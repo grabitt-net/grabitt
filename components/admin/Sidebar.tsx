@@ -1,91 +1,95 @@
 'use client'
-import { useState } from 'react'
+import type { View } from './AdminApp'
 
-const navSections = [
+const sections = [
   {
     label: 'Executive',
     items: [
-      { icon: '🚰', label: 'Pipeline', id: 'funnel' },
-      { icon: '🤞', label: 'Prospects', id: 'pipeline' },
-      { icon: '🙋', label: 'Contacts', id: 'contacts' },
-      { icon: '📈', label: 'Forecast', id: 'forecast' },
-      { icon: '🪪', label: 'Members', id: 'members' },
-      { icon: '⚖️', label: 'Disputes', id: 'disputes' },
-      { icon: '🚨', label: 'Reports', id: 'reports' },
-      { icon: '🎁', label: 'Rewards', id: 'rewards' },
-      { icon: '💰', label: 'Financials', id: 'financials' },
-      { icon: '📊', label: 'Retention', id: 'retention' },
+      { icon: '🚰', label: 'Pipeline', id: 'funnel' as View },
+      { icon: '🤞', label: 'Prospects', id: 'pipeline' as View, countKey: 'pipeline' },
+      { icon: '🙋', label: 'Contacts', id: 'contacts' as View },
+      { icon: '📈', label: 'Forecast', id: 'forecast' as View },
+      { icon: '🪪', label: 'Members', id: 'members' as View },
+      { icon: '⚖️', label: 'Disputes', id: 'disputes' as View, countKey: 'disputes' },
+      { icon: '🚨', label: 'Reports', id: 'reports' as View, countKey: 'reports' },
+      { icon: '🎁', label: 'Rewards', id: 'rewards' as View },
+      { icon: '💰', label: 'Financials', id: 'financials' as View },
+      { icon: '📊', label: 'Retention', id: 'retention' as View },
     ],
   },
   {
     label: 'Activity',
     items: [
-      { icon: '📅', label: 'Calendar', id: 'calendar' },
-      { icon: '✅', label: 'To Do', id: 'todo' },
-      { icon: '💬', label: 'Chats', id: 'messages' },
+      { icon: '📅', label: 'Calendar', id: 'calendar' as View },
+      { icon: '✅', label: 'To Do', id: 'todo' as View },
+      { icon: '💬', label: 'Chats', id: 'messages' as View },
     ],
   },
   {
     label: 'Marketing',
     items: [
-      { icon: '📧', label: 'E-shots', id: 'emails' },
-      { icon: '🎯', label: 'Banners', id: 'banners' },
+      { icon: '📧', label: 'E-shots', id: 'emails' as View },
+      { icon: '🎯', label: 'Banners', id: 'banners' as View },
     ],
   },
 ]
 
-export default function AdminSidebar() {
-  const [active, setActive] = useState('funnel')
+interface Props {
+  activeView: View
+  onViewChange: (v: View) => void
+  counts: { pipeline: number; disputes: number; reports: number }
+}
 
+export default function AdminSidebar({ activeView, onViewChange, counts }: Props) {
   return (
     <aside style={{
       background: '#fff', borderRight: '1px solid #eee',
       padding: '16px 0', display: 'flex', flexDirection: 'column',
-      minHeight: 'calc(100vh - 48px)',
+      minHeight: 'calc(100vh - 52px)', position: 'sticky', top: 52,
     }}>
-      {navSections.map(section => (
+      {sections.map(section => (
         <div key={section.label} style={{ padding: '0 8px', marginBottom: 20 }}>
           <div style={{
-            fontSize: 9, letterSpacing: 2, color: '#FF4500',
-            textTransform: 'uppercase', marginBottom: 6,
-            fontFamily: 'var(--font-nunito)', fontWeight: 800,
+            fontSize: 9, letterSpacing: 2, color: '#FF4500', textTransform: 'uppercase',
+            marginBottom: 6, fontFamily: 'var(--font-nunito)', fontWeight: 800,
             padding: '0 4px', textAlign: 'center',
           }}>
             {section.label}
           </div>
-          {section.items.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActive(item.id)}
-              style={{
+          {section.items.map(item => {
+            const count = item.countKey ? counts[item.countKey as keyof typeof counts] : 0
+            const isActive = activeView === item.id
+            return (
+              <button key={item.id} onClick={() => onViewChange(item.id)} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center',
-                gap: 4, padding: '8px 4px', borderRadius: 10, width: '100%',
+                gap: 3, padding: '8px 4px', borderRadius: 10, width: '100%',
                 fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 700,
-                color: active === item.id ? '#FF4500' : '#555',
-                background: active === item.id ? '#FFF3EE' : 'none',
+                color: isActive ? '#FF4500' : '#555',
+                background: isActive ? '#FFF3EE' : 'none',
                 border: 'none', cursor: 'pointer', marginBottom: 2,
-                textAlign: 'center',
-              }}
-            >
-              <span style={{ fontSize: 18 }}>{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
+                textAlign: 'center', position: 'relative',
+              }}>
+                <span style={{ fontSize: 18 }}>{item.icon}</span>
+                {item.label}
+                {count > 0 && (
+                  <span style={{
+                    position: 'absolute', top: 4, right: 6,
+                    background: '#FF4500', color: '#fff',
+                    borderRadius: 50, padding: '1px 5px', fontSize: 8, fontWeight: 900,
+                  }}>{count}</span>
+                )}
+              </button>
+            )
+          })}
         </div>
       ))}
-
-      {/* Toolbox pinned at bottom */}
       <div style={{ padding: 8, marginTop: 'auto', borderTop: '1px solid #f0f0f0' }}>
-        <button
-          onClick={() => setActive('toolbox')}
-          style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            gap: 4, padding: '8px 4px', borderRadius: 10, width: '100%',
-            fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 800,
-            color: '#FF4500', background: '#FFF3EE',
-            border: '1.5px solid #FF4500', cursor: 'pointer',
-          }}
-        >
+        <button onClick={() => onViewChange('toolbox')} style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          gap: 4, padding: '8px 4px', borderRadius: 10, width: '100%',
+          fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 800,
+          color: '#FF4500', background: '#FFF3EE', border: '1.5px solid #FF4500', cursor: 'pointer',
+        }}>
           <span style={{ fontSize: 20 }}>🧰</span>
           Toolbox
         </button>
