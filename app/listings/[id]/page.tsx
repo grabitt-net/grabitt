@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import BottomNav from '@/components/marketplace/BottomNav'
+import MessageButton from '@/components/marketplace/MessageButton'
 
 const conditionLabel: Record<string, string> = {
   new: 'New', like_new: 'Like New', good: 'Good', fair: 'Fair', poor: 'Poor',
@@ -167,17 +168,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           display: 'flex', gap: 10, zIndex: 99,
           boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
         }}>
-          <Link href={`/messages?listing=${id}&seller=${listing.seller_id}`} style={{
-            flex: 1, textDecoration: 'none',
-          }}>
-            <button style={{
-              width: '100%', background: '#f0f0f0', color: 'var(--dark)',
-              border: 'none', borderRadius: 14, padding: '14px 20px',
-              fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer',
-            }}>
-              💬 Message
-            </button>
-          </Link>
+          <MessageButton listingId={id} sellerId={listing.seller_id} />
           {listing.listing_type !== 'wanted' && (
             <button style={{
               flex: 2, background: 'var(--orange)', color: '#fff',
