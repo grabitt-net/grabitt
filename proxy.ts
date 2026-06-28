@@ -5,7 +5,7 @@ const PROTECTED_ROUTES = ['/profile', '/messages', '/listings/new', '/orders']
 const ADMIN_ROUTES = ['/admin']
 const AUTH_ROUTES = ['/auth']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
