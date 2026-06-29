@@ -3,18 +3,21 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 const categories = [
-  { icon: '🏠', name: 'Property', slug: 'property' },
-  { icon: '🚗', name: 'Vehicles', slug: 'vehicles' },
-  { icon: '💼', name: 'Jobs', slug: 'jobs' },
-  { icon: '🛍️', name: 'Fashion', slug: 'fashion' },
-  { icon: '📱', name: 'Tech', slug: 'tech' },
-  { icon: '🍽️', name: 'Food', slug: 'food' },
-  { icon: '🔧', name: 'Services', slug: 'services' },
-  { icon: '🎨', name: 'Art', slug: 'art' },
-  { icon: '🌿', name: 'Garden', slug: 'garden' },
-  { icon: '👶', name: 'Baby', slug: 'baby' },
-  { icon: '⚽', name: 'Sport', slug: 'sport' },
-  { icon: '🎵', name: 'Music', slug: 'music' },
+  { icon: '🏡', name: 'Home & Garden', slug: 'home-garden', grad: 'linear-gradient(135deg,#56ab2f,#a8e063)' },
+  { icon: '💼', name: 'Jobs', slug: 'jobs', grad: 'linear-gradient(135deg,#2193b0,#6dd5ed)' },
+  { icon: '👗', name: 'Fashion', slug: 'fashion', grad: 'linear-gradient(135deg,#f7971e,#ffd200)' },
+  { icon: '⚽', name: 'Sport', slug: 'sport', grad: 'linear-gradient(135deg,#11998e,#38ef7d)' },
+  { icon: '🎮', name: 'Gaming', slug: 'gaming', grad: 'linear-gradient(135deg,#8E2DE2,#c471f5)' },
+  { icon: '📱', name: 'Electronics', slug: 'electronics', grad: 'linear-gradient(135deg,#4776E6,#8E54E9)' },
+  { icon: '🎁', name: 'Gift Ideas', slug: 'gifts', grad: 'linear-gradient(135deg,#f953c6,#b91d73)' },
+  { icon: '🧸', name: 'Kids & Baby', slug: 'kids', grad: 'linear-gradient(135deg,#f9d423,#ff4e50)' },
+  { icon: '🏠', name: 'Property', slug: 'property', grad: 'linear-gradient(135deg,#e96c2a,#f5a623)' },
+  { icon: '💊', name: 'Health & Fitness', slug: 'health', grad: 'linear-gradient(135deg,#43cea2,#185a9d)' },
+  { icon: '🥖', name: 'Food Store', slug: 'food', grad: 'linear-gradient(135deg,#8e44ad,#c0392b)' },
+  { icon: '🕺', name: 'Retro & Vintage', slug: 'vintage', grad: 'linear-gradient(135deg,#d35400,#7a4419)' },
+  { icon: '🛍️', name: 'Grab It Now', slug: 'now', grad: 'linear-gradient(135deg,#FF4500,#FF8C00)' },
+  { icon: '🔧', name: 'Handy Help', slug: 'services', grad: 'linear-gradient(135deg,#00b09b,#96c93d)' },
+  { icon: '🐾', name: 'Pet Shop', slug: 'pets', grad: 'linear-gradient(135deg,#f093fb,#f5576c)' },
 ]
 
 export default function CategoryGrid() {
@@ -55,7 +58,7 @@ export default function CategoryGrid() {
                 width: 38, height: 38, borderRadius: 11,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 21, marginBottom: 5, boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
-                background: '#f9f9f9',
+                background: cat.grad,
               }}>
                 {cat.icon}
               </div>

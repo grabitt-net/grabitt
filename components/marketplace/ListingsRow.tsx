@@ -6,11 +6,11 @@ interface Props {
 }
 
 const placeholderListings = [
-  { id: '1', emoji: '🏄', title: 'Surfboard — Rip Curl 6ft', price: '€120', location: 'Las Palmas', badge: 'Hot', badgeType: 'hot' },
-  { id: '2', emoji: '🛵', title: 'Vespa Scooter 2021', price: '€2,400', location: 'Maspalomas', badge: 'New', badgeType: 'new' },
-  { id: '3', emoji: '🏠', title: 'Studio Flat — Playa del Inglés', price: '€650/mo', location: 'Playa del Inglés', badge: null, badgeType: null },
-  { id: '4', emoji: '📷', title: 'Canon EOS R6 + 24-70mm', price: '€1,800', location: 'Telde', badge: 'Offer', badgeType: 'offer' },
-  { id: '5', emoji: '🎸', title: 'Fender Stratocaster', price: '€340', location: 'Las Palmas', badge: null, badgeType: null },
+  { id: '1', emoji: '🏄', title: 'Surfboard — Rip Curl 6ft', price: '€120', location: 'Las Palmas', badge: 'Hot', badgeType: 'hot', grad: 'linear-gradient(145deg,#FFF3EE,#FFE4D6)' },
+  { id: '2', emoji: '🛵', title: 'Vespa Scooter 2021', price: '€2,400', location: 'Maspalomas', badge: 'New', badgeType: 'new', grad: 'linear-gradient(145deg,#EEF4FF,#D6E8FF)' },
+  { id: '3', emoji: '🏠', title: 'Studio Flat — Playa del Inglés', price: '€650/mo', location: 'Playa del Inglés', badge: null, badgeType: null, grad: 'linear-gradient(145deg,#F0FDF4,#D6F5E3)' },
+  { id: '4', emoji: '📷', title: 'Canon EOS R6 + 24-70mm', price: '€1,800', location: 'Telde', badge: 'Offer', badgeType: 'offer', grad: 'linear-gradient(145deg,#FEF9EE,#FFF0CC)' },
+  { id: '5', emoji: '🎸', title: 'Fender Stratocaster', price: '€340', location: 'Las Palmas', badge: null, badgeType: null, grad: 'linear-gradient(145deg,#FDF0FF,#F0D6FF)' },
 ]
 
 const badgeColors: Record<string, string> = {
@@ -49,7 +49,7 @@ export default function ListingsRow({ title, seeAllHref }: Props) {
               <div style={{
                 width: '100%', height: 120,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 44, background: 'var(--sand)', position: 'relative',
+                fontSize: 44, background: listing.grad, position: 'relative',
               }}>
                 {listing.emoji}
                 {listing.badge && (
@@ -63,6 +63,13 @@ export default function ListingsRow({ title, seeAllHref }: Props) {
                     {listing.badge}
                   </span>
                 )}
+                <span style={{
+                  position: 'absolute', top: 8, right: 8,
+                  width: 30, height: 30, borderRadius: '50%',
+                  background: 'var(--sand)', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', fontSize: 15,
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.12)', cursor: 'pointer', zIndex: 5,
+                }}>🤍</span>
               </div>
               <div style={{ padding: 10 }}>
                 <div style={{
@@ -74,7 +81,7 @@ export default function ListingsRow({ title, seeAllHref }: Props) {
                   {listing.title}
                 </div>
                 <div style={{
-                  fontFamily: 'Georgia, serif', fontSize: 16,
+                  fontFamily: 'Georgia, "Playfair Display", serif', fontSize: 16,
                   fontWeight: 700, color: 'var(--orange)', marginBottom: 4,
                 }}>
                   {listing.price}
