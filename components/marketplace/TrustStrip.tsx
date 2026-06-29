@@ -1,19 +1,24 @@
+'use client'
+import { usePanel } from '@/context/PanelContext'
+
 const footerLinks = [
-  { icon: 'ℹ️', label: 'About Us' },
-  { icon: '⭐', label: 'Why Us?' },
-  { icon: '✉️', label: 'Contact Us' },
-  { icon: '💬', label: 'Help Centre' },
-  { icon: '📄', label: 'Terms' },
-  { icon: '🏷️', label: 'Pricing' },
-  { icon: '🚚', label: 'Delivery' },
-  { icon: '🛡️', label: 'Scam Centre' },
-  { icon: '🪙', label: 'Economic Living' },
-  { icon: '✅', label: "Dos & Don'ts" },
-  { icon: '💡', label: 'Suggest Ideas' },
-  { icon: '🕘', label: 'Recently viewed' },
+  { icon: 'ℹ️', label: 'About Us', key: 'about' },
+  { icon: '⭐', label: 'Why Us?', key: 'why' },
+  { icon: '✉️', label: 'Contact Us', key: 'contact' },
+  { icon: '💬', label: 'Help Centre', key: 'help' },
+  { icon: '📄', label: 'Terms', key: 'terms' },
+  { icon: '🏷️', label: 'Pricing', key: 'pricing' },
+  { icon: '🚚', label: 'Delivery', key: 'collection' },
+  { icon: '🛡️', label: 'Scam Centre', key: 'scams' },
+  { icon: '🪙', label: 'Economic Living', key: 'economic' },
+  { icon: '✅', label: "Dos & Don'ts", key: 'policy' },
+  { icon: '💡', label: 'Suggest Ideas', key: 'suggest' },
+  { icon: '🕘', label: 'Recently viewed', key: 'recent' },
 ]
 
 export default function TrustStrip() {
+  const { openPanel } = usePanel()
+
   return (
     <section style={{ margin: '0 14px 14px' }}>
       <div style={{
@@ -31,24 +36,31 @@ export default function TrustStrip() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           {footerLinks.map(link => (
-            <button key={link.label} style={{
-              display: 'flex', alignItems: 'center', gap: 9,
-              background: '#fff', border: '1px solid #F0E0D0', borderRadius: 14,
-              padding: '11px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11,
-              fontWeight: 800, color: '#444', cursor: 'pointer', textAlign: 'left',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            }}>
+            <button
+              key={link.label}
+              onClick={() => link.key === 'recent' ? openPanel('justlisted') : openPanel('footer', { key: link.key })}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 9,
+                background: '#fff', border: '1px solid #F0E0D0', borderRadius: 14,
+                padding: '11px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11,
+                fontWeight: 800, color: '#444', cursor: 'pointer', textAlign: 'left',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              }}
+            >
               <span style={{ fontSize: 16, flexShrink: 0 }}>{link.icon}</span>
               {link.label}
             </button>
           ))}
-          <button style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-            background: '#fff', border: '1px solid #F0E0D0', borderRadius: 14,
-            padding: '11px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11,
-            fontWeight: 800, color: '#444', cursor: 'pointer',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)', gridColumn: '1 / -1',
-          }}>
+          <button
+            onClick={() => window.location.href = '/admin'}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+              background: '#fff', border: '1px solid #F0E0D0', borderRadius: 14,
+              padding: '11px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11,
+              fontWeight: 800, color: '#444', cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)', gridColumn: '1 / -1',
+            }}
+          >
             <span style={{ fontSize: 16 }}>🧠</span>
             Executive Suite
           </button>

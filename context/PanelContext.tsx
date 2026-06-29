@@ -1,0 +1,46 @@
+'use client'
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+
+export type PanelId =
+  | 'alerts' | 'saved' | 'rewards' | 'login' | 'messages' | 'sell' | 'help'
+  | 'shield' | 'affiliate' | 'dept' | 'near' | 'grabit' | 'sponsors'
+  | 'employers' | 'business' | 'footer' | 'menu' | 'justlisted'
+
+interface PanelState {
+  id: PanelId | null
+  data?: Record<string, unknown>
+}
+
+interface PanelContextValue {
+  panel: PanelState
+  openPanel: (id: PanelId, data?: Record<string, unknown>) => void
+  closePanel: () => void
+}
+
+const PanelContext = createContext<PanelContextValue>({
+  panel: { id: null },
+  openPanel: () => {},
+  closePanel: () => {},
+})
+
+export function PanelProvider({ children }: { children: ReactNode }) {
+  const [panel, setPanel] = useState<PanelState>({ id: null })
+
+  const openPanel = useCallback((id: PanelId, data?: Record<string, unknown>) => {
+    setPanel({ id, data })
+  }, [])
+
+  const closePanel = useCallback(() => {
+    setPanel({ id: null })
+  }, [])
+
+  return (
+    <PanelContext.Provider value={{ panel, openPanel, closePanel }}>
+      {children}
+    </PanelContext.Provider>
+  )
+}
+
+export function usePanel() {
+  return useContext(PanelContext)
+}
