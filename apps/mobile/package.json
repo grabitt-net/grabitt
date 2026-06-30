@@ -1,0 +1,29 @@
+{
+  "name": "@grabitt/mobile",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@grabitt/design-tokens": "workspace:*",
+    "@grabitt/types": "workspace:*",
+    "@grabitt/api-client": "workspace:*",
+    "@grabitt/utils": "workspace:*",
+    "expo": "~51.0.0",
+    "expo-router": "~3.5.0",
+    "expo-status-bar": "~1.12.1",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "@trpc/client": "^11.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@types/react": "^18.3.3",
+    "typescript": "^5.6.3"
+  }
+}

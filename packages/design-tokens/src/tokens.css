@@ -1,0 +1,51 @@
+/* ============================================================
+   Grabitt Design Tokens — single source of truth
+   ALL colours and fonts MUST reference these variables.
+   Never use hex literals or raw font strings in components.
+   ============================================================ */
+
+:root {
+  /* Brand colours */
+  --orange: #FF4500;
+  --orange2: #FF7A00;
+  --dark: #1A1A1A;
+  --sand: #F5ECD7;
+  --topbar-crm: #E8DDD5;
+
+  /* Semantic colours */
+  --ocean: #1B6CA8;
+  --terra: #C1440E;
+  --sage: #6B8F71;
+
+  /* Surface colours */
+  --cream: #FFFFFF;
+  --sand2: #EDE0C4;
+
+  /* Pipeline stage colours */
+  --stage-lead: #E2E8F0;
+  --stage-qual: #DBEAFE;
+  --stage-pitch: #FEF3C7;
+  --stage-close: #D1FAE5;
+  --stage-won: #4ADE80;
+  --stage-lost: #FCA5A5;
+  --stage-nurture: #E9D5FF;
+
+  /* Spacing & shape */
+  --radius: 18px;
+  --radius-sm: 10px;
+  --radius-lg: 24px;
+  --shadow: 0 4px 24px rgba(28,16,8,0.10);
+  --shadow-sm: 0 2px 8px rgba(28,16,8,0.06);
+  --shadow-lg: 0 8px 40px rgba(28,16,8,0.16);
+
+  /* Typography — reference Next.js font variable names */
+  --font-body: var(--font-comfortaa), 'Comfortaa', sans-serif;
+  --font-ui: var(--font-nunito), 'Nunito', sans-serif;
+  --font-display: 'Playfair Display', serif;
+
+  /* Z-index scale */
+  --z-topbar: 200;
+  --z-panel: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+}

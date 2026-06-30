@@ -1,0 +1,556 @@
+// Grabitt v2 — Prisma Schema
+// Every monetary calculation uses server-side values only.
+// Never trust client-sent fee or net amounts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ── Users ──────────────────────────────────────────────────────────────────
+
+enum UserGrade {
+  grabber
+  dealer
+  trader
+  pro
+}
+
+enum Locale {
+  en
+  es
+  de
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  supabaseId         String    @unique
+  email              String    @unique
+  displayName        String
+  avatar             String?
+  grade              UserGrade @default(grabber)
+  salesCount         Int       @default(0)
+  avgRating          Float?
+  credits            Int       @default(50)
+  isBusiness         Boolean   @default(false)
+  businessVerified   Boolean   @default(false)
+  businessTrialEnds  DateTime?
+  stripeAccountId    String?
+  locale             Locale    @default(en)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  listings           Listing[]
+  buyerTransactions  Transaction[] @relation("Buyer")
+  sellerTransactions Transaction[] @relation("Seller")
+  sentMessages       Message[]
+  threads            ThreadParticipant[]
+  notifications      Notification[]
+  creditEvents       CreditEvent[]
+  wishlistItems      WishlistItem[]
+  savedSearches      SavedSearch[]
+  reviews            Review[]     @relation("ReviewAuthor")
+  receivedReviews    Review[]     @relation("ReviewSubject")
+  disputes           Dispute[]    @relation("DisputeRaiser")
+  crmContacts        CrmContact[] @relation("CrmAssigned")
+  handyListings      HandyListing[]
+
+  @@index([grade])
+  @@index([email])
+}
+
+model ExecUser {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  role      ExecRole
+  createdAt DateTime @default(now())
+}
+
+enum ExecRole {
+  super_admin
+  admin
+  support
+}
+
+// ── Listings ────────────────────────────────────────────────────────────────
+
+enum Department {
+  home_garden
+  jobs
+  fashion
+  sport
+  gaming
+  electronics
+  gift_ideas
+  kids_baby
+  property
+  health_fitness
+  food_store
+  retro_vintage
+  grab_it_now
+  handy_help
+  pet_shop
+}
+
+enum ListingCondition {
+  new
+  like_new
+  good
+  fair
+  spares
+}
+
+enum ListingStatus {
+  draft
+  active
+  grab_it_now
+  sold
+  expired
+  removed
+}
+
+model Listing {
+  id               String           @id @default(uuid())
+  sellerId         String
+  seller           User             @relation(fields: [sellerId], references: [id])
+  title            String
+  description      String
+  price            Decimal          @db.Decimal(10, 2)
+  department       Department
+  condition        ListingCondition
+  status           ListingStatus    @default(draft)
+  images           String[]
+  location         String
+  lat              Float?
+  lng              Float?
+  isFeatured       Boolean          @default(false)
+  featuredUntil    DateTime?
+  grabItNowUntil   DateTime?
+  grabItNowWindow  Int?
+  viewCount        Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  transaction      Transaction?
+  jobListing       JobListing?
+  propertyListing  PropertyListing?
+  wishlistItems    WishlistItem[]
+
+  @@index([department])
+  @@index([status])
+  @@index([sellerId])
+  @@index([isFeatured])
+  @@index([createdAt(sort: Desc)])
+}
+
+// ── Transactions ─────────────────────────────────────────────────────────────
+
+enum TransactionStatus {
+  pending_payment
+  held
+  confirmed_handover
+  completed
+  released
+  disputed
+  refunded
+  cancelled
+}
+
+model Transaction {
+  id                    String            @id @default(uuid())
+  listingId             String            @unique
+  listing               Listing           @relation(fields: [listingId], references: [id])
+  buyerId               String
+  buyer                 User              @relation("Buyer", fields: [buyerId], references: [id])
+  sellerId              String
+  seller                User              @relation("Seller", fields: [sellerId], references: [id])
+  amount                Decimal           @db.Decimal(10, 2)
+  platformFee           Decimal           @db.Decimal(10, 2)
+  sellerNet             Decimal           @db.Decimal(10, 2)
+  status                TransactionStatus @default(pending_payment)
+  stripePaymentIntentId String?
+  stripeTransferId      String?
+  buyerRating           Int?
+  sellerRating          Int?
+  handoverConfirmedAt   DateTime?
+  fundsReleasedAt       DateTime?
+  autoReleaseAt         DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  dispute               Dispute?
+  reviews               Review[]
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+}
+
+// ── Messaging ────────────────────────────────────────────────────────────────
+
+enum MessageChannel {
+  in_app
+  sms
+  whatsapp
+}
+
+model Thread {
+  id           String             @id @default(uuid())
+  listingId    String
+  lastMessageAt DateTime?
+  createdAt    DateTime           @default(now())
+
+  participants ThreadParticipant[]
+  messages     Message[]
+
+  @@index([listingId])
+}
+
+model ThreadParticipant {
+  threadId String
+  userId   String
+  thread   Thread @relation(fields: [threadId], references: [id])
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@id([threadId, userId])
+}
+
+model Message {
+  id            String         @id @default(uuid())
+  threadId      String
+  thread        Thread         @relation(fields: [threadId], references: [id])
+  senderId      String
+  sender        User           @relation(fields: [senderId], references: [id])
+  body          String
+  channel       MessageChannel @default(in_app)
+  blocked       Boolean        @default(false)
+  blockedReason String?
+  readAt        DateTime?
+  createdAt     DateTime       @default(now())
+
+  @@index([threadId])
+  @@index([senderId])
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+enum NotificationKind {
+  new_message
+  offer_received
+  offer_accepted
+  offer_declined
+  payment_held
+  handover_confirmed
+  funds_released
+  new_review
+  listing_expiring
+  grade_upgrade
+  credits_received
+  dispute_opened
+  dispute_resolved
+  system
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  kind      NotificationKind
+  title     String
+  body      String
+  actionUrl String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([readAt])
+}
+
+// ── Offers ──────────────────────────────────────────────────────────────────
+
+enum OfferStatus {
+  pending
+  accepted
+  declined
+  countered
+  expired
+  withdrawn
+}
+
+model Offer {
+  id        String      @id @default(uuid())
+  listingId String
+  buyerId   String
+  amount    Decimal     @db.Decimal(10, 2)
+  message   String?
+  status    OfferStatus @default(pending)
+  expiresAt DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([listingId])
+  @@index([buyerId])
+}
+
+// ── Reviews ──────────────────────────────────────────────────────────────────
+
+model Review {
+  id            String      @id @default(uuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  authorId      String
+  author        User        @relation("ReviewAuthor", fields: [authorId], references: [id])
+  subjectId     String
+  subject       User        @relation("ReviewSubject", fields: [subjectId], references: [id])
+  rating        Int
+  comment       String?
+  createdAt     DateTime    @default(now())
+
+  @@unique([transactionId, authorId])
+  @@index([subjectId])
+}
+
+// ── Disputes ─────────────────────────────────────────────────────────────────
+
+enum DisputeStatus {
+  open
+  under_review
+  resolved_buyer
+  resolved_seller
+  escalated
+}
+
+model Dispute {
+  id            String        @id @default(uuid())
+  transactionId String        @unique
+  transaction   Transaction   @relation(fields: [transactionId], references: [id])
+  raisedById    String
+  raisedBy      User          @relation("DisputeRaiser", fields: [raisedById], references: [id])
+  reason        String
+  evidence      String[]
+  status        DisputeStatus @default(open)
+  resolution    String?
+  resolvedAt    DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// ── Credits ──────────────────────────────────────────────────────────────────
+
+enum CreditEventKind {
+  registration_bonus
+  share_reward
+  referral
+  purchase
+  featured_listing
+  grab_it_now
+  refund
+  admin_adjustment
+}
+
+model CreditEvent {
+  id        String          @id @default(uuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id])
+  kind      CreditEventKind
+  delta     Int
+  balance   Int
+  note      String?
+  createdAt DateTime        @default(now())
+
+  @@index([userId])
+}
+
+// ── Wishlist & Saved Searches ──────────────────────────────────────────────
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+}
+
+model SavedSearch {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  name       String
+  query      Json
+  alertsOn   Boolean  @default(true)
+  lastAlertAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ── Jobs ─────────────────────────────────────────────────────────────────────
+
+enum JobType {
+  full_time
+  part_time
+  contract
+  temporary
+  volunteer
+}
+
+model JobListing {
+  id         String   @id @default(uuid())
+  listingId  String   @unique
+  listing    Listing  @relation(fields: [listingId], references: [id])
+  employerId String
+  jobTitle   String
+  company    String
+  type       JobType
+  salaryMin  Decimal? @db.Decimal(10, 2)
+  salaryMax  Decimal? @db.Decimal(10, 2)
+  remote     Boolean  @default(false)
+  skills     String[]
+  applyUrl   String?
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+}
+
+// ── Property ─────────────────────────────────────────────────────────────────
+
+enum PropertyType {
+  sale
+  rent
+  holiday
+  commercial
+}
+
+model PropertyListing {
+  id           String      @id @default(uuid())
+  listingId    String      @unique
+  listing      Listing     @relation(fields: [listingId], references: [id])
+  type         PropertyType
+  bedrooms     Int?
+  bathrooms    Int?
+  m2           Decimal?    @db.Decimal(8, 2)
+  community    String?
+  floor        Int?
+  hasPool      Boolean     @default(false)
+  hasGarage    Boolean     @default(false)
+  energyRating String?
+  lat          Float?
+  lng          Float?
+  createdAt    DateTime    @default(now())
+}
+
+// ── Handy Help ────────────────────────────────────────────────────────────────
+
+enum HandyCategory {
+  plumbing
+  electrical
+  cleaning
+  painting
+  gardening
+  moving
+  assembly
+  it_support
+  tutoring
+  beauty
+  other
+}
+
+model HandyListing {
+  id                String        @id @default(uuid())
+  listingId         String        @unique
+  providerId        String
+  provider          User          @relation(fields: [providerId], references: [id])
+  category          HandyCategory
+  pricePerHour      Decimal?      @db.Decimal(8, 2)
+  priceFixed        Decimal?      @db.Decimal(8, 2)
+  availableDays     Int[]
+  responseTimeHours Int?
+  insured           Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+
+  @@index([category])
+  @@index([providerId])
+}
+
+// ── CRM (Exec only) ──────────────────────────────────────────────────────────
+
+enum PipelineStage {
+  lead
+  qual
+  pitch
+  close
+  won
+  lost
+  nurture
+}
+
+model CrmContact {
+  id         String        @id @default(uuid())
+  name       String
+  email      String?
+  phone      String?
+  company    String?
+  stage      PipelineStage @default(lead)
+  value      Decimal       @default(0) @db.Decimal(10, 2)
+  assignedTo String?
+  assignee   User?         @relation("CrmAssigned", fields: [assignedTo], references: [id])
+  notes      String?
+  tags       String[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([stage])
+  @@index([assignedTo])
+}
+
+// ── Banners & E-shots (Exec only) ────────────────────────────────────────────
+
+enum BannerPosition {
+  home_top
+  home_mid
+  category
+  checkout
+}
+
+model Banner {
+  id        String         @id @default(uuid())
+  title     String
+  imageUrl  String
+  linkUrl   String?
+  active    Boolean        @default(false)
+  position  BannerPosition
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime       @default(now())
+
+  @@index([active])
+  @@index([position])
+}
+
+enum EshotSegment {
+  all
+  grabber
+  dealer
+  trader
+  pro
+  business
+  inactive
+}
+
+model Eshot {
+  id         String       @id @default(uuid())
+  subject    String
+  bodyHtml   String
+  segment    EshotSegment
+  sentAt     DateTime?
+  openCount  Int          @default(0)
+  clickCount Int          @default(0)
+  createdAt  DateTime     @default(now())
+}

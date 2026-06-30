@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@import "@grabitt/design-tokens/css";
+
+/* ── Global resets ── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--cream);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero            { animation: fadeUp 0.5s ease both; }
+.dept-grid       { animation: fadeUp 0.5s 0.1s ease both; }
+.listings-scroll { animation: fadeUp 0.5s 0.2s ease both; }
+
+/* ── Utilities ── */
+.hide-scroll { scrollbar-width: none; }
+.hide-scroll::-webkit-scrollbar { display: none; }
