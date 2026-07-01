@@ -51,7 +51,7 @@ export default function AdminSidebar({ activeView, onViewChange, counts }: Props
         <div key={section.label} style={{ padding: '0 8px', marginBottom: 20 }}>
           <div style={{
             fontSize: 9, letterSpacing: 2, color: '#FF4500', textTransform: 'uppercase',
-            marginBottom: 6, fontFamily: 'var(--font-nunito)', fontWeight: 800,
+            marginBottom: 6, fontFamily: 'var(--font-ui)', fontWeight: 800,
             padding: '0 4px', textAlign: 'center',
           }}>
             {section.label}
@@ -63,7 +63,7 @@ export default function AdminSidebar({ activeView, onViewChange, counts }: Props
               <button key={item.id} onClick={() => onViewChange(item.id)} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center',
                 gap: 3, padding: '8px 4px', borderRadius: 10, width: '100%',
-                fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 700,
+                fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 700,
                 color: isActive ? '#FF4500' : '#555',
                 background: isActive ? '#FFF3EE' : 'none',
                 border: 'none', cursor: 'pointer', marginBottom: 2,
@@ -87,7 +87,7 @@ export default function AdminSidebar({ activeView, onViewChange, counts }: Props
         <button onClick={() => onViewChange('toolbox')} style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           gap: 4, padding: '8px 4px', borderRadius: 10, width: '100%',
-          fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 800,
+          fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800,
           color: '#FF4500', background: '#FFF3EE', border: '1.5px solid #FF4500', cursor: 'pointer',
         }}>
           <span style={{ fontSize: 20 }}>🧰</span>

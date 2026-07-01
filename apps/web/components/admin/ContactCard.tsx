@@ -26,17 +26,17 @@ export default function ContactCard({ contact, stageColor, onClick, onStageChang
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
         <div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontWeight: 800, fontSize: 13, color: '#1a1a1a' }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 13, color: '#1a1a1a' }}>
             {contact.name}
           </div>
           {contact.company && (
-            <div style={{ fontSize: 10, color: '#888', fontFamily: 'var(--font-nunito)' }}>{contact.company}</div>
+            <div style={{ fontSize: 10, color: '#888', fontFamily: 'var(--font-ui)' }}>{contact.company}</div>
           )}
         </div>
         {contact.monthly_value > 0 && (
           <div style={{
             background: '#f0faf4', borderRadius: 6, padding: '2px 7px',
-            fontFamily: 'var(--font-nunito)', fontWeight: 900, fontSize: 11, color: '#16a34a',
+            fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 11, color: '#16a34a',
             whiteSpace: 'nowrap',
           }}>
             €{Number(contact.monthly_value).toLocaleString()}/mo
@@ -46,7 +46,7 @@ export default function ContactCard({ contact, stageColor, onClick, onStageChang
 
       {followUp && (
         <div style={{
-          fontSize: 9, fontFamily: 'var(--font-nunito)', fontWeight: 700,
+          fontSize: 9, fontFamily: 'var(--font-ui)', fontWeight: 700,
           color: isOverdue ? '#ef4444' : '#888',
           marginBottom: 8,
         }}>

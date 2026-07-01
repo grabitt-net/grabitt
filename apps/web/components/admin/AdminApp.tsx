@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, createContext, useContext } from 'react'
 import AdminSidebar from './Sidebar'
 import FunnelView from './FunnelView'
 import PipelineView from './PipelineView'
@@ -9,81 +9,106 @@ import DisputesView from './DisputesView'
 import ReportsView from './ReportsView'
 import BannersView from './BannersView'
 import ForecastView from './ForecastView'
+import FinancialsView from './FinancialsView'
+import { makeCrmApi, CrmApi } from '@/lib/admin-api'
 
-interface Props {
-  contacts: any[]
-  members: any[]
-  disputes: any[]
-  reports: any[]
-  banners: any[]
-  orders: any[]
-  listings: any[]
+// Context so child components can call the API without prop-drilling
+export const CrmApiContext = createContext<CrmApi | null>(null)
+export function useCrmApi() {
+  const ctx = useContext(CrmApiContext)
+  if (!ctx) throw new Error('useCrmApi must be used inside AdminApp')
+  return ctx
 }
 
 export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'disputes' | 'reports' | 'rewards' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox'
 
-export default function AdminApp({ contacts, members, disputes, reports, banners, orders, listings }: Props) {
+interface Props { execToken: string }
+
+export default function AdminApp({ execToken }: Props) {
+  const api = makeCrmApi(execToken)
   const [view, setView] = useState<View>('funnel')
-  const [contactList, setContactList] = useState(contacts)
+
+  const [contacts, setContacts] = useState<any[]>([])
+  const [members, setMembers] = useState<any[]>([])
+  const [disputes, setDisputes] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([api.contacts(), api.members(), api.disputes()])
+      .then(([c, m, d]) => { setContacts(c ?? []); setMembers(m ?? []); setDisputes(d ?? []) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const openDisputeCount = disputes.filter(d => d.status === 'open').length
-  const openReportCount = reports.filter(r => r.status === 'open').length
 
   return (
-    <div style={{ background: '#f0f2f5', fontFamily: 'var(--font-comfortaa)', minHeight: '100vh' }}>
-      {/* Topbar */}
-      <header style={{
-        background: '#E8DDD5', padding: '12px 20px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        position: 'sticky', top: 0, zIndex: 200,
-      }}>
-        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 22, fontWeight: 700 }}>
-          <span style={{ color: '#FF4500' }}>Grab</span>
-          <span style={{ color: '#2a2a2a' }}>itt</span>
-          <span style={{ color: '#999', fontSize: 13, marginLeft: 6, fontWeight: 400 }}>/ Exec</span>
-        </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <StatChip label="Members" value={members.length} onClick={() => setView('members')} />
-          <StatChip label="Prospects" value={contactList.length} onClick={() => setView('pipeline')} />
-          {openDisputeCount > 0 && <StatChip label="Disputes" value={openDisputeCount} onClick={() => setView('disputes')} urgent />}
-          <button
-            onClick={() => setView('contacts')}
-            style={{
-              background: '#FF4500', color: '#fff', border: 'none',
-              borderRadius: 50, padding: '8px 16px',
-              fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer',
-            }}>
-            + New Contact
-          </button>
-        </div>
-      </header>
+    <CrmApiContext.Provider value={api}>
+      <div style={{ background: '#f0f2f5', fontFamily: 'var(--font-body)', minHeight: '100vh' }}>
+        {/* Topbar */}
+        <header style={{
+          background: '#E8DDD5', padding: '12px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'sticky', top: 0, zIndex: 200,
+        }}>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700 }}>
+            <span style={{ color: 'var(--orange)' }}>Grab</span>
+            <span style={{ color: 'var(--dark)' }}>itt</span>
+            <span style={{ color: '#999', fontSize: 13, marginLeft: 6, fontWeight: 400 }}>/ Exec</span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {loading ? (
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#999' }}>Loading…</span>
+            ) : (
+              <>
+                <StatChip label="Members"   value={members.length}    onClick={() => setView('members')} />
+                <StatChip label="Prospects" value={contacts.length}   onClick={() => setView('pipeline')} />
+                {openDisputeCount > 0 && <StatChip label="Disputes" value={openDisputeCount} onClick={() => setView('disputes')} urgent />}
+              </>
+            )}
+            <button
+              onClick={() => setView('contacts')}
+              style={{
+                background: 'var(--orange)', color: '#fff', border: 'none',
+                borderRadius: 50, padding: '8px 16px',
+                fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+              }}>
+              + New Contact
+            </button>
+          </div>
+        </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', minHeight: 'calc(100vh - 52px)' }}>
-        <AdminSidebar
-          activeView={view}
-          onViewChange={setView}
-          counts={{
-            pipeline: contactList.length,
-            disputes: openDisputeCount,
-            reports: openReportCount,
-          }}
-        />
+        <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', minHeight: 'calc(100vh - 52px)' }}>
+          <AdminSidebar
+            activeView={view}
+            onViewChange={setView}
+            counts={{ pipeline: contacts.length, disputes: openDisputeCount, reports: 0 }}
+          />
 
-        <main style={{ padding: '24px 20px 40px', overflowY: 'auto' }}>
-          {view === 'funnel' && <FunnelView contacts={contactList} onNavigate={setView} />}
-          {view === 'pipeline' && <PipelineView contacts={contactList} onUpdate={setContactList} />}
-          {view === 'contacts' && <ContactsView contacts={contactList} onUpdate={setContactList} />}
-          {view === 'forecast' && <ForecastView contacts={contactList} orders={orders} />}
-          {view === 'members' && <MembersView members={members} />}
-          {view === 'disputes' && <DisputesView disputes={disputes} />}
-          {view === 'reports' && <ReportsView reports={reports} />}
-          {view === 'banners' && <BannersView banners={banners} contacts={contactList} />}
-          {['rewards','financials','retention','calendar','todo','messages','emails','toolbox'].includes(view) && (
-            <Placeholder view={view} />
-          )}
-        </main>
+          <main style={{ padding: '24px 20px 40px', overflowY: 'auto' }}>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: 60, color: '#bbb', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Loading data…</div>
+            ) : (
+              <>
+                {view === 'funnel'      && <FunnelView    contacts={contacts} onNavigate={setView} />}
+                {view === 'pipeline'   && <PipelineView  contacts={contacts} onUpdate={setContacts} />}
+                {view === 'contacts'   && <ContactsView  contacts={contacts} onUpdate={setContacts} />}
+                {view === 'forecast'   && <ForecastView  contacts={contacts} orders={[]} />}
+                {view === 'members'    && <MembersView   members={members} />}
+                {view === 'disputes'   && <DisputesView  disputes={disputes} onUpdate={setDisputes} />}
+                {view === 'reports'    && <ReportsView   reports={[]} />}
+                {view === 'banners'    && <BannersView   banners={[]} contacts={contacts} />}
+                {view === 'financials' && <FinancialsView />}
+                {['rewards','retention','calendar','todo','messages','emails','toolbox'].includes(view) && (
+                  <Placeholder view={view} />
+                )}
+              </>
+            )}
+          </main>
+        </div>
       </div>
-    </div>
+    </CrmApiContext.Provider>
   )
 }
 
@@ -93,22 +118,22 @@ function StatChip({ label, value, onClick, urgent }: { label: string; value: num
       background: urgent ? 'rgba(239,68,68,0.12)' : 'rgba(255,69,0,0.12)',
       borderRadius: 50, padding: '5px 12px', textAlign: 'center', cursor: 'pointer',
     }}>
-      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: urgent ? '#ef4444' : '#FF4500' }}>{value}</div>
-      <div style={{ fontSize: 8, color: '#555', fontFamily: 'var(--font-nunito)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
+      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: urgent ? '#ef4444' : 'var(--orange)' }}>{value}</div>
+      <div style={{ fontSize: 8, color: '#555', fontFamily: 'var(--font-ui)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
     </div>
   )
 }
 
 function Placeholder({ view }: { view: string }) {
   const labels: Record<string, string> = {
-    rewards: '🎁 Rewards & Accounts', financials: '💰 Financials',
-    retention: '📊 Retention & LTV', calendar: '📅 Calendar',
-    todo: '✅ To Do', messages: '💬 Chats', emails: '📧 E-shots', toolbox: '🧰 Toolbox',
+    rewards: '🎁 Rewards & Accounts', retention: '📊 Retention & LTV',
+    calendar: '📅 Calendar', todo: '✅ To Do',
+    messages: '💬 Chats', emails: '📧 E-shots', toolbox: '🧰 Toolbox',
   }
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', padding: '60px 20px', textAlign: 'center' }}>
       <div style={{ fontSize: 48, marginBottom: 14 }}>{labels[view]?.split(' ')[0]}</div>
-      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: '#aaa', marginBottom: 6 }}>{labels[view]?.slice(2)}</div>
+      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#aaa', marginBottom: 6 }}>{labels[view]?.slice(2)}</div>
       <div style={{ fontSize: 12, color: '#bbb' }}>Coming soon</div>
     </div>
   )

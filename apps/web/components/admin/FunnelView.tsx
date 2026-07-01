@@ -31,7 +31,7 @@ export default function FunnelView({ contacts, onNavigate }: Props) {
 
   return (
     <div>
-      <h2 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 22, fontWeight: 700, marginBottom: 20 }}>
+      <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, marginBottom: 20 }}>
         <span style={{ color: '#FF4500' }}>Affiliate</span> Pipeline
       </h2>
 
@@ -53,15 +53,15 @@ export default function FunnelView({ contacts, onNavigate }: Props) {
                     padding: '0 12px', cursor: 'pointer',
                   }}
                 >
-                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: '#fff' }}>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: '#fff' }}>
                     {stage.label}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.9)' }}>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.9)' }}>
                     {count} · €{value.toLocaleString()}
                   </span>
                 </div>
                 <div style={{ minWidth: 55, textAlign: 'right', marginLeft: 'auto' }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: '#1a1a1a' }}>{count}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#1a1a1a' }}>{count}</div>
                   <div style={{ fontSize: 9, color: '#aaa' }}>{pct}%</div>
                 </div>
               </div>
@@ -83,7 +83,7 @@ export default function FunnelView({ contacts, onNavigate }: Props) {
             { val: `€${Math.round(weightedPipeline).toLocaleString()}`, lbl: 'Weighted' },
           ].map((s, i) => (
             <div key={i} style={{ textAlign: i === 0 ? 'left' : i === 3 ? 'right' : 'center', flex: 1 }}>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: '#FF4500' }}>{s.val}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#FF4500' }}>{s.val}</div>
               <div style={{ fontSize: 9, color: '#aaa' }}>{s.lbl}</div>
             </div>
           ))}

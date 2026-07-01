@@ -42,22 +42,22 @@ export default function ForecastView({ contacts, orders }: Props) {
 
   return (
     <div>
-      <h2 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, marginBottom: 18 }}>
+      <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, marginBottom: 18 }}>
         Revenue <span style={{ color: '#FF4500' }}>Forecast</span>
       </h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
         {kpis.map(k => (
           <div key={k.label} style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', borderTop: `4px solid ${k.color}` }}>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontWeight: 900, fontSize: 22, color: k.color }}>{k.value}</div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontWeight: 800, fontSize: 11, color: '#333', marginTop: 2 }}>{k.label}</div>
-            <div style={{ fontSize: 9, color: '#aaa', fontFamily: 'var(--font-nunito)', marginTop: 1 }}>{k.sub}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 22, color: k.color }}>{k.value}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 11, color: '#333', marginTop: 2 }}>{k.label}</div>
+            <div style={{ fontSize: 9, color: '#aaa', fontFamily: 'var(--font-ui)', marginTop: 1 }}>{k.sub}</div>
           </div>
         ))}
       </div>
 
       <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
-        <h3 style={{ fontFamily: 'var(--font-nunito)', fontWeight: 800, fontSize: 14, marginBottom: 16, color: '#1a1a1a' }}>
+        <h3 style={{ fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 14, marginBottom: 16, color: '#1a1a1a' }}>
           Marketplace Revenue — {thisYear}
         </h3>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 140 }}>
@@ -67,7 +67,7 @@ export default function ForecastView({ contacts, orders }: Props) {
             return (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                 {v > 0 && (
-                  <div style={{ fontSize: 8, fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#555' }}>
+                  <div style={{ fontSize: 8, fontFamily: 'var(--font-ui)', fontWeight: 900, color: '#555' }}>
                     €{v >= 1000 ? `${(v/1000).toFixed(1)}k` : v.toFixed(0)}
                   </div>
                 )}
@@ -77,7 +77,7 @@ export default function ForecastView({ contacts, orders }: Props) {
                   borderRadius: '4px 4px 0 0',
                   border: isFuture ? '1.5px dashed #d1d5db' : 'none',
                 }} />
-                <div style={{ fontSize: 9, fontFamily: 'var(--font-nunito)', color: i === now.getMonth() ? '#FF4500' : '#aaa', fontWeight: i === now.getMonth() ? 900 : 400 }}>
+                <div style={{ fontSize: 9, fontFamily: 'var(--font-ui)', color: i === now.getMonth() ? '#FF4500' : '#aaa', fontWeight: i === now.getMonth() ? 900 : 400 }}>
                   {months[i]}
                 </div>
               </div>
@@ -85,7 +85,7 @@ export default function ForecastView({ contacts, orders }: Props) {
           })}
         </div>
         {orders.length === 0 && (
-          <div style={{ textAlign: 'center', paddingTop: 20, fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#ccc' }}>
+          <div style={{ textAlign: 'center', paddingTop: 20, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#ccc' }}>
             No completed orders yet — revenue will appear here
           </div>
         )}

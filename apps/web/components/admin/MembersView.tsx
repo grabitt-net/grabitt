@@ -29,7 +29,7 @@ export default function MembersView({ members }: Props) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <h2 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700 }}>
+        <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}>
           <span style={{ color: '#FF4500' }}>Members</span>
           <span style={{ fontSize: 12, color: '#aaa', fontWeight: 400, marginLeft: 8 }}>{members.length} total</span>
         </h2>
@@ -37,7 +37,7 @@ export default function MembersView({ members }: Props) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search members…"
-          style={{ padding: '8px 14px', border: '1.5px solid #e5e7eb', borderRadius: 50, fontFamily: 'var(--font-nunito)', fontSize: 12, width: 200 }}
+          style={{ padding: '8px 14px', border: '1.5px solid #e5e7eb', borderRadius: 50, fontFamily: 'var(--font-ui)', fontSize: 12, width: 200 }}
         />
       </div>
 
@@ -45,7 +45,7 @@ export default function MembersView({ members }: Props) {
         {filters.map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '6px 14px', borderRadius: 50, border: 'none', cursor: 'pointer',
-            fontFamily: 'var(--font-nunito)', fontWeight: 800, fontSize: 11,
+            fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 11,
             background: filter === f ? '#FF4500' : '#fff', color: filter === f ? '#fff' : '#666',
             boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
           }}>{f}</button>
@@ -57,22 +57,22 @@ export default function MembersView({ members }: Props) {
           <thead>
             <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
               {['Member', 'Email', 'Grade', 'Type', 'Joined', 'Status'].map(h => (
-                <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 9, fontWeight: 800, color: '#aaa', fontFamily: 'var(--font-nunito)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 9, fontWeight: 800, color: '#aaa', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {filtered.map(m => (
               <tr key={m.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                <td style={{ padding: '10px 14px', fontFamily: 'var(--font-nunito)', fontWeight: 800, fontSize: 13 }}>
+                <td style={{ padding: '10px 14px', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 13 }}>
                   {m.full_name ?? 'Anonymous'}
                 </td>
-                <td style={{ padding: '10px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888' }}>{m.email}</td>
+                <td style={{ padding: '10px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{m.email}</td>
                 <td style={{ padding: '10px 14px' }}>
                   {m.grade && (
                     <span style={{
                       color: gradeColors[m.grade] ?? '#aaa',
-                      fontFamily: 'var(--font-nunito)', fontWeight: 900, fontSize: 11,
+                      fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 11,
                       textTransform: 'capitalize',
                     }}>{m.grade}</span>
                   )}
@@ -81,19 +81,19 @@ export default function MembersView({ members }: Props) {
                   <span style={{
                     background: m.is_seller ? '#f0faf4' : '#eff6ff',
                     color: m.is_seller ? '#16a34a' : '#2563eb',
-                    borderRadius: 50, padding: '3px 10px', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-nunito)',
+                    borderRadius: 50, padding: '3px 10px', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)',
                   }}>
                     {m.is_seller ? 'Seller' : 'Buyer'}
                   </span>
                 </td>
-                <td style={{ padding: '10px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#999' }}>
+                <td style={{ padding: '10px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, color: '#999' }}>
                   {new Date(m.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </td>
                 <td style={{ padding: '10px 14px' }}>
                   <span style={{
                     background: (m.status ?? 'active') === 'active' ? '#f0faf4' : '#fef2f2',
                     color: (m.status ?? 'active') === 'active' ? '#16a34a' : '#ef4444',
-                    borderRadius: 50, padding: '3px 10px', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-nunito)',
+                    borderRadius: 50, padding: '3px 10px', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)',
                   }}>
                     {m.status ?? 'active'}
                   </span>
@@ -102,7 +102,7 @@ export default function MembersView({ members }: Props) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} style={{ padding: '40px 14px', textAlign: 'center', color: '#ccc', fontFamily: 'var(--font-nunito)', fontSize: 13 }}>
+                <td colSpan={6} style={{ padding: '40px 14px', textAlign: 'center', color: '#ccc', fontFamily: 'var(--font-ui)', fontSize: 13 }}>
                   No members found
                 </td>
               </tr>

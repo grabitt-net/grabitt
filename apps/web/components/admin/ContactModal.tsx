@@ -27,14 +27,14 @@ export default function ContactModal({ contact, onClose, onSave }: Props) {
 
   const field = (key: keyof typeof form, label: string, type = 'text', opts?: any) => (
     <div style={{ marginBottom: 12 }}>
-      <label style={{ display: 'block', fontSize: 10, fontWeight: 800, color: '#888', fontFamily: 'var(--font-nunito)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+      <label style={{ display: 'block', fontSize: 10, fontWeight: 800, color: '#888', fontFamily: 'var(--font-ui)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
         {label}
       </label>
       {opts?.type === 'select' ? (
         <select
           value={form[key]}
           onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-          style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontFamily: 'var(--font-nunito)', fontSize: 13 }}
+          style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontFamily: 'var(--font-ui)', fontSize: 13 }}
         >
           {stages.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
@@ -43,14 +43,14 @@ export default function ContactModal({ contact, onClose, onSave }: Props) {
           value={form[key]}
           onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
           rows={3}
-          style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontFamily: 'var(--font-nunito)', fontSize: 13, resize: 'vertical', boxSizing: 'border-box' }}
+          style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontFamily: 'var(--font-ui)', fontSize: 13, resize: 'vertical', boxSizing: 'border-box' }}
         />
       ) : (
         <input
           type={type}
           value={form[key]}
           onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-          style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontFamily: 'var(--font-nunito)', fontSize: 13, boxSizing: 'border-box' }}
+          style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontFamily: 'var(--font-ui)', fontSize: 13, boxSizing: 'border-box' }}
         />
       )}
     </div>
@@ -87,7 +87,7 @@ export default function ContactModal({ contact, onClose, onSave }: Props) {
         maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-          <h2 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 18, fontWeight: 700 }}>
+          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700 }}>
             {isNew ? 'Add Contact' : 'Edit Contact'}
           </h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#888' }}>✕</button>
@@ -104,16 +104,16 @@ export default function ContactModal({ contact, onClose, onSave }: Props) {
           <div style={{ gridColumn: '1/-1' }}>{field('notes', 'Notes', 'text', { type: 'textarea' })}</div>
         </div>
 
-        {error && <div style={{ color: '#ef4444', fontSize: 12, fontFamily: 'var(--font-nunito)', marginBottom: 12 }}>{error}</div>}
+        {error && <div style={{ color: '#ef4444', fontSize: 12, fontFamily: 'var(--font-ui)', marginBottom: 12 }}>{error}</div>}
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '9px 18px', borderRadius: 50, border: '1.5px solid #e5e7eb', background: '#fff', fontFamily: 'var(--font-nunito)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ padding: '9px 18px', borderRadius: 50, border: '1.5px solid #e5e7eb', background: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
             Cancel
           </button>
           <button onClick={handleSave} disabled={saving} style={{
             padding: '9px 22px', borderRadius: 50, border: 'none',
             background: '#FF4500', color: '#fff',
-            fontFamily: 'var(--font-nunito)', fontWeight: 800, fontSize: 13, cursor: 'pointer',
+            fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 13, cursor: 'pointer',
             opacity: saving ? 0.7 : 1,
           }}>
             {saving ? 'Saving…' : isNew ? 'Add Contact' : 'Save Changes'}

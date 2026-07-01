@@ -21,7 +21,7 @@ export default function ContactsView({ contacts, onUpdate }: Props) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h2 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700 }}>
+        <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}>
           All <span style={{ color: '#FF4500' }}>Contacts</span>
         </h2>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -31,13 +31,13 @@ export default function ContactsView({ contacts, onUpdate }: Props) {
             placeholder="Search contacts…"
             style={{
               padding: '8px 14px', border: '1.5px solid #e5e7eb', borderRadius: 50,
-              fontFamily: 'var(--font-nunito)', fontSize: 12, width: 200,
+              fontFamily: 'var(--font-ui)', fontSize: 12, width: 200,
             }}
           />
           <button onClick={() => { setEditingContact(null); setShowModal(true) }} style={{
             background: '#FF4500', color: '#fff', border: 'none',
             borderRadius: 50, padding: '8px 16px',
-            fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+            fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer',
           }}>
             + Add
           </button>
@@ -52,7 +52,7 @@ export default function ContactsView({ contacts, onUpdate }: Props) {
                 <th key={h} style={{
                   padding: '10px 14px', textAlign: 'left',
                   fontSize: 9, fontWeight: 800, color: '#aaa',
-                  fontFamily: 'var(--font-nunito)', textTransform: 'uppercase', letterSpacing: 0.5,
+                  fontFamily: 'var(--font-ui)', textTransform: 'uppercase', letterSpacing: 0.5,
                 }}>{h}</th>
               ))}
             </tr>
@@ -63,28 +63,28 @@ export default function ContactsView({ contacts, onUpdate }: Props) {
               const isOverdue = followUp && followUp < new Date()
               return (
                 <tr key={c.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                  <td style={{ padding: '10px 14px', fontFamily: 'var(--font-nunito)', fontWeight: 800, fontSize: 13 }}>{c.name}</td>
-                  <td style={{ padding: '10px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#666' }}>{c.company ?? '—'}</td>
-                  <td style={{ padding: '10px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888' }}>{c.email ?? '—'}</td>
+                  <td style={{ padding: '10px 14px', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 13 }}>{c.name}</td>
+                  <td style={{ padding: '10px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>{c.company ?? '—'}</td>
+                  <td style={{ padding: '10px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{c.email ?? '—'}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <span style={{
                       background: `${stageColors[c.stage] ?? '#ccc'}22`,
                       color: stageColors[c.stage] ?? '#ccc',
                       borderRadius: 50, padding: '3px 10px',
-                      fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-nunito)',
+                      fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)',
                     }}>{c.stage}</span>
                   </td>
-                  <td style={{ padding: '10px 14px', fontFamily: 'var(--font-nunito)', fontWeight: 700, fontSize: 12, color: '#16a34a' }}>
+                  <td style={{ padding: '10px 14px', fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 12, color: '#16a34a' }}>
                     {c.monthly_value ? `€${Number(c.monthly_value).toLocaleString()}` : '—'}
                   </td>
-                  <td style={{ padding: '10px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11, color: isOverdue ? '#ef4444' : '#666' }}>
+                  <td style={{ padding: '10px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, color: isOverdue ? '#ef4444' : '#666' }}>
                     {followUp ? followUp.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}
                   </td>
                   <td style={{ padding: '10px 14px' }}>
                     <button onClick={() => { setEditingContact(c); setShowModal(true) }} style={{
                       background: 'none', border: '1px solid #e5e7eb', borderRadius: 6,
                       padding: '4px 10px', fontSize: 11, cursor: 'pointer', color: '#555',
-                      fontFamily: 'var(--font-nunito)', fontWeight: 700,
+                      fontFamily: 'var(--font-ui)', fontWeight: 700,
                     }}>Edit</button>
                   </td>
                 </tr>
@@ -92,7 +92,7 @@ export default function ContactsView({ contacts, onUpdate }: Props) {
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} style={{ padding: '40px 14px', textAlign: 'center', color: '#ccc', fontFamily: 'var(--font-nunito)', fontSize: 13 }}>
+                <td colSpan={7} style={{ padding: '40px 14px', textAlign: 'center', color: '#ccc', fontFamily: 'var(--font-ui)', fontSize: 13 }}>
                   No contacts found
                 </td>
               </tr>
