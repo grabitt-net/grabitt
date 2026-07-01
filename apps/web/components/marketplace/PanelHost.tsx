@@ -181,34 +181,292 @@ export default function PanelHost() {
 
   // ── LOGIN / PROFILE ─────────────────────────────────────────────────────────
   if (panel.id === 'login') {
-    return (
-      <ActionPanel title="👤 Join Grabitt" onClose={closePanel}>
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ fontSize: 48, marginBottom: 8 }}>🌴</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: '#1a1a1a', marginBottom: 4 }}>Welcome to Grabitt!</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Gran Canaria's local marketplace</div>
+    const [authStep, setAuthStep] = useState<'choose'|'login'|'register'|'forgot'|'verify'|'done'>('choose')
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [name, setName] = useState('')
+    const [phone, setPhone] = useState('')
+    const [showPass, setShowPass] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
+
+    const fakeSubmit = async () => {
+      setError('')
+      setLoading(true)
+      await new Promise(r => setTimeout(r, 1100))
+      setLoading(false)
+      if (authStep === 'forgot') { setAuthStep('verify'); return }
+      if (authStep === 'register') { setAuthStep('verify'); return }
+      setAuthStep('done')
+    }
+
+    const inputStyle: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '12px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box', marginBottom: 10 }
+    const btnPrimary: React.CSSProperties = { width: '100%', background: loading ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: loading ? 'not-allowed' : 'pointer', marginBottom: 10 }
+    const btnGhost: React.CSSProperties = { width: '100%', background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }
+    const link: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--orange)', cursor: 'pointer', textDecoration: 'underline', background: 'none', border: 'none', padding: 0 }
+
+    if (authStep === 'done') return (
+      <ActionPanel title="✅ Welcome!" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <div style={{ fontSize: 60, marginBottom: 14 }}>🌴</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>You're in!</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>Welcome back to Gran Canaria's marketplace.</div>
+          <button onClick={closePanel} style={btnPrimary}>Start browsing →</button>
         </div>
-        <a href="/auth" onClick={closePanel} style={{ textDecoration: 'none' }}>
-          <button style={{ width: '100%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>Log In</button>
-        </a>
-        <a href="/auth?mode=signup" onClick={closePanel} style={{ textDecoration: 'none' }}>
-          <button style={{ width: '100%', background: '#fff', color: '#FF4500', border: '2px solid #FF4500', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Create Account</button>
-        </a>
       </ActionPanel>
+    )
+
+    if (authStep === 'verify') return (
+      <ActionPanel title="📧 Check your email" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+          <div style={{ fontSize: 56, marginBottom: 14 }}>📧</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>
+            {authStep === 'verify' && password === '' ? 'Reset link sent!' : 'Confirm your email'}
+          </div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>
+            We sent a link to <strong>{email}</strong>. Click it to {password === '' ? 'reset your password' : 'activate your account'}.
+          </div>
+          <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+            {['Check your spam / junk folder','The link expires in 24 hours','You can resend from the login screen'].map((tip, i) => (
+              <div key={i} style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', padding: '3px 0' }}>· {tip}</div>
+            ))}
+          </div>
+          <button onClick={() => setAuthStep('login')} style={btnPrimary}>Back to login</button>
+        </div>
+      </ActionPanel>
+    )
+
+    return (
+      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 16px 0', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {authStep !== 'choose' && (
+                <button onClick={() => { setAuthStep('choose'); setError('') }} style={{ background: 'none', border: 'none', fontSize: 18, color: 'var(--orange)', cursor: 'pointer', padding: 0 }}>‹</button>
+              )}
+              <div>
+                <div style={{ fontFamily: 'var(--font-body)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>
+                  {authStep === 'choose' ? '🌴 Grabitt' : authStep === 'login' ? 'Log in' : authStep === 'register' ? 'Create account' : 'Forgot password'}
+                </div>
+                {authStep === 'choose' && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Gran Canaria's local marketplace</div>}
+              </div>
+            </div>
+            <button onClick={closePanel} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer' }}>✕</button>
+          </div>
+
+          <div style={{ overflowY: 'auto', flex: 1, padding: 16 }}>
+
+            {authStep === 'choose' && (
+              <>
+                <div style={{ textAlign: 'center', padding: '10px 0 20px' }}>
+                  <div style={{ fontSize: 52, marginBottom: 10 }}>🌴</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Buy, sell & connect on the island</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>50 free credits when you join · Secure Stripe payments</div>
+                </div>
+
+                {/* Social buttons */}
+                {[['🇬 Continue with Google', '#4285F4'],['🍎 Continue with Apple', '#000']].map(([label, bg], i) => (
+                  <button key={i} onClick={() => setAuthStep('done')} style={{ width: '100%', background: bg as string, color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 10 }}>{label as string}</button>
+                ))}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 12px' }}>
+                  <div style={{ flex: 1, height: 1, background: '#e0d8d0' }} />
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#aaa' }}>or</span>
+                  <div style={{ flex: 1, height: 1, background: '#e0d8d0' }} />
+                </div>
+
+                <button onClick={() => setAuthStep('login')} style={btnPrimary}>Log in with email</button>
+                <button onClick={() => setAuthStep('register')} style={btnGhost}>Create account</button>
+
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa', textAlign: 'center', lineHeight: 1.5, marginTop: 8 }}>
+                  By continuing you agree to our <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Terms</span> and <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span>
+                </div>
+              </>
+            )}
+
+            {authStep === 'login' && (
+              <>
+                {error && <div style={{ background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{error}</div>}
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" style={inputStyle} />
+                <div style={{ position: 'relative', marginBottom: 4 }}>
+                  <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" type={showPass ? 'text' : 'password'} style={{ ...inputStyle, marginBottom: 0, paddingRight: 44 }} />
+                  <button onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: 16, cursor: 'pointer' }}>{showPass ? '🙈' : '👁'}</button>
+                </div>
+                <div style={{ textAlign: 'right', marginBottom: 16 }}>
+                  <button onClick={() => setAuthStep('forgot')} style={link}>Forgot password?</button>
+                </div>
+                <button onClick={fakeSubmit} disabled={loading || !email || !password} style={btnPrimary}>{loading ? '⏳ Logging in…' : 'Log In'}</button>
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>No account? </span>
+                  <button onClick={() => setAuthStep('register')} style={link}>Create one</button>
+                </div>
+              </>
+            )}
+
+            {authStep === 'register' && (
+              <>
+                {error && <div style={{ background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{error}</div>}
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="Full name" style={inputStyle} />
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" style={inputStyle} />
+                <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone (optional)" type="tel" style={inputStyle} />
+                <div style={{ position: 'relative' }}>
+                  <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Create password (min 8 chars)" type={showPass ? 'text' : 'password'} style={{ ...inputStyle, paddingRight: 44 }} />
+                  <button onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: 16, cursor: 'pointer' }}>{showPass ? '🙈' : '👁'}</button>
+                </div>
+
+                {/* Password strength */}
+                {password && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ display: 'flex', gap: 4, marginBottom: 3 }}>
+                      {[...Array(4)].map((_, i) => {
+                        const strength = [password.length >= 8, /[A-Z]/.test(password), /[0-9]/.test(password), /[^A-Za-z0-9]/.test(password)].filter(Boolean).length
+                        return <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < strength ? (strength < 2 ? '#ef4444' : strength < 4 ? '#f59e0b' : 'var(--sage)') : '#e0d8d0' }} />
+                      })}
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>
+                      {[password.length >= 8, /[A-Z]/.test(password), /[0-9]/.test(password), /[^A-Za-z0-9]/.test(password)].filter(Boolean).length < 2 ? 'Weak' : [password.length >= 8, /[A-Z]/.test(password), /[0-9]/.test(password), /[^A-Za-z0-9]/.test(password)].filter(Boolean).length < 4 ? 'Good' : 'Strong'}
+                    </div>
+                  </div>
+                )}
+
+                {/* Referral bonus */}
+                <div style={{ background: '#f0fdf4', border: '1px solid var(--sage)', borderRadius: 12, padding: 12, marginBottom: 14, display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <span style={{ fontSize: 22 }}>🎁</span>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)', fontWeight: 800 }}>You'll get 50 free credits on sign-up!</div>
+                </div>
+
+                <button onClick={fakeSubmit} disabled={loading || !name || !email || password.length < 8} style={{ ...btnPrimary, background: loading || !name || !email || password.length < 8 ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>
+                  {loading ? '⏳ Creating account…' : '🚀 Create Account'}
+                </button>
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>Already have one? </span>
+                  <button onClick={() => setAuthStep('login')} style={link}>Log in</button>
+                </div>
+              </>
+            )}
+
+            {authStep === 'forgot' && (
+              <>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 16 }}>
+                  Enter your email and we'll send a reset link.
+                </div>
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" style={inputStyle} />
+                <button onClick={fakeSubmit} disabled={loading || !email} style={{ ...btnPrimary, background: loading || !email ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>
+                  {loading ? '⏳ Sending…' : 'Send Reset Link'}
+                </button>
+              </>
+            )}
+
+          </div>
+        </div>
+      </div>
     )
   }
 
   // ── MESSAGES ────────────────────────────────────────────────────────────────
   if (panel.id === 'messages') {
+    const THREADS = [
+      { id: 'T1', avatar: '👩', handle: '@buyer_maria',  listing: 'iPhone 14 Pro', last: 'Is it still available?',     time: '2m',  unread: 2 },
+      { id: 'T2', avatar: '👨', handle: '@seller_pete',  listing: 'Road Bike',     last: 'Yes, collection tomorrow?', time: '1h',  unread: 0 },
+      { id: 'T3', avatar: '🧑', handle: '@buyer_anna',   listing: 'MacBook Air M2',last: 'OK sounds good 👍',          time: '3h',  unread: 0 },
+    ]
     return (
       <ActionPanel title="💬 Messages" onClose={closePanel}>
-        <div style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>💬</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>No messages yet</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>When you message a seller or buyer, your conversations appear here.</div>
-          <a href="/messages" onClick={closePanel} style={{ textDecoration: 'none' }}><button style={{ marginTop: 16, background: '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Open Messages</button></a>
-        </div>
+        {THREADS.map(t => (
+          <div key={t.id} onClick={() => openPanel('chatThread', { threadId: t.id, handle: t.handle, listing: t.listing, avatar: t.avatar })}
+            style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <div style={{ width: 44, height: 44, background: '#FFF3EE', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>{t.avatar}</div>
+              {t.unread > 0 && <div style={{ position: 'absolute', top: -2, right: -2, background: 'var(--orange)', color: '#fff', borderRadius: '50%', width: 18, height: 18, fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t.unread}</div>}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{t.handle}</span>
+                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa' }}>{t.time}</span>
+              </div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginBottom: 1 }}>{t.listing}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: t.unread > 0 ? 'var(--dark)' : '#aaa', fontWeight: t.unread > 0 ? 800 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.last}</div>
+            </div>
+          </div>
+        ))}
       </ActionPanel>
+    )
+  }
+
+  if (panel.id === 'chatThread') {
+    const { handle, listing, avatar } = (panel.data || {}) as { handle: string; listing: string; avatar: string }
+    const [msgs, setMsgs] = useState([
+      { from: 'them', text: 'Hi! Is this still available?', time: '10:32' },
+      { from: 'me',   text: 'Yes, still available 👍',     time: '10:35' },
+      { from: 'them', text: 'Great — can I collect today?', time: '10:36' },
+    ])
+    const [draft, setDraft] = useState('')
+    const bottomRef = useRef<HTMLDivElement>(null)
+
+    const send = () => {
+      if (!draft.trim()) return
+      const now = new Date()
+      setMsgs(prev => [...prev, { from: 'me', text: draft.trim(), time: `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}` }])
+      setDraft('')
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    }
+
+    return (
+      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', height: '88vh', display: 'flex', flexDirection: 'column' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px 12px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
+            <button onClick={() => openPanel('messages')} style={{ background: 'none', border: 'none', fontSize: 18, color: 'var(--orange)', cursor: 'pointer', padding: 0 }}>‹</button>
+            <div style={{ width: 38, height: 38, background: '#FFF3EE', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{avatar || '👤'}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{handle || 'Unknown'}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>re: {listing || 'Item'}</div>
+            </div>
+            <button onClick={closePanel} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 30, height: 30, fontSize: 14, cursor: 'pointer' }}>✕</button>
+          </div>
+
+          {/* Contact-info warning */}
+          <div style={{ background: '#FFF3EE', padding: '6px 14px', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#a8460f' }}>🔒 Keep conversations on Grabitt — sharing phone/email violates our terms.</span>
+          </div>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {msgs.map((m, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: m.from === 'me' ? 'flex-end' : 'flex-start' }}>
+                <div style={{
+                  maxWidth: '72%',
+                  background: m.from === 'me' ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#f5f0e8',
+                  color: m.from === 'me' ? '#fff' : 'var(--dark)',
+                  borderRadius: m.from === 'me' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                  padding: '10px 13px',
+                }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, lineHeight: 1.45 }}>{m.text}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, opacity: 0.7, marginTop: 3, textAlign: 'right' }}>{m.time}</div>
+                </div>
+              </div>
+            ))}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Compose bar */}
+          <div style={{ display: 'flex', gap: 8, padding: '10px 12px 24px', borderTop: '1px solid #f0f0f0', flexShrink: 0, alignItems: 'flex-end' }}>
+            <input
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
+              placeholder="Message..."
+              style={{ flex: 1, border: '1.5px solid #e0d8d0', borderRadius: 22, padding: '10px 14px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none', resize: 'none' }}
+            />
+            <button onClick={send} disabled={!draft.trim()} style={{ background: draft.trim() ? 'var(--orange)' : '#e0d8d0', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, fontSize: 16, cursor: draft.trim() ? 'pointer' : 'default', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              ↑
+            </button>
+          </div>
+        </div>
+      </div>
     )
   }
 
