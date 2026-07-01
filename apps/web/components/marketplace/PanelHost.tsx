@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { usePanel } from '@/context/PanelContext'
 import { useChat } from '@/hooks/useChat'
+import { useNotifications, kindIcon, kindTab, relativeTime } from '@/hooks/useNotifications'
 
 // ── dept listings (stub — real data from Supabase later) ──────────────────────
 const DEPT_LISTINGS: Record<string, [string, string, string, string][]> = {
@@ -118,31 +119,73 @@ export default function PanelHost() {
   const [shieldTab, setShieldTab] = useState<string>('promise')
   const [notifTab, setNotifTab] = useState<string>('all')
 
+  // Auth state — in production this comes from Supabase auth session
+  // For now we read from localStorage so auth panel can set it
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentUserId(localStorage.getItem('grabitt_uid'))
+    }
+  }, [panel.id])
+
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications(currentUserId)
+
   if (!panel.id) return null
 
   // ── ALERTS / NOTIFICATIONS ──────────────────────────────────────────────────
   if (panel.id === 'alerts') {
-    const tabs = ['all', 'bid', 'messages', 'price']
-    const tabLabels: Record<string, string> = { all: 'All', bid: 'Bids', messages: 'Messages', price: 'Price drops' }
-    const shown = notifTab === 'all' ? NOTIFS : NOTIFS.filter(n => n.type === notifTab)
+    const TABS = ['all', 'bid', 'messages', 'price'] as const
+    const TAB_LABELS: Record<string, string> = { all: 'All', bid: 'Offers & Tx', messages: 'Messages', price: 'Price drops' }
+
+    // Fall back to stub data when no user is logged in
+    const STUB_NOTIFS = [
+      { id: 's1', kind: 'offer_received',   title: 'Offer received!',   body: 'Dave M. offered €85 on your Surfboard', readAt: null,  createdAt: new Date(Date.now()-120000).toISOString() },
+      { id: 's2', kind: 'new_message',      title: 'New message',       body: 'Maria: "Is the bike still available?"',  readAt: null,  createdAt: new Date(Date.now()-480000).toISOString() },
+      { id: 's3', kind: 'price_drop',       title: 'Price drop!',       body: 'MacBook Air M2 dropped to €890',         readAt: '.',   createdAt: new Date(Date.now()-3600000).toISOString() },
+      { id: 's4', kind: 'review_received',  title: 'New review',        body: 'Emma gave you 5 stars! ⭐⭐⭐⭐⭐',      readAt: '.',   createdAt: new Date(Date.now()-7200000).toISOString() },
+      { id: 's5', kind: 'offer_accepted',   title: 'Counter offer',     body: 'Seller countered at €300 on Guitar',     readAt: '.',   createdAt: new Date(Date.now()-18000000).toISOString() },
+    ]
+    const displayNotifs = currentUserId ? notifications : STUB_NOTIFS
+
+    const shown = notifTab === 'all'
+      ? displayNotifs
+      : displayNotifs.filter(n => kindTab(n.kind) === notifTab)
+
+    // Mark unread as read when panel opens
+    useEffect(() => {
+      if (!currentUserId) return
+      const unreadIds = notifications.filter(n => !n.readAt).map(n => n.id)
+      if (unreadIds.length) markRead(unreadIds)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     return (
       <ActionPanel title="🔔 Notifications" onClose={closePanel}>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {tabs.map(t => (
-            <button key={t} onClick={() => setNotifTab(t)} style={{ background: notifTab === t ? '#FF4500' : '#FFF3EE', color: notifTab === t ? '#fff' : '#FF4500', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              {tabLabels[t]}
-            </button>
-          ))}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {TABS.map(t => (
+              <button key={t} onClick={() => setNotifTab(t)} style={{ background: notifTab === t ? 'var(--orange)' : '#FFF3EE', color: notifTab === t ? '#fff' : 'var(--orange)', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                {TAB_LABELS[t]}
+              </button>
+            ))}
+          </div>
+          {currentUserId && unreadCount > 0 && (
+            <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'var(--font-ui)', fontSize: 11, color: 'var(--orange)', cursor: 'pointer', whiteSpace: 'nowrap', padding: '0 0 0 8px' }}>Mark all read</button>
+          )}
         </div>
         {shown.length === 0 && <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No notifications here yet.</div>}
-        {shown.map((n, i) => (
-          <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'flex-start' }}>
-            <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{n.icon}</div>
+        {shown.map((n) => (
+          <div key={n.id} onClick={() => currentUserId && markRead([n.id])}
+            style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'flex-start', cursor: 'pointer', background: !n.readAt ? '#fffaf8' : 'transparent', margin: '0 -16px', padding: '12px 16px' }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{kindIcon(n.kind)}</div>
+              {!n.readAt && <div style={{ position: 'absolute', top: -2, right: -2, width: 10, height: 10, background: 'var(--orange)', borderRadius: '50%', border: '2px solid #fff' }} />}
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{n.title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: !n.readAt ? 900 : 700, color: 'var(--dark)' }}>{n.title}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 2 }}>{n.body}</div>
             </div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#bbb', flexShrink: 0 }}>{n.time}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#bbb', flexShrink: 0 }}>{relativeTime(n.createdAt)}</div>
           </div>
         ))}
       </ActionPanel>
