@@ -221,16 +221,14 @@ export default function PanelHost() {
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 4 }}>List an item in 60 seconds</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Fees from 2.5% · Secure Stripe payments</div>
         </div>
-        {[['🏡','Sell an item','List anything from furniture to electronics'],['💼','Post a job','Find staff or freelancers'],['🏠','List a property','Rent or sell a home'],['🔧','Offer a service','Plumbers, cleaners, tutors & more']].map(([icon, title, desc], i) => (
-          <div key={i} onClick={closePanel} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
-            <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{icon}</div>
-            <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
-            <span style={{ color: '#FF4500', marginLeft: 'auto' }}>›</span>
+        {([['🏡','Sell an item','List anything from furniture to electronics', () => openPanel('createListing')],['💼','Post a job','Find staff or freelancers', () => openPanel('createListing', { category: 'Jobs' })],['🏠','List a property','Rent or sell a home', () => openPanel('createListing', { category: 'Property' })],['🔧','Offer a service','Plumbers, cleaners, tutors & more', () => openPanel('createListing', { category: 'Services' })]] as [string,string,string,()=>void][]).map(([icon, title, desc, action], i) => (
+          <div key={i} onClick={action} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
+            <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{icon}</div>
+            <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{title}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{desc}</div></div>
+            <span style={{ color: 'var(--orange)', marginLeft: 'auto' }}>›</span>
           </div>
         ))}
-        <a href="/listings/new" onClick={closePanel} style={{ textDecoration: 'none' }}>
-          <button style={{ width: '100%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>🚀 Start Listing</button>
-        </a>
+        <button onClick={() => openPanel('createListing')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>🚀 Start Listing</button>
       </ActionPanel>
     )
   }
@@ -1415,6 +1413,280 @@ export default function PanelHost() {
           </div>
         ))}
       </ActionPanel>
+    )
+  }
+
+  // ── CREATE LISTING ───────────────────────────────────────────────────────────
+  if (panel.id === 'createListing') {
+    const prefillCat = (panel.data?.category as string) || ''
+
+    const DEPTS = ['Electronics','Fashion','Home & Garden','Sport & Leisure','Retro & Vintage','Gaming','Pet Shop','Motors','Kids & Baby','Handy Help','Jobs','Property','Services','Collectables','Other']
+    const CONDITIONS = ['New','Like New','Very Good','Good','Fair','For Parts']
+    const TOWNS = ['Las Palmas','Maspalomas','Playa del Inglés','Puerto Rico','Arucas','Telde','Santa Lucía','Ingenio','Agüimes','Gáldar','Mogán','San Bartolomé de Tirajana','Vecindario','Tejeda','Other']
+
+    const [step, setStep] = useState<'photos'|'details'|'price'|'preview'|'done'>(prefillCat ? 'details' : 'photos')
+    const [photos, setPhotos] = useState<string[]>([])   // data URLs for preview
+    const [title, setTitle] = useState('')
+    const [dept, setDept] = useState(prefillCat)
+    const [condition, setCondition] = useState('')
+    const [desc, setDesc] = useState('')
+    const [price, setPrice] = useState('')
+    const [freeItem, setFreeItem] = useState(false)
+    const [town, setTown] = useState('Las Palmas')
+    const [grabItNow, setGrabItNow] = useState(false)
+    const [featured, setFeatured] = useState(false)
+    const [uploading, setUploading] = useState(false)
+
+    const STEPS = ['photos','details','price','preview'] as const
+    const stepIdx = STEPS.indexOf(step as typeof STEPS[number])
+    const progress = stepIdx >= 0 ? ((stepIdx + 1) / STEPS.length) * 100 : 100
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || [])
+      files.slice(0, 8 - photos.length).forEach(file => {
+        const reader = new FileReader()
+        reader.onload = ev => setPhotos(prev => [...prev, ev.target!.result as string])
+        reader.readAsDataURL(file)
+      })
+    }
+
+    if (step === 'done') return (
+      <ActionPanel title="🎉 Listing live!" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Your listing is live!</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>"{title}" is now visible to thousands of buyers on Gran Canaria.</div>
+          {grabItNow && <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--orange)', fontWeight: 800 }}>⚡ Grab It Now active — expires tonight at midnight!</div>}
+          {featured && <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)', fontWeight: 800 }}>👀 Featured for 7 days — appearing at the top of search!</div>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <button onClick={() => openPanel('mylistings')} style={{ background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>📋 View My Listings</button>
+            <button onClick={() => openPanel('createListing')} style={{ background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, cursor: 'pointer' }}>+ List another item</button>
+            <button onClick={closePanel} style={{ background: 'transparent', color: '#888', border: 'none', padding: 8, fontFamily: 'var(--font-ui)', fontSize: 12, cursor: 'pointer' }}>Back to browsing</button>
+          </div>
+        </div>
+      </ActionPanel>
+    )
+
+    return (
+      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 0', flexShrink: 0 }}>
+            <div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>
+                {step === 'photos' ? '📷 Add photos' : step === 'details' ? '📝 Item details' : step === 'price' ? '💰 Price & options' : '👁 Preview'}
+              </div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 1 }}>
+                Step {Math.max(stepIdx + 1, 1)} of {STEPS.length}
+              </div>
+            </div>
+            <button onClick={closePanel} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          </div>
+
+          {/* Progress bar */}
+          <div style={{ height: 3, background: '#f0f0f0', margin: '10px 16px 0', borderRadius: 2, flexShrink: 0 }}>
+            <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg,var(--orange),var(--orange2))', borderRadius: 2, transition: 'width 0.3s' }} />
+          </div>
+
+          <div style={{ overflowY: 'auto', flex: 1, padding: '16px 16px 0' }}>
+
+            {/* ── Step 1: Photos ── */}
+            {step === 'photos' && (
+              <>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed #e0d8d0', borderRadius: 16, padding: 24, cursor: 'pointer', background: '#faf7f4' }}>
+                    <div style={{ fontSize: 36, marginBottom: 8 }}>📷</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>Add up to 8 photos</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Tap to choose from your device</div>
+                    <input type="file" accept="image/*" multiple onChange={handleFileChange} style={{ display: 'none' }} />
+                  </label>
+                </div>
+
+                {photos.length > 0 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 14 }}>
+                    {photos.map((src, i) => (
+                      <div key={i} style={{ position: 'relative', paddingTop: '100%', borderRadius: 10, overflow: 'hidden', background: '#f5f0e8' }}>
+                        <img src={src} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {i === 0 && <div style={{ position: 'absolute', bottom: 4, left: 4, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: 8, fontFamily: 'var(--font-ui)', fontWeight: 900, padding: '2px 5px', borderRadius: 4 }}>MAIN</div>}
+                        <button onClick={() => setPhotos(prev => prev.filter((_, j) => j !== i))} style={{ position: 'absolute', top: 3, right: 3, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 20, height: 20, color: '#fff', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11, color: '#a8460f' }}>
+                  💡 Good photos = 3× more offers. Shoot in natural light against a plain background.
+                </div>
+              </>
+            )}
+
+            {/* ── Step 2: Details ── */}
+            {step === 'details' && (
+              <>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Title *</div>
+                  <input value={title} onChange={e => setTitle(e.target.value)} placeholder='e.g. "iPhone 14 Pro — Unlocked, 256GB"' style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa', marginTop: 3 }}>{title.length}/80</div>
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Category *</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {DEPTS.map(d => (
+                      <button key={d} onClick={() => setDept(d)} style={{ background: dept === d ? 'var(--orange)' : '#f5f0e8', color: dept === d ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{d}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Condition *</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {CONDITIONS.map(c => (
+                      <button key={c} onClick={() => setCondition(c)} style={{ background: condition === c ? 'var(--sage)' : '#f5f0e8', color: condition === c ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{c}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Description</div>
+                  <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder='Describe the item — include any defects, accessories included, reason for selling...' rows={4} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', resize: 'none', boxSizing: 'border-box' }} />
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Location</div>
+                  <select value={town} onChange={e => setTown(e.target.value)} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+                    {TOWNS.map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+              </>
+            )}
+
+            {/* ── Step 3: Price & Options ── */}
+            {step === 'price' && (
+              <>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Price (€) *</div>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 20, color: freeItem ? '#ccc' : '#888' }}>€</span>
+                    <input type="number" value={price} onChange={e => setPrice(e.target.value)} disabled={freeItem} placeholder="0.00" min="0" step="0.01"
+                      style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '13px 12px 13px 30px', fontFamily: 'Georgia,serif', fontSize: 22, fontWeight: 700, color: 'var(--orange)', outline: 'none', boxSizing: 'border-box', opacity: freeItem ? 0.4 : 1 }} />
+                  </div>
+                  <div onClick={() => { setFreeItem(v => !v); if (!freeItem) setPrice('0') }} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, cursor: 'pointer' }}>
+                    <div style={{ width: 20, height: 20, borderRadius: 4, border: `2px solid ${freeItem ? 'var(--sage)' : '#ccc'}`, background: freeItem ? 'var(--sage)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {freeItem && <span style={{ color: '#fff', fontSize: 11, fontWeight: 900 }}>✓</span>}
+                    </div>
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>This item is free / give-away</span>
+                  </div>
+                </div>
+
+                {/* Grab It Now */}
+                <div onClick={() => setGrabItNow(v => !v)} style={{ display: 'flex', gap: 12, background: grabItNow ? '#FFF3EE' : '#faf7f4', border: `1.5px solid ${grabItNow ? 'var(--orange)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10, cursor: 'pointer', alignItems: 'flex-start' }}>
+                  <div style={{ fontSize: 26, flexShrink: 0 }}>⚡</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Grab It Now</div>
+                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>€4.99</div>
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Appears in the Grab It Now strip on the homepage. Expires at midnight — creates buying urgency.</div>
+                  </div>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${grabItNow ? 'var(--orange)' : '#ccc'}`, background: grabItNow ? 'var(--orange)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {grabItNow && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}
+                  </div>
+                </div>
+
+                {/* Featured */}
+                <div onClick={() => setFeatured(v => !v)} style={{ display: 'flex', gap: 12, background: featured ? '#f0fdf4' : '#faf7f4', border: `1.5px solid ${featured ? 'var(--sage)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 16, cursor: 'pointer', alignItems: 'flex-start' }}>
+                  <div style={{ fontSize: 26, flexShrink: 0 }}>👀</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Featured listing</div>
+                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--sage)' }}>€1.99/wk</div>
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Shown in the Featured strip on the homepage and at the top of department search results.</div>
+                  </div>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${featured ? 'var(--sage)' : '#ccc'}`, background: featured ? 'var(--sage)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {featured && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}
+                  </div>
+                </div>
+
+                {/* Fee explainer */}
+                {price && parseFloat(price) > 0 && (
+                  <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 12, marginBottom: 12 }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 6 }}>Your estimated payout (Grabber grade)</div>
+                    {[['Listing price', `€${parseFloat(price).toFixed(2)}`],['Platform fee (8%)', `-€${(parseFloat(price) * 0.08).toFixed(2)}`],['You receive', `€${(parseFloat(price) * 0.92).toFixed(2)}`]].map(([l, v], i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
+                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#555' }}>{l}</span>
+                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: i === 2 ? 'var(--sage)' : '#555' }}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── Step 4: Preview ── */}
+            {step === 'preview' && (
+              <>
+                {/* Thumbnail */}
+                <div style={{ background: '#f5f0e8', borderRadius: 16, paddingTop: '52%', position: 'relative', marginBottom: 14, overflow: 'hidden' }}>
+                  {photos[0]
+                    ? <img src={photos[0]} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 60 }}>🛍️</div>
+                  }
+                  {featured && <div style={{ position: 'absolute', top: 10, left: 12, background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50 }}>👀 FEATURED</div>}
+                </div>
+
+                <div style={{ fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 700, color: 'var(--dark)', marginBottom: 4 }}>{title || 'Untitled listing'}</div>
+                <div style={{ fontFamily: 'Georgia,serif', fontSize: 26, fontWeight: 700, color: 'var(--orange)', marginBottom: 10 }}>{freeItem ? 'FREE' : price ? `€${parseFloat(price).toFixed(2)}` : 'POA'}</div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                  {[dept, condition, `📍 ${town}`, '🤝 Collection'].filter(Boolean).map((tag, i) => (
+                    <span key={i} style={{ background: '#f5f0e8', color: '#555', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 50 }}>{tag}</span>
+                  ))}
+                </div>
+
+                {desc && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 14 }}>{desc}</div>}
+
+                <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)' }}>
+                  ✅ Listing looks good! Hit publish to go live.
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Footer nav */}
+          <div style={{ padding: '12px 16px 24px', borderTop: '1px solid #f0f0f0', flexShrink: 0, display: 'flex', gap: 10 }}>
+            {step !== 'photos' && (
+              <button onClick={() => setStep(STEPS[Math.max(stepIdx - 1, 0)])} style={{ flex: 1, background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, cursor: 'pointer' }}>← Back</button>
+            )}
+            {step === 'preview' ? (
+              <button
+                onClick={async () => { setUploading(true); await new Promise(r => setTimeout(r, 1200)); setUploading(false); setStep('done') }}
+                disabled={uploading}
+                style={{ flex: 2, background: uploading ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: uploading ? 'not-allowed' : 'pointer' }}
+              >
+                {uploading ? '⏳ Publishing…' : '🚀 Publish Listing'}
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  const next = STEPS[stepIdx + 1]
+                  if (next) setStep(next)
+                }}
+                disabled={
+                  (step === 'photos' && false) ||
+                  (step === 'details' && (!title.trim() || !dept || !condition)) ||
+                  (step === 'price' && !freeItem && !price)
+                }
+                style={{ flex: 2, background: (step === 'details' && (!title.trim() || !dept || !condition)) || (step === 'price' && !freeItem && !price) ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
+              >
+                {step === 'photos' ? (photos.length > 0 ? `Continue with ${photos.length} photo${photos.length > 1 ? 's' : ''} →` : 'Skip photos →') : 'Continue →'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     )
   }
 
