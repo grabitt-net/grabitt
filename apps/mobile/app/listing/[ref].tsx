@@ -1,0 +1,160 @@
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { useLocalSearchParams, router } from 'expo-router'
+import { colors } from '@grabitt/design-tokens'
+
+// Stub lookup — in production this would call trpc.listings.byId
+const LISTINGS: Record<string, { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean }> = {
+  F1: { emoji: '📱', title: 'iPhone 14 — Unlocked',         price: '€620',    location: 'Las Palmas',      category: 'Electronics',   condition: 'Excellent', isFeatured: true },
+  F2: { emoji: '🚴', title: 'Mountain Bike — 21sp Shimano', price: '€340',    location: 'Maspalomas',      category: 'Sport',         condition: 'Good',      isFeatured: true },
+  F3: { emoji: '💻', title: 'MacBook Air M2 — 8GB',         price: '€890',    location: 'Las Palmas',      category: 'Electronics',   condition: 'Like New',  isFeatured: true },
+  F4: { emoji: '🏄', title: 'Surfboard 6ft + GoPro',        price: '€120',    location: 'Las Palmas',      category: 'Sport',         condition: 'Good' },
+  F5: { emoji: '🎸', title: 'Fender Stratocaster 2020',     price: '€340',    location: 'Las Palmas',      category: 'Retro & Vintage', condition: 'Very Good' },
+  JL1: { emoji: '🎮', title: 'PS5 + 2 Controllers',         price: '€380',    location: 'Las Palmas',      category: 'Gaming',        condition: 'Like New' },
+  JL2: { emoji: '🐱', title: 'Bengal Kitten — 10 weeks',    price: '€450',    location: 'Maspalomas',      category: 'Pet Shop' },
+  JL3: { emoji: '👗', title: 'Summer Dress — Size M',       price: '€22',     location: 'Playa del Inglés', category: 'Fashion',       condition: 'New' },
+  JL4: { emoji: '🔧', title: 'Plumber — Emergency',         price: '€35/hr',  location: 'Las Palmas',      category: 'Handy Help' },
+  JL5: { emoji: '🪴', title: 'Indoor Plant Collection',     price: '€18',     location: 'Telde',           category: 'Home & Garden' },
+}
+
+const SIMILAR = [
+  { emoji: '📱', title: 'Samsung S24',      price: '€580' },
+  { emoji: '💻', title: 'iPad Pro 12.9"',   price: '€720' },
+  { emoji: '🎧', title: 'Sony WH-1000XM5', price: '€220' },
+]
+
+export default function ListingScreen() {
+  const { ref } = useLocalSearchParams<{ ref: string }>()
+  const item = LISTINGS[ref as string] || {
+    emoji: '🛍️',
+    title: decodeURIComponent(ref || 'Item'),
+    price: 'POA',
+    location: 'Gran Canaria',
+    category: 'General',
+  }
+
+  return (
+    <View style={s.screen}>
+      {/* Back button floated over hero */}
+      <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
+        <Text style={{ color: colors.orange, fontSize: 22 }}>‹</Text>
+      </TouchableOpacity>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+        {/* Hero */}
+        <View style={s.hero}>
+          <Text style={{ fontSize: 90 }}>{item.emoji}</Text>
+          {item.isFeatured && (
+            <View style={s.featuredBadge}><Text style={s.featuredBadgeText}>👀 FEATURED</Text></View>
+          )}
+          <TouchableOpacity style={s.heartBtn}><Text style={{ fontSize: 18 }}>🤍</Text></TouchableOpacity>
+        </View>
+
+        <View style={s.body}>
+          {/* Demand signals */}
+          <View style={s.signals}>
+            <View style={s.signalPill}><Text style={s.signalText}>👁 42 views today</Text></View>
+            <View style={s.signalPill}><Text style={s.signalText}>⚡ 7 watching</Text></View>
+          </View>
+
+          {/* Title + price */}
+          <Text style={s.title}>{item.title}</Text>
+          <Text style={s.price}>{item.price}</Text>
+
+          {/* Seller */}
+          <View style={s.sellerRow}>
+            <View style={s.sellerAvatar}><Text style={{ fontSize: 22 }}>👤</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.sellerHandle}>@seller_GC</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                <View style={s.gradeBadge}><Text style={s.gradeBadgeText}>🟠 Grabber</Text></View>
+                <Text style={s.sellerStats}>⭐ 4.8 · 34 sales</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={s.msgBtn}><Text style={s.msgBtnText}>Message</Text></TouchableOpacity>
+          </View>
+
+          {/* Tag pills */}
+          <View style={s.pills}>
+            {item.condition && <View style={s.pill}><Text style={[s.pillText, { color: colors.sage }]}>{item.condition}</Text></View>}
+            <View style={s.pill}><Text style={s.pillText}>{item.category}</Text></View>
+            <View style={s.pill}><Text style={s.pillText}>📍 {item.location}</Text></View>
+            <View style={s.pill}><Text style={s.pillText}>🤝 Collection</Text></View>
+          </View>
+
+          {/* Description */}
+          <Text style={s.desc}>
+            Great condition — selling due to upgrade. Happy to answer any questions via Grabitt chat. Pickup preferred; local delivery available for a small fee. Cash or Grabitt Pay accepted.
+          </Text>
+
+          {/* Map placeholder */}
+          <View style={s.mapPlaceholder}>
+            <Text style={{ fontSize: 28, marginBottom: 4 }}>📍</Text>
+            <Text style={s.mapText}>{item.location}, Gran Canaria</Text>
+          </View>
+
+          {/* Similar listings */}
+          <Text style={s.similarHeading}>Similar listings</Text>
+          <View style={s.similarRow}>
+            {SIMILAR.map((sim, i) => (
+              <TouchableOpacity key={i} style={s.simCard}>
+                <View style={s.simThumb}><Text style={{ fontSize: 28 }}>{sim.emoji}</Text></View>
+                <Text style={s.simTitle} numberOfLines={1}>{sim.title}</Text>
+                <Text style={s.simPrice}>{sim.price}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Fixed action buttons */}
+      <View style={s.actions}>
+        <TouchableOpacity style={s.buyBtn}>
+          <Text style={s.buyBtnText}>Buy Now</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.offerBtn}>
+          <Text style={s.offerBtnText}>Make Offer</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  )
+}
+
+const s = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: '#fff' },
+  backBtn: { position: 'absolute', top: 52, left: 14, zIndex: 10, backgroundColor: 'rgba(255,255,255,0.9)', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  hero: { width: '100%', aspectRatio: 1.8, backgroundColor: '#f5f0e8', alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  featuredBadge: { position: 'absolute', top: 12, left: 14, backgroundColor: colors.orange, borderRadius: 50, paddingHorizontal: 10, paddingVertical: 3 },
+  featuredBadgeText: { color: '#fff', fontFamily: 'Nunito', fontSize: 9, fontWeight: '900' },
+  heartBtn: { position: 'absolute', top: 12, right: 56, backgroundColor: 'rgba(255,255,255,0.9)', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  body: { padding: 16 },
+  signals: { flexDirection: 'row', gap: 8, marginBottom: 10, flexWrap: 'wrap' },
+  signalPill: { backgroundColor: '#FFF3EE', borderRadius: 50, paddingHorizontal: 10, paddingVertical: 4 },
+  signalText: { fontFamily: 'Nunito', fontSize: 10, fontWeight: '800', color: colors.orange },
+  title: { fontFamily: 'Georgia', fontSize: 20, fontWeight: '700', color: colors.dark, lineHeight: 26, marginBottom: 6 },
+  price: { fontFamily: 'Georgia', fontSize: 28, fontWeight: '700', color: colors.orange, marginBottom: 14 },
+  sellerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#f9f6f2', borderRadius: 12, padding: 12, marginBottom: 14 },
+  sellerAvatar: { width: 44, height: 44, backgroundColor: colors.orange, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  sellerHandle: { fontFamily: 'Nunito', fontSize: 13, fontWeight: '800', color: colors.dark },
+  gradeBadge: { backgroundColor: colors.orange, borderRadius: 50, paddingHorizontal: 8, paddingVertical: 1 },
+  gradeBadgeText: { color: '#fff', fontFamily: 'Nunito', fontSize: 9, fontWeight: '900' },
+  sellerStats: { fontFamily: 'Nunito', fontSize: 10, color: '#888' },
+  msgBtn: { backgroundColor: colors.ocean, borderRadius: 50, paddingHorizontal: 12, paddingVertical: 6 },
+  msgBtnText: { color: '#fff', fontFamily: 'Nunito', fontSize: 11, fontWeight: '800' },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
+  pill: { backgroundColor: '#f5f0e8', borderRadius: 50, paddingHorizontal: 10, paddingVertical: 4 },
+  pillText: { fontFamily: 'Nunito', fontSize: 10, fontWeight: '800', color: '#555' },
+  desc: { fontFamily: 'Nunito', fontSize: 13, color: '#555', lineHeight: 20, marginBottom: 14 },
+  mapPlaceholder: { backgroundColor: '#eee', borderRadius: 12, padding: 18, alignItems: 'center', marginBottom: 18 },
+  mapText: { fontFamily: 'Nunito', fontSize: 12, color: '#666' },
+  similarHeading: { fontFamily: 'Georgia', fontSize: 16, fontWeight: '700', color: colors.dark, marginBottom: 10 },
+  similarRow: { flexDirection: 'row', gap: 10 },
+  simCard: { flex: 1, backgroundColor: '#fff', borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: '#e8e0d5' },
+  simThumb: { width: '100%', aspectRatio: 1.4, backgroundColor: '#f5f0e8', alignItems: 'center', justifyContent: 'center' },
+  simTitle: { fontFamily: 'Nunito', fontSize: 10, fontWeight: '800', color: colors.dark, padding: 6, paddingBottom: 2 },
+  simPrice: { fontFamily: 'Georgia', fontSize: 11, fontWeight: '700', color: colors.orange, paddingHorizontal: 6, paddingBottom: 8 },
+  actions: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#f0f0f0', flexDirection: 'row', gap: 10, padding: 14, paddingBottom: 28 },
+  buyBtn: { flex: 1, backgroundColor: colors.orange, borderRadius: 14, padding: 15, alignItems: 'center' },
+  buyBtnText: { color: '#fff', fontFamily: 'Nunito', fontSize: 15, fontWeight: '900' },
+  offerBtn: { flex: 1, backgroundColor: '#fff', borderRadius: 14, padding: 15, alignItems: 'center', borderWidth: 2, borderColor: colors.orange },
+  offerBtnText: { color: colors.orange, fontFamily: 'Nunito', fontSize: 15, fontWeight: '900' },
+})

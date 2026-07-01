@@ -103,6 +103,114 @@ export const listingsRouter = router({
         include: { seller: { select: { id: true, displayName: true, avatar: true, grade: true } } },
       })
     ),
+
+  // ── §3.1 extended procedures ─────────────────────────────────────────────
+
+  getByDept: publicProcedure
+    .input(z.object({
+      department: z.string(),
+      subcategory: z.string().optional(),
+      sort: z.enum(['newest', 'price_asc', 'price_desc']).default('newest'),
+      page: z.number().int().min(1).default(1),
+      limit: z.number().int().min(1).max(50).default(20),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { department, subcategory, sort, page, limit } = input
+      const skip = (page - 1) * limit
+      const where: Record<string, unknown> = {
+        status: 'active',
+        department,
+        ...(subcategory && subcategory !== 'All' && { subcategory }),
+      }
+      const orderBy = sort === 'price_asc'
+        ? { price: 'asc' as const }
+        : sort === 'price_desc'
+        ? { price: 'desc' as const }
+        : { createdAt: 'desc' as const }
+
+      const [items, total] = await Promise.all([
+        ctx.prisma.listing.findMany({ where, skip, take: limit, orderBy, include: { seller: { select: { id: true, displayName: true, grade: true, avgRating: true } } } }),
+        ctx.prisma.listing.count({ where }),
+      ])
+      return { items, total, page, limit }
+    }),
+
+  featureListing: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid(), weeks: z.number().int().min(1).max(4) }))
+    .mutation(async ({ ctx, input }) => {
+      const { listingId, weeks } = input
+      const listing = await ctx.prisma.listing.findUniqueOrThrow({ where: { id: listingId } })
+      if (listing.sellerId !== ctx.user.id)
+        throw new TRPCError({ code: 'FORBIDDEN' })
+
+      // Fee is always calculated server-side — never trust client-sent amounts (§10.2)
+      const feeEur = PRICES.featuredPerWeek * weeks
+      const featuredUntil = new Date()
+      featuredUntil.setDate(featuredUntil.getDate() + weeks * 7)
+
+      await ctx.prisma.listing.update({
+        where: { id: listingId },
+        data: { isFeatured: true, featuredUntil },
+      })
+      await ctx.prisma.creditEvent.create({
+        data: {
+          userId: ctx.user.id,
+          kind: 'spend',
+          amount: Math.round(feeEur * 100),
+          note: `Featured listing ×${weeks}wk`,
+        },
+      })
+      return { featuredUntil, feeEur }
+    }),
+
+  createGrabit: protectedProcedure
+    .input(z.object({
+      listingId: z.string().uuid(),
+      windowHours: z.union([z.literal(2), z.literal(4), z.literal(6), z.literal(12), z.literal(24)]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { listingId, windowHours } = input
+      const listing = await ctx.prisma.listing.findUniqueOrThrow({ where: { id: listingId } })
+      if (listing.sellerId !== ctx.user.id)
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      if (listing.grabItNowPrice === null)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Set a Grab It Now price first' })
+
+      // Fee always server-side (§10.2)
+      const feeEur = PRICES.grabItNow
+      const expiresAt = new Date(Date.now() + windowHours * 60 * 60 * 1000)
+
+      await ctx.prisma.listing.update({
+        where: { id: listingId },
+        data: { grabItNowActive: true, grabItNowExpiry: expiresAt },
+      })
+      await ctx.prisma.creditEvent.create({
+        data: { userId: ctx.user.id, kind: 'spend', amount: Math.round(feeEur * 100), note: `Grab It Now ${windowHours}h` },
+      })
+      return { expiresAt, feeEur }
+    }),
+
+  expireGrabit: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUniqueOrThrow({ where: { id: input.listingId } })
+      if (listing.sellerId !== ctx.user.id)
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      return ctx.prisma.listing.update({
+        where: { id: input.listingId },
+        data: { grabItNowActive: false, grabItNowExpiry: null },
+      })
+    }),
+
+  getGrabitActive: publicProcedure
+    .query(({ ctx }) =>
+      ctx.prisma.listing.findMany({
+        where: { status: 'active', grabItNowActive: true, grabItNowExpiry: { gt: new Date() } },
+        orderBy: { grabItNowExpiry: 'asc' },
+        take: 20,
+        include: { seller: { select: { id: true, displayName: true, grade: true } } },
+      })
+    ),
 })
 
 async function checkGradeUpgrade(prisma: typeof import('../db').prisma, user: { id: string; grade: string; salesCount: number; avgRating: number | null }) {
