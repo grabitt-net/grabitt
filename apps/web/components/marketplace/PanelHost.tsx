@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { usePanel } from '@/context/PanelContext'
 
 // ── dept listings (stub — real data from Supabase later) ──────────────────────
@@ -103,7 +103,7 @@ function ActionPanel({ title, children, onClose }: ActionPanelProps) {
         style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
-          <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>{title}</span>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>{title}</span>
           <button onClick={onClose} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
         <div style={{ overflowY: 'auto', padding: 16, flex: 1 }}>{children}</div>
@@ -128,20 +128,20 @@ export default function PanelHost() {
       <ActionPanel title="🔔 Notifications" onClose={closePanel}>
         <div style={{ display: 'flex', gap: 6, marginBottom: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {tabs.map(t => (
-            <button key={t} onClick={() => setNotifTab(t)} style={{ background: notifTab === t ? '#FF4500' : '#FFF3EE', color: notifTab === t ? '#fff' : '#FF4500', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            <button key={t} onClick={() => setNotifTab(t)} style={{ background: notifTab === t ? '#FF4500' : '#FFF3EE', color: notifTab === t ? '#fff' : '#FF4500', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
               {tabLabels[t]}
             </button>
           ))}
         </div>
-        {shown.length === 0 && <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-nunito)', fontSize: 12 }}>No notifications here yet.</div>}
+        {shown.length === 0 && <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No notifications here yet.</div>}
         {shown.map((n, i) => (
           <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'flex-start' }}>
             <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{n.icon}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{n.title}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#666', marginTop: 2 }}>{n.body}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{n.title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 2 }}>{n.body}</div>
             </div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: '#bbb', flexShrink: 0 }}>{n.time}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#bbb', flexShrink: 0 }}>{n.time}</div>
           </div>
         ))}
       </ActionPanel>
@@ -154,8 +154,8 @@ export default function PanelHost() {
       <ActionPanel title="❤️ Saved Listings" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: 40 }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>❤️</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>No saved listings yet</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#666' }}>Tap the 🤍 on any listing to save it here.</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>No saved listings yet</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Tap the 🤍 on any listing to save it here.</div>
         </div>
       </ActionPanel>
     )
@@ -166,13 +166,13 @@ export default function PanelHost() {
     return (
       <ActionPanel title="💶 Rewards & Credits" onClose={closePanel}>
         <div style={{ background: 'linear-gradient(135deg,#FF4500,#FF8C00)', borderRadius: 16, padding: 20, marginBottom: 16, textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 28, fontWeight: 900, color: '#fff' }}>142</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Grabitt Credits</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 28, fontWeight: 900, color: '#fff' }}>142</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Grabitt Credits</div>
         </div>
         {[['💶','Refer a friend','Earn 50 credits when they list their first item'],['⭐','Leave a review','Earn 10 credits per review'],['🛒','Make a purchase','Earn 5% back as credits'],['📦','List an item','Earn 5 credits per active listing']].map(([icon, title, desc], i) => (
           <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
             <div style={{ fontSize: 24 }}>{icon}</div>
-            <div><div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
+            <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
           </div>
         ))}
       </ActionPanel>
@@ -185,14 +185,14 @@ export default function PanelHost() {
       <ActionPanel title="👤 Join Grabitt" onClose={closePanel}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 48, marginBottom: 8 }}>🌴</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 18, fontWeight: 900, color: '#1a1a1a', marginBottom: 4 }}>Welcome to Grabitt!</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#666' }}>Gran Canaria's local marketplace</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: '#1a1a1a', marginBottom: 4 }}>Welcome to Grabitt!</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Gran Canaria's local marketplace</div>
         </div>
         <a href="/auth" onClick={closePanel} style={{ textDecoration: 'none' }}>
-          <button style={{ width: '100%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>Log In</button>
+          <button style={{ width: '100%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>Log In</button>
         </a>
         <a href="/auth?mode=signup" onClick={closePanel} style={{ textDecoration: 'none' }}>
-          <button style={{ width: '100%', background: '#fff', color: '#FF4500', border: '2px solid #FF4500', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Create Account</button>
+          <button style={{ width: '100%', background: '#fff', color: '#FF4500', border: '2px solid #FF4500', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Create Account</button>
         </a>
       </ActionPanel>
     )
@@ -204,9 +204,9 @@ export default function PanelHost() {
       <ActionPanel title="💬 Messages" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: 40 }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>💬</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>No messages yet</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#666' }}>When you message a seller or buyer, your conversations appear here.</div>
-          <a href="/messages" onClick={closePanel} style={{ textDecoration: 'none' }}><button style={{ marginTop: 16, background: '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Open Messages</button></a>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>No messages yet</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>When you message a seller or buyer, your conversations appear here.</div>
+          <a href="/messages" onClick={closePanel} style={{ textDecoration: 'none' }}><button style={{ marginTop: 16, background: '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Open Messages</button></a>
         </div>
       </ActionPanel>
     )
@@ -218,18 +218,18 @@ export default function PanelHost() {
       <ActionPanel title="📦 Sell on Grabitt" onClose={closePanel}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 40, marginBottom: 8 }}>📦</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 4 }}>List an item in 60 seconds</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#666' }}>Fees from 2.5% · Secure Stripe payments</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 4 }}>List an item in 60 seconds</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Fees from 2.5% · Secure Stripe payments</div>
         </div>
         {[['🏡','Sell an item','List anything from furniture to electronics'],['💼','Post a job','Find staff or freelancers'],['🏠','List a property','Rent or sell a home'],['🔧','Offer a service','Plumbers, cleaners, tutors & more']].map(([icon, title, desc], i) => (
           <div key={i} onClick={closePanel} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
             <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{icon}</div>
-            <div><div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
+            <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
             <span style={{ color: '#FF4500', marginLeft: 'auto' }}>›</span>
           </div>
         ))}
         <a href="/listings/new" onClick={closePanel} style={{ textDecoration: 'none' }}>
-          <button style={{ width: '100%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>🚀 Start Listing</button>
+          <button style={{ width: '100%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>🚀 Start Listing</button>
         </a>
       </ActionPanel>
     )
@@ -245,7 +245,7 @@ export default function PanelHost() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" stroke="#dc2626" strokeWidth="2" strokeLinejoin="round"><path d="M12 2 L20 5 V11 C20 16 16.5 20 12 22 C7.5 20 4 16 4 11 V5 Z"/></svg>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 17, fontWeight: 900 }}>
                   <span style={{ color: '#FF4500' }}>Grab</span><span style={{ color: '#1a1a1a' }}>itt</span><span style={{ color: '#1a1a1a', fontWeight: 700, fontSize: 14 }}> Safety Shield</span>
                 </div>
               </div>
@@ -255,13 +255,13 @@ export default function PanelHost() {
               {[['🔒','Stripe Secured'],['👤','Verified Members'],['📍','Local & Trusted']].map(([icon, label]) => (
                 <div key={label as string} style={{ flex: 1, background: 'rgba(255,255,255,0.5)', borderRadius: 10, padding: '7px 4px', textAlign: 'center' }}>
                   <div style={{ fontSize: 15 }}>{icon}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 800, color: '#FF4500', marginTop: 1 }}>{label as string}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#FF4500', marginTop: 1 }}>{label as string}</div>
                 </div>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
               {tabs.map(t => (
-                <button key={t.id} onClick={() => setShieldTab(t.id)} style={{ background: shieldTab === t.id ? '#FF4500' : 'rgba(255,255,255,0.5)', color: shieldTab === t.id ? '#fff' : '#FF4500', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <button key={t.id} onClick={() => setShieldTab(t.id)} style={{ background: shieldTab === t.id ? '#FF4500' : 'rgba(255,255,255,0.5)', color: shieldTab === t.id ? '#fff' : '#FF4500', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                   {t.label}
                 </button>
               ))}
@@ -273,28 +273,86 @@ export default function PanelHost() {
     )
   }
 
-  // ── DEPT PANEL ──────────────────────────────────────────────────────────────
+  // ── DEPT PANEL (§4.3) ───────────────────────────────────────────────────────
   if (panel.id === 'dept') {
     const name = (panel.data?.name as string) || 'Listings'
     const icon = (panel.data?.icon as string) || '🛍️'
-    const grad = (panel.data?.grad as string) || 'linear-gradient(135deg,#FF4500,#FF8C00)'
     const items = DEPT_LISTINGS[name] || []
+
+    const SUBCATS: Record<string, string[]> = {
+      'Electronics':    ['All', 'Phones', 'Laptops', 'Audio', 'Cameras', 'Gaming', 'Wearables'],
+      'Fashion':        ['All', "Women's", "Men's", "Kids'", 'Shoes', 'Accessories', 'Vintage'],
+      'Home & Garden':  ['All', 'Furniture', 'Kitchen', 'Garden', 'Decor', 'DIY', 'Lighting'],
+      'Jobs':           ['All', 'Hospitality', 'Construction', 'Cleaning', 'Office', 'IT', 'Driving'],
+      'Sport':          ['All', 'Water Sports', 'Cycling', 'Football', 'Tennis', 'Gym', 'Golf'],
+      'Gaming':         ['All', 'Consoles', 'Games', 'Accessories', 'PC Gaming', 'Retro'],
+      'Property':       ['All', 'Rent', 'For Sale', 'Rooms', 'Commercial', 'Holiday'],
+      'Health & Fitness':['All', 'Gym', 'Supplements', 'Running', 'Yoga', 'Medical'],
+      'Kids & Baby':    ['All', 'Toys', 'Clothing', 'Prams', 'Books', 'Nursery'],
+      'Pet Shop':       ['All', 'Dogs', 'Cats', 'Birds', 'Fish', 'Reptiles', 'Services'],
+      'Handy Help':     ['All', 'Plumbing', 'Electric', 'Cleaning', 'Building', 'Gardening'],
+      'Food Store':     ['All', 'Bakery', 'Dairy', 'Wine', 'Oils', 'Coffee', 'Organic'],
+      'Retro & Vintage':['All', 'Vinyl', 'Clothing', 'Electronics', 'Instruments', 'Collectables'],
+      'Gift Ideas':     ['All', 'Experiences', 'Hampers', 'Beauty', 'Books', 'Jewellery'],
+      'Grab It Now':    ['All', 'Electronics', 'Furniture', 'Fashion', 'Sport', 'Other'],
+    }
+    const subcats = SUBCATS[name] || ['All']
+
+    const [activeSub, setActiveSub] = useState('All')
+    const [sort, setSort] = useState('newest')
+
     return (
-      <ActionPanel title={`${icon} ${name}`} onClose={closePanel}>
-        {items.length === 0 && <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-nunito)', fontSize: 12 }}>No listings in {name} right now.</div>}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {items.map(([emoji, title, price, location], i) => (
-            <div key={i} style={{ background: '#fff', border: '1px solid #1a1a1a', borderRadius: 12, padding: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-              <div style={{ width: '100%', height: 64, background: CARD_GRADS[i % CARD_GRADS.length], borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, marginBottom: 8 }}>{emoji}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
-                <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, fontWeight: 700, color: '#FF4500' }}>{price}</div>
-                <div style={{ fontSize: 9, color: '#666', fontFamily: 'var(--font-nunito)' }}>{location}</div>
-              </div>
+      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 10px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{icon} {name}</span>
+            <button onClick={closePanel} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          </div>
+
+          {/* Subcategory chips */}
+          <div style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none', gap: 6, padding: '10px 14px 8px', flexShrink: 0, borderBottom: '1px solid #f0f0f0' }}>
+            {subcats.map(sub => (
+              <button key={sub} onClick={() => setActiveSub(sub)} style={{ flex: '0 0 auto', background: activeSub === sub ? 'var(--orange)' : '#FFF3EE', color: activeSub === sub ? '#fff' : 'var(--orange)', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                {sub}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', flexShrink: 0, borderBottom: '1px solid #f0f0f0' }}>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Sort:</span>
+            <select value={sort} onChange={e => setSort(e.target.value)} style={{ border: '1px solid #e0d8d0', borderRadius: 8, padding: '4px 8px', fontFamily: 'var(--font-ui)', fontSize: 11, color: 'var(--dark)', background: '#fff' }}>
+              <option value="newest">Newest first</option>
+              <option value="price_asc">Price: low to high</option>
+              <option value="price_desc">Price: high to low</option>
+              <option value="nearest">Nearest first</option>
+            </select>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginLeft: 'auto' }}>{items.length} listings</span>
+          </div>
+
+          {/* Grid */}
+          <div style={{ overflowY: 'auto', flex: 1, padding: 12 }}>
+            {items.length === 0 && <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No listings in {name} right now.</div>}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {items.map(([emoji, title, price, location], i) => (
+                <div key={i} onClick={() => openPanel('listing', { emoji, title, price, location, category: name, ref: `D${i}` })} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                  <div style={{ width: '100%', paddingTop: '72%', background: CARD_GRADS[i % CARD_GRADS.length], position: 'relative' }}>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{emoji}</div>
+                  </div>
+                  <div style={{ padding: '8px 10px 10px' }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2 }}>{title}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{price}</div>
+                      <div style={{ fontSize: 9, color: '#888', fontFamily: 'var(--font-ui)' }}>📍 {location}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
-      </ActionPanel>
+      </div>
     )
   }
 
@@ -304,13 +362,13 @@ export default function PanelHost() {
     return (
       <ActionPanel title="⚡ Grabitt Now! — Flash Deals" onClose={closePanel}>
         <div style={{ background: 'linear-gradient(135deg,#FF4500,#FF8C00)', borderRadius: 12, padding: 14, textAlign: 'center', marginBottom: 16 }}>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: '#fff' }}>⚡ Limited time offers — grab them before they're gone!</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: '#fff' }}>⚡ Limited time offers — grab them before they're gone!</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {items.map(([emoji, title, price, location], i) => (
             <div key={i} style={{ background: '#fff', border: '2px solid #FF4500', borderRadius: 12, padding: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(255,69,0,0.12)' }}>
               <div style={{ width: '100%', height: 64, background: CARD_GRADS[i % CARD_GRADS.length], borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, marginBottom: 8 }}>{emoji}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
               <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, fontWeight: 700, color: '#FF4500', marginTop: 2 }}>{price}</div>
             </div>
           ))}
@@ -332,14 +390,14 @@ export default function PanelHost() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
               <div style={{ width: 48, height: 48, background: s.color, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>{s.icon}</div>
               <div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: '#1a1a1a' }}>{s.name}</div>
-                <span style={{ background: s.color, color: '#fff', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-nunito)', padding: '2px 8px', borderRadius: 50 }}>{s.badge}</span>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a' }}>{s.name}</div>
+                <span style={{ background: s.color, color: '#fff', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '2px 8px', borderRadius: 50 }}>{s.badge}</span>
               </div>
             </div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#555', lineHeight: 1.5 }}>{s.desc}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', lineHeight: 1.5 }}>{s.desc}</div>
           </div>
         ))}
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 8 }}>Want to advertise on Grabitt? Email ads@grabitt.net</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 8 }}>Want to advertise on Grabitt? Email ads@grabitt.net</div>
       </ActionPanel>
     )
   }
@@ -350,17 +408,17 @@ export default function PanelHost() {
       <ActionPanel title="🏢 Employer Dashboard" onClose={closePanel}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 40, marginBottom: 8 }}>🏢</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 4 }}>Post a Job on Grabitt</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#666' }}>Reach thousands of workers across Gran Canaria</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 4 }}>Post a Job on Grabitt</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Reach thousands of workers across Gran Canaria</div>
         </div>
         {[['✅','Free to post','Your first 3 job listings are completely free'],['👤','Verified candidates','Browse profiles with skills and ratings'],['💬','Direct messaging','Chat with applicants instantly'],['📊','Application tracking','See who applied and manage offers']].map(([icon, title, desc], i) => (
           <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
             <div style={{ fontSize: 22 }}>{icon}</div>
-            <div><div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
+            <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
           </div>
         ))}
         <a href="/listings/new" onClick={closePanel} style={{ textDecoration: 'none' }}>
-          <button style={{ width: '100%', background: 'linear-gradient(135deg,#2193b0,#6dd5ed)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>Post a Job Now</button>
+          <button style={{ width: '100%', background: 'linear-gradient(135deg,#2193b0,#6dd5ed)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>Post a Job Now</button>
         </a>
       </ActionPanel>
     )
@@ -371,17 +429,17 @@ export default function PanelHost() {
     return (
       <ActionPanel title="🏢 Business Account" onClose={closePanel}>
         <div style={{ background: 'linear-gradient(135deg,#1a1a1a,#3a2a1a)', borderRadius: 16, padding: 20, marginBottom: 16, textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: '#FF8C00', marginBottom: 4 }}>🏢 Business</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 28, fontWeight: 900, color: '#fff' }}>€29<span style={{ fontSize: 14 }}>/mo</span></div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>21-day free trial · Cancel anytime</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 20, fontWeight: 900, color: '#FF8C00', marginBottom: 4 }}>🏢 Business</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 28, fontWeight: 900, color: '#fff' }}>€29<span style={{ fontSize: 14 }}>/mo</span></div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>21-day free trial · Cancel anytime</div>
         </div>
         {[['📦','Up to 100 listings','vs 10 for standard members'],['🏢','Business badge','Stand out from individual sellers'],['📊','Analytics dashboard','See views, offers, and sales data'],['💬','Priority support','Dedicated business helpline'],['🌍','Multi-language listings','Reach German, Danish & Swedish buyers'],['⭐','Featured placement','Appear higher in search results']].map(([icon, title, desc], i) => (
           <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
             <div style={{ fontSize: 20 }}>{icon}</div>
-            <div><div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
+            <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
           </div>
         ))}
-        <button style={{ width: '100%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>Start Free Trial</button>
+        <button style={{ width: '100%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>Start Free Trial</button>
       </ActionPanel>
     )
   }
@@ -403,16 +461,16 @@ export default function PanelHost() {
     return (
       <ActionPanel title="Grabitt!" onClose={closePanel}>
         <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 28, fontWeight: 700 }}>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 28, fontWeight: 700 }}>
             <span style={{ color: '#FF4500' }}>Grab</span><span style={{ color: '#1a1a1a' }}>itt</span><span style={{ color: '#FF4500' }}>!</span>
           </div>
-          <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#7a6a55', fontWeight: 700 }}>Your local everything</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#7a6a55', fontWeight: 700 }}>Your local everything</div>
         </div>
         {[['🏪','Browse all listings','/listings'],['📦','Sell something','/listings/new'],['💬','My messages','/messages'],['👤','My profile','/profile'],['🛡️','Safety Shield','#shield'],['ℹ️','About Grabitt','#about']].map(([icon, label, href], i) => (
           <a key={i} href={href as string} onClick={closePanel} style={{ textDecoration: 'none' }}>
             <div style={{ display: 'flex', gap: 14, padding: '13px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
               <div style={{ fontSize: 22, width: 32, textAlign: 'center' }}>{icon}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 800, color: '#1a1a1a', flex: 1 }}>{label as string}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: '#1a1a1a', flex: 1 }}>{label as string}</div>
               <span style={{ color: '#ccc' }}>›</span>
             </div>
           </a>
@@ -432,10 +490,10 @@ export default function PanelHost() {
           {allItems.map(([emoji, title, price, location, dept], i) => (
             <div key={i} style={{ background: '#fff', border: '1px solid #1a1a1a', borderRadius: 12, padding: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
               <div style={{ width: '100%', height: 64, background: CARD_GRADS[i % CARD_GRADS.length], borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, marginBottom: 8 }}>{emoji}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
                 <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, fontWeight: 700, color: '#FF4500' }}>{price}</div>
-                <div style={{ fontSize: 9, color: '#666', fontFamily: 'var(--font-nunito)' }}>{location}</div>
+                <div style={{ fontSize: 9, color: '#666', fontFamily: 'var(--font-ui)' }}>{location}</div>
               </div>
             </div>
           ))}
@@ -455,24 +513,423 @@ export default function PanelHost() {
     return (
       <ActionPanel title={`📍 Near ${town}`} onClose={closePanel}>
         <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 14, textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: '#FF4500' }}>📍 Showing items near {town}</div>
-          <div style={{ fontSize: 10, color: '#a8460f', fontFamily: 'var(--font-nunito)', marginTop: 3 }}>{nearItems.length} nearby · 🔒 your location isn't stored</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#FF4500' }}>📍 Showing items near {town}</div>
+          <div style={{ fontSize: 10, color: '#a8460f', fontFamily: 'var(--font-ui)', marginTop: 3 }}>{nearItems.length} nearby · 🔒 your location isn't stored</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {ordered.slice(0, 30).map(([emoji, title, price, location], i) => {
             const isNear = nearItems.some(([, t]) => t === title)
             return (
               <div key={i} style={{ background: '#fff', border: `1px solid ${isNear ? '#FF4500' : '#1a1a1a'}`, borderRadius: 12, padding: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', position: 'relative' }}>
-                {isNear && <div style={{ position: 'absolute', top: 6, right: 6, background: '#FF4500', color: '#fff', fontSize: 8, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '1px 6px', borderRadius: 50 }}>NEAR</div>}
+                {isNear && <div style={{ position: 'absolute', top: 6, right: 6, background: '#FF4500', color: '#fff', fontSize: 8, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '1px 6px', borderRadius: 50 }}>NEAR</div>}
                 <div style={{ width: '100%', height: 64, background: CARD_GRADS[i % CARD_GRADS.length], borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, marginBottom: 8 }}>{emoji}</div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
                   <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, fontWeight: 700, color: '#FF4500' }}>{price}</div>
-                  <div style={{ fontSize: 9, color: '#666', fontFamily: 'var(--font-nunito)' }}>{location}</div>
+                  <div style={{ fontSize: 9, color: '#666', fontFamily: 'var(--font-ui)' }}>{location}</div>
                 </div>
               </div>
             )
           })}
+        </div>
+      </ActionPanel>
+    )
+  }
+
+  // ── LISTING DETAIL (§4.4) ──────────────────────────────────────────────────
+  if (panel.id === 'listing') {
+    const item = panel.data as Record<string, unknown>
+    const emoji    = (item.emoji    as string) || '🛍️'
+    const title    = (item.title    as string) || 'Item'
+    const price    = (item.price    as string) || '€0'
+    const location = (item.location as string) || 'Gran Canaria'
+    const category = (item.category as string) || ''
+    const condition= (item.condition as string) || ''
+    const isFeatured = !!item.isFeatured
+
+    const SIMILAR = [
+      { emoji: '📱', title: 'Samsung S24', price: '€580', location: 'Las Palmas' },
+      { emoji: '💻', title: 'iPad Pro 12.9"', price: '€720', location: 'Telde' },
+      { emoji: '🎧', title: 'Sony WH-1000XM5', price: '€220', location: 'Maspalomas' },
+      { emoji: '🖥️', title: 'Dell Monitor 27"', price: '€190', location: 'Las Palmas' },
+    ]
+
+    return (
+      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+          {/* Hero */}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <div style={{ width: '100%', paddingTop: '52%', background: '#f5f0e8', borderRadius: '24px 24px 0 0', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 88 }}>{emoji}</div>
+              {isFeatured && <div style={{ position: 'absolute', top: 12, left: 14, background: 'var(--orange)', color: '#fff', fontSize: 10, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>👀 FEATURED</div>}
+            </div>
+            <button onClick={closePanel} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            <button style={{ position: 'absolute', top: 12, right: 56, background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤍</button>
+          </div>
+
+          <div style={{ overflowY: 'auto', flex: 1, padding: '14px 16px 24px' }}>
+            {/* Demand signals */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+              <span style={{ background: '#FFF3EE', color: 'var(--orange)', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>👁 42 views today</span>
+              <span style={{ background: '#FFF3EE', color: 'var(--orange)', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>⚡ 7 watching</span>
+            </div>
+
+            {/* Title + price */}
+            <div style={{ fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 700, color: 'var(--dark)', lineHeight: 1.2, marginBottom: 6 }}>{title}</div>
+            <div style={{ fontFamily: 'Georgia,serif', fontSize: 28, fontWeight: 700, color: 'var(--orange)', marginBottom: 14 }}>{price}</div>
+
+            {/* Seller */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#f9f6f2', borderRadius: 12, marginBottom: 14 }}>
+              <div style={{ width: 42, height: 42, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>👤</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>@seller_GC</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                  <span style={{ background: 'var(--orange)', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '1px 6px', borderRadius: 50 }}>🟠 Grabber</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>⭐ 4.8 · 34 sales</span>
+                </div>
+              </div>
+              <button style={{ background: 'var(--ocean)', color: '#fff', border: 'none', borderRadius: 50, padding: '7px 13px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}>Message</button>
+            </div>
+
+            {/* Tag pills */}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+              {condition && <span style={{ background: '#edf7ed', color: 'var(--sage)', border: '1px solid var(--sage)', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>{condition}</span>}
+              {category  && <span style={{ background: '#f5f0e8', color: '#555', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>{category}</span>}
+              <span style={{ background: '#f5f0e8', color: '#555', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>📍 {location}</span>
+              <span style={{ background: '#f5f0e8', color: '#555', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>🤝 Collection</span>
+            </div>
+
+            {/* Description */}
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.65, marginBottom: 14 }}>
+              Great condition — selling due to upgrade. Happy to answer any questions via Grabitt chat. Pickup preferred; local delivery available for a small fee. Cash or Grabitt Pay accepted.
+            </div>
+
+            {/* Map placeholder */}
+            <div style={{ background: '#eee', borderRadius: 12, padding: 18, textAlign: 'center', marginBottom: 14 }}>
+              <div style={{ fontSize: 30, marginBottom: 4 }}>📍</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>{location}, Gran Canaria</div>
+            </div>
+
+            {/* Similar listings */}
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--dark)', marginBottom: 10 }}>Similar listings</div>
+              <div style={{ display: 'flex', gap: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
+                {SIMILAR.map((sim, i) => (
+                  <div key={i} onClick={() => openPanel('listing', { ...sim, ref: `SIM${i}`, category })} style={{ flex: '0 0 120px', background: '#fff', border: '1px solid #e8e0d5', borderRadius: 10, overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ width: '100%', paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30 }}>{sim.emoji}</div>
+                    </div>
+                    <div style={{ padding: '6px 8px 8px' }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sim.title}</div>
+                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 12, fontWeight: 700, color: 'var(--orange)' }}>{sim.price}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button style={{ flex: 1, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '15px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+                Buy Now
+              </button>
+              <button style={{ flex: 1, background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 14, padding: '15px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+                Make Offer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── SEARCH RESULTS ──────────────────────────────────────────────────────────
+  if (panel.id === 'search') {
+    const q         = (panel.data?.q as string) || ''
+    const featured  = !!panel.data?.featured
+    const [sort, setSort] = useState('newest')
+    const FILTERS   = ['All', 'Electronics', 'Fashion', 'Sport', 'Home', 'Jobs', 'Property']
+    const [filterIdx, setFilterIdx] = useState(0)
+
+    const ALL_RESULTS = Object.entries(DEPT_LISTINGS).flatMap(([dept, items]) =>
+      items.map(([e, t, p, l]) => ({ emoji: e, title: t, price: p, location: l, category: dept }))
+    ).filter(item =>
+      !q || item.title.toLowerCase().includes(q.toLowerCase()) ||
+            item.category.toLowerCase().includes(q.toLowerCase())
+    )
+
+    const sorted = [...ALL_RESULTS].sort(() => Math.random() - 0.5)
+
+    return (
+      <ActionPanel title={featured ? '👀 Featured Listings' : `🔍 "${q}" — ${ALL_RESULTS.length} results`} onClose={closePanel}>
+        {/* Sort + filter */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
+          {FILTERS.map((f, i) => (
+            <button key={f} onClick={() => setFilterIdx(i)} style={{ flex: '0 0 auto', background: filterIdx === i ? 'var(--orange)' : '#FFF3EE', color: filterIdx === i ? '#fff' : 'var(--orange)', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{f}</button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', flexShrink: 0 }}>Sort:</span>
+          <select value={sort} onChange={e => setSort(e.target.value)} style={{ flex: 1, border: '1px solid #e0d8d0', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-ui)', fontSize: 11, color: 'var(--dark)' }}>
+            <option value="newest">Newest first</option>
+            <option value="price_asc">Price: low to high</option>
+            <option value="price_desc">Price: high to low</option>
+            <option value="nearest">Nearest first</option>
+          </select>
+          <button
+            onClick={() => openPanel('savesearch', { q, category: FILTERS[filterIdx] })}
+            style={{ flexShrink: 0, background: '#FFF3EE', color: 'var(--orange)', border: '1px solid var(--orange)', borderRadius: 50, padding: '5px 10px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, cursor: 'pointer' }}
+          >
+            🔖 Save
+          </button>
+        </div>
+        {sorted.length === 0
+          ? <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No results for "{q}".</div>
+          : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {sorted.slice(0, 30).map((item, i) => (
+                <div key={i} onClick={() => openPanel('listing', { ...item, ref: `SR${i}` })} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                  <div style={{ width: '100%', paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{item.emoji}</div>
+                  </div>
+                  <div style={{ padding: '8px 8px 10px' }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{item.title}</div>
+                    <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{item.price}</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#888', marginTop: 2 }}>📍 {item.location}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        }
+      </ActionPanel>
+    )
+  }
+
+  // ── SAVE SEARCH PANEL ────────────────────────────────────────────────────────
+  if (panel.id === 'savesearch') {
+    const q        = (panel.data?.q as string) || ''
+    const category = (panel.data?.category as string) || 'All'
+    const [name, setName] = useState(q || category)
+    const [channel, setChannel] = useState<'email' | 'push' | 'both'>('push')
+
+    return (
+      <ActionPanel title="🔖 Save this Search" onClose={closePanel}>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Search name</div>
+          <input
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder='e.g. "iPhone Las Palmas"'
+            style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }}
+          />
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 8 }}>Alert channel</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {(['push', 'email', 'both'] as const).map(ch => (
+              <button key={ch} onClick={() => setChannel(ch)} style={{ flex: 1, background: channel === ch ? 'var(--orange)' : '#fff', color: channel === ch ? '#fff' : '#555', border: `1.5px solid ${channel === ch ? 'var(--orange)' : '#e0d8d0'}`, borderRadius: 10, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, cursor: 'pointer' }}>
+                {ch === 'push' ? '📲 Push' : ch === 'email' ? '📧 Email' : '🔔 Both'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={() => { alert(`Saved "${name}" via ${channel}`); closePanel() }}
+          style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
+        >
+          🔖 Save Search
+        </button>
+      </ActionPanel>
+    )
+  }
+
+  // ── SAVED SEARCHES LIST ──────────────────────────────────────────────────────
+  if (panel.id === 'savedSearches') {
+    const MOCK_SAVED = [
+      { name: 'iPhone Las Palmas', query: 'iPhone', channel: '📲 Push', count: 3, time: '2h ago' },
+      { name: 'Studio flat to rent', query: 'studio flat', channel: '📧 Email', count: 7, time: '1d ago' },
+      { name: 'Mountain bike', query: 'mountain bike', channel: '🔔 Both', count: 1, time: '3d ago' },
+    ]
+    return (
+      <ActionPanel title="🔖 Saved Searches" onClose={closePanel}>
+        {MOCK_SAVED.length === 0
+          ? <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No saved searches yet. Use the 🔖 Save button in search results.</div>
+          : MOCK_SAVED.map((s, i) => (
+            <div key={i} onClick={() => openPanel('search', { q: s.query })} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
+              <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🔖</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{s.name}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 2 }}>{s.channel} · {s.count} new · {s.time}</div>
+              </div>
+              <span style={{ color: 'var(--orange)', fontSize: 16 }}>›</span>
+            </div>
+          ))
+        }
+        <button
+          onClick={() => openPanel('savesearch', {})}
+          style={{ width: '100%', background: '#FFF3EE', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 14, padding: '12px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 14 }}
+        >
+          + Save a new search
+        </button>
+      </ActionPanel>
+    )
+  }
+
+  // ── OFFERS ──────────────────────────────────────────────────────────────────
+  if (panel.id === 'offers') {
+    return (
+      <ActionPanel title="💰 Offers" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>💰</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No offers yet</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Offers you make or receive on listings appear here.</div>
+        </div>
+      </ActionPanel>
+    )
+  }
+
+  // ── PURCHASES ───────────────────────────────────────────────────────────────
+  if (panel.id === 'purchases') {
+    return (
+      <ActionPanel title="🛒 Purchases" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🛒</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No purchases yet</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Items you buy via Grabitt Pay appear here.</div>
+          <a href="/auth" onClick={closePanel} style={{ textDecoration: 'none' }}>
+            <button style={{ marginTop: 16, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Log in to view</button>
+          </a>
+        </div>
+      </ActionPanel>
+    )
+  }
+
+  // ── MY LISTINGS ─────────────────────────────────────────────────────────────
+  if (panel.id === 'mylistings') {
+    return (
+      <ActionPanel title="📋 My Listings" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No active listings</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', marginBottom: 16 }}>Items you list for sale appear here.</div>
+          <button onClick={() => openPanel('sell')} style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ New Listing</button>
+        </div>
+      </ActionPanel>
+    )
+  }
+
+  // ── WISHLIST ─────────────────────────────────────────────────────────────────
+  if (panel.id === 'wishlist') {
+    return (
+      <ActionPanel title="🤞 Wishlist" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🤞</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Wishlist is empty</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Add items you're looking for — we'll alert you when they're listed.</div>
+        </div>
+      </ActionPanel>
+    )
+  }
+
+  // ── FAVOURITES ──────────────────────────────────────────────────────────────
+  if (panel.id === 'favourites') {
+    return (
+      <ActionPanel title="❤️ Favourites" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>❤️</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No favourites yet</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Tap 🤍 on any listing to add it here.</div>
+        </div>
+      </ActionPanel>
+    )
+  }
+
+  // ── INVITE FRIENDS ───────────────────────────────────────────────────────────
+  if (panel.id === 'invite') {
+    return (
+      <ActionPanel title="➕ Invite Friends" onClose={closePanel}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div style={{ fontSize: 44, marginBottom: 8 }}>🎁</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Earn 50 credits per referral!</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5 }}>Invite friends to Grabitt. When they list their first item, you both earn 50 credits.</div>
+        </div>
+        <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 14, textAlign: 'center', marginBottom: 16 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 4 }}>Your referral link</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>grabitt.net/join?ref=USER123</div>
+        </div>
+        {[['WhatsApp', '💚'], ['Copy link', '🔗'], ['Share on Facebook', '📘'], ['Share via Email', '📧']].map(([label, icon]) => (
+          <button key={label as string} style={{ width: '100%', background: '#fff', color: 'var(--dark)', border: '1.5px solid #e0d8d0', borderRadius: 12, padding: '12px 14px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 8, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }}>{icon as string}</span>{label as string}
+          </button>
+        ))}
+      </ActionPanel>
+    )
+  }
+
+  // ── RECENTLY VIEWED ──────────────────────────────────────────────────────────
+  if (panel.id === 'recentviewed') {
+    return (
+      <ActionPanel title="👁 Recently Viewed" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>👁</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Nothing yet</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Listings you view appear here for easy access.</div>
+        </div>
+      </ActionPanel>
+    )
+  }
+
+  // ── SOLD PRICES ──────────────────────────────────────────────────────────────
+  if (panel.id === 'soldprices') {
+    const SOLD = [
+      { emoji: '📱', title: 'iPhone 13 — 128GB', price: '€480', date: '28 Jun', location: 'Las Palmas' },
+      { emoji: '🚴', title: 'Road Bike — Carbon', price: '€640', date: '26 Jun', location: 'Maspalomas' },
+      { emoji: '💻', title: 'Dell XPS 15', price: '€720', date: '25 Jun', location: 'Telde' },
+      { emoji: '🛋️', title: 'L-Shape Sofa', price: '€220', date: '24 Jun', location: 'Las Palmas' },
+      { emoji: '🎮', title: 'PS5 Digital Edition', price: '€350', date: '22 Jun', location: 'Playa del Inglés' },
+    ]
+    return (
+      <ActionPanel title="📊 Sold Prices" onClose={closePanel}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 14 }}>Recent completed sales across Gran Canaria</div>
+        {SOLD.map((s, i) => (
+          <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
+            <div style={{ width: 44, height: 44, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{s.emoji}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 2 }}>📍 {s.location} · {s.date}</div>
+            </div>
+            <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: 'var(--sage)', flexShrink: 0 }}>SOLD {s.price}</div>
+          </div>
+        ))}
+      </ActionPanel>
+    )
+  }
+
+  // ── ADVERTISE ────────────────────────────────────────────────────────────────
+  if (panel.id === 'advertise') {
+    return (
+      <ActionPanel title="📣 Advertise on Grabitt" onClose={closePanel}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div style={{ fontSize: 44, marginBottom: 8 }}>📣</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Reach Gran Canaria buyers</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Thousands of daily active users across the island</div>
+        </div>
+        {[
+          { name: '⭐ Featured Listing', price: '€1.99/week', desc: 'Boost visibility in search & category pages' },
+          { name: '🏷️ Banner Ad (300×600)', price: '€49/month', desc: 'Sidebar slot on dept and search panels' },
+          { name: '📧 Eshot Campaign', price: '€99/blast', desc: 'Direct email to opted-in members in your area' },
+        ].map((p, i) => (
+          <div key={i} style={{ background: '#fff', border: '1.5px solid #e8e0d5', borderRadius: 14, padding: 14, marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{p.name}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--orange)' }}>{p.price}</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{p.desc}</div>
+          </div>
+        ))}
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 6 }}>
+          Enquire: ads@grabitt.net
         </div>
       </ActionPanel>
     )

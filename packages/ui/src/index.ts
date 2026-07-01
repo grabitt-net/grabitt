@@ -3,3 +3,5 @@
 export { Button } from './Button'
 export { Card } from './Card'
 export { Badge } from './Badge'
+export { ListingCard } from './ListingCard'
+export type { Listing } from './ListingCard'
