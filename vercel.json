@@ -2,6 +2,5 @@
   "framework": "nextjs",
   "buildCommand": "cd apps/web && next build",
   "outputDirectory": "apps/web/.next",
-  "installCommand": "npm install -g pnpm && pnpm install",
-  "rootDirectory": "."
+  "installCommand": "npm install -g pnpm && pnpm install"
 }
