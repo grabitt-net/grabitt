@@ -1,6 +1,5 @@
-import type { NextConfig } from 'next'
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   transpilePackages: ['@grabitt/design-tokens', '@grabitt/types', '@grabitt/api-client'],
   images: {
     remotePatterns: [
