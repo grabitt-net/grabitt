@@ -630,10 +630,10 @@ export default function PanelHost() {
 
             {/* Action buttons */}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button style={{ flex: 1, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '15px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+              <button onClick={() => openPanel('checkout', { ...item })} style={{ flex: 1, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '15px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
                 Buy Now
               </button>
-              <button style={{ flex: 1, background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 14, padding: '15px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+              <button onClick={() => openPanel('makeOffer', { ...item })} style={{ flex: 1, background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 14, padding: '15px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
                 Make Offer
               </button>
             </div>
@@ -931,6 +931,489 @@ export default function PanelHost() {
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 6 }}>
           Enquire: ads@grabitt.net
         </div>
+      </ActionPanel>
+    )
+  }
+
+  // ── CHECKOUT / BUY NOW (§5.1) ───────────────────────────────────────────────
+  if (panel.id === 'checkout') {
+    const item = panel.data as Record<string, unknown>
+    const title    = (item.title    as string) || 'Item'
+    const price    = (item.price    as string) || '€0'
+    const emoji    = (item.emoji    as string) || '🛍️'
+    const location = (item.location as string) || 'Gran Canaria'
+    const priceNum = parseFloat(price.replace(/[^0-9.]/g, '')) || 0
+
+    const [step, setStep] = useState<'summary' | 'card' | 'processing' | 'success'>('summary')
+    const [cardNum, setCardNum] = useState('')
+    const [expiry, setExpiry] = useState('')
+    const [cvc, setCvc] = useState('')
+
+    const formatCard = (v: string) => v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
+    const formatExpiry = (v: string) => { const d = v.replace(/\D/g, '').slice(0, 4); return d.length > 2 ? `${d.slice(0,2)}/${d.slice(2)}` : d }
+
+    return (
+      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>
+              {step === 'success' ? '✅ Payment confirmed' : '🔒 Secure Checkout'}
+            </span>
+            {step !== 'processing' && <button onClick={closePanel} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>}
+          </div>
+
+          <div style={{ overflowY: 'auto', flex: 1, padding: 16 }}>
+            {step === 'success' ? (
+              <div style={{ textAlign: 'center', padding: '30px 0' }}>
+                <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Payment held in escrow!</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>
+                  Your {price} is safely held by Grabitt. Arrange collection with the seller, then confirm handover to release payment.
+                </div>
+                <div style={{ background: '#f0fdf4', border: '1px solid var(--sage)', borderRadius: 12, padding: 14, marginBottom: 20, textAlign: 'left' }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--sage)', marginBottom: 6 }}>Next steps</div>
+                  {['Message the seller to arrange pickup','Meet in a safe public place','Inspect the item carefully','Confirm handover in the app to release payment'].map((s, i) => (
+                    <div key={i} style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', padding: '4px 0' }}>✅ {s}</div>
+                  ))}
+                </div>
+                <button onClick={() => openPanel('handover', { ...item })} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>
+                  Confirm Handover
+                </button>
+                <button onClick={closePanel} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
+                  Back to browsing
+                </button>
+              </div>
+            ) : step === 'processing' ? (
+              <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>Processing payment…</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginTop: 8 }}>Please don't close this window</div>
+              </div>
+            ) : step === 'card' ? (
+              <>
+                {/* Item recap */}
+                <div style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f0f0f0', marginBottom: 16, alignItems: 'center' }}>
+                  <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>{emoji}</div>
+                  <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{title}</div><div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--orange)' }}>{price}</div></div>
+                </div>
+
+                {/* Card form */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>Card number</div>
+                  <input value={cardNum} onChange={e => setCardNum(formatCard(e.target.value))} placeholder="1234 5678 9012 3456" style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'monospace', fontSize: 15, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>Expiry</div>
+                    <input value={expiry} onChange={e => setExpiry(formatExpiry(e.target.value))} placeholder="MM/YY" style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'monospace', fontSize: 15, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>CVC</div>
+                    <input value={cvc} onChange={e => setCvc(e.target.value.replace(/\D/g, '').slice(0, 3))} placeholder="123" style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'monospace', fontSize: 15, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+
+                {/* Security badges */}
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16 }}>
+                  {['🔒 256-bit SSL', '🏦 Stripe Secured', '🛡️ Escrow Protected'].map(b => (
+                    <span key={b} style={{ background: '#f0fdf4', color: '#555', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, padding: '3px 7px', borderRadius: 50 }}>{b}</span>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => { setStep('processing'); setTimeout(() => setStep('success'), 2000) }}
+                  style={{ width: '100%', background: cardNum.length >= 19 && expiry.length >= 5 && cvc.length >= 3 ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
+                >
+                  Pay {price} Securely
+                </button>
+              </>
+            ) : (
+              /* Step: summary */
+              <>
+                <div style={{ display: 'flex', gap: 12, padding: '0 0 16px', borderBottom: '1px solid #f0f0f0', marginBottom: 16, alignItems: 'center' }}>
+                  <div style={{ width: 64, height: 64, background: '#f5f0e8', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, flexShrink: 0 }}>{emoji}</div>
+                  <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)', marginBottom: 2 }}>{title}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>📍 {location}</div></div>
+                </div>
+
+                {/* Price breakdown */}
+                <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 10 }}>Order summary</div>
+                  {[['Item price', price], ['Platform fee', 'Paid by seller'], ['You pay', price]].map(([label, val], i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: i < 2 ? '1px solid #ede0c4' : 'none' }}>
+                      <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>{label}</span>
+                      <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: i === 2 ? 'var(--orange)' : '#555' }}>{val}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Escrow explainer */}
+                <div style={{ display: 'flex', gap: 10, background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16 }}>
+                  <span style={{ fontSize: 22 }}>🔒</span>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5 }}>
+                    Your payment is held in <strong>Stripe escrow</strong> and only released to the seller after you confirm receipt.
+                  </div>
+                </div>
+
+                <button onClick={() => setStep('card')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+                  Continue to Payment →
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── MAKE OFFER ──────────────────────────────────────────────────────────────
+  if (panel.id === 'makeOffer') {
+    const item = panel.data as Record<string, unknown>
+    const title = (item.title as string) || 'Item'
+    const price = (item.price as string) || '€0'
+    const emoji = (item.emoji as string) || '🛍️'
+    const priceNum = parseFloat(price.replace(/[^0-9.]/g, '')) || 0
+
+    const [amount, setAmount] = useState(String(Math.round(priceNum * 0.9) || ''))
+    const [message, setMessage] = useState('')
+    const [sent, setSent] = useState(false)
+
+    if (sent) return (
+      <ActionPanel title="💰 Offer sent!" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <div style={{ fontSize: 56, marginBottom: 14 }}>💰</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Offer sent to seller</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>You offered <strong>€{amount}</strong> for "{title}". The seller has 48 hours to respond.</div>
+          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
+        </div>
+      </ActionPanel>
+    )
+
+    return (
+      <ActionPanel title={`💰 Make Offer — ${title}`} onClose={closePanel}>
+        <div style={{ display: 'flex', gap: 12, padding: '0 0 16px', borderBottom: '1px solid #f0f0f0', marginBottom: 16, alignItems: 'center' }}>
+          <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>{emoji}</div>
+          <div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{title}</div>
+            <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, color: '#888' }}>Listed at {price}</div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Your offer amount (€)</div>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 18, color: '#888' }}>€</span>
+            <input
+              type="number"
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+              min="1"
+              style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px 11px 28px', fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 700, color: 'var(--orange)', outline: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
+          {priceNum > 0 && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 4 }}>
+            {Math.round((1 - parseFloat(amount || '0') / priceNum) * 100)}% below asking price
+          </div>}
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Message to seller (optional)</div>
+          <textarea
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            placeholder='e.g. "Happy to collect today if you accept"'
+            rows={3}
+            style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
+          />
+        </div>
+
+        <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#a8460f' }}>
+          🔒 Offers are binding if accepted. Payment is processed via Stripe escrow.
+        </div>
+
+        <button
+          onClick={() => setSent(true)}
+          disabled={!amount || parseFloat(amount) <= 0}
+          style={{ width: '100%', background: amount && parseFloat(amount) > 0 ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
+        >
+          Send Offer — €{amount || '0'}
+        </button>
+      </ActionPanel>
+    )
+  }
+
+  // ── OFFER RECEIVED (seller view) ────────────────────────────────────────────
+  if (panel.id === 'offerReceived') {
+    const MOCK_OFFERS = [
+      { id: 'O1', buyer: '@buyer_maria', avatar: '👩', listing: 'MacBook Air M2', amount: '€820', original: '€890', msg: 'Can collect today', time: '5m ago' },
+      { id: 'O2', buyer: '@buyer_carlos', avatar: '👨', listing: 'Surfboard 6ft', amount: '€95', original: '€120', msg: '', time: '2h ago' },
+    ]
+    const [responded, setResponded] = useState<Record<string, string>>({})
+
+    return (
+      <ActionPanel title="💰 Offers Received" onClose={closePanel}>
+        {MOCK_OFFERS.length === 0
+          ? <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No pending offers right now.</div>
+          : MOCK_OFFERS.map(offer => (
+            <div key={offer.id} style={{ background: '#f9f6f2', borderRadius: 14, padding: 14, marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>{offer.avatar}</div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{offer.buyer}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>on {offer.listing} · {offer.time}</div>
+                </div>
+                <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>{offer.amount}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', textDecoration: 'line-through' }}>{offer.original}</div>
+                </div>
+              </div>
+              {offer.msg && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 10 }}>"{offer.msg}"</div>}
+              {responded[offer.id] ? (
+                <div style={{ textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: responded[offer.id] === 'accepted' ? 'var(--sage)' : '#ef4444' }}>
+                  {responded[offer.id] === 'accepted' ? '✅ Accepted' : '❌ Declined'}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setResponded(r => ({ ...r, [offer.id]: 'accepted' }))} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>✅ Accept</button>
+                  <button onClick={() => setResponded(r => ({ ...r, [offer.id]: 'declined' }))} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>❌ Decline</button>
+                  <button style={{ flex: 1, background: '#fff', color: 'var(--ocean)', border: '1.5px solid var(--ocean)', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>↔ Counter</button>
+                </div>
+              )}
+            </div>
+          ))
+        }
+      </ActionPanel>
+    )
+  }
+
+  // ── CONFIRM HANDOVER ─────────────────────────────────────────────────────────
+  if (panel.id === 'handover') {
+    const item = panel.data as Record<string, unknown>
+    const title = (item.title as string) || 'Item'
+    const [confirmed, setConfirmed] = useState(false)
+    const [checklist, setChecklist] = useState([false, false, false])
+
+    const CHECKS = ['I have received the item in person', 'The item matches the listing description', 'I am happy to release payment to the seller']
+    const allChecked = checklist.every(Boolean)
+
+    if (confirmed) return (
+      <ActionPanel title="✅ Handover confirmed" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <div style={{ fontSize: 56, marginBottom: 14 }}>✅</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Payment released!</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>Funds have been released to the seller. Why not leave them a review?</div>
+          <button onClick={() => openPanel('reviewTx', item)} style={{ width: '100%', background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>⭐ Leave a Review</button>
+          <button onClick={closePanel} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, cursor: 'pointer' }}>Done</button>
+        </div>
+      </ActionPanel>
+    )
+
+    return (
+      <ActionPanel title="🤝 Confirm Handover" onClose={closePanel}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 16 }}>
+          Once you confirm receipt of <strong>{title}</strong>, payment will be released to the seller. This cannot be undone.
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          {CHECKS.map((check, i) => (
+            <div
+              key={i}
+              onClick={() => setChecklist(prev => prev.map((v, j) => j === i ? !v : v))}
+              style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 0', borderBottom: '1px solid #f5f5f5', cursor: 'pointer' }}
+            >
+              <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${checklist[i] ? 'var(--sage)' : '#ccc'}`, background: checklist[i] ? 'var(--sage)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {checklist[i] && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}
+              </div>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: checklist[i] ? 'var(--dark)' : '#888', lineHeight: 1.4 }}>{check}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: '#fff8f0', border: '1px solid #ffe0cc', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#a8460f' }}>
+          ⚠️ If there is an issue with the item, <strong style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => openPanel('dispute', item)}>raise a dispute</strong> instead.
+        </div>
+        <button
+          onClick={() => setConfirmed(true)}
+          disabled={!allChecked}
+          style={{ width: '100%', background: allChecked ? 'var(--sage)' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: allChecked ? 'pointer' : 'not-allowed' }}
+        >
+          ✅ Confirm & Release Payment
+        </button>
+      </ActionPanel>
+    )
+  }
+
+  // ── REVIEW TRANSACTION ───────────────────────────────────────────────────────
+  if (panel.id === 'reviewTx') {
+    const item = panel.data as Record<string, unknown>
+    const title = (item.title as string) || 'Item'
+    const [rating, setRating] = useState(0)
+    const [comment, setComment] = useState('')
+    const [submitted, setSubmitted] = useState(false)
+
+    if (submitted) return (
+      <ActionPanel title="⭐ Review submitted" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <div style={{ fontSize: 56, marginBottom: 14 }}>⭐</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Thanks for your review!</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>Your feedback helps keep the Grabitt community great.</div>
+          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
+        </div>
+      </ActionPanel>
+    )
+
+    return (
+      <ActionPanel title={`⭐ Review — ${title}`} onClose={closePanel}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 14 }}>How was your experience with this seller?</div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 8 }}>
+            {[1, 2, 3, 4, 5].map(star => (
+              <span key={star} onClick={() => setRating(star)} style={{ fontSize: 36, cursor: 'pointer', opacity: star <= rating ? 1 : 0.3 }}>⭐</span>
+            ))}
+          </div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>
+            {rating === 0 ? 'Tap to rate' : ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'][rating]}
+          </div>
+        </div>
+
+        <textarea
+          value={comment}
+          onChange={e => setComment(e.target.value)}
+          placeholder='Tell others about your experience...'
+          rows={4}
+          style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', resize: 'none', boxSizing: 'border-box', marginBottom: 16 }}
+        />
+
+        <button
+          onClick={() => setSubmitted(true)}
+          disabled={rating === 0}
+          style={{ width: '100%', background: rating > 0 ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: rating > 0 ? 'pointer' : 'not-allowed' }}
+        >
+          Submit Review
+        </button>
+      </ActionPanel>
+    )
+  }
+
+  // ── RAISE DISPUTE ────────────────────────────────────────────────────────────
+  if (panel.id === 'dispute') {
+    const item = panel.data as Record<string, unknown>
+    const title = (item.title as string) || 'Item'
+    const REASONS = ['Item not as described', 'Item not received', 'Wrong item sent', 'Item damaged', 'Seller unresponsive', 'Other']
+    const [reason, setReason] = useState('')
+    const [evidence, setEvidence] = useState('')
+    const [submitted, setSubmitted] = useState(false)
+
+    if (submitted) return (
+      <ActionPanel title="🚨 Dispute opened" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <div style={{ fontSize: 56, marginBottom: 14 }}>🚨</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Dispute raised — funds frozen</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 8 }}>Your payment is frozen until the dispute is resolved. Our team will review within 24 hours.</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 20 }}>Questions? Email safety@grabitt.net</div>
+          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
+        </div>
+      </ActionPanel>
+    )
+
+    return (
+      <ActionPanel title={`🚨 Raise Dispute — ${title}`} onClose={closePanel}>
+        <div style={{ background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 12, padding: 12, marginBottom: 16 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#ef4444', fontWeight: 800 }}>⚠️ Raising a dispute freezes funds immediately.</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 4 }}>Only do this if you have a genuine problem. False disputes may result in account suspension.</div>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 8 }}>Reason</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {REASONS.map(r => (
+              <button key={r} onClick={() => setReason(r)} style={{ background: reason === r ? '#ef4444' : '#fff', color: reason === r ? '#fff' : '#555', border: `1.5px solid ${reason === r ? '#ef4444' : '#e0d8d0'}`, borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{r}</button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Evidence / description</div>
+          <textarea
+            value={evidence}
+            onChange={e => setEvidence(e.target.value)}
+            placeholder='Describe what happened in detail...'
+            rows={4}
+            style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
+          />
+        </div>
+
+        <button
+          onClick={() => setSubmitted(true)}
+          disabled={!reason || !evidence}
+          style={{ width: '100%', background: reason && evidence ? '#ef4444' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: reason && evidence ? 'pointer' : 'not-allowed' }}
+        >
+          🚨 Open Dispute
+        </button>
+      </ActionPanel>
+    )
+  }
+
+  // ── MY SALES ─────────────────────────────────────────────────────────────────
+  if (panel.id === 'mySales') {
+    const MOCK_SALES = [
+      { emoji: '📱', title: 'iPhone 13', buyer: '@buyer_anna', amount: '€440', net: '€405', status: 'released', date: '28 Jun' },
+      { emoji: '🚴', title: 'Road Bike', buyer: '@buyer_pete', amount: '€280', net: '€258', status: 'held', date: '30 Jun' },
+    ]
+    const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
+      released: { bg: '#d1fae5', color: '#065f46', label: '✅ Paid out' },
+      held: { bg: '#FFF3EE', color: 'var(--orange)', label: '🔒 In escrow' },
+      pending_payment: { bg: '#f0f0f0', color: '#888', label: '⏳ Awaiting payment' },
+      disputed: { bg: '#fff5f5', color: '#ef4444', label: '🚨 Disputed' },
+    }
+    return (
+      <ActionPanel title="📊 My Sales" onClose={closePanel}>
+        {MOCK_SALES.length === 0
+          ? <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No sales yet.</div>
+          : MOCK_SALES.map((sale, i) => {
+            const ss = STATUS_STYLES[sale.status] || STATUS_STYLES.held
+            return (
+              <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
+                <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>{sale.emoji}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 2 }}>{sale.title}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>to {sale.buyer} · {sale.date}</div>
+                  <span style={{ background: ss.bg, color: ss.color, fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '2px 7px', borderRadius: 50, display: 'inline-block', marginTop: 3 }}>{ss.label}</span>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: 'var(--dark)' }}>{sale.amount}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: 'var(--sage)', fontWeight: 800 }}>Net {sale.net}</div>
+                </div>
+              </div>
+            )
+          })
+        }
+      </ActionPanel>
+    )
+  }
+
+  // ── PURCHASES (enhanced) ─────────────────────────────────────────────────────
+  if (panel.id === 'purchases') {
+    const MOCK_PURCHASES = [
+      { emoji: '🎸', title: 'Fender Stratocaster', seller: '@seller_gc', amount: '€340', status: 'held', date: '30 Jun' },
+      { emoji: '🧸', title: 'LEGO City Set', seller: '@seller_maria', amount: '€45', status: 'released', date: '20 Jun' },
+    ]
+    const STATUS_LABEL: Record<string, string> = { held: '🔒 Awaiting handover', released: '✅ Complete', pending_payment: '⏳ Payment pending', disputed: '🚨 Disputed' }
+    return (
+      <ActionPanel title="🛒 My Purchases" onClose={closePanel}>
+        {MOCK_PURCHASES.map((p, i) => (
+          <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
+            <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>{p.emoji}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 1 }}>{p.title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>from {p.seller} · {p.date}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: p.status === 'held' ? 'var(--orange)' : p.status === 'released' ? 'var(--sage)' : '#888', fontWeight: 800, marginTop: 2 }}>{STATUS_LABEL[p.status]}</div>
+            </div>
+            <div style={{ flexShrink: 0 }}>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: 'var(--dark)', textAlign: 'right' }}>{p.amount}</div>
+              {p.status === 'held' && (
+                <button onClick={() => openPanel('handover', { title: p.title })} style={{ marginTop: 4, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>Confirm ✅</button>
+              )}
+            </div>
+          </div>
+        ))}
       </ActionPanel>
     )
   }
