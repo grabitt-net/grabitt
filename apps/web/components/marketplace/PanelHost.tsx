@@ -1,6 +1,7 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { usePanel } from '@/context/PanelContext'
+import { useChat } from '@/hooks/useChat'
 
 // ── dept listings (stub — real data from Supabase later) ──────────────────────
 const DEPT_LISTINGS: Record<string, [string, string, string, string][]> = {
@@ -396,21 +397,39 @@ export default function PanelHost() {
   }
 
   if (panel.id === 'chatThread') {
-    const { handle, listing, avatar } = (panel.data || {}) as { handle: string; listing: string; avatar: string }
-    const [msgs, setMsgs] = useState([
-      { from: 'them', text: 'Hi! Is this still available?', time: '10:32' },
-      { from: 'me',   text: 'Yes, still available 👍',     time: '10:35' },
-      { from: 'them', text: 'Great — can I collect today?', time: '10:36' },
-    ])
+    const { threadId, handle, listing, avatar, currentUserId } = (panel.data || {}) as {
+      threadId: string; handle: string; listing: string; avatar: string; currentUserId: string
+    }
+    const { messages: realtimeMsgs, loading: chatLoading, sendMessage } = useChat(threadId || null, currentUserId || null)
     const [draft, setDraft] = useState('')
     const bottomRef = useRef<HTMLDivElement>(null)
 
-    const send = () => {
+    // Stub messages shown when no real threadId (demo mode)
+    const STUB = [
+      { id: 's1', sender_id: 'them', body: 'Hi! Is this still available?', created_at: new Date(Date.now() - 600000).toISOString() },
+      { id: 's2', sender_id: currentUserId || 'me', body: 'Yes, still available 👍', created_at: new Date(Date.now() - 300000).toISOString() },
+      { id: 's3', sender_id: 'them', body: 'Great — can I collect today?', created_at: new Date(Date.now() - 60000).toISOString() },
+    ]
+    const displayMsgs = threadId ? realtimeMsgs : STUB
+
+    // Scroll to bottom on new messages
+    useEffect(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [displayMsgs.length])
+
+    const send = useCallback(async () => {
       if (!draft.trim()) return
-      const now = new Date()
-      setMsgs(prev => [...prev, { from: 'me', text: draft.trim(), time: `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}` }])
+      const text = draft.trim()
       setDraft('')
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+      if (threadId) {
+        await sendMessage(text)
+      }
+      // In stub/demo mode the input just clears — no optimistic update needed
+    }, [draft, threadId, sendMessage])
+
+    const fmtTime = (iso: string) => {
+      const d = new Date(iso)
+      return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`
     }
 
     return (
@@ -435,20 +454,26 @@ export default function PanelHost() {
 
           {/* Messages */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {msgs.map((m, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: m.from === 'me' ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '72%',
-                  background: m.from === 'me' ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#f5f0e8',
-                  color: m.from === 'me' ? '#fff' : 'var(--dark)',
-                  borderRadius: m.from === 'me' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                  padding: '10px 13px',
-                }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, lineHeight: 1.45 }}>{m.text}</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, opacity: 0.7, marginTop: 3, textAlign: 'right' }}>{m.time}</div>
+            {chatLoading && (
+              <div style={{ textAlign: 'center', padding: 20, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#aaa' }}>Loading messages…</div>
+            )}
+            {displayMsgs.map((m) => {
+              const isMe = m.sender_id === (currentUserId || 'me')
+              return (
+                <div key={m.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+                  <div style={{
+                    maxWidth: '72%',
+                    background: isMe ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#f5f0e8',
+                    color: isMe ? '#fff' : 'var(--dark)',
+                    borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                    padding: '10px 13px',
+                  }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, lineHeight: 1.45 }}>{m.body}</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, opacity: 0.7, marginTop: 3, textAlign: 'right' }}>{fmtTime(m.created_at)}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
             <div ref={bottomRef} />
           </div>
 
@@ -459,7 +484,7 @@ export default function PanelHost() {
               onChange={e => setDraft(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
               placeholder="Message..."
-              style={{ flex: 1, border: '1.5px solid #e0d8d0', borderRadius: 22, padding: '10px 14px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none', resize: 'none' }}
+              style={{ flex: 1, border: '1.5px solid #e0d8d0', borderRadius: 22, padding: '10px 14px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none' }}
             />
             <button onClick={send} disabled={!draft.trim()} style={{ background: draft.trim() ? 'var(--orange)' : '#e0d8d0', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, fontSize: 16, cursor: draft.trim() ? 'pointer' : 'default', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               ↑
