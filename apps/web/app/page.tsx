@@ -5,7 +5,6 @@ import FeaturedStrip from '@/components/marketplace/FeaturedStrip'
 import CategoryGrid from '@/components/marketplace/CategoryGrid'
 import AffiliateBanner from '@/components/marketplace/AffiliateBanner'
 import SeasonalBanner from '@/components/marketplace/SeasonalBanner'
-import JustListed from '@/components/marketplace/JustListed'
 import TrustStrip from '@/components/marketplace/TrustStrip'
 import BottomCarousel from '@/components/marketplace/BottomCarousel'
 import PanelHost from '@/components/marketplace/PanelHost'
@@ -24,7 +23,6 @@ export default function HomePage() {
         <CategoryGrid />
         <AffiliateBanner />
         <SeasonalBanner />
-        <JustListed />
         <TrustStrip />
         <BottomCarousel />
         <PanelHost />
