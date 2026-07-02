@@ -962,6 +962,17 @@ function PanelBody() {
                 Make Offer
               </button>
             </div>
+
+            {/* Grabitt Guarantee — trust notice (HTML: openGrabittGuarantee) */}
+            <div onClick={() => openPanel('shield')} style={{ textAlign: 'center', fontSize: 11, color: '#16a34a', fontFamily: 'var(--font-ui)', fontWeight: 800, marginTop: 10, cursor: 'pointer' }}>
+              🛡️ Protected by the Grabitt Guarantee · Funds held until you confirm ›
+            </div>
+
+            {/* Report / Share (HTML: report this listing / share this listing) */}
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12 }}>
+              <button onClick={() => openPanel('report', { ...item })} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🚨 Report this Listing</button>
+              <button onClick={() => { if (typeof navigator !== 'undefined' && navigator.share) navigator.share({ title, text: `${title} — ${price}` }).catch(() => {}) }} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>📤 Share this Listing</button>
+            </div>
           </div>
         </div>
       </div>
