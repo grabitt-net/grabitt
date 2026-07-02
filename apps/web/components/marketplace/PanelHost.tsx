@@ -123,7 +123,19 @@ function ActionPanel({ title, children, onClose }: ActionPanelProps) {
   )
 }
 
+// PanelHost only decides *whether* a panel is open. The body is rendered as a
+// separate component keyed by panel.id so that switching between panels
+// remounts a fresh instance. Individual panel branches below declare their own
+// hooks; keying on panel.id guarantees each mounted instance always runs the
+// same hook sequence for its lifetime, which is what React requires (prevents
+// error #310 when moving between panels with different hook counts).
 export default function PanelHost() {
+  const { panel } = usePanel()
+  if (!panel.id) return null
+  return <PanelBody key={panel.id} />
+}
+
+function PanelBody() {
   const { panel, closePanel, openPanel } = usePanel()
   const [shieldTab, setShieldTab] = useState<string>('promise')
   const [notifTab, setNotifTab] = useState<string>('all')
@@ -135,7 +147,7 @@ export default function PanelHost() {
     if (typeof window !== 'undefined') {
       setCurrentUserId(localStorage.getItem('grabitt_uid'))
     }
-  }, [panel.id])
+  }, [])
 
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications(currentUserId)
 
