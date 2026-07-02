@@ -10,6 +10,14 @@ import ReportsView from './ReportsView'
 import BannersView from './BannersView'
 import ForecastView from './ForecastView'
 import FinancialsView from './FinancialsView'
+import RetentionView from './RetentionView'
+import CalendarView from './CalendarView'
+import TodoView from './TodoView'
+import CrmMessagesView from './CrmMessagesView'
+import EshotsView from './EshotsView'
+import ToolboxView from './ToolboxView'
+import JobsView from './JobsView'
+import AuditTrailView from './AuditTrailView'
 import { makeCrmApi, CrmApi } from '@/lib/admin-api'
 
 // Context so child components can call the API without prop-drilling
@@ -20,7 +28,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'disputes' | 'reports' | 'rewards' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox'
+export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'disputes' | 'reports' | 'rewards' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'audit'
 
 interface Props { execToken: string }
 
@@ -100,9 +108,15 @@ export default function AdminApp({ execToken }: Props) {
                 {view === 'reports'    && <ReportsView   reports={[]} />}
                 {view === 'banners'    && <BannersView   banners={[]} contacts={contacts} />}
                 {view === 'financials' && <FinancialsView />}
-                {['rewards','retention','calendar','todo','messages','emails','toolbox'].includes(view) && (
-                  <Placeholder view={view} />
-                )}
+                {view === 'retention'  && <RetentionView />}
+                {view === 'calendar'   && <CalendarView />}
+                {view === 'todo'       && <TodoView />}
+                {view === 'messages'   && <CrmMessagesView />}
+                {view === 'emails'     && <EshotsView />}
+                {view === 'toolbox'    && <ToolboxView />}
+                {view === 'jobs'       && <JobsView />}
+                {view === 'audit'      && <AuditTrailView onViewMember={() => setView('members')} />}
+                {view === 'rewards'    && <Placeholder view={view} />}
               </>
             )}
           </main>

@@ -28,7 +28,10 @@ export type Transaction = z.infer<typeof TransactionSchema>
 
 export const RateTransactionInputSchema = z.object({
   transactionId: z.string().uuid(),
-  rating: z.number().min(1).max(5),
+  rating: z.number().int().min(1).max(5),              // overall
+  accuracyRating: z.number().int().min(1).max(5).optional(),       // item as described
+  communicationRating: z.number().int().min(1).max(5).optional(),  // responsiveness
+  speedRating: z.number().int().min(1).max(5).optional(),          // handover speed
   comment: z.string().max(500).optional(),
 })
 export type RateTransactionInput = z.infer<typeof RateTransactionInputSchema>

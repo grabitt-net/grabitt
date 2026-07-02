@@ -5,20 +5,20 @@ import ContactModal from './ContactModal'
 import { useCrmApi } from './AdminApp'
 
 const stages = [
-  { id: 'prospect', label: 'Prospect', color: '#94a3b8' },
-  { id: 'free-trial', label: 'Free Trial', color: '#14b8a6' },
-  { id: 'contacted', label: 'Contacted', color: '#3b82f6' },
-  { id: 'interested', label: 'Interested', color: '#eab308' },
-  { id: 'negotiating', label: 'Negotiating', color: '#f97316' },
-  { id: 'highly-likely', label: 'Highly Likely', color: '#FF4500' },
-  { id: 'signed', label: 'Signed ✅', color: '#22c55e' },
+  { id: 'lead', label: 'Lead', color: '#94a3b8' },
+  { id: 'qualified', label: 'Qualified', color: '#14b8a6' },
+  { id: 'pitch', label: 'Pitch', color: '#3b82f6' },
+  { id: 'proposal', label: 'Proposal', color: '#eab308' },
+  { id: 'close', label: 'Close', color: '#f97316' },
+  { id: 'won', label: 'Won ✅', color: '#22c55e' },
+  { id: 'nurture', label: 'Nurture', color: '#a855f7' },
 ]
 
 interface Props { contacts: any[]; onUpdate: (contacts: any[]) => void }
 
 export default function PipelineView({ contacts, onUpdate }: Props) {
   const api = useCrmApi()
-  const [activeStage, setActiveStage] = useState('prospect')
+  const [activeStage, setActiveStage] = useState('lead')
   const [editingContact, setEditingContact] = useState<any | null>(null)
   const [showModal, setShowModal] = useState(false)
 

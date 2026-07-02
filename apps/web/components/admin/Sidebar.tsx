@@ -15,6 +15,8 @@ const sections = [
       { icon: '🎁', label: 'Rewards', id: 'rewards' as View },
       { icon: '💰', label: 'Financials', id: 'financials' as View },
       { icon: '📊', label: 'Retention', id: 'retention' as View },
+      { icon: '💼', label: 'Jobs', id: 'jobs' as View },
+      { icon: '📋', label: 'Audit', id: 'audit' as View },
     ],
   },
   {

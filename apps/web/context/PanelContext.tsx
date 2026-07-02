@@ -8,6 +8,10 @@ export type PanelId =
   | 'listing' | 'search' | 'savesearch' | 'savedSearches'
   | 'offers' | 'purchases' | 'mylistings' | 'wishlist'
   | 'invite' | 'recentviewed' | 'favourites' | 'soldprices' | 'advertise'
+  | 'checkout' | 'makeOffer' | 'offerReceived' | 'handover' | 'reviewTx' | 'dispute' | 'mySales'
+  | 'createListing' | 'chatThread'
+  | 'jobs' | 'property' | 'handy' | 'grabItNow' | 'profile' | 'featureListing'
+  | 'myActivity' | 'myRatings' | 'report' | 'verifyMe' | 'following'
 
 interface PanelState {
   id: PanelId | null

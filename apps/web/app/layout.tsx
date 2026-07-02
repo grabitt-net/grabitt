@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Nunito, Comfortaa } from 'next/font/google'
+import { TrpcProvider } from '@/providers/TrpcProvider'
 import './globals.css'
 
 const nunito = Nunito({
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${nunito.variable} ${comfortaa.variable}`}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full"><TrpcProvider>{children}</TrpcProvider></body>
     </html>
   )
 }

@@ -21,11 +21,11 @@ export default function ForecastView({ contacts, orders }: Props) {
 
   // Weighted affiliate pipeline forecast
   const stageWeights: Record<string, number> = {
-    prospect: 0.05, 'free-trial': 0.1, contacted: 0.2, interested: 0.35,
-    negotiating: 0.6, 'highly-likely': 0.85, signed: 1.0,
+    lead: 0.05, qualified: 0.15, pitch: 0.30, proposal: 0.50,
+    close: 0.75, won: 1.0, nurture: 0.10,
   }
   const totalMRR = contacts.reduce((s, c) => s + Number(c.monthly_value ?? 0) * (stageWeights[c.stage] ?? 0), 0)
-  const signedMRR = contacts.filter(c => c.stage === 'signed').reduce((s, c) => s + Number(c.monthly_value ?? 0), 0)
+  const signedMRR = contacts.filter(c => c.stage === 'won').reduce((s, c) => s + Number(c.monthly_value ?? 0), 0)
 
   // Marketplace revenue (GMV 10% commission)
   const totalGMV = orders.reduce((s, o) => s + Number(o.amount ?? 0), 0)
