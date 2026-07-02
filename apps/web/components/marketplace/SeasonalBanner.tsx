@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { usePanel } from '@/context/PanelContext'
 
 const CAMPAIGNS = [
@@ -13,8 +14,12 @@ const CAMPAIGNS = [
 
 export default function SeasonalBanner() {
   const { openPanel } = usePanel()
-  const month = new Date().getMonth() + 1
-  const campaign = CAMPAIGNS.find(c => c.months.includes(month)) ?? CAMPAIGNS[4]
+  // Pick the campaign after mount so server (UTC) and client can't disagree on
+  // the month at a boundary and cause a hydration mismatch. Default to the
+  // summer campaign for the server-rendered/first-paint markup.
+  const [month, setMonth] = useState<number | null>(null)
+  useEffect(() => { setMonth(new Date().getMonth() + 1) }, [])
+  const campaign = (month !== null && CAMPAIGNS.find(c => c.months.includes(month))) || CAMPAIGNS[4]
 
   return (
     <div

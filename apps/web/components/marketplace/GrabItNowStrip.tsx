@@ -18,10 +18,15 @@ function formatCountdown(secs: number) {
 
 export default function GrabItNowStrip() {
   const { openPanel } = usePanel()
-  const [secs, setSecs] = useState(getSecondsUntilMidnight())
+  // Seed with null so the server-rendered HTML and the first client render
+  // match (both show the placeholder). Computing the live countdown during the
+  // initial render would differ between server and client time → hydration
+  // mismatch (React #418/#423/#425). The real value is set after mount.
+  const [secs, setSecs] = useState<number | null>(null)
 
   useEffect(() => {
-    const id = setInterval(() => setSecs(s => s > 0 ? s - 1 : getSecondsUntilMidnight()), 1000)
+    setSecs(getSecondsUntilMidnight())
+    const id = setInterval(() => setSecs(s => (s !== null && s > 0) ? s - 1 : getSecondsUntilMidnight()), 1000)
     return () => clearInterval(id)
   }, [])
 
@@ -51,7 +56,7 @@ export default function GrabItNowStrip() {
       </div>
       <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: '5px 10px', textAlign: 'center', flexShrink: 0 }}>
         <div style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 900, color: '#fff', letterSpacing: 2 }}>
-          {formatCountdown(secs)}
+          {secs === null ? '--:--:--' : formatCountdown(secs)}
         </div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 8, color: 'rgba(255,255,255,0.7)', marginTop: 1 }}>
           ENDS MIDNIGHT
