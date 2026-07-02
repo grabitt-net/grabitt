@@ -13,7 +13,7 @@ export async function initJobs() {
   boss.work('auto-release-funds', async () => {
     const { prisma } = await import('../db')
     const { default: Stripe } = await import('stripe')
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-12-18.acacia' })
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-02-24.acacia' })
 
     const eligible = await prisma.transaction.findMany({
       where: {
@@ -108,7 +108,7 @@ export async function initJobs() {
   })
 
   // 9. Send e-shot batches
-  boss.work('send-eshot', async (job) => {
+  boss.work('send-eshot', async ([job]) => {
     const { prisma } = await import('../db')
     const { Resend } = await import('resend')
     const resend = new Resend(process.env.RESEND_API_KEY!)

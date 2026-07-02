@@ -3,7 +3,7 @@ import { router, execProcedure } from '../trpc'
 
 export const crmRouter = router({
   contacts: execProcedure
-    .input(z.object({ stage: z.enum(['lead','qual','pitch','close','won','lost','nurture']).optional(), page: z.number().default(1) }))
+    .input(z.object({ stage: z.enum(['lead','qualified','pitch','proposal','close','won','nurture']).optional(), page: z.number().default(1) }))
     .query(({ ctx, input }) =>
       ctx.prisma.crmContact.findMany({
         where: input.stage ? { stage: input.stage } : {},
@@ -20,7 +20,7 @@ export const crmRouter = router({
       email: z.string().email().optional(),
       phone: z.string().optional(),
       company: z.string().optional(),
-      stage: z.enum(['lead','qual','pitch','close','won','lost','nurture']).optional(),
+      stage: z.enum(['lead','qualified','pitch','proposal','close','won','nurture']).optional(),
       value: z.number().optional(),
       notes: z.string().optional(),
       tags: z.array(z.string()).optional(),
@@ -28,11 +28,11 @@ export const crmRouter = router({
     .mutation(({ ctx, input }) => {
       const { id, ...data } = input
       if (id) return ctx.prisma.crmContact.update({ where: { id }, data })
-      return ctx.prisma.crmContact.create({ data: { name: data.name, ...data } })
+      return ctx.prisma.crmContact.create({ data })
     }),
 
   moveStage: execProcedure
-    .input(z.object({ id: z.string().uuid(), stage: z.enum(['lead','qual','pitch','close','won','lost','nurture']) }))
+    .input(z.object({ id: z.string().uuid(), stage: z.enum(['lead','qualified','pitch','proposal','close','won','nurture']) }))
     .mutation(({ ctx, input }) =>
       ctx.prisma.crmContact.update({ where: { id: input.id }, data: { stage: input.stage } })
     ),

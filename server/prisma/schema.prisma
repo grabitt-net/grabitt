@@ -1,6 +1,6 @@
 // Grabitt v2 — Prisma Schema
 // Every monetary calculation uses server-side values only.
-// Never trust client-sent fee or net amounts.
+// Never trust client-sent fee or net amounts. (§10.2)
 
 generator client {
   provider = "prisma-client-js"
@@ -25,6 +25,11 @@ enum Locale {
   en
   es
   de
+  da
+  sv
+  nl
+  fr
+  pt
 }
 
 model User {
@@ -42,33 +47,62 @@ model User {
   businessTrialEnds  DateTime?
   stripeAccountId    String?
   locale             Locale    @default(en)
+
+  // Verification
+  isVerified         Boolean   @default(false)
+  emailVerified      Boolean   @default(false)
+  phoneVerified      Boolean   @default(false)
+  idVerified         Boolean   @default(false)
+  addressVerified    Boolean   @default(false)
+
+  // Moderation
+  strikeCount        Int       @default(0)
+  suspendedAt        DateTime?
+  suspendedUntil     DateTime?
+  suspendedReason    String?
+
+  // Snowbird mode — member marks themselves away
+  snowbirdMode       Boolean   @default(false)
+  snowbirdUntil      DateTime?
+
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
   listings           Listing[]
-  buyerTransactions  Transaction[] @relation("Buyer")
-  sellerTransactions Transaction[] @relation("Seller")
+  buyerTransactions  Transaction[]      @relation("Buyer")
+  sellerTransactions Transaction[]      @relation("Seller")
   sentMessages       Message[]
   threads            ThreadParticipant[]
   notifications      Notification[]
   creditEvents       CreditEvent[]
   wishlistItems      WishlistItem[]
+  wishItems          WishItem[]
   savedSearches      SavedSearch[]
-  reviews            Review[]     @relation("ReviewAuthor")
-  receivedReviews    Review[]     @relation("ReviewSubject")
-  disputes           Dispute[]    @relation("DisputeRaiser")
-  crmContacts        CrmContact[] @relation("CrmAssigned")
+  reviews            Review[]           @relation("ReviewAuthor")
+  receivedReviews    Review[]           @relation("ReviewSubject")
+  disputes           Dispute[]          @relation("DisputeRaiser")
+  crmContacts        CrmContact[]       @relation("CrmAssigned")
   handyListings      HandyListing[]
+  following          Following[]        @relation("Follower")
+  followers          Following[]        @relation("Following")
+  pushTokens         PushToken[]
+  reportsFiled       Report[]           @relation("Reporter")
+  reportsAgainst     Report[]           @relation("ReportedUser")
+  jobApplications    JobApplication[]
+  strikes            UserStrike[]
+  execAuditLogs      ExecAuditLog[]     @relation("ExecTarget")
 
   @@index([grade])
   @@index([email])
 }
 
 model ExecUser {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  role      ExecRole
-  createdAt DateTime @default(now())
+  id           String         @id @default(uuid())
+  email        String         @unique
+  role         ExecRole
+  createdAt    DateTime       @default(now())
+
+  auditLogs    ExecAuditLog[]
 }
 
 enum ExecRole {
@@ -95,11 +129,16 @@ enum Department {
   grab_it_now
   handy_help
   pet_shop
+  motors
+  services
+  collectables
+  other
 }
 
 enum ListingCondition {
   new
   like_new
+  very_good
   good
   fair
   spares
@@ -132,6 +171,7 @@ model Listing {
   featuredUntil    DateTime?
   grabItNowUntil   DateTime?
   grabItNowWindow  Int?
+  grabItNowPrice   Decimal?         @db.Decimal(10, 2)
   viewCount        Int              @default(0)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
@@ -139,13 +179,17 @@ model Listing {
   transaction      Transaction?
   jobListing       JobListing?
   propertyListing  PropertyListing?
+  handyListing     HandyListing?
   wishlistItems    WishlistItem[]
+  reports          Report[]
+  offers           Offer[]
 
   @@index([department])
   @@index([status])
   @@index([sellerId])
   @@index([isFeatured])
   @@index([createdAt(sort: Desc)])
+  @@index([location])
 }
 
 // ── Transactions ─────────────────────────────────────────────────────────────
@@ -161,6 +205,11 @@ enum TransactionStatus {
   cancelled
 }
 
+enum FulfilmentType {
+  collection
+  delivery
+}
+
 model Transaction {
   id                    String            @id @default(uuid())
   listingId             String            @unique
@@ -173,13 +222,14 @@ model Transaction {
   platformFee           Decimal           @db.Decimal(10, 2)
   sellerNet             Decimal           @db.Decimal(10, 2)
   status                TransactionStatus @default(pending_payment)
+  quantity              Int               @default(1)
+  fulfilmentType        FulfilmentType    @default(collection)
   stripePaymentIntentId String?
   stripeTransferId      String?
-  buyerRating           Int?
-  sellerRating          Int?
+  handoverQrToken       String?           // signed token for QR handover confirmation
   handoverConfirmedAt   DateTime?
   fundsReleasedAt       DateTime?
-  autoReleaseAt         DateTime?
+  autoReleaseAt         DateTime?         // 14 days after handoverConfirmedAt (§10.2)
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
 
@@ -189,6 +239,7 @@ model Transaction {
   @@index([buyerId])
   @@index([sellerId])
   @@index([status])
+  @@index([autoReleaseAt])
 }
 
 // ── Messaging ────────────────────────────────────────────────────────────────
@@ -200,15 +251,16 @@ enum MessageChannel {
 }
 
 model Thread {
-  id           String             @id @default(uuid())
-  listingId    String
+  id            String             @id @default(uuid())
+  listingId     String
   lastMessageAt DateTime?
-  createdAt    DateTime           @default(now())
+  createdAt     DateTime           @default(now())
 
-  participants ThreadParticipant[]
-  messages     Message[]
+  participants  ThreadParticipant[]
+  messages      Message[]
 
   @@index([listingId])
+  @@index([lastMessageAt(sort: Desc)])
 }
 
 model ThreadParticipant {
@@ -229,12 +281,13 @@ model Message {
   body          String
   channel       MessageChannel @default(in_app)
   blocked       Boolean        @default(false)
-  blockedReason String?
+  blockedReason String?        // populated when contact-info regex fires (§10.2)
   readAt        DateTime?
   createdAt     DateTime       @default(now())
 
   @@index([threadId])
   @@index([senderId])
+  @@index([createdAt])
 }
 
 // ── Notifications ─────────────────────────────────────────────────────────────
@@ -253,6 +306,7 @@ enum NotificationKind {
   credits_received
   dispute_opened
   dispute_resolved
+  wish_matched
   system
 }
 
@@ -269,6 +323,18 @@ model Notification {
 
   @@index([userId])
   @@index([readAt])
+  @@index([createdAt(sort: Desc)])
+}
+
+model PushToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  platform  String   // "ios" | "android"
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // ── Offers ──────────────────────────────────────────────────────────────────
@@ -285,6 +351,7 @@ enum OfferStatus {
 model Offer {
   id        String      @id @default(uuid())
   listingId String
+  listing   Listing     @relation(fields: [listingId], references: [id])
   buyerId   String
   amount    Decimal     @db.Decimal(10, 2)
   message   String?
@@ -295,21 +362,25 @@ model Offer {
 
   @@index([listingId])
   @@index([buyerId])
+  @@index([status])
 }
 
 // ── Reviews ──────────────────────────────────────────────────────────────────
 
 model Review {
-  id            String      @id @default(uuid())
-  transactionId String
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
-  authorId      String
-  author        User        @relation("ReviewAuthor", fields: [authorId], references: [id])
-  subjectId     String
-  subject       User        @relation("ReviewSubject", fields: [subjectId], references: [id])
-  rating        Int
-  comment       String?
-  createdAt     DateTime    @default(now())
+  id                  String      @id @default(uuid())
+  transactionId       String
+  transaction         Transaction @relation(fields: [transactionId], references: [id])
+  authorId            String
+  author              User        @relation("ReviewAuthor", fields: [authorId], references: [id])
+  subjectId           String
+  subject             User        @relation("ReviewSubject", fields: [subjectId], references: [id])
+  rating              Int         // overall 1–5
+  accuracyRating      Int?        // item as described 1–5
+  communicationRating Int?        // seller responsiveness 1–5
+  speedRating         Int?        // handover speed 1–5
+  comment             String?
+  createdAt           DateTime    @default(now())
 
   @@unique([transactionId, authorId])
   @@index([subjectId])
@@ -338,6 +409,8 @@ model Dispute {
   resolvedAt    DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@index([status])
 }
 
 // ── Credits ──────────────────────────────────────────────────────────────────
@@ -364,32 +437,142 @@ model CreditEvent {
   createdAt DateTime        @default(now())
 
   @@index([userId])
+  @@index([createdAt(sort: Desc)])
 }
 
-// ── Wishlist & Saved Searches ──────────────────────────────────────────────
+// ── Wishlist (saved listings) & Wish Items (wanted alerts) ─────────────────
 
 model WishlistItem {
-  id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   listingId String
+  user      User     @relation(fields: [userId], references: [id])
   listing   Listing  @relation(fields: [listingId], references: [id])
   createdAt DateTime @default(now())
 
-  @@unique([userId, listingId])
+  @@id([userId, listingId])
+  @@index([userId])
+}
+
+// WishItem = "I'm looking for X" — triggers wish_matched notification
+model WishItem {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  title       String
+  department  Department?
+  maxPrice    Decimal?  @db.Decimal(10, 2)
+  keywords    String[]
+  active      Boolean   @default(true)
+  lastMatchAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([active])
 }
 
 model SavedSearch {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  name       String
-  query      Json
-  alertsOn   Boolean  @default(true)
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  name        String
+  query       Json
+  alertsOn    Boolean   @default(true)
   lastAlertAt DateTime?
-  createdAt  DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([userId])
+}
+
+// ── Following ────────────────────────────────────────────────────────────────
+
+model Following {
+  followerId  String
+  followingId String
+  follower    User     @relation("Follower",  fields: [followerId],  references: [id])
+  following   User     @relation("Following", fields: [followingId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+
+enum ReportReason {
+  scam
+  counterfeit
+  prohibited
+  misleading
+  price_gouging
+  duplicate
+  contact_info_leak
+  other
+}
+
+enum ReportStatus {
+  open
+  under_review
+  actioned
+  dismissed
+}
+
+model Report {
+  id             String       @id @default(uuid())
+  reporterId     String
+  reporter       User         @relation("Reporter",     fields: [reporterId],    references: [id])
+  reportedUserId String?
+  reportedUser   User?        @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  listingId      String?
+  listing        Listing?     @relation(fields: [listingId], references: [id])
+  reason         ReportReason
+  notes          String?
+  status         ReportStatus @default(open)
+  actionTaken    String?
+  resolvedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([status])
+  @@index([reportedUserId])
+  @@index([listingId])
+}
+
+// ── Moderation (Exec actions) ─────────────────────────────────────────────────
+
+enum StrikeReason {
+  contact_leak
+  off_platform_deal
+  fake_listing
+  abusive_behaviour
+  payment_fraud
+  other
+}
+
+model UserStrike {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  reason    StrikeReason
+  note      String?
+  issuedBy  String      // exec user id
+  createdAt DateTime    @default(now())
+
+  @@index([userId])
+}
+
+model ExecAuditLog {
+  id           String    @id @default(uuid())
+  execUserId   String
+  execUser     ExecUser  @relation(fields: [execUserId], references: [id])
+  targetUserId String?
+  targetUser   User?     @relation("ExecTarget", fields: [targetUserId], references: [id])
+  action       String    // "strike" | "suspend" | "award_credits" | "mark_verified" | "remove_listing" etc.
+  detail       Json?
+  createdAt    DateTime  @default(now())
+
+  @@index([execUserId])
+  @@index([targetUserId])
+  @@index([createdAt(sort: Desc)])
 }
 
 // ── Jobs ─────────────────────────────────────────────────────────────────────
@@ -402,21 +585,48 @@ enum JobType {
   volunteer
 }
 
+enum ApplicationStatus {
+  applied
+  viewed
+  shortlisted
+  rejected
+  hired
+}
+
 model JobListing {
-  id         String   @id @default(uuid())
-  listingId  String   @unique
-  listing    Listing  @relation(fields: [listingId], references: [id])
-  employerId String
-  jobTitle   String
-  company    String
-  type       JobType
-  salaryMin  Decimal? @db.Decimal(10, 2)
-  salaryMax  Decimal? @db.Decimal(10, 2)
-  remote     Boolean  @default(false)
-  skills     String[]
-  applyUrl   String?
-  expiresAt  DateTime?
-  createdAt  DateTime @default(now())
+  id           String    @id @default(uuid())
+  listingId    String    @unique
+  listing      Listing   @relation(fields: [listingId], references: [id])
+  employerId   String
+  jobTitle     String
+  company      String
+  type         JobType
+  salaryMin    Decimal?  @db.Decimal(10, 2)
+  salaryMax    Decimal?  @db.Decimal(10, 2)
+  remote       Boolean   @default(false)
+  skills       String[]
+  applyUrl     String?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  applications JobApplication[]
+}
+
+model JobApplication {
+  id           String            @id @default(uuid())
+  jobListingId String
+  jobListing   JobListing        @relation(fields: [jobListingId], references: [id])
+  applicantId  String
+  applicant    User              @relation(fields: [applicantId], references: [id])
+  coverNote    String?
+  cvUrl        String?
+  status       ApplicationStatus @default(applied)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@unique([jobListingId, applicantId])
+  @@index([jobListingId])
+  @@index([applicantId])
 }
 
 // ── Property ─────────────────────────────────────────────────────────────────
@@ -426,24 +636,26 @@ enum PropertyType {
   rent
   holiday
   commercial
+  land
+  new_build
 }
 
 model PropertyListing {
-  id           String      @id @default(uuid())
-  listingId    String      @unique
-  listing      Listing     @relation(fields: [listingId], references: [id])
+  id           String       @id @default(uuid())
+  listingId    String       @unique
+  listing      Listing      @relation(fields: [listingId], references: [id])
   type         PropertyType
   bedrooms     Int?
   bathrooms    Int?
-  m2           Decimal?    @db.Decimal(8, 2)
+  m2           Decimal?     @db.Decimal(8, 2)
   community    String?
   floor        Int?
-  hasPool      Boolean     @default(false)
-  hasGarage    Boolean     @default(false)
+  hasPool      Boolean      @default(false)
+  hasGarage    Boolean      @default(false)
   energyRating String?
   lat          Float?
   lng          Float?
-  createdAt    DateTime    @default(now())
+  createdAt    DateTime     @default(now())
 }
 
 // ── Handy Help ────────────────────────────────────────────────────────────────
@@ -459,18 +671,22 @@ enum HandyCategory {
   it_support
   tutoring
   beauty
+  beauty_nails
+  pet_care
+  childcare
   other
 }
 
 model HandyListing {
   id                String        @id @default(uuid())
   listingId         String        @unique
+  listing           Listing       @relation(fields: [listingId], references: [id])
   providerId        String
   provider          User          @relation(fields: [providerId], references: [id])
   category          HandyCategory
   pricePerHour      Decimal?      @db.Decimal(8, 2)
   priceFixed        Decimal?      @db.Decimal(8, 2)
-  availableDays     Int[]
+  availableDays     Int[]         // 0=Sun..6=Sat
   responseTimeHours Int?
   insured           Boolean       @default(false)
   createdAt         DateTime      @default(now())
@@ -483,11 +699,11 @@ model HandyListing {
 
 enum PipelineStage {
   lead
-  qual
+  qualified
   pitch
+  proposal
   close
   won
-  lost
   nurture
 }
 
@@ -541,16 +757,50 @@ enum EshotSegment {
   trader
   pro
   business
-  inactive
+  inactive_30
+  inactive_60
+  new_members
 }
 
 model Eshot {
-  id         String       @id @default(uuid())
-  subject    String
-  bodyHtml   String
-  segment    EshotSegment
-  sentAt     DateTime?
-  openCount  Int          @default(0)
-  clickCount Int          @default(0)
-  createdAt  DateTime     @default(now())
+  id          String       @id @default(uuid())
+  subject     String
+  bodyHtml    String
+  segment     EshotSegment
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  openCount   Int          @default(0)
+  clickCount  Int          @default(0)
+  createdAt   DateTime     @default(now())
+
+  @@index([sentAt])
+}
+
+// ── Affiliate / Referral ──────────────────────────────────────────────────────
+
+model AffiliateLink {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  name        String
+  targetUrl   String
+  clicks      Int       @default(0)
+  conversions Int       @default(0)
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  referrals   Referral[]
+
+  @@index([slug])
+}
+
+model Referral {
+  id              String        @id @default(uuid())
+  affiliateLinkId String
+  affiliateLink   AffiliateLink @relation(fields: [affiliateLinkId], references: [id])
+  referredEmail   String?
+  registeredAt    DateTime?
+  creditAwarded   Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+
+  @@index([affiliateLinkId])
 }

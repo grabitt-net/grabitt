@@ -152,11 +152,18 @@ export const listingsRouter = router({
         where: { id: listingId },
         data: { isFeatured: true, featuredUntil },
       })
+      // 20 credits per euro (400 credits = €20)
+      const creditCost = Math.round(feeEur * 20)
+      const updatedUser = await ctx.prisma.user.update({
+        where: { id: ctx.user.id },
+        data: { credits: { decrement: creditCost } },
+      })
       await ctx.prisma.creditEvent.create({
         data: {
           userId: ctx.user.id,
-          kind: 'spend',
-          amount: Math.round(feeEur * 100),
+          kind: 'featured_listing',
+          delta: -creditCost,
+          balance: updatedUser.credits,
           note: `Featured listing ×${weeks}wk`,
         },
       })
@@ -182,10 +189,15 @@ export const listingsRouter = router({
 
       await ctx.prisma.listing.update({
         where: { id: listingId },
-        data: { grabItNowActive: true, grabItNowExpiry: expiresAt },
+        data: { grabItNowUntil: expiresAt, grabItNowWindow: windowHours },
+      })
+      const creditCost = Math.round(feeEur * 20)
+      const updatedUser = await ctx.prisma.user.update({
+        where: { id: ctx.user.id },
+        data: { credits: { decrement: creditCost } },
       })
       await ctx.prisma.creditEvent.create({
-        data: { userId: ctx.user.id, kind: 'spend', amount: Math.round(feeEur * 100), note: `Grab It Now ${windowHours}h` },
+        data: { userId: ctx.user.id, kind: 'grab_it_now', delta: -creditCost, balance: updatedUser.credits, note: `Grab It Now ${windowHours}h` },
       })
       return { expiresAt, feeEur }
     }),
@@ -198,15 +210,15 @@ export const listingsRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN' })
       return ctx.prisma.listing.update({
         where: { id: input.listingId },
-        data: { grabItNowActive: false, grabItNowExpiry: null },
+        data: { grabItNowUntil: null, grabItNowWindow: null },
       })
     }),
 
   getGrabitActive: publicProcedure
     .query(({ ctx }) =>
       ctx.prisma.listing.findMany({
-        where: { status: 'active', grabItNowActive: true, grabItNowExpiry: { gt: new Date() } },
-        orderBy: { grabItNowExpiry: 'asc' },
+        where: { status: 'active', grabItNowUntil: { gt: new Date() } },
+        orderBy: { grabItNowUntil: 'asc' },
         take: 20,
         include: { seller: { select: { id: true, displayName: true, grade: true } } },
       })

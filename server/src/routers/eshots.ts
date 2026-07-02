@@ -10,7 +10,7 @@ export const eshotsRouter = router({
     .input(z.object({
       subject: z.string(),
       bodyHtml: z.string(),
-      segment: z.enum(['all','grabber','dealer','trader','pro','business','inactive']),
+      segment: z.enum(['all','grabber','dealer','trader','pro','business','inactive_30','inactive_60','new_members']),
     }))
     .mutation(({ ctx, input }) => ctx.prisma.eshot.create({ data: input })),
 

@@ -3,6 +3,15 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { usePanel } from '@/context/PanelContext'
 import { useChat } from '@/hooks/useChat'
 import { useNotifications, kindIcon, kindTab, relativeTime } from '@/hooks/useNotifications'
+import { createTrpcClient } from '@/lib/trpc'
+import { createClient } from '@/lib/supabase'
+import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
+
+async function getTrpcClient() {
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  return createTrpcClient(session?.access_token ?? undefined)
+}
 
 // ── dept listings (stub — real data from Supabase later) ──────────────────────
 const DEPT_LISTINGS: Record<string, [string, string, string, string][]> = {
@@ -176,7 +185,7 @@ export default function PanelHost() {
         {shown.length === 0 && <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No notifications here yet.</div>}
         {shown.map((n) => (
           <div key={n.id} onClick={() => currentUserId && markRead([n.id])}
-            style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'flex-start', cursor: 'pointer', background: !n.readAt ? '#fffaf8' : 'transparent', margin: '0 -16px', padding: '12px 16px' }}>
+            style={{ display: 'flex', gap: 12, borderBottom: '1px solid #f5f5f5', alignItems: 'flex-start', cursor: 'pointer', background: !n.readAt ? '#fffaf8' : 'transparent', margin: '0 -16px', padding: '12px 16px' }}>
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{kindIcon(n.kind)}</div>
               {!n.readAt && <div style={{ position: 'absolute', top: -2, right: -2, width: 10, height: 10, background: 'var(--orange)', borderRadius: '50%', border: '2px solid #fff' }} />}
@@ -748,26 +757,6 @@ export default function PanelHost() {
     )
   }
 
-  // ── BUSINESS ────────────────────────────────────────────────────────────────
-  if (panel.id === 'business') {
-    return (
-      <ActionPanel title="🏢 Business Account" onClose={closePanel}>
-        <div style={{ background: 'linear-gradient(135deg,#1a1a1a,#3a2a1a)', borderRadius: 16, padding: 20, marginBottom: 16, textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 20, fontWeight: 900, color: '#FF8C00', marginBottom: 4 }}>🏢 Business</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 28, fontWeight: 900, color: '#fff' }}>€29<span style={{ fontSize: 14 }}>/mo</span></div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>21-day free trial · Cancel anytime</div>
-        </div>
-        {[['📦','Up to 100 listings','vs 10 for standard members'],['🏢','Business badge','Stand out from individual sellers'],['📊','Analytics dashboard','See views, offers, and sales data'],['💬','Priority support','Dedicated business helpline'],['🌍','Multi-language listings','Reach German, Danish & Swedish buyers'],['⭐','Featured placement','Appear higher in search results']].map(([icon, title, desc], i) => (
-          <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
-            <div style={{ fontSize: 20 }}>{icon}</div>
-            <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
-          </div>
-        ))}
-        <button style={{ width: '100%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>Start Free Trial</button>
-      </ActionPanel>
-    )
-  }
-
   // ── FOOTER PANELS ───────────────────────────────────────────────────────────
   if (panel.id === 'footer') {
     const key = panel.data?.key as string
@@ -1113,22 +1102,6 @@ export default function PanelHost() {
     )
   }
 
-  // ── PURCHASES ───────────────────────────────────────────────────────────────
-  if (panel.id === 'purchases') {
-    return (
-      <ActionPanel title="🛒 Purchases" onClose={closePanel}>
-        <div style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🛒</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No purchases yet</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Items you buy via Grabitt Pay appear here.</div>
-          <a href="/auth" onClick={closePanel} style={{ textDecoration: 'none' }}>
-            <button style={{ marginTop: 16, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Log in to view</button>
-          </a>
-        </div>
-      </ActionPanel>
-    )
-  }
-
   // ── MY LISTINGS ─────────────────────────────────────────────────────────────
   if (panel.id === 'mylistings') {
     return (
@@ -1138,32 +1111,6 @@ export default function PanelHost() {
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No active listings</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', marginBottom: 16 }}>Items you list for sale appear here.</div>
           <button onClick={() => openPanel('sell')} style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ New Listing</button>
-        </div>
-      </ActionPanel>
-    )
-  }
-
-  // ── WISHLIST ─────────────────────────────────────────────────────────────────
-  if (panel.id === 'wishlist') {
-    return (
-      <ActionPanel title="🤞 Wishlist" onClose={closePanel}>
-        <div style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🤞</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Wishlist is empty</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Add items you're looking for — we'll alert you when they're listed.</div>
-        </div>
-      </ActionPanel>
-    )
-  }
-
-  // ── FAVOURITES ──────────────────────────────────────────────────────────────
-  if (panel.id === 'favourites') {
-    return (
-      <ActionPanel title="❤️ Favourites" onClose={closePanel}>
-        <div style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>❤️</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No favourites yet</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Tap 🤍 on any listing to add it here.</div>
         </div>
       </ActionPanel>
     )
@@ -1272,9 +1219,28 @@ export default function PanelHost() {
     const [cardNum, setCardNum] = useState('')
     const [expiry, setExpiry] = useState('')
     const [cvc, setCvc] = useState('')
+    const [transactionId, setTransactionId] = useState<string | null>(null)
+    const [payError, setPayError] = useState<string | null>(null)
 
     const formatCard = (v: string) => v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
     const formatExpiry = (v: string) => { const d = v.replace(/\D/g, '').slice(0, 4); return d.length > 2 ? `${d.slice(0,2)}/${d.slice(2)}` : d }
+
+    const handlePay = async () => {
+      setStep('processing')
+      setPayError(null)
+      try {
+        const listingId = (item.id as string) || (item.listingId as string) || ''
+        if (listingId) {
+          const client = await getTrpcClient()
+          const result = await client.transactions.initiate.mutate({ listingId })
+          setTransactionId(result.transaction.id)
+        }
+        setStep('success')
+      } catch (err) {
+        setPayError((err as Error).message || 'Payment failed')
+        setStep('card')
+      }
+    }
 
     return (
       <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
@@ -1300,7 +1266,7 @@ export default function PanelHost() {
                     <div key={i} style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', padding: '4px 0' }}>✅ {s}</div>
                   ))}
                 </div>
-                <button onClick={() => openPanel('handover', { ...item })} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>
+                <button onClick={() => openPanel('handover', { ...item, transactionId, role: 'buyer' })} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>
                   Confirm Handover
                 </button>
                 <button onClick={closePanel} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
@@ -1344,8 +1310,10 @@ export default function PanelHost() {
                   ))}
                 </div>
 
+                {payError && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{payError}</div>}
                 <button
-                  onClick={() => { setStep('processing'); setTimeout(() => setStep('success'), 2000) }}
+                  onClick={handlePay}
+                  disabled={cardNum.length < 19 || expiry.length < 5 || cvc.length < 3}
                   style={{ width: '100%', background: cardNum.length >= 19 && expiry.length >= 5 && cvc.length >= 3 ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
                 >
                   Pay {price} Securely
@@ -1509,17 +1477,108 @@ export default function PanelHost() {
     )
   }
 
-  // ── CONFIRM HANDOVER ─────────────────────────────────────────────────────────
+  // ── CONFIRM HANDOVER (QR-gated) ──────────────────────────────────────────────
   if (panel.id === 'handover') {
     const item = panel.data as Record<string, unknown>
+    const transactionId = (item.transactionId as string) || ''
+    const role = (item.role as 'seller' | 'buyer') || 'buyer'
     const title = (item.title as string) || 'Item'
-    const [confirmed, setConfirmed] = useState(false)
+
+    // ── Seller view: generate QR ──────────────────────────────────────────────
+    if (role === 'seller') {
+      const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
+      const [shortCode, setShortCode] = useState<string | null>(null)
+      const [expiresIn, setExpiresIn] = useState(0)
+      const [generating, setGenerating] = useState(false)
+      const [genError, setGenError] = useState('')
+
+      // Countdown timer
+      useEffect(() => {
+        if (expiresIn <= 0) return
+        const id = setInterval(() => setExpiresIn(s => s > 0 ? s - 1 : 0), 1000)
+        return () => clearInterval(id)
+      }, [expiresIn > 0])
+
+      const generate = async () => {
+        setGenerating(true)
+        setGenError('')
+        try {
+          const client = await getTrpcClient()
+          const res = await client.transactions.generateHandoverQr.mutate({ transactionId })
+          setQrDataUrl(res.qrDataUrl)
+          setShortCode(res.shortCode)
+          setExpiresIn(res.expiresInSecs)
+        } catch (err) {
+          setGenError((err as Error).message || 'Failed to generate QR')
+        } finally {
+          setGenerating(false)
+        }
+      }
+
+      const mins = Math.floor(expiresIn / 60)
+      const secs = (expiresIn % 60).toString().padStart(2, '0')
+      const isExpired = shortCode && expiresIn === 0
+
+      return (
+        <ActionPanel title="🤝 Handover QR" onClose={closePanel}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 16 }}>
+            Show this QR code to the buyer when handing over <strong>{title}</strong>. The buyer scans it to confirm receipt and release your payment.
+          </div>
+
+          {!qrDataUrl ? (
+            <>
+              <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 14, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#a8460f' }}>
+                ⚠️ Payment will only be released after the buyer scans this QR code in person. Do not hand over the item without it.
+              </div>
+              {genError && <div style={{ color: '#ef4444', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 12 }}>{genError}</div>}
+              <button onClick={generate} disabled={generating} style={{ width: '100%', background: generating ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: generating ? 'not-allowed' : 'pointer' }}>
+                {generating ? '⏳ Generating…' : '📲 Generate Handover QR'}
+              </button>
+            </>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              {isExpired ? (
+                <div style={{ padding: 24 }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>⏰</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#ef4444', marginBottom: 8 }}>QR Code Expired</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', marginBottom: 16 }}>Generate a new one to continue.</div>
+                  <button onClick={generate} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 24px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>🔄 Regenerate QR</button>
+                </div>
+              ) : (
+                <>
+                  <img src={qrDataUrl} alt="Handover QR code" style={{ width: 220, height: 220, borderRadius: 12, marginBottom: 12 }} />
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 6 }}>Manual entry code</div>
+                  <div style={{ fontFamily: 'Courier, monospace', fontSize: 32, fontWeight: 900, letterSpacing: 8, color: 'var(--dark)', marginBottom: 8 }}>{shortCode}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: expiresIn < 300 ? '#ef4444' : '#888' }}>
+                    Expires in {mins}:{secs}
+                  </div>
+                  <div style={{ background: '#f0fdf4', border: '1px solid var(--sage)', borderRadius: 12, padding: 12, marginTop: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)', textAlign: 'left' }}>
+                    ✅ Show this screen to the buyer — they scan the QR or type the code above to release your payment.
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </ActionPanel>
+      )
+    }
+
+    // ── Buyer view: enter code ────────────────────────────────────────────────
+    const [code, setCode] = useState('')
     const [checklist, setChecklist] = useState([false, false, false])
+    const [submitting, setSubmitting] = useState(false)
+    const [submitError, setSubmitError] = useState('')
+    const [done, setDone] = useState(false)
 
-    const CHECKS = ['I have received the item in person', 'The item matches the listing description', 'I am happy to release payment to the seller']
+    const CHECKS = [
+      'I have received the item in person from the seller',
+      'The item matches the listing description',
+      'I am satisfied and happy to release payment',
+    ]
     const allChecked = checklist.every(Boolean)
+    const codeClean = code.trim().toUpperCase()
 
-    if (confirmed) return (
+    if (done) return (
       <ActionPanel title="✅ Handover confirmed" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
           <div style={{ fontSize: 56, marginBottom: 14 }}>✅</div>
@@ -1531,34 +1590,66 @@ export default function PanelHost() {
       </ActionPanel>
     )
 
+    const handleConfirm = async () => {
+      setSubmitting(true)
+      setSubmitError('')
+      try {
+        const client = await getTrpcClient()
+        await client.transactions.confirmHandoverByCode.mutate({ transactionId, code: codeClean })
+        setDone(true)
+      } catch (err) {
+        setSubmitError((err as Error).message || 'Failed to confirm handover')
+      } finally {
+        setSubmitting(false)
+      }
+    }
+
     return (
       <ActionPanel title="🤝 Confirm Handover" onClose={closePanel}>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 16 }}>
-          Once you confirm receipt of <strong>{title}</strong>, payment will be released to the seller. This cannot be undone.
+          Ask the seller to show their QR code. Enter the 6-character code below it to confirm receipt of <strong>{title}</strong> and release their payment.
         </div>
+
+        {/* Code input */}
         <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>Seller's 6-character code</div>
+          <input
+            value={code}
+            onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+            placeholder="A1B2C3"
+            maxLength={6}
+            style={{ width: '100%', border: `2px solid ${codeClean.length === 6 ? 'var(--sage)' : '#e0d8d0'}`, borderRadius: 12, padding: '14px 16px', fontFamily: 'Courier, monospace', fontSize: 28, fontWeight: 900, letterSpacing: 8, color: 'var(--dark)', textAlign: 'center', outline: 'none', boxSizing: 'border-box', textTransform: 'uppercase' }}
+          />
+        </div>
+
+        {/* Checklist */}
+        <div style={{ marginBottom: 16 }}>
           {CHECKS.map((check, i) => (
             <div
               key={i}
               onClick={() => setChecklist(prev => prev.map((v, j) => j === i ? !v : v))}
-              style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 0', borderBottom: '1px solid #f5f5f5', cursor: 'pointer' }}
+              style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '11px 0', borderBottom: '1px solid #f5f5f5', cursor: 'pointer' }}
             >
-              <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${checklist[i] ? 'var(--sage)' : '#ccc'}`, background: checklist[i] ? 'var(--sage)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${checklist[i] ? 'var(--sage)' : '#ccc'}`, background: checklist[i] ? 'var(--sage)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                 {checklist[i] && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}
               </div>
               <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: checklist[i] ? 'var(--dark)' : '#888', lineHeight: 1.4 }}>{check}</span>
             </div>
           ))}
         </div>
+
         <div style={{ background: '#fff8f0', border: '1px solid #ffe0cc', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#a8460f' }}>
-          ⚠️ If there is an issue with the item, <strong style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => openPanel('dispute', item)}>raise a dispute</strong> instead.
+          ⚠️ If there is an issue with the item, <strong style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => openPanel('dispute', item)}>raise a dispute</strong> instead. Once confirmed this cannot be undone.
         </div>
+
+        {submitError && <div style={{ color: '#ef4444', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 12 }}>{submitError}</div>}
+
         <button
-          onClick={() => setConfirmed(true)}
-          disabled={!allChecked}
-          style={{ width: '100%', background: allChecked ? 'var(--sage)' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: allChecked ? 'pointer' : 'not-allowed' }}
+          onClick={handleConfirm}
+          disabled={codeClean.length !== 6 || !allChecked || submitting}
+          style={{ width: '100%', background: codeClean.length === 6 && allChecked && !submitting ? 'var(--sage)' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: codeClean.length === 6 && allChecked && !submitting ? 'pointer' : 'not-allowed' }}
         >
-          ✅ Confirm & Release Payment
+          {submitting ? '⏳ Confirming…' : '✅ Confirm & Release Payment'}
         </button>
       </ActionPanel>
     )
@@ -1568,9 +1659,32 @@ export default function PanelHost() {
   if (panel.id === 'reviewTx') {
     const item = panel.data as Record<string, unknown>
     const title = (item.title as string) || 'Item'
-    const [rating, setRating] = useState(0)
+    const transactionId = (item.transactionId as string) || ''
+
+    const [overall, setOverall] = useState(0)
+    const [accuracy, setAccuracy] = useState(0)
+    const [comms, setComms] = useState(0)
+    const [speed, setSpeed] = useState(0)
     const [comment, setComment] = useState('')
+    const [submitting, setSubmitting] = useState(false)
     const [submitted, setSubmitted] = useState(false)
+    const [submitError, setSubmitError] = useState('')
+
+    const LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent']
+
+    function StarRow({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', width: 120 }}>{label}</span>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {[1,2,3,4,5].map(s => (
+              <span key={s} onClick={() => onChange(s)} style={{ fontSize: 22, cursor: 'pointer', opacity: s <= value ? 1 : 0.2 }}>⭐</span>
+            ))}
+          </div>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: 'var(--orange)', width: 56, textAlign: 'right', fontWeight: 800 }}>{value > 0 ? LABELS[value] : ''}</span>
+        </div>
+      )
+    }
 
     if (submitted) return (
       <ActionPanel title="⭐ Review submitted" onClose={closePanel}>
@@ -1583,34 +1697,52 @@ export default function PanelHost() {
       </ActionPanel>
     )
 
+    const handleSubmit = async () => {
+      setSubmitting(true)
+      setSubmitError('')
+      try {
+        const client = await getTrpcClient()
+        await client.transactions.rate.mutate({
+          transactionId,
+          rating: overall,
+          accuracyRating: accuracy || undefined,
+          communicationRating: comms || undefined,
+          speedRating: speed || undefined,
+          comment: comment.trim() || undefined,
+        })
+        setSubmitted(true)
+      } catch (err) {
+        setSubmitError((err as Error).message || 'Failed to submit review')
+      } finally {
+        setSubmitting(false)
+      }
+    }
+
     return (
       <ActionPanel title={`⭐ Review — ${title}`} onClose={closePanel}>
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 14 }}>How was your experience with this seller?</div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 8 }}>
-            {[1, 2, 3, 4, 5].map(star => (
-              <span key={star} onClick={() => setRating(star)} style={{ fontSize: 36, cursor: 'pointer', opacity: star <= rating ? 1 : 0.3 }}>⭐</span>
-            ))}
-          </div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>
-            {rating === 0 ? 'Tap to rate' : ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'][rating]}
-          </div>
-        </div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 16 }}>Rate your experience across all aspects. Your overall score is the one that counts toward the seller's grade.</div>
+
+        <StarRow label="Overall ★" value={overall} onChange={setOverall} />
+        <StarRow label="As described" value={accuracy} onChange={setAccuracy} />
+        <StarRow label="Communication" value={comms} onChange={setComms} />
+        <StarRow label="Speed" value={speed} onChange={setSpeed} />
 
         <textarea
           value={comment}
           onChange={e => setComment(e.target.value)}
-          placeholder='Tell others about your experience...'
+          placeholder="Tell others about your experience (optional)…"
           rows={4}
-          style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', resize: 'none', boxSizing: 'border-box', marginBottom: 16 }}
+          style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', resize: 'none', boxSizing: 'border-box', marginTop: 16, marginBottom: 16 }}
         />
 
+        {submitError && <div style={{ color: '#ef4444', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 12 }}>{submitError}</div>}
+
         <button
-          onClick={() => setSubmitted(true)}
-          disabled={rating === 0}
-          style={{ width: '100%', background: rating > 0 ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: rating > 0 ? 'pointer' : 'not-allowed' }}
+          onClick={handleSubmit}
+          disabled={overall === 0 || submitting}
+          style={{ width: '100%', background: overall > 0 && !submitting ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: overall > 0 && !submitting ? 'pointer' : 'not-allowed' }}
         >
-          Submit Review
+          {submitting ? '⏳ Submitting…' : 'Submit Review'}
         </button>
       </ActionPanel>
     )
@@ -1715,25 +1847,35 @@ export default function PanelHost() {
 
   // ── PURCHASES (enhanced) ─────────────────────────────────────────────────────
   if (panel.id === 'purchases') {
-    const MOCK_PURCHASES = [
-      { emoji: '🎸', title: 'Fender Stratocaster', seller: '@seller_gc', amount: '€340', status: 'held', date: '30 Jun' },
-      { emoji: '🧸', title: 'LEGO City Set', seller: '@seller_maria', amount: '€45', status: 'released', date: '20 Jun' },
-    ]
-    const STATUS_LABEL: Record<string, string> = { held: '🔒 Awaiting handover', released: '✅ Complete', pending_payment: '⏳ Payment pending', disputed: '🚨 Disputed' }
+    type Purchase = { id: string; listing: { title: string; images: string[] }; amount: number; status: string; createdAt: Date; sellerId: string }
+    const [purchases, setPurchases] = useState<Purchase[]>([])
+    const [purchasesLoaded, setPurchasesLoaded] = useState(false)
+    useEffect(() => {
+      getTrpcClient().then(c => c.transactions.myPurchases.query()).then(data => {
+        setPurchases(data as unknown as Purchase[])
+        setPurchasesLoaded(true)
+      }).catch(() => setPurchasesLoaded(true))
+    }, [])
+
+    const STATUS_LABEL: Record<string, string> = { held: '🔒 Awaiting handover', released: '✅ Complete', pending_payment: '⏳ Payment pending', disputed: '🚨 Disputed', confirmed_handover: '🤝 Handover confirmed' }
     return (
       <ActionPanel title="🛒 My Purchases" onClose={closePanel}>
-        {MOCK_PURCHASES.map((p, i) => (
+        {!purchasesLoaded && <div style={{ textAlign: 'center', padding: 32, color: '#aaa', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Loading…</div>}
+        {purchasesLoaded && purchases.length === 0 && <div style={{ textAlign: 'center', padding: 32, color: '#aaa', fontFamily: 'var(--font-ui)', fontSize: 13 }}>No purchases yet</div>}
+        {purchases.map((p, i) => (
           <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
-            <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>{p.emoji}</div>
+            <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+              {p.listing.images?.[0] ? <img src={p.listing.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🛍️</div>}
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 1 }}>{p.title}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>from {p.seller} · {p.date}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: p.status === 'held' ? 'var(--orange)' : p.status === 'released' ? 'var(--sage)' : '#888', fontWeight: 800, marginTop: 2 }}>{STATUS_LABEL[p.status]}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 1 }}>{p.listing.title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>{new Date(p.createdAt).toLocaleDateString('en-IE', { day: 'numeric', month: 'short' })}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: p.status === 'held' ? 'var(--orange)' : p.status === 'released' ? 'var(--sage)' : '#888', fontWeight: 800, marginTop: 2 }}>{STATUS_LABEL[p.status] ?? p.status}</div>
             </div>
             <div style={{ flexShrink: 0 }}>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: 'var(--dark)', textAlign: 'right' }}>{p.amount}</div>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: 'var(--dark)', textAlign: 'right' }}>€{Number(p.amount).toFixed(2)}</div>
               {p.status === 'held' && (
-                <button onClick={() => openPanel('handover', { title: p.title })} style={{ marginTop: 4, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>Confirm ✅</button>
+                <button onClick={() => openPanel('handover', { title: p.listing.title, transactionId: p.id, role: 'buyer' })} style={{ marginTop: 4, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>Confirm ✅</button>
               )}
             </div>
           </div>
@@ -1752,6 +1894,7 @@ export default function PanelHost() {
 
     const [step, setStep] = useState<'photos'|'details'|'price'|'preview'|'done'>(prefillCat ? 'details' : 'photos')
     const [photos, setPhotos] = useState<string[]>([])   // data URLs for preview
+    const [photoFiles, setPhotoFiles] = useState<File[]>([])
     const [title, setTitle] = useState('')
     const [dept, setDept] = useState(prefillCat)
     const [condition, setCondition] = useState('')
@@ -1768,8 +1911,9 @@ export default function PanelHost() {
     const progress = stepIdx >= 0 ? ((stepIdx + 1) / STEPS.length) * 100 : 100
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files || [])
-      files.slice(0, 8 - photos.length).forEach(file => {
+      const files = Array.from(e.target.files || []).slice(0, 8 - photos.length)
+      setPhotoFiles(prev => [...prev, ...files])
+      files.forEach(file => {
         const reader = new FileReader()
         reader.onload = ev => setPhotos(prev => [...prev, ev.target!.result as string])
         reader.readAsDataURL(file)
@@ -1988,7 +2132,41 @@ export default function PanelHost() {
             )}
             {step === 'preview' ? (
               <button
-                onClick={async () => { setUploading(true); await new Promise(r => setTimeout(r, 1200)); setUploading(false); setStep('done') }}
+                onClick={async () => {
+                  setUploading(true)
+                  try {
+                    const listingId = crypto.randomUUID()
+                    const imageUrls = photoFiles.length > 0
+                      ? await Promise.all(photoFiles.map(f => compressAndUpload(f, listingPhotoPath(listingId))))
+                      : ['https://placehold.co/800x600/f5f0e8/9E8F7A?text=No+photo']
+                    const DEPT_ENUM: Record<string, string> = {
+                      'Electronics': 'electronics', 'Fashion': 'fashion', 'Home & Garden': 'home_garden',
+                      'Sport & Leisure': 'sport_leisure', 'Retro & Vintage': 'retro_vintage', 'Gaming': 'gaming',
+                      'Pet Shop': 'pet_shop', 'Motors': 'motors', 'Kids & Baby': 'kids_baby',
+                      'Handy Help': 'handy_help', 'Jobs': 'jobs', 'Property': 'property',
+                      'Services': 'services', 'Collectables': 'collectables', 'Other': 'other',
+                    }
+                    const COND_ENUM: Record<string, string> = {
+                      'New': 'new', 'Like New': 'like_new', 'Very Good': 'very_good',
+                      'Good': 'good', 'Fair': 'fair', 'For Parts': 'for_parts',
+                    }
+                    const client = await getTrpcClient()
+                    await client.listings.create.mutate({
+                      title: title.trim(),
+                      description: desc.trim(),
+                      price: freeItem ? 0 : parseFloat(price) || 0,
+                      department: (DEPT_ENUM[dept] ?? dept) as Parameters<typeof client.listings.create.mutate>[0]['department'],
+                      condition: (COND_ENUM[condition] ?? condition) as Parameters<typeof client.listings.create.mutate>[0]['condition'],
+                      images: imageUrls,
+                      location: town,
+                    })
+                    setStep('done')
+                  } catch (err) {
+                    alert((err as Error).message || 'Failed to publish listing')
+                  } finally {
+                    setUploading(false)
+                  }
+                }}
                 disabled={uploading}
                 style={{ flex: 2, background: uploading ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: uploading ? 'not-allowed' : 'pointer' }}
               >
@@ -2013,6 +2191,648 @@ export default function PanelHost() {
           </div>
         </div>
       </div>
+    )
+  }
+
+  // ── JOBS ────────────────────────────────────────────────────────────────────
+  if (panel.id === 'jobs') {
+    const JOB_TYPES = [
+      { id: 'all', label: 'All Jobs' },
+      { id: 'full_time', label: '⏰ Full Time' },
+      { id: 'part_time', label: '🕐 Part Time' },
+      { id: 'contract', label: '📝 Contract' },
+      { id: 'temporary', label: '⚡ Temp' },
+      { id: 'volunteer', label: '❤️ Volunteer' },
+    ]
+    const MOCK_JOBS = [
+      { id: '1', title: 'Bar Staff Needed', company: 'The Irish Rover', location: 'Playa del Inglés', salary: '€1,200/mo', type: 'full_time', emoji: '🍺', posted: '2h ago' },
+      { id: '2', title: 'Chef — Italian Restaurant', company: 'La Trattoria', location: 'Maspalomas', salary: '€1,600/mo', type: 'full_time', emoji: '🍳', posted: '4h ago' },
+      { id: '3', title: 'Housekeeper (Part Time)', company: 'Hotel Gran Canaria', location: 'Las Palmas', salary: '€800/mo', type: 'part_time', emoji: '🧹', posted: '1d ago' },
+      { id: '4', title: 'Driver Wanted', company: 'FastDeliver GC', location: 'Vecindario', salary: '€1,100/mo', type: 'contract', emoji: '🚗', posted: '2d ago' },
+      { id: '5', title: 'Web Developer — Remote', company: 'TechGC', location: 'Remote', salary: '€2,400/mo', type: 'contract', emoji: '💻', posted: '3d ago' },
+      { id: '6', title: 'Beach Cleaner Volunteer', company: 'GC Eco Foundation', location: 'Various', salary: 'Voluntary', type: 'volunteer', emoji: '🌊', posted: '1d ago' },
+    ]
+    const [jobType, setJobType] = useState('all')
+    const filteredJobs = jobType === 'all' ? MOCK_JOBS : MOCK_JOBS.filter(j => j.type === jobType)
+    return (
+      <ActionPanel title="💼 Jobs" onClose={closePanel}>
+        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', marginBottom: 16, paddingBottom: 4 }}>
+          {JOB_TYPES.map(jt => (
+            <button key={jt.id} onClick={() => setJobType(jt.id)} style={{ background: jobType === jt.id ? 'var(--orange)' : '#f5f0e8', color: jobType === jt.id ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{jt.label}</button>
+          ))}
+        </div>
+        {filteredJobs.map(job => (
+          <div key={job.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #f0ebe4', padding: '14px 12px', marginBottom: 10, cursor: 'pointer' }} onClick={() => openPanel('listing', { id: job.id })}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>{job.emoji}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 2 }}>{job.title}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginBottom: 4 }}>{job.company} · 📍 {job.location}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: 'var(--orange)' }}>{job.salary}</span>
+                  <span style={{ background: '#f5f0e8', color: '#888', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 50 }}>{job.type.replace('_', ' ').toUpperCase()}</span>
+                </div>
+              </div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#bbb', flexShrink: 0 }}>{job.posted}</div>
+            </div>
+          </div>
+        ))}
+        <button onClick={() => openPanel('createListing', { category: 'Jobs' })} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 8 }}>+ Post a Job</button>
+      </ActionPanel>
+    )
+  }
+
+  // ── PROPERTY ──────────────────────────────────────────────────────────────────
+  if (panel.id === 'property') {
+    const PROP_TABS = ['For Sale', 'To Let', 'Commercial', 'Land', 'New Builds', 'Wanted']
+    const MOCK_PROPS = [
+      { id: 'p1', title: 'Luxury 2-Bed Apartment', location: 'Playa del Inglés', price: '€185,000', beds: 2, baths: 1, m2: 85, tab: 'For Sale', emoji: '🏢', tag: 'Pool' },
+      { id: 'p2', title: 'Villa with Sea View', location: 'Mogán', price: '€380,000', beds: 4, baths: 3, m2: 220, tab: 'For Sale', emoji: '🏡', tag: 'Sea view' },
+      { id: 'p3', title: 'Studio to Rent', location: 'Las Palmas', price: '€550/mo', beds: 0, baths: 1, m2: 38, tab: 'To Let', emoji: '🏠', tag: 'Furnished' },
+      { id: 'p4', title: '2-Bed Bungalow', location: 'Maspalomas', price: '€950/mo', beds: 2, baths: 1, m2: 90, tab: 'To Let', emoji: '🏘️', tag: 'Garden' },
+      { id: 'p5', title: 'Office Space 120m²', location: 'Las Palmas', price: '€1,200/mo', beds: 0, baths: 1, m2: 120, tab: 'Commercial', emoji: '🏢', tag: 'A/C' },
+      { id: 'p6', title: 'Building Plot 800m²', location: 'Tejeda', price: '€45,000', beds: 0, baths: 0, m2: 800, tab: 'Land', emoji: '🌍', tag: 'Rural' },
+      { id: 'p7', title: 'New Build 3-Bed', location: 'Arguineguín', price: '€295,000', beds: 3, baths: 2, m2: 140, tab: 'New Builds', emoji: '🏗️', tag: 'Off-plan' },
+      { id: 'p8', title: 'Wanted: 2-Bed near Airport', location: 'Las Palmas', price: 'Budget: €800/mo', beds: 2, baths: 0, m2: 0, tab: 'Wanted', emoji: '🔍', tag: 'Urgent' },
+    ]
+    const [propTab, setPropTab] = useState('For Sale')
+    const shownProps = MOCK_PROPS.filter(p => p.tab === propTab)
+    return (
+      <ActionPanel title="🏠 Property" onClose={closePanel}>
+        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', marginBottom: 14, paddingBottom: 4 }}>
+          {PROP_TABS.map(t => (
+            <button key={t} onClick={() => setPropTab(t)} style={{ background: propTab === t ? 'var(--orange)' : '#f5f0e8', color: propTab === t ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{t}</button>
+          ))}
+        </div>
+        {shownProps.map(p => (
+          <div key={p.id} onClick={() => openPanel('listing', { id: p.id })} style={{ background: '#fff', borderRadius: 14, border: '1px solid #f0ebe4', marginBottom: 10, overflow: 'hidden', cursor: 'pointer' }}>
+            <div style={{ background: '#f5f0e8', height: 110, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56, position: 'relative' }}>
+              {p.emoji}
+              <span style={{ position: 'absolute', top: 10, right: 10, background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50 }}>{p.tag}</span>
+            </div>
+            <div style={{ padding: '12px 14px' }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 2 }}>{p.title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 6 }}>📍 {p.location}</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>{p.price}</span>
+                <div style={{ display: 'flex', gap: 10, fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>
+                  {p.beds > 0 && <span>🛏 {p.beds}</span>}
+                  {p.baths > 0 && <span>🚿 {p.baths}</span>}
+                  {p.m2 > 0 && <span>📐 {p.m2}m²</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+        <button onClick={() => openPanel('createListing', { category: 'Property' })} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 4 }}>+ List Property</button>
+      </ActionPanel>
+    )
+  }
+
+  // ── HANDY HELP ────────────────────────────────────────────────────────────────
+  if (panel.id === 'handy') {
+    const TRADES = [
+      { id: 'plumbing', label: 'Plumbing', emoji: '🔧' }, { id: 'electrical', label: 'Electrical', emoji: '⚡' },
+      { id: 'cleaning', label: 'Cleaning', emoji: '🧹' }, { id: 'painting', label: 'Painting', emoji: '🎨' },
+      { id: 'gardening', label: 'Gardening', emoji: '🌿' }, { id: 'moving', label: 'Moving', emoji: '📦' },
+      { id: 'assembly', label: 'Assembly', emoji: '🔩' }, { id: 'it_support', label: 'IT Support', emoji: '💻' },
+      { id: 'tutoring', label: 'Tutoring', emoji: '📚' }, { id: 'beauty', label: 'Beauty', emoji: '💅' },
+      { id: 'building', label: 'Building', emoji: '🏗️' }, { id: 'pool', label: 'Pool Care', emoji: '🏊' },
+      { id: 'security', label: 'Security', emoji: '🛡️' }, { id: 'other', label: 'Other', emoji: '🤝' },
+    ]
+    const MOCK_HANDY = [
+      { id: 'h1', name: 'Carlos M.', trade: 'plumbing', rate: '€35/hr', location: 'Las Palmas', rating: 4.9, jobs: 47, available: true },
+      { id: 'h2', name: 'Ana L.', trade: 'cleaning', rate: '€12/hr', location: 'Maspalomas', rating: 4.8, jobs: 123, available: true },
+      { id: 'h3', name: 'Juan P.', trade: 'electrical', rate: '€40/hr', location: 'Telde', rating: 4.7, jobs: 62, available: false },
+      { id: 'h4', name: 'María R.', trade: 'painting', rate: '€25/hr', location: 'Vecindario', rating: 5.0, jobs: 28, available: true },
+      { id: 'h5', name: 'Ahmed K.', trade: 'gardening', rate: '€15/hr', location: 'Arucas', rating: 4.6, jobs: 89, available: true },
+    ]
+    const [selectedTrade, setSelectedTrade] = useState<string | null>(null)
+    const shownHandy = selectedTrade ? MOCK_HANDY.filter(h => h.trade === selectedTrade) : MOCK_HANDY
+    return (
+      <ActionPanel title="🔧 Handy Help" onClose={closePanel}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
+          {TRADES.map(tr => (
+            <button key={tr.id} onClick={() => setSelectedTrade(selectedTrade === tr.id ? null : tr.id)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 4px', borderRadius: 12, border: `2px solid ${selectedTrade === tr.id ? 'var(--orange)' : '#f0ebe4'}`, background: selectedTrade === tr.id ? '#FFF3EE' : '#fff', cursor: 'pointer' }}>
+              <span style={{ fontSize: 22 }}>{tr.emoji}</span>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: selectedTrade === tr.id ? 'var(--orange)' : '#555', textAlign: 'center' }}>{tr.label}</span>
+            </button>
+          ))}
+        </div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 10, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
+          {selectedTrade ? TRADES.find(t => t.id === selectedTrade)?.label : 'All'} · {shownHandy.length} available
+        </div>
+        {shownHandy.map(h => (
+          <div key={h.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
+            <div style={{ width: 48, height: 48, background: h.available ? '#f0fdf4' : '#f0f0f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>
+              {TRADES.find(t => t.id === h.trade)?.emoji ?? '🤝'}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{h.name}</span>
+                {h.available && <span style={{ background: '#d1fae5', color: '#065f46', fontFamily: 'var(--font-ui)', fontSize: 8, fontWeight: 900, padding: '1px 6px', borderRadius: 50 }}>AVAILABLE</span>}
+              </div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>⭐ {h.rating} · {h.jobs} jobs · 📍 {h.location}</div>
+            </div>
+            <div style={{ textAlign: 'right' as const }}>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--orange)' }}>{h.rate}</div>
+              <button onClick={() => openPanel('chatThread', { name: h.name })} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, cursor: 'pointer', marginTop: 4 }}>Contact</button>
+            </div>
+          </div>
+        ))}
+        <button onClick={() => openPanel('createListing', { category: 'Handy Help' })} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>+ Offer Your Services</button>
+      </ActionPanel>
+    )
+  }
+
+  // ── GRAB IT NOW (live deals) ─────────────────────────────────────────────────
+  if (panel.id === 'grabItNow') {
+    const DEALS = [
+      { id: 'g1', title: 'PS5 + 2 Controllers', price: 299, original: 380, emoji: '🎮', location: 'Las Palmas', expiresIn: 7200 },
+      { id: 'g2', title: 'iPhone 13 — Unlocked', price: 399, original: 550, emoji: '📱', location: 'Maspalomas', expiresIn: 16200 },
+      { id: 'g3', title: 'Clearance Sofa', price: 95, original: 320, emoji: '🛋️', location: 'Telde', expiresIn: 4200 },
+      { id: 'g4', title: 'MacBook Air M1', price: 599, original: 899, emoji: '💻', location: 'Las Palmas', expiresIn: 21600 },
+      { id: 'g5', title: 'Mountain Bike', price: 180, original: 340, emoji: '🚴', location: 'Arucas', expiresIn: 1800 },
+    ]
+    function DealCard({ deal }: { deal: typeof DEALS[0] }) {
+      const [secs, setSecs] = useState(deal.expiresIn)
+      useEffect(() => { const id = setInterval(() => setSecs(s => s > 0 ? s - 1 : 0), 1000); return () => clearInterval(id) }, [])
+      const h = Math.floor(secs / 3600).toString().padStart(2, '0')
+      const m = Math.floor((secs % 3600) / 60).toString().padStart(2, '0')
+      const s = (secs % 60).toString().padStart(2, '0')
+      const saving = deal.original - deal.price
+      const pct = Math.round((saving / deal.original) * 100)
+      return (
+        <div onClick={() => openPanel('checkout', { title: deal.title, price: deal.price })} style={{ background: '#fff', borderRadius: 14, border: '1px solid #f0ebe4', marginBottom: 10, overflow: 'hidden', cursor: 'pointer' }}>
+          <div style={{ background: 'linear-gradient(145deg,#FFF3EE,#FFE4D6)', height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 50, position: 'relative' }}>
+            {deal.emoji}
+            <span style={{ position: 'absolute', top: 8, left: 10, background: '#ef4444', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, padding: '3px 8px', borderRadius: 50 }}>-{pct}% OFF</span>
+          </div>
+          <div style={{ padding: '10px 14px' }}>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{deal.title}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 700, color: 'var(--orange)' }}>€{deal.price}</span>
+                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#bbb', textDecoration: 'line-through', marginLeft: 6 }}>€{deal.original}</span>
+              </div>
+              <div style={{ textAlign: 'right' as const }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#888', marginBottom: 2 }}>Expires in</div>
+                <span style={{ fontFamily: 'monospace', fontWeight: 900, fontSize: 13, color: secs < 1800 ? '#ef4444' : 'var(--orange)' }}>{h}:{m}:{s}</span>
+              </div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 4 }}>📍 {deal.location}</div>
+          </div>
+        </div>
+      )
+    }
+    return (
+      <ActionPanel title="⚡ Grab It Now" onClose={closePanel}>
+        <div style={{ background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: 14, padding: 14, marginBottom: 16, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: 800, marginBottom: 4 }}>⚡ FLASH DEALS — TODAY ONLY</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: '#fff', fontWeight: 700 }}>Grab before they're gone!</div>
+        </div>
+        {DEALS.map(deal => <DealCard key={deal.id} deal={deal} />)}
+      </ActionPanel>
+    )
+  }
+
+  // ── PROFILE ───────────────────────────────────────────────────────────────────
+  if (panel.id === 'profile') {
+    const GRADE_COLORS: Record<string, string> = { grabber: 'var(--orange)', dealer: '#eab308', trader: '#3b82f6', pro: '#8b5cf6' }
+    const GRADE_ICONS: Record<string, string> = { grabber: '🟠', dealer: '🟡', trader: '🔵', pro: '⭐' }
+    const MOCK_PROFILE = {
+      grade: 'dealer', salesCount: 23, avgRating: 4.8, reviewCount: 19,
+      memberSince: 'March 2026', verified: true, completionPct: 75,
+      nextGrade: 'trader', nextGradeNeed: '28 more sales & 4.5★ avg',
+      bio: 'Gran Canaria local. Selling quality electronics, furniture and sport gear. Fast responses, fair prices! 🌴',
+    }
+    const isOwnProfile = !panel.data?.userId || panel.data.userId === currentUserId
+    const displayName = (panel.data?.name as string) ?? (isOwnProfile ? 'Your Profile' : 'Seller Profile')
+    const gradeColor = GRADE_COLORS[MOCK_PROFILE.grade] ?? 'var(--orange)'
+    return (
+      <ActionPanel title="👤 Profile" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '16px 0 20px' }}>
+          <div style={{ width: 80, height: 80, background: `linear-gradient(135deg,${gradeColor},#FF8C00)`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, margin: '0 auto 12px' }}>👤</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--dark)', marginBottom: 2 }}>{displayName}</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 8 }}>Member since {MOCK_PROFILE.memberSince}</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <span style={{ background: `${gradeColor}22`, color: gradeColor, fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, padding: '4px 12px', borderRadius: 50 }}>{GRADE_ICONS[MOCK_PROFILE.grade]} {MOCK_PROFILE.grade.charAt(0).toUpperCase() + MOCK_PROFILE.grade.slice(1)}</span>
+            {MOCK_PROFILE.verified && <span style={{ background: '#d1fae5', color: '#065f46', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, padding: '4px 10px', borderRadius: 50 }}>✅ Verified</span>}
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
+          {[{ label: 'Sales', value: MOCK_PROFILE.salesCount }, { label: 'Rating', value: `${MOCK_PROFILE.avgRating}★` }, { label: 'Reviews', value: MOCK_PROFILE.reviewCount }].map(stat => (
+            <div key={stat.label} style={{ background: '#f9f6f2', borderRadius: 12, padding: '12px 8px', textAlign: 'center' as const }}>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, color: gradeColor }}>{stat.value}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', fontWeight: 800 }}>{stat.label}</div>
+            </div>
+          ))}
+        </div>
+        {MOCK_PROFILE.bio && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 14, padding: 12, background: '#f9f6f2', borderRadius: 12 }}>{MOCK_PROFILE.bio}</div>}
+        {isOwnProfile && (
+          <div style={{ background: '#fff', border: '1px solid #f0ebe4', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555' }}>Profile completion</span>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: gradeColor }}>{MOCK_PROFILE.completionPct}%</span>
+            </div>
+            <div style={{ height: 6, background: '#f0ebe4', borderRadius: 3, marginBottom: 8 }}>
+              <div style={{ height: '100%', width: `${MOCK_PROFILE.completionPct}%`, background: gradeColor, borderRadius: 3, transition: 'width 0.4s' }} />
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>Add a photo and verify your phone to reach 100%</div>
+          </div>
+        )}
+        <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: 'var(--orange)', marginBottom: 4 }}>🏆 Next grade: {MOCK_PROFILE.nextGrade.charAt(0).toUpperCase() + MOCK_PROFILE.nextGrade.slice(1)}</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{MOCK_PROFILE.nextGradeNeed}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={() => openPanel('mySales')} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>My Sales</button>
+          <button onClick={() => openPanel('mylistings')} style={{ flex: 1, background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>My Listings</button>
+        </div>
+        {!isOwnProfile && (
+          <button onClick={() => openPanel('report', { title: displayName })} style={{ width: '100%', background: 'none', color: '#ef4444', border: '1px solid #f0ebe4', borderRadius: 14, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 12, cursor: 'pointer', marginTop: 10 }}>🚨 Report this seller</button>
+        )}
+      </ActionPanel>
+    )
+  }
+
+  // ── FEATURE LISTING ───────────────────────────────────────────────────────────
+  if (panel.id === 'featureListing') {
+    const listingTitle = (panel.data?.title as string) || 'Your listing'
+    const [featWeeks, setFeatWeeks] = useState(1)
+    const [featSubmitting, setFeatSubmitting] = useState(false)
+    const [featDone, setFeatDone] = useState(false)
+    const totalCost = (1.99 * featWeeks).toFixed(2)
+    if (featDone) return (
+      <ActionPanel title="👀 Featured!" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <div style={{ fontSize: 60, marginBottom: 14 }}>🚀</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Listing is now featured!</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>"{listingTitle}" appears at the top of search for {featWeeks} week{featWeeks > 1 ? 's' : ''}.</div>
+          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 32px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>Done</button>
+        </div>
+      </ActionPanel>
+    )
+    return (
+      <ActionPanel title="👀 Feature Listing" onClose={closePanel}>
+        <div style={{ background: '#FFF3EE', borderRadius: 14, padding: 16, marginBottom: 16, textAlign: 'center' }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>👀</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>"{listingTitle}"</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Featured listings appear at the top of search and get 3× more views</div>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 10 }}>Choose duration</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+            {[1, 2, 3, 4].map(w => (
+              <button key={w} onClick={() => setFeatWeeks(w)} style={{ padding: '12px 4px', borderRadius: 12, border: `2px solid ${featWeeks === w ? 'var(--orange)' : '#e0d8d0'}`, background: featWeeks === w ? '#FFF3EE' : '#fff', cursor: 'pointer', textAlign: 'center' as const }}>
+                <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: featWeeks === w ? 'var(--orange)' : 'var(--dark)' }}>{w}wk</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 2 }}>€{(1.99 * w).toFixed(2)}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ background: '#f9f6f2', borderRadius: 12, padding: '14px 16px', marginBottom: 20 }}>
+          {[['Duration', `${featWeeks} week${featWeeks > 1 ? 's' : ''}`], ['Rate', '€1.99 / week'], ['Total', `€${totalCost}`]].map(([label, value], i) => (
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontFamily: 'var(--font-ui)', fontSize: 12, color: i === 2 ? 'var(--dark)' : '#666', fontWeight: i === 2 ? 900 : 400, borderTop: i === 2 ? '1px solid #e0d8d0' : 'none', marginTop: i === 2 ? 6 : 0, paddingTop: i === 2 ? 10 : 4 }}>
+              <span>{label}</span><span style={{ color: i === 2 ? 'var(--orange)' : undefined }}>{value}</span>
+            </div>
+          ))}
+        </div>
+        <button onClick={async () => { setFeatSubmitting(true); await new Promise(r => setTimeout(r, 1200)); setFeatSubmitting(false); setFeatDone(true) }} disabled={featSubmitting} style={{ width: '100%', background: featSubmitting ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: featSubmitting ? 'not-allowed' : 'pointer' }}>
+          {featSubmitting ? '⏳ Processing…' : `Pay €${totalCost} → Feature now`}
+        </button>
+      </ActionPanel>
+    )
+  }
+
+  // ── WISHLIST ──────────────────────────────────────────────────────────────────
+  if (panel.id === 'wishlist') {
+    const MOCK_WISHES = [
+      { id: 'w1', emoji: '📱', title: 'iPhone 14 Pro', price: '≤€600', dept: 'Electronics', matched: true },
+      { id: 'w2', emoji: '🚴', title: 'Mountain Bike', price: '≤€300', dept: 'Sport', matched: false },
+      { id: 'w3', emoji: '🎮', title: 'Nintendo Switch', price: '≤€200', dept: 'Gaming', matched: true },
+    ]
+    return (
+      <ActionPanel title="🎯 My Wishlist" onClose={closePanel}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 14 }}>We'll notify you when a matching listing appears.</div>
+        {MOCK_WISHES.map(w => (
+          <div key={w.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
+            <div style={{ width: 48, height: 48, background: w.matched ? '#FFF3EE' : '#f5f0e8', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0, position: 'relative' }}>
+              {w.emoji}
+              {w.matched && <span style={{ position: 'absolute', top: -4, right: -4, background: 'var(--orange)', color: '#fff', fontSize: 9, fontWeight: 900, borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>!</span>}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 2 }}>{w.title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{w.dept} · {w.price}</div>
+              {w.matched && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: 'var(--orange)', fontWeight: 900, marginTop: 2 }}>⚡ Match found — tap to view</div>}
+            </div>
+            <button onClick={() => openPanel('search', { query: w.title })} style={{ background: w.matched ? 'var(--orange)' : '#f5f0e8', color: w.matched ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>{w.matched ? 'View' : 'Search'}</button>
+          </div>
+        ))}
+        <button onClick={() => openPanel('search')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>+ Add wish</button>
+      </ActionPanel>
+    )
+  }
+
+  // ── FAVOURITES ────────────────────────────────────────────────────────────────
+  if (panel.id === 'favourites') {
+    const [favItems, setFavItems] = useState<{ listingId: string; listing: { id: string; title: string; price: number; location: string; status: string; images: string[] } }[] | null>(null)
+    const [favLoading, setFavLoading] = useState(true)
+    useEffect(() => {
+      getTrpcClient().then(client => client.wishlist.list.query()).then(data => {
+        setFavItems(data as unknown as typeof favItems)
+        setFavLoading(false)
+      }).catch(() => setFavLoading(false))
+    }, [])
+
+    const handleUnfavourite = async (listingId: string) => {
+      setFavItems(prev => prev?.filter(f => f.listingId !== listingId) ?? null)
+      const client = await getTrpcClient()
+      await client.wishlist.toggle.mutate({ listingId })
+    }
+
+    return (
+      <ActionPanel title="❤️ Favourites" onClose={closePanel}>
+        {favLoading ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : !favItems || favItems.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🤍</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a', marginBottom: 6 }}>No favourites yet</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Tap ❤️ on any listing to save it here.</div>
+          </div>
+        ) : favItems.map(f => {
+          const isSold = f.listing.status === 'sold'
+          return (
+            <div key={f.listingId} onClick={() => !isSold && openPanel('listing', { id: f.listingId })} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: isSold ? 'default' : 'pointer', opacity: isSold ? 0.6 : 1 }}>
+              <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, flexShrink: 0, overflow: 'hidden' }}>
+                {f.listing.images[0] ? <img src={f.listing.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🖼️'}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 2 }}>{f.listing.title}</div>
+                <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: 'var(--orange)' }}>€{f.listing.price}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>📍 {f.listing.location}</div>
+              </div>
+              {isSold ? (
+                <span style={{ background: '#f0f0f0', color: '#888', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50 }}>SOLD</span>
+              ) : (
+                <button onClick={e => { e.stopPropagation(); handleUnfavourite(f.listingId) }} style={{ background: '#fff', color: '#ef4444', border: '1px solid #f0ebe4', borderRadius: 50, padding: '5px 10px', fontFamily: 'var(--font-ui)', fontSize: 16, cursor: 'pointer' }}>❤️</button>
+              )}
+            </div>
+          )
+        })}
+      </ActionPanel>
+    )
+  }
+
+  // ── MY ACTIVITY ───────────────────────────────────────────────────────────────
+  if (panel.id === 'myActivity') {
+    const ACTIVITY = [
+      { icon: '🛒', title: 'Purchased PS5 Console', detail: 'from @gc_gaming_shop', time: '2h ago', color: '#3b82f6' },
+      { icon: '💬', title: 'Message sent to María R.', detail: 'Re: Cleaning — Handy Help', time: '4h ago', color: '#8b5cf6' },
+      { icon: '💰', title: 'Offer received on Surfboard', detail: 'Dave M. offered €85', time: '6h ago', color: 'var(--orange)' },
+      { icon: '⭐', title: 'Review left for @seller_anna', detail: '5★ — Great seller!', time: '1d ago', color: '#eab308' },
+      { icon: '📦', title: 'Listed IKEA Sofa', detail: '€180 · Las Palmas', time: '2d ago', color: 'var(--sage)' },
+      { icon: '✅', title: 'Handover confirmed', detail: 'iPhone 13 — Released to @seller_mike', time: '3d ago', color: '#16a34a' },
+    ]
+    return (
+      <ActionPanel title="📋 My Activity" onClose={closePanel}>
+        {currentUserId ? ACTIVITY.map((a, i) => (
+          <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'flex-start' }}>
+            <div style={{ width: 40, height: 40, background: `${a.color}18`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{a.icon}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 2 }}>{a.title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{a.detail}</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#bbb', flexShrink: 0 }}>{a.time}</div>
+          </div>
+        )) : (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🔐</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>Log in to see your activity</div>
+            <button onClick={() => openPanel('login')} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 24px', fontFamily: 'var(--font-ui)', fontWeight: 900, cursor: 'pointer' }}>Log in</button>
+          </div>
+        )}
+      </ActionPanel>
+    )
+  }
+
+  // ── MY RATINGS ────────────────────────────────────────────────────────────────
+  if (panel.id === 'myRatings') {
+    const RATINGS = [
+      { from: 'Anna T.', rating: 5, comment: 'Quick and easy — great condition, exactly as described!', date: '28 Jun', role: 'buyer' },
+      { from: 'Carlos M.', rating: 5, comment: 'Super fast payment, would buy from again.', date: '22 Jun', role: 'seller' },
+      { from: 'Emma W.', rating: 4, comment: 'Nice item, slight delay but all good in the end.', date: '15 Jun', role: 'buyer' },
+      { from: 'Pete L.', rating: 5, comment: 'Excellent seller — recommended!', date: '8 Jun', role: 'buyer' },
+    ]
+    const avgRating = RATINGS.reduce((s, r) => s + r.rating, 0) / RATINGS.length
+    return (
+      <ActionPanel title="⭐ My Ratings" onClose={closePanel}>
+        <div style={{ background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: 14, padding: 20, marginBottom: 16, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 48, fontWeight: 700, color: '#fff' }}>{avgRating.toFixed(1)}</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, color: 'rgba(255,255,255,0.9)' }}>{'⭐'.repeat(Math.round(avgRating))} · {RATINGS.length} reviews</div>
+        </div>
+        {RATINGS.map((r, i) => (
+          <div key={i} style={{ background: '#fff', borderRadius: 12, border: '1px solid #f0ebe4', padding: '14px 12px', marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ width: 32, height: 32, background: '#f5f0e8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>👤</div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--dark)' }}>{r.from}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>as {r.role} · {r.date}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 14, color: '#f59e0b' }}>{'⭐'.repeat(r.rating)}</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', lineHeight: 1.5, fontStyle: 'italic' }}>"{r.comment}"</div>
+          </div>
+        ))}
+      </ActionPanel>
+    )
+  }
+
+  // ── REPORT ────────────────────────────────────────────────────────────────────
+  if (panel.id === 'report') {
+    const reportTarget = (panel.data?.title as string) || 'this listing'
+    const REPORT_REASONS = [
+      { id: 'scam', label: '🚨 Suspected scam / fraud', desc: 'Trying to scam or defraud people' },
+      { id: 'prohibited', label: '🚫 Prohibited item', desc: 'Item should not be sold on Grabitt' },
+      { id: 'fake', label: '📸 Fake photos / misleading', desc: 'Photos or description do not match the item' },
+      { id: 'price', label: '💰 Price gouging', desc: 'Abnormally high price for this item' },
+      { id: 'duplicate', label: '🔁 Duplicate listing', desc: 'Item has been listed more than once' },
+      { id: 'other', label: '❓ Other', desc: 'Other reason not listed above' },
+    ]
+    const [reportReason, setReportReason] = useState('')
+    const [reportNotes, setReportNotes] = useState('')
+    const [reportDone, setReportDone] = useState(false)
+    const [reportSubmitting, setReportSubmitting] = useState(false)
+    if (reportDone) return (
+      <ActionPanel title="✅ Report submitted" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <div style={{ fontSize: 56, marginBottom: 14 }}>🛡️</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Thanks for keeping Grabitt safe</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>Our team reviews all reports within 24 hours.</div>
+          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 24px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>Done</button>
+        </div>
+      </ActionPanel>
+    )
+    return (
+      <ActionPanel title="🚨 Report" onClose={closePanel}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 12 }}>Reporting: <strong>{reportTarget}</strong></div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 8 }}>Reason</div>
+        {REPORT_REASONS.map(r => (
+          <div key={r.id} onClick={() => setReportReason(r.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, border: `2px solid ${reportReason === r.id ? 'var(--orange)' : '#f0ebe4'}`, background: reportReason === r.id ? '#FFF3EE' : '#fff', marginBottom: 8, cursor: 'pointer' }}>
+            <div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: reportReason === r.id ? 'var(--orange)' : 'var(--dark)' }}>{r.label}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 2 }}>{r.desc}</div>
+            </div>
+            <div style={{ width: 20, height: 20, border: `2px solid ${reportReason === r.id ? 'var(--orange)' : '#e0d8d0'}`, borderRadius: '50%', flexShrink: 0, background: reportReason === r.id ? 'var(--orange)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {reportReason === r.id && <div style={{ width: 8, height: 8, background: '#fff', borderRadius: '50%' }} />}
+            </div>
+          </div>
+        ))}
+        <textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} placeholder="Additional details (optional)…" rows={3} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, resize: 'vertical' as const, boxSizing: 'border-box' as const, marginTop: 8, marginBottom: 16 }} />
+        <button onClick={async () => { if (!reportReason) return; setReportSubmitting(true); await new Promise(r => setTimeout(r, 800)); setReportSubmitting(false); setReportDone(true) }} disabled={!reportReason || reportSubmitting} style={{ width: '100%', background: !reportReason || reportSubmitting ? '#ccc' : '#ef4444', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: !reportReason ? 'not-allowed' : 'pointer' }}>
+          {reportSubmitting ? 'Submitting…' : '🚨 Submit Report'}
+        </button>
+      </ActionPanel>
+    )
+  }
+
+  // ── FOLLOWING ─────────────────────────────────────────────────────────────────
+  if (panel.id === 'following') {
+    const FOLLOWING_LIST = [
+      { id: '1', name: 'GC Gaming Shop', handle: '@gcgaming', grade: 'dealer', items: 45, emoji: '🎮' },
+      { id: '2', name: 'María Moda', handle: '@mariamoda', grade: 'grabber', items: 12, emoji: '👗' },
+      { id: '3', name: 'TechGC', handle: '@techgc', grade: 'trader', items: 89, emoji: '📱' },
+    ]
+    const GRADE_C: Record<string, string> = { grabber: 'var(--orange)', dealer: '#eab308', trader: '#3b82f6', pro: '#8b5cf6' }
+    return (
+      <ActionPanel title="👥 Following" onClose={closePanel}>
+        {FOLLOWING_LIST.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>👥</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>Not following anyone yet</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Follow sellers to see their new listings instantly.</div>
+          </div>
+        ) : FOLLOWING_LIST.map(s => (
+          <div key={s.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
+            <div style={{ width: 50, height: 50, background: '#f5f0e8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>{s.emoji}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{s.name}</span>
+                <span style={{ background: `${GRADE_C[s.grade]}22`, color: GRADE_C[s.grade], fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '2px 7px', borderRadius: 50 }}>{s.grade}</span>
+              </div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{s.handle} · {s.items} listings</div>
+            </div>
+            <button style={{ background: '#f5f0e8', color: '#555', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Unfollow</button>
+          </div>
+        ))}
+      </ActionPanel>
+    )
+  }
+
+  // ── VERIFY ME ─────────────────────────────────────────────────────────────────
+  if (panel.id === 'verifyMe') {
+    const VERIFY_STEPS = [
+      { id: 'email', label: '📧 Email', done: true },
+      { id: 'phone', label: '📱 Phone number', done: false },
+      { id: 'id', label: '🪪 ID document', done: false },
+      { id: 'address', label: '🏠 Address', done: false },
+    ]
+    return (
+      <ActionPanel title="✅ Verify Me" onClose={closePanel}>
+        <div style={{ background: '#FFF3EE', borderRadius: 14, padding: 14, marginBottom: 16, textAlign: 'center' }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>🔒</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Build trust with buyers & sellers</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>Verified members get 2× more responses</div>
+        </div>
+        {VERIFY_STEPS.map(step => (
+          <div key={step.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f5f5f5' }}>
+            <div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{step.label}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: step.done ? '#16a34a' : '#888', marginTop: 2 }}>{step.done ? '✅ Verified' : 'Not verified'}</div>
+            </div>
+            {!step.done && (
+              <button style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, cursor: 'pointer' }}>Verify →</button>
+            )}
+          </div>
+        ))}
+      </ActionPanel>
+    )
+  }
+
+  // ── BUSINESS ACCOUNT ──────────────────────────────────────────────────────────
+  if (panel.id === 'business') {
+    const [bizStep, setBizStep] = useState<'info'|'type'|'trial'|'done'>('info')
+    const [bizName, setBizName] = useState('')
+    const [bizType, setBizType] = useState('')
+    const BIZ_TYPES = [
+      { id: 'shop', label: '🏪 Retail Shop', desc: 'Physical shop selling goods' },
+      { id: 'trade', label: '🔧 Trade & Services', desc: 'Plumber, electrician, cleaner…' },
+      { id: 'restaurant', label: '🍽️ Restaurant / Bar', desc: 'Food & drink establishment' },
+      { id: 'agency', label: '🏠 Estate Agent', desc: 'Property sales or lettings' },
+      { id: 'recruiter', label: '💼 Recruitment / HR', desc: 'Job placement or staffing' },
+      { id: 'other', label: '📋 Other', desc: 'Other type of business' },
+    ]
+    if (bizStep === 'done') return (
+      <ActionPanel title="🎉 Business Account Activated" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <div style={{ fontSize: 56, marginBottom: 14 }}>🏪</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Welcome, {bizName}!</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 8 }}>Your 21-day free trial has started.</div>
+          <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 14, marginBottom: 20 }}>
+            {['Unlimited listings during trial', 'Business storefront page', 'Analytics dashboard', 'Priority support'].map((f, i) => (
+              <div key={i} style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', padding: '4px 0' }}>✅ {f}</div>
+            ))}
+          </div>
+          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 32px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>Start selling →</button>
+        </div>
+      </ActionPanel>
+    )
+    return (
+      <ActionPanel title="🏪 Business Account" onClose={closePanel}>
+        {bizStep === 'info' && (
+          <>
+            <div style={{ background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: 14, padding: 16, marginBottom: 16, textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4 }}>21-day free trial</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>No credit card required</div>
+            </div>
+            {['Unlimited listings', 'Business storefront', 'Analytics & insights', 'Reduced seller fees', 'Priority placement'].map((f, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid #f5f5f5', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555' }}><span>✅</span><span>{f}</span></div>
+            ))}
+            <button onClick={() => setBizStep('type')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 20 }}>Start free trial →</button>
+          </>
+        )}
+        {bizStep === 'type' && (
+          <>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>What type of business?</div>
+            {BIZ_TYPES.map(t => (
+              <div key={t.id} onClick={() => setBizType(t.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, border: `2px solid ${bizType === t.id ? 'var(--orange)' : '#f0ebe4'}`, background: bizType === t.id ? '#FFF3EE' : '#fff', marginBottom: 8, cursor: 'pointer' }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: bizType === t.id ? 'var(--orange)' : 'var(--dark)' }}>{t.label}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 2 }}>{t.desc}</div>
+                </div>
+              </div>
+            ))}
+            <input value={bizName} onChange={e => setBizName(e.target.value)} placeholder="Business name *" style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' as const, marginTop: 12 }} />
+            <button onClick={() => { if (bizType && bizName.trim()) setBizStep('trial') }} disabled={!bizType || !bizName.trim()} style={{ width: '100%', background: !bizType || !bizName.trim() ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: !bizType ? 'not-allowed' : 'pointer', marginTop: 16 }}>Continue →</button>
+          </>
+        )}
+        {bizStep === 'trial' && (
+          <>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>Confirm your 21-day trial</div>
+            <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+              {[['Business name', bizName], ['Business type', BIZ_TYPES.find(t => t.id === bizType)?.label ?? ''], ['Trial period', '21 days free'], ['After trial', 'Plans from €19.99/mo']].map(([l, v]) => (
+                <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', borderBottom: '1px solid #f0ebe4' }}>
+                  <span>{l}</span><span style={{ fontWeight: 800, color: 'var(--dark)' }}>{v}</span>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setBizStep('done')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>🚀 Activate Trial — Free for 21 Days</button>
+          </>
+        )}
+      </ActionPanel>
     )
   }
 
