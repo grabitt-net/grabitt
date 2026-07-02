@@ -1,23 +1,32 @@
 import { z } from 'zod'
-import bcrypt from 'bcryptjs'
 import { TRPCError } from '@trpc/server'
-import { router, publicProcedure, execProcedure } from '../trpc'
+import { router, publicProcedure } from '../trpc'
 import { prisma } from '../db'
-import { signConsumerJwt, signExecJwt } from '../middleware/auth'
-import { RegisterInputSchema, LoginInputSchema } from '@grabitt/types'
+import { RegisterInputSchema } from '@grabitt/types'
 import { PRICES } from '@grabitt/design-tokens'
 
-export const authRouter = router({
-  register: publicProcedure
-    .input(RegisterInputSchema)
-    .mutation(async ({ input }) => {
-      const existing = await prisma.user.findUnique({ where: { email: input.email } })
-      if (existing) throw new TRPCError({ code: 'CONFLICT', message: 'Email already registered' })
+// SECURITY (§ auth): Identity is owned by Supabase Auth.
+// - Consumers sign in via Supabase (email/password or OAuth) on the client.
+// - The web app derives the tRPC/exec identity server-side in app/admin/page.tsx,
+//   only AFTER validating the Supabase session and the is_admin flag.
+// This router therefore MUST NOT mint app JWTs from an unauthenticated email
+// lookup. The previous login/execLogin did exactly that (no password check),
+// which allowed anyone to impersonate any user or exec. They are removed.
 
-      const supabaseId = input.email // replaced by actual Supabase auth flow
+export const authRouter = router({
+  // Provisions the Prisma profile row that mirrors a freshly-created Supabase user.
+  // Requires a verified Supabase user id — never issues a session token itself.
+  provisionProfile: publicProcedure
+    .input(RegisterInputSchema.extend({ supabaseId: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const existing = await prisma.user.findFirst({
+        where: { OR: [{ email: input.email }, { supabaseId: input.supabaseId }] },
+      })
+      if (existing) return { user: existing, created: false }
+
       const user = await prisma.user.create({
         data: {
-          supabaseId,
+          supabaseId: input.supabaseId,
           email: input.email,
           displayName: input.displayName,
           locale: input.locale,
@@ -25,7 +34,6 @@ export const authRouter = router({
         },
       })
 
-      // Registration bonus credit event
       await prisma.creditEvent.create({
         data: {
           userId: user.id,
@@ -36,26 +44,22 @@ export const authRouter = router({
         },
       })
 
-      const token = signConsumerJwt({ id: user.id, grade: user.grade })
-      return { token, user }
+      return { user, created: true }
     }),
 
-  login: publicProcedure
-    .input(LoginInputSchema)
-    .mutation(async ({ input }) => {
-      const user = await prisma.user.findUnique({ where: { email: input.email } })
-      if (!user) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid credentials' })
-      const token = signConsumerJwt({ id: user.id, grade: user.grade })
-      return { token, user }
-    }),
+  // Retained as explicit failures so any stale client gets a clear signal rather
+  // than a silently-minted, unauthenticated token.
+  login: publicProcedure.mutation(() => {
+    throw new TRPCError({
+      code: 'NOT_IMPLEMENTED',
+      message: 'Sign in via Supabase Auth. This endpoint no longer issues tokens.',
+    })
+  }),
 
-  execLogin: publicProcedure
-    .input(z.object({ email: z.string().email(), password: z.string() }))
-    .mutation(async ({ input }) => {
-      const execUser = await prisma.execUser.findUnique({ where: { email: input.email } })
-      if (!execUser) throw new TRPCError({ code: 'UNAUTHORIZED' })
-      // 4-hour session, no silent refresh
-      const token = signExecJwt({ id: execUser.id, role: execUser.role })
-      return { token, execUser }
-    }),
+  execLogin: publicProcedure.mutation(() => {
+    throw new TRPCError({
+      code: 'NOT_IMPLEMENTED',
+      message: 'Exec access is granted through the Supabase-authenticated admin route.',
+    })
+  }),
 })

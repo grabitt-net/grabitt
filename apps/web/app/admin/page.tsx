@@ -4,7 +4,11 @@ import AdminApp from '@/components/admin/AdminApp'
 import { SignJWT } from 'jose'
 
 async function makeExecToken(): Promise<string> {
-  const secret = new TextEncoder().encode(process.env.EXEC_JWT_SECRET ?? 'exec-secret-change-me')
+  // Fail hard if the secret is missing — never fall back to a predictable value,
+  // or exec/admin tokens could be forged by anyone who knows the default.
+  const rawSecret = process.env.EXEC_JWT_SECRET
+  if (!rawSecret) throw new Error('EXEC_JWT_SECRET is not configured')
+  const secret = new TextEncoder().encode(rawSecret)
   return new SignJWT({ role: 'admin', id: 'admin-page' })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('4h')
