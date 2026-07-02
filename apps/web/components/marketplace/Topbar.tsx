@@ -1,48 +1,100 @@
 'use client'
+import { useState } from 'react'
 import { usePanel } from '@/context/PanelContext'
+import IconRail from './IconRail'
+
+// Mirrors the HTML .topbar: a single sticky header containing row1
+// (logo + tagline on the left, search + 📍Near on the right) and the
+// 7-button icon rail beneath it. There is no separate search row and no
+// "Member" button in the header — login lives in the rail.
+
+const GC_TOWNS = [
+  { name: 'Las Palmas', lat: 28.1235, lng: -15.4363 },
+  { name: 'Maspalomas', lat: 27.7606, lng: -15.5860 },
+  { name: 'Playa del Inglés', lat: 27.7560, lng: -15.5730 },
+  { name: 'Telde', lat: 27.9985, lng: -15.4197 },
+  { name: 'Arguineguín', lat: 27.7600, lng: -15.6850 },
+  { name: 'Puerto Rico', lat: 27.7900, lng: -15.7100 },
+  { name: 'Mogán', lat: 27.8870, lng: -15.7230 },
+  { name: 'Vecindario', lat: 27.8160, lng: -15.4470 },
+  { name: 'Gáldar', lat: 28.1440, lng: -15.6510 },
+  { name: 'Arucas', lat: 28.1190, lng: -15.5230 },
+]
+
+function nearestTown(lat: number, lng: number) {
+  let best = GC_TOWNS[0]
+  let bestDist = Infinity
+  GC_TOWNS.forEach(t => {
+    const d = (lat - t.lat) ** 2 + (lng - t.lng) ** 2
+    if (d < bestDist) { bestDist = d; best = t }
+  })
+  return best.name
+}
 
 export default function Topbar() {
   const { openPanel } = usePanel()
+  const [query, setQuery] = useState('')
+
+  const handleSearch = () => {
+    if (query.trim()) openPanel('search', { q: query.trim() })
+  }
+
+  const handleNearMe = () => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      openPanel('near', { town: 'Gran Canaria' })
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => openPanel('near', { town: nearestTown(pos.coords.latitude, pos.coords.longitude) }),
+      () => openPanel('near', { town: 'Las Palmas' }),
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 0 }
+    )
+  }
 
   return (
     <header style={{
       background: 'var(--sand)',
-      padding: '10px 14px',
       position: 'sticky',
       top: 0,
       zIndex: 200,
       borderBottom: '1.5px solid var(--sand2)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
     }}>
-      <div onClick={() => openPanel('menu')} style={{ cursor: 'pointer' }}>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, letterSpacing: -1, lineHeight: 1 }}>
-          <span style={{ color: 'var(--orange)' }}>Grab</span>
-          <span style={{ color: 'var(--dark)' }}>itt</span>
-          <span style={{ color: 'var(--orange)' }}>!</span>
+      {/* Row 1 — logo + search + Near */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', padding: '10px 14px 0' }}>
+        <div onClick={() => openPanel('menu')} style={{ flexShrink: 0, cursor: 'pointer' }}>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, letterSpacing: -1, lineHeight: 1 }}>
+            <span style={{ color: 'var(--orange)' }}>Grab</span>
+            <span style={{ color: 'var(--dark)' }}>itt</span>
+            <span style={{ color: 'var(--orange)' }}>!</span>
+          </div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: '#7a6a55', fontWeight: 700, marginTop: 1, whiteSpace: 'nowrap' }}>
+            Your local everything
+          </div>
         </div>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: '#7a6a55', fontWeight: 700, marginTop: 1 }}>
-          Your local everything
+
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginLeft: 8, minWidth: 0, maxWidth: '62%' }}>
+          <div style={{ flex: 1, background: '#fff', borderRadius: 50, display: 'flex', alignItems: 'center', padding: '7px 5px 7px 11px', gap: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: 0 }}>
+            <span style={{ fontSize: 13, flexShrink: 0 }}>🔍</span>
+            <input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleSearch() }}
+              placeholder="Search..."
+              style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', background: 'transparent', minWidth: 0 }}
+            />
+            <button
+              onClick={e => { e.stopPropagation(); handleNearMe() }}
+              title="Show items near me"
+              style={{ flexShrink: 0, background: '#FFF3EE', color: 'var(--orange)', border: 'none', borderRadius: 50, padding: '5px 8px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              📍 Near
+            </button>
+          </div>
         </div>
       </div>
 
-      <button
-        onClick={() => openPanel('login')}
-        style={{
-          background: 'var(--orange)',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 50,
-          padding: '9px 18px',
-          fontFamily: 'var(--font-ui)',
-          fontSize: 13,
-          fontWeight: 900,
-          cursor: 'pointer',
-        }}
-      >
-        Member
-      </button>
+      {/* Row 2 — 7-button icon rail */}
+      <IconRail />
     </header>
   )
 }

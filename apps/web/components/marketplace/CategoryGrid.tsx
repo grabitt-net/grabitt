@@ -12,7 +12,7 @@ const categories = [
   { icon: '🎁', name: 'Gift Ideas', grad: 'linear-gradient(135deg,#f953c6,#b91d73)' },
   { icon: '🧸', name: 'Kids & Baby', grad: 'linear-gradient(135deg,#f9d423,#ff4e50)' },
   { icon: '🏠', name: 'Property', grad: 'linear-gradient(135deg,#e96c2a,#f5a623)' },
-  { icon: '💊', name: 'Health & Fitness', grad: 'linear-gradient(135deg,#43cea2,#185a9d)' },
+  { icon: '💊', name: 'Health, Fitness & Diet', grad: 'linear-gradient(135deg,#43cea2,#185a9d)' },
   { icon: '🥖', name: 'Food Store', grad: 'linear-gradient(135deg,#8e44ad,#c0392b)' },
   { icon: '🕺', name: 'Retro & Vintage', grad: 'linear-gradient(135deg,#d35400,#7a4419)' },
   { icon: '🛍️', name: 'Grab It Now', grad: 'linear-gradient(135deg,#FF4500,#FF8C00)' },

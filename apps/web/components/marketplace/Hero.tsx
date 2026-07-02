@@ -24,7 +24,7 @@ export default function Hero() {
                 style={{
                   flex: 1, minWidth: 0, background: '#fff', color: '#1a1a1a',
                   border: '2px solid var(--orange)', borderRadius: 10,
-                  padding: '9px 2px', fontFamily: 'var(--font-nunito)', fontSize: 9,
+                  padding: '9px 2px', fontFamily: 'var(--font-ui)', fontSize: 9,
                   fontWeight: 900, cursor: 'pointer', lineHeight: 1.15,
                 }}
               >
@@ -39,7 +39,7 @@ export default function Hero() {
           style={{
             width: '100%', background: 'linear-gradient(135deg, #FF4500, #FF8C00)',
             color: '#fff', border: 'none', borderRadius: 12,
-            padding: '9px 13px', fontFamily: 'var(--font-nunito)', fontSize: 14,
+            padding: '9px 13px', fontFamily: 'var(--font-ui)', fontSize: 14,
             fontWeight: 900, cursor: 'pointer', boxShadow: '0 3px 12px rgba(255,69,0,0.30)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}

@@ -30,7 +30,7 @@ export default function IconRail() {
   ]
 
   return (
-    <div style={{ background: 'var(--sand)', borderTop: '1px solid rgba(122,106,85,0.18)' }}>
+    <div style={{ borderTop: '1px solid rgba(122,106,85,0.18)', marginTop: 6 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 2, padding: '8px 8px 2px' }}>
         {items.map(item => (
           <button
