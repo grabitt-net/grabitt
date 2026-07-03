@@ -135,6 +135,67 @@ export default function PanelHost() {
   return <PanelBody key={panel.id} />
 }
 
+// Seller records the courier tracking number for a delivery order. Funds are
+// released automatically when the tracking webhook reports the first scan —
+// the seller does not release funds here.
+function CourierTrackingForm({ transactionId, title, onClose }: { transactionId: string; title: string; onClose: () => void }) {
+  const [carrier, setCarrier] = useState('')
+  const [trackingNumber, setTrackingNumber] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [done, setDone] = useState(false)
+
+  const submit = async () => {
+    setSaving(true)
+    setError('')
+    try {
+      const client = await getTrpcClient()
+      await client.transactions.submitTracking.mutate({ transactionId, carrier: carrier.trim(), trackingNumber: trackingNumber.trim() })
+      setDone(true)
+    } catch (err) {
+      setError((err as Error).message || 'Failed to submit tracking')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (done) return (
+    <ActionPanel title="📦 Tracking added" onClose={onClose}>
+      <div style={{ textAlign: 'center', padding: '30px 0' }}>
+        <div style={{ fontSize: 56, marginBottom: 14 }}>📦</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Tracking submitted</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>
+          Your payment for "{title}" will be released automatically once the courier's first scan shows the parcel in transit.
+        </div>
+        <button onClick={onClose} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
+      </div>
+    </ActionPanel>
+  )
+
+  return (
+    <ActionPanel title="📦 Add courier tracking" onClose={onClose}>
+      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 16 }}>
+        Post <strong>{title}</strong> by a tracked courier and enter the details below. You'll be paid automatically once tracking shows the parcel in transit — no QR needed.
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Courier</div>
+        <input value={carrier} onChange={e => setCarrier(e.target.value)} placeholder="e.g. Correos, SEUR, DHL, GLS"
+          style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+      </div>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Tracking number</div>
+        <input value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} placeholder="e.g. PK123456789ES"
+          style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'monospace', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+      </div>
+      {error && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{error}</div>}
+      <button onClick={submit} disabled={saving || !carrier.trim() || trackingNumber.trim().length < 3}
+        style={{ width: '100%', background: (saving || !carrier.trim() || trackingNumber.trim().length < 3) ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+        {saving ? '⏳ Submitting…' : 'Submit tracking →'}
+      </button>
+    </ActionPanel>
+  )
+}
+
 function PanelBody() {
   const { panel, closePanel, openPanel } = usePanel()
   const [shieldTab, setShieldTab] = useState<string>('promise')
@@ -1239,6 +1300,7 @@ function PanelBody() {
     const priceNum = parseFloat(price.replace(/[^0-9.]/g, '')) || 0
 
     const deliveryFee = Number(item.deliveryFee) || 0
+    const deliveryMethod = (item.deliveryMethod as string) || 'courier'
 
     const [step, setStep] = useState<'summary' | 'card' | 'processing' | 'success'>('summary')
     const [qty, setQty] = useState(1)
@@ -1263,7 +1325,7 @@ function PanelBody() {
         const listingId = (item.id as string) || (item.listingId as string) || ''
         if (listingId) {
           const client = await getTrpcClient()
-          const result = await client.transactions.initiate.mutate({ listingId, quantity: qty, fulfilmentType: fulfil })
+          const result = await client.transactions.initiate.mutate({ listingId, quantity: qty, fulfilment: fulfil })
           setTransactionId(result.transaction.id)
         }
         setStep('success')
@@ -1375,7 +1437,9 @@ function PanelBody() {
                 </div>
                 <div style={{ background: fulfil === 'delivery' ? '#eef6ff' : '#FFF3EE', borderRadius: 10, padding: '9px 12px', marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11, color: fulfil === 'delivery' ? '#2563eb' : 'var(--orange)' }}>
                   {fulfil === 'delivery'
-                    ? `🚚 Delivery${delFee > 0 ? ` (+${fmt(delFee)})` : ' (free)'} — must be sent by tracked delivery. Funds are released to the seller once tracking shows the item in transit.`
+                    ? (deliveryMethod === 'in_person'
+                        ? `🚚 Delivery${delFee > 0 ? ` (+${fmt(delFee)})` : ' (free)'} — the seller delivers in person; scan the QR code on arrival to release funds.`
+                        : `🚚 Delivery${delFee > 0 ? ` (+${fmt(delFee)})` : ' (free)'} — sent by tracked courier; funds release once tracking shows the item in transit.`)
                     : '🤝 Collection — scan the QR code at handover to release funds.'}
                 </div>
 
@@ -1540,6 +1604,12 @@ function PanelBody() {
     const transactionId = (item.transactionId as string) || ''
     const role = (item.role as 'seller' | 'buyer') || 'buyer'
     const title = (item.title as string) || 'Item'
+    const fulfilmentType = (item.fulfilmentType as string) || ''
+
+    // ── Courier order: seller submits tracking (no QR) ────────────────────────
+    if (role === 'seller' && fulfilmentType === 'courier') {
+      return <CourierTrackingForm transactionId={transactionId} title={title} onClose={closePanel} />
+    }
 
     // ── Seller view: generate QR ──────────────────────────────────────────────
     if (role === 'seller') {
@@ -1959,6 +2029,7 @@ function PanelBody() {
     const [price, setPrice] = useState('')
     const [freeItem, setFreeItem] = useState(false)
     const [offersDelivery, setOffersDelivery] = useState(false)
+    const [deliveryMethod, setDeliveryMethod] = useState<'courier' | 'in_person'>('courier')
     const [deliveryFee, setDeliveryFee] = useState('')
     const [town, setTown] = useState('Las Palmas')
     const [grabItNow, setGrabItNow] = useState(false)
@@ -2123,6 +2194,16 @@ function PanelBody() {
                   </div>
                   {offersDelivery && (
                     <div style={{ marginTop: 12 }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>Delivery method</div>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                        <button onClick={() => setDeliveryMethod('courier')} style={{ flex: 1, background: deliveryMethod === 'courier' ? 'var(--ocean)' : '#f0f0f0', color: deliveryMethod === 'courier' ? '#fff' : '#666', border: 'none', borderRadius: 10, padding: '8px 4px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>📦 Courier (tracked)</button>
+                        <button onClick={() => setDeliveryMethod('in_person')} style={{ flex: 1, background: deliveryMethod === 'in_person' ? 'var(--ocean)' : '#f0f0f0', color: deliveryMethod === 'in_person' ? '#fff' : '#666', border: 'none', borderRadius: 10, padding: '8px 4px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>🤝 In person (QR)</button>
+                      </div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginBottom: 10 }}>
+                        {deliveryMethod === 'courier'
+                          ? 'Send by tracked courier — you get paid once tracking shows the parcel in transit.'
+                          : 'You deliver in person — the buyer scans your QR code on arrival to release funds.'}
+                      </div>
                       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>Delivery fee (€)</div>
                       <div style={{ position: 'relative' }}>
                         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 16, color: '#888' }}>€</span>
@@ -2243,6 +2324,7 @@ function PanelBody() {
                       images: imageUrls,
                       location: town,
                       deliveryFee: offersDelivery ? (parseFloat(deliveryFee) || 0) : 0,
+                      deliveryMethod: offersDelivery ? deliveryMethod : undefined,
                     })
                     setStep('done')
                   } catch (err) {

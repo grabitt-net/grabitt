@@ -173,6 +173,7 @@ model Listing {
   grabItNowWindow  Int?
   grabItNowPrice   Decimal?         @db.Decimal(10, 2)
   deliveryFee      Decimal          @default(0) @db.Decimal(10, 2)
+  deliveryMethod   DeliveryMethod?  // null = delivery not offered (collection only)
   viewCount        Int              @default(0)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
@@ -207,8 +208,15 @@ enum TransactionStatus {
 }
 
 enum FulfilmentType {
-  collection
-  delivery
+  collection   // buyer collects in person — released via QR handover scan
+  courier      // shipped by tracked courier — released on first waypoint scan (in transit)
+  delivery     // seller delivers in person (charged) — released via QR handover scan
+}
+
+// How a seller fulfils delivery when they offer it on a listing
+enum DeliveryMethod {
+  courier      // tracked shipping
+  in_person    // seller drops off, confirmed by QR at the door
 }
 
 model Transaction {
@@ -229,6 +237,9 @@ model Transaction {
   stripeTransferId      String?
   handoverQrToken       String?           // signed token for QR handover confirmation
   handoverConfirmedAt   DateTime?
+  trackingCarrier       String?           // courier fulfilment: carrier name/slug
+  trackingNumber        String?           // courier fulfilment: tracking number
+  firstScanAt           DateTime?         // courier: first waypoint scan → funds release trigger
   fundsReleasedAt       DateTime?
   autoReleaseAt         DateTime?         // 14 days after handoverConfirmedAt (§10.2)
   createdAt             DateTime          @default(now())

@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server'
 import Stripe from 'stripe'
 import jwt from 'jsonwebtoken'
 import QRCode from 'qrcode'
+import { Prisma, type PrismaClient } from '@prisma/client'
 import { router, protectedProcedure } from '../trpc'
 import { RateTransactionInputSchema } from '@grabitt/types'
 import { FEE_RATES, FUND_RELEASE_AUTO_DAYS } from '@grabitt/design-tokens'
@@ -38,6 +39,90 @@ function shortCode(token: string): string {
   return sig.slice(-6).toUpperCase()
 }
 
+// ── SHARED FUND RELEASE ────────────────────────────────────────────────────────
+// The single place that captures the Stripe payment and pays the seller. Reached
+// by two gates only: (1) QR handover scan — collection & in-person delivery;
+// (2) courier first-waypoint scan — tracked delivery. Never call from anywhere else.
+type ReleasableTx = {
+  id: string; buyerId: string; sellerId: string; listingId: string
+  sellerNet: unknown; stripePaymentIntentId: string | null
+}
+
+async function releaseFundsToSeller(
+  prisma: PrismaClient,
+  tx: ReleasableTx,
+  via: 'handover' | 'courier',
+) {
+  // Capture the held PaymentIntent — funds are NEVER released without this (§10.2)
+  if (tx.stripePaymentIntentId) {
+    await stripe.paymentIntents.capture(tx.stripePaymentIntentId)
+  }
+
+  // Transfer net proceeds to the seller's connected Stripe account
+  let transferId: string | null = null
+  const seller = await prisma.user.findUnique({
+    where: { id: tx.sellerId },
+    select: { stripeAccountId: true },
+  })
+  if (tx.stripePaymentIntentId && seller?.stripeAccountId) {
+    const transfer = await stripe.transfers.create({
+      amount: Math.round(Number(tx.sellerNet) * 100),
+      currency: 'eur',
+      destination: seller.stripeAccountId,
+      metadata: { transactionId: tx.id },
+    })
+    transferId = transfer.id
+  }
+
+  const listing = await prisma.listing.findUnique({ where: { id: tx.listingId }, select: { title: true } })
+  const now = new Date()
+
+  const txData: Prisma.TransactionUpdateInput = {
+    status: 'released',
+    fundsReleasedAt: now,
+    ...(transferId ? { stripeTransferId: transferId } : {}),
+    ...(via === 'handover' ? { handoverConfirmedAt: now, handoverQrToken: null } : { firstScanAt: now }),
+  }
+
+  await prisma.$transaction([
+    prisma.transaction.update({ where: { id: tx.id }, data: txData }),
+    prisma.listing.update({ where: { id: tx.listingId }, data: { status: 'sold' } }),
+    prisma.user.update({ where: { id: tx.sellerId }, data: { salesCount: { increment: 1 } } }),
+    prisma.notification.create({
+      data: {
+        userId: tx.sellerId,
+        kind: 'funds_released',
+        title: '💰 Funds released!',
+        body: `€${Number(tx.sellerNet).toFixed(2)} for "${listing?.title}" is on its way to you.`,
+      },
+    }),
+    prisma.notification.create({
+      data: {
+        userId: tx.buyerId,
+        kind: via === 'courier' ? 'funds_released' : 'handover_confirmed',
+        title: via === 'courier' ? '📦 On its way' : '✅ Handover confirmed',
+        body: via === 'courier'
+          ? `"${listing?.title}" is in transit. Funds have been released to the seller.`
+          : `Your purchase of "${listing?.title}" is complete. Why not leave a review?`,
+      },
+    }),
+  ])
+
+  return { ok: true, sellerNet: Number(tx.sellerNet) }
+}
+
+// Called by the tracking webhook when a courier reports the first scan / in-transit.
+// Finds the held courier transaction for this tracking number and releases funds.
+// Returns true if a release happened, false if nothing matched (idempotent).
+export async function releaseCourierByTracking(prisma: PrismaClient, trackingNumber: string): Promise<boolean> {
+  const tx = await prisma.transaction.findFirst({
+    where: { trackingNumber, fulfilmentType: 'courier', status: 'held' },
+  })
+  if (!tx) return false
+  await releaseFundsToSeller(prisma, tx, 'courier')
+  return true
+}
+
 export const transactionsRouter = router({
 
   // ── INITIATE ─────────────────────────────────────────────────────────────────
@@ -46,7 +131,9 @@ export const transactionsRouter = router({
     .input(z.object({
       listingId: z.string().uuid(),
       quantity: z.number().int().min(1).max(99).default(1),
-      fulfilmentType: z.enum(['collection', 'delivery']).default('collection'),
+      // Buyer intent only: collection vs delivery. The concrete fulfilment
+      // (courier vs in-person delivery) is resolved server-side from the listing.
+      fulfilment: z.enum(['collection', 'delivery']).default('collection'),
     }))
     .mutation(async ({ ctx, input }) => {
       const listing = await ctx.prisma.listing.findUniqueOrThrow({
@@ -61,11 +148,21 @@ export const transactionsRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot buy your own listing' })
       }
 
+      // Resolve fulfilment server-side. If the buyer wants delivery, the listing
+      // must offer it; the stored type is courier or in-person per the listing.
+      let fulfilmentType: 'collection' | 'courier' | 'delivery' = 'collection'
+      let deliveryFee = 0
+      if (input.fulfilment === 'delivery') {
+        if (!listing.deliveryMethod) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'This listing does not offer delivery' })
+        }
+        fulfilmentType = listing.deliveryMethod === 'courier' ? 'courier' : 'delivery'
+        deliveryFee = Number(listing.deliveryFee)
+      }
+
       // ALL monetary calculations server-side — never trust client amounts (§10.2)
       const itemSubtotal = Math.round(Number(listing.price) * input.quantity * 100) / 100
-      // Delivery fee is read from the listing (server-owned), only when the buyer
-      // chose delivery. Platform fee applies to the item subtotal, not delivery.
-      const deliveryFee = input.fulfilmentType === 'delivery' ? Number(listing.deliveryFee) : 0
+      // Platform fee applies to the item subtotal, not delivery.
       const amount = Math.round((itemSubtotal + deliveryFee) * 100) / 100
       const sellerGrade = listing.seller.grade as keyof typeof FEE_RATES
       const feeRate = FEE_RATES[sellerGrade] ?? FEE_RATES.grabber
@@ -88,7 +185,7 @@ export const transactionsRouter = router({
           platformFee,
           sellerNet,
           quantity: input.quantity,
-          fulfilmentType: input.fulfilmentType,
+          fulfilmentType,
           status: 'pending_payment',
           stripePaymentIntentId: paymentIntent.id,
         },
@@ -114,6 +211,9 @@ export const transactionsRouter = router({
       }
       if (tx.status !== 'held') {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Payment must be held before generating handover QR' })
+      }
+      if (tx.fulfilmentType === 'courier') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Courier orders use tracked shipping, not a QR handover. Submit a tracking number instead.' })
       }
 
       const token = signHandoverToken({ txn: tx.id, sel: tx.sellerId })
@@ -164,6 +264,9 @@ export const transactionsRouter = router({
       if (tx.status !== 'held') {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Transaction is not in a held state' })
       }
+      if (tx.fulfilmentType === 'courier') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Courier orders release automatically once tracking shows the item in transit — no QR scan is used.' })
+      }
 
       // Validate token
       const payload = verifyHandoverToken(input.token)
@@ -178,71 +281,8 @@ export const transactionsRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'QR code has already been used or superseded' })
       }
 
-      // Capture the Stripe payment — funds NEVER released without this confirmation (§10.2)
-      if (tx.stripePaymentIntentId) {
-        await stripe.paymentIntents.capture(tx.stripePaymentIntentId)
-      }
-
-      // Transfer net amount to seller's connected Stripe account
-      if (tx.stripePaymentIntentId && tx.listing) {
-        const sellerAccount = await ctx.prisma.user.findUnique({
-          where: { id: tx.sellerId },
-          select: { stripeAccountId: true },
-        })
-        if (sellerAccount?.stripeAccountId) {
-          const transfer = await stripe.transfers.create({
-            amount: Math.round(Number(tx.sellerNet) * 100),
-            currency: 'eur',
-            destination: sellerAccount.stripeAccountId,
-            metadata: { transactionId: tx.id },
-          })
-          await ctx.prisma.transaction.update({
-            where: { id: tx.id },
-            data: { stripeTransferId: transfer.id },
-          })
-        }
-      }
-
-      const now = new Date()
-      // Execute all state changes atomically
-      await ctx.prisma.$transaction([
-        // Clear the QR token to prevent replay
-        ctx.prisma.transaction.update({
-          where: { id: tx.id },
-          data: {
-            status: 'released',
-            handoverConfirmedAt: now,
-            fundsReleasedAt: now,
-            handoverQrToken: null,
-          },
-        }),
-        ctx.prisma.listing.update({
-          where: { id: tx.listingId },
-          data: { status: 'sold' },
-        }),
-        ctx.prisma.user.update({
-          where: { id: tx.sellerId },
-          data: { salesCount: { increment: 1 } },
-        }),
-        ctx.prisma.notification.create({
-          data: {
-            userId: tx.sellerId,
-            kind: 'funds_released',
-            title: '💰 Funds released!',
-            body: `€${Number(tx.sellerNet).toFixed(2)} is on its way to you for "${tx.listing.title}".`,
-          },
-        }),
-        ctx.prisma.notification.create({
-          data: {
-            userId: tx.buyerId,
-            kind: 'handover_confirmed',
-            title: '✅ Handover confirmed',
-            body: `Your purchase of "${tx.listing.title}" is complete. Why not leave a review?`,
-          },
-        }),
-      ])
-
-      return { ok: true, sellerNet: Number(tx.sellerNet) }
+      // Single fund-release path — captures Stripe payment + pays the seller (§10.2)
+      return releaseFundsToSeller(ctx.prisma, tx, 'handover')
     }),
 
   // ── CONFIRM HANDOVER BY SHORT CODE ───────────────────────────────────────────
@@ -263,6 +303,9 @@ export const transactionsRouter = router({
       if (tx.status !== 'held') {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Transaction is not in a held state' })
       }
+      if (tx.fulfilmentType === 'courier') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Courier orders release automatically once tracking shows the item in transit — no code is used.' })
+      }
       if (!tx.handoverQrToken) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seller has not generated a handover QR yet' })
       }
@@ -272,50 +315,52 @@ export const transactionsRouter = router({
       if (input.code.toUpperCase() !== expectedCode) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Incorrect code — check with the seller' })
       }
-
-      // Delegate to confirmHandoverByQr logic by calling with the stored token
-      // Re-use same validation path to keep fund release logic in one place
-      const payload = verifyHandoverToken(tx.handoverQrToken)
-      if (!payload) {
+      if (!verifyHandoverToken(tx.handoverQrToken)) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'QR code has expired — ask the seller to generate a new one' })
       }
 
-      if (tx.stripePaymentIntentId) {
-        await stripe.paymentIntents.capture(tx.stripePaymentIntentId)
-      }
+      // Single fund-release path — same as the QR scan
+      return releaseFundsToSeller(ctx.prisma, tx, 'handover')
+    }),
 
-      const sellerAccount = await ctx.prisma.user.findUnique({
-        where: { id: tx.sellerId },
-        select: { stripeAccountId: true, displayName: true },
+  // ── SUBMIT TRACKING (courier fulfilment) ─────────────────────────────────────
+  // Seller records the tracking number after posting a courier order. Funds are
+  // NOT released here — release happens when the tracking webhook reports the
+  // first waypoint scan (in transit). See releaseCourierByTracking / the webhook.
+  submitTracking: protectedProcedure
+    .input(z.object({
+      transactionId: z.string().uuid(),
+      carrier: z.string().min(1).max(60),
+      trackingNumber: z.string().min(3).max(60),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const tx = await ctx.prisma.transaction.findUniqueOrThrow({
+        where: { id: input.transactionId },
+        include: { listing: { select: { title: true } } },
       })
-      if (sellerAccount?.stripeAccountId) {
-        await stripe.transfers.create({
-          amount: Math.round(Number(tx.sellerNet) * 100),
-          currency: 'eur',
-          destination: sellerAccount.stripeAccountId,
-          metadata: { transactionId: tx.id },
-        })
+      if (tx.sellerId !== ctx.user.id) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the seller can submit tracking' })
+      }
+      if (tx.fulfilmentType !== 'courier') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Tracking only applies to courier orders' })
+      }
+      if (tx.status !== 'held') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Payment must be held before adding tracking' })
       }
 
-      const listing = await ctx.prisma.listing.findUnique({ where: { id: tx.listingId }, select: { title: true } })
-      const now = new Date()
-
-      await ctx.prisma.$transaction([
-        ctx.prisma.transaction.update({
-          where: { id: tx.id },
-          data: { status: 'released', handoverConfirmedAt: now, fundsReleasedAt: now, handoverQrToken: null },
-        }),
-        ctx.prisma.listing.update({ where: { id: tx.listingId }, data: { status: 'sold' } }),
-        ctx.prisma.user.update({ where: { id: tx.sellerId }, data: { salesCount: { increment: 1 } } }),
-        ctx.prisma.notification.create({
-          data: { userId: tx.sellerId, kind: 'funds_released', title: '💰 Funds released!', body: `€${Number(tx.sellerNet).toFixed(2)} for "${listing?.title}" is on its way.` },
-        }),
-        ctx.prisma.notification.create({
-          data: { userId: tx.buyerId, kind: 'handover_confirmed', title: '✅ Handover confirmed', body: `Purchase of "${listing?.title}" is complete.` },
-        }),
-      ])
-
-      return { ok: true, sellerNet: Number(tx.sellerNet) }
+      await ctx.prisma.transaction.update({
+        where: { id: tx.id },
+        data: { trackingCarrier: input.carrier.trim(), trackingNumber: input.trackingNumber.trim() },
+      })
+      await ctx.prisma.notification.create({
+        data: {
+          userId: tx.buyerId,
+          kind: 'system',
+          title: '📦 Your order has shipped',
+          body: `"${tx.listing.title}" is on its way via ${input.carrier.trim()} (${input.trackingNumber.trim()}).`,
+        },
+      })
+      return { ok: true }
     }),
 
   // ── RATE ─────────────────────────────────────────────────────────────────────

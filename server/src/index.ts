@@ -22,6 +22,12 @@ app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (r
   return stripeWebhookHandler(req, res)
 })
 
+// Courier tracking webhook — releases held funds on the first waypoint scan.
+app.post('/webhooks/tracking', async (req, res) => {
+  const { trackingWebhookHandler } = await import('./webhooks/tracking')
+  return trackingWebhookHandler(req, res)
+})
+
 app.get('/health', (_req, res) => res.json({ ok: true }))
 
 app.listen(PORT, () => {
