@@ -10,6 +10,7 @@ import { createTrpcClient } from '@/lib/trpc'
 import { createClient } from '@/lib/supabase'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
 import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
+import StripePayment from './StripePayment'
 
 async function getTrpcClient() {
   const supabase = createClient()
@@ -1189,34 +1190,35 @@ function PanelBody() {
     const [selected, setSelected] = useState<'p100' | 'p550' | 'p1400' | 'p3000'>('p550')
     const [balance, setBalance] = useState<number | null>(null)
     const [buying, setBuying] = useState(false)
-    const [bought, setBought] = useState<number | null>(null)
+    const [clientSecret, setClientSecret] = useState<string | null>(null)
+    const [paid, setPaid] = useState(false)
     const [err, setErr] = useState('')
 
     useEffect(() => {
       getTrpcClient().then(c => c.credits.balance.query()).then(setBalance).catch(() => {})
     }, [])
 
-    const buy = async () => {
+    const startBuy = async () => {
       setBuying(true); setErr('')
       try {
         const client = await getTrpcClient()
-        const res = await client.credits.buyPack.mutate({ packId: selected })
-        setBalance(res.credits)
-        setBought(res.granted)
-        toast(`🪙 ${res.granted} credits added`)
+        const res = await client.credits.buyPackIntent.mutate({ packId: selected })
+        setClientSecret(res.clientSecret ?? null)
       } catch (e) {
-        setErr((e as Error).message || 'Purchase failed')
+        setErr((e as Error).message || 'Could not start payment')
       } finally {
         setBuying(false)
       }
     }
 
-    if (bought !== null) return (
-      <ActionPanel title="🪙 Credits added" onClose={closePanel}>
+    const pack = PACKS.find(p => p.id === selected)!
+
+    if (paid) return (
+      <ActionPanel title="🪙 Payment received" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
           <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{bought} credits added!</div>
-          {balance !== null && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>New balance: <strong>{balance} 🪙</strong></div>}
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Payment received!</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>Your {pack.credits} credits will appear in your balance in a moment.</div>
           <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
         </div>
       </ActionPanel>
@@ -1228,21 +1230,30 @@ function PanelBody() {
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 2 }}>Your balance</div>
           <div style={{ fontFamily: 'var(--font-body)', fontSize: 26, fontWeight: 700, color: 'var(--orange)' }}>{balance === null ? '…' : `${balance} 🪙`}</div>
         </div>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 12 }}>Credits pay for featured listings, Grab It Now and job posts. 20 credits ≈ €1.</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-          {PACKS.map(p => (
-            <div key={p.id} onClick={() => setSelected(p.id)} style={{ border: `2px solid ${selected === p.id ? 'var(--orange)' : '#e0d8d0'}`, background: selected === p.id ? '#FFF3EE' : '#fff', borderRadius: 14, padding: 14, cursor: 'pointer', textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, color: 'var(--dark)' }}>{p.credits}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', fontWeight: 800, marginBottom: 6 }}>credits{p.bonus && ` · ${p.bonus}`}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>€{p.eur}</div>
+        {clientSecret ? (
+          <>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555', marginBottom: 12, textAlign: 'center' }}>{pack.credits} credits — €{pack.eur}</div>
+            <StripePayment clientSecret={clientSecret} label={`Pay €${pack.eur}`} onSuccess={() => setPaid(true)} />
+          </>
+        ) : (
+          <>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 12 }}>Credits pay for featured listings, Grab It Now and job posts. 20 credits ≈ €1.</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+              {PACKS.map(p => (
+                <div key={p.id} onClick={() => setSelected(p.id)} style={{ border: `2px solid ${selected === p.id ? 'var(--orange)' : '#e0d8d0'}`, background: selected === p.id ? '#FFF3EE' : '#fff', borderRadius: 14, padding: 14, cursor: 'pointer', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, color: 'var(--dark)' }}>{p.credits}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', fontWeight: 800, marginBottom: 6 }}>credits{p.bonus && ` · ${p.bonus}`}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>€{p.eur}</div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        {err && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{err}</div>}
-        <button onClick={buy} disabled={buying} style={{ width: '100%', background: buying ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
-          {buying ? '⏳ Processing…' : `Buy ${PACKS.find(p => p.id === selected)?.credits} credits — €${PACKS.find(p => p.id === selected)?.eur}`}
-        </button>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#aaa', textAlign: 'center', marginTop: 10 }}>🔒 Secured by Stripe</div>
+            {err && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{err}</div>}
+            <button onClick={startBuy} disabled={buying} style={{ width: '100%', background: buying ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+              {buying ? '⏳ Processing…' : `Buy ${pack.credits} credits — €${pack.eur}`}
+            </button>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#aaa', textAlign: 'center', marginTop: 10 }}>🔒 Secured by Stripe</div>
+          </>
+        )}
       </ActionPanel>
     )
   }
@@ -1741,33 +1752,29 @@ function PanelBody() {
     const [step, setStep] = useState<'summary' | 'card' | 'processing' | 'success'>('summary')
     const [qty, setQty] = useState(1)
     const [fulfil, setFulfil] = useState<'collection' | 'delivery'>('collection')
-    const [cardNum, setCardNum] = useState('')
-    const [expiry, setExpiry] = useState('')
-    const [cvc, setCvc] = useState('')
     const [transactionId, setTransactionId] = useState<string | null>(null)
+    const [clientSecret, setClientSecret] = useState<string | null>(null)
     const [payError, setPayError] = useState<string | null>(null)
 
     const delFee = fulfil === 'delivery' ? deliveryFee : 0
     const total = priceNum * qty + delFee
     const fmt = (n: number) => `€${n % 1 === 0 ? n : n.toFixed(2)}`
 
-    const formatCard = (v: string) => v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
-    const formatExpiry = (v: string) => { const d = v.replace(/\D/g, '').slice(0, 4); return d.length > 2 ? `${d.slice(0,2)}/${d.slice(2)}` : d }
-
-    const handlePay = async () => {
+    // Create the escrow PaymentIntent, then reveal Stripe Elements for card entry.
+    const startPayment = async () => {
       setStep('processing')
       setPayError(null)
       try {
         const listingId = (item.id as string) || (item.listingId as string) || ''
-        if (listingId) {
-          const client = await getTrpcClient()
-          const result = await client.transactions.initiate.mutate({ listingId, quantity: qty, fulfilment: fulfil })
-          setTransactionId(result.transaction.id)
-        }
-        setStep('success')
-      } catch (err) {
-        setPayError((err as Error).message || 'Payment failed')
+        if (!listingId) throw new Error('This demo listing cannot be purchased.')
+        const client = await getTrpcClient()
+        const result = await client.transactions.initiate.mutate({ listingId, quantity: qty, fulfilment: fulfil })
+        setTransactionId(result.transaction.id)
+        setClientSecret(result.clientSecret ?? null)
         setStep('card')
+      } catch (err) {
+        setPayError((err as Error).message || 'Could not start payment')
+        setStep('summary')
       }
     }
 
@@ -1813,40 +1820,14 @@ function PanelBody() {
                 {/* Item recap */}
                 <div style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f0f0f0', marginBottom: 16, alignItems: 'center' }}>
                   <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>{emoji}</div>
-                  <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{title}</div><div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--orange)' }}>{price}</div></div>
+                  <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{title}</div><div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--orange)' }}>{fmt(total)}</div></div>
                 </div>
 
-                {/* Card form */}
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>Card number</div>
-                  <input value={cardNum} onChange={e => setCardNum(formatCard(e.target.value))} placeholder="1234 5678 9012 3456" style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'monospace', fontSize: 15, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>Expiry</div>
-                    <input value={expiry} onChange={e => setExpiry(formatExpiry(e.target.value))} placeholder="MM/YY" style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'monospace', fontSize: 15, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>CVC</div>
-                    <input value={cvc} onChange={e => setCvc(e.target.value.replace(/\D/g, '').slice(0, 3))} placeholder="123" style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'monospace', fontSize: 15, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
-                  </div>
-                </div>
-
-                {/* Security badges */}
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16 }}>
-                  {['🔒 256-bit SSL', '🏦 Stripe Secured', '🛡️ Escrow Protected'].map(b => (
-                    <span key={b} style={{ background: '#f0fdf4', color: '#555', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, padding: '3px 7px', borderRadius: 50 }}>{b}</span>
-                  ))}
-                </div>
-
-                {payError && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{payError}</div>}
-                <button
-                  onClick={handlePay}
-                  disabled={cardNum.length < 19 || expiry.length < 5 || cvc.length < 3}
-                  style={{ width: '100%', background: cardNum.length >= 19 && expiry.length >= 5 && cvc.length >= 3 ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
-                >
-                  Pay {fmt(total)} Securely
-                </button>
+                {clientSecret ? (
+                  <StripePayment clientSecret={clientSecret} label={`Pay ${fmt(total)} Securely`} onSuccess={() => setStep('success')} />
+                ) : (
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#b91c1c', background: '#fef2f2', borderRadius: 10, padding: 12 }}>Payments are not configured yet.</div>
+                )}
               </>
             ) : (
               /* Step: summary */
@@ -1903,7 +1884,8 @@ function PanelBody() {
                   </div>
                 </div>
 
-                <button onClick={() => setStep('card')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+                {payError && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{payError}</div>}
+                <button onClick={startPayment} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
                   Continue to Payment →
                 </button>
               </>
@@ -3040,6 +3022,8 @@ function PanelBody() {
     const [interests, setInterests] = useState<string[]>([])
     const [lang, setLang] = useState<Lang>('en')
     const [saving, setSaving] = useState(false)
+    const [payout, setPayout] = useState<{ connected: boolean; payoutsEnabled: boolean } | null>(null)
+    const [payoutBusy, setPayoutBusy] = useState(false)
 
     useEffect(() => {
       setLang(getLanguage())
@@ -3048,7 +3032,26 @@ function PanelBody() {
         setMe(u as unknown as Me)
         setInterests((u as unknown as Me).interests ?? [])
       }).catch(() => {})
+      getTrpcClient().then(c => c.users.payoutStatus.query()).then(s => setPayout(s)).catch(() => {})
     }, [isOwnProfile])
+
+    const setupPayouts = async () => {
+      setPayoutBusy(true)
+      try {
+        const client = await getTrpcClient()
+        const res = await client.users.createPayoutOnboarding.mutate()
+        if (res.url) window.location.href = res.url
+      } catch { toast('Could not start payout setup'); setPayoutBusy(false) }
+    }
+    const openPayoutDashboard = async () => {
+      setPayoutBusy(true)
+      try {
+        const client = await getTrpcClient()
+        const res = await client.users.payoutDashboardLink.mutate()
+        if (res.url) window.open(res.url, '_blank')
+      } catch { toast('Could not open dashboard') }
+      finally { setPayoutBusy(false) }
+    }
 
     const grade = me?.grade ?? 'grabber'
     const gradeColor = GRADE_COLORS[grade] ?? 'var(--orange)'
@@ -3105,6 +3108,23 @@ function PanelBody() {
             </select>
 
             <button onClick={savePrefs} disabled={saving} style={{ width: '100%', background: saving ? '#ccc' : 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 16 }}>{saving ? 'Saving…' : 'Save preferences ✓'}</button>
+
+            {/* Seller payouts — Stripe Connect */}
+            <div style={{ background: payout?.payoutsEnabled ? '#f0fdf4' : '#FFF3EE', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: payout?.payoutsEnabled ? 'var(--sage)' : 'var(--orange)', marginBottom: 4 }}>
+                {payout?.payoutsEnabled ? '✅ Payouts active' : '💳 Set up payouts'}
+              </div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginBottom: 10 }}>
+                {payout?.payoutsEnabled
+                  ? 'Your Stripe account is connected — sales are paid out to you automatically at handover.'
+                  : 'Connect a Stripe account to receive money from your sales. Required before you can be paid.'}
+              </div>
+              {payout?.payoutsEnabled ? (
+                <button onClick={openPayoutDashboard} disabled={payoutBusy} style={{ width: '100%', background: '#fff', color: 'var(--sage)', border: '1.5px solid var(--sage)', borderRadius: 12, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Manage payouts ↗</button>
+              ) : (
+                <button onClick={setupPayouts} disabled={payoutBusy} style={{ width: '100%', background: payoutBusy ? '#ccc' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: 12, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{payoutBusy ? '⏳ Opening…' : (payout?.connected ? 'Finish payout setup →' : 'Set up payouts →')}</button>
+              )}
+            </div>
 
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => openPanel('mySales')} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>My Sales</button>

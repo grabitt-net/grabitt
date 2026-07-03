@@ -1,5 +1,10 @@
 import { z } from 'zod'
+import Stripe from 'stripe'
+import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-02-24.acacia' })
+const APP_URL = () => process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
 export const usersRouter = router({
   me: protectedProcedure.query(({ ctx }) =>
@@ -30,4 +35,52 @@ export const usersRouter = router({
     .mutation(({ ctx, input }) =>
       ctx.prisma.user.update({ where: { id: ctx.user.id }, data: input })
     ),
+
+  // ── STRIPE CONNECT (seller payouts) ──────────────────────────────────────────
+  // Whether the seller can receive payouts yet.
+  payoutStatus: protectedProcedure.query(async ({ ctx }) => {
+    const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { stripeAccountId: true } })
+    if (!user.stripeAccountId) return { connected: false, payoutsEnabled: false, chargesEnabled: false }
+    const acct = await stripe.accounts.retrieve(user.stripeAccountId)
+    return {
+      connected: true,
+      payoutsEnabled: acct.payouts_enabled ?? false,
+      chargesEnabled: acct.charges_enabled ?? false,
+      detailsSubmitted: acct.details_submitted ?? false,
+    }
+  }),
+
+  // Creates (or reuses) the seller's Express connected account and returns a
+  // hosted onboarding link. Sellers must complete this before funds can be
+  // transferred to them at handover/tracking release.
+  createPayoutOnboarding: protectedProcedure.mutation(async ({ ctx }) => {
+    const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
+    let accountId = user.stripeAccountId
+    if (!accountId) {
+      const account = await stripe.accounts.create({
+        type: 'express',
+        email: user.email,
+        capabilities: { transfers: { requested: true }, card_payments: { requested: true } },
+        business_type: 'individual',
+        metadata: { userId: user.id },
+      })
+      accountId = account.id
+      await ctx.prisma.user.update({ where: { id: user.id }, data: { stripeAccountId: accountId } })
+    }
+    const link = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: `${APP_URL()}/?payout=refresh`,
+      return_url: `${APP_URL()}/?payout=done`,
+      type: 'account_onboarding',
+    })
+    return { url: link.url }
+  }),
+
+  // Opens the Express dashboard for a seller who has already onboarded.
+  payoutDashboardLink: protectedProcedure.mutation(async ({ ctx }) => {
+    const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { stripeAccountId: true } })
+    if (!user.stripeAccountId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No payout account yet' })
+    const link = await stripe.accounts.createLoginLink(user.stripeAccountId)
+    return { url: link.url }
+  }),
 })

@@ -1,7 +1,37 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
+import Stripe from 'stripe'
+import type { PrismaClient } from '@prisma/client'
 import { router, protectedProcedure } from '../trpc'
 import { PRICES } from '@grabitt/design-tokens'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-02-24.acacia' })
+
+// Credit packs — prices are server-owned (§10.2). Bigger packs include bonus credits.
+export const CREDIT_PACKS: Record<string, { credits: number; eur: number }> = {
+  p100: { credits: 100, eur: 5 },
+  p550: { credits: 550, eur: 20 },
+  p1400: { credits: 1400, eur: 45 },
+  p3000: { credits: 3000, eur: 90 },
+}
+
+// Grants a credit pack — called by the Stripe webhook once payment succeeds.
+// Idempotent: skips if a CreditEvent already exists for this PaymentIntent.
+export async function grantCreditPack(prisma: PrismaClient, userId: string, packId: string, paymentIntentId: string) {
+  const pack = CREDIT_PACKS[packId]
+  if (!pack) return
+  const already = await prisma.creditEvent.findFirst({ where: { note: { contains: paymentIntentId } } })
+  if (already) return
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) return
+  const newBalance = user.credits + pack.credits
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: userId }, data: { credits: newBalance } }),
+    prisma.creditEvent.create({
+      data: { userId, kind: 'purchase', delta: pack.credits, balance: newBalance, note: `Bought ${pack.credits} credits (€${pack.eur}) · ${paymentIntentId}` },
+    }),
+  ])
+}
 
 export const creditsRouter = router({
   balance: protectedProcedure.query(async ({ ctx }) => {
@@ -60,38 +90,18 @@ export const creditsRouter = router({
       return { credits: newBalance }
     }),
 
-  // Credit packs — prices are server-owned; the client only sends a pack id (§10.2).
-  buyPack: protectedProcedure
+  // Creates a Stripe PaymentIntent for a credit pack. Credits are granted by the
+  // webhook once payment succeeds (never on the unauthenticated client). Returns
+  // the client secret for Stripe Elements.
+  buyPackIntent: protectedProcedure
     .input(z.object({ packId: z.enum(['p100', 'p550', 'p1400', 'p3000']) }))
     .mutation(async ({ ctx, input }) => {
-      // { credits granted, € price }. Bigger packs include bonus credits.
-      const PACKS: Record<string, { credits: number; eur: number }> = {
-        p100: { credits: 100, eur: 5 },
-        p550: { credits: 550, eur: 20 },
-        p1400: { credits: 1400, eur: 45 },
-        p3000: { credits: 3000, eur: 90 },
-      }
-      const pack = PACKS[input.packId]
-
-      // NOTE: in production the credit grant must be gated on a confirmed Stripe
-      // PaymentIntent (Elements on the client). This mirrors the app's current
-      // simulated-card checkout and grants on submit.
-      const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
-      const newBalance = user.credits + pack.credits
-
-      await ctx.prisma.$transaction([
-        ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { credits: newBalance } }),
-        ctx.prisma.creditEvent.create({
-          data: {
-            userId: ctx.user.id,
-            kind: 'purchase',
-            delta: pack.credits,
-            balance: newBalance,
-            note: `Bought ${pack.credits} credits (€${pack.eur})`,
-          },
-        }),
-      ])
-
-      return { credits: newBalance, granted: pack.credits }
+      const pack = CREDIT_PACKS[input.packId]
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(pack.eur * 100),
+        currency: 'eur',
+        metadata: { kind: 'credit_pack', userId: ctx.user.id, packId: input.packId },
+      })
+      return { clientSecret: paymentIntent.client_secret, credits: pack.credits, eur: pack.eur }
     }),
 })
