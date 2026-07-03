@@ -1,8 +1,4 @@
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const here = path.dirname(fileURLToPath(import.meta.url))
-const repoRoot = path.join(here, '..', '..')
+import { PrismaPlugin } from '@prisma/nextjs-monorepo-workaround-plugin'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -15,17 +11,12 @@ const nextConfig = {
       '@prisma/client', 'prisma', 'stripe', 'jsonwebtoken', 'bcryptjs',
       'qrcode', 'resend', 'twilio', 'pg-boss', 'cloudinary',
     ],
-    // Trace from the monorepo root so pnpm's hoisted packages are reachable, and
-    // force-include the Prisma query engine binary into the API function bundles
-    // (Next's tracer doesn't pick up the .prisma/client engine on its own).
-    outputFileTracingRoot: repoRoot,
-    outputFileTracingIncludes: {
-      '/api/**/*': [
-        '../../node_modules/.pnpm/@prisma+client*/node_modules/.prisma/client/*.node',
-        '../../node_modules/.pnpm/@prisma+client*/node_modules/@prisma/client/**',
-        '../../node_modules/.prisma/client/*.node',
-      ],
-    },
+  },
+  // Copies the Prisma query engine binary next to the server bundles — the
+  // canonical fix for Prisma + Next.js in a pnpm monorepo on Vercel.
+  webpack: (config, { isServer }) => {
+    if (isServer) config.plugins = [...config.plugins, new PrismaPlugin()]
+    return config
   },
   images: {
     remotePatterns: [
