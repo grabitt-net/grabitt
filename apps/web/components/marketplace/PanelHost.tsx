@@ -1375,8 +1375,8 @@ function PanelBody() {
                 </div>
                 <div style={{ background: fulfil === 'delivery' ? '#eef6ff' : '#FFF3EE', borderRadius: 10, padding: '9px 12px', marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11, color: fulfil === 'delivery' ? '#2563eb' : 'var(--orange)' }}>
                   {fulfil === 'delivery'
-                    ? `🚚 Delivery${delFee > 0 ? ` (+${fmt(delFee)})` : ' (free)'} — confirm receipt on arrival to release funds.`
-                    : '🤝 Collection — scan at handover to release funds.'}
+                    ? `🚚 Delivery${delFee > 0 ? ` (+${fmt(delFee)})` : ' (free)'} — must be sent by tracked delivery. Funds are released to the seller once tracking shows the item in transit.`
+                    : '🤝 Collection — scan the QR code at handover to release funds.'}
                 </div>
 
                 {/* Price breakdown */}
@@ -1421,13 +1421,10 @@ function PanelBody() {
     const price = (item.price as string) || '€0'
     const emoji = (item.emoji as string) || '🛍️'
     const priceNum = parseFloat(price.replace(/[^0-9.]/g, '')) || 0
-    const autoAcceptMin = Number(item.autoAcceptMin) || 0
 
     const [amount, setAmount] = useState(String(Math.round(priceNum * 0.9) || ''))
     const [message, setMessage] = useState('')
     const [sent, setSent] = useState(false)
-
-    const meetsAutoAccept = autoAcceptMin > 0 && parseFloat(amount || '0') >= autoAcceptMin
 
     if (sent) return (
       <ActionPanel title="💰 Offer sent!" onClose={closePanel}>
@@ -1465,13 +1462,6 @@ function PanelBody() {
           {priceNum > 0 && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 4 }}>
             {Math.round((1 - parseFloat(amount || '0') / priceNum) * 100)}% below asking price
           </div>}
-          {autoAcceptMin > 0 && (
-            <div style={{ marginTop: 8, background: meetsAutoAccept ? '#f0fdf4' : '#FFF3EE', borderRadius: 10, padding: '8px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: meetsAutoAccept ? 'var(--sage)' : 'var(--orange)' }}>
-              {meetsAutoAccept
-                ? `✅ Seller auto-accepts offers of €${autoAcceptMin} or above — this offer pays out instantly via Stripe.`
-                : `⚡ Seller auto-accepts offers of €${autoAcceptMin} or above.`}
-            </div>
-          )}
         </div>
 
         <div style={{ marginBottom: 20 }}>
