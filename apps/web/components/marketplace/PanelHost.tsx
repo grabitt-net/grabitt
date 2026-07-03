@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { usePanel } from '@/context/PanelContext'
+import type { PanelId } from '@/context/PanelContext'
 import { useCart } from '@/context/CartContext'
 import { useToast } from '@/context/ToastContext'
 import { useChat } from '@/hooks/useChat'
@@ -14,6 +15,9 @@ async function getTrpcClient() {
   const { data: { session } } = await supabase.auth.getSession()
   return createTrpcClient(session?.access_token ?? undefined)
 }
+
+const btnPrimary: React.CSSProperties = { width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }
+const btnDanger: React.CSSProperties = { width: '100%', background: '#fff', color: '#ef4444', border: '2px solid #ef4444', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }
 
 // ── dept listings (stub — real data from Supabase later) ──────────────────────
 const DEPT_LISTINGS: Record<string, [string, string, string, string][]> = {
@@ -860,7 +864,15 @@ function PanelBody() {
           </div>
           <div style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#7a6a55', fontWeight: 700 }}>Your local everything</div>
         </div>
-        {[['🏪','Browse all listings','/listings'],['📦','Sell something','/listings/new'],['💬','My messages','/messages'],['👤','My profile','/profile'],['🛡️','Safety Shield','#shield'],['ℹ️','About Grabitt','#about']].map(([icon, label, href], i) => (
+        {/* Account / orders — open in-app panels */}
+        {([['🛒','My purchases','purchases'],['📊','My sales','mySales'],['💰','My offers','offers'],['🛡️','My disputes','myDisputes'],['🪙','Buy credits','buyCredits'],['👤','My profile','profile']] as [string, string, PanelId][]).map(([icon, label, pid], i) => (
+          <div key={`p${i}`} onClick={() => openPanel(pid)} style={{ display: 'flex', gap: 14, padding: '13px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
+            <div style={{ fontSize: 22, width: 32, textAlign: 'center' }}>{icon}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: '#1a1a1a', flex: 1 }}>{label}</div>
+            <span style={{ color: '#ccc' }}>›</span>
+          </div>
+        ))}
+        {[['🏪','Browse all listings','/listings'],['💬','My messages','/messages'],['🛡️','Safety Shield','#shield'],['ℹ️','About Grabitt','#about']].map(([icon, label, href], i) => (
           <a key={i} href={href as string} onClick={closePanel} style={{ textDecoration: 'none' }}>
             <div style={{ display: 'flex', gap: 14, padding: '13px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
               <div style={{ fontSize: 22, width: 32, textAlign: 'center' }}>{icon}</div>
@@ -1225,6 +1237,135 @@ function PanelBody() {
           {buying ? '⏳ Processing…' : `Buy ${PACKS.find(p => p.id === selected)?.credits} credits — €${PACKS.find(p => p.id === selected)?.eur}`}
         </button>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#aaa', textAlign: 'center', marginTop: 10 }}>🔒 Secured by Stripe</div>
+      </ActionPanel>
+    )
+  }
+
+  // ── TRANSACTION DETAIL ───────────────────────────────────────────────────────
+  if (panel.id === 'transaction') {
+    const txId = (panel.data?.transactionId as string) || ''
+    type TxDetail = {
+      id: string; status: string; role: 'buyer' | 'seller'; title: string; amount: number; sellerNet: number
+      quantity: number; fulfilmentType: string; trackingCarrier: string | null; trackingNumber: string | null
+      counterparty: string; dispute: { status: string; reason: string } | null
+    }
+    const [tx, setTx] = useState<TxDetail | null>(null)
+    const [loaded, setLoaded] = useState(false)
+    useEffect(() => {
+      if (!txId) { setLoaded(true); return }
+      getTrpcClient().then(c => c.transactions.getById.query({ transactionId: txId }))
+        .then(d => { setTx(d as TxDetail); setLoaded(true) }).catch(() => setLoaded(true))
+    }, [txId])
+
+    const STATUS: Record<string, { label: string; color: string }> = {
+      pending_payment: { label: '⏳ Payment pending', color: '#f59e0b' },
+      held: { label: '🔒 Funds held in escrow', color: 'var(--orange)' },
+      confirmed_handover: { label: '🤝 Handover confirmed', color: '#3b82f6' },
+      released: { label: '✅ Complete — funds released', color: 'var(--sage)' },
+      disputed: { label: '🚨 In dispute', color: '#ef4444' },
+      refunded: { label: '↩️ Refunded', color: '#6b7280' },
+      cancelled: { label: '✖ Cancelled', color: '#6b7280' },
+    }
+
+    return (
+      <ActionPanel title="🔒 Transaction" onClose={closePanel}>
+        {!loaded ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : !tx ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Transaction not found.</div>
+        ) : (
+          <>
+            <div style={{ background: `${(STATUS[tx.status]?.color) ?? '#888'}18`, color: STATUS[tx.status]?.color ?? '#888', borderRadius: 12, padding: '12px 14px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, textAlign: 'center', marginBottom: 16 }}>
+              {STATUS[tx.status]?.label ?? tx.status}
+            </div>
+            <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+              {[
+                ['Item', tx.title],
+                [tx.role === 'buyer' ? 'Seller' : 'Buyer', tx.counterparty],
+                ['Quantity', String(tx.quantity)],
+                ['Fulfilment', tx.fulfilmentType === 'courier' ? 'Tracked courier' : tx.fulfilmentType === 'delivery' ? 'In-person delivery' : 'Collection'],
+                [tx.role === 'buyer' ? 'You paid' : 'You receive', `€${(tx.role === 'buyer' ? tx.amount : tx.sellerNet).toFixed(2)}`],
+                ['Ref', tx.id.slice(0, 8).toUpperCase()],
+              ].map(([l, v], i, arr) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid #ede0c4' : 'none' }}>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{l}</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--dark)' }}>{v}</span>
+                </div>
+              ))}
+            </div>
+
+            {tx.trackingNumber && (
+              <div style={{ background: '#eff6ff', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#2563eb' }}>
+                📦 {tx.trackingCarrier} · {tx.trackingNumber}
+              </div>
+            )}
+
+            {/* Actions by role + status */}
+            {tx.status === 'held' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {tx.role === 'seller' && tx.fulfilmentType === 'courier' && (
+                  <button onClick={() => openPanel('handover', { transactionId: tx.id, role: 'seller', title: tx.title, fulfilmentType: 'courier' })} style={btnPrimary}>📦 Add courier tracking</button>
+                )}
+                {tx.role === 'seller' && tx.fulfilmentType !== 'courier' && (
+                  <button onClick={() => openPanel('handover', { transactionId: tx.id, role: 'seller', title: tx.title })} style={btnPrimary}>🤝 Generate handover QR</button>
+                )}
+                {tx.role === 'buyer' && tx.fulfilmentType !== 'courier' && (
+                  <button onClick={() => openPanel('handover', { transactionId: tx.id, role: 'buyer', title: tx.title })} style={btnPrimary}>✅ Confirm handover</button>
+                )}
+                <button onClick={() => openPanel('dispute', { transactionId: tx.id, title: tx.title })} style={btnDanger}>🚨 Raise a dispute</button>
+              </div>
+            )}
+            {tx.status === 'released' && tx.role === 'buyer' && (
+              <button onClick={() => openPanel('reviewTx', { transactionId: tx.id, title: tx.title })} style={btnPrimary}>⭐ Leave a review</button>
+            )}
+            {tx.dispute && (
+              <div style={{ background: '#fef2f2', borderRadius: 12, padding: 12, marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#b91c1c' }}>
+                Dispute {tx.dispute.status.replace(/_/g, ' ')} — {tx.dispute.reason}
+              </div>
+            )}
+          </>
+        )}
+      </ActionPanel>
+    )
+  }
+
+  // ── MY DISPUTES ──────────────────────────────────────────────────────────────
+  if (panel.id === 'myDisputes') {
+    type Disp = { id: string; status: string; reason: string; createdAt: string; transaction: { listing: { title: string } } }
+    const [disputes, setDisputes] = useState<Disp[]>([])
+    const [loaded, setLoaded] = useState(false)
+    useEffect(() => {
+      getTrpcClient().then(c => c.disputes.mine.query())
+        .then(d => { setDisputes(d as unknown as Disp[]); setLoaded(true) }).catch(() => setLoaded(true))
+    }, [])
+
+    const DSTATUS: Record<string, { label: string; color: string }> = {
+      open: { label: 'Open', color: '#ef4444' },
+      under_review: { label: 'Under review', color: '#f59e0b' },
+      resolved_buyer: { label: 'Resolved — refunded', color: 'var(--sage)' },
+      resolved_seller: { label: 'Resolved — seller paid', color: '#6b7280' },
+      escalated: { label: 'Escalated', color: '#7c3aed' },
+    }
+
+    return (
+      <ActionPanel title="🛡️ My Disputes" onClose={closePanel}>
+        {!loaded ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : disputes.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🛡️</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No disputes</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Disputes you raise appear here so you can track their status.</div>
+          </div>
+        ) : disputes.map(d => (
+          <div key={d.id} style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{d.transaction?.listing?.title ?? 'Item'}</span>
+              <span style={{ background: `${DSTATUS[d.status]?.color ?? '#888'}22`, color: DSTATUS[d.status]?.color ?? '#888', borderRadius: 50, padding: '3px 10px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800 }}>{DSTATUS[d.status]?.label ?? d.status}</span>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>{d.reason}</div>
+          </div>
+        ))}
       </ActionPanel>
     )
   }
@@ -2179,7 +2320,7 @@ function PanelBody() {
         {!purchasesLoaded && <div style={{ textAlign: 'center', padding: 32, color: '#aaa', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Loading…</div>}
         {purchasesLoaded && purchases.length === 0 && <div style={{ textAlign: 'center', padding: 32, color: '#aaa', fontFamily: 'var(--font-ui)', fontSize: 13 }}>No purchases yet</div>}
         {purchases.map((p, i) => (
-          <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
+          <div key={i} onClick={() => openPanel('transaction', { transactionId: p.id })} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
             <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
               {p.listing.images?.[0] ? <img src={p.listing.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🛍️</div>}
             </div>
@@ -2191,7 +2332,7 @@ function PanelBody() {
             <div style={{ flexShrink: 0 }}>
               <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: 'var(--dark)', textAlign: 'right' }}>€{Number(p.amount).toFixed(2)}</div>
               {p.status === 'held' && (
-                <button onClick={() => openPanel('handover', { title: p.listing.title, transactionId: p.id, role: 'buyer' })} style={{ marginTop: 4, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>Confirm ✅</button>
+                <button onClick={e => { e.stopPropagation(); openPanel('handover', { title: p.listing.title, transactionId: p.id, role: 'buyer' }) }} style={{ marginTop: 4, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>Confirm ✅</button>
               )}
             </div>
           </div>

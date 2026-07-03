@@ -418,6 +418,40 @@ export const transactionsRouter = router({
     })
   ),
 
+  // Single transaction detail — buyer or seller only.
+  getById: protectedProcedure
+    .input(z.object({ transactionId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const tx = await ctx.prisma.transaction.findUniqueOrThrow({
+        where: { id: input.transactionId },
+        include: {
+          listing: { select: { title: true, images: true } },
+          buyer: { select: { id: true, displayName: true } },
+          seller: { select: { id: true, displayName: true } },
+          dispute: { select: { status: true, reason: true } },
+        },
+      })
+      if (tx.buyerId !== ctx.user.id && tx.sellerId !== ctx.user.id) {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      }
+      return {
+        id: tx.id,
+        status: tx.status,
+        role: tx.buyerId === ctx.user.id ? 'buyer' : 'seller',
+        title: tx.listing.title,
+        image: tx.listing.images?.[0] ?? null,
+        amount: Number(tx.amount),
+        sellerNet: Number(tx.sellerNet),
+        quantity: tx.quantity,
+        fulfilmentType: tx.fulfilmentType,
+        trackingCarrier: tx.trackingCarrier,
+        trackingNumber: tx.trackingNumber,
+        counterparty: tx.buyerId === ctx.user.id ? tx.seller.displayName : tx.buyer.displayName,
+        dispute: tx.dispute,
+        createdAt: tx.createdAt,
+      }
+    }),
+
   getHandoverStatus: protectedProcedure
     .input(z.object({ transactionId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
