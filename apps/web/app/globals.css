@@ -24,3 +24,23 @@ body {
 /* ── Utilities ── */
 .hide-scroll { scrollbar-width: none; }
 .hide-scroll::-webkit-scrollbar { display: none; }
+
+/* ── Responsive shell ──────────────────────────────────────────────────────────
+   Mobile-first: single phone-width column. On wider screens the app becomes a
+   proper web layout — wider content, multi-column listing grids, and panels that
+   present as centered modals rather than full-width bottom sheets. */
+.app-shell { width: 100%; max-width: 520px; margin: 0 auto; position: relative; }
+
+.panel-overlay { display: flex; flex-direction: column; justify-content: flex-end; }
+.panel-sheet { width: 100%; max-width: 520px; margin: 0 auto; border-radius: 24px 24px 0 0; }
+
+/* Responsive listing grid — 2 cols on mobile, fills columns on wider screens */
+.listing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+@media (min-width: 820px) {
+  .app-shell { max-width: 720px; }
+  /* Panels become centered modals */
+  .panel-overlay { justify-content: center; align-items: center; padding: 24px; }
+  .panel-sheet { max-width: 760px; border-radius: 20px; max-height: 88vh; }
+  .listing-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+}

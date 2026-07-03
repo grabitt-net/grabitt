@@ -17,7 +17,7 @@ import PanelHost from '@/components/marketplace/PanelHost'
 export default function HomePage() {
   return (
     <PanelProvider>
-      <main style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 160, width: '100%', maxWidth: 520, margin: '0 auto', position: 'relative', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
+      <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 160, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
         <Topbar />
         <Hero />
         <FeaturedStrip />

@@ -116,11 +116,13 @@ function ActionPanel({ title, children, onClose }: ActionPanelProps) {
   return (
     <div
       onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
+      className="panel-overlay"
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400 }}
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '88vh', width: '100%', maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column' }}
+        className="panel-sheet"
+        style={{ background: '#fff', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>{title}</span>
@@ -378,8 +380,8 @@ function PanelBody() {
     )
 
     return (
-      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '88vh', width: '100%', maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+      <div onClick={closePanel} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }}>
+        <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
 
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 16px 0', flexShrink: 0 }}>
@@ -573,8 +575,8 @@ function PanelBody() {
     }
 
     return (
-      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', height: '88vh', width: '100%', maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+      <div onClick={closePanel} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }}>
+        <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', height: '88vh', display: 'flex', flexDirection: 'column' }}>
 
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px 12px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
@@ -660,8 +662,8 @@ function PanelBody() {
   if (panel.id === 'shield' || panel.id === 'help') {
     const tabs = [{ id: 'promise', label: 'Our Promise' }, { id: 'rules', label: 'Golden Rules' }, { id: 'scams', label: 'Known Scams' }, { id: 'tips', label: 'Safety Tips' }, { id: 'report', label: 'Report' }]
     return (
-      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '88vh', width: '100%', maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+      <div onClick={closePanel} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400 }}>
+        <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
           <div style={{ background: 'linear-gradient(135deg,#F5E6D3,#E8D4B8 55%,#DFC9A8)', borderRadius: '24px 24px 0 0', padding: '18px 16px 16px', boxShadow: '0 4px 20px rgba(223,201,168,0.4)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -735,8 +737,8 @@ function PanelBody() {
     }, [name, sort])
 
     return (
-      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '90vh', width: '100%', maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+      <div onClick={closePanel} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400 }}>
+        <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 10px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{icon} {name}</span>
@@ -768,7 +770,7 @@ function PanelBody() {
           <div style={{ overflowY: 'auto', flex: 1, padding: 12 }}>
             {loading && <div style={{ textAlign: 'center', padding: 30, color: '#aaa', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>}
             {!loading && items.length === 0 && <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No listings in {name} right now.</div>}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="listing-grid">
               {items.map((l, i) => {
                 const item = toPanelItem(l)
                 return (
@@ -984,11 +986,11 @@ function PanelBody() {
     ]
 
     return (
-      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '92vh', width: '100%', maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+      <div onClick={closePanel} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }}>
+        <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
           {/* Hero */}
           <div style={{ position: 'relative', flexShrink: 0 }}>
-            <div style={{ width: '100%', paddingTop: '52%', background: '#f5f0e8', borderRadius: '24px 24px 0 0', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ width: '100%', paddingTop: 'min(52%, 300px)', background: '#f5f0e8', borderRadius: 'inherit', position: 'relative', overflow: 'hidden' }}>
               {heroImage
                 ? <img src={heroImage} alt={title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 88 }}>{emoji}</div>}
@@ -1560,7 +1562,7 @@ function PanelBody() {
           : sorted.length === 0
           ? <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No results{q ? ` for "${q}"` : ''}.</div>
           : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="listing-grid">
               {sorted.slice(0, 40).map(l => {
                 const item = toPanelItem(l)
                 return (
@@ -1814,8 +1816,8 @@ function PanelBody() {
     }
 
     return (
-      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '88vh', width: '100%', maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+      <div onClick={closePanel} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }}>
+        <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>
               {step === 'success' ? '✅ Payment confirmed' : '🔒 Secure Checkout'}
@@ -2535,8 +2537,8 @@ function PanelBody() {
     )
 
     return (
-      <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '92vh', width: '100%', maxWidth: 520, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+      <div onClick={closePanel} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }}>
+        <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
 
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 0', flexShrink: 0 }}>
