@@ -14,11 +14,47 @@ export const offersRouter = router({
       if (listing.sellerId === ctx.user.id) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot make offer on own listing' })
       }
+
+      // Seller-configured auto-accept: any offer at or above autoAcceptMin is
+      // accepted without seller action. This threshold is never exposed to the
+      // buyer — they simply see the offer accepted and proceed to pay. Payment
+      // still follows normal escrow (held → handover/tracking release).
+      const autoAccept = listing.autoAcceptMin != null && input.amount >= Number(listing.autoAcceptMin)
+
       const expiresAt = new Date()
       expiresAt.setHours(expiresAt.getHours() + 48)
-      return ctx.prisma.offer.create({
-        data: { listingId: input.listingId, buyerId: ctx.user.id, amount: input.amount, message: input.message, expiresAt },
+      const offer = await ctx.prisma.offer.create({
+        data: {
+          listingId: input.listingId,
+          buyerId: ctx.user.id,
+          amount: input.amount,
+          message: input.message,
+          expiresAt,
+          status: autoAccept ? 'accepted' : 'pending',
+        },
       })
+
+      if (autoAccept) {
+        await ctx.prisma.notification.create({
+          data: {
+            userId: ctx.user.id,
+            kind: 'offer_accepted',
+            title: '✅ Offer accepted!',
+            body: `Your €${input.amount.toFixed(2)} offer on "${listing.title}" was accepted. Complete payment to secure it.`,
+          },
+        })
+      } else {
+        await ctx.prisma.notification.create({
+          data: {
+            userId: listing.sellerId,
+            kind: 'offer_received',
+            title: '💰 New offer',
+            body: `You received a €${input.amount.toFixed(2)} offer on "${listing.title}".`,
+          },
+        })
+      }
+
+      return offer
     }),
 
   respond: protectedProcedure

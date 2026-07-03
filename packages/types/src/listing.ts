@@ -47,6 +47,7 @@ export const CreateListingInputSchema = z.object({
   location: z.string().max(100),
   deliveryFee: z.number().min(0).default(0),
   deliveryMethod: z.enum(['courier', 'in_person']).optional(),
+  autoAcceptMin: z.number().min(0).optional(),
 })
 export type CreateListingInput = z.infer<typeof CreateListingInputSchema>
 

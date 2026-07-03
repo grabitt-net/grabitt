@@ -2028,6 +2028,7 @@ function PanelBody() {
     const [desc, setDesc] = useState('')
     const [price, setPrice] = useState('')
     const [freeItem, setFreeItem] = useState(false)
+    const [autoAcceptMin, setAutoAcceptMin] = useState('')
     const [offersDelivery, setOffersDelivery] = useState(false)
     const [deliveryMethod, setDeliveryMethod] = useState<'courier' | 'in_person'>('courier')
     const [deliveryFee, setDeliveryFee] = useState('')
@@ -2180,6 +2181,21 @@ function PanelBody() {
                   </div>
                 </div>
 
+                {/* Auto-accept offers minimum (seller-only; never shown to buyers) */}
+                {!freeItem && (
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Auto-accept offers over (optional)</div>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 18, color: '#888' }}>€</span>
+                      <input type="number" value={autoAcceptMin} onChange={e => setAutoAcceptMin(e.target.value)} placeholder="Leave blank to review every offer" min="0" step="0.01"
+                        style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px 11px 28px', fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 4 }}>
+                      Offers at or above this amount are accepted automatically. Buyers never see your threshold.
+                    </div>
+                  </div>
+                )}
+
                 {/* Delivery option */}
                 <div style={{ background: '#faf7f4', border: `1.5px solid ${offersDelivery ? 'var(--ocean)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
                   <div onClick={() => setOffersDelivery(v => !v)} style={{ display: 'flex', gap: 12, cursor: 'pointer', alignItems: 'center' }}>
@@ -2325,6 +2341,7 @@ function PanelBody() {
                       location: town,
                       deliveryFee: offersDelivery ? (parseFloat(deliveryFee) || 0) : 0,
                       deliveryMethod: offersDelivery ? deliveryMethod : undefined,
+                      autoAcceptMin: !freeItem && parseFloat(autoAcceptMin) > 0 ? parseFloat(autoAcceptMin) : undefined,
                     })
                     setStep('done')
                   } catch (err) {
