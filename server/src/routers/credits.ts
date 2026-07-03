@@ -1,11 +1,11 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import Stripe from 'stripe'
+import { getStripe } from '../lib/stripe'
 import type { PrismaClient } from '@prisma/client'
 import { router, protectedProcedure } from '../trpc'
 import { PRICES } from '@grabitt/design-tokens'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-02-24.acacia' })
 
 // Credit packs — prices are server-owned (§10.2). Bigger packs include bonus credits.
 export const CREDIT_PACKS: Record<string, { credits: number; eur: number }> = {
@@ -97,7 +97,7 @@ export const creditsRouter = router({
     .input(z.object({ packId: z.enum(['p100', 'p550', 'p1400', 'p3000']) }))
     .mutation(async ({ ctx, input }) => {
       const pack = CREDIT_PACKS[input.packId]
-      const paymentIntent = await stripe.paymentIntents.create({
+      const paymentIntent = await getStripe().paymentIntents.create({
         amount: Math.round(pack.eur * 100),
         currency: 'eur',
         metadata: { kind: 'credit_pack', userId: ctx.user.id, packId: input.packId },

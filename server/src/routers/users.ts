@@ -1,9 +1,9 @@
 import { z } from 'zod'
 import Stripe from 'stripe'
+import { getStripe } from '../lib/stripe'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-02-24.acacia' })
 const APP_URL = () => process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
 export const usersRouter = router({
@@ -41,7 +41,7 @@ export const usersRouter = router({
   payoutStatus: protectedProcedure.query(async ({ ctx }) => {
     const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { stripeAccountId: true } })
     if (!user.stripeAccountId) return { connected: false, payoutsEnabled: false, chargesEnabled: false }
-    const acct = await stripe.accounts.retrieve(user.stripeAccountId)
+    const acct = await getStripe().accounts.retrieve(user.stripeAccountId)
     return {
       connected: true,
       payoutsEnabled: acct.payouts_enabled ?? false,
@@ -57,7 +57,7 @@ export const usersRouter = router({
     const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
     let accountId = user.stripeAccountId
     if (!accountId) {
-      const account = await stripe.accounts.create({
+      const account = await getStripe().accounts.create({
         type: 'express',
         email: user.email,
         capabilities: { transfers: { requested: true }, card_payments: { requested: true } },
@@ -67,7 +67,7 @@ export const usersRouter = router({
       accountId = account.id
       await ctx.prisma.user.update({ where: { id: user.id }, data: { stripeAccountId: accountId } })
     }
-    const link = await stripe.accountLinks.create({
+    const link = await getStripe().accountLinks.create({
       account: accountId,
       refresh_url: `${APP_URL()}/?payout=refresh`,
       return_url: `${APP_URL()}/?payout=done`,
@@ -80,7 +80,7 @@ export const usersRouter = router({
   payoutDashboardLink: protectedProcedure.mutation(async ({ ctx }) => {
     const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { stripeAccountId: true } })
     if (!user.stripeAccountId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No payout account yet' })
-    const link = await stripe.accounts.createLoginLink(user.stripeAccountId)
+    const link = await getStripe().accounts.createLoginLink(user.stripeAccountId)
     return { url: link.url }
   }),
 })

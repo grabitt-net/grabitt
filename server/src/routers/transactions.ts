@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import Stripe from 'stripe'
+import { getStripe } from '../lib/stripe'
 import jwt from 'jsonwebtoken'
 import QRCode from 'qrcode'
 import { Prisma, type PrismaClient } from '@prisma/client'
@@ -8,7 +9,6 @@ import { router, protectedProcedure } from '../trpc'
 import { RateTransactionInputSchema } from '@grabitt/types'
 import { FEE_RATES, FUND_RELEASE_AUTO_DAYS } from '@grabitt/design-tokens'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-02-24.acacia' })
 
 // Handover token lives for 30 minutes — long enough for an in-person meetup
 const HANDOVER_TOKEN_TTL_SECS = 30 * 60
@@ -55,7 +55,7 @@ async function releaseFundsToSeller(
 ) {
   // Capture the held PaymentIntent — funds are NEVER released without this (§10.2)
   if (tx.stripePaymentIntentId) {
-    await stripe.paymentIntents.capture(tx.stripePaymentIntentId)
+    await getStripe().paymentIntents.capture(tx.stripePaymentIntentId)
   }
 
   // Transfer net proceeds to the seller's connected Stripe account
@@ -65,7 +65,7 @@ async function releaseFundsToSeller(
     select: { stripeAccountId: true },
   })
   if (tx.stripePaymentIntentId && seller?.stripeAccountId) {
-    const transfer = await stripe.transfers.create({
+    const transfer = await getStripe().transfers.create({
       amount: Math.round(Number(tx.sellerNet) * 100),
       currency: 'eur',
       destination: seller.stripeAccountId,
@@ -169,7 +169,7 @@ export const transactionsRouter = router({
       const platformFee = Math.round(itemSubtotal * feeRate * 100) / 100
       const sellerNet = Math.round((amount - platformFee) * 100) / 100
 
-      const paymentIntent = await stripe.paymentIntents.create({
+      const paymentIntent = await getStripe().paymentIntents.create({
         amount: Math.round(amount * 100),
         currency: 'eur',
         capture_method: 'manual', // held in escrow — captured only after QR handover

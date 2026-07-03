@@ -1,7 +1,12 @@
 import { Resend } from 'resend'
 import twilio from 'twilio'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+// Lazily construct clients so importing this module never requires the API keys.
+let _resend: Resend | null = null
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY ?? '')
+  return _resend
+}
 
 function getTwilio() {
   return twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
@@ -9,7 +14,7 @@ function getTwilio() {
 
 export async function sendEmail(to: string, subject: string, html: string) {
   if (!process.env.RESEND_API_KEY) return
-  await resend.emails.send({
+  await getResend().emails.send({
     from: 'Grabitt <noreply@grabitt.net>',
     to,
     subject,

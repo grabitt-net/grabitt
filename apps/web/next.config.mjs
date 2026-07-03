@@ -4,10 +4,12 @@ const nextConfig = {
   // The tRPC API + webhooks now run inside this app as route handlers, importing
   // the backend from the `server` package. Keep native/heavy backend packages
   // external so they're required from node_modules at runtime (not bundled).
-  serverComponentsExternalPackages: [
-    '@prisma/client', 'prisma', 'stripe', 'jsonwebtoken', 'bcryptjs',
-    'qrcode', 'resend', 'twilio', 'pg-boss', 'cloudinary',
-  ],
+  experimental: {
+    serverComponentsExternalPackages: [
+      '@prisma/client', 'prisma', 'stripe', 'jsonwebtoken', 'bcryptjs',
+      'qrcode', 'resend', 'twilio', 'pg-boss', 'cloudinary',
+    ],
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },

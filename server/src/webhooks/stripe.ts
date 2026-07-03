@@ -1,9 +1,9 @@
 import type { Request, Response } from 'express'
 import Stripe from 'stripe'
+import { getStripe } from '../lib/stripe'
 import { prisma } from '../db'
 import { grantCreditPack } from '../routers/credits'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-02-24.acacia' })
 
 // Processes a verified Stripe event. Shared by the Express server and the
 // Next.js /api/webhooks/stripe route handler.
@@ -52,7 +52,7 @@ export async function handleStripeEvent(event: Stripe.Event) {
 
 // Verifies the signature then processes. Throws on bad signature.
 export async function verifyAndHandleStripe(rawBody: string | Buffer, signature: string) {
-  const event = stripe.webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET!)
+  const event = getStripe().webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET!)
   await handleStripeEvent(event)
 }
 
