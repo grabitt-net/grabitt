@@ -1421,10 +1421,13 @@ function PanelBody() {
     const price = (item.price as string) || '€0'
     const emoji = (item.emoji as string) || '🛍️'
     const priceNum = parseFloat(price.replace(/[^0-9.]/g, '')) || 0
+    const autoAcceptMin = Number(item.autoAcceptMin) || 0
 
     const [amount, setAmount] = useState(String(Math.round(priceNum * 0.9) || ''))
     const [message, setMessage] = useState('')
     const [sent, setSent] = useState(false)
+
+    const meetsAutoAccept = autoAcceptMin > 0 && parseFloat(amount || '0') >= autoAcceptMin
 
     if (sent) return (
       <ActionPanel title="💰 Offer sent!" onClose={closePanel}>
@@ -1462,6 +1465,13 @@ function PanelBody() {
           {priceNum > 0 && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 4 }}>
             {Math.round((1 - parseFloat(amount || '0') / priceNum) * 100)}% below asking price
           </div>}
+          {autoAcceptMin > 0 && (
+            <div style={{ marginTop: 8, background: meetsAutoAccept ? '#f0fdf4' : '#FFF3EE', borderRadius: 10, padding: '8px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: meetsAutoAccept ? 'var(--sage)' : 'var(--orange)' }}>
+              {meetsAutoAccept
+                ? `✅ Seller auto-accepts offers of €${autoAcceptMin} or above — this offer pays out instantly via Stripe.`
+                : `⚡ Seller auto-accepts offers of €${autoAcceptMin} or above.`}
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: 20 }}>
@@ -1958,6 +1968,8 @@ function PanelBody() {
     const [desc, setDesc] = useState('')
     const [price, setPrice] = useState('')
     const [freeItem, setFreeItem] = useState(false)
+    const [offersDelivery, setOffersDelivery] = useState(false)
+    const [deliveryFee, setDeliveryFee] = useState('')
     const [town, setTown] = useState('Las Palmas')
     const [grabItNow, setGrabItNow] = useState(false)
     const [featured, setFeatured] = useState(false)
@@ -2107,6 +2119,30 @@ function PanelBody() {
                   </div>
                 </div>
 
+                {/* Delivery option */}
+                <div style={{ background: '#faf7f4', border: `1.5px solid ${offersDelivery ? 'var(--ocean)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
+                  <div onClick={() => setOffersDelivery(v => !v)} style={{ display: 'flex', gap: 12, cursor: 'pointer', alignItems: 'center' }}>
+                    <div style={{ fontSize: 26, flexShrink: 0 }}>🚚</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Offer delivery</div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Let buyers choose delivery at checkout. Leave the fee at €0 for free delivery.</div>
+                    </div>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${offersDelivery ? 'var(--ocean)' : '#ccc'}`, background: offersDelivery ? 'var(--ocean)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {offersDelivery && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}
+                    </div>
+                  </div>
+                  {offersDelivery && (
+                    <div style={{ marginTop: 12 }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>Delivery fee (€)</div>
+                      <div style={{ position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 16, color: '#888' }}>€</span>
+                        <input type="number" value={deliveryFee} onChange={e => setDeliveryFee(e.target.value)} placeholder="0.00" min="0" step="0.01"
+                          style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px 10px 28px', fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Grab It Now */}
                 <div onClick={() => setGrabItNow(v => !v)} style={{ display: 'flex', gap: 12, background: grabItNow ? '#FFF3EE' : '#faf7f4', border: `1.5px solid ${grabItNow ? 'var(--orange)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10, cursor: 'pointer', alignItems: 'flex-start' }}>
                   <div style={{ fontSize: 26, flexShrink: 0 }}>⚡</div>
@@ -2168,7 +2204,7 @@ function PanelBody() {
                 <div style={{ fontFamily: 'Georgia,serif', fontSize: 26, fontWeight: 700, color: 'var(--orange)', marginBottom: 10 }}>{freeItem ? 'FREE' : price ? `€${parseFloat(price).toFixed(2)}` : 'POA'}</div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-                  {[dept, condition, `📍 ${town}`, '🤝 Collection'].filter(Boolean).map((tag, i) => (
+                  {[dept, condition, `📍 ${town}`, '🤝 Collection', ...(offersDelivery ? [`🚚 Delivery${parseFloat(deliveryFee) > 0 ? ` +€${parseFloat(deliveryFee).toFixed(2)}` : ' free'}`] : [])].filter(Boolean).map((tag, i) => (
                     <span key={i} style={{ background: '#f5f0e8', color: '#555', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 50 }}>{tag}</span>
                   ))}
                 </div>
@@ -2216,6 +2252,7 @@ function PanelBody() {
                       condition: (COND_ENUM[condition] ?? condition) as Parameters<typeof client.listings.create.mutate>[0]['condition'],
                       images: imageUrls,
                       location: town,
+                      deliveryFee: offersDelivery ? (parseFloat(deliveryFee) || 0) : 0,
                     })
                     setStep('done')
                   } catch (err) {
