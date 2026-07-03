@@ -7,6 +7,7 @@ import AffiliateBanner from '@/components/marketplace/AffiliateBanner'
 import SeasonalBanner from '@/components/marketplace/SeasonalBanner'
 import TrustStrip from '@/components/marketplace/TrustStrip'
 import BottomCarousel from '@/components/marketplace/BottomCarousel'
+import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 
 // Section order mirrors grabitt-homepage-v3-1-15.html:
@@ -25,6 +26,7 @@ export default function HomePage() {
         <SeasonalBanner />
         <TrustStrip />
         <BottomCarousel />
+        <CartFab />
         <PanelHost />
       </main>
     </PanelProvider>

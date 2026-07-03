@@ -59,4 +59,39 @@ export const creditsRouter = router({
 
       return { credits: newBalance }
     }),
+
+  // Credit packs — prices are server-owned; the client only sends a pack id (§10.2).
+  buyPack: protectedProcedure
+    .input(z.object({ packId: z.enum(['p100', 'p550', 'p1400', 'p3000']) }))
+    .mutation(async ({ ctx, input }) => {
+      // { credits granted, € price }. Bigger packs include bonus credits.
+      const PACKS: Record<string, { credits: number; eur: number }> = {
+        p100: { credits: 100, eur: 5 },
+        p550: { credits: 550, eur: 20 },
+        p1400: { credits: 1400, eur: 45 },
+        p3000: { credits: 3000, eur: 90 },
+      }
+      const pack = PACKS[input.packId]
+
+      // NOTE: in production the credit grant must be gated on a confirmed Stripe
+      // PaymentIntent (Elements on the client). This mirrors the app's current
+      // simulated-card checkout and grants on submit.
+      const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
+      const newBalance = user.credits + pack.credits
+
+      await ctx.prisma.$transaction([
+        ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { credits: newBalance } }),
+        ctx.prisma.creditEvent.create({
+          data: {
+            userId: ctx.user.id,
+            kind: 'purchase',
+            delta: pack.credits,
+            balance: newBalance,
+            note: `Bought ${pack.credits} credits (€${pack.eur})`,
+          },
+        }),
+      ])
+
+      return { credits: newBalance, granted: pack.credits }
+    }),
 })

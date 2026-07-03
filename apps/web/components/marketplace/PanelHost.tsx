@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { usePanel } from '@/context/PanelContext'
+import { useCart } from '@/context/CartContext'
+import { useToast } from '@/context/ToastContext'
 import { useChat } from '@/hooks/useChat'
 import { useNotifications, kindIcon, kindTab, relativeTime } from '@/hooks/useNotifications'
 import { createTrpcClient } from '@/lib/trpc'
@@ -198,6 +200,8 @@ function CourierTrackingForm({ transactionId, title, onClose }: { transactionId:
 
 function PanelBody() {
   const { panel, closePanel, openPanel } = usePanel()
+  const cart = useCart()
+  const toast = useToast()
   const [shieldTab, setShieldTab] = useState<string>('promise')
   const [notifTab, setNotifTab] = useState<string>('all')
 
@@ -295,6 +299,10 @@ function PanelBody() {
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 28, fontWeight: 900, color: '#fff' }}>142</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Grabitt Credits</div>
         </div>
+        <button onClick={() => openPanel('buyCredits')} style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 16 }}>
+          🪙 Buy Credits
+        </button>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Earn free credits</div>
         {[['💶','Refer a friend','Earn 50 credits when they list their first item'],['⭐','Leave a review','Earn 10 credits per review'],['🛒','Make a purchase','Earn 5% back as credits'],['📦','List an item','Earn 5 credits per active listing']].map(([icon, title, desc], i) => (
           <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
             <div style={{ fontSize: 24 }}>{icon}</div>
@@ -1022,6 +1030,21 @@ function PanelBody() {
               <button onClick={() => openPanel('makeOffer', { ...item })} style={{ flex: 1, background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 14, padding: '15px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
                 Make Offer
               </button>
+              <button
+                onClick={() => {
+                  const priceNum = parseFloat(price.replace(/[^0-9.]/g, '')) || 0
+                  cart.add({
+                    key: (item.id as string) || (item.listingId as string) || title,
+                    listingId: (item.id as string) || (item.listingId as string),
+                    title, price: priceNum, emoji, location,
+                    deliveryFee: Number(item.deliveryFee) || 0,
+                    deliveryMethod: item.deliveryMethod as ('courier' | 'in_person' | undefined),
+                  })
+                  toast('🛒 Added to cart')
+                }}
+                title="Add to cart"
+                style={{ flexShrink: 0, background: '#fff', color: 'var(--dark)', border: '2px solid #e0d8d0', borderRadius: 14, padding: '15px 16px', fontSize: 18, cursor: 'pointer' }}
+              >🛒</button>
             </div>
 
             {/* Grabitt Guarantee — trust notice (HTML: openGrabittGuarantee) */}
@@ -1037,6 +1060,172 @@ function PanelBody() {
           </div>
         </div>
       </div>
+    )
+  }
+
+  // ── CART ─────────────────────────────────────────────────────────────────────
+  if (panel.id === 'cart') {
+    const [cartStep, setCartStep] = useState<'summary' | 'card' | 'processing' | 'success'>('summary')
+    const [payErr, setPayErr] = useState('')
+    const fmt = (n: number) => `€${n % 1 === 0 ? n : n.toFixed(2)}`
+
+    const payCart = async () => {
+      setCartStep('processing')
+      setPayErr('')
+      try {
+        const client = await getTrpcClient()
+        // Each listing becomes its own held transaction (per-listing escrow).
+        for (const it of cart.items) {
+          if (it.listingId) {
+            await client.transactions.initiate.mutate({ listingId: it.listingId, quantity: it.qty, fulfilment: 'collection' })
+          }
+        }
+        cart.clear()
+        setCartStep('success')
+      } catch (err) {
+        setPayErr((err as Error).message || 'Payment failed')
+        setCartStep('card')
+      }
+    }
+
+    return (
+      <ActionPanel title={`🛒 Your Cart${cart.count > 0 ? ` (${cart.count})` : ''}`} onClose={closePanel}>
+        {cartStep === 'success' ? (
+          <div style={{ textAlign: 'center', padding: '30px 0' }}>
+            <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Order placed!</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>
+              Payment for each item is held safely in escrow. Arrange handover with each seller from My Purchases.
+            </div>
+            <button onClick={() => openPanel('purchases')} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>🛒 View My Purchases</button>
+            <button onClick={closePanel} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>Back to browsing</button>
+          </div>
+        ) : cartStep === 'processing' ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>Placing your order…</div>
+          </div>
+        ) : cart.items.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🛒</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Your cart is empty</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Add items from any listing to buy them together.</div>
+          </div>
+        ) : cartStep === 'card' ? (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 16px', borderBottom: '1px solid #f0f0f0', marginBottom: 16 }}>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555' }}>Total to pay</span>
+              <span style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>{fmt(cart.total)}</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16 }}>
+              {['🔒 256-bit SSL', '🏦 Stripe Secured', '🛡️ Escrow Protected'].map(b => (
+                <span key={b} style={{ background: '#f0fdf4', color: '#555', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, padding: '3px 7px', borderRadius: 50 }}>{b}</span>
+              ))}
+            </div>
+            {payErr && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{payErr}</div>}
+            <button onClick={payCart} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+              Pay {fmt(cart.total)} Securely
+            </button>
+          </>
+        ) : (
+          <>
+            {cart.items.map(it => (
+              <div key={it.key} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
+                <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{it.emoji || '🛍️'}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
+                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{fmt(it.price)}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                    <button onClick={() => it.qty > 1 ? cart.setQty(it.key, it.qty - 1) : cart.remove(it.key)} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: '#f0f0f0', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>−</button>
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, minWidth: 16, textAlign: 'center' }}>{it.qty}</span>
+                    <button onClick={() => cart.setQty(it.key, it.qty + 1)} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: '#f0f0f0', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>+</button>
+                    <button onClick={() => { cart.remove(it.key); toast('Removed from cart') }} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Remove</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 0', fontFamily: 'var(--font-ui)' }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#555' }}>Subtotal</span>
+              <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--orange)' }}>{fmt(cart.total)}</span>
+            </div>
+            <div style={{ background: '#FFF3EE', borderRadius: 10, padding: '9px 12px', marginBottom: 14, fontFamily: 'var(--font-ui)', fontSize: 11, color: 'var(--orange)' }}>
+              🔒 Each item is paid into escrow and released to its seller at handover.
+            </div>
+            <button onClick={() => setCartStep('card')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+              Checkout →
+            </button>
+          </>
+        )}
+      </ActionPanel>
+    )
+  }
+
+  // ── BUY CREDITS ──────────────────────────────────────────────────────────────
+  if (panel.id === 'buyCredits') {
+    const PACKS = [
+      { id: 'p100' as const, credits: 100, eur: 5, bonus: '' },
+      { id: 'p550' as const, credits: 550, eur: 20, bonus: '+50 bonus' },
+      { id: 'p1400' as const, credits: 1400, eur: 45, bonus: '+200 bonus' },
+      { id: 'p3000' as const, credits: 3000, eur: 90, bonus: '+600 bonus' },
+    ]
+    const [selected, setSelected] = useState<'p100' | 'p550' | 'p1400' | 'p3000'>('p550')
+    const [balance, setBalance] = useState<number | null>(null)
+    const [buying, setBuying] = useState(false)
+    const [bought, setBought] = useState<number | null>(null)
+    const [err, setErr] = useState('')
+
+    useEffect(() => {
+      getTrpcClient().then(c => c.credits.balance.query()).then(setBalance).catch(() => {})
+    }, [])
+
+    const buy = async () => {
+      setBuying(true); setErr('')
+      try {
+        const client = await getTrpcClient()
+        const res = await client.credits.buyPack.mutate({ packId: selected })
+        setBalance(res.credits)
+        setBought(res.granted)
+        toast(`🪙 ${res.granted} credits added`)
+      } catch (e) {
+        setErr((e as Error).message || 'Purchase failed')
+      } finally {
+        setBuying(false)
+      }
+    }
+
+    if (bought !== null) return (
+      <ActionPanel title="🪙 Credits added" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{bought} credits added!</div>
+          {balance !== null && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>New balance: <strong>{balance} 🪙</strong></div>}
+          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
+        </div>
+      </ActionPanel>
+    )
+
+    return (
+      <ActionPanel title="🪙 Buy Credits" onClose={closePanel}>
+        <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 14, marginBottom: 16, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 2 }}>Your balance</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 26, fontWeight: 700, color: 'var(--orange)' }}>{balance === null ? '…' : `${balance} 🪙`}</div>
+        </div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 12 }}>Credits pay for featured listings, Grab It Now and job posts. 20 credits ≈ €1.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+          {PACKS.map(p => (
+            <div key={p.id} onClick={() => setSelected(p.id)} style={{ border: `2px solid ${selected === p.id ? 'var(--orange)' : '#e0d8d0'}`, background: selected === p.id ? '#FFF3EE' : '#fff', borderRadius: 14, padding: 14, cursor: 'pointer', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, color: 'var(--dark)' }}>{p.credits}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', fontWeight: 800, marginBottom: 6 }}>credits{p.bonus && ` · ${p.bonus}`}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>€{p.eur}</div>
+            </div>
+          ))}
+        </div>
+        {err && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{err}</div>}
+        <button onClick={buy} disabled={buying} style={{ width: '100%', background: buying ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+          {buying ? '⏳ Processing…' : `Buy ${PACKS.find(p => p.id === selected)?.credits} credits — €${PACKS.find(p => p.id === selected)?.eur}`}
+        </button>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#aaa', textAlign: 'center', marginTop: 10 }}>🔒 Secured by Stripe</div>
+      </ActionPanel>
     )
   }
 
