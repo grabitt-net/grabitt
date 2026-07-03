@@ -172,6 +172,7 @@ model Listing {
   grabItNowUntil   DateTime?
   grabItNowWindow  Int?
   grabItNowPrice   Decimal?         @db.Decimal(10, 2)
+  deliveryFee      Decimal          @default(0) @db.Decimal(10, 2)
   viewCount        Int              @default(0)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt

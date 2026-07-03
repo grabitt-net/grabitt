@@ -45,6 +45,7 @@ export const CreateListingInputSchema = z.object({
   condition: ListingCondition,
   images: z.array(z.string().url()).min(1).max(8),
   location: z.string().max(100),
+  deliveryFee: z.number().min(0).default(0),
 })
 export type CreateListingInput = z.infer<typeof CreateListingInputSchema>
 

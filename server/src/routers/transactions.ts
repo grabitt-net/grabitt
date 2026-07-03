@@ -43,7 +43,11 @@ export const transactionsRouter = router({
   // ── INITIATE ─────────────────────────────────────────────────────────────────
   // Creates a Stripe PaymentIntent (capture_method: manual = funds held, not yet captured)
   initiate: protectedProcedure
-    .input(z.object({ listingId: z.string().uuid() }))
+    .input(z.object({
+      listingId: z.string().uuid(),
+      quantity: z.number().int().min(1).max(99).default(1),
+      fulfilmentType: z.enum(['collection', 'delivery']).default('collection'),
+    }))
     .mutation(async ({ ctx, input }) => {
       const listing = await ctx.prisma.listing.findUniqueOrThrow({
         where: { id: input.listingId },
@@ -58,10 +62,14 @@ export const transactionsRouter = router({
       }
 
       // ALL monetary calculations server-side — never trust client amounts (§10.2)
-      const amount = Number(listing.price)
+      const itemSubtotal = Math.round(Number(listing.price) * input.quantity * 100) / 100
+      // Delivery fee is read from the listing (server-owned), only when the buyer
+      // chose delivery. Platform fee applies to the item subtotal, not delivery.
+      const deliveryFee = input.fulfilmentType === 'delivery' ? Number(listing.deliveryFee) : 0
+      const amount = Math.round((itemSubtotal + deliveryFee) * 100) / 100
       const sellerGrade = listing.seller.grade as keyof typeof FEE_RATES
       const feeRate = FEE_RATES[sellerGrade] ?? FEE_RATES.grabber
-      const platformFee = Math.round(amount * feeRate * 100) / 100
+      const platformFee = Math.round(itemSubtotal * feeRate * 100) / 100
       const sellerNet = Math.round((amount - platformFee) * 100) / 100
 
       const paymentIntent = await stripe.paymentIntents.create({
@@ -79,6 +87,8 @@ export const transactionsRouter = router({
           amount,
           platformFee,
           sellerNet,
+          quantity: input.quantity,
+          fulfilmentType: input.fulfilmentType,
           status: 'pending_payment',
           stripePaymentIntentId: paymentIntent.id,
         },

@@ -1238,12 +1238,20 @@ function PanelBody() {
     const location = (item.location as string) || 'Gran Canaria'
     const priceNum = parseFloat(price.replace(/[^0-9.]/g, '')) || 0
 
+    const deliveryFee = Number(item.deliveryFee) || 0
+
     const [step, setStep] = useState<'summary' | 'card' | 'processing' | 'success'>('summary')
+    const [qty, setQty] = useState(1)
+    const [fulfil, setFulfil] = useState<'collection' | 'delivery'>('collection')
     const [cardNum, setCardNum] = useState('')
     const [expiry, setExpiry] = useState('')
     const [cvc, setCvc] = useState('')
     const [transactionId, setTransactionId] = useState<string | null>(null)
     const [payError, setPayError] = useState<string | null>(null)
+
+    const delFee = fulfil === 'delivery' ? deliveryFee : 0
+    const total = priceNum * qty + delFee
+    const fmt = (n: number) => `€${n % 1 === 0 ? n : n.toFixed(2)}`
 
     const formatCard = (v: string) => v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
     const formatExpiry = (v: string) => { const d = v.replace(/\D/g, '').slice(0, 4); return d.length > 2 ? `${d.slice(0,2)}/${d.slice(2)}` : d }
@@ -1255,7 +1263,7 @@ function PanelBody() {
         const listingId = (item.id as string) || (item.listingId as string) || ''
         if (listingId) {
           const client = await getTrpcClient()
-          const result = await client.transactions.initiate.mutate({ listingId })
+          const result = await client.transactions.initiate.mutate({ listingId, quantity: qty, fulfilmentType: fulfil })
           setTransactionId(result.transaction.id)
         }
         setStep('success')
@@ -1339,7 +1347,7 @@ function PanelBody() {
                   disabled={cardNum.length < 19 || expiry.length < 5 || cvc.length < 3}
                   style={{ width: '100%', background: cardNum.length >= 19 && expiry.length >= 5 && cvc.length >= 3 ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
                 >
-                  Pay {price} Securely
+                  Pay {fmt(total)} Securely
                 </button>
               </>
             ) : (
@@ -1350,13 +1358,39 @@ function PanelBody() {
                   <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)', marginBottom: 2 }}>{title}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>📍 {location}</div></div>
                 </div>
 
+                {/* Quantity */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555' }}>Quantity</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <button onClick={() => setQty(q => Math.max(1, q - 1))} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: 'var(--orange)', color: '#fff', fontSize: 16, fontWeight: 900, cursor: 'pointer' }}>−</button>
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', minWidth: 20, textAlign: 'center' }}>{qty}</span>
+                    <button onClick={() => setQty(q => Math.min(99, q + 1))} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: 'var(--orange)', color: '#fff', fontSize: 16, fontWeight: 900, cursor: 'pointer' }}>+</button>
+                  </div>
+                </div>
+
+                {/* Fulfilment choice */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                  <button onClick={() => setFulfil('collection')} style={{ flex: 1, background: fulfil === 'collection' ? 'var(--orange)' : '#f0f0f0', color: fulfil === 'collection' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🤝 Collection</button>
+                  <button onClick={() => setFulfil('delivery')} style={{ flex: 1, background: fulfil === 'delivery' ? 'var(--orange)' : '#f0f0f0', color: fulfil === 'delivery' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🚚 Delivery{deliveryFee > 0 ? ` +${fmt(deliveryFee)}` : ' free'}</button>
+                </div>
+                <div style={{ background: fulfil === 'delivery' ? '#eef6ff' : '#FFF3EE', borderRadius: 10, padding: '9px 12px', marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11, color: fulfil === 'delivery' ? '#2563eb' : 'var(--orange)' }}>
+                  {fulfil === 'delivery'
+                    ? `🚚 Delivery${delFee > 0 ? ` (+${fmt(delFee)})` : ' (free)'} — confirm receipt on arrival to release funds.`
+                    : '🤝 Collection — scan at handover to release funds.'}
+                </div>
+
                 {/* Price breakdown */}
                 <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 16 }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 10 }}>Order summary</div>
-                  {[['Item price', price], ['Platform fee', 'Paid by seller'], ['You pay', price]].map(([label, val], i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: i < 2 ? '1px solid #ede0c4' : 'none' }}>
+                  {[
+                    [`Item price${qty > 1 ? ` × ${qty}` : ''}`, fmt(priceNum * qty)],
+                    ['Delivery', fulfil === 'delivery' ? (delFee > 0 ? fmt(delFee) : 'Free') : '—'],
+                    ['Platform fee', 'Paid by seller'],
+                    ['You pay', fmt(total)],
+                  ].map(([label, val], i, arr) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid #ede0c4' : 'none' }}>
                       <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>{label}</span>
-                      <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: i === 2 ? 'var(--orange)' : '#555' }}>{val}</span>
+                      <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: i === arr.length - 1 ? 'var(--orange)' : '#555' }}>{val}</span>
                     </div>
                   ))}
                 </div>
