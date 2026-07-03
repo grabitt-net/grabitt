@@ -54,6 +54,24 @@ export const listingsRouter = router({
       return listing
     }),
 
+  // A seller's public storefront: their profile + active listings.
+  bySeller: publicProcedure
+    .input(z.object({ sellerId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const seller = await ctx.prisma.user.findUnique({
+        where: { id: input.sellerId },
+        select: { id: true, displayName: true, avatar: true, grade: true, avgRating: true, salesCount: true, createdAt: true, isBusiness: true },
+      })
+      if (!seller) throw new TRPCError({ code: 'NOT_FOUND' })
+      const listings = await ctx.prisma.listing.findMany({
+        where: { sellerId: input.sellerId, status: 'active' },
+        orderBy: { createdAt: 'desc' },
+        take: 60,
+        select: { id: true, title: true, price: true, images: true, location: true, department: true },
+      })
+      return { seller, listings }
+    }),
+
   create: protectedProcedure
     .input(CreateListingInputSchema)
     .mutation(async ({ ctx, input }) => {

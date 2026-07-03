@@ -17,4 +17,30 @@ export const jobsRouter = router({
         take: 20,
       })
     ),
+
+  // Employer's applications board: their job listings with applicants.
+  employerApplications: protectedProcedure.query(async ({ ctx }) => {
+    const jobs = await ctx.prisma.jobListing.findMany({
+      where: { employerId: ctx.user.id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        applications: {
+          orderBy: { createdAt: 'desc' },
+          include: { applicant: { select: { id: true, displayName: true } } },
+        },
+      },
+    })
+    return jobs.map(j => ({
+      id: j.id,
+      jobTitle: j.jobTitle,
+      company: j.company,
+      applications: j.applications.map(a => ({
+        id: a.id,
+        status: a.status,
+        coverNote: a.coverNote,
+        applicant: a.applicant.displayName,
+        createdAt: a.createdAt,
+      })),
+    }))
+  }),
 })

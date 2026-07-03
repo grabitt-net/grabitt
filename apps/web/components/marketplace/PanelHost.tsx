@@ -838,6 +838,7 @@ function PanelBody() {
         <a href="/listings/new" onClick={closePanel} style={{ textDecoration: 'none' }}>
           <button style={{ width: '100%', background: 'linear-gradient(135deg,#2193b0,#6dd5ed)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>Post a Job Now</button>
         </a>
+        <button onClick={() => openPanel('applications')} style={{ width: '100%', background: '#fff', color: '#2193b0', border: '2px solid #2193b0', borderRadius: 14, padding: '13px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 10 }}>📋 View Applicants</button>
       </ActionPanel>
     )
   }
@@ -994,7 +995,11 @@ function PanelBody() {
                   <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>⭐ 4.8 · 34 sales</span>
                 </div>
               </div>
-              <button style={{ background: 'var(--ocean)', color: '#fff', border: 'none', borderRadius: 50, padding: '7px 13px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}>Message</button>
+              {item.sellerId ? (
+                <button onClick={() => openPanel('storefront', { sellerId: item.sellerId })} style={{ background: '#fff', color: 'var(--ocean)', border: '1.5px solid var(--ocean)', borderRadius: 50, padding: '7px 13px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}>🏪 Store</button>
+              ) : (
+                <button style={{ background: 'var(--ocean)', color: '#fff', border: 'none', borderRadius: 50, padding: '7px 13px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}>Message</button>
+              )}
             </div>
 
             {/* Tag pills */}
@@ -1364,6 +1369,106 @@ function PanelBody() {
               <span style={{ background: `${DSTATUS[d.status]?.color ?? '#888'}22`, color: DSTATUS[d.status]?.color ?? '#888', borderRadius: 50, padding: '3px 10px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800 }}>{DSTATUS[d.status]?.label ?? d.status}</span>
             </div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>{d.reason}</div>
+          </div>
+        ))}
+      </ActionPanel>
+    )
+  }
+
+  // ── STOREFRONT (seller's public store) ───────────────────────────────────────
+  if (panel.id === 'storefront') {
+    const sellerId = (panel.data?.sellerId as string) || ''
+    type Store = {
+      seller: { displayName: string; grade: string; avgRating: number | null; salesCount: number; isBusiness: boolean }
+      listings: { id: string; title: string; price: unknown; images: string[]; location: string }[]
+    }
+    const [store, setStore] = useState<Store | null>(null)
+    const [loaded, setLoaded] = useState(false)
+    useEffect(() => {
+      if (!sellerId) { setLoaded(true); return }
+      getTrpcClient().then(c => c.listings.bySeller.query({ sellerId }))
+        .then(d => { setStore(d as Store); setLoaded(true) }).catch(() => setLoaded(true))
+    }, [sellerId])
+
+    const GRADE_ICONS: Record<string, string> = { grabber: '🟠', dealer: '🟡', trader: '🔵', pro: '⭐' }
+
+    return (
+      <ActionPanel title="🏪 Storefront" onClose={closePanel}>
+        {!loaded ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : !store ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Store not found.</div>
+        ) : (
+          <>
+            <div style={{ textAlign: 'center', padding: '10px 0 18px' }}>
+              <div style={{ width: 72, height: 72, background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, margin: '0 auto 10px' }}>{store.seller.isBusiness ? '🏢' : '👤'}</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--dark)' }}>{store.seller.displayName}</div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 6 }}>
+                <span style={{ background: '#FFF3EE', color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, padding: '3px 10px', borderRadius: 50 }}>{GRADE_ICONS[store.seller.grade] ?? '🟠'} {store.seller.grade}</span>
+                <span style={{ background: '#f9f6f2', color: '#555', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 50 }}>⭐ {store.seller.avgRating ? Number(store.seller.avgRating).toFixed(1) : '—'} · {store.seller.salesCount} sales</span>
+              </div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>{store.listings.length} listings</div>
+            {store.listings.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 20, color: '#aaa', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No active listings.</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {store.listings.map(l => (
+                  <div key={l.id} onClick={() => openPanel('listing', { id: l.id, title: l.title, price: `€${Number(l.price).toFixed(2)}`, location: l.location })} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 12, overflow: 'hidden', cursor: 'pointer' }}>
+                    <div style={{ width: '100%', paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
+                      {l.images?.[0] ? <img src={l.images[0]} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30 }}>🛍️</div>}
+                    </div>
+                    <div style={{ padding: '6px 8px 8px' }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.title}</div>
+                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>€{Number(l.price).toFixed(2)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </ActionPanel>
+    )
+  }
+
+  // ── EMPLOYER APPLICATIONS BOARD ──────────────────────────────────────────────
+  if (panel.id === 'applications') {
+    type JobApps = { id: string; jobTitle: string; company: string; applications: { id: string; status: string; coverNote: string | null; applicant: string; createdAt: string }[] }
+    const [jobs, setJobs] = useState<JobApps[]>([])
+    const [loaded, setLoaded] = useState(false)
+    useEffect(() => {
+      getTrpcClient().then(c => c.jobs.employerApplications.query())
+        .then(d => { setJobs(d as unknown as JobApps[]); setLoaded(true) }).catch(() => setLoaded(true))
+    }, [])
+
+    const ASTATUS: Record<string, string> = { applied: '#3b82f6', viewed: '#6b7280', shortlisted: 'var(--sage)', rejected: '#ef4444', hired: '#16a34a' }
+
+    return (
+      <ActionPanel title="📋 Applicants" onClose={closePanel}>
+        {!loaded ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : jobs.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No job posts yet</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Post a job and applicants will appear here.</div>
+          </div>
+        ) : jobs.map(j => (
+          <div key={j.id} style={{ marginBottom: 16 }}>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{j.jobTitle} <span style={{ color: '#888', fontWeight: 700 }}>· {j.company}</span></div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginBottom: 8 }}>{j.applications.length} applicant{j.applications.length === 1 ? '' : 's'}</div>
+            {j.applications.length === 0 ? (
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#bbb', paddingLeft: 4 }}>No applicants yet.</div>
+            ) : j.applications.map(a => (
+              <div key={a.id} style={{ background: '#f9f6f2', borderRadius: 10, padding: 12, marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{a.applicant}</span>
+                  <span style={{ background: `${ASTATUS[a.status] ?? '#888'}22`, color: ASTATUS[a.status] ?? '#888', borderRadius: 50, padding: '2px 10px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800 }}>{a.status}</span>
+                </div>
+                {a.coverNote && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#555', marginTop: 4 }}>{a.coverNote}</div>}
+              </div>
+            ))}
           </div>
         ))}
       </ActionPanel>
