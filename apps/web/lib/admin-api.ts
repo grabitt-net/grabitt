@@ -5,7 +5,9 @@
  * localStorage and is scoped to the admin shell's render.
  */
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+// Same-origin tRPC endpoint served by this Next.js app (/api/trpc), unless an
+// external standalone server URL is configured.
+const API = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/trpc` : '/api/trpc'
 
 async function rpc<T>(
   procedure: string,
@@ -14,8 +16,8 @@ async function rpc<T>(
   execToken: string,
 ): Promise<T> {
   const url = type === 'query'
-    ? `${API}/trpc/${procedure}?input=${encodeURIComponent(JSON.stringify(input))}`
-    : `${API}/trpc/${procedure}`
+    ? `${API}/${procedure}?input=${encodeURIComponent(JSON.stringify(input))}`
+    : `${API}/${procedure}`
 
   const res = await fetch(url, {
     method: type === 'query' ? 'GET' : 'POST',

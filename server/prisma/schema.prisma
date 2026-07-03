@@ -3,7 +3,9 @@
 // Never trust client-sent fee or net amounts. (§10.2)
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // native = local dev; rhel = Vercel serverless (Amazon Linux 2 / RHEL)
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {

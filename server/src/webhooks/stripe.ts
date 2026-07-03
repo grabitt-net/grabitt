@@ -5,18 +5,9 @@ import { grantCreditPack } from '../routers/credits'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-02-24.acacia' })
 
-export async function stripeWebhookHandler(req: Request, res: Response) {
-  const sig = req.headers['stripe-signature']
-  if (!sig) return res.status(400).send('Missing signature')
-
-  let event: Stripe.Event
-  try {
-    // Signature validation MUST happen before any processing (§10.2)
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
-  } catch (err) {
-    return res.status(400).send(`Webhook error: ${(err as Error).message}`)
-  }
-
+// Processes a verified Stripe event. Shared by the Express server and the
+// Next.js /api/webhooks/stripe route handler.
+export async function handleStripeEvent(event: Stripe.Event) {
   switch (event.type) {
     // Escrow purchases use capture_method: 'manual'. When the buyer authorises
     // the card, Stripe fires amount_capturable_updated — funds are now HELD
@@ -57,6 +48,22 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
       break
     }
   }
+}
 
+// Verifies the signature then processes. Throws on bad signature.
+export async function verifyAndHandleStripe(rawBody: string | Buffer, signature: string) {
+  const event = stripe.webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET!)
+  await handleStripeEvent(event)
+}
+
+// Express adapter (standalone server)
+export async function stripeWebhookHandler(req: Request, res: Response) {
+  const sig = req.headers['stripe-signature']
+  if (!sig) return res.status(400).send('Missing signature')
+  try {
+    await verifyAndHandleStripe(req.body, sig as string)
+  } catch (err) {
+    return res.status(400).send(`Webhook error: ${(err as Error).message}`)
+  }
   res.json({ received: true })
 }
