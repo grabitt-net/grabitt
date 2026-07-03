@@ -9,6 +9,7 @@ import { useNotifications, kindIcon, kindTab, relativeTime } from '@/hooks/useNo
 import { createTrpcClient } from '@/lib/trpc'
 import { createClient } from '@/lib/supabase'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
+import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
 
 async function getTrpcClient() {
   const supabase = createClient()
@@ -1042,10 +1043,10 @@ function PanelBody() {
             {/* Action buttons */}
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => openPanel('checkout', { ...item })} style={{ flex: 1, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '15px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
-                Buy Now
+                {t('Buy Now')}
               </button>
               <button onClick={() => openPanel('makeOffer', { ...item })} style={{ flex: 1, background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 14, padding: '15px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
-                Make Offer
+                {t('Make Offer')}
               </button>
               <button
                 onClick={() => {
@@ -1991,44 +1992,57 @@ function PanelBody() {
 
   // ── OFFER RECEIVED (seller view) ────────────────────────────────────────────
   if (panel.id === 'offerReceived') {
-    const MOCK_OFFERS = [
-      { id: 'O1', buyer: '@buyer_maria', avatar: '👩', listing: 'MacBook Air M2', amount: '€820', original: '€890', msg: 'Can collect today', time: '5m ago' },
-      { id: 'O2', buyer: '@buyer_carlos', avatar: '👨', listing: 'Surfboard 6ft', amount: '€95', original: '€120', msg: '', time: '2h ago' },
-    ]
+    type RecvOffer = { id: string; amount: unknown; message: string | null; createdAt: string; status: string; listing: { title: string; price: unknown } }
+    const [offers, setOffers] = useState<RecvOffer[]>([])
+    const [loaded, setLoaded] = useState(false)
     const [responded, setResponded] = useState<Record<string, string>>({})
+
+    useEffect(() => {
+      getTrpcClient().then(c => c.offers.received.query())
+        .then(d => { setOffers(d as unknown as RecvOffer[]); setLoaded(true) }).catch(() => setLoaded(true))
+    }, [])
+
+    const respond = async (offerId: string, action: 'accept' | 'decline') => {
+      setResponded(r => ({ ...r, [offerId]: action === 'accept' ? 'accepted' : 'declined' }))
+      try {
+        const client = await getTrpcClient()
+        await client.offers.respond.mutate({ offerId, action })
+        toast(action === 'accept' ? '✅ Offer accepted' : 'Offer declined')
+      } catch { toast('Could not update offer') }
+    }
 
     return (
       <ActionPanel title="💰 Offers Received" onClose={closePanel}>
-        {MOCK_OFFERS.length === 0
-          ? <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No pending offers right now.</div>
-          : MOCK_OFFERS.map(offer => (
-            <div key={offer.id} style={{ background: '#f9f6f2', borderRadius: 14, padding: 14, marginBottom: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>{offer.avatar}</div>
-                <div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{offer.buyer}</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>on {offer.listing} · {offer.time}</div>
-                </div>
-                <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>{offer.amount}</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', textDecoration: 'line-through' }}>{offer.original}</div>
-                </div>
+        {!loaded ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : offers.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No pending offers right now.</div>
+        ) : offers.map(offer => (
+          <div key={offer.id} style={{ background: '#f9f6f2', borderRadius: 14, padding: 14, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>👤</div>
+              <div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>Offer</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>on {offer.listing.title} · {new Date(offer.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
               </div>
-              {offer.msg && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 10 }}>"{offer.msg}"</div>}
-              {responded[offer.id] ? (
-                <div style={{ textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: responded[offer.id] === 'accepted' ? 'var(--sage)' : '#ef4444' }}>
-                  {responded[offer.id] === 'accepted' ? '✅ Accepted' : '❌ Declined'}
-                </div>
-              ) : (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => setResponded(r => ({ ...r, [offer.id]: 'accepted' }))} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>✅ Accept</button>
-                  <button onClick={() => setResponded(r => ({ ...r, [offer.id]: 'declined' }))} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>❌ Decline</button>
-                  <button style={{ flex: 1, background: '#fff', color: 'var(--ocean)', border: '1.5px solid var(--ocean)', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>↔ Counter</button>
-                </div>
-              )}
+              <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                <div style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>€{Number(offer.amount).toFixed(2)}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', textDecoration: 'line-through' }}>€{Number(offer.listing.price).toFixed(2)}</div>
+              </div>
             </div>
-          ))
-        }
+            {offer.message && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 10 }}>"{offer.message}"</div>}
+            {responded[offer.id] ? (
+              <div style={{ textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: responded[offer.id] === 'accepted' ? 'var(--sage)' : '#ef4444' }}>
+                {responded[offer.id] === 'accepted' ? '✅ Accepted' : '❌ Declined'}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => respond(offer.id, 'accept')} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>✅ Accept</button>
+                <button onClick={() => respond(offer.id, 'decline')} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>❌ Decline</button>
+              </div>
+            )}
+          </div>
+        ))}
       </ActionPanel>
     )
   }
@@ -3018,57 +3032,91 @@ function PanelBody() {
   if (panel.id === 'profile') {
     const GRADE_COLORS: Record<string, string> = { grabber: 'var(--orange)', dealer: '#eab308', trader: '#3b82f6', pro: '#8b5cf6' }
     const GRADE_ICONS: Record<string, string> = { grabber: '🟠', dealer: '🟡', trader: '🔵', pro: '⭐' }
-    const MOCK_PROFILE = {
-      grade: 'dealer', salesCount: 23, avgRating: 4.8, reviewCount: 19,
-      memberSince: 'March 2026', verified: true, completionPct: 75,
-      nextGrade: 'trader', nextGradeNeed: '28 more sales & 4.5★ avg',
-      bio: 'Gran Canaria local. Selling quality electronics, furniture and sport gear. Fast responses, fair prices! 🌴',
-    }
+    const INTEREST_DEPTS = ['Electronics', 'Fashion', 'Home & Garden', 'Sport', 'Gaming', 'Motors', 'Kids & Baby', 'Property', 'Pet Shop', 'Retro & Vintage']
     const isOwnProfile = !panel.data?.userId || panel.data.userId === currentUserId
-    const displayName = (panel.data?.name as string) ?? (isOwnProfile ? 'Your Profile' : 'Seller Profile')
-    const gradeColor = GRADE_COLORS[MOCK_PROFILE.grade] ?? 'var(--orange)'
+
+    type Me = { displayName: string; grade: string; salesCount: number; avgRating: number | null; createdAt: string; isVerified: boolean; interests: string[]; locale: string }
+    const [me, setMe] = useState<Me | null>(null)
+    const [interests, setInterests] = useState<string[]>([])
+    const [lang, setLang] = useState<Lang>('en')
+    const [saving, setSaving] = useState(false)
+
+    useEffect(() => {
+      setLang(getLanguage())
+      if (!isOwnProfile) return
+      getTrpcClient().then(c => c.users.me.query()).then(u => {
+        setMe(u as unknown as Me)
+        setInterests((u as unknown as Me).interests ?? [])
+      }).catch(() => {})
+    }, [isOwnProfile])
+
+    const grade = me?.grade ?? 'grabber'
+    const gradeColor = GRADE_COLORS[grade] ?? 'var(--orange)'
+    const displayName = me?.displayName ?? (panel.data?.name as string) ?? (isOwnProfile ? 'Your Profile' : 'Seller Profile')
+    const memberSince = me?.createdAt ? new Date(me.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '—'
+
+    const toggleInterest = (d: string) => setInterests(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])
+
+    const savePrefs = async () => {
+      setSaving(true)
+      try {
+        const client = await getTrpcClient()
+        await client.users.updateProfile.mutate({ interests, locale: lang })
+        if (lang !== getLanguage()) { setLanguage(lang); toast('✓ Preferences saved — applying language…'); setTimeout(() => location.reload(), 600) }
+        else toast('✓ Preferences saved')
+      } catch { toast('Could not save — are you logged in?') }
+      finally { setSaving(false) }
+    }
+
     return (
       <ActionPanel title="👤 Profile" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '16px 0 20px' }}>
           <div style={{ width: 80, height: 80, background: `linear-gradient(135deg,${gradeColor},#FF8C00)`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, margin: '0 auto 12px' }}>👤</div>
           <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--dark)', marginBottom: 2 }}>{displayName}</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 8 }}>Member since {MOCK_PROFILE.memberSince}</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 8 }}>Member since {memberSince}</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <span style={{ background: `${gradeColor}22`, color: gradeColor, fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, padding: '4px 12px', borderRadius: 50 }}>{GRADE_ICONS[MOCK_PROFILE.grade]} {MOCK_PROFILE.grade.charAt(0).toUpperCase() + MOCK_PROFILE.grade.slice(1)}</span>
-            {MOCK_PROFILE.verified && <span style={{ background: '#d1fae5', color: '#065f46', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, padding: '4px 10px', borderRadius: 50 }}>✅ Verified</span>}
+            <span style={{ background: `${gradeColor}22`, color: gradeColor, fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, padding: '4px 12px', borderRadius: 50 }}>{GRADE_ICONS[grade]} {grade.charAt(0).toUpperCase() + grade.slice(1)}</span>
+            {me?.isVerified && <span style={{ background: '#d1fae5', color: '#065f46', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, padding: '4px 10px', borderRadius: 50 }}>✅ Verified</span>}
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
-          {[{ label: 'Sales', value: MOCK_PROFILE.salesCount }, { label: 'Rating', value: `${MOCK_PROFILE.avgRating}★` }, { label: 'Reviews', value: MOCK_PROFILE.reviewCount }].map(stat => (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16 }}>
+          {[{ label: 'Sales', value: me?.salesCount ?? 0 }, { label: 'Rating', value: me?.avgRating ? `${Number(me.avgRating).toFixed(1)}★` : '—' }].map(stat => (
             <div key={stat.label} style={{ background: '#f9f6f2', borderRadius: 12, padding: '12px 8px', textAlign: 'center' as const }}>
               <div style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, color: gradeColor }}>{stat.value}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', fontWeight: 800 }}>{stat.label}</div>
             </div>
           ))}
         </div>
-        {MOCK_PROFILE.bio && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 14, padding: 12, background: '#f9f6f2', borderRadius: 12 }}>{MOCK_PROFILE.bio}</div>}
+
         {isOwnProfile && (
-          <div style={{ background: '#fff', border: '1px solid #f0ebe4', borderRadius: 12, padding: 14, marginBottom: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555' }}>Profile completion</span>
-              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: gradeColor }}>{MOCK_PROFILE.completionPct}%</span>
+          <>
+            {/* Preferences — interests */}
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>My interests</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+              {INTEREST_DEPTS.map(d => (
+                <button key={d} onClick={() => toggleInterest(d)} style={{ background: interests.includes(d) ? 'var(--orange)' : '#f5f0e8', color: interests.includes(d) ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{d}</button>
+              ))}
             </div>
-            <div style={{ height: 6, background: '#f0ebe4', borderRadius: 3, marginBottom: 8 }}>
-              <div style={{ height: '100%', width: `${MOCK_PROFILE.completionPct}%`, background: gradeColor, borderRadius: 3, transition: 'width 0.4s' }} />
+
+            {/* Preferences — language */}
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Language</div>
+            <select value={lang} onChange={e => setLang(e.target.value as Lang)} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', background: '#fff', marginBottom: 14, boxSizing: 'border-box' }}>
+              {LANGS.map(l => <option key={l} value={l}>{langLabel(l)}</option>)}
+            </select>
+
+            <button onClick={savePrefs} disabled={saving} style={{ width: '100%', background: saving ? '#ccc' : 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 16 }}>{saving ? 'Saving…' : 'Save preferences ✓'}</button>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => openPanel('mySales')} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>My Sales</button>
+              <button onClick={() => openPanel('mylistings')} style={{ flex: 1, background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>My Listings</button>
             </div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>Add a photo and verify your phone to reach 100%</div>
-          </div>
+          </>
         )}
-        <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 14, marginBottom: 16 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: 'var(--orange)', marginBottom: 4 }}>🏆 Next grade: {MOCK_PROFILE.nextGrade.charAt(0).toUpperCase() + MOCK_PROFILE.nextGrade.slice(1)}</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{MOCK_PROFILE.nextGradeNeed}</div>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={() => openPanel('mySales')} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>My Sales</button>
-          <button onClick={() => openPanel('mylistings')} style={{ flex: 1, background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>My Listings</button>
-        </div>
         {!isOwnProfile && (
-          <button onClick={() => openPanel('report', { title: displayName })} style={{ width: '100%', background: 'none', color: '#ef4444', border: '1px solid #f0ebe4', borderRadius: 14, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 12, cursor: 'pointer', marginTop: 10 }}>🚨 Report this seller</button>
+          <>
+            {panel.data?.userId && <button onClick={() => openPanel('storefront', { sellerId: panel.data!.userId })} style={{ width: '100%', background: 'var(--ocean)', color: '#fff', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>🏪 View storefront</button>}
+            <button onClick={() => openPanel('report', { title: displayName })} style={{ width: '100%', background: 'none', color: '#ef4444', border: '1px solid #f0ebe4', borderRadius: 14, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 12, cursor: 'pointer' }}>🚨 Report this seller</button>
+          </>
         )}
       </ActionPanel>
     )
