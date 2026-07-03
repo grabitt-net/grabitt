@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
 import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
 import StripePayment from './StripePayment'
+import { toPanelItem, DEPT_ENUM, type DbListing } from '@/lib/listingMap'
 
 async function getTrpcClient() {
   const supabase = createClient()
@@ -697,7 +698,6 @@ function PanelBody() {
   if (panel.id === 'dept') {
     const name = (panel.data?.name as string) || 'Listings'
     const icon = (panel.data?.icon as string) || '🛍️'
-    const items = DEPT_LISTINGS[name] || []
 
     const SUBCATS: Record<string, string[]> = {
       'Electronics':    ['All', 'Phones', 'Laptops', 'Audio', 'Cameras', 'Gaming', 'Wearables'],
@@ -720,6 +720,19 @@ function PanelBody() {
 
     const [activeSub, setActiveSub] = useState('All')
     const [sort, setSort] = useState('newest')
+    const [items, setItems] = useState<DbListing[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+      const dept = DEPT_ENUM[name]
+      if (!dept) { setItems([]); setLoading(false); return }
+      setLoading(true)
+      const srt = (sort === 'price_asc' || sort === 'price_desc') ? sort : 'newest'
+      getTrpcClient()
+        .then(c => c.listings.getByDept.query({ department: dept, sort: srt as 'newest' | 'price_asc' | 'price_desc' }))
+        .then(res => { setItems((res.items ?? []) as unknown as DbListing[]); setLoading(false) })
+        .catch(() => setLoading(false))
+    }, [name, sort])
 
     return (
       <div onClick={closePanel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
@@ -753,22 +766,28 @@ function PanelBody() {
 
           {/* Grid */}
           <div style={{ overflowY: 'auto', flex: 1, padding: 12 }}>
-            {items.length === 0 && <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No listings in {name} right now.</div>}
+            {loading && <div style={{ textAlign: 'center', padding: 30, color: '#aaa', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>}
+            {!loading && items.length === 0 && <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No listings in {name} right now.</div>}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {items.map(([emoji, title, price, location], i) => (
-                <div key={i} onClick={() => openPanel('listing', { emoji, title, price, location, category: name, ref: `D${i}` })} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
-                  <div style={{ width: '100%', paddingTop: '72%', background: CARD_GRADS[i % CARD_GRADS.length], position: 'relative' }}>
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{emoji}</div>
-                  </div>
-                  <div style={{ padding: '8px 10px 10px' }}>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2 }}>{title}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{price}</div>
-                      <div style={{ fontSize: 9, color: '#888', fontFamily: 'var(--font-ui)' }}>📍 {location}</div>
+              {items.map((l, i) => {
+                const item = toPanelItem(l)
+                return (
+                  <div key={l.id} onClick={() => openPanel('listing', item)} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ width: '100%', paddingTop: '72%', background: CARD_GRADS[i % CARD_GRADS.length], position: 'relative' }}>
+                      {item.image
+                        ? <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{item.emoji}</div>}
+                    </div>
+                    <div style={{ padding: '8px 10px 10px' }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2 }}>{item.title}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{item.price}</div>
+                        <div style={{ fontSize: 9, color: '#888', fontFamily: 'var(--font-ui)' }}>📍 {item.location}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>
@@ -949,6 +968,7 @@ function PanelBody() {
   if (panel.id === 'listing') {
     const item = panel.data as Record<string, unknown>
     const emoji    = (item.emoji    as string) || '🛍️'
+    const heroImage = (item.image as string) || (Array.isArray(item.images) ? (item.images as string[])[0] : null)
     const title    = (item.title    as string) || 'Item'
     const price    = (item.price    as string) || '€0'
     const location = (item.location as string) || 'Gran Canaria'
@@ -969,8 +989,10 @@ function PanelBody() {
           {/* Hero */}
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <div style={{ width: '100%', paddingTop: '52%', background: '#f5f0e8', borderRadius: '24px 24px 0 0', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 88 }}>{emoji}</div>
-              {isFeatured && <div style={{ position: 'absolute', top: 12, left: 14, background: 'var(--orange)', color: '#fff', fontSize: 10, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>👀 FEATURED</div>}
+              {heroImage
+                ? <img src={heroImage} alt={title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 88 }}>{emoji}</div>}
+              {isFeatured && <div style={{ position: 'absolute', top: 12, left: 14, background: 'var(--orange)', color: '#fff', fontSize: 10, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50, zIndex: 1 }}>👀 FEATURED</div>}
             </div>
             <button onClick={closePanel} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             <button style={{ position: 'absolute', top: 12, right: 56, background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤍</button>
@@ -1493,19 +1515,25 @@ function PanelBody() {
     const featured  = !!panel.data?.featured
     const [sort, setSort] = useState('newest')
     const FILTERS   = ['All', 'Electronics', 'Fashion', 'Sport', 'Home', 'Jobs', 'Property']
+    const FILTER_ENUM: Record<string, string | undefined> = { All: undefined, Electronics: 'electronics', Fashion: 'fashion', Sport: 'sport', Home: 'home_garden', Jobs: 'jobs', Property: 'property' }
     const [filterIdx, setFilterIdx] = useState(0)
+    const [results, setResults] = useState<DbListing[]>([])
+    const [loading, setLoading] = useState(true)
 
-    const ALL_RESULTS = Object.entries(DEPT_LISTINGS).flatMap(([dept, items]) =>
-      items.map(([e, t, p, l]) => ({ emoji: e, title: t, price: p, location: l, category: dept }))
-    ).filter(item =>
-      !q || item.title.toLowerCase().includes(q.toLowerCase()) ||
-            item.category.toLowerCase().includes(q.toLowerCase())
-    )
+    useEffect(() => {
+      setLoading(true)
+      const srt = (sort === 'price_asc' || sort === 'price_desc') ? sort : 'newest'
+      const dept = FILTER_ENUM[FILTERS[filterIdx]]
+      const run: Promise<unknown> = featured
+        ? getTrpcClient().then(c => c.listings.featured.query()).then(d => ({ items: d }))
+        : getTrpcClient().then(c => c.listings.search.query({ query: q || undefined, department: dept as never, sort: srt as never }))
+      run.then(res => { const items = (res as { items?: unknown }).items; setResults((items ?? []) as unknown as DbListing[]); setLoading(false) }).catch(() => setLoading(false))
+    }, [q, sort, filterIdx, featured])
 
-    const sorted = [...ALL_RESULTS].sort(() => Math.random() - 0.5)
+    const sorted = results
 
     return (
-      <ActionPanel title={featured ? '👀 Featured Listings' : `🔍 "${q}" — ${ALL_RESULTS.length} results`} onClose={closePanel}>
+      <ActionPanel title={featured ? '👀 Featured Listings' : `🔍 "${q}" — ${sorted.length} results`} onClose={closePanel}>
         {/* Sort + filter */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {FILTERS.map((f, i) => (
@@ -1527,22 +1555,29 @@ function PanelBody() {
             🔖 Save
           </button>
         </div>
-        {sorted.length === 0
-          ? <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No results for "{q}".</div>
+        {loading
+          ? <div style={{ textAlign: 'center', padding: 40, color: '#aaa', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+          : sorted.length === 0
+          ? <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No results{q ? ` for "${q}"` : ''}.</div>
           : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {sorted.slice(0, 30).map((item, i) => (
-                <div key={i} onClick={() => openPanel('listing', { ...item, ref: `SR${i}` })} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
-                  <div style={{ width: '100%', paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{item.emoji}</div>
+              {sorted.slice(0, 40).map(l => {
+                const item = toPanelItem(l)
+                return (
+                  <div key={l.id} onClick={() => openPanel('listing', item)} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ width: '100%', paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
+                      {item.image
+                        ? <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{item.emoji}</div>}
+                    </div>
+                    <div style={{ padding: '8px 8px 10px' }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{item.title}</div>
+                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{item.price}</div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#888', marginTop: 2 }}>📍 {item.location}</div>
+                    </div>
                   </div>
-                  <div style={{ padding: '8px 8px 10px' }}>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{item.title}</div>
-                    <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{item.price}</div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#888', marginTop: 2 }}>📍 {item.location}</div>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )
         }
