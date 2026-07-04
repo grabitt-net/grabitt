@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure } from '../trpc'
 import { prisma } from '../db'
-import { RegisterInputSchema } from '@grabitt/types'
 import { PRICES } from '@grabitt/design-tokens'
 
 // SECURITY (§ auth): Identity is owned by Supabase Auth.
@@ -16,8 +15,15 @@ import { PRICES } from '@grabitt/design-tokens'
 export const authRouter = router({
   // Provisions the Prisma profile row that mirrors a freshly-created Supabase user.
   // Requires a verified Supabase user id — never issues a session token itself.
+  // OAuth users have no password, so this takes only the fields it actually
+  // persists (never the password). Idempotent: safe to call on every session.
   provisionProfile: publicProcedure
-    .input(RegisterInputSchema.extend({ supabaseId: z.string().min(1) }))
+    .input(z.object({
+      supabaseId: z.string().min(1),
+      email: z.string().email(),
+      displayName: z.string().min(1).max(80),
+      locale: z.enum(['en', 'es', 'de']).default('en'),
+    }))
     .mutation(async ({ input }) => {
       const existing = await prisma.user.findFirst({
         where: { OR: [{ email: input.email }, { supabaseId: input.supabaseId }] },
