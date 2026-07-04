@@ -16,7 +16,7 @@ async function rpc<T>(
   execToken: string,
 ): Promise<T> {
   const url = type === 'query'
-    ? `${API}/${procedure}?input=${encodeURIComponent(JSON.stringify(input))}`
+    ? `${API}/${procedure}${input !== undefined ? `?input=${encodeURIComponent(JSON.stringify(input))}` : ''}`
     : `${API}/${procedure}`
 
   const res = await fetch(url, {
@@ -61,6 +61,13 @@ export function makeCrmApi(execToken: string) {
       rpc<{ gmv: number; revenue: number; transactionCount: number; newMembers: number; disputes: number }>(
         'financials.summary', 'query', { from, to }, execToken
       ),
+
+    // Banners (CMS)
+    banners: () => rpc<any[]>('banners.all', 'query', undefined, execToken),
+    upsertBanner: (data: Record<string, unknown>) =>
+      rpc<any>('banners.upsert', 'mutation', data, execToken),
+    removeBanner: (id: string) =>
+      rpc<any>('banners.remove', 'mutation', { id }, execToken),
   }
 }
 

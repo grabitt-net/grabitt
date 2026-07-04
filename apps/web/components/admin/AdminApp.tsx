@@ -106,7 +106,7 @@ export default function AdminApp({ execToken }: Props) {
                 {view === 'members'    && <MembersView   members={members} />}
                 {view === 'disputes'   && <DisputesView  disputes={disputes} onUpdate={setDisputes} />}
                 {view === 'reports'    && <ReportsView   reports={[]} />}
-                {view === 'banners'    && <BannersView   banners={[]} contacts={contacts} />}
+                {view === 'banners'    && <BannersView />}
                 {view === 'financials' && <FinancialsView />}
                 {view === 'retention'  && <RetentionView />}
                 {view === 'calendar'   && <CalendarView />}

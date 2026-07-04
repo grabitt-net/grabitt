@@ -2,6 +2,16 @@ import { z } from 'zod'
 import { router, publicProcedure, execProcedure } from '../trpc'
 
 export const bannersRouter = router({
+  // Admin: all banners for management (any status/position).
+  all: execProcedure.query(({ ctx }) =>
+    ctx.prisma.banner.findMany({ orderBy: [{ position: 'asc' }, { createdAt: 'desc' }] })
+  ),
+
+  // Admin: remove a banner.
+  remove: execProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(({ ctx, input }) => ctx.prisma.banner.delete({ where: { id: input.id } })),
+
   active: publicProcedure
     .input(z.object({ position: z.enum(['home_top','home_mid','category','checkout']) }))
     .query(({ ctx, input }) => {
