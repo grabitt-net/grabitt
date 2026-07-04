@@ -42,8 +42,15 @@ body {
 .home-chrome { }
 .icon-rail-row { }
 
+/* Header: mobile chrome (logo+search+rail) shown by default; desktop nav hidden */
+.desktop-nav { display: none; }
+.mobile-chrome { display: block; }
+
 @media (min-width: 820px) {
   .app-shell { max-width: 1120px; }
+  /* Swap the phone header for the persistent desktop nav bar */
+  .desktop-nav { display: flex; }
+  .mobile-chrome { display: none; }
   /* Keep the mobile chrome centered & readable rather than stretched */
   .home-chrome { max-width: 860px; margin: 0 auto; }
   .icon-rail-row { max-width: 860px; margin: 0 auto; }

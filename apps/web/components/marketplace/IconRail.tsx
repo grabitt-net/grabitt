@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { usePanel } from '@/context/PanelContext'
 import type { PanelId } from '@/context/PanelContext'
 import { useNotifications } from '@/hooks/useNotifications'
+import Icon, { IconName } from './Icon'
 
 // Mirrors the original HTML .icon-rail exactly: 7 buttons, evenly spread
 // (flex:1 each, justify-content:space-between) — Alerts, Saved, Rewards,
@@ -19,14 +20,14 @@ export default function IconRail() {
   const { unreadCount } = useNotifications(userId)
   const loggedIn = !!userId
 
-  const items: { icon: string; label: string; panel: PanelId; badge?: number }[] = [
-    { icon: '🔔', label: 'Alerts',   panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
-    { icon: '❤️', label: 'Saved',    panel: 'favourites' },
-    { icon: '💶', label: 'Rewards',  panel: 'rewards' },
-    { icon: loggedIn ? '👤' : '🚪', label: loggedIn ? 'Account' : 'Login', panel: 'login' },
-    { icon: '💬', label: 'Messages', panel: 'messages' },
-    { icon: '📦', label: 'Sell',     panel: 'sell' },
-    { icon: '🆘', label: 'Help',     panel: 'help' },
+  const items: { icon: IconName; label: string; panel: PanelId; badge?: number }[] = [
+    { icon: 'bell',    label: 'Alerts',   panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
+    { icon: 'heart',   label: 'Saved',    panel: 'favourites' },
+    { icon: 'coins',   label: 'Rewards',  panel: 'rewards' },
+    { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: 'login' },
+    { icon: 'message', label: 'Messages', panel: 'messages' },
+    { icon: 'package', label: 'Sell',     panel: 'sell' },
+    { icon: 'lifebuoy', label: 'Help',    panel: 'help' },
   ]
 
   return (
@@ -38,7 +39,7 @@ export default function IconRail() {
             onClick={() => openPanel(item.panel)}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '2px 0', position: 'relative' }}
           >
-            <span style={{ fontSize: 19, lineHeight: 1 }}>{item.icon}</span>
+            <span style={{ lineHeight: 1, color: 'var(--dark)' }}><Icon name={item.icon} size={20} /></span>
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 8, fontWeight: 800, color: '#7a6a55', lineHeight: 1.05, textAlign: 'center', whiteSpace: 'nowrap' }}>
               {item.label}
             </span>

@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { usePanel } from '@/context/PanelContext'
 import IconRail from './IconRail'
+import DesktopNav from './DesktopNav'
+import Icon from './Icon'
 
 // Mirrors the HTML .topbar: a single sticky header containing row1
 // (logo + tagline on the left, search + 📍Near on the right) and the
@@ -59,6 +61,11 @@ export default function Topbar() {
       zIndex: 200,
       borderBottom: '1.5px solid var(--sand2)',
     }}>
+      {/* Desktop (≥820px): persistent horizontal nav bar */}
+      <DesktopNav />
+
+      {/* Mobile (<820px): logo + search + icon rail */}
+      <div className="mobile-chrome">
       {/* Row 1 — logo + search + Near */}
       <div style={{ display: 'flex', alignItems: 'flex-start', padding: '10px 14px 0' }}>
         <div onClick={() => openPanel('menu')} style={{ flexShrink: 0, cursor: 'pointer' }}>
@@ -74,7 +81,7 @@ export default function Topbar() {
 
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginLeft: 8, minWidth: 0, maxWidth: '62%' }}>
           <div style={{ flex: 1, background: '#fff', borderRadius: 50, display: 'flex', alignItems: 'center', padding: '7px 5px 7px 11px', gap: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: 0 }}>
-            <span style={{ fontSize: 13, flexShrink: 0 }}>🔍</span>
+            <span style={{ flexShrink: 0, color: '#9a8b74', display: 'flex' }}><Icon name="search" size={15} /></span>
             <input
               value={query}
               onChange={e => setQuery(e.target.value)}
@@ -85,9 +92,9 @@ export default function Topbar() {
             <button
               onClick={e => { e.stopPropagation(); handleNearMe() }}
               title="Show items near me"
-              style={{ flexShrink: 0, background: '#FFF3EE', color: 'var(--orange)', border: 'none', borderRadius: 50, padding: '5px 8px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}
+              style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3, background: '#FFF3EE', color: 'var(--orange)', border: 'none', borderRadius: 50, padding: '5px 9px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
-              📍 Near
+              <Icon name="mapPin" size={12} strokeWidth={2.2} /> Near
             </button>
           </div>
         </div>
@@ -95,6 +102,7 @@ export default function Topbar() {
 
       {/* Row 2 — 7-button icon rail */}
       <IconRail />
+      </div>
     </header>
   )
 }
