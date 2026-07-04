@@ -52,8 +52,8 @@ export default function CategoryGrid() {
       </div>
 
       <div className="dept-grid" style={{
-        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 10, padding: '0 12px',
+        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: 8, padding: '0 12px',
       }}>
         {categories.map(cat => {
           const showImg = cat.img && !failed[cat.name]
