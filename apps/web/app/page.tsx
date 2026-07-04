@@ -1,6 +1,8 @@
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import BannerSlot from '@/components/marketplace/BannerSlot'
+import HomeHero from '@/components/marketplace/HomeHero'
+import Footer from '@/components/marketplace/Footer'
 import Hero from '@/components/marketplace/Hero'
 import FeaturedStrip from '@/components/marketplace/FeaturedStrip'
 import CategoryGrid from '@/components/marketplace/CategoryGrid'
@@ -20,6 +22,7 @@ export default function HomePage() {
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 160, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
         <Topbar />
         <BannerSlot position="home_top" />
+        <HomeHero />
         <div className="home-chrome">
           <Hero />
           <CategoryGrid />
@@ -28,6 +31,7 @@ export default function HomePage() {
         <BannerSlot position="home_mid" />
         <ListingsGrid />
         <TrustStrip />
+        <Footer />
         <BottomCarousel />
         <CartFab />
         <PanelHost />
