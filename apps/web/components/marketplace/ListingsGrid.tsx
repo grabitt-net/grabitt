@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { usePanel } from '@/context/PanelContext'
 import { createTrpcClient } from '@/lib/trpc'
 import { toPanelItem, type DbListing } from '@/lib/listingMap'
+import Icon from './Icon'
 
 // The main browse experience for the homepage: a big responsive grid of real
 // listings with a category filter bar. On desktop this reads like a proper
@@ -42,7 +43,7 @@ export default function ListingsGrid() {
   return (
     <section style={{ padding: '18px 14px 0' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-        <span style={{ fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>Browse listings</span>
+        <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 20, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>Browse listings</h2>
         <select value={sort} onChange={e => setSort(e.target.value)} style={{ border: '1px solid #e0d8d0', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--dark)', background: '#fff' }}>
           <option value="newest">Newest</option>
           <option value="price_asc">Price ↑</option>
@@ -68,22 +69,22 @@ export default function ListingsGrid() {
           {items.map(l => {
             const item = toPanelItem(l)
             return (
-              <div key={l.id} onClick={() => openPanel('listing', item)} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)', transition: 'transform 0.15s, box-shadow 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' }}>
-                <div style={{ width: '100%', paddingTop: '75%', background: '#f5f0e8', position: 'relative' }}>
+              <div key={l.id} onClick={() => openPanel('listing', item)} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'transform 0.15s, box-shadow 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 26px rgba(0,0,0,0.12)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <div style={{ width: '100%', paddingTop: '80%', background: '#f5f0e8', position: 'relative' }}>
                   {item.image
                     ? <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                     : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>{item.emoji}</div>}
-                  {item.isFeatured && <div style={{ position: 'absolute', top: 8, left: 8, background: 'var(--orange)', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '2px 8px', borderRadius: 50 }}>👀 FEATURED</div>}
+                  {item.isFeatured && <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(26,26,26,0.82)', color: '#fff', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50, letterSpacing: 0.3 }}><Icon name="star" size={10} strokeWidth={0} style={{ fill: '#FFB800' }} /> FEATURED</div>}
                 </div>
-                <div style={{ padding: '10px 12px 12px' }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>{item.title}</div>
+                <div style={{ padding: '11px 12px 13px' }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 700, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 5 }}>{item.title}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--orange)' }}>{item.price}</div>
-                    <div style={{ fontSize: 10, color: '#888', fontFamily: 'var(--font-ui)' }}>📍 {item.location}</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 17, fontWeight: 800, color: 'var(--dark)' }}>{item.price}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 500, color: '#9a8b74', fontFamily: 'var(--font-ui)' }}><Icon name="mapPin" size={11} /> {item.location}</div>
                   </div>
-                  {item.condition && <div style={{ display: 'inline-block', marginTop: 6, background: '#edf7ed', color: 'var(--sage)', border: '1px solid var(--sage)', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '2px 8px', borderRadius: 50 }}>{item.condition}</div>}
+                  {item.condition && <div style={{ display: 'inline-block', marginTop: 8, background: '#f2f7f2', color: 'var(--sage)', fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>{item.condition}</div>}
                 </div>
               </div>
             )

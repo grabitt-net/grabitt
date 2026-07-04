@@ -33,7 +33,10 @@ export default function Footer() {
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#8a7d68', marginTop: 4 }}>
           🛡️ Every payment protected by the Grabitt Guarantee · Made in Gran Canaria
         </div>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#a89a82', marginTop: 8 }}>© {new Date().getFullYear()} Grabitt. All rights reserved.</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#a89a82', marginTop: 8 }}>
+          © {new Date().getFullYear()} Grabitt. All rights reserved. ·{' '}
+          <a href="/admin" style={{ color: '#a89a82', textDecoration: 'none' }}>Executive Suite</a>
+        </div>
       </div>
     </footer>
   )

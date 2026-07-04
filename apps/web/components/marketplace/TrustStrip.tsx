@@ -1,73 +1,31 @@
 'use client'
-import { usePanel } from '@/context/PanelContext'
+import Icon, { IconName } from './Icon'
 
-const footerLinks = [
-  { icon: 'ℹ️', label: 'About Us', key: 'about' },
-  { icon: '⭐', label: 'Why Us?', key: 'why' },
-  { icon: '✉️', label: 'Contact Us', key: 'contact' },
-  { icon: '💬', label: 'Help Centre', key: 'help' },
-  { icon: '📄', label: 'Terms', key: 'terms' },
-  { icon: '🏷️', label: 'Pricing', key: 'pricing' },
-  { icon: '🚚', label: 'Delivery', key: 'collection' },
-  { icon: '🛡️', label: 'Scam Centre', key: 'scams' },
-  { icon: '🪙', label: 'Economic Living', key: 'economic' },
-  { icon: '✅', label: "Dos & Don'ts", key: 'policy' },
-  { icon: '💡', label: 'Suggest Ideas', key: 'suggest' },
-  { icon: '🕘', label: 'Recently viewed', key: 'recent' },
+// Trust/USP strip (marketplace pattern): a small set of reassurance badges with
+// consistent SVG icons — replaces the old emoji-link grid, whose links now live
+// in the site Footer. Communicates why Grabitt is safe at a glance.
+const BADGES: { icon: IconName; title: string; body: string }[] = [
+  { icon: 'shield', title: 'Secure escrow', body: 'Payment is held safely until you confirm handover.' },
+  { icon: 'mapPin', title: 'Local to Gran Canaria', body: 'Buy and sell with people near you across the island.' },
+  { icon: 'check', title: 'Buyer protection', body: 'Every order is covered by the Grabitt Guarantee.' },
+  { icon: 'truck', title: 'Tracked delivery', body: 'Funds release to sellers once an item is in transit.' },
 ]
 
 export default function TrustStrip() {
-  const { openPanel } = usePanel()
-
   return (
-    <section style={{ margin: '0 14px 14px' }}>
-      <div style={{
-        background: 'linear-gradient(180deg,#fff,#FFF8F3)',
-        border: '2px solid #FFD9B8', borderRadius: 18,
-        padding: '16px 14px', boxShadow: '0 3px 14px rgba(255,140,0,0.10)',
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: 14 }}>
-          <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 18, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1 }}>
-            <span style={{ color: 'var(--orange)' }}>Grabitt!</span>
+    <section style={{ margin: '28px 14px 8px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+        {BADGES.map(b => (
+          <div key={b.title} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, padding: '16px 16px' }}>
+            <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 11, background: '#FFF3EE', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name={b.icon} size={21} />
+            </div>
+            <div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)', marginBottom: 3 }}>{b.title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 500, color: '#7a6d58', lineHeight: 1.45 }}>{b.body}</div>
+            </div>
           </div>
-          <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 10, color: '#7a6a55', fontWeight: 700, marginTop: 3 }}>
-            Your Local Everything!
-          </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {footerLinks.map(link => (
-            <button
-              key={link.label}
-              onClick={() => link.key === 'recent' ? openPanel('justlisted') : openPanel('footer', { key: link.key })}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 9,
-                background: '#fff', border: '1px solid #F0E0D0', borderRadius: 14,
-                padding: '11px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11,
-                fontWeight: 800, color: '#444', cursor: 'pointer', textAlign: 'left',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-              }}
-            >
-              <span style={{ fontSize: 16, flexShrink: 0 }}>{link.icon}</span>
-              {link.label}
-            </button>
-          ))}
-          <button
-            onClick={() => window.location.href = '/admin'}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-              background: '#fff', border: '1px solid #F0E0D0', borderRadius: 14,
-              padding: '11px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11,
-              fontWeight: 800, color: '#444', cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04)', gridColumn: '1 / -1',
-            }}
-          >
-            <span style={{ fontSize: 16 }}>🧠</span>
-            Executive Suite
-          </button>
-        </div>
-        <div style={{ marginTop: 14, fontSize: 10, color: '#777', fontFamily: 'var(--font-nunito)', textAlign: 'center', borderTop: '1px solid #f0f0f0', paddingTop: 10 }}>
-          © 2026 Grabitt · Canary Islands · All rights reserved
-        </div>
+        ))}
       </div>
     </section>
   )

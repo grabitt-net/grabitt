@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react'
 import { usePanel } from '@/context/PanelContext'
 import { createTrpcClient } from '@/lib/trpc'
 import { toPanelItem, type DbListing } from '@/lib/listingMap'
+import Icon from './Icon'
 
+// "Just Listed" — previously a fixed bottom bar; now an inline banner-style
+// section in the page flow (a full-width strip with its own tinted surface).
 export default function BottomCarousel() {
   const { openPanel } = usePanel()
   const [items, setItems] = useState<DbListing[]>([])
@@ -17,58 +20,37 @@ export default function BottomCarousel() {
   if (items.length === 0) return null
 
   return (
-    <div style={{
-      position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-      width: '100%', maxWidth: 520, zIndex: 250,
-      background: '#fff', borderTop: '2px solid #E0E0E0',
-      borderRadius: '16px 16px 0 0', boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 14px 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#1a1a1a' }}>🆕 Just Listed</div>
+    <section style={{ margin: '24px 14px 0' }}>
+      <div style={{ background: 'linear-gradient(180deg,#fff,#faf6f0)', border: '1px solid #ece3d7', borderRadius: 16, padding: '16px 16px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: 'var(--orange)', display: 'flex' }}><Icon name="sparkle" size={17} /></span>
+            <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>Just listed</h2>
+          </div>
           <button
             onClick={() => openPanel('justlisted')}
-            style={{ background: '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: '3px 12px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', color: 'var(--orange)', border: 'none', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
           >
-            See all
+            See all <Icon name="arrowRight" size={15} />
           </button>
         </div>
-      </div>
-      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 14px 9px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-        {items.map(l => {
-          const item = toPanelItem(l)
-          return (
-            <div key={l.id} onClick={() => openPanel('listing', item)} style={{ flexShrink: 0, width: 72, cursor: 'pointer' }}>
-              <div style={{
-                position: 'relative', width: 72, height: 72,
-                background: 'linear-gradient(145deg,#FFF3EE,#FFE4D6)',
-                borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 32, marginBottom: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                border: '1px solid #1a1a1a', overflow: 'hidden',
-              }}>
-                {item.image
-                  ? <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : item.emoji}
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0,
-                  background: 'rgba(0,0,0,0.62)', color: '#fff',
-                  fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900,
-                  textAlign: 'center', padding: '2px 0',
-                }}>
-                  {item.price}
+        <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+          {items.map(l => {
+            const item = toPanelItem(l)
+            return (
+              <button key={l.id} onClick={() => openPanel('listing', item)} style={{ flexShrink: 0, width: 104, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ position: 'relative', width: 104, height: 104, background: '#f3ede4', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+                  {item.image
+                    ? <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{item.emoji}</div>}
                 </div>
-              </div>
-              <div style={{
-                fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800,
-                color: '#1a1a1a', textAlign: 'center',
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-              }}>
-                {item.title}
-              </div>
-            </div>
-          )
-        })}
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginTop: 6 }}>{item.price}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 600, color: '#8a7d68', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+              </button>
+            )
+          })}
+        </div>
       </div>
-    </div>
+    </section>
   )
 }

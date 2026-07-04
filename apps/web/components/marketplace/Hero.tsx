@@ -1,5 +1,6 @@
 'use client'
 import { usePanel } from '@/context/PanelContext'
+import Icon from './Icon'
 
 export default function Hero() {
   const { openPanel } = usePanel()
@@ -13,40 +14,37 @@ export default function Hero() {
   ]
 
   return (
-    <section style={{ padding: '8px 14px' }} className="hero">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.06)', padding: '6px 6px' }}>
-          <div style={{ display: 'flex', alignItems: 'stretch', gap: 4 }}>
-            {quickActions.map(a => (
-              <button
-                key={a.label}
-                onClick={a.action}
-                style={{
-                  flex: 1, minWidth: 0, background: '#fff', color: '#1a1a1a',
-                  border: '2px solid var(--orange)', borderRadius: 10,
-                  padding: '9px 2px', fontFamily: 'var(--font-ui)', fontSize: 9,
-                  fontWeight: 900, cursor: 'pointer', lineHeight: 1.15,
-                }}
-              >
-                {a.label}
-              </button>
-            ))}
-          </div>
+    <section style={{ padding: '12px 14px 4px' }} className="hero">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 2 }}>
+          {quickActions.map(a => (
+            <button
+              key={a.label}
+              onClick={a.action}
+              style={{
+                flex: '0 0 auto', background: '#fff', color: '#3a3226',
+                border: '1px solid #e5dccd', borderRadius: 50,
+                padding: '9px 18px', fontFamily: 'var(--font-ui)', fontSize: 13,
+                fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              {a.label}
+            </button>
+          ))}
         </div>
 
         <button
           onClick={() => openPanel('grabit')}
           style={{
             width: '100%', background: 'linear-gradient(135deg, #FF4500, #FF8C00)',
-            color: '#fff', border: 'none', borderRadius: 12,
-            padding: '9px 13px', fontFamily: 'var(--font-ui)', fontSize: 14,
-            fontWeight: 900, cursor: 'pointer', boxShadow: '0 3px 12px rgba(255,69,0,0.30)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            color: '#fff', border: 'none', borderRadius: 14,
+            padding: '13px 18px', fontFamily: 'var(--font-ui)', fontSize: 14,
+            fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 16px rgba(255,69,0,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
           }}
         >
-          <span style={{ fontSize: 16 }}>⚡</span>
-          <span>Grabitt Now! · Limited time offers!</span>
-          <span style={{ fontSize: 16 }}>⚡</span>
+          <Icon name="sparkle" size={18} strokeWidth={0} style={{ fill: '#fff' }} />
+          <span>Grabitt Now — limited-time offers</span>
         </button>
       </div>
     </section>

@@ -19,7 +19,7 @@ import PanelHost from '@/components/marketplace/PanelHost'
 export default function HomePage() {
   return (
     <PanelProvider>
-      <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 160, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
+      <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
         <Topbar />
         <BannerSlot position="home_top" />
         <HomeHero />
@@ -30,9 +30,9 @@ export default function HomePage() {
         </div>
         <BannerSlot position="home_mid" />
         <ListingsGrid />
+        <BottomCarousel />
         <TrustStrip />
         <Footer />
-        <BottomCarousel />
         <CartFab />
         <PanelHost />
       </main>
