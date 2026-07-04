@@ -333,14 +333,50 @@ function PanelBody() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
-    const fakeSubmit = async () => {
+    const supabase = createClient()
+
+    // Real Supabase auth (was a mock that never called the backend, so no
+    // account was created and no confirmation email was ever sent).
+    const submitAuth = async () => {
       setError('')
       setLoading(true)
-      await new Promise(r => setTimeout(r, 1100))
-      setLoading(false)
-      if (authStep === 'forgot') { setAuthStep('verify'); return }
-      if (authStep === 'register') { setAuthStep('verify'); return }
-      setAuthStep('done')
+      try {
+        if (authStep === 'forgot') {
+          const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${location.origin}/auth/callback`,
+          })
+          if (error) throw error
+          setAuthStep('verify')
+        } else if (authStep === 'register') {
+          const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { full_name: name, phone },
+              emailRedirectTo: `${location.origin}/auth/callback`,
+            },
+          })
+          if (error) throw error
+          setAuthStep('verify')
+        } else {
+          const { error } = await supabase.auth.signInWithPassword({ email, password })
+          if (error) throw error
+          setAuthStep('done')
+        }
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    const handleGoogle = async () => {
+      setError('')
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${location.origin}/auth/callback` },
+      })
+      if (error) setError(error.message)
     }
 
     const inputStyle: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '12px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box', marginBottom: 10 }
@@ -410,9 +446,11 @@ function PanelBody() {
                 </div>
 
                 {/* Social buttons */}
-                {[['🇬 Continue with Google', '#4285F4'],['🍎 Continue with Apple', '#000']].map(([label, bg], i) => (
-                  <button key={i} onClick={() => setAuthStep('done')} style={{ width: '100%', background: bg as string, color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 10 }}>{label as string}</button>
-                ))}
+                {error && <div style={{ background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{error}</div>}
+                <button onClick={handleGoogle} style={{ width: '100%', background: '#fff', color: 'var(--dark)', border: '1.5px solid #e0d8d0', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.5l-6.6-5.6C29.6 34.5 26.9 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4 5.6l6.6 5.6C41.4 36.6 44 30.9 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
+                  Continue with Google
+                </button>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 12px' }}>
                   <div style={{ flex: 1, height: 1, background: '#e0d8d0' }} />
@@ -440,7 +478,7 @@ function PanelBody() {
                 <div style={{ textAlign: 'right', marginBottom: 16 }}>
                   <button onClick={() => setAuthStep('forgot')} style={link}>Forgot password?</button>
                 </div>
-                <button onClick={fakeSubmit} disabled={loading || !email || !password} style={btnPrimary}>{loading ? '⏳ Logging in…' : 'Log In'}</button>
+                <button onClick={submitAuth} disabled={loading || !email || !password} style={btnPrimary}>{loading ? '⏳ Logging in…' : 'Log In'}</button>
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>No account? </span>
                   <button onClick={() => setAuthStep('register')} style={link}>Create one</button>
@@ -480,7 +518,7 @@ function PanelBody() {
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)', fontWeight: 800 }}>You'll get 50 free credits on sign-up!</div>
                 </div>
 
-                <button onClick={fakeSubmit} disabled={loading || !name || !email || password.length < 8} style={{ ...btnPrimary, background: loading || !name || !email || password.length < 8 ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>
+                <button onClick={submitAuth} disabled={loading || !name || !email || password.length < 8} style={{ ...btnPrimary, background: loading || !name || !email || password.length < 8 ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>
                   {loading ? '⏳ Creating account…' : '🚀 Create Account'}
                 </button>
                 <div style={{ textAlign: 'center' }}>
@@ -496,7 +534,7 @@ function PanelBody() {
                   Enter your email and we'll send a reset link.
                 </div>
                 <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" style={inputStyle} />
-                <button onClick={fakeSubmit} disabled={loading || !email} style={{ ...btnPrimary, background: loading || !email ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>
+                <button onClick={submitAuth} disabled={loading || !email} style={{ ...btnPrimary, background: loading || !email ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>
                   {loading ? '⏳ Sending…' : 'Send Reset Link'}
                 </button>
               </>
