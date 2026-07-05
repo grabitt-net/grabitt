@@ -8,15 +8,20 @@ import { useChat } from '@/hooks/useChat'
 import { useNotifications, kindIcon, kindTab, relativeTime } from '@/hooks/useNotifications'
 import { createTrpcClient } from '@/lib/trpc'
 import { createClient } from '@/lib/supabase'
+import { getAuthToken, refreshAuthToken } from '@/lib/authToken'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
 import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
 import StripePayment from './StripePayment'
 import { toPanelItem, DEPT_ENUM, type DbListing } from '@/lib/listingMap'
 
+// Protected tRPC calls must use our CONSUMER app JWT (verified with JWT_SECRET),
+// NOT the Supabase access_token (signed with a different secret, which the
+// backend can't verify — every logged-in action failed UNAUTHORIZED before).
+// The token is minted by /api/auth/token; refresh it here if it's missing.
 async function getTrpcClient() {
-  const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  return createTrpcClient(session?.access_token ?? undefined)
+  let token = getAuthToken()
+  if (!token) token = await refreshAuthToken()
+  return createTrpcClient(token ?? undefined)
 }
 
 const btnPrimary: React.CSSProperties = { width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }
