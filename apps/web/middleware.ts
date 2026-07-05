@@ -1,11 +1,15 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Next.js only runs a file literally named `middleware.ts`. This refreshes the
+// Supabase session on every request and syncs the auth cookies so Server
+// Components (e.g. /admin, /messages, /profile) can read a valid session —
+// without it, getUser() returns null server-side and those pages redirect away.
 const PROTECTED_ROUTES = ['/profile', '/messages', '/listings/new', '/orders']
 const ADMIN_ROUTES = ['/admin']
 const AUTH_ROUTES = ['/auth']
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -25,10 +29,11 @@ export async function proxy(request: NextRequest) {
     }
   )
 
+  // IMPORTANT: refreshes the session + writes refreshed cookies onto the response.
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
-  // Redirect logged-in users away from auth page
+  // Redirect logged-in users away from the auth page
   if (user && AUTH_ROUTES.some(r => path.startsWith(r))) {
     return NextResponse.redirect(new URL('/', request.url))
   }
@@ -38,7 +43,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth', request.url))
   }
 
-  // Protect admin routes (basic — role check happens server-side too)
+  // Protect admin routes (the is_admin role check also happens in the page)
   if (ADMIN_ROUTES.some(r => path.startsWith(r))) {
     if (!user) return NextResponse.redirect(new URL('/auth', request.url))
   }
