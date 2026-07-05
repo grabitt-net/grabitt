@@ -3281,6 +3281,8 @@ function PanelBody() {
               <button onClick={() => openPanel('business')} style={{ width: '100%', background: '#fff', border: '2px solid var(--orange)', borderRadius: 12, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--orange)', cursor: 'pointer', marginBottom: 16 }}>🏢 Upgrade to Business — 7 days free</button>
             )}
 
+            {/* My Purchases — buyers view orders + complete handover later */}
+            <button onClick={() => openPanel('purchases')} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>🛒 My Purchases &amp; Handovers</button>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => openPanel('mySales')} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>My Sales</button>
               <button onClick={() => openPanel('mylistings')} style={{ flex: 1, background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>My Listings</button>
