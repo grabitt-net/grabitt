@@ -3143,6 +3143,9 @@ function PanelBody() {
     const [saving, setSaving] = useState(false)
     const [payout, setPayout] = useState<{ connected: boolean; payoutsEnabled: boolean } | null>(null)
     const [payoutBusy, setPayoutBusy] = useState(false)
+    type Sub = { id: string; plan: string; status: string; currentPeriodEnd: string | null; trialEnd: string | null; cancelAtPeriodEnd: boolean }
+    const [subs, setSubs] = useState<Sub[]>([])
+    const [portalBusy, setPortalBusy] = useState(false)
 
     useEffect(() => {
       setLang(getLanguage())
@@ -3152,7 +3155,22 @@ function PanelBody() {
         setInterests((u as unknown as Me).interests ?? [])
       }).catch(() => {})
       getTrpcClient().then(c => c.users.payoutStatus.query()).then(s => setPayout(s)).catch(() => {})
+      getTrpcClient().then(c => c.subscriptions.mine.query()).then(d => setSubs(d as unknown as Sub[])).catch(() => {})
     }, [isOwnProfile])
+
+    const openBillingPortal = async () => {
+      setPortalBusy(true)
+      try {
+        const client = await getTrpcClient()
+        const res = await client.subscriptions.portal.mutate()
+        if (res.url) window.location.href = res.url
+        else { toast('Could not open billing'); setPortalBusy(false) }
+      } catch { toast('Could not open billing'); setPortalBusy(false) }
+    }
+
+    const PLAN_LABELS: Record<string, string> = { business: 'Business', service_ad: 'Service ad', page_banner: 'Page banners', directory: 'Business directory' }
+    const activeSubs = subs.filter(s => ['trialing', 'active', 'past_due'].includes(s.status))
+    const daysLeft = (iso: string | null) => iso ? Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000)) : 0
 
     const setupPayouts = async () => {
       setPayoutBusy(true)
@@ -3244,6 +3262,29 @@ function PanelBody() {
                 <button onClick={setupPayouts} disabled={payoutBusy} style={{ width: '100%', background: payoutBusy ? '#ccc' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: 12, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{payoutBusy ? '⏳ Opening…' : (payout?.connected ? 'Finish payout setup →' : 'Set up payouts →')}</button>
               )}
             </div>
+
+            {/* Subscriptions */}
+            {activeSubs.length > 0 ? (
+              <div style={{ background: '#f0f6ff', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#1d4ed8', marginBottom: 8 }}>🏢 Your subscriptions</div>
+                {activeSubs.map(s => (
+                  <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{PLAN_LABELS[s.plan] ?? s.plan}</div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>
+                        {s.status === 'trialing' ? `Free trial · ${daysLeft(s.trialEnd)} day${daysLeft(s.trialEnd) === 1 ? '' : 's'} left`
+                          : s.status === 'past_due' ? '⚠️ Payment overdue'
+                          : s.cancelAtPeriodEnd ? `Cancels ${s.currentPeriodEnd ? new Date(s.currentPeriodEnd).toLocaleDateString() : ''}`
+                          : `Active${s.currentPeriodEnd ? ` · renews ${new Date(s.currentPeriodEnd).toLocaleDateString()}` : ''}`}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button onClick={openBillingPortal} disabled={portalBusy} style={{ width: '100%', background: '#fff', color: '#1d4ed8', border: '1.5px solid #1d4ed8', borderRadius: 12, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer', marginTop: 10 }}>{portalBusy ? 'Opening…' : 'Manage subscription ↗'}</button>
+              </div>
+            ) : (
+              <button onClick={() => openPanel('business')} style={{ width: '100%', background: '#fff', border: '2px solid var(--orange)', borderRadius: 12, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--orange)', cursor: 'pointer', marginBottom: 16 }}>🏢 Upgrade to Business — 7 days free</button>
+            )}
 
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => openPanel('mySales')} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>My Sales</button>
