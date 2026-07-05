@@ -3173,7 +3173,7 @@ function PanelBody() {
         const client = await getTrpcClient()
         const res = await client.users.createPayoutOnboarding.mutate()
         if (res.url) window.location.href = res.url
-      } catch { toast('Could not start payout setup'); setPayoutBusy(false) }
+      } catch (e) { toast(e instanceof Error ? e.message : 'Could not start payout setup'); setPayoutBusy(false) }
     }
     const openPayoutDashboard = async () => {
       setPayoutBusy(true)

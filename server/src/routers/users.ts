@@ -55,25 +55,32 @@ export const usersRouter = router({
   // transferred to them at handover/tracking release.
   createPayoutOnboarding: protectedProcedure.mutation(async ({ ctx }) => {
     const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
-    let accountId = user.stripeAccountId
-    if (!accountId) {
-      const account = await getStripe().accounts.create({
-        type: 'express',
-        email: user.email,
-        capabilities: { transfers: { requested: true }, card_payments: { requested: true } },
-        business_type: 'individual',
-        metadata: { userId: user.id },
+    try {
+      let accountId = user.stripeAccountId
+      if (!accountId) {
+        const account = await getStripe().accounts.create({
+          type: 'express',
+          email: user.email,
+          // Sellers only receive payouts (transfers). Requesting card_payments
+          // is unnecessary and can fail platform capability checks.
+          capabilities: { transfers: { requested: true } },
+          business_type: 'individual',
+          metadata: { userId: user.id },
+        })
+        accountId = account.id
+        await ctx.prisma.user.update({ where: { id: user.id }, data: { stripeAccountId: accountId } })
+      }
+      const link = await getStripe().accountLinks.create({
+        account: accountId,
+        refresh_url: `${APP_URL()}/?payout=refresh`,
+        return_url: `${APP_URL()}/?payout=done`,
+        type: 'account_onboarding',
       })
-      accountId = account.id
-      await ctx.prisma.user.update({ where: { id: user.id }, data: { stripeAccountId: accountId } })
+      return { url: link.url }
+    } catch (e) {
+      // Surface Stripe's real reason (e.g. "complete your platform profile").
+      throw new TRPCError({ code: 'BAD_REQUEST', message: e instanceof Error ? e.message : 'Stripe payout setup failed' })
     }
-    const link = await getStripe().accountLinks.create({
-      account: accountId,
-      refresh_url: `${APP_URL()}/?payout=refresh`,
-      return_url: `${APP_URL()}/?payout=done`,
-      type: 'account_onboarding',
-    })
-    return { url: link.url }
   }),
 
   // Opens the Express dashboard for a seller who has already onboarded.
