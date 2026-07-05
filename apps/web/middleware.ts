@@ -10,6 +10,13 @@ const ADMIN_ROUTES = ['/admin']
 const AUTH_ROUTES = ['/auth']
 
 export async function middleware(request: NextRequest) {
+  // The OAuth / email-confirm callback must exchange its PKCE code untouched —
+  // running getUser() + rewriting cookies here can drop the code-verifier
+  // cookie ("OAuth state has expired"). Let the route handler own it.
+  if (request.nextUrl.pathname.startsWith('/auth/callback')) {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
