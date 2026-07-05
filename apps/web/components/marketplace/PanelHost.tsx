@@ -8,7 +8,7 @@ import { useChat } from '@/hooks/useChat'
 import { useNotifications, kindIcon, kindTab, relativeTime } from '@/hooks/useNotifications'
 import { createTrpcClient } from '@/lib/trpc'
 import { createClient } from '@/lib/supabase'
-import { getAuthToken, refreshAuthToken } from '@/lib/authToken'
+import { getAuthToken, refreshAuthToken, setAuthToken } from '@/lib/authToken'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
 import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
 import StripePayment from './StripePayment'
@@ -3239,6 +3239,19 @@ function PanelBody() {
               <button onClick={() => openPanel('mySales')} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>My Sales</button>
               <button onClick={() => openPanel('mylistings')} style={{ flex: 1, background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>My Listings</button>
             </div>
+
+            <button
+              onClick={async () => {
+                try { await createClient().auth.signOut() } catch {}
+                setAuthToken(null)
+                if (typeof window !== 'undefined') localStorage.removeItem('grabitt_uid')
+                closePanel()
+                location.reload()
+              }}
+              style={{ width: '100%', background: 'none', color: '#ef4444', border: '1px solid #f0ebe4', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginTop: 14 }}
+            >
+              Log out
+            </button>
           </>
         )}
         {!isOwnProfile && (

@@ -23,7 +23,7 @@ export default function DesktopNav() {
     { icon: 'bell', label: 'Alerts', panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
     { icon: 'heart', label: 'Saved', panel: 'favourites' },
     { icon: 'message', label: 'Messages', panel: 'messages' },
-    { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: 'login' },
+    { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
   ]
 
   return (
