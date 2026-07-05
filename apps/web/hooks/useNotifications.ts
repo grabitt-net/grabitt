@@ -1,5 +1,6 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { getAuthToken, trpcAuthed } from '@/lib/authToken'
 
 export interface AppNotification {
   id: string
@@ -47,28 +48,41 @@ export function relativeTime(iso: string) {
   return `${Math.floor(diff / 86400000)}d ago`
 }
 
-// NOTE: The in-app notifications feature is not yet wired for the consumer web
-// client. The `Notification` table is RLS deny-all and not in the realtime
-// publication, so direct Supabase access can't work; the `notifications` tRPC
-// router is a protectedProcedure and the web client holds no app JWT yet. This
-// hook therefore returns a safe empty state (no network calls, no console
-// errors). To enable: issue an app JWT after Supabase auth, then swap the body
-// for `createTrpcClient(token).notifications.list.query()` + `.markRead` /
-// `.markAllRead`. The public API below is intentionally unchanged so callers
-// (IconRail / DesktopNav / PanelHost) need no edits when it's wired up.
-export function useNotifications(_userId: string | null) {
+// Reads notifications for the signed-in user through the protected tRPC
+// endpoint, authenticated with the consumer app JWT (see lib/authToken). When
+// no token is present (logged out) it stays a quiet empty state.
+export function useNotifications(userId: string | null) {
   const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const fetchAll = useCallback(async () => {
+    if (!userId || !getAuthToken()) return
+    setLoading(true)
+    try {
+      const rows = await trpcAuthed().notifications.list.query({ unreadOnly: false })
+      setNotifications((rows as Array<{ id: string; kind: string; title: string; body: string; readAt: string | null; createdAt: string }>).map(r => ({
+        id: r.id, kind: r.kind, title: r.title, body: r.body,
+        readAt: r.readAt ? String(r.readAt) : null,
+        createdAt: String(r.createdAt),
+      })))
+    } catch { /* unauthenticated or transient — leave state as-is */ }
+    finally { setLoading(false) }
+  }, [userId])
+
+  useEffect(() => { fetchAll() }, [fetchAll])
 
   const markRead = useCallback(async (ids: string[]) => {
     if (!ids.length) return
     setNotifications(prev => prev.map(n => ids.includes(n.id) ? { ...n, readAt: new Date().toISOString() } : n))
+    try { await trpcAuthed().notifications.markRead.mutate({ ids }) } catch { /* optimistic */ }
   }, [])
 
   const markAllRead = useCallback(async () => {
     setNotifications(prev => prev.map(n => n.readAt ? n : { ...n, readAt: new Date().toISOString() }))
+    try { await trpcAuthed().notifications.markAllRead.mutate() } catch { /* optimistic */ }
   }, [])
 
   const unreadCount = notifications.filter(n => !n.readAt).length
 
-  return { notifications, loading: false, unreadCount, markRead, markAllRead }
+  return { notifications, loading, unreadCount, markRead, markAllRead }
 }

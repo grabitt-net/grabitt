@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { createTrpcClient } from '@/lib/trpc'
+import { refreshAuthToken, setAuthToken } from '@/lib/authToken'
 
 // Bridges Supabase Auth → the app's Prisma profile + client identity.
 //
@@ -20,7 +21,8 @@ export default function AuthBootstrap() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        // Signed out — clear identity and refresh the chrome if it was set.
+        // Signed out — clear identity + app JWT and refresh the chrome if set.
+        setAuthToken(null)
         if (localStorage.getItem('grabitt_uid')) {
           localStorage.removeItem('grabitt_uid')
           location.reload()
@@ -43,6 +45,10 @@ export default function AuthBootstrap() {
         })
         if (cancelled) return
         const uid = res?.user?.id
+        // Mint the app JWT now that the Prisma profile exists, so protected
+        // tRPC calls (notifications etc.) work immediately after this load.
+        await refreshAuthToken()
+        if (cancelled) return
         if (uid && localStorage.getItem('grabitt_uid') !== uid) {
           localStorage.setItem('grabitt_uid', uid)
           // Chrome (IconRail/DesktopNav/PanelHost) reads grabitt_uid on mount,
