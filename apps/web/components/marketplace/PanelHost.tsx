@@ -726,6 +726,16 @@ function PanelBody() {
           </div>
         ))}
         <button onClick={() => openPanel('createListing')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>🚀 Start Listing</button>
+
+        {/* Business upsell — routes to the Business subscription signup */}
+        <button onClick={() => openPanel('business')} style={{ width: '100%', background: '#fff', border: '2px solid var(--orange)', borderRadius: 14, padding: '14px', marginTop: 10, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🏢</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Sign up as a Business</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>Storefront, 🏢 badge & Dealer status · 7 days free, then €29/mo</div>
+          </div>
+          <span style={{ color: 'var(--orange)', fontWeight: 900 }}>›</span>
+        </button>
       </ActionPanel>
     )
   }
