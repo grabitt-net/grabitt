@@ -6,6 +6,7 @@ import { useCart } from '@/context/CartContext'
 import { useToast } from '@/context/ToastContext'
 import { useChat } from '@/hooks/useChat'
 import { useNotifications, kindIcon, kindTab, relativeTime } from '@/hooks/useNotifications'
+import { useGrabittUid } from '@/hooks/useGrabittUid'
 import { createTrpcClient } from '@/lib/trpc'
 import { createClient } from '@/lib/supabase'
 import { getAuthToken, refreshAuthToken, setAuthToken } from '@/lib/authToken'
@@ -219,14 +220,8 @@ function PanelBody() {
   const [shieldTab, setShieldTab] = useState<string>('promise')
   const [notifTab, setNotifTab] = useState<string>('all')
 
-  // Auth state — in production this comes from Supabase auth session
-  // For now we read from localStorage so auth panel can set it
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setCurrentUserId(localStorage.getItem('grabitt_uid'))
-    }
-  }, [])
+  // Auth identity — reactively tracks grabitt_uid (set by AuthBootstrap).
+  const currentUserId = useGrabittUid()
 
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications(currentUserId)
 

@@ -21,11 +21,11 @@ export default function AuthBootstrap() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        // Signed out — clear identity + app JWT and refresh the chrome if set.
+        // Signed out — clear identity + app JWT and notify the chrome.
         setAuthToken(null)
         if (localStorage.getItem('grabitt_uid')) {
           localStorage.removeItem('grabitt_uid')
-          location.reload()
+          window.dispatchEvent(new Event('grabitt-auth'))
         }
         return
       }
@@ -51,9 +51,9 @@ export default function AuthBootstrap() {
         if (cancelled) return
         if (uid && localStorage.getItem('grabitt_uid') !== uid) {
           localStorage.setItem('grabitt_uid', uid)
-          // Chrome (IconRail/DesktopNav/PanelHost) reads grabitt_uid on mount,
-          // so reload once to reflect the freshly-established identity.
-          location.reload()
+          // Notify the chrome (IconRail/DesktopNav/PanelHost) to re-read the
+          // identity reactively — no page reload (which caused a reload loop).
+          window.dispatchEvent(new Event('grabitt-auth'))
         }
       } catch {
         // Non-fatal: the user is still authenticated at the Supabase layer.

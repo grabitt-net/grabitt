@@ -1,8 +1,9 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { usePanel } from '@/context/PanelContext'
 import type { PanelId } from '@/context/PanelContext'
 import { useNotifications } from '@/hooks/useNotifications'
+import { useGrabittUid } from '@/hooks/useGrabittUid'
 import Icon, { IconName } from './Icon'
 
 // Desktop-only top navigation (shown ≥820px via .desktop-nav in globals.css).
@@ -12,8 +13,7 @@ import Icon, { IconName } from './Icon'
 export default function DesktopNav() {
   const { openPanel } = usePanel()
   const [query, setQuery] = useState('')
-  const [userId, setUserId] = useState<string | null>(null)
-  useEffect(() => { if (typeof window !== 'undefined') setUserId(localStorage.getItem('grabitt_uid')) }, [])
+  const userId = useGrabittUid()
   const { unreadCount } = useNotifications(userId)
   const loggedIn = !!userId
 

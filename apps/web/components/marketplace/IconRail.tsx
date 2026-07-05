@@ -1,8 +1,8 @@
 'use client'
-import { useEffect, useState } from 'react'
 import { usePanel } from '@/context/PanelContext'
 import type { PanelId } from '@/context/PanelContext'
 import { useNotifications } from '@/hooks/useNotifications'
+import { useGrabittUid } from '@/hooks/useGrabittUid'
 import Icon, { IconName } from './Icon'
 
 // Mirrors the original HTML .icon-rail exactly: 7 buttons, evenly spread
@@ -12,10 +12,7 @@ import Icon, { IconName } from './Icon'
 
 export default function IconRail() {
   const { openPanel } = usePanel()
-  const [userId, setUserId] = useState<string | null>(null)
-  useEffect(() => {
-    if (typeof window !== 'undefined') setUserId(localStorage.getItem('grabitt_uid'))
-  }, [])
+  const userId = useGrabittUid()
 
   const { unreadCount } = useNotifications(userId)
   const loggedIn = !!userId
