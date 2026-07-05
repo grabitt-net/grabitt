@@ -1,75 +1,33 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { createClient } from '@/lib/supabase'
-
-interface Message {
-  id: string
-  body: string
-  sender_id: string
-  is_read: boolean
-  created_at: string
-}
+import { useChat, type ChatMessage } from '@/hooks/useChat'
 
 interface Props {
-  conversationId: string
+  threadId: string
   userId: string
-  initialMessages: Message[]
+  initialMessages: ChatMessage[]
 }
 
-export default function ChatWindow({ conversationId, userId, initialMessages }: Props) {
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
+export default function ChatWindow({ threadId, userId, initialMessages }: Props) {
+  // useChat owns loading/sending via the protected tRPC router (enforces §10.2).
+  const { messages: live, sendMessage } = useChat(threadId, userId)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const supabase = createClient()
 
-  // Scroll to bottom on new messages
+  // Show server-rendered messages until the first live fetch returns.
+  const messages = live.length > 0 ? live : initialMessages
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
-
-  // Subscribe to real-time messages
-  useEffect(() => {
-    const channel = supabase
-      .channel(`conversation-${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const msg = payload.new as Message
-          setMessages(prev => {
-            if (prev.find(m => m.id === msg.id)) return prev
-            return [...prev, msg]
-          })
-          // Mark as read if we're the recipient
-          if (msg.sender_id !== userId) {
-            supabase.from('messages').update({ is_read: true }).eq('id', msg.id)
-          }
-        }
-      )
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [conversationId, userId])
 
   async function send() {
     const body = input.trim()
     if (!body || sending) return
     setInput('')
     setSending(true)
-
-    await supabase.from('messages').insert({
-      conversation_id: conversationId,
-      sender_id: userId,
-      body,
-    })
-
-    setSending(false)
+    try { await sendMessage(body) } finally { setSending(false) }
   }
 
   function handleKey(e: React.KeyboardEvent) {
@@ -78,7 +36,13 @@ export default function ChatWindow({ conversationId, userId, initialMessages }: 
 
   return (
     <>
-      {/* Messages scroll area */}
+      {/* Contact-info guard (server also enforces §10.2) */}
+      <div style={{ background: '#FFF3EE', padding: '6px 14px', flexShrink: 0 }}>
+        <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: '#a8460f' }}>
+          🔒 Keep conversations on Grabitt — sharing phone/email is not allowed.
+        </span>
+      </div>
+
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', color: '#bbb', marginTop: 40, fontFamily: 'var(--font-nunito)', fontSize: 13 }}>
@@ -86,37 +50,42 @@ export default function ChatWindow({ conversationId, userId, initialMessages }: 
           </div>
         )}
         {messages.map((msg, i) => {
-          const isMe = msg.sender_id === userId
+          const isMe = msg.senderId === userId
           const prevMsg = messages[i - 1]
-          const showTime = !prevMsg || timeDiff(prevMsg.created_at, msg.created_at) > 10
+          const showTime = !prevMsg || timeDiff(prevMsg.createdAt, msg.createdAt) > 10
 
           return (
             <div key={msg.id}>
               {showTime && (
-                <div style={{
-                  textAlign: 'center', fontSize: 10, color: '#bbb',
-                  fontFamily: 'var(--font-nunito)', margin: '4px 0 8px',
-                }}>
-                  {formatTime(msg.created_at)}
+                <div style={{ textAlign: 'center', fontSize: 10, color: '#bbb', fontFamily: 'var(--font-nunito)', margin: '4px 0 8px' }}>
+                  {formatTime(msg.createdAt)}
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '75%', padding: '10px 14px', borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                  background: isMe ? 'var(--orange)' : '#fff',
-                  color: isMe ? '#fff' : 'var(--dark)',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                  fontFamily: 'var(--font-nunito)', fontSize: 14, lineHeight: 1.4,
-                }}>
-                  {msg.body}
+                {msg.blocked ? (
                   <div style={{
-                    fontSize: 9, marginTop: 4, textAlign: 'right',
-                    color: isMe ? 'rgba(255,255,255,0.7)' : '#bbb',
+                    maxWidth: '78%', padding: '10px 14px', borderRadius: 14,
+                    background: '#fff4f4', border: '1px solid #ffd5d5',
+                    color: '#c0392b', fontFamily: 'var(--font-nunito)', fontSize: 12, lineHeight: 1.4,
                   }}>
-                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    {isMe && <span style={{ marginLeft: 4 }}>{msg.is_read ? '✓✓' : '✓'}</span>}
+                    ⚠️ This message was hidden because it looked like it contained contact details. Keep deals on Grabitt.
                   </div>
-                </div>
+                ) : (
+                  <div style={{
+                    maxWidth: '75%', padding: '10px 14px',
+                    borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                    background: isMe ? 'var(--orange)' : '#fff',
+                    color: isMe ? '#fff' : 'var(--dark)',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                    fontFamily: 'var(--font-nunito)', fontSize: 14, lineHeight: 1.4,
+                  }}>
+                    {msg.body}
+                    <div style={{ fontSize: 9, marginTop: 4, textAlign: 'right', color: isMe ? 'rgba(255,255,255,0.7)' : '#bbb' }}>
+                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {isMe && <span style={{ marginLeft: 4 }}>{msg.readAt ? '✓✓' : '✓'}</span>}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )
@@ -124,10 +93,8 @@ export default function ChatWindow({ conversationId, userId, initialMessages }: 
         <div ref={bottomRef} />
       </div>
 
-      {/* Input bar */}
       <div style={{
-        flexShrink: 0, background: '#fff',
-        borderTop: '1px solid #eee',
+        flexShrink: 0, background: '#fff', borderTop: '1px solid #eee',
         padding: '10px 12px max(10px, env(safe-area-inset-bottom))',
         display: 'flex', gap: 8, alignItems: 'flex-end',
       }}>
@@ -141,8 +108,7 @@ export default function ChatWindow({ conversationId, userId, initialMessages }: 
             flex: 1, border: '1.5px solid #eee', borderRadius: 20,
             padding: '10px 14px', fontFamily: 'var(--font-nunito)',
             fontSize: 14, outline: 'none', resize: 'none',
-            lineHeight: 1.4, maxHeight: 120, overflowY: 'auto',
-            background: '#fafafa',
+            lineHeight: 1.4, maxHeight: 120, overflowY: 'auto', background: '#fafafa',
           }}
         />
         <button
@@ -166,7 +132,6 @@ export default function ChatWindow({ conversationId, userId, initialMessages }: 
 function timeDiff(a: string, b: string) {
   return (new Date(b).getTime() - new Date(a).getTime()) / 60000
 }
-
 function formatTime(iso: string) {
   const d = new Date(iso)
   const now = new Date()

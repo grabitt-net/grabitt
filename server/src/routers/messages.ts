@@ -101,4 +101,23 @@ export const messagesRouter = router({
       },
     })
   ),
+
+  // Marks every message in a thread NOT sent by the caller as read.
+  markThreadRead: protectedProcedure
+    .input(z.object({ threadId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const thread = await ctx.prisma.thread.findUnique({
+        where: { id: input.threadId },
+        include: { participants: true },
+      })
+      if (!thread) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (!thread.participants.some(p => p.userId === ctx.user.id)) {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      }
+      await ctx.prisma.message.updateMany({
+        where: { threadId: input.threadId, senderId: { not: ctx.user.id }, readAt: null },
+        data: { readAt: new Date() },
+      })
+      return { ok: true }
+    }),
 })

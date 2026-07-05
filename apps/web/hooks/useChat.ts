@@ -1,89 +1,71 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { createClient } from '@/lib/supabase'
+import { useState, useEffect, useCallback } from 'react'
+import { getAuthToken, trpcAuthed } from '@/lib/authToken'
 
+// Prisma/tRPC-backed chat message (camelCase). `blocked` is set server-side by
+// the §10.2 contact-info scan in messages.send.
 export interface ChatMessage {
   id: string
-  thread_id: string
-  sender_id: string
+  threadId: string
+  senderId: string
   body: string
-  created_at: string
+  blocked: boolean
+  blockedReason: string | null
+  readAt: string | null
+  createdAt: string
 }
 
+type Raw = {
+  id: string; threadId: string; senderId: string; body: string
+  blocked: boolean; blockedReason: string | null; readAt: string | null; createdAt: string
+}
+const normalize = (r: Raw): ChatMessage => ({
+  id: r.id, threadId: r.threadId, senderId: r.senderId, body: r.body,
+  blocked: !!r.blocked, blockedReason: r.blockedReason ?? null,
+  readAt: r.readAt ? String(r.readAt) : null, createdAt: String(r.createdAt),
+})
+
+// Loads/sends messages through the protected messages tRPC router (authed with
+// the consumer app JWT). Contact-info enforcement (§10.2) happens server-side.
+// Live updates via short polling — the Prisma tables aren't in the Supabase
+// realtime publication and identity is app-JWT based, not the anon key.
 export function useChat(threadId: string | null, currentUserId: string | null) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(false)
-  const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null)
-  const supabase = useRef(createClient())
 
-  // Initial load
+  const load = useCallback(async () => {
+    if (!threadId || !getAuthToken()) return
+    try {
+      const rows = await trpcAuthed().messages.threadMessages.query({ threadId })
+      setMessages((rows as Raw[]).map(normalize))
+      trpcAuthed().messages.markThreadRead.mutate({ threadId }).catch(() => {})
+    } catch { /* unauthenticated / transient */ }
+  }, [threadId])
+
   useEffect(() => {
-    if (!threadId) return
+    if (!threadId) { setMessages([]); return }
     setLoading(true)
-    supabase.current
-      .from('messages')
-      .select('*')
-      .eq('thread_id', threadId)
-      .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        if (data) setMessages(data as ChatMessage[])
-        setLoading(false)
-      })
-  }, [threadId])
-
-  // Realtime subscription
-  useEffect(() => {
-    if (!threadId) return
-
-    const channel = supabase.current
-      .channel(`thread:${threadId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `thread_id=eq.${threadId}` },
-        (payload) => {
-          setMessages(prev => {
-            // Deduplicate — optimistic message already added by sendMessage
-            const incoming = payload.new as ChatMessage
-            if (prev.some(m => m.id === incoming.id)) return prev
-            return [...prev, incoming]
-          })
-        }
-      )
-      .subscribe()
-
-    channelRef.current = channel
-    return () => { supabase.current.removeChannel(channel) }
-  }, [threadId])
+    load().finally(() => setLoading(false))
+    const iv = setInterval(load, 4000)
+    return () => clearInterval(iv)
+  }, [threadId, load])
 
   const sendMessage = useCallback(async (body: string) => {
-    if (!threadId || !currentUserId || !body.trim()) return
+    const text = body.trim()
+    if (!threadId || !currentUserId || !text) return
 
-    // Optimistic update — server will broadcast the real row via Realtime
     const optimisticId = `opt_${Date.now()}`
-    const optimistic: ChatMessage = {
-      id: optimisticId,
-      thread_id: threadId,
-      sender_id: currentUserId,
-      body: body.trim(),
-      created_at: new Date().toISOString(),
-    }
-    setMessages(prev => [...prev, optimistic])
+    setMessages(prev => [...prev, {
+      id: optimisticId, threadId, senderId: currentUserId, body: text,
+      blocked: false, blockedReason: null, readAt: null, createdAt: new Date().toISOString(),
+    }])
 
-    const { data, error } = await supabase.current
-      .from('messages')
-      .insert({ thread_id: threadId, sender_id: currentUserId, body: body.trim() })
-      .select()
-      .single()
-
-    if (error) {
-      // Roll back optimistic message on failure
+    try {
+      const saved = await trpcAuthed().messages.send.mutate({ threadId, body: text, channel: 'in_app' })
+      setMessages(prev => prev.map(m => m.id === optimisticId ? normalize(saved as Raw) : m))
+    } catch {
       setMessages(prev => prev.filter(m => m.id !== optimisticId))
-      console.error('sendMessage failed:', error.message)
-      return
     }
-
-    // Replace optimistic row with real row
-    setMessages(prev => prev.map(m => m.id === optimisticId ? (data as ChatMessage) : m))
   }, [threadId, currentUserId])
 
   return { messages, loading, sendMessage }

@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 
 interface Props { listingId: string; sellerId: string }
 
@@ -10,15 +11,19 @@ export default function MessageButton({ listingId, sellerId }: Props) {
 
   async function handleMessage() {
     setLoading(true)
-    const res = await fetch('/api/conversations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listing_id: listingId, seller_id: sellerId }),
-    })
-    if (res.status === 401) { router.push('/auth'); return }
-    const data = await res.json()
-    if (data.id) router.push(`/messages/${data.id}`)
-    setLoading(false)
+    try {
+      // Ensure we hold an app JWT (mint from the Supabase session if needed).
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      if (!token) { router.push('/auth'); return }
+
+      const thread = await trpcAuthed().messages.thread.mutate({ listingId, sellerId })
+      if (thread?.id) router.push(`/messages/${thread.id}`)
+    } catch {
+      router.push('/auth')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

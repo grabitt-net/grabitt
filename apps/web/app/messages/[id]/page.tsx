@@ -2,54 +2,51 @@ import { createClient } from '@/lib/supabase-server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import ChatWindow from '@/components/marketplace/ChatWindow'
+import { prisma } from 'server/src/db'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export default async function ConversationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
-
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth')
 
-  const { data: conv } = await supabase
-    .from('conversations')
-    .select(`
-      id,
-      listings!listing_id (id, title, price, listing_type, categories!category_id(icon, name)),
-      buyer:profiles!buyer_id (id, full_name),
-      seller:profiles!seller_id (id, full_name)
-    `)
-    .eq('id', id)
-    .single()
+  const me = await prisma.user.findUnique({ where: { supabaseId: user.id }, select: { id: true } })
+  if (!me) redirect('/auth')
 
-  if (!conv) notFound()
+  const thread = await prisma.thread.findUnique({
+    where: { id },
+    include: { participants: { include: { user: { select: { id: true, displayName: true } } } } },
+  })
+  if (!thread) notFound()
+  if (!thread.participants.some(p => p.userId === me.id)) redirect('/messages')
 
-  const conv_any = conv as any
-  const isBuyer = conv_any.buyer?.id === user.id
-  const isSeller = conv_any.seller?.id === user.id
-  if (!isBuyer && !isSeller) redirect('/messages')
+  const other = thread.participants.find(p => p.userId !== me.id)?.user
+  const listing = await prisma.listing.findUnique({
+    where: { id: thread.listingId },
+    select: { id: true, title: true, price: true },
+  })
 
-  const other = isBuyer ? conv_any.seller : conv_any.buyer
+  const rows = await prisma.message.findMany({
+    where: { threadId: id },
+    orderBy: { createdAt: 'asc' },
+  })
+  const initialMessages = rows.map(m => ({
+    id: m.id, threadId: m.threadId, senderId: m.senderId, body: m.body,
+    blocked: m.blocked, blockedReason: m.blockedReason,
+    readAt: m.readAt ? m.readAt.toISOString() : null, createdAt: m.createdAt.toISOString(),
+  }))
 
-  // Fetch initial messages
-  const { data: initialMessages } = await supabase
-    .from('messages')
-    .select('id, body, sender_id, is_read, created_at')
-    .eq('conversation_id', id)
-    .order('created_at', { ascending: true })
-
-  // Mark unread messages as read
-  await supabase
-    .from('messages')
-    .update({ is_read: true })
-    .eq('conversation_id', id)
-    .neq('sender_id', user.id)
-    .eq('is_read', false)
-
-  const listing = conv_any.listings
+  // Mark incoming messages read now that the thread is open.
+  await prisma.message.updateMany({
+    where: { threadId: id, senderId: { not: me.id }, readAt: null },
+    data: { readAt: new Date() },
+  })
 
   return (
     <main style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#f5f5f5' }}>
-      {/* Header */}
       <header style={{
         background: 'var(--sand)', padding: '12px 16px',
         borderBottom: '1.5px solid var(--sand2)',
@@ -61,16 +58,16 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 15, color: '#fff', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0,
         }}>
-          {other?.full_name?.[0]?.toUpperCase() ?? '?'}
+          {other?.displayName?.[0]?.toUpperCase() ?? '?'}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 800, color: 'var(--dark)' }}>
-            {other?.full_name ?? 'Grabitt User'}
+            {other?.displayName ?? 'Grabitt User'}
           </div>
           {listing && (
             <div style={{ fontSize: 10, color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontWeight: 700 }}>
-              {listing.categories?.icon} {listing.title}
-              {listing.price && ` · €${Number(listing.price).toLocaleString()}`}
+              {listing.title}
+              {listing.price != null && ` · €${Number(listing.price).toLocaleString()}`}
             </div>
           )}
         </div>
@@ -83,11 +80,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
         )}
       </header>
 
-      <ChatWindow
-        conversationId={id}
-        userId={user.id}
-        initialMessages={initialMessages ?? []}
-      />
+      <ChatWindow threadId={id} userId={me.id} initialMessages={initialMessages} />
     </main>
   )
 }

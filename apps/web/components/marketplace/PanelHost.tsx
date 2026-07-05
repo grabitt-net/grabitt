@@ -553,30 +553,56 @@ function PanelBody() {
 
   // ── MESSAGES ────────────────────────────────────────────────────────────────
   if (panel.id === 'messages') {
-    const THREADS = [
-      { id: 'T1', avatar: '👩', handle: '@buyer_maria',  listing: 'iPhone 14 Pro', last: 'Is it still available?',     time: '2m',  unread: 2 },
-      { id: 'T2', avatar: '👨', handle: '@seller_pete',  listing: 'Road Bike',     last: 'Yes, collection tomorrow?', time: '1h',  unread: 0 },
-      { id: 'T3', avatar: '🧑', handle: '@buyer_anna',   listing: 'MacBook Air M2',last: 'OK sounds good 👍',          time: '3h',  unread: 0 },
-    ]
+    type ThreadRow = {
+      id: string; listingId: string; lastMessageAt: string | null
+      participants: { userId: string; user: { id: string; displayName: string; avatar: string | null } }[]
+      messages: { id: string; senderId: string; body: string; blocked: boolean; readAt: string | null }[]
+    }
+    const [threads, setThreads] = useState<ThreadRow[]>([])
+    const [loadingThreads, setLoadingThreads] = useState(true)
+    const me = typeof window !== 'undefined' ? localStorage.getItem('grabitt_uid') : null
+
+    useEffect(() => {
+      getTrpcClient()
+        .then(c => c.messages.myThreads.query())
+        .then(d => setThreads(d as unknown as ThreadRow[]))
+        .catch(() => setThreads([]))
+        .finally(() => setLoadingThreads(false))
+    }, [])
+
     return (
       <ActionPanel title="💬 Messages" onClose={closePanel}>
-        {THREADS.map(t => (
-          <div key={t.id} onClick={() => openPanel('chatThread', { threadId: t.id, handle: t.handle, listing: t.listing, avatar: t.avatar })}
-            style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <div style={{ width: 44, height: 44, background: '#FFF3EE', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>{t.avatar}</div>
-              {t.unread > 0 && <div style={{ position: 'absolute', top: -2, right: -2, background: 'var(--orange)', color: '#fff', borderRadius: '50%', width: 18, height: 18, fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t.unread}</div>}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{t.handle}</span>
-                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa' }}>{t.time}</span>
-              </div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginBottom: 1 }}>{t.listing}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: t.unread > 0 ? 'var(--dark)' : '#aaa', fontWeight: t.unread > 0 ? 800 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.last}</div>
-            </div>
+        {loadingThreads ? (
+          <div style={{ textAlign: 'center', padding: 40, fontFamily: 'var(--font-ui)', fontSize: 13, color: '#aaa' }}>Loading…</div>
+        ) : threads.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#999' }}>
+            No conversations yet — message a seller from any listing.
           </div>
-        ))}
+        ) : threads.map(t => {
+          const other = t.participants.find(p => p.userId !== me)?.user
+          const last = t.messages[0]
+          const unread = !!last && last.senderId !== me && !last.readAt
+          const preview = last ? (last.blocked ? '⚠️ Message hidden' : last.body) : 'Start chatting…'
+          const avatar = other?.avatar || '👤'
+          return (
+            <div key={t.id} onClick={() => openPanel('chatThread', { threadId: t.id, handle: other?.displayName || 'Grabitt user', listing: '', avatar, currentUserId: me || '' })}
+              style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <div style={{ width: 44, height: 44, background: '#FFF3EE', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, color: 'var(--orange)', fontFamily: 'var(--font-ui)' }}>
+                  {avatar.length <= 2 ? avatar : (other?.displayName?.[0]?.toUpperCase() ?? '?')}
+                </div>
+                {unread && <div style={{ position: 'absolute', top: -2, right: -2, background: 'var(--orange)', borderRadius: '50%', width: 12, height: 12, border: '2px solid #fff' }} />}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{other?.displayName || 'Grabitt user'}</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa' }}>{t.lastMessageAt ? relativeTime(String(t.lastMessageAt)) : ''}</span>
+                </div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: unread ? 'var(--dark)' : '#aaa', fontWeight: unread ? 800 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preview}</div>
+              </div>
+            </div>
+          )
+        })}
       </ActionPanel>
     )
   }
@@ -585,17 +611,9 @@ function PanelBody() {
     const { threadId, handle, listing, avatar, currentUserId } = (panel.data || {}) as {
       threadId: string; handle: string; listing: string; avatar: string; currentUserId: string
     }
-    const { messages: realtimeMsgs, loading: chatLoading, sendMessage } = useChat(threadId || null, currentUserId || null)
+    const { messages: displayMsgs, loading: chatLoading, sendMessage } = useChat(threadId || null, currentUserId || null)
     const [draft, setDraft] = useState('')
     const bottomRef = useRef<HTMLDivElement>(null)
-
-    // Stub messages shown when no real threadId (demo mode)
-    const STUB = [
-      { id: 's1', sender_id: 'them', body: 'Hi! Is this still available?', created_at: new Date(Date.now() - 600000).toISOString() },
-      { id: 's2', sender_id: currentUserId || 'me', body: 'Yes, still available 👍', created_at: new Date(Date.now() - 300000).toISOString() },
-      { id: 's3', sender_id: 'them', body: 'Great — can I collect today?', created_at: new Date(Date.now() - 60000).toISOString() },
-    ]
-    const displayMsgs = threadId ? realtimeMsgs : STUB
 
     // Scroll to bottom on new messages
     useEffect(() => {
@@ -643,7 +661,16 @@ function PanelBody() {
               <div style={{ textAlign: 'center', padding: 20, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#aaa' }}>Loading messages…</div>
             )}
             {displayMsgs.map((m) => {
-              const isMe = m.sender_id === (currentUserId || 'me')
+              const isMe = m.senderId === currentUserId
+              if (m.blocked) {
+                return (
+                  <div key={m.id} style={{ display: 'flex', justifyContent: 'center' }}>
+                    <div style={{ maxWidth: '80%', background: '#fff4f4', border: '1px solid #ffd5d5', color: '#c0392b', borderRadius: 12, padding: '8px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, lineHeight: 1.4, textAlign: 'center' }}>
+                      ⚠️ Message hidden — contact details aren&apos;t allowed. Keep deals on Grabitt.
+                    </div>
+                  </div>
+                )
+              }
               return (
                 <div key={m.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                   <div style={{
@@ -654,7 +681,9 @@ function PanelBody() {
                     padding: '10px 13px',
                   }}>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, lineHeight: 1.45 }}>{m.body}</div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, opacity: 0.7, marginTop: 3, textAlign: 'right' }}>{fmtTime(m.created_at)}</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, opacity: 0.7, marginTop: 3, textAlign: 'right' }}>
+                      {fmtTime(m.createdAt)}{isMe && <span style={{ marginLeft: 4 }}>{m.readAt ? '✓✓' : '✓'}</span>}
+                    </div>
                   </div>
                 </div>
               )
