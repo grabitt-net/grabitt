@@ -3611,7 +3611,7 @@ function PanelBody() {
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
           <div style={{ fontSize: 56, marginBottom: 14 }}>🏪</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Welcome, {bizName}!</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 8 }}>Your 21-day free trial has started.</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 8 }}>Your 7-day free trial has started.</div>
           <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 14, marginBottom: 20 }}>
             {['Unlimited listings during trial', 'Business storefront page', 'Analytics dashboard', 'Priority support'].map((f, i) => (
               <div key={i} style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', padding: '4px 0' }}>✅ {f}</div>
@@ -3626,13 +3626,13 @@ function PanelBody() {
         {bizStep === 'info' && (
           <>
             <div style={{ background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: 14, padding: 16, marginBottom: 16, textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4 }}>21-day free trial</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4 }}>7-day free trial</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>No credit card required</div>
             </div>
             {['Your own storefront + 🏢 badge', 'Instant Dealer status (lower fees)', 'Analytics & insights', 'Priority placement'].map((f, i) => (
               <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid #f5f5f5', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555' }}><span>✅</span><span>{f}</span></div>
             ))}
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', textAlign: 'center', marginTop: 12 }}>21 days free, then <strong style={{ color: 'var(--dark)' }}>€29/mo</strong> · cancel anytime</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', textAlign: 'center', marginTop: 12 }}>7 days free, then <strong style={{ color: 'var(--dark)' }}>€29/mo</strong> · cancel anytime</div>
             <button onClick={() => setBizStep('type')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 12 }}>Start free trial →</button>
 
             {/* Add-on plans + verification */}
@@ -3666,16 +3666,16 @@ function PanelBody() {
         )}
         {bizStep === 'trial' && (
           <>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>Confirm your 21-day trial</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>Confirm your 7-day trial</div>
             <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 16 }}>
-              {[['Business name', bizName], ['Business type', BIZ_TYPES.find(t => t.id === bizType)?.label ?? ''], ['Trial period', '21 days free'], ['After trial', '€29/mo · cancel anytime']].map(([l, v]) => (
+              {[['Business name', bizName], ['Business type', BIZ_TYPES.find(t => t.id === bizType)?.label ?? ''], ['Trial period', '7 days free'], ['After trial', '€29/mo · cancel anytime']].map(([l, v]) => (
                 <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', borderBottom: '1px solid #f0ebe4' }}>
                   <span>{l}</span><span style={{ fontWeight: 800, color: 'var(--dark)' }}>{v}</span>
                 </div>
               ))}
             </div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>You&apos;ll be taken to Stripe to add a card. You won&apos;t be charged until the trial ends.</div>
-            <button onClick={() => startCheckout('business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? 'Opening Stripe…' : '🚀 Start 21-Day Free Trial'}</button>
+            <button onClick={() => startCheckout('business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? 'Opening Stripe…' : '🚀 Start 7-Day Free Trial'}</button>
           </>
         )}
       </ActionPanel>

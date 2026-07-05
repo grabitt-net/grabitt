@@ -39,7 +39,7 @@ export const subscriptionsRouter = router({
   ),
 
   // Starts a Stripe Checkout session for a recurring plan (inline price_data so
-  // no dashboard Price setup is needed). Business includes the 21-day trial.
+  // no dashboard Price setup is needed). Business includes the 7-day trial.
   createCheckout: protectedProcedure
     .input(z.object({ plan: z.enum(PLAN_IDS as [string, ...string[]]) }))
     .mutation(async ({ ctx, input }) => {

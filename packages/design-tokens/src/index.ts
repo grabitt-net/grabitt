@@ -64,8 +64,8 @@ export const PRICES = {
 // in cents (EUR). `trialDays` 0 = no trial. `grantsGrade` = a grade floor while
 // the sub is active. `verifyFeeCents` = one-off business verification.
 export const SUBSCRIPTION_PLANS = {
-  business:    { label: 'Business',            amountCents: 2900, interval: 'month', trialDays: 21, grantsGrade: 'dealer', verifyFeeCents: 1900,
-                 blurb: 'Your own storefront, 🏢 badge & instant Dealer status. 21 days free, then €29/mo.' },
+  business:    { label: 'Business',            amountCents: 2900, interval: 'month', trialDays: 7, grantsGrade: 'dealer', verifyFeeCents: 1900,
+                 blurb: 'Your own storefront, 🏢 badge & instant Dealer status. 7 days free, then €29/mo.' },
   service_ad:  { label: 'Advertise a service', amountCents: 2900, interval: 'month', trialDays: 0,
                  blurb: 'Promote your service to locals. €29/mo.' },
   page_banner: { label: 'Page banners',        amountCents: 3900, interval: 'month', trialDays: 0,
