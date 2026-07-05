@@ -17,6 +17,7 @@ import { crmRouter } from './routers/crm'
 import { eshotsRouter } from './routers/eshots'
 import { bannersRouter } from './routers/banners'
 import { financialsRouter } from './routers/financials'
+import { subscriptionsRouter } from './routers/subscriptions'
 
 export const appRouter = router({
   auth: authRouter,
@@ -37,6 +38,7 @@ export const appRouter = router({
   eshots: eshotsRouter,
   banners: bannersRouter,
   financials: financialsRouter,
+  subscriptions: subscriptionsRouter,
 })
 
 export type AppRouter = typeof appRouter

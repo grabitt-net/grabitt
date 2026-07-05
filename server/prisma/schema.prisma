@@ -23,6 +23,40 @@ enum UserGrade {
   pro
 }
 
+// Paid recurring plans (Stripe Billing). Prices/intervals live in
+// packages/design-tokens SUBSCRIPTION_PLANS — the source of truth.
+enum SubPlan {
+  business      // €29/mo, 21-day trial — storefront, badge, instant Dealer
+  service_ad    // €29/mo — advertise a service (tradespeople)
+  page_banner   // €39/mo — banner across Grabitt pages
+  directory     // €99/yr — business directory listing
+}
+
+enum SubStatus {
+  trialing
+  active
+  past_due
+  canceled
+  paused
+}
+
+model Subscription {
+  id                   String    @id @default(uuid())
+  userId               String
+  user                 User      @relation(fields: [userId], references: [id])
+  plan                 SubPlan
+  status               SubStatus
+  stripeSubscriptionId String    @unique
+  stripeCustomerId     String
+  currentPeriodEnd     DateTime?
+  trialEnd             DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([userId])
+}
+
 enum Locale {
   en
   es
@@ -48,6 +82,7 @@ model User {
   businessVerified   Boolean   @default(false)
   businessTrialEnds  DateTime?
   stripeAccountId    String?
+  stripeCustomerId   String?
   locale             Locale    @default(en)
 
   // Verification
@@ -96,6 +131,7 @@ model User {
   jobApplications    JobApplication[]
   strikes            UserStrike[]
   execAuditLogs      ExecAuditLog[]     @relation("ExecTarget")
+  subscriptions      Subscription[]
 
   @@index([grade])
   @@index([email])

@@ -3575,6 +3575,7 @@ function PanelBody() {
     const [bizStep, setBizStep] = useState<'info'|'type'|'trial'|'done'>('info')
     const [bizName, setBizName] = useState('')
     const [bizType, setBizType] = useState('')
+    const [bizBusy, setBizBusy] = useState(false)
     const BIZ_TYPES = [
       { id: 'shop', label: '🏪 Retail Shop', desc: 'Physical shop selling goods' },
       { id: 'trade', label: '🔧 Trade & Services', desc: 'Plumber, electrician, cleaner…' },
@@ -3583,6 +3584,28 @@ function PanelBody() {
       { id: 'recruiter', label: '💼 Recruitment / HR', desc: 'Job placement or staffing' },
       { id: 'other', label: '📋 Other', desc: 'Other type of business' },
     ]
+    // Recurring add-on plans (mirror the prototype pricing).
+    const ADDONS: { plan: string; icon: string; label: string; price: string }[] = [
+      { plan: 'service_ad',  icon: '🛠️', label: 'Advertise a service', price: '€29/mo' },
+      { plan: 'page_banner', icon: '🖼️', label: 'Page banners',        price: '€39/mo' },
+      { plan: 'directory',   icon: '📒', label: 'Business directory',   price: '€99/yr' },
+    ]
+
+    const startCheckout = async (plan: string) => {
+      setBizBusy(true)
+      try {
+        let token = getAuthToken()
+        if (!token) token = await refreshAuthToken()
+        if (!token) { toast('Please log in first'); openPanel('login'); return }
+        const client = await getTrpcClient()
+        const res = plan === 'verify'
+          ? await client.subscriptions.verifyCheckout.mutate()
+          : await client.subscriptions.createCheckout.mutate({ plan: plan as 'business' | 'service_ad' | 'page_banner' | 'directory' })
+        if (res.url) window.location.href = res.url
+        else { toast('Could not start checkout'); setBizBusy(false) }
+      } catch { toast('Could not start checkout — are you logged in?'); setBizBusy(false) }
+    }
+
     if (bizStep === 'done') return (
       <ActionPanel title="🎉 Business Account Activated" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
@@ -3606,10 +3629,24 @@ function PanelBody() {
               <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4 }}>21-day free trial</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>No credit card required</div>
             </div>
-            {['Unlimited listings', 'Business storefront', 'Analytics & insights', 'Reduced seller fees', 'Priority placement'].map((f, i) => (
+            {['Your own storefront + 🏢 badge', 'Instant Dealer status (lower fees)', 'Analytics & insights', 'Priority placement'].map((f, i) => (
               <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid #f5f5f5', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555' }}><span>✅</span><span>{f}</span></div>
             ))}
-            <button onClick={() => setBizStep('type')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 20 }}>Start free trial →</button>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', textAlign: 'center', marginTop: 12 }}>21 days free, then <strong style={{ color: 'var(--dark)' }}>€29/mo</strong> · cancel anytime</div>
+            <button onClick={() => setBizStep('type')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 12 }}>Start free trial →</button>
+
+            {/* Add-on plans + verification */}
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, margin: '20px 0 8px' }}>More business tools</div>
+            {ADDONS.map(a => (
+              <button key={a.plan} onClick={() => startCheckout(a.plan)} disabled={bizBusy} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', border: '1.5px solid #f0ebe4', borderRadius: 12, padding: '11px 14px', marginBottom: 8, cursor: 'pointer', fontFamily: 'var(--font-ui)' }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{a.icon} {a.label}</span>
+                <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--orange)' }}>{a.price}</span>
+              </button>
+            ))}
+            <button onClick={() => startCheckout('verify')} disabled={bizBusy} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', border: '1.5px solid #f0ebe4', borderRadius: 12, padding: '11px 14px', cursor: 'pointer', fontFamily: 'var(--font-ui)' }}>
+              <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>🛡️ Verify my business</span>
+              <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--orange)' }}>€19 once</span>
+            </button>
           </>
         )}
         {bizStep === 'type' && (
@@ -3631,13 +3668,14 @@ function PanelBody() {
           <>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>Confirm your 21-day trial</div>
             <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 16 }}>
-              {[['Business name', bizName], ['Business type', BIZ_TYPES.find(t => t.id === bizType)?.label ?? ''], ['Trial period', '21 days free'], ['After trial', 'Plans from €19.99/mo']].map(([l, v]) => (
+              {[['Business name', bizName], ['Business type', BIZ_TYPES.find(t => t.id === bizType)?.label ?? ''], ['Trial period', '21 days free'], ['After trial', '€29/mo · cancel anytime']].map(([l, v]) => (
                 <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', borderBottom: '1px solid #f0ebe4' }}>
                   <span>{l}</span><span style={{ fontWeight: 800, color: 'var(--dark)' }}>{v}</span>
                 </div>
               ))}
             </div>
-            <button onClick={() => setBizStep('done')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>🚀 Activate Trial — Free for 21 Days</button>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>You&apos;ll be taken to Stripe to add a card. You won&apos;t be charged until the trial ends.</div>
+            <button onClick={() => startCheckout('business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? 'Opening Stripe…' : '🚀 Start 21-Day Free Trial'}</button>
           </>
         )}
       </ActionPanel>

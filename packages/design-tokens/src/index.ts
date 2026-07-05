@@ -60,6 +60,22 @@ export const PRICES = {
   registrationBonus: 50,
 } as const
 
+// Recurring subscription catalogue (from the original prototype). Amounts are
+// in cents (EUR). `trialDays` 0 = no trial. `grantsGrade` = a grade floor while
+// the sub is active. `verifyFeeCents` = one-off business verification.
+export const SUBSCRIPTION_PLANS = {
+  business:    { label: 'Business',            amountCents: 2900, interval: 'month', trialDays: 21, grantsGrade: 'dealer', verifyFeeCents: 1900,
+                 blurb: 'Your own storefront, 🏢 badge & instant Dealer status. 21 days free, then €29/mo.' },
+  service_ad:  { label: 'Advertise a service', amountCents: 2900, interval: 'month', trialDays: 0,
+                 blurb: 'Promote your service to locals. €29/mo.' },
+  page_banner: { label: 'Page banners',        amountCents: 3900, interval: 'month', trialDays: 0,
+                 blurb: 'Your banner across Grabitt pages, with monthly click stats. €39/mo.' },
+  directory:   { label: 'Business directory',  amountCents: 9900, interval: 'year',  trialDays: 0,
+                 blurb: 'Year-round directory listing, with click stats. €99/yr.' },
+} as const
+
+export type SubPlanId = keyof typeof SUBSCRIPTION_PLANS
+
 export const GRAB_IT_NOW_WINDOWS = [2, 4, 6, 12, 24] as const
 
 export const EXEC_SESSION_TTL_MS = 4 * 60 * 60 * 1000 // 4 hours, NO silent refresh
