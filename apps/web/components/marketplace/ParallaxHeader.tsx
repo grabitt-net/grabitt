@@ -10,14 +10,24 @@ type Banner = { id: string; title: string; imageUrl: string; linkUrl: string | n
 // page for a subtle parallax effect. Falls back to a branded gradient when no
 // banner is set, so the page never looks empty.
 export default function ParallaxHeader() {
-  const [banner, setBanner] = useState<Banner | null>(null)
+  const [banners, setBanners] = useState<Banner[]>([])
+  const [idx, setIdx] = useState(0)
   const imgRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     createTrpcClient().banners.active.query({ position: 'home_top' })
-      .then(d => { const list = d as unknown as Banner[]; if (list.length) setBanner(list[0]) })
+      .then(d => setBanners((d as unknown as Banner[]) ?? []))
       .catch(() => {})
   }, [])
+
+  // Slider: rotate through the hero banners.
+  useEffect(() => {
+    if (banners.length < 2) return
+    const t = setInterval(() => setIdx(i => (i + 1) % banners.length), 6000)
+    return () => clearInterval(t)
+  }, [banners.length])
+
+  const banner = banners.length ? banners[idx % banners.length] : null
 
   // Parallax: translate the background slower than scroll (transform only).
   useEffect(() => {
@@ -51,6 +61,14 @@ export default function ParallaxHeader() {
           Buy &amp; sell locally — safely. Funds held in escrow until handover.
         </p>
       </div>
+      {/* Slider dots */}
+      {banners.length > 1 && (
+        <div style={{ position: 'absolute', bottom: 12, right: 18, display: 'flex', gap: 6 }}>
+          {banners.map((_, i) => (
+            <span key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === (idx % banners.length) ? '#fff' : 'rgba(255,255,255,0.45)' }} />
+          ))}
+        </div>
+      )}
     </section>
   )
 

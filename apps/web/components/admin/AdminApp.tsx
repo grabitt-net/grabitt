@@ -41,6 +41,7 @@ export default function AdminApp({ execToken }: Props) {
   const [contacts, setContacts] = useState<any[]>([])
   const [members, setMembers] = useState<any[]>([])
   const [focusMemberId, setFocusMemberId] = useState<string | null>(null)
+  const [bannerPosition, setBannerPosition] = useState<string | null>(null)
   const [disputes, setDisputes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -109,7 +110,7 @@ export default function AdminApp({ execToken }: Props) {
                 {view === 'members'    && <MembersView   members={members} focusUserId={focusMemberId} />}
                 {view === 'disputes'   && <DisputesView  disputes={disputes} onUpdate={setDisputes} />}
                 {view === 'reports'    && <ReportsView   reports={[]} />}
-                {view === 'banners'    && <BannersView />}
+                {view === 'banners'    && <BannersView initialPosition={bannerPosition} />}
                 {view === 'financials' && <FinancialsView />}
                 {view === 'retention'  && <RetentionView />}
                 {view === 'calendar'   && <CalendarView />}
@@ -120,7 +121,7 @@ export default function AdminApp({ execToken }: Props) {
                 {view === 'jobs'       && <JobsView />}
                 {view === 'audit'      && <AuditTrailView onViewMember={() => setView('members')} />}
                 {view === 'compliance' && <ComplianceView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
-                {view === 'homepage'   && <HomepageView />}
+                {view === 'homepage'   && <HomepageView onEditBanners={(pos) => { setBannerPosition(pos); setView('banners') }} />}
                 {view === 'rewards'    && <Placeholder view={view} />}
               </>
             )}

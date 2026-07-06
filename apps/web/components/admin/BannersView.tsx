@@ -14,7 +14,7 @@ interface Banner { id: string; title: string; imageUrl: string; linkUrl: string 
 
 const EMPTY = { title: '', imageUrl: '', linkUrl: '', position: 'home_top', active: true, startsAt: '', endsAt: '' }
 
-export default function BannersView() {
+export default function BannersView({ initialPosition }: { initialPosition?: string | null }) {
   const api = useCrmApi()
   const [banners, setBanners] = useState<Banner[]>([])
   const [showAdd, setShowAdd] = useState(false)
@@ -23,6 +23,12 @@ export default function BannersView() {
 
   const load = () => api.banners().then(b => setBanners((b ?? []) as Banner[])).catch(() => {})
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When arriving from the Homepage builder for a specific slot, open the add
+  // form pre-set to that placement.
+  useEffect(() => {
+    if (initialPosition) { setForm({ ...EMPTY, position: initialPosition }); setShowAdd(true) }
+  }, [initialPosition])
 
   async function save() {
     if (!form.title.trim() || !form.imageUrl.trim()) return

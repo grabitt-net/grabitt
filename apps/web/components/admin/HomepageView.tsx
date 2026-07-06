@@ -4,7 +4,19 @@ import { useCrmApi } from './AdminApp'
 
 type Section = { key: string; label: string; enabled: boolean; sortOrder: number }
 
-export default function HomepageView() {
+// Per-section metadata: what it is and (if applicable) how to edit its content.
+const META: Record<string, { edit?: 'home_top' | 'home_mid'; note: string }> = {
+  hero_banner:   { edit: 'home_top', note: 'Parallax hero slider — edit the image(s), heading & link.' },
+  mid_banner:    { edit: 'home_mid', note: 'Advertising banner — edit the image & link.' },
+  quick_actions: { note: 'Fixed quick links (Sponsorship, Find Work, Business…) + Grab It Now.' },
+  departments:   { note: 'Auto — the department tiles.' },
+  featured:      { note: 'Auto — populated from featured listings.' },
+  listings:      { note: 'Auto — the live "Browse listings" grid.' },
+  just_listed:   { note: 'Auto — the most recent listings.' },
+  trust:         { note: 'Fixed Grabitt Guarantee / trust badges.' },
+}
+
+export default function HomepageView({ onEditBanners }: { onEditBanners: (position: string) => void }) {
   const api = useCrmApi()
   const [sections, setSections] = useState<Section[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,15 +77,18 @@ export default function HomepageView() {
               <div style={{ width: 22, textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#bbb' }}>{i + 1}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)' }}>{s.label}</div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#aaa' }}>{s.key}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999' }}>{META[s.key]?.note ?? s.key}</div>
               </div>
+              {META[s.key]?.edit && (
+                <button onClick={() => onEditBanners(META[s.key]!.edit!)} style={{ background: '#fff', color: '#FF4500', border: '1.5px solid #FF4500', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>✎ Edit content</button>
+              )}
               <button onClick={() => toggle(i)} style={{ background: s.enabled ? '#f0faf4' : '#f5f5f5', color: s.enabled ? '#16a34a' : '#aaa', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>
                 {s.enabled ? '● Visible' : '○ Hidden'}
               </button>
             </div>
           ))}
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#999', marginTop: 10 }}>
-            Tip: the Hero banner and Mid banner pull their images from the <strong>Banners</strong> tab.
+            Use <strong>✎ Edit content</strong> to change the hero slider &amp; banner images/links. Other sections fill automatically from live data.
           </div>
         </div>
       )}
