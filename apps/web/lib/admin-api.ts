@@ -74,6 +74,11 @@ export function makeCrmApi(execToken: string) {
       rpc<any[]>('compliance.consentLog', 'query', kind ? { kind } : undefined, execToken),
     deletionRequests: () =>
       rpc<any[]>('compliance.deletionRequests', 'query', undefined, execToken),
+
+    // Homepage layout CMS
+    homeSections: () => rpc<any[]>('homepage.sections', 'query', undefined, execToken),
+    saveHomeSections: (sections: { key: string; enabled: boolean; sortOrder: number }[]) =>
+      rpc<any>('homepage.save', 'mutation', { sections }, execToken),
   }
 }
 

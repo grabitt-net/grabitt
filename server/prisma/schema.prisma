@@ -40,6 +40,18 @@ enum SubStatus {
   paused
 }
 
+// ── Homepage CMS (section layout) ─────────────────────────────────────────────
+// Admin-controlled homepage blocks: which sections show and in what order.
+model HomeSection {
+  id        String  @id @default(uuid())
+  key       String  @unique
+  label     String
+  enabled   Boolean @default(true)
+  sortOrder Int
+
+  @@index([sortOrder])
+}
+
 // ── Compliance / GDPR ─────────────────────────────────────────────────────────
 enum ConsentKind {
   gdpr                // GDPR data-processing acceptance

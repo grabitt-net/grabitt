@@ -32,6 +32,7 @@ const sections = [
     label: 'Marketing',
     items: [
       { icon: '📧', label: 'E-shots', id: 'emails' as View },
+      { icon: '🏠', label: 'Homepage', id: 'homepage' as View },
       { icon: '🎯', label: 'Banners', id: 'banners' as View },
     ],
   },

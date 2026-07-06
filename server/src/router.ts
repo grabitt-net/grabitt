@@ -19,6 +19,7 @@ import { bannersRouter } from './routers/banners'
 import { financialsRouter } from './routers/financials'
 import { subscriptionsRouter } from './routers/subscriptions'
 import { complianceRouter } from './routers/compliance'
+import { homepageRouter } from './routers/homepage'
 
 export const appRouter = router({
   auth: authRouter,
@@ -41,6 +42,7 @@ export const appRouter = router({
   financials: financialsRouter,
   subscriptions: subscriptionsRouter,
   compliance: complianceRouter,
+  homepage: homepageRouter,
 })
 
 export type AppRouter = typeof appRouter

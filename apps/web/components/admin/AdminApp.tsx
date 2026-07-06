@@ -19,6 +19,7 @@ import ToolboxView from './ToolboxView'
 import JobsView from './JobsView'
 import AuditTrailView from './AuditTrailView'
 import ComplianceView from './ComplianceView'
+import HomepageView from './HomepageView'
 import { makeCrmApi, CrmApi } from '@/lib/admin-api'
 
 // Context so child components can call the API without prop-drilling
@@ -29,7 +30,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'disputes' | 'reports' | 'rewards' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'audit' | 'compliance'
+export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'disputes' | 'reports' | 'rewards' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'audit' | 'compliance' | 'homepage'
 
 interface Props { execToken: string }
 
@@ -119,6 +120,7 @@ export default function AdminApp({ execToken }: Props) {
                 {view === 'jobs'       && <JobsView />}
                 {view === 'audit'      && <AuditTrailView onViewMember={() => setView('members')} />}
                 {view === 'compliance' && <ComplianceView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
+                {view === 'homepage'   && <HomepageView />}
                 {view === 'rewards'    && <Placeholder view={view} />}
               </>
             )}
