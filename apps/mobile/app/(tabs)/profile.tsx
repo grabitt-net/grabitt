@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, A
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { useAuth } from '../../lib/auth'
-import { apiClient } from '../../lib/trpc'
+import { apiClient, API_URL } from '../../lib/trpc'
 
 type Me = { displayName: string; grade: string; salesCount: number; avgRating: number | null; credits: number; isBusiness: boolean }
 type Sub = { plan: string; status: string; trialEnd: string | null; currentPeriodEnd: string | null }
@@ -109,6 +109,11 @@ export default function ProfileScreen() {
         <Text style={s.gdprLabel}>YOUR DATA (GDPR)</Text>
         <Text style={s.gdprNote}>Permanently delete your account and personal data. Past sales/purchase records are retained as required by law.</Text>
         <TouchableOpacity style={s.deleteBtn} onPress={deleteAccount}><Text style={s.deleteText}>🗑 Delete my account & data</Text></TouchableOpacity>
+
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 18, marginTop: 20 }}>
+          <TouchableOpacity onPress={() => Linking.openURL(`${API_URL}/privacy`)}><Text style={s.legalLink}>Privacy Policy</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL(`${API_URL}/terms`)}><Text style={s.legalLink}>Terms of Service</Text></TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   )
@@ -139,4 +144,5 @@ const s = StyleSheet.create({
   gdprNote: { fontFamily: 'Nunito', fontSize: 12, color: '#888', lineHeight: 18, marginBottom: 10 },
   deleteBtn: { backgroundColor: '#ef4444', borderRadius: 12, padding: 13, alignItems: 'center' },
   deleteText: { color: '#fff', fontWeight: '900', fontFamily: 'Nunito' },
+  legalLink: { fontFamily: 'Nunito', fontSize: 12, color: '#999', textDecorationLine: 'underline' },
 })

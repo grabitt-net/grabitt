@@ -27,7 +27,8 @@ export default function TabLayout() {
       <Tabs.Screen name="sell"     options={{ title: 'Sell',     tabBarIcon: ({ color }) => <TabIcon emoji="📦" color={color} /> }} />
       <Tabs.Screen name="messages" options={{ title: 'Messages', tabBarIcon: ({ color }) => <TabIcon emoji="💬" color={color} /> }} />
       <Tabs.Screen name="profile"  options={{ title: 'Profile',  tabBarIcon: ({ color }) => <TabIcon emoji="👤" color={color} /> }} />
-      <Tabs.Screen name="exec"     options={{ title: 'Exec',     tabBarIcon: ({ color }) => <TabIcon emoji="⚡" color={color} /> }} />
+      {/* Admin/CRM is a web-only product — hide the placeholder Exec tab. */}
+      <Tabs.Screen name="exec"     options={{ href: null }} />
     </Tabs>
   )
 }
