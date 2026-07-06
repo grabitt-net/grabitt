@@ -64,6 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
   const signInWithGoogle = async () => {
     const redirectTo = Linking.createURL('auth-callback')
+    // Copy this exact value into Supabase → Auth → URL Configuration → Redirect URLs.
+    console.log('OAuth redirectTo (allowlist this in Supabase):', redirectTo)
     const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, skipBrowserRedirect: true } })
     if (error || !data?.url) return { error: error?.message ?? 'Could not start Google sign-in' }
     const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo)

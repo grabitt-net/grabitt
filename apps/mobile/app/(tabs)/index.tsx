@@ -22,22 +22,27 @@ const { width: SCREEN_W } = Dimensions.get('window')
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
+// Department tiles use real photography (Unsplash) over the brand gradient —
+// same image set as the web CategoryGrid. A failed image falls back to the
+// gradient + emoji so a card never renders broken.
+const IMG = (id: string) => `https://images.unsplash.com/${id}?w=320&h=320&fit=crop&q=55&auto=format`
+
 const DEPTS = [
-  { icon: '🏡', name: 'Home & Garden', grad: ['#56ab2f', '#a8e063'] },
-  { icon: '💼', name: 'Jobs',          grad: ['#2193b0', '#6dd5ed'] },
-  { icon: '👗', name: 'Fashion',       grad: ['#f7971e', '#ffd200'] },
-  { icon: '⚽', name: 'Sport',         grad: ['#11998e', '#38ef7d'] },
-  { icon: '🎮', name: 'Gaming',        grad: ['#8E2DE2', '#c471f5'] },
-  { icon: '📱', name: 'Electronics',   grad: ['#4776E6', '#8E54E9'] },
-  { icon: '🎁', name: 'Gift Ideas',    grad: ['#f953c6', '#b91d73'] },
-  { icon: '🧸', name: 'Kids & Baby',   grad: ['#f9d423', '#ff4e50'] },
-  { icon: '🏠', name: 'Property',      grad: ['#e96c2a', '#f5a623'] },
-  { icon: '💊', name: 'Health & Fitness', grad: ['#43cea2', '#185a9d'] },
-  { icon: '🥖', name: 'Food Store',    grad: ['#8e44ad', '#c0392b'] },
-  { icon: '🕺', name: 'Retro & Vintage', grad: ['#d35400', '#7a4419'] },
-  { icon: '🛍️', name: 'Grab It Now',  grad: [colors.orange, colors.orange2] },
-  { icon: '🔧', name: 'Handy Help',    grad: ['#00b09b', '#96c93d'] },
-  { icon: '🐾', name: 'Pet Shop',      grad: ['#f093fb', '#f5576c'] },
+  { icon: '🏡', name: 'Home & Garden', color: '#56ab2f', img: IMG('photo-1416879595882-3373a0480b5b') },
+  { icon: '💼', name: 'Jobs',          color: '#2193b0', img: IMG('photo-1521737604893-d14cc237f11d') },
+  { icon: '👗', name: 'Fashion',       color: '#f7971e', img: IMG('photo-1445205170230-053b83016050') },
+  { icon: '⚽', name: 'Sport',         color: '#11998e', img: IMG('photo-1461896836934-ffe607ba8211') },
+  { icon: '🎮', name: 'Gaming',        color: '#8E2DE2', img: IMG('photo-1542751371-adc38448a05e') },
+  { icon: '📱', name: 'Electronics',   color: '#4776E6', img: IMG('photo-1498049794561-7780e7231661') },
+  { icon: '🎁', name: 'Gift Ideas',    color: '#f953c6', img: IMG('photo-1513885535751-8b9238bd345a') },
+  { icon: '🧸', name: 'Kids & Baby',   color: '#f9d423', img: IMG('photo-1515488042361-ee00e0ddd4e4') },
+  { icon: '🏠', name: 'Property',      color: '#e96c2a', img: IMG('photo-1560518883-ce09059eeffa') },
+  { icon: '💊', name: 'Health & Fitness', color: '#43cea2', img: IMG('photo-1571019613454-1cb2f99b2d8b') },
+  { icon: '🥖', name: 'Food Store',    color: '#8e44ad', img: IMG('photo-1542838132-92c53300491e') },
+  { icon: '🕺', name: 'Retro & Vintage', color: '#d35400', img: IMG('photo-1489599849927-2ee91cede3ba') },
+  { icon: '🛍️', name: 'Grab It Now',  color: colors.orange, img: '' }, // brand tile — no photo
+  { icon: '🔧', name: 'Handy Help',    color: '#00b09b', img: IMG('photo-1581578731548-c64695cc6952') },
+  { icon: '🐾', name: 'Pet Shop',      color: '#f093fb', img: IMG('photo-1425082661705-1834bfd09dca') },
 ]
 
 const FEATURED = [
@@ -102,6 +107,7 @@ export default function HomeScreen() {
   const { user } = useAuth()
   const [featured, setFeatured] = useState<Card[]>([])
   const [justListed, setJustListed] = useState<Card[]>([])
+  const [deptFailed, setDeptFailed] = useState<Record<string, boolean>>({})
 
   // Live data from the backend (public endpoints — same as web).
   useEffect(() => {
@@ -160,18 +166,31 @@ export default function HomeScreen() {
           <Text style={s.sectionTitle}>Departments</Text>
         </View>
         <View style={s.deptGrid}>
-          {DEPTS.map(dept => (
-            <TouchableOpacity
-              key={dept.name}
-              style={s.deptTile}
-              onPress={() => router.push(`/dept/${encodeURIComponent(dept.name)}`)}
-            >
-              <View style={[s.deptIcon, { backgroundColor: dept.grad[0] }]}>
-                <Text style={{ fontSize: 20 }}>{dept.icon}</Text>
-              </View>
-              <Text style={s.deptName} numberOfLines={2}>{dept.name}</Text>
-            </TouchableOpacity>
-          ))}
+          {DEPTS.map(dept => {
+            const showImg = !!dept.img && !deptFailed[dept.name]
+            return (
+              <TouchableOpacity
+                key={dept.name}
+                style={[s.deptTile, { backgroundColor: dept.color }]}
+                onPress={() => router.push(`/dept/${encodeURIComponent(dept.name)}`)}
+              >
+                {showImg && (
+                  <Image
+                    source={{ uri: dept.img }}
+                    resizeMode="cover"
+                    onError={() => setDeptFailed(f => ({ ...f, [dept.name]: true }))}
+                    style={StyleSheet.absoluteFill}
+                  />
+                )}
+                {/* Dark scrim so the label stays legible over any photo */}
+                <View style={s.deptScrim} />
+                {!showImg && (
+                  <View style={s.deptEmojiWrap}><Text style={{ fontSize: 26 }}>{dept.icon}</Text></View>
+                )}
+                <Text style={s.deptName} numberOfLines={2}>{dept.name}</Text>
+              </TouchableOpacity>
+            )
+          })}
         </View>
 
         {/* Featured strip */}
@@ -248,9 +267,18 @@ const s = StyleSheet.create({
   sectionTitle: { fontFamily: 'Comfortaa', fontSize: 18, fontWeight: '700', color: colors.dark },
   seeAll: { fontFamily: 'Nunito', fontSize: 12, color: colors.orange, fontWeight: '800' },
   deptGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10, gap: 6 },
-  deptTile: { width: (SCREEN_W - 20 - 12) / 3, backgroundColor: '#fff', borderRadius: 12, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: '#eee', marginBottom: 0 },
-  deptIcon: { width: 42, height: 42, borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginBottom: 6, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
-  deptName: { fontFamily: 'Nunito', fontSize: 9, fontWeight: '900', color: colors.dark, textAlign: 'center', lineHeight: 12 },
+  deptTile: {
+    width: (SCREEN_W - 20 - 18) / 4, aspectRatio: 1, borderRadius: 12, overflow: 'hidden',
+    position: 'relative', marginBottom: 6, justifyContent: 'flex-end',
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
+  },
+  deptScrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.28)' },
+  deptEmojiWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+  deptName: {
+    fontFamily: 'Nunito', fontSize: 9, fontWeight: '900', color: '#fff', lineHeight: 11,
+    paddingHorizontal: 5, paddingBottom: 5,
+    textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
+  },
   miniCard: { width: 145, backgroundColor: '#fff', borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: '#e8e0d5', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
   miniCardThumb: { width: '100%', aspectRatio: 1.4, backgroundColor: '#f5f0e8', alignItems: 'center', justifyContent: 'center' },
   miniCardBody: { padding: 8 },
