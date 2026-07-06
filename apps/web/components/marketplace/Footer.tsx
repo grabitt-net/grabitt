@@ -1,5 +1,6 @@
 'use client'
 import { usePanel } from '@/context/PanelContext'
+import Logo from './Logo'
 
 // Site footer — grouped links, brand, and trust line. Links open the existing
 // info panels so content stays consistent with the rest of the app.
@@ -27,9 +28,7 @@ export default function Footer() {
         ))}
       </div>
       <div style={{ borderTop: '1px solid var(--sand2, #e8dcc0)', marginTop: 24, paddingTop: 18, textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}>
-          <span style={{ color: 'var(--orange)' }}>Grab</span><span style={{ color: 'var(--dark, #1a1a1a)' }}>itt</span><span style={{ color: 'var(--orange)' }}>!</span>
-        </div>
+        <Logo height={30} style={{ margin: '0 auto' }} />
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#8a7d68', marginTop: 4 }}>
           🛡️ Every payment protected by the Grabitt Guarantee · Made in Gran Canaria
         </div>

@@ -86,10 +86,8 @@ function AuthForm() {
       alignItems: 'center', justifyContent: 'center', padding: 20,
     }}>
       <Link href="/" style={{ textDecoration: 'none', marginBottom: 32 }}>
-        <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 36, fontWeight: 700, letterSpacing: -1 }}>
-          <span style={{ color: 'var(--orange)' }}>G</span>
-          <span style={{ color: 'var(--dark)' }}>rabitt</span>
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/grabitt-logo.png" alt="Grabitt" style={{ height: 48, width: 'auto', display: 'block' }} />
       </Link>
 
       <div style={{

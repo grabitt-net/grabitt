@@ -60,10 +60,10 @@ export default function AdminApp({ execToken }: Props) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           position: 'sticky', top: 0, zIndex: 200,
         }}>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700 }}>
-            <span style={{ color: 'var(--orange)' }}>Grab</span>
-            <span style={{ color: 'var(--dark)' }}>itt</span>
-            <span style={{ color: '#999', fontSize: 13, marginLeft: 6, fontWeight: 400 }}>/ Exec</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/grabitt-logo.png" alt="Grabitt" style={{ height: 26, width: 'auto', display: 'block' }} />
+            <span style={{ color: '#999', fontSize: 13, fontWeight: 400 }}>/ Exec</span>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             {loading ? (

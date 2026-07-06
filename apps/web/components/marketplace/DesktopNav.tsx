@@ -5,6 +5,7 @@ import type { PanelId } from '@/context/PanelContext'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
 import Icon, { IconName } from './Icon'
+import Logo from './Logo'
 
 // Desktop-only top navigation (shown ≥820px via .desktop-nav in globals.css).
 // A persistent horizontal bar — logo, wide search, primary "Sell" CTA, and
@@ -29,10 +30,8 @@ export default function DesktopNav() {
   return (
     <div className="desktop-nav" style={{ alignItems: 'center', gap: 20, padding: '12px 28px', maxWidth: 1120, margin: '0 auto' }}>
       {/* Logo */}
-      <button onClick={() => openPanel('menu')} style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', flexShrink: 0 }}>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 26, fontWeight: 700, letterSpacing: -1, lineHeight: 1 }}>
-          <span style={{ color: 'var(--orange)' }}>Grab</span><span style={{ color: 'var(--dark)' }}>itt</span><span style={{ color: 'var(--orange)' }}>!</span>
-        </div>
+      <button onClick={() => openPanel('menu')} style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', flexShrink: 0, padding: 0 }}>
+        <Logo height={38} />
       </button>
 
       {/* Search — grows to fill */}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions } from 'react-native'
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, Image } from 'react-native'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 
@@ -87,7 +87,7 @@ export default function HomeScreen() {
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* Topbar */}
       <View style={s.topbar}>
-        <Text style={s.wordmark}><Text style={{ color: colors.orange }}>Grab</Text>itt!</Text>
+        <Image source={require('../../assets/logo.png')} style={{ height: 28, width: 28 * (1470 / 472), resizeMode: 'contain' }} />
         <TouchableOpacity style={s.memberBtn}>
           <Text style={s.memberBtnText}>Member</Text>
         </TouchableOpacity>

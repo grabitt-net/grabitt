@@ -4,6 +4,7 @@ import { usePanel } from '@/context/PanelContext'
 import IconRail from './IconRail'
 import DesktopNav from './DesktopNav'
 import Icon from './Icon'
+import Logo from './Logo'
 
 // Mirrors the HTML .topbar: a single sticky header containing row1
 // (logo + tagline on the left, search + 📍Near on the right) and the
@@ -69,12 +70,8 @@ export default function Topbar() {
       {/* Row 1 — logo + search + Near */}
       <div style={{ display: 'flex', alignItems: 'flex-start', padding: '10px 14px 0' }}>
         <div onClick={() => openPanel('menu')} style={{ flexShrink: 0, cursor: 'pointer' }}>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, letterSpacing: -1, lineHeight: 1 }}>
-            <span style={{ color: 'var(--orange)' }}>Grab</span>
-            <span style={{ color: 'var(--dark)' }}>itt</span>
-            <span style={{ color: 'var(--orange)' }}>!</span>
-          </div>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: '#7a6a55', fontWeight: 700, marginTop: 1, whiteSpace: 'nowrap' }}>
+          <Logo height={30} />
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: '#7a6a55', fontWeight: 700, marginTop: 2, whiteSpace: 'nowrap' }}>
             Your local everything
           </div>
         </div>
