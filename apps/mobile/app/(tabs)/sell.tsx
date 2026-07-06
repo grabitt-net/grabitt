@@ -1,14 +1,21 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
+import { useAuth } from '../../lib/auth'
 
-const OPTIONS = [
+const OPTIONS: { icon: string; title: string; desc: string; cat?: string }[] = [
   { icon: '🏡', title: 'Sell an item',    desc: 'List anything from furniture to electronics' },
-  { icon: '💼', title: 'Post a job',      desc: 'Find staff or freelancers on Gran Canaria' },
-  { icon: '🏠', title: 'List a property', desc: 'Rent or sell a home or room' },
-  { icon: '🔧', title: 'Offer a service', desc: 'Plumbers, cleaners, tutors and more' },
+  { icon: '💼', title: 'Post a job',      desc: 'Find staff or freelancers on Gran Canaria', cat: 'Jobs' },
+  { icon: '🏠', title: 'List a property', desc: 'Rent or sell a home or room', cat: 'Property' },
+  { icon: '🔧', title: 'Offer a service', desc: 'Plumbers, cleaners, tutors and more', cat: 'Handy Help' },
 ]
 
 export default function SellScreen() {
+  const { user } = useAuth()
+  const go = (cat?: string) => {
+    if (!user) { router.push('/auth'); return }
+    router.push(cat ? `/create-listing?category=${encodeURIComponent(cat)}` : '/create-listing')
+  }
   return (
     <View style={s.screen}>
       <View style={s.header}>
@@ -17,7 +24,7 @@ export default function SellScreen() {
       </View>
       <View style={s.options}>
         {OPTIONS.map(opt => (
-          <TouchableOpacity key={opt.title} style={s.optionRow}>
+          <TouchableOpacity key={opt.title} style={s.optionRow} onPress={() => go(opt.cat)}>
             <View style={s.optionIcon}><Text style={{ fontSize: 24 }}>{opt.icon}</Text></View>
             <View style={{ flex: 1 }}>
               <Text style={s.optionTitle}>{opt.title}</Text>
@@ -27,7 +34,7 @@ export default function SellScreen() {
           </TouchableOpacity>
         ))}
       </View>
-      <TouchableOpacity style={s.cta}>
+      <TouchableOpacity style={s.cta} onPress={() => go()}>
         <Text style={s.ctaText}>🚀 Start Listing</Text>
       </TouchableOpacity>
     </View>

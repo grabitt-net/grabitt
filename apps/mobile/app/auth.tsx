@@ -5,7 +5,7 @@ import { colors } from '@grabitt/design-tokens'
 import { useAuth } from '../lib/auth'
 
 export default function AuthScreen() {
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp, signInWithGoogle } = useAuth()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -42,6 +42,11 @@ export default function AuthScreen() {
         ))}
       </View>
 
+      <TouchableOpacity style={s.google} onPress={async () => { setError(''); const { error } = await signInWithGoogle(); if (error) setError(error); else router.back() }}>
+        <Text style={s.googleText}>Continue with Google</Text>
+      </TouchableOpacity>
+      <View style={s.divider}><View style={s.line} /><Text style={s.or}>or</Text><View style={s.line} /></View>
+
       {mode === 'signup' && (
         <TextInput value={name} onChangeText={setName} placeholder="Full name" placeholderTextColor="#aaa" style={s.input} />
       )}
@@ -65,6 +70,11 @@ const s = StyleSheet.create({
   toggleBtnActive: { backgroundColor: colors.orange },
   toggleText: { fontFamily: 'Nunito', fontWeight: '800', color: '#888', fontSize: 14 },
   toggleTextActive: { color: '#fff' },
+  google: { backgroundColor: '#fff', borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1.5, borderColor: '#eadfce', marginBottom: 16 },
+  googleText: { fontFamily: 'Nunito', fontWeight: '800', color: colors.dark, fontSize: 14 },
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  line: { flex: 1, height: 1, backgroundColor: '#e0d5c0' },
+  or: { fontFamily: 'Nunito', fontSize: 11, color: '#aaa', fontWeight: '700' },
   input: { backgroundColor: '#fff', borderRadius: 12, padding: 14, fontSize: 15, color: colors.dark, marginBottom: 12, borderWidth: 1, borderColor: '#eadfce' },
   error: { color: '#c62828', fontSize: 13, marginBottom: 10, fontFamily: 'Nunito' },
   submit: { backgroundColor: colors.orange, borderRadius: 12, padding: 15, alignItems: 'center', marginTop: 4 },

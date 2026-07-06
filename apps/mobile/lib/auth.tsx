@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
+import * as WebBrowser from 'expo-web-browser'
+import * as Linking from 'expo-linking'
 import { supabase } from './supabase'
 import { apiClient, API_URL } from './trpc'
 
@@ -9,12 +11,13 @@ type Ctx = {
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error?: string }>
   signUp: (email: string, password: string, name: string) => Promise<{ error?: string; needsConfirm?: boolean }>
+  signInWithGoogle: () => Promise<{ error?: string }>
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<Ctx>({
   user: null, token: null, loading: true,
-  signIn: async () => ({}), signUp: async () => ({}), signOut: async () => {},
+  signIn: async () => ({}), signUp: async () => ({}), signInWithGoogle: async () => ({}), signOut: async () => {},
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -59,10 +62,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) return { error: error.message }
     return { needsConfirm: !data.session }
   }
+  const signInWithGoogle = async () => {
+    const redirectTo = Linking.createURL('auth-callback')
+    const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, skipBrowserRedirect: true } })
+    if (error || !data?.url) return { error: error?.message ?? 'Could not start Google sign-in' }
+    const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo)
+    if (res.type !== 'success') return {} // cancelled/dismissed
+    const code = new URL(res.url).searchParams.get('code')
+    if (code) {
+      const { error: e2 } = await supabase.auth.exchangeCodeForSession(code)
+      if (e2) return { error: e2.message }
+    }
+    return {}
+  }
   const signOut = async () => { await supabase.auth.signOut(); setUser(null); setToken(null) }
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, token, loading, signIn, signUp, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )
