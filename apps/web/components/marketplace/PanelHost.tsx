@@ -3391,6 +3391,32 @@ function PanelBody() {
             >
               Log out
             </button>
+
+            {/* GDPR — right to erasure */}
+            <div style={{ marginTop: 22, paddingTop: 16, borderTop: '1px solid #f0ebe4' }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Your data (GDPR)</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#777', lineHeight: 1.5, marginBottom: 12 }}>
+                You can permanently delete your account and personal data at any time. Your past sales &amp; purchase records are retained as required by law and for the other party&apos;s protection.
+              </div>
+              <button
+                onClick={async () => {
+                  const ok = typeof window !== 'undefined' && window.confirm('Permanently delete your account and personal data?\n\nThis cannot be undone. You will be signed out immediately and lose access. Your past sales/purchase records are kept as required by law.')
+                  if (!ok) return
+                  try {
+                    const client = await getTrpcClient()
+                    await client.compliance.requestDeletion.mutate()
+                  } catch { /* proceed to sign out regardless */ }
+                  try { await createClient().auth.signOut() } catch {}
+                  setAuthToken(null)
+                  if (typeof window !== 'undefined') localStorage.removeItem('grabitt_uid')
+                  toast('Your account data has been deleted.')
+                  location.href = '/'
+                }}
+                style={{ width: '100%', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}
+              >
+                🗑 Delete my account &amp; data (GDPR)
+              </button>
+            </div>
           </>
         )}
         {!isOwnProfile && (

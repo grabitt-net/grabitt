@@ -18,6 +18,7 @@ import { eshotsRouter } from './routers/eshots'
 import { bannersRouter } from './routers/banners'
 import { financialsRouter } from './routers/financials'
 import { subscriptionsRouter } from './routers/subscriptions'
+import { complianceRouter } from './routers/compliance'
 
 export const appRouter = router({
   auth: authRouter,
@@ -39,6 +40,7 @@ export const appRouter = router({
   banners: bannersRouter,
   financials: financialsRouter,
   subscriptions: subscriptionsRouter,
+  compliance: complianceRouter,
 })
 
 export type AppRouter = typeof appRouter

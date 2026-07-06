@@ -18,11 +18,14 @@ export async function POST() {
 
   const dbUser = await prisma.user.findUnique({
     where: { supabaseId: user.id },
-    select: { id: true, grade: true },
+    select: { id: true, grade: true, deletedAt: true },
   })
   // Profile is provisioned separately (AuthBootstrap → auth.provisionProfile)
   // before this is called; 404 signals "retry after provisioning".
   if (!dbUser) return NextResponse.json({ error: 'no_profile' }, { status: 404 })
+
+  // GDPR erasure: a deleted account must not receive an app token (no access).
+  if (dbUser.deletedAt) return NextResponse.json({ error: 'account_deleted' }, { status: 403 })
 
   const secret = process.env.JWT_SECRET
   if (!secret) return NextResponse.json({ error: 'server_misconfigured' }, { status: 500 })

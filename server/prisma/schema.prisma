@@ -40,6 +40,50 @@ enum SubStatus {
   paused
 }
 
+// ── Compliance / GDPR ─────────────────────────────────────────────────────────
+enum ConsentKind {
+  gdpr                // GDPR data-processing acceptance
+  withdrawal_waiver   // EU right-to-withdraw exemption disclaimer (digital marketplace)
+}
+
+// Immutable audit trail of consent acceptances (proof of when + who accepted).
+model Consent {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  kind        ConsentKind
+  version     String      @default("1")
+  // Immutable snapshot of who accepted — survives later GDPR anonymisation,
+  // so the waiver record stands if a user later disputes it.
+  email       String
+  displayName String
+  acceptedAt  DateTime    @default(now())
+  ipAddress   String?
+  userAgent   String?
+
+  @@index([userId])
+  @@index([kind])
+}
+
+enum DeletionStatus {
+  requested
+  completed
+}
+
+// GDPR erasure requests — recorded even after the account PII is cleared.
+model DeletionRequest {
+  id          String         @id @default(uuid())
+  userId      String         // kept as a reference; the User row is anonymised, not deleted
+  email       String         // email at time of request (for the audit record)
+  displayName String
+  status      DeletionStatus @default(requested)
+  requestedAt DateTime       @default(now())
+  completedAt DateTime?
+
+  @@index([status])
+  @@index([requestedAt])
+}
+
 model Subscription {
   id                   String    @id @default(uuid())
   userId               String
@@ -84,6 +128,11 @@ model User {
   businessName       String?
   businessBio        String?
   businessBanner     String?
+
+  // Compliance (GDPR consent + EU right-to-withdraw waiver + erasure)
+  gdprAcceptedAt            DateTime?
+  withdrawalWaiverAcceptedAt DateTime?
+  deletedAt                 DateTime?  // GDPR erasure: PII cleared, access revoked, records kept
   stripeAccountId    String?
   stripeCustomerId   String?
   locale             Locale    @default(en)
@@ -135,6 +184,7 @@ model User {
   strikes            UserStrike[]
   execAuditLogs      ExecAuditLog[]     @relation("ExecTarget")
   subscriptions      Subscription[]
+  consents           Consent[]
 
   @@index([grade])
   @@index([email])

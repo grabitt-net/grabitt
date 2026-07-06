@@ -44,6 +44,14 @@ export default function AuthBootstrap() {
           locale: 'en',
         })
         if (cancelled) return
+        // GDPR-erased account: block access — sign out, don't establish identity.
+        if ((res?.user as { deletedAt?: string | null } | undefined)?.deletedAt) {
+          setAuthToken(null)
+          localStorage.removeItem('grabitt_uid')
+          try { await supabase.auth.signOut() } catch { /* noop */ }
+          window.dispatchEvent(new Event('grabitt-auth'))
+          return
+        }
         const uid = res?.user?.id
         // Mint the app JWT now that the Prisma profile exists, so protected
         // tRPC calls (notifications etc.) work immediately after this load.
