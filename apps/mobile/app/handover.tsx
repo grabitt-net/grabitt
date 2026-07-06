@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { createTrpcClient } from '@grabitt/api-client'
+import { apiClient } from '../lib/trpc'
 
 // Opened via grabitt://handover?token=<jwt>&txn=<uuid>
 export default function HandoverScreen() {
@@ -18,7 +18,7 @@ export default function HandoverScreen() {
     }
     setStatus('loading')
     try {
-      const client = createTrpcClient()
+      const client = apiClient()
       const result = await client.transactions.confirmHandoverByQr.mutate({
         transactionId: txn,
         token,

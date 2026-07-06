@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
-import { createTrpcClient } from '@grabitt/api-client'
+import { apiClient } from '../../lib/trpc'
 
 const STEPS = ['Confirm', 'Payment', 'Done']
 
@@ -23,7 +23,7 @@ export default function CheckoutScreen() {
       try {
         // ref is the listing ID
         if (ref) {
-          const client = createTrpcClient()
+          const client = apiClient()
           const result = await client.transactions.initiate.mutate({ listingId: ref })
           setTransactionId(result.transaction.id)
         }

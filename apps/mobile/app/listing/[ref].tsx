@@ -1,8 +1,15 @@
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { useEffect, useState } from 'react'
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
+import { apiClient } from '../../lib/trpc'
 
-// Stub lookup — in production this would call trpc.listings.byId
+const isUuid = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
+const pretty = (s?: string) => (s ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+
+type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; description?: string; seller?: { name: string; grade: string; rating: number | null; sales: number } }
+
+// Fallback demo lookup for the old ref-keyed cards (F1, JL1…).
 const LISTINGS: Record<string, { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean }> = {
   F1: { emoji: '📱', title: 'iPhone 14 — Unlocked',         price: '€620',    location: 'Las Palmas',      category: 'Electronics',   condition: 'Excellent', isFeatured: true },
   F2: { emoji: '🚴', title: 'Mountain Bike — 21sp Shimano', price: '€340',    location: 'Maspalomas',      category: 'Sport',         condition: 'Good',      isFeatured: true },
@@ -24,7 +31,28 @@ const SIMILAR = [
 
 export default function ListingScreen() {
   const { ref } = useLocalSearchParams<{ ref: string }>()
-  const item = LISTINGS[ref as string] || {
+  const [fetched, setFetched] = useState<Item | null>(null)
+
+  // Real listing when we have a UUID (from live cards); else the demo fallback.
+  useEffect(() => {
+    if (!isUuid(ref as string)) return
+    apiClient().listings.byId.query({ id: ref as string })
+      .then((l: any) => setFetched({
+        emoji: '🛍️',
+        title: l.title,
+        price: `€${Number(l.price).toLocaleString()}`,
+        location: l.location ?? 'Gran Canaria',
+        category: pretty(l.department),
+        condition: l.condition ? pretty(l.condition) : undefined,
+        isFeatured: l.isFeatured,
+        image: Array.isArray(l.images) ? l.images[0] : undefined,
+        description: l.description,
+        seller: l.seller ? { name: l.seller.displayName, grade: l.seller.grade, rating: l.seller.avgRating, sales: l.seller.salesCount } : undefined,
+      }))
+      .catch(() => {})
+  }, [ref])
+
+  const item: Item = fetched || LISTINGS[ref as string] || {
     emoji: '🛍️',
     title: decodeURIComponent(ref || 'Item'),
     price: 'POA',
@@ -42,7 +70,9 @@ export default function ListingScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hero */}
         <View style={s.hero}>
-          <Text style={{ fontSize: 90 }}>{item.emoji}</Text>
+          {item.image
+            ? <Image source={{ uri: item.image }} style={{ ...StyleSheet.absoluteFillObject }} resizeMode="cover" />
+            : <Text style={{ fontSize: 90 }}>{item.emoji}</Text>}
           {item.isFeatured && (
             <View style={s.featuredBadge}><Text style={s.featuredBadgeText}>👀 FEATURED</Text></View>
           )}
@@ -64,10 +94,10 @@ export default function ListingScreen() {
           <View style={s.sellerRow}>
             <View style={s.sellerAvatar}><Text style={{ fontSize: 22 }}>👤</Text></View>
             <View style={{ flex: 1 }}>
-              <Text style={s.sellerHandle}>@seller_GC</Text>
+              <Text style={s.sellerHandle}>{item.seller?.name ?? '@seller_GC'}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                <View style={s.gradeBadge}><Text style={s.gradeBadgeText}>🟠 Grabber</Text></View>
-                <Text style={s.sellerStats}>⭐ 4.8 · 34 sales</Text>
+                <View style={s.gradeBadge}><Text style={s.gradeBadgeText}>{pretty(item.seller?.grade ?? 'grabber')}</Text></View>
+                <Text style={s.sellerStats}>⭐ {item.seller?.rating ? Number(item.seller.rating).toFixed(1) : '—'} · {item.seller?.sales ?? 0} sales</Text>
               </View>
             </View>
             <TouchableOpacity style={s.msgBtn}><Text style={s.msgBtnText}>Message</Text></TouchableOpacity>
@@ -83,7 +113,7 @@ export default function ListingScreen() {
 
           {/* Description */}
           <Text style={s.desc}>
-            Great condition — selling due to upgrade. Happy to answer any questions via Grabitt chat. Pickup preferred; local delivery available for a small fee. Cash or Grabitt Pay accepted.
+            {item.description ?? 'Great condition. Message the seller via Grabitt chat with any questions. Collection or local delivery available.'}
           </Text>
 
           {/* Map placeholder */}

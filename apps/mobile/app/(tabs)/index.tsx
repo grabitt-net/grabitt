@@ -2,6 +2,20 @@ import { useState, useEffect, useRef } from 'react'
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, Image } from 'react-native'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
+import { apiClient } from '../../lib/trpc'
+
+// Maps a live DB listing to the card shape used on this screen.
+type Card = { ref: string; title: string; price: string; location: string; emoji?: string; image?: string }
+function toCard(l: any): Card {
+  return {
+    ref: l.id,
+    title: l.title,
+    price: `€${Number(l.price).toLocaleString()}`,
+    location: l.location ?? 'Gran Canaria',
+    image: Array.isArray(l.images) ? l.images[0] : undefined,
+    emoji: '🛍️',
+  }
+}
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -62,11 +76,13 @@ function useCountdown() {
 
 // ── Mini card ─────────────────────────────────────────────────────────────────
 
-function MiniCard({ item, onPress }: { item: typeof FEATURED[0]; onPress: () => void }) {
+function MiniCard({ item, onPress }: { item: Card; onPress: () => void }) {
   return (
     <TouchableOpacity onPress={onPress} style={s.miniCard}>
       <View style={s.miniCardThumb}>
-        <Text style={{ fontSize: 36 }}>{item.emoji}</Text>
+        {item.image
+          ? <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%', borderTopLeftRadius: 12, borderTopRightRadius: 12 }} resizeMode="cover" />
+          : <Text style={{ fontSize: 36 }}>{item.emoji}</Text>}
       </View>
       <View style={s.miniCardBody}>
         <Text style={s.miniCardTitle} numberOfLines={1}>{item.title}</Text>
@@ -82,6 +98,15 @@ function MiniCard({ item, onPress }: { item: typeof FEATURED[0]; onPress: () => 
 export default function HomeScreen() {
   const [query, setQuery] = useState('')
   const countdown = useCountdown()
+  const [featured, setFeatured] = useState<Card[]>([])
+  const [justListed, setJustListed] = useState<Card[]>([])
+
+  // Live data from the backend (public endpoints — same as web).
+  useEffect(() => {
+    const api = apiClient()
+    api.listings.featured.query().then((d: any[]) => setFeatured(d.map(toCard))).catch(() => {})
+    api.listings.recent.query().then((d: any[]) => setJustListed(d.map(toCard))).catch(() => {})
+  }, [])
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -153,7 +178,7 @@ export default function HomeScreen() {
           <TouchableOpacity><Text style={s.seeAll}>See all</Text></TouchableOpacity>
         </View>
         <FlatList
-          data={FEATURED}
+          data={(featured.length ? featured : FEATURED) as Card[]}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
@@ -172,7 +197,7 @@ export default function HomeScreen() {
           <TouchableOpacity><Text style={s.seeAll}>See all</Text></TouchableOpacity>
         </View>
         <FlatList
-          data={JUST_LISTED}
+          data={(justListed.length ? justListed : JUST_LISTED) as Card[]}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
