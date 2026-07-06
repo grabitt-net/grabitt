@@ -1492,7 +1492,7 @@ function PanelBody() {
   if (panel.id === 'storefront') {
     const sellerId = (panel.data?.sellerId as string) || ''
     type Store = {
-      seller: { displayName: string; grade: string; avgRating: number | null; salesCount: number; isBusiness: boolean }
+      seller: { displayName: string; grade: string; avgRating: number | null; salesCount: number; isBusiness: boolean; businessVerified?: boolean; businessName?: string | null; businessBio?: string | null; businessBanner?: string | null }
       listings: { id: string; title: string; price: unknown; images: string[]; location: string }[]
     }
     const [store, setStore] = useState<Store | null>(null)
@@ -1513,9 +1513,21 @@ function PanelBody() {
           <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Store not found.</div>
         ) : (
           <>
+            {/* Business banner */}
+            {store.seller.isBusiness && store.seller.businessBanner && (
+              <div style={{ width: '100%', height: 120, borderRadius: 14, overflow: 'hidden', marginBottom: 12, background: '#f5f0e8' }}>
+                <img src={store.seller.businessBanner} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            )}
             <div style={{ textAlign: 'center', padding: '10px 0 18px' }}>
               <div style={{ width: 72, height: 72, background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, margin: '0 auto 10px' }}>{store.seller.isBusiness ? '🏢' : '👤'}</div>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--dark)' }}>{store.seller.displayName}</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--dark)' }}>
+                {(store.seller.isBusiness && store.seller.businessName) || store.seller.displayName}
+                {store.seller.businessVerified && <span title="Verified business" style={{ marginLeft: 6 }}>🛡️</span>}
+              </div>
+              {store.seller.isBusiness && store.seller.businessBio && (
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5, maxWidth: 380, margin: '6px auto 0' }}>{store.seller.businessBio}</div>
+              )}
               <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 6 }}>
                 <span style={{ background: '#FFF3EE', color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, padding: '3px 10px', borderRadius: 50 }}>{GRADE_ICONS[store.seller.grade] ?? '🟠'} {store.seller.grade}</span>
                 <span style={{ background: '#f9f6f2', color: '#555', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 50 }}>⭐ {store.seller.avgRating ? Number(store.seller.avgRating).toFixed(1) : '—'} · {store.seller.salesCount} sales</span>
@@ -1539,6 +1551,80 @@ function PanelBody() {
                 ))}
               </div>
             )}
+          </>
+        )}
+      </ActionPanel>
+    )
+  }
+
+  // ── STOREFRONT SETUP (business accounts) ─────────────────────────────────────
+  if (panel.id === 'storefrontEdit') {
+    type BizMe = { isBusiness: boolean; businessName: string | null; businessBio: string | null; businessBanner: string | null; displayName: string }
+    const [loaded, setLoaded] = useState(false)
+    const [isBiz, setIsBiz] = useState(false)
+    const [name, setName] = useState('')
+    const [bio, setBio] = useState('')
+    const [banner, setBanner] = useState('')
+    const [saving, setSaving] = useState(false)
+
+    useEffect(() => {
+      getTrpcClient().then(c => c.users.me.query()).then(u => {
+        const m = u as unknown as BizMe
+        setIsBiz(m.isBusiness)
+        setName(m.businessName ?? m.displayName ?? '')
+        setBio(m.businessBio ?? '')
+        setBanner(m.businessBanner ?? '')
+        setLoaded(true)
+      }).catch(() => setLoaded(true))
+    }, [])
+
+    const save = async () => {
+      setSaving(true)
+      try {
+        const client = await getTrpcClient()
+        await client.users.updateBusinessProfile.mutate({
+          businessName: name.trim() || undefined,
+          businessBio: bio.trim() || undefined,
+          businessBanner: banner.trim(),
+        })
+        toast('✓ Storefront saved')
+      } catch (e) { toast(e instanceof Error ? e.message : 'Could not save storefront') }
+      finally { setSaving(false) }
+    }
+
+    const inp: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box', marginBottom: 12 }
+    const lbl: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, display: 'block' }
+
+    return (
+      <ActionPanel title="🏪 My Storefront" onClose={closePanel}>
+        {!loaded ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#aaa', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Loading…</div>
+        ) : !isBiz ? (
+          <div style={{ textAlign: 'center', padding: '30px 10px' }}>
+            <div style={{ fontSize: 40, marginBottom: 10 }}>🏢</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)', marginBottom: 6 }}>Business account required</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 16 }}>Start a Business subscription to get your own storefront.</div>
+            <button onClick={() => openPanel('business')} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Upgrade to Business</button>
+          </div>
+        ) : (
+          <>
+            {/* Live banner preview */}
+            <div style={{ width: '100%', height: 110, borderRadius: 14, overflow: 'hidden', background: banner ? '#f5f0e8' : 'linear-gradient(135deg,var(--ocean),#0ea5e9)', marginBottom: 14, position: 'relative', display: 'flex', alignItems: 'flex-end' }}>
+              {banner && <img src={banner} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />}
+              <div style={{ position: 'relative', padding: 12, color: '#fff', fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>🏢 {name || 'Your business'}</div>
+            </div>
+
+            <label style={lbl}>Business name</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Test Shop GC" style={inp} maxLength={60} />
+
+            <label style={lbl}>About / tagline</label>
+            <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Tell buyers what you sell and where you're based…" rows={3} maxLength={500} style={{ ...inp, resize: 'vertical' }} />
+
+            <label style={lbl}>Banner image URL</label>
+            <input value={banner} onChange={e => setBanner(e.target.value)} placeholder="https://… (a wide landscape image)" style={inp} />
+
+            <button onClick={save} disabled={saving} style={{ width: '100%', background: saving ? '#ccc' : 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>{saving ? 'Saving…' : 'Save storefront ✓'}</button>
+            {currentUserId && <button onClick={() => openPanel('storefront', { sellerId: currentUserId })} style={{ width: '100%', background: '#fff', color: 'var(--ocean)', border: '1.5px solid var(--ocean)', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>👁 Preview my storefront</button>}
           </>
         )}
       </ActionPanel>
@@ -3131,7 +3217,7 @@ function PanelBody() {
     const INTEREST_DEPTS = ['Electronics', 'Fashion', 'Home & Garden', 'Sport', 'Gaming', 'Motors', 'Kids & Baby', 'Property', 'Pet Shop', 'Retro & Vintage']
     const isOwnProfile = !panel.data?.userId || panel.data.userId === currentUserId
 
-    type Me = { displayName: string; grade: string; salesCount: number; avgRating: number | null; createdAt: string; isVerified: boolean; interests: string[]; locale: string }
+    type Me = { displayName: string; grade: string; salesCount: number; avgRating: number | null; createdAt: string; isVerified: boolean; interests: string[]; locale: string; isBusiness: boolean }
     const [me, setMe] = useState<Me | null>(null)
     const [interests, setInterests] = useState<string[]>([])
     const [lang, setLang] = useState<Lang>('en')
@@ -3279,6 +3365,11 @@ function PanelBody() {
               </div>
             ) : (
               <button onClick={() => openPanel('business')} style={{ width: '100%', background: '#fff', border: '2px solid var(--orange)', borderRadius: 12, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--orange)', cursor: 'pointer', marginBottom: 16 }}>🏢 Upgrade to Business — 7 days free</button>
+            )}
+
+            {/* Business storefront — only for active Business accounts */}
+            {me?.isBusiness && (
+              <button onClick={() => openPanel('storefrontEdit')} style={{ width: '100%', background: '#fff', color: 'var(--ocean)', border: '2px solid var(--ocean)', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>🏪 Set up my storefront</button>
             )}
 
             {/* My Purchases — buyers view orders + complete handover later */}

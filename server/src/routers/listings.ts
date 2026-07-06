@@ -60,7 +60,7 @@ export const listingsRouter = router({
     .query(async ({ ctx, input }) => {
       const seller = await ctx.prisma.user.findUnique({
         where: { id: input.sellerId },
-        select: { id: true, displayName: true, avatar: true, grade: true, avgRating: true, salesCount: true, createdAt: true, isBusiness: true },
+        select: { id: true, displayName: true, avatar: true, grade: true, avgRating: true, salesCount: true, createdAt: true, isBusiness: true, businessVerified: true, businessName: true, businessBio: true, businessBanner: true },
       })
       if (!seller) throw new TRPCError({ code: 'NOT_FOUND' })
       const listings = await ctx.prisma.listing.findMany({

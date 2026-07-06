@@ -36,6 +36,26 @@ export const usersRouter = router({
       ctx.prisma.user.update({ where: { id: ctx.user.id }, data: input })
     ),
 
+  // Business storefront customisation — only for active Business accounts.
+  updateBusinessProfile: protectedProcedure
+    .input(z.object({
+      businessName: z.string().min(2).max(60).optional(),
+      businessBio: z.string().max(500).optional(),
+      businessBanner: z.string().url().optional().or(z.literal('')),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true } })
+      if (!user.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A Business subscription is required to set up a storefront' })
+      return ctx.prisma.user.update({
+        where: { id: ctx.user.id },
+        data: {
+          ...(input.businessName !== undefined ? { businessName: input.businessName } : {}),
+          ...(input.businessBio !== undefined ? { businessBio: input.businessBio } : {}),
+          ...(input.businessBanner !== undefined ? { businessBanner: input.businessBanner || null } : {}),
+        },
+      })
+    }),
+
   // ── STRIPE CONNECT (seller payouts) ──────────────────────────────────────────
   // Whether the seller can receive payouts yet.
   payoutStatus: protectedProcedure.query(async ({ ctx }) => {

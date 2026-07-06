@@ -12,7 +12,7 @@ export type PanelId =
   | 'createListing' | 'chatThread'
   | 'jobs' | 'property' | 'handy' | 'grabItNow' | 'profile' | 'featureListing'
   | 'myActivity' | 'myRatings' | 'report' | 'verifyMe' | 'following'
-  | 'cart' | 'buyCredits' | 'transaction' | 'myDisputes' | 'storefront' | 'applications'
+  | 'cart' | 'buyCredits' | 'transaction' | 'myDisputes' | 'storefront' | 'storefrontEdit' | 'applications'
 
 interface PanelState {
   id: PanelId | null

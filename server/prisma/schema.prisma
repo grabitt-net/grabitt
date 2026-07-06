@@ -81,6 +81,9 @@ model User {
   isBusiness         Boolean   @default(false)
   businessVerified   Boolean   @default(false)
   businessTrialEnds  DateTime?
+  businessName       String?
+  businessBio        String?
+  businessBanner     String?
   stripeAccountId    String?
   stripeCustomerId   String?
   locale             Locale    @default(en)
