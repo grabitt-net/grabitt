@@ -10,30 +10,30 @@
     "typecheck": "echo \"(mobile typecheck skipped — WIP app; re-enable when built out)\""
   },
   "dependencies": {
+    "@grabitt/api-client": "workspace:*",
     "@grabitt/design-tokens": "workspace:*",
     "@grabitt/types": "workspace:*",
-    "@grabitt/api-client": "workspace:*",
     "@grabitt/utils": "workspace:*",
-    "@react-native-async-storage/async-storage": "1.23.1",
-    "@stripe/stripe-react-native": "0.38.6",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@stripe/stripe-react-native": "0.50.3",
     "@supabase/supabase-js": "^2.45.0",
+    "@trpc/client": "^11.0.0",
     "base64-arraybuffer": "^1.0.2",
-    "expo": "~51.0.0",
-    "expo-constants": "~16.0.2",
-    "expo-image-picker": "~15.0.7",
-    "expo-linking": "~6.3.1",
-    "expo-router": "~3.5.0",
-    "expo-secure-store": "~13.0.2",
-    "expo-status-bar": "~1.12.1",
-    "expo-web-browser": "~13.0.3",
-    "react": "18.2.0",
-    "react-native": "0.74.5",
-    "react-native-url-polyfill": "^2.0.0",
-    "@trpc/client": "^11.0.0"
+    "expo": "~54.0.35",
+    "expo-constants": "~18.0.13",
+    "expo-image-picker": "~17.0.11",
+    "expo-linking": "~8.0.12",
+    "expo-router": "~6.0.24",
+    "expo-secure-store": "~15.0.8",
+    "expo-status-bar": "~3.0.9",
+    "expo-web-browser": "~15.0.11",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-url-polyfill": "^2.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.24.0",
-    "@types/react": "^18.3.3",
+    "@babel/core": "^7.25.2",
+    "@types/react": "~19.1.10",
     "typescript": "^5.6.3"
   }
 }
