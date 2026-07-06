@@ -1,7 +1,17 @@
-import { useState } from 'react'
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, Pressable } from 'react-native'
+import { useState, useEffect } from 'react'
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, Pressable, Image } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
+import { apiClient } from '../../lib/trpc'
+
+// Display name → Department enum (matches server schema).
+const DEPT_ENUM: Record<string, string> = {
+  'Home & Garden': 'home_garden', 'Jobs': 'jobs', 'Fashion': 'fashion', 'Sport': 'sport',
+  'Gaming': 'gaming', 'Electronics': 'electronics', 'Gift Ideas': 'gift_ideas', 'Kids & Baby': 'kids_baby',
+  'Property': 'property', 'Health & Fitness': 'health_fitness', 'Food Store': 'food_store',
+  'Retro & Vintage': 'retro_vintage', 'Grab It Now': 'grab_it_now', 'Handy Help': 'handy_help', 'Pet Shop': 'pet_shop',
+}
+type Live = { id: string; title: string; price: string; location: string; image?: string }
 
 // Stub listings per dept — same as web PanelHost
 const DEPT_LISTINGS: Record<string, [string, string, string, string][]> = {
@@ -35,10 +45,24 @@ const CARD_BKGS = ['#FFF3EE','#EEF4FF','#F0FDF4','#FEF9EE','#FDF0FF']
 export default function DeptScreen() {
   const { name } = useLocalSearchParams<{ name: string }>()
   const deptName = name ? decodeURIComponent(name) : 'Listings'
-  const items = DEPT_LISTINGS[deptName] || []
   const subcats = SUBCATS[deptName] || ['All']
   const [activeSub, setActiveSub] = useState('All')
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
+  const [items, setItems] = useState<Live[]>([])
+
+  // Live listings for this department (falls back to nothing if unmapped).
+  useEffect(() => {
+    const department = DEPT_ENUM[deptName]
+    apiClient().listings.search.query({ ...(department ? { department } : {}), sort, limit: 50 } as any)
+      .then((res: any) => {
+        const list = (res?.items ?? res ?? []) as any[]
+        setItems(list.map(l => ({
+          id: l.id, title: l.title, price: `€${Number(l.price).toLocaleString()}`,
+          location: l.location ?? 'Gran Canaria', image: Array.isArray(l.images) ? l.images[0] : undefined,
+        })))
+      })
+      .catch(() => setItems([]))
+  }, [deptName, sort])
 
   return (
     <View style={s.screen}>
@@ -93,19 +117,21 @@ export default function DeptScreen() {
         numColumns={2}
         contentContainerStyle={{ padding: 10, gap: 10 }}
         columnWrapperStyle={{ gap: 10 }}
-        keyExtractor={(_, i) => String(i)}
-        renderItem={({ item: [emoji, title, price, location], index }) => (
+        keyExtractor={(it) => it.id}
+        renderItem={({ item, index }) => (
           <TouchableOpacity
             style={[s.card, { backgroundColor: CARD_BKGS[index % CARD_BKGS.length] }]}
-            onPress={() => router.push(`/listing/${encodeURIComponent(title)}`)}
+            onPress={() => router.push(`/listing/${item.id}`)}
           >
             <View style={s.cardThumb}>
-              <Text style={{ fontSize: 36 }}>{emoji}</Text>
+              {item.image
+                ? <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%', borderRadius: 8 }} resizeMode="cover" />
+                : <Text style={{ fontSize: 36 }}>🛍️</Text>}
             </View>
-            <Text style={s.cardTitle} numberOfLines={1}>{title}</Text>
+            <Text style={s.cardTitle} numberOfLines={1}>{item.title}</Text>
             <View style={s.cardFooter}>
-              <Text style={s.cardPrice}>{price}</Text>
-              <Text style={s.cardLocation} numberOfLines={1}>{location}</Text>
+              <Text style={s.cardPrice}>{item.price}</Text>
+              <Text style={s.cardLocation} numberOfLines={1}>{item.location}</Text>
             </View>
           </TouchableOpacity>
         )}

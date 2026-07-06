@@ -1,23 +1,32 @@
-import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView } from 'react-native'
+import { useState, useEffect, useCallback } from 'react'
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
+import { apiClient } from '../lib/trpc'
 
-const MOCK_RESULTS = [
-  { ref: 'SR1', emoji: '📱', title: 'iPhone 14 Pro — 256GB', price: '€620', location: 'Las Palmas', condition: 'Like New' },
-  { ref: 'SR2', emoji: '💻', title: 'MacBook Air M2', price: '€890', location: 'Maspalomas', condition: 'Very Good' },
-  { ref: 'SR3', emoji: '🎮', title: 'PS5 Console + Games', price: '€380', location: 'Telde', condition: 'Good' },
-  { ref: 'SR4', emoji: '🚴', title: 'Mountain Bike 21sp', price: '€340', location: 'Arucas', condition: 'Good' },
-  { ref: 'SR5', emoji: '🎧', title: 'Sony WH-1000XM5', price: '€220', location: 'Las Palmas', condition: 'Like New' },
-]
-
-const SORT_OPTIONS = ['Newest', 'Price ↑', 'Price ↓', 'Nearest']
+const SORT_OPTIONS: [string, 'newest' | 'price_asc' | 'price_desc'][] = [['Newest', 'newest'], ['Price ↑', 'price_asc'], ['Price ↓', 'price_desc']]
+type Result = { ref: string; image?: string; title: string; price: string; location: string; condition?: string }
+const pretty = (s?: string) => (s ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
 export default function SearchScreen() {
   const { q } = useLocalSearchParams<{ q?: string }>()
   const [query, setQuery] = useState(q ?? '')
-  const [sort, setSort] = useState('Newest')
-  const [results] = useState(MOCK_RESULTS)
+  const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
+  const [results, setResults] = useState<Result[]>([])
+
+  const run = useCallback(async () => {
+    try {
+      const res: any = await apiClient().listings.search.query({ query: query.trim() || undefined, sort, limit: 50 } as any)
+      const items = (res?.items ?? res ?? []) as any[]
+      setResults(items.map(l => ({
+        ref: l.id, title: l.title, price: `€${Number(l.price).toLocaleString()}`,
+        location: l.location ?? 'Gran Canaria', condition: l.condition ? pretty(l.condition) : undefined,
+        image: Array.isArray(l.images) ? l.images[0] : undefined,
+      })))
+    } catch { setResults([]) }
+  }, [query, sort])
+
+  useEffect(() => { run() }, [sort]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -36,6 +45,7 @@ export default function SearchScreen() {
             style={s.input}
             returnKeyType="search"
             autoFocus={!q}
+            onSubmitEditing={run}
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={() => setQuery('')}><Text style={{ color: '#aaa', fontSize: 16 }}>✕</Text></TouchableOpacity>
@@ -45,9 +55,9 @@ export default function SearchScreen() {
 
       {/* Sort */}
       <View style={s.sortRow}>
-        {SORT_OPTIONS.map(opt => (
-          <TouchableOpacity key={opt} onPress={() => setSort(opt)} style={[s.sortBtn, sort === opt && s.sortBtnActive]}>
-            <Text style={[s.sortLabel, sort === opt && s.sortLabelActive]}>{opt}</Text>
+        {SORT_OPTIONS.map(([label, val]) => (
+          <TouchableOpacity key={val} onPress={() => setSort(val)} style={[s.sortBtn, sort === val && s.sortBtnActive]}>
+            <Text style={[s.sortLabel, sort === val && s.sortLabelActive]}>{label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -62,7 +72,11 @@ export default function SearchScreen() {
         contentContainerStyle={{ padding: 10, paddingTop: 4 }}
         renderItem={({ item }) => (
           <TouchableOpacity style={s.card} onPress={() => router.push(`/listing/${item.ref}`)}>
-            <View style={s.thumb}><Text style={{ fontSize: 36 }}>{item.emoji}</Text></View>
+            <View style={s.thumb}>
+              {item.image
+                ? <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%', borderRadius: 10 }} resizeMode="cover" />
+                : <Text style={{ fontSize: 36 }}>🛍️</Text>}
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={s.title} numberOfLines={1}>{item.title}</Text>
               <Text style={s.price}>{item.price}</Text>
