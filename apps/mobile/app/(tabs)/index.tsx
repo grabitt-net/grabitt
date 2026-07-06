@@ -114,7 +114,7 @@ export default function HomeScreen() {
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* Topbar */}
       <View style={s.topbar}>
-        <Image source={require('../../assets/logo.png')} style={{ height: 28, width: 28 * (1470 / 472), resizeMode: 'contain' }} />
+        <Image source={require('../../assets/logo.png')} resizeMode="contain" style={{ height: 28, width: 28 * (1470 / 472) }} />
         <TouchableOpacity style={s.memberBtn} onPress={() => router.push(user ? '/(tabs)/profile' : '/auth')}>
           <Text style={s.memberBtnText}>{user ? 'Account' : 'Log in'}</Text>
         </TouchableOpacity>

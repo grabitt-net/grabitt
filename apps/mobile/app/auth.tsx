@@ -32,7 +32,7 @@ export default function AuthScreen() {
   return (
     <View style={s.screen}>
       <TouchableOpacity onPress={() => router.back()} style={s.back}><Text style={{ color: colors.orange, fontSize: 24 }}>‹</Text></TouchableOpacity>
-      <Image source={require('../assets/logo.png')} style={{ height: 44, width: 44 * (1470 / 472), resizeMode: 'contain', alignSelf: 'center', marginBottom: 24 }} />
+      <Image source={require('../assets/logo.png')} resizeMode="contain" style={{ height: 44, width: 44 * (1470 / 472), alignSelf: 'center', marginBottom: 24 }} />
 
       <View style={s.toggle}>
         {(['login', 'signup'] as const).map(m => (
