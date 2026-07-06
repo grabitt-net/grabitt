@@ -33,4 +33,36 @@ export const homepageRouter = router({
       )
       return { ok: true }
     }),
+
+  // ── Parallax hero slider ────────────────────────────────────────────────────
+  // Public: active slides in order (what the homepage hero rotates through).
+  heroSlides: publicProcedure.query(({ ctx }) =>
+    ctx.prisma.heroSlide.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' } })
+  ),
+
+  // Exec: all slides for the editor.
+  allHeroSlides: execProcedure.query(({ ctx }) =>
+    ctx.prisma.heroSlide.findMany({ orderBy: { sortOrder: 'asc' } })
+  ),
+
+  upsertHeroSlide: execProcedure
+    .input(z.object({
+      id: z.string().optional(),
+      heading: z.string().min(1).max(120),
+      subheading: z.string().max(200).optional(),
+      imageUrl: z.string().url(),
+      linkUrl: z.string().optional(),
+      active: z.boolean().default(true),
+      sortOrder: z.number().int().default(0),
+    }))
+    .mutation(({ ctx, input }) => {
+      const { id, ...data } = input
+      return id
+        ? ctx.prisma.heroSlide.update({ where: { id }, data })
+        : ctx.prisma.heroSlide.create({ data })
+    }),
+
+  removeHeroSlide: execProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(({ ctx, input }) => ctx.prisma.heroSlide.delete({ where: { id: input.id } })),
 })

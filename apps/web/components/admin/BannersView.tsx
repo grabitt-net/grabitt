@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
 
 const POSITIONS: [string, string][] = [
-  ['home_top', 'Home — Hero (top)'],
   ['home_mid', 'Home — Mid ad'],
   ['category', 'Department pages'],
   ['checkout', 'Checkout'],
@@ -12,7 +11,7 @@ const POS_LABEL = Object.fromEntries(POSITIONS)
 
 interface Banner { id: string; title: string; imageUrl: string; linkUrl: string | null; active: boolean; position: string; startsAt: string | null; endsAt: string | null }
 
-const EMPTY = { title: '', imageUrl: '', linkUrl: '', position: 'home_top', active: true, startsAt: '', endsAt: '' }
+const EMPTY = { title: '', imageUrl: '', linkUrl: '', position: 'home_mid', active: true, startsAt: '', endsAt: '' }
 
 export default function BannersView({ initialPosition }: { initialPosition?: string | null }) {
   const api = useCrmApi()

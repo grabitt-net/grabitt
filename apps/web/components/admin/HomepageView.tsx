@@ -1,12 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
+import HeroSlidesEditor from './HeroSlidesEditor'
 
 type Section = { key: string; label: string; enabled: boolean; sortOrder: number }
 
 // Per-section metadata: what it is and (if applicable) how to edit its content.
-const META: Record<string, { edit?: 'home_top' | 'home_mid'; note: string }> = {
-  hero_banner:   { edit: 'home_top', note: 'Parallax hero slider — edit the image(s), heading & link.' },
+const META: Record<string, { edit?: 'home_mid'; slides?: boolean; note: string }> = {
+  hero_banner:   { slides: true, note: 'Parallax hero slider — add & reorder slides (image, heading, link).' },
   mid_banner:    { edit: 'home_mid', note: 'Advertising banner — edit the image & link.' },
   quick_actions: { note: 'Fixed quick links (Sponsorship, Find Work, Business…) + Grab It Now.' },
   departments:   { note: 'Auto — the department tiles.' },
@@ -23,6 +24,7 @@ export default function HomepageView({ onEditBanners }: { onEditBanners: (positi
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [openSlides, setOpenSlides] = useState(false)
 
   useEffect(() => {
     api.homeSections()
@@ -69,22 +71,28 @@ export default function HomepageView({ onEditBanners }: { onEditBanners: (positi
       ) : (
         <div style={{ maxWidth: 560, marginTop: 12 }}>
           {sections.map((s, i) => (
-            <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: '12px 14px', marginBottom: 8, opacity: s.enabled ? 1 : 0.6 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <button onClick={() => move(i, -1)} disabled={i === 0} style={arrow(i === 0)}>▲</button>
-                <button onClick={() => move(i, 1)} disabled={i === sections.length - 1} style={arrow(i === sections.length - 1)}>▼</button>
+            <div key={s.key} style={{ marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: '12px 14px', opacity: s.enabled ? 1 : 0.6 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <button onClick={() => move(i, -1)} disabled={i === 0} style={arrow(i === 0)}>▲</button>
+                  <button onClick={() => move(i, 1)} disabled={i === sections.length - 1} style={arrow(i === sections.length - 1)}>▼</button>
+                </div>
+                <div style={{ width: 22, textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#bbb' }}>{i + 1}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)' }}>{s.label}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999' }}>{META[s.key]?.note ?? s.key}</div>
+                </div>
+                {META[s.key]?.slides && (
+                  <button onClick={() => setOpenSlides(v => !v)} style={{ background: openSlides ? '#FF4500' : '#fff', color: openSlides ? '#fff' : '#FF4500', border: '1.5px solid #FF4500', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>✎ {openSlides ? 'Close slides' : 'Edit slides'}</button>
+                )}
+                {META[s.key]?.edit && (
+                  <button onClick={() => onEditBanners(META[s.key]!.edit!)} style={{ background: '#fff', color: '#FF4500', border: '1.5px solid #FF4500', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>✎ Edit content</button>
+                )}
+                <button onClick={() => toggle(i)} style={{ background: s.enabled ? '#f0faf4' : '#f5f5f5', color: s.enabled ? '#16a34a' : '#aaa', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>
+                  {s.enabled ? '● Visible' : '○ Hidden'}
+                </button>
               </div>
-              <div style={{ width: 22, textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#bbb' }}>{i + 1}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)' }}>{s.label}</div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999' }}>{META[s.key]?.note ?? s.key}</div>
-              </div>
-              {META[s.key]?.edit && (
-                <button onClick={() => onEditBanners(META[s.key]!.edit!)} style={{ background: '#fff', color: '#FF4500', border: '1.5px solid #FF4500', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>✎ Edit content</button>
-              )}
-              <button onClick={() => toggle(i)} style={{ background: s.enabled ? '#f0faf4' : '#f5f5f5', color: s.enabled ? '#16a34a' : '#aaa', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>
-                {s.enabled ? '● Visible' : '○ Hidden'}
-              </button>
+              {META[s.key]?.slides && openSlides && <HeroSlidesEditor />}
             </div>
           ))}
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#999', marginTop: 10 }}>

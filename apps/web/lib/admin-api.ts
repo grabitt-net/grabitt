@@ -79,6 +79,13 @@ export function makeCrmApi(execToken: string) {
     homeSections: () => rpc<any[]>('homepage.sections', 'query', undefined, execToken),
     saveHomeSections: (sections: { key: string; enabled: boolean; sortOrder: number }[]) =>
       rpc<any>('homepage.save', 'mutation', { sections }, execToken),
+
+    // Parallax hero slides
+    heroSlides: () => rpc<any[]>('homepage.allHeroSlides', 'query', undefined, execToken),
+    upsertHeroSlide: (data: Record<string, unknown>) =>
+      rpc<any>('homepage.upsertHeroSlide', 'mutation', data, execToken),
+    removeHeroSlide: (id: string) =>
+      rpc<any>('homepage.removeHeroSlide', 'mutation', { id }, execToken),
   }
 }
 

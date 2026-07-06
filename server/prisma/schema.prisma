@@ -52,6 +52,20 @@ model HomeSection {
   @@index([sortOrder])
 }
 
+// Parallax hero slider — a set of slides (image + heading + link), NOT banners.
+model HeroSlide {
+  id         String   @id @default(uuid())
+  heading    String
+  subheading String?
+  imageUrl   String
+  linkUrl    String?
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([sortOrder])
+}
+
 // ── Compliance / GDPR ─────────────────────────────────────────────────────────
 enum ConsentKind {
   gdpr                // GDPR data-processing acceptance
