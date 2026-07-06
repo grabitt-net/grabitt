@@ -93,7 +93,7 @@ export default function ProfileScreen() {
 
       {/* Actions */}
       {[
-        { icon: '🛒', label: 'My Purchases & Handovers', onPress: () => router.push('/(tabs)/index') },
+        { icon: '🛒', label: 'My Purchases & Handovers', onPress: () => router.push('/purchases') },
         { icon: '📋', label: 'My Listings', onPress: () => {} },
       ].map(item => (
         <TouchableOpacity key={item.label} style={s.menuRow} onPress={item.onPress}>
