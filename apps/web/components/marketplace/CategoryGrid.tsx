@@ -47,7 +47,7 @@ export default function CategoryGrid() {
         padding: '20px 16px 10px',
       }}>
         <span style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>
-          Categories
+          Departments
         </span>
       </div>
 

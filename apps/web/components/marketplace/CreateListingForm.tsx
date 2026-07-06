@@ -135,9 +135,9 @@ export default function CreateListingForm({ categories, userId }: Props) {
 
         {/* Category */}
         <div style={cardStyle}>
-          <label style={labelStyle}>Category</label>
+          <label style={labelStyle}>Department</label>
           <select value={categoryId} onChange={e => setCategoryId(e.target.value)} style={inputStyle}>
-            <option value="">Select a category</option>
+            <option value="">Select a department</option>
             {categories.map(cat => (
               <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
             ))}

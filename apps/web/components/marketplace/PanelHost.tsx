@@ -1918,7 +1918,7 @@ function PanelBody() {
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Thousands of daily active users across the island</div>
         </div>
         {[
-          { name: '⭐ Featured Listing', price: '€1.99/week', desc: 'Boost visibility in search & category pages' },
+          { name: '⭐ Featured Listing', price: '€1.99/week', desc: 'Boost visibility in search & department pages' },
           { name: '🏷️ Banner Ad (300×600)', price: '€49/month', desc: 'Sidebar slot on dept and search panels' },
           { name: '📧 Eshot Campaign', price: '€99/blast', desc: 'Direct email to opted-in members in your area' },
         ].map((p, i) => (
@@ -2763,7 +2763,7 @@ function PanelBody() {
                 </div>
 
                 <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Category *</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Department *</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {DEPTS.map(d => (
                       <button key={d} onClick={() => setDept(d)} style={{ background: dept === d ? 'var(--orange)' : '#f5f0e8', color: dept === d ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{d}</button>

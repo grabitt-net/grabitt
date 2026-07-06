@@ -187,7 +187,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Pro
         }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
           <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>No listings found</div>
-          <div style={{ fontSize: 13 }}>Be the first to post in this category!</div>
+          <div style={{ fontSize: 13 }}>Be the first to post in this department!</div>
           <Link href="/listings/new" style={{ textDecoration: 'none' }}>
             <button style={{
               marginTop: 16, background: 'var(--orange)', color: '#fff', border: 'none',

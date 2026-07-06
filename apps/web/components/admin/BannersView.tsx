@@ -5,7 +5,7 @@ import { useCrmApi } from './AdminApp'
 const POSITIONS: [string, string][] = [
   ['home_top', 'Home — Hero (top)'],
   ['home_mid', 'Home — Mid ad'],
-  ['category', 'Category pages'],
+  ['category', 'Department pages'],
   ['checkout', 'Checkout'],
 ]
 const POS_LABEL = Object.fromEntries(POSITIONS)

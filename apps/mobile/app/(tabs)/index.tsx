@@ -130,7 +130,7 @@ export default function HomeScreen() {
 
         {/* Dept grid — 3 col */}
         <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>Categories</Text>
+          <Text style={s.sectionTitle}>Departments</Text>
         </View>
         <View style={s.deptGrid}>
           {DEPTS.map(dept => (

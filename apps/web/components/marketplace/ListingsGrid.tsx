@@ -63,7 +63,7 @@ export default function ListingsGrid() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40, color: '#aaa', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Loading listings…</div>
       ) : items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 13 }}>No listings in this category yet.</div>
+        <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 13 }}>No listings in this department yet.</div>
       ) : (
         <div className="listing-grid" style={{ paddingBottom: 8 }}>
           {items.map(l => {
