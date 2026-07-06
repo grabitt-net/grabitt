@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
-import { useStripe } from '@stripe/stripe-react-native'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
 import { useAuth } from '../../lib/auth'
+import { useSafeStripe } from '../../lib/stripe'
 
 const STEPS = ['Confirm', 'Payment', 'Done']
 
 export default function CheckoutScreen() {
   const { ref } = useLocalSearchParams<{ ref: string }>()
   const { token } = useAuth()
-  const { initPaymentSheet, presentPaymentSheet } = useStripe()
+  const { initPaymentSheet, presentPaymentSheet } = useSafeStripe()
   const [step, setStep] = useState(0)
   const [fulfilment, setFulfilment] = useState<'collection' | 'delivery'>('collection')
   const [qty, setQty] = useState(1)
@@ -32,6 +32,12 @@ export default function CheckoutScreen() {
         setTransactionId(result.transaction.id)
         const clientSecret = (result as any).clientSecret
         if (!clientSecret) throw new Error('Could not start payment')
+
+        // Card entry needs the native Stripe SDK (not available in Expo Go).
+        if (!initPaymentSheet || !presentPaymentSheet) {
+          Alert.alert('Card payment unavailable here', 'Your order is reserved. Card payment needs the full Grabitt app (a dev/production build) — it is disabled in Expo Go.')
+          return
+        }
 
         // 2. Present Stripe's native payment sheet to collect + authorise the card.
         const init = await initPaymentSheet({ merchantDisplayName: 'Grabitt', paymentIntentClientSecret: clientSecret })

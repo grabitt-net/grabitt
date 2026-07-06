@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { StripeProvider } from '@stripe/stripe-react-native'
+import { MaybeStripeProvider } from '../lib/stripe'
 import { AuthProvider } from '../lib/auth'
 import ConsentGate from '../components/ConsentGate'
 
@@ -9,12 +9,12 @@ const STRIPE_PK = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY
 
 export default function RootLayout() {
   return (
-    <StripeProvider publishableKey={STRIPE_PK} merchantIdentifier="merchant.net.grabitt.app">
+    <MaybeStripeProvider publishableKey={STRIPE_PK}>
       <AuthProvider>
         <StatusBar style="dark" />
         <Stack screenOptions={{ headerShown: false }} />
         <ConsentGate />
       </AuthProvider>
-    </StripeProvider>
+    </MaybeStripeProvider>
   )
 }
