@@ -1911,15 +1911,32 @@ function PanelBody() {
   // ── ADVERTISE ────────────────────────────────────────────────────────────────
   if (panel.id === 'advertise') {
     return (
-      <ActionPanel title="📣 Advertise on Grabitt" onClose={closePanel}>
+      <ActionPanel title="🤝 Sponsorship & Advertising" onClose={closePanel}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ fontSize: 44, marginBottom: 8 }}>📣</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Reach Gran Canaria buyers</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Thousands of daily active users across the island</div>
+          <div style={{ fontSize: 44, marginBottom: 8 }}>🤝</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Sponsor Grabitt &amp; reach the island</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Thousands of daily active buyers across Gran Canaria</div>
         </div>
+
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Sponsorship packages</div>
+        {[
+          { name: '🥇 Headline Sponsor', price: '€299/month', desc: 'Your brand on the homepage hero + a Featured Partner badge across Grabitt.' },
+          { name: '🤝 Department Sponsor', price: '€149/month', desc: 'Own a department page (e.g. Motors, Property) with your banner + badge.' },
+          { name: '⭐ Featured Partner', price: '€79/month', desc: 'Listed on the Sponsors & Partners page with logo, blurb and link.' },
+        ].map((p, i) => (
+          <div key={i} style={{ background: '#fff', border: '2px solid #FFD9B8', borderRadius: 14, padding: 14, marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{p.name}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--orange)' }}>{p.price}</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{p.desc}</div>
+          </div>
+        ))}
+
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, margin: '18px 0 8px' }}>Advertising add-ons</div>
         {[
           { name: '⭐ Featured Listing', price: '€1.99/week', desc: 'Boost visibility in search & department pages' },
-          { name: '🏷️ Banner Ad (300×600)', price: '€49/month', desc: 'Sidebar slot on dept and search panels' },
+          { name: '🏷️ Banner Ad (300×600)', price: '€49/month', desc: 'Sidebar slot on department and search panels' },
           { name: '📧 Eshot Campaign', price: '€99/blast', desc: 'Direct email to opted-in members in your area' },
         ].map((p, i) => (
           <div key={i} style={{ background: '#fff', border: '1.5px solid #e8e0d5', borderRadius: 14, padding: 14, marginBottom: 10 }}>
@@ -1930,8 +1947,12 @@ function PanelBody() {
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{p.desc}</div>
           </div>
         ))}
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 6 }}>
-          Enquire: ads@grabitt.net
+
+        <a href="mailto:ads@grabitt.net?subject=Grabitt%20Sponsorship%20enquiry" style={{ textDecoration: 'none' }}>
+          <button style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 6 }}>Enquire about sponsorship →</button>
+        </a>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 8 }}>
+          Our team will confirm availability and set you up: ads@grabitt.net
         </div>
       </ActionPanel>
     )

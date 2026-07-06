@@ -6,7 +6,7 @@ export default function Hero() {
   const { openPanel } = usePanel()
 
   const quickActions = [
-    { label: 'Sponsors', action: () => openPanel('sponsors') },
+    { label: 'Sponsorship', action: () => openPanel('advertise') },
     { label: 'Find Work', action: () => openPanel('dept', { name: 'Jobs', icon: '💼', grad: 'linear-gradient(135deg,#2193b0,#6dd5ed)' }) },
     { label: 'Find Home', action: () => openPanel('dept', { name: 'Property', icon: '🏠', grad: 'linear-gradient(135deg,#e96c2a,#f5a623)' }) },
     { label: 'Employers', action: () => openPanel('employers') },
