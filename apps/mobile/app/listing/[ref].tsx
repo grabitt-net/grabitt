@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
+import { Alert } from 'react-native'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
+import { useAuth } from '../../lib/auth'
 
 const isUuid = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
 const pretty = (s?: string) => (s ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
-type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; description?: string; seller?: { name: string; grade: string; rating: number | null; sales: number } }
+type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; description?: string; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number } }
 
 // Fallback demo lookup for the old ref-keyed cards (F1, JL1…).
 const LISTINGS: Record<string, { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean }> = {
@@ -31,7 +33,17 @@ const SIMILAR = [
 
 export default function ListingScreen() {
   const { ref } = useLocalSearchParams<{ ref: string }>()
+  const { token } = useAuth()
   const [fetched, setFetched] = useState<Item | null>(null)
+
+  const startChat = async () => {
+    if (!token) { Alert.alert('Please log in', 'Log in to message the seller.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
+    if (!fetched?.sellerId || !isUuid(ref as string)) return
+    try {
+      const thread = await apiClient(token).messages.thread.mutate({ listingId: ref as string, sellerId: fetched.sellerId })
+      if (thread?.id) router.push(`/chat/${thread.id}?name=${encodeURIComponent(fetched.seller?.name ?? 'Seller')}`)
+    } catch (e: any) { Alert.alert('Could not start chat', e?.message ?? 'Try again') }
+  }
 
   // Real listing when we have a UUID (from live cards); else the demo fallback.
   useEffect(() => {
@@ -47,6 +59,7 @@ export default function ListingScreen() {
         isFeatured: l.isFeatured,
         image: Array.isArray(l.images) ? l.images[0] : undefined,
         description: l.description,
+        sellerId: l.seller?.id,
         seller: l.seller ? { name: l.seller.displayName, grade: l.seller.grade, rating: l.seller.avgRating, sales: l.seller.salesCount } : undefined,
       }))
       .catch(() => {})
@@ -100,7 +113,7 @@ export default function ListingScreen() {
                 <Text style={s.sellerStats}>⭐ {item.seller?.rating ? Number(item.seller.rating).toFixed(1) : '—'} · {item.seller?.sales ?? 0} sales</Text>
               </View>
             </View>
-            <TouchableOpacity style={s.msgBtn}><Text style={s.msgBtnText}>Message</Text></TouchableOpacity>
+            <TouchableOpacity style={s.msgBtn} onPress={startChat}><Text style={s.msgBtnText}>Message</Text></TouchableOpacity>
           </View>
 
           {/* Tag pills */}
