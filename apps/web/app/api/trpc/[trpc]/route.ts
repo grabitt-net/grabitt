@@ -15,7 +15,11 @@ function handler(req: Request) {
     createContext: () => {
       const auth = req.headers.get('authorization')
       const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
-      return buildContext(token)
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+        ?? req.headers.get('x-real-ip')
+        ?? null
+      const userAgent = req.headers.get('user-agent') ?? null
+      return buildContext(token, { ip, userAgent })
     },
   })
 }

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
 
-type Consent = { id: string; userId: string; kind: string; email: string; displayName: string; acceptedAt: string; version: string }
+type Consent = { id: string; userId: string; kind: string; email: string; displayName: string; acceptedAt: string; version: string; ipAddress: string | null }
 type Deletion = { id: string; userId: string; email: string; displayName: string; status: string; requestedAt: string; completedAt: string | null }
 
 type Tab = 'gdpr' | 'withdrawal_waiver' | 'deletions'
@@ -14,7 +14,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 const fmt = (iso: string | null) => iso ? new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
 
-export default function ComplianceView() {
+export default function ComplianceView({ onViewMember }: { onViewMember: (userId: string) => void }) {
   const api = useCrmApi()
   const [tab, setTab] = useState<Tab>('gdpr')
   const [consents, setConsents] = useState<Consent[]>([])
@@ -49,13 +49,15 @@ export default function ComplianceView() {
         ) : tab === 'deletions' ? (
           <Table
             cols={['User', 'Email (at request)', 'Requested', 'Status', 'Completed']}
-            rows={deletions.map(d => [d.displayName, d.email, fmt(d.requestedAt), d.status === 'completed' ? '✅ Completed' : '⏳ ' + d.status, fmt(d.completedAt)])}
+            rows={deletions.map(d => ({ userId: d.userId, cells: [d.displayName, d.email, fmt(d.requestedAt), d.status === 'completed' ? '✅ Completed' : '⏳ ' + d.status, fmt(d.completedAt)] }))}
+            onViewMember={onViewMember}
             empty="No deletion requests."
           />
         ) : (
           <Table
-            cols={['User', 'Email', 'Accepted at', 'Version']}
-            rows={consents.map(c => [c.displayName, c.email, fmt(c.acceptedAt), 'v' + c.version])}
+            cols={['User', 'Email', 'Accepted at', 'IP address', 'Version']}
+            rows={consents.map(c => ({ userId: c.userId, cells: [c.displayName, c.email, fmt(c.acceptedAt), c.ipAddress ?? '—', 'v' + c.version] }))}
+            onViewMember={onViewMember}
             empty={`No ${tab === 'gdpr' ? 'GDPR' : 'waiver'} acceptances recorded yet.`}
           />
         )}
@@ -64,7 +66,7 @@ export default function ComplianceView() {
   )
 }
 
-function Table({ cols, rows, empty }: { cols: string[]; rows: (string)[][]; empty: string }) {
+function Table({ cols, rows, empty, onViewMember }: { cols: string[]; rows: { userId: string; cells: string[] }[]; empty: string; onViewMember: (userId: string) => void }) {
   if (rows.length === 0) return <div style={{ padding: 40, textAlign: 'center', color: '#bbb', fontFamily: 'var(--font-ui)', fontSize: 13 }}>{empty}</div>
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-ui)' }}>
@@ -76,7 +78,13 @@ function Table({ cols, rows, empty }: { cols: string[]; rows: (string)[][]; empt
       <tbody>
         {rows.map((r, i) => (
           <tr key={i} style={{ borderTop: '1px solid #f0ebe4' }}>
-            {r.map((cell, j) => <td key={j} style={{ padding: '10px 14px', fontSize: 12.5, color: j === 0 ? 'var(--dark)' : '#555', fontWeight: j === 0 ? 800 : 400 }}>{cell}</td>)}
+            {r.cells.map((cell, j) => j === 0 ? (
+              <td key={j} style={{ padding: '10px 14px', fontSize: 12.5 }}>
+                <button onClick={() => onViewMember(r.userId)} title="View client details" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#FF4500', fontWeight: 800, fontFamily: 'var(--font-ui)', fontSize: 12.5, textDecoration: 'underline' }}>{cell}</button>
+              </td>
+            ) : (
+              <td key={j} style={{ padding: '10px 14px', fontSize: 12.5, color: '#555' }}>{cell}</td>
+            ))}
           </tr>
         ))}
       </tbody>

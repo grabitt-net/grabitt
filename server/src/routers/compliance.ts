@@ -24,7 +24,10 @@ export const complianceRouter = router({
         select: { email: true, displayName: true },
       })
       await ctx.prisma.consent.create({
-        data: { userId: ctx.user.id, kind: input.kind, email: user.email, displayName: user.displayName },
+        data: {
+          userId: ctx.user.id, kind: input.kind, email: user.email, displayName: user.displayName,
+          ipAddress: ctx.ip, userAgent: ctx.userAgent,
+        },
       })
       await ctx.prisma.user.update({
         where: { id: ctx.user.id },

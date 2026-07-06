@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 
 const filters = ['All', 'Active', 'Sellers', 'Buyers', 'New']
@@ -8,13 +8,20 @@ const gradeColors: Record<string, string> = {
   grabber: '#FF4500', dealer: '#f59e0b', trader: '#3b82f6', pro: '#7c3aed',
 }
 
-interface Props { members: any[] }
+interface Props { members: any[]; focusUserId?: string | null }
 
-export default function MembersView({ members: initial }: Props) {
+export default function MembersView({ members: initial, focusUserId }: Props) {
   const [members, setMembers] = useState(initial)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('All')
   const [selected, setSelected] = useState<any | null>(null)
+
+  // Open a specific member's detail when navigated here (e.g. from Compliance).
+  useEffect(() => {
+    if (!focusUserId) return
+    const m = members.find(x => x.id === focusUserId)
+    if (m) setSelected(m)
+  }, [focusUserId, members])
   const [chatMsg, setChatMsg] = useState('')
   const [chatHistory, setChatHistory] = useState<{ channel: string; text: string; time: string }[]>([])
   const [auditLog, setAuditLog] = useState<{ time: string; action: string }[]>([])

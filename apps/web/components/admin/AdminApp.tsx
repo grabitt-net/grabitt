@@ -39,6 +39,7 @@ export default function AdminApp({ execToken }: Props) {
 
   const [contacts, setContacts] = useState<any[]>([])
   const [members, setMembers] = useState<any[]>([])
+  const [focusMemberId, setFocusMemberId] = useState<string | null>(null)
   const [disputes, setDisputes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -104,7 +105,7 @@ export default function AdminApp({ execToken }: Props) {
                 {view === 'pipeline'   && <PipelineView  contacts={contacts} onUpdate={setContacts} />}
                 {view === 'contacts'   && <ContactsView  contacts={contacts} onUpdate={setContacts} />}
                 {view === 'forecast'   && <ForecastView  contacts={contacts} orders={[]} />}
-                {view === 'members'    && <MembersView   members={members} />}
+                {view === 'members'    && <MembersView   members={members} focusUserId={focusMemberId} />}
                 {view === 'disputes'   && <DisputesView  disputes={disputes} onUpdate={setDisputes} />}
                 {view === 'reports'    && <ReportsView   reports={[]} />}
                 {view === 'banners'    && <BannersView />}
@@ -117,7 +118,7 @@ export default function AdminApp({ execToken }: Props) {
                 {view === 'toolbox'    && <ToolboxView />}
                 {view === 'jobs'       && <JobsView />}
                 {view === 'audit'      && <AuditTrailView onViewMember={() => setView('members')} />}
-                {view === 'compliance' && <ComplianceView />}
+                {view === 'compliance' && <ComplianceView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'rewards'    && <Placeholder view={view} />}
               </>
             )}
