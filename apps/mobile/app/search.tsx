@@ -1,28 +1,24 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../lib/trpc'
+import { toCard, type Card } from '../lib/listingMap'
+import { ListingCard } from '../components/ListingCard'
 
 const SORT_OPTIONS: [string, 'newest' | 'price_asc' | 'price_desc'][] = [['Newest', 'newest'], ['Price ↑', 'price_asc'], ['Price ↓', 'price_desc']]
-type Result = { ref: string; image?: string; title: string; price: string; location: string; condition?: string }
-const pretty = (s?: string) => (s ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
 export default function SearchScreen() {
   const { q } = useLocalSearchParams<{ q?: string }>()
   const [query, setQuery] = useState(q ?? '')
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
-  const [results, setResults] = useState<Result[]>([])
+  const [results, setResults] = useState<Card[]>([])
 
   const run = useCallback(async () => {
     try {
       const res: any = await apiClient().listings.search.query({ query: query.trim() || undefined, sort, limit: 50 } as any)
       const items = (res?.items ?? res ?? []) as any[]
-      setResults(items.map(l => ({
-        ref: l.id, title: l.title, price: `€${Number(l.price).toLocaleString()}`,
-        location: l.location ?? 'Gran Canaria', condition: l.condition ? pretty(l.condition) : undefined,
-        image: Array.isArray(l.images) ? l.images[0] : undefined,
-      })))
+      setResults(items.map(toCard))
     } catch { setResults([]) }
   }, [query, sort])
 
@@ -70,23 +66,7 @@ export default function SearchScreen() {
         data={results}
         keyExtractor={i => i.ref}
         contentContainerStyle={{ padding: 10, paddingTop: 4 }}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={s.card} onPress={() => router.push(`/listing/${item.ref}`)}>
-            <View style={s.thumb}>
-              {item.image
-                ? <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%', borderRadius: 10 }} resizeMode="cover" />
-                : <Text style={{ fontSize: 36 }}>🛍️</Text>}
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.title} numberOfLines={1}>{item.title}</Text>
-              <Text style={s.price}>{item.price}</Text>
-              <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
-                <Text style={s.tag}>📍 {item.location}</Text>
-                <Text style={s.tag}>{item.condition}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => <ListingCard item={item} layout="row" />}
       />
     </SafeAreaView>
   )
@@ -102,9 +82,4 @@ const s = StyleSheet.create({
   sortLabel: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: '#555' },
   sortLabelActive: { color: '#fff' },
   resultsCount: { fontFamily: 'Nunito', fontSize: 11, color: '#888', fontWeight: '700' },
-  card: { flexDirection: 'row', gap: 12, padding: 12, backgroundColor: '#fff', borderRadius: 12, marginBottom: 8, borderWidth: 1, borderColor: '#f0ebe4', alignItems: 'center' },
-  thumb: { width: 60, height: 60, backgroundColor: '#f5f0e8', borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  title: { fontFamily: 'Nunito', fontSize: 13, fontWeight: '800', color: colors.dark, marginBottom: 2 },
-  price: { fontFamily: 'Georgia', fontSize: 16, fontWeight: '700', color: colors.orange },
-  tag: { fontFamily: 'Nunito', fontSize: 9, color: '#888', backgroundColor: '#f5f0e8', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 50, fontWeight: '700' },
 })

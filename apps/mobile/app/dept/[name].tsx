@@ -1,36 +1,10 @@
 import { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, Pressable, Image } from 'react-native'
+import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
-
-// Display name → Department enum (matches server schema).
-const DEPT_ENUM: Record<string, string> = {
-  'Home & Garden': 'home_garden', 'Jobs': 'jobs', 'Fashion': 'fashion', 'Sport': 'sport',
-  'Gaming': 'gaming', 'Electronics': 'electronics', 'Gift Ideas': 'gift_ideas', 'Kids & Baby': 'kids_baby',
-  'Property': 'property', 'Health & Fitness': 'health_fitness', 'Food Store': 'food_store',
-  'Retro & Vintage': 'retro_vintage', 'Grab It Now': 'grab_it_now', 'Handy Help': 'handy_help', 'Pet Shop': 'pet_shop',
-}
-type Live = { id: string; title: string; price: string; location: string; image?: string }
-
-// Stub listings per dept — same as web PanelHost
-const DEPT_LISTINGS: Record<string, [string, string, string, string][]> = {
-  'Home & Garden': [['🪴','Snake Plant','€12','Las Palmas'],['🛋️','IKEA Sofa','€180','Maspalomas'],['🔨','Dewalt Drill','€85','Telde'],['🌿','Garden Tools Set','€40','Arucas'],['🪟','Venetian Blinds','€55','Las Palmas']],
-  'Jobs': [['💼','Bar Staff Needed','€1,200/mo','Las Palmas'],['🍳','Chef — Italian Rest.','€1,600/mo','Playa del Inglés'],['🧹','Housekeeper','€950/mo','Maspalomas'],['🚗','Driver Wanted','€1,100/mo','Vecindario'],['💻','Web Dev — Remote','€2,400/mo','Online']],
-  'Fashion': [['👟','Nike Air Max 90','€75','Las Palmas'],['👗','Summer Dress','€22','Maspalomas'],['🧳','Louis Vuitton Bag','€320','Playa del Inglés'],['🧢','Vintage Cap','€15','Telde'],['💍','Silver Ring','€28','Las Palmas']],
-  'Sport': [['🏄','Surfboard 6ft','€120','Las Palmas'],['🚴','Mountain Bike','€340','Maspalomas'],['⚽','Football Boots','€45','Arucas'],['🎾','Tennis Racket','€60','Telde'],['🏋️','Dumbbells Set','€95','Vecindario']],
-  'Gaming': [['🎮','PS5 Console','€380','Las Palmas'],['🕹️','Nintendo Switch','€220','Maspalomas'],['🎧','Gaming Headset','€55','Telde'],['🖥️','Gaming Chair','€150','Playa del Inglés'],['📀','FIFA 25','€25','Las Palmas']],
-  'Electronics': [['📱','iPhone 14','€620','Las Palmas'],['💻','MacBook Air M2','€890','Maspalomas'],['📷','Canon R6 + Lens','€1,800','Telde'],['🎵','Sony WH-1000XM5','€220','Playa del Inglés'],['⌨️','Mechanical Keyboard','€75','Arucas']],
-  'Gift Ideas': [['🎁','Spa Gift Voucher','€50','Las Palmas'],['🍷','Wine Hamper','€65','Maspalomas'],['🕯️','Candle Set','€18','Telde'],['📚','Book Collection','€35','Playa del Inglés'],['🧴','Beauty Box','€42','Las Palmas']],
-  'Kids & Baby': [['🧸','LEGO City Set','€45','Las Palmas'],['🚲','Kids Bike 16"','€85','Maspalomas'],['👶','Mothercare Pram','€120','Telde'],['🎨','Art Supplies','€22','Playa del Inglés'],["📚","Children's Books",'€12','Arucas']],
-  'Property': [['🏠','Studio Flat','€650/mo','Playa del Inglés'],['🏡','2-Bed Bungalow','€950/mo','Maspalomas'],['🏢','Office Space','€400/mo','Las Palmas'],['🌴','Villa for Sale','€285,000','Puerto Rico'],['🛏️','Room to Rent','€380/mo','Vecindario']],
-  'Health & Fitness': [['💊','Vitamin D Pack','€12','Las Palmas'],['🏃','Running Shoes','€65','Maspalomas'],['🧘','Yoga Mat','€18','Telde'],['💪','Protein Powder','€35','Playa del Inglés'],['🩺','Blood Pressure Mon.','€45','Las Palmas']],
-  'Food Store': [['🥖','Artisan Bread Box','€12','Las Palmas'],['🧀','Local Cheese Pack','€18','Maspalomas'],['🍷','Gran Canaria Wine','€22','Telde'],['🫒','Olive Oil 5L','€28','Arucas'],['☕','Specialty Coffee','€15','Las Palmas']],
-  'Retro & Vintage': [['📻','Vintage Radio','€45','Las Palmas'],['🕹️','Atari Console','€120','Maspalomas'],['👔','70s Leather Jacket','€85','Telde'],['🎸','Fender Stratocaster','€340','Las Palmas'],['📷','Film Camera','€65','Playa del Inglés']],
-  'Grab It Now': [['🛍️','Flash Deal Bundle','€29','Las Palmas'],['⚡','Today Only: TV','€199','Maspalomas'],['🔥','Clearance Sofa','€95','Telde'],['💥','iPhone Deal','€299','Las Palmas'],['⏰','Last 2: Laptop','€349','Playa del Inglés']],
-  'Handy Help': [['🔧','Plumber — Urgent','€35/hr','Las Palmas'],['⚡','Electrician','€40/hr','Maspalomas'],['🪣','Cleaner Available','€12/hr','Telde'],['🏗️','Builder / Painter','€25/hr','Arucas'],['🌿','Gardener','€15/hr','Las Palmas']],
-  'Pet Shop': [['🐾','Golden Retriever Pup','€600','Las Palmas'],['🐱','Bengal Kitten','€450','Maspalomas'],['🦜','African Grey Parrot','€800','Telde'],['🐠','Aquarium Setup','€120','Playa del Inglés'],['🦮','Dog Walker','€10/hr','Las Palmas']],
-}
+import { toCard, type Card, DEPT_ENUM } from '../../lib/listingMap'
+import { ListingCard } from '../../components/ListingCard'
 
 const SUBCATS: Record<string, string[]> = {
   'Electronics':    ['All', 'Phones', 'Laptops', 'Audio', 'Cameras', 'Gaming', 'Wearables'],
@@ -40,15 +14,13 @@ const SUBCATS: Record<string, string[]> = {
   'Property':       ['All', 'Rent', 'For Sale', 'Rooms', 'Commercial'],
 }
 
-const CARD_BKGS = ['#FFF3EE','#EEF4FF','#F0FDF4','#FEF9EE','#FDF0FF']
-
 export default function DeptScreen() {
   const { name } = useLocalSearchParams<{ name: string }>()
   const deptName = name ? decodeURIComponent(name) : 'Listings'
   const subcats = SUBCATS[deptName] || ['All']
   const [activeSub, setActiveSub] = useState('All')
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
-  const [items, setItems] = useState<Live[]>([])
+  const [items, setItems] = useState<Card[]>([])
 
   // Live listings for this department (falls back to nothing if unmapped).
   useEffect(() => {
@@ -56,10 +28,7 @@ export default function DeptScreen() {
     apiClient().listings.search.query({ ...(department ? { department } : {}), sort, limit: 50 } as any)
       .then((res: any) => {
         const list = (res?.items ?? res ?? []) as any[]
-        setItems(list.map(l => ({
-          id: l.id, title: l.title, price: `€${Number(l.price).toLocaleString()}`,
-          location: l.location ?? 'Gran Canaria', image: Array.isArray(l.images) ? l.images[0] : undefined,
-        })))
+        setItems(list.map(toCard))
       })
       .catch(() => setItems([]))
   }, [deptName, sort])
@@ -117,24 +86,8 @@ export default function DeptScreen() {
         numColumns={2}
         contentContainerStyle={{ padding: 10, gap: 10 }}
         columnWrapperStyle={{ gap: 10 }}
-        keyExtractor={(it) => it.id}
-        renderItem={({ item, index }) => (
-          <TouchableOpacity
-            style={[s.card, { backgroundColor: CARD_BKGS[index % CARD_BKGS.length] }]}
-            onPress={() => router.push(`/listing/${item.id}`)}
-          >
-            <View style={s.cardThumb}>
-              {item.image
-                ? <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%', borderRadius: 8 }} resizeMode="cover" />
-                : <Text style={{ fontSize: 36 }}>🛍️</Text>}
-            </View>
-            <Text style={s.cardTitle} numberOfLines={1}>{item.title}</Text>
-            <View style={s.cardFooter}>
-              <Text style={s.cardPrice}>{item.price}</Text>
-              <Text style={s.cardLocation} numberOfLines={1}>{item.location}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
+        keyExtractor={(it) => it.ref}
+        renderItem={({ item }) => <ListingCard item={item} />}
         ListEmptyComponent={
           <View style={s.empty}>
             <Text style={{ fontSize: 40, marginBottom: 10 }}>😕</Text>
@@ -163,12 +116,6 @@ const s = StyleSheet.create({
   sortBtnActive: { backgroundColor: colors.orange },
   sortBtnText: { fontFamily: 'Nunito', fontSize: 10, fontWeight: '800', color: '#555' },
   sortBtnTextActive: { color: '#fff' },
-  card: { flex: 1, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#e8e0d5' },
-  cardThumb: { width: '100%', aspectRatio: 1.4, alignItems: 'center', justifyContent: 'center' },
-  cardTitle: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: colors.dark, paddingHorizontal: 10, paddingTop: 8 },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 10, paddingTop: 4 },
-  cardPrice: { fontFamily: 'Georgia', fontSize: 13, fontWeight: '700', color: colors.orange },
-  cardLocation: { fontFamily: 'Nunito', fontSize: 9, color: '#888', flex: 1, textAlign: 'right' },
   empty: { alignItems: 'center', paddingTop: 60 },
   emptyText: { fontFamily: 'Nunito', fontSize: 13, color: '#888' },
 })

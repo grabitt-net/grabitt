@@ -1,22 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, Image } from 'react-native'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
 import { useAuth } from '../../lib/auth'
-
-// Maps a live DB listing to the card shape used on this screen.
-type Card = { ref: string; title: string; price: string; location: string; emoji?: string; image?: string }
-function toCard(l: any): Card {
-  return {
-    ref: l.id,
-    title: l.title,
-    price: `€${Number(l.price).toLocaleString()}`,
-    location: l.location ?? 'Gran Canaria',
-    image: Array.isArray(l.images) ? l.images[0] : undefined,
-    emoji: '🛍️',
-  }
-}
+import { toCard, type Card } from '../../lib/listingMap'
+import { ListingCard } from '../../components/ListingCard'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -78,25 +67,6 @@ function useCountdown() {
   const m = Math.floor((secs % 3600) / 60).toString().padStart(2, '0')
   const s = (secs % 60).toString().padStart(2, '0')
   return `${h}:${m}:${s}`
-}
-
-// ── Mini card ─────────────────────────────────────────────────────────────────
-
-function MiniCard({ item, onPress }: { item: Card; onPress: () => void }) {
-  return (
-    <TouchableOpacity onPress={onPress} style={s.miniCard}>
-      <View style={s.miniCardThumb}>
-        {item.image
-          ? <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%', borderTopLeftRadius: 12, borderTopRightRadius: 12 }} resizeMode="cover" />
-          : <Text style={{ fontSize: 36 }}>{item.emoji}</Text>}
-      </View>
-      <View style={s.miniCardBody}>
-        <Text style={s.miniCardTitle} numberOfLines={1}>{item.title}</Text>
-        <Text style={s.miniCardPrice}>{item.price}</Text>
-        <Text style={s.miniCardLocation}>📍 {item.location}</Text>
-      </View>
-    </TouchableOpacity>
-  )
 }
 
 // ── Main screen ───────────────────────────────────────────────────────────────
@@ -204,12 +174,7 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
           keyExtractor={i => i.ref}
-          renderItem={({ item }) => (
-            <MiniCard
-              item={item}
-              onPress={() => router.push(`/listing/${item.ref}`)}
-            />
-          )}
+          renderItem={({ item }) => <ListingCard item={item} width={158} />}
         />
 
         {/* Just Listed */}
@@ -223,12 +188,7 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
           keyExtractor={i => i.ref}
-          renderItem={({ item }) => (
-            <MiniCard
-              item={item}
-              onPress={() => router.push(`/listing/${item.ref}`)}
-            />
-          )}
+          renderItem={({ item }) => <ListingCard item={item} width={158} />}
         />
       </ScrollView>
     </View>
@@ -279,10 +239,4 @@ const s = StyleSheet.create({
     paddingHorizontal: 5, paddingBottom: 5,
     textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
   },
-  miniCard: { width: 145, backgroundColor: '#fff', borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: '#e8e0d5', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
-  miniCardThumb: { width: '100%', aspectRatio: 1.4, backgroundColor: '#f5f0e8', alignItems: 'center', justifyContent: 'center' },
-  miniCardBody: { padding: 8 },
-  miniCardTitle: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: colors.dark, marginBottom: 2 },
-  miniCardPrice: { fontFamily: 'Georgia', fontSize: 13, fontWeight: '700', color: colors.orange },
-  miniCardLocation: { fontFamily: 'Nunito', fontSize: 9, color: '#888', marginTop: 2 },
 })
