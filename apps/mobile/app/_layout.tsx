@@ -1,14 +1,20 @@
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import { StripeProvider } from '@stripe/stripe-react-native'
 import { AuthProvider } from '../lib/auth'
 import ConsentGate from '../components/ConsentGate'
 
+const STRIPE_PK = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  || 'pk_test_51ToglgLj1cI4cCytLRwZRhN6gVi1YvWzSEF7jz0OF5Hxe88ACDLaU1IcYOY9TNFwDlnZQzczxpAw1Ft23Dk0n7bh00I6XH7UxH'
+
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }} />
-      <ConsentGate />
-    </AuthProvider>
+    <StripeProvider publishableKey={STRIPE_PK} merchantIdentifier="merchant.net.grabitt.app">
+      <AuthProvider>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false }} />
+        <ConsentGate />
+      </AuthProvider>
+    </StripeProvider>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
+import { useStripe } from '@stripe/stripe-react-native'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
 import { useAuth } from '../../lib/auth'
@@ -10,6 +11,7 @@ const STEPS = ['Confirm', 'Payment', 'Done']
 export default function CheckoutScreen() {
   const { ref } = useLocalSearchParams<{ ref: string }>()
   const { token } = useAuth()
+  const { initPaymentSheet, presentPaymentSheet } = useStripe()
   const [step, setStep] = useState(0)
   const [fulfilment, setFulfilment] = useState<'collection' | 'delivery'>('collection')
   const [qty, setQty] = useState(1)
@@ -22,14 +24,22 @@ export default function CheckoutScreen() {
   async function handleNext() {
     if (step === 1) {
       if (!token) { Alert.alert('Please log in', 'You need an account to buy.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
+      if (!ref) return
       setLoading(true)
       try {
-        // ref is the listing ID
-        if (ref) {
-          const client = apiClient(token)
-          const result = await client.transactions.initiate.mutate({ listingId: ref })
-          setTransactionId(result.transaction.id)
-        }
+        // 1. Create the escrow PaymentIntent (funds held until handover).
+        const result = await apiClient(token).transactions.initiate.mutate({ listingId: ref, quantity: qty, fulfilment: fulfilment as any })
+        setTransactionId(result.transaction.id)
+        const clientSecret = (result as any).clientSecret
+        if (!clientSecret) throw new Error('Could not start payment')
+
+        // 2. Present Stripe's native payment sheet to collect + authorise the card.
+        const init = await initPaymentSheet({ merchantDisplayName: 'Grabitt', paymentIntentClientSecret: clientSecret })
+        if (init.error) throw new Error(init.error.message)
+        const { error } = await presentPaymentSheet()
+        if (error) { Alert.alert('Payment cancelled', error.message); return }
+
+        // Authorised — the webhook marks the transaction "held" (escrow).
         setStep(2)
       } catch (err: any) {
         Alert.alert('Payment failed', err?.message ?? 'Please try again')
