@@ -3,11 +3,13 @@ import { View, Text, TouchableOpacity, TextInput, StyleSheet, SafeAreaView, Scro
 import { router, useLocalSearchParams } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
+import { useAuth } from '../../lib/auth'
 
 const STEPS = ['Confirm', 'Payment', 'Done']
 
 export default function CheckoutScreen() {
   const { ref } = useLocalSearchParams<{ ref: string }>()
+  const { token } = useAuth()
   const [step, setStep] = useState(0)
   const [fulfilment, setFulfilment] = useState<'collection' | 'delivery'>('collection')
   const [qty, setQty] = useState(1)
@@ -19,11 +21,12 @@ export default function CheckoutScreen() {
 
   async function handleNext() {
     if (step === 1) {
+      if (!token) { Alert.alert('Please log in', 'You need an account to buy.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
       setLoading(true)
       try {
         // ref is the listing ID
         if (ref) {
-          const client = apiClient()
+          const client = apiClient(token)
           const result = await client.transactions.initiate.mutate({ listingId: ref })
           setTransactionId(result.transaction.id)
         }

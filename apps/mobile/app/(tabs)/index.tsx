@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatLi
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
+import { useAuth } from '../../lib/auth'
 
 // Maps a live DB listing to the card shape used on this screen.
 type Card = { ref: string; title: string; price: string; location: string; emoji?: string; image?: string }
@@ -98,6 +99,7 @@ function MiniCard({ item, onPress }: { item: Card; onPress: () => void }) {
 export default function HomeScreen() {
   const [query, setQuery] = useState('')
   const countdown = useCountdown()
+  const { user } = useAuth()
   const [featured, setFeatured] = useState<Card[]>([])
   const [justListed, setJustListed] = useState<Card[]>([])
 
@@ -113,8 +115,8 @@ export default function HomeScreen() {
       {/* Topbar */}
       <View style={s.topbar}>
         <Image source={require('../../assets/logo.png')} style={{ height: 28, width: 28 * (1470 / 472), resizeMode: 'contain' }} />
-        <TouchableOpacity style={s.memberBtn}>
-          <Text style={s.memberBtnText}>Member</Text>
+        <TouchableOpacity style={s.memberBtn} onPress={() => router.push(user ? '/(tabs)/profile' : '/auth')}>
+          <Text style={s.memberBtnText}>{user ? 'Account' : 'Log in'}</Text>
         </TouchableOpacity>
       </View>
 

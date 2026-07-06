@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { apiClient } from '../lib/trpc'
+import { useAuth } from '../lib/auth'
 
-// Opened via grabitt://handover?token=<jwt>&txn=<uuid>
+// Opened via grabitt://handover?token=<handoverToken>&txn=<uuid>
 export default function HandoverScreen() {
   const { token, txn } = useLocalSearchParams<{ token: string; txn: string }>()
+  const { token: appToken } = useAuth()
   const router = useRouter()
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -16,9 +18,13 @@ export default function HandoverScreen() {
       Alert.alert('Invalid link', 'This handover link is missing required data.')
       return
     }
+    if (!appToken) {
+      Alert.alert('Please log in', 'Log in to confirm the handover.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }])
+      return
+    }
     setStatus('loading')
     try {
-      const client = apiClient()
+      const client = apiClient(appToken)
       const result = await client.transactions.confirmHandoverByQr.mutate({
         transactionId: txn,
         token,

@@ -11,9 +11,13 @@ import { prisma } from 'server/src/db'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export async function POST() {
+export async function POST(req: Request) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // Web sends the session via httpOnly cookies; mobile (no cookies) sends the
+  // Supabase access token as a Bearer header. getUser(jwt?) handles both.
+  const authHeader = req.headers.get('authorization')
+  const bearer = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
+  const { data: { user } } = await supabase.auth.getUser(bearer)
   if (!user) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
 
   const dbUser = await prisma.user.findUnique({
