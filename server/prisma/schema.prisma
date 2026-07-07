@@ -55,7 +55,7 @@ model HomeSection {
 // Parallax hero slider — a set of slides (image + heading + link), NOT banners.
 model HeroSlide {
   id         String   @id @default(uuid())
-  heading    String
+  heading    String?
   subheading String?
   imageUrl   String
   linkUrl    String?

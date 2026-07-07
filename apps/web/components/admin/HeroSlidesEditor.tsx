@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
 import ImageUploadField from './ImageUploadField'
 
-type Slide = { id: string; heading: string; subheading: string | null; imageUrl: string; linkUrl: string | null; active: boolean; sortOrder: number }
+type Slide = { id: string; heading: string | null; subheading: string | null; imageUrl: string; linkUrl: string | null; active: boolean; sortOrder: number }
 const EMPTY = { heading: '', subheading: '', imageUrl: '', linkUrl: '', active: true }
 
 // Inline editor for the parallax hero slider — add/edit/remove/reorder slides.
@@ -14,6 +14,7 @@ export default function HeroSlidesEditor() {
   const [editing, setEditing] = useState<string | null>(null) // slide id or 'new'
   const [form, setForm] = useState({ ...EMPTY })
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   const load = () => api.heroSlides()
     .then(d => setSlides(((d ?? []) as Slide[]).sort((a, b) => a.sortOrder - b.sortOrder)))
@@ -21,17 +22,18 @@ export default function HeroSlidesEditor() {
     .finally(() => setLoading(false))
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const startNew = () => { setForm({ ...EMPTY }); setEditing('new') }
-  const startEdit = (s: Slide) => { setForm({ heading: s.heading, subheading: s.subheading ?? '', imageUrl: s.imageUrl, linkUrl: s.linkUrl ?? '', active: s.active }); setEditing(s.id) }
+  const startNew = () => { setForm({ ...EMPTY }); setError(''); setEditing('new') }
+  const startEdit = (s: Slide) => { setForm({ heading: s.heading ?? '', subheading: s.subheading ?? '', imageUrl: s.imageUrl, linkUrl: s.linkUrl ?? '', active: s.active }); setError(''); setEditing(s.id) }
 
   const save = async () => {
-    if (!form.heading.trim() || !form.imageUrl.trim()) return
+    if (!form.imageUrl.trim()) { setError('Please add an image first.'); return }
+    setError('')
     setSaving(true)
     try {
       const sortOrder = editing === 'new' ? slides.length : (slides.find(s => s.id === editing)?.sortOrder ?? 0)
       await api.upsertHeroSlide({
         ...(editing !== 'new' ? { id: editing } : {}),
-        heading: form.heading.trim(),
+        heading: form.heading.trim() || undefined, // optional — image-only slides show no text
         subheading: form.subheading.trim() || undefined,
         imageUrl: form.imageUrl.trim(),
         linkUrl: form.linkUrl.trim() || undefined,
@@ -39,6 +41,8 @@ export default function HeroSlidesEditor() {
         sortOrder,
       })
       setEditing(null); await load()
+    } catch (e: any) {
+      setError(e?.message ?? 'Could not save the slide. Please try again.')
     } finally { setSaving(false) }
   }
 
@@ -47,8 +51,8 @@ export default function HeroSlidesEditor() {
     const j = i + dir
     if (j < 0 || j >= slides.length) return
     const a = slides[i], b = slides[j]
-    await api.upsertHeroSlide({ id: a.id, heading: a.heading, imageUrl: a.imageUrl, subheading: a.subheading ?? undefined, linkUrl: a.linkUrl ?? undefined, active: a.active, sortOrder: b.sortOrder })
-    await api.upsertHeroSlide({ id: b.id, heading: b.heading, imageUrl: b.imageUrl, subheading: b.subheading ?? undefined, linkUrl: b.linkUrl ?? undefined, active: b.active, sortOrder: a.sortOrder })
+    await api.upsertHeroSlide({ id: a.id, heading: a.heading ?? undefined, imageUrl: a.imageUrl, subheading: a.subheading ?? undefined, linkUrl: a.linkUrl ?? undefined, active: a.active, sortOrder: b.sortOrder })
+    await api.upsertHeroSlide({ id: b.id, heading: b.heading ?? undefined, imageUrl: b.imageUrl, subheading: b.subheading ?? undefined, linkUrl: b.linkUrl ?? undefined, active: b.active, sortOrder: a.sortOrder })
     load()
   }
 
@@ -61,16 +65,17 @@ export default function HeroSlidesEditor() {
 
       {editing !== null ? (
         <div style={{ display: 'grid', gap: 8 }}>
-          <Field label="Heading"><input value={form.heading} onChange={e => setForm(f => ({ ...f, heading: e.target.value }))} style={inp} placeholder="Gran Canaria's local marketplace" /></Field>
-          <Field label="Subheading"><input value={form.subheading} onChange={e => setForm(f => ({ ...f, subheading: e.target.value }))} style={inp} placeholder="Buy & sell locally — safely." /></Field>
+          <Field label="Heading (optional)"><input value={form.heading} onChange={e => setForm(f => ({ ...f, heading: e.target.value }))} style={inp} placeholder="Leave blank for an image-only slide" /></Field>
+          <Field label="Subheading (optional)"><input value={form.subheading} onChange={e => setForm(f => ({ ...f, subheading: e.target.value }))} style={inp} placeholder="Buy & sell locally — safely." /></Field>
           <ImageUploadField label="Image" kind="hero" hint="Wide landscape works best." value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} />
           <Field label="Link URL (optional)"><input value={form.linkUrl} onChange={e => setForm(f => ({ ...f, linkUrl: e.target.value }))} style={inp} placeholder="/listings or https://…" /></Field>
           <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>
             <input type="checkbox" checked={form.active} onChange={e => setForm(f => ({ ...f, active: e.target.checked }))} /> Show this slide
           </label>
+          {error && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#c0392b' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <button onClick={() => setEditing(null)} style={btn('#fff', '#555', '#e5e7eb')}>Cancel</button>
-            <button onClick={save} disabled={saving || !form.heading || !form.imageUrl} style={btn('#16a34a', '#fff')}>{saving ? 'Saving…' : 'Save slide'}</button>
+            <button onClick={save} disabled={saving || !form.imageUrl} style={btn('#16a34a', '#fff')}>{saving ? 'Saving…' : 'Save slide'}</button>
           </div>
         </div>
       ) : loading ? (
@@ -88,7 +93,7 @@ export default function HeroSlidesEditor() {
               <img src={s.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.heading}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: s.heading ? 'var(--dark)' : '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.heading || 'Image-only slide'}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#aaa' }}>{s.active ? 'Visible' : 'Hidden'}</div>
             </div>
             <button onClick={() => startEdit(s)} style={btn('#fff', '#FF4500', '#FF4500')}>Edit</button>

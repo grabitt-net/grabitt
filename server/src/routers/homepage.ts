@@ -48,7 +48,7 @@ export const homepageRouter = router({
   upsertHeroSlide: execProcedure
     .input(z.object({
       id: z.string().optional(),
-      heading: z.string().min(1).max(120),
+      heading: z.string().max(120).optional(), // image-only slides need no text
       subheading: z.string().max(200).optional(),
       imageUrl: z.string().url(),
       linkUrl: z.string().optional(),
