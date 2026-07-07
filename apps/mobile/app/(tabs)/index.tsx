@@ -9,6 +9,14 @@ import { ListingCard } from '../../components/ListingCard'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
+// Jobs and Property have bespoke screens (salary/beds/baths etc.); everything
+// else uses the generic department grid.
+function deptRoute(name: string): string {
+  if (name === 'Jobs') return '/jobs'
+  if (name === 'Property') return '/property'
+  return `/dept/${encodeURIComponent(name)}`
+}
+
 // ── Data ─────────────────────────────────────────────────────────────────────
 
 // Department tiles use real photography (Unsplash) over the brand gradient —
@@ -142,7 +150,7 @@ export default function HomeScreen() {
               <TouchableOpacity
                 key={dept.name}
                 style={[s.deptTile, { backgroundColor: dept.color }]}
-                onPress={() => router.push(`/dept/${encodeURIComponent(dept.name)}`)}
+                onPress={() => router.push(deptRoute(dept.name) as any)}
               >
                 {showImg && (
                   <Image
