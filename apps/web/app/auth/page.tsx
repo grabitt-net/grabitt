@@ -64,7 +64,10 @@ function AuthForm() {
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setError(error.message)
-      else router.push('/')
+      else {
+        const next = searchParams.get('next')
+        router.push(next && next.startsWith('/') ? next : '/')
+      }
     }
 
     setLoading(false)

@@ -6,7 +6,6 @@ import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
 import { useAuth } from '../../lib/auth'
 
-const isUuid = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
 const pretty = (s?: string) => (s ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
 type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; description?: string; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number } }
@@ -37,17 +36,18 @@ export default function ListingScreen() {
   const [fetched, setFetched] = useState<Item | null>(null)
 
   const startChat = async () => {
+    // Messaging is for logged-in users only — prompt sign-in otherwise.
     if (!token) { Alert.alert('Please log in', 'Log in to message the seller.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
-    if (!fetched?.sellerId || !isUuid(ref as string)) return
+    if (!fetched?.sellerId) { Alert.alert('Unavailable', 'This listing can’t be messaged.'); return }
     try {
       const thread = await apiClient(token).messages.thread.mutate({ listingId: ref as string, sellerId: fetched.sellerId })
       if (thread?.id) router.push(`/chat/${thread.id}?name=${encodeURIComponent(fetched.seller?.name ?? 'Seller')}`)
     } catch (e: any) { Alert.alert('Could not start chat', e?.message ?? 'Try again') }
   }
 
-  // Real listing when we have a UUID (from live cards); else the demo fallback.
+  // Fetch the real listing (any id). Falls back to the demo lookup on failure.
   useEffect(() => {
-    if (!isUuid(ref as string)) return
+    if (!ref) return
     apiClient().listings.byId.query({ id: ref as string })
       .then((l: any) => setFetched({
         emoji: '🛍️',

@@ -6,7 +6,7 @@ import { containsContactInfo } from '../lib/contactScan'
 
 export const messagesRouter = router({
   thread: protectedProcedure
-    .input(z.object({ listingId: z.string().uuid(), sellerId: z.string().uuid() }))
+    .input(z.object({ listingId: z.string().min(1), sellerId: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       if (input.sellerId === ctx.user.id) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot message yourself' })
