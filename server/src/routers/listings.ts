@@ -39,7 +39,7 @@ export const listingsRouter = router({
     }),
 
   byId: publicProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
       const listing = await ctx.prisma.listing.findUnique({
         where: { id: input.id },
