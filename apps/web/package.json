@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "echo \"(lint temporarily disabled — eslint.config.mjs targets eslint-config-next 15 but v14 is installed; re-enable after ESLint setup)\"",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -34,9 +34,13 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@eslint/js": "^9",
+    "@next/eslint-plugin-next": "14.2.29",
     "eslint": "^9",
-    "eslint-config-next": "14.2.29",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.14.0",
     "tailwindcss": "^4",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.18.0"
   }
 }

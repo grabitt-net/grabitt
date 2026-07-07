@@ -2,17 +2,7 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, protectedProcedure } from '../trpc'
 import { SendMessageInputSchema } from '@grabitt/types'
-
-// Regex patterns for contact info scan (§10.2 — scan BEFORE sending)
-const CONTACT_PATTERNS = [
-  /\b(\+\d{1,3}[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/, // phone
-  /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/, // email
-  /wa\.me\/\d+|whatsapp/i, // WhatsApp links
-]
-
-function containsContactInfo(text: string): boolean {
-  return CONTACT_PATTERNS.some(p => p.test(text))
-}
+import { containsContactInfo } from '../lib/contactScan'
 
 export const messagesRouter = router({
   thread: protectedProcedure
