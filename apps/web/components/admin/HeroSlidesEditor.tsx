@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
+import ImageUploadField from './ImageUploadField'
 
 type Slide = { id: string; heading: string; subheading: string | null; imageUrl: string; linkUrl: string | null; active: boolean; sortOrder: number }
 const EMPTY = { heading: '', subheading: '', imageUrl: '', linkUrl: '', active: true }
@@ -62,9 +63,8 @@ export default function HeroSlidesEditor() {
         <div style={{ display: 'grid', gap: 8 }}>
           <Field label="Heading"><input value={form.heading} onChange={e => setForm(f => ({ ...f, heading: e.target.value }))} style={inp} placeholder="Gran Canaria's local marketplace" /></Field>
           <Field label="Subheading"><input value={form.subheading} onChange={e => setForm(f => ({ ...f, subheading: e.target.value }))} style={inp} placeholder="Buy & sell locally — safely." /></Field>
-          <Field label="Image URL"><input value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} style={inp} placeholder="https://… (wide landscape)" /></Field>
+          <ImageUploadField label="Image" kind="hero" hint="Wide landscape works best." value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} />
           <Field label="Link URL (optional)"><input value={form.linkUrl} onChange={e => setForm(f => ({ ...f, linkUrl: e.target.value }))} style={inp} placeholder="/listings or https://…" /></Field>
-          {form.imageUrl && <img src={form.imageUrl} alt="" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8 }} />}
           <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>
             <input type="checkbox" checked={form.active} onChange={e => setForm(f => ({ ...f, active: e.target.checked }))} /> Show this slide
           </label>

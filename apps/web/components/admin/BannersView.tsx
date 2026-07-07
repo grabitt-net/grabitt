@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
+import ImageUploadField from './ImageUploadField'
 
 const POSITIONS: [string, string][] = [
   ['home_mid', 'Home — Mid ad'],
@@ -74,16 +75,15 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
                 {POSITIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </Field>
-            <div style={{ gridColumn: '1/-1' }}><Field label="Image URL">
-              <input value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} placeholder="https://…" style={inp} />
-            </Field></div>
+            <div style={{ gridColumn: '1/-1' }}>
+              <ImageUploadField label="Banner image" kind="banner" value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} />
+            </div>
             <div style={{ gridColumn: '1/-1' }}><Field label="Link URL (optional)">
               <input value={form.linkUrl} onChange={e => setForm(f => ({ ...f, linkUrl: e.target.value }))} placeholder="https://… or /listings" style={inp} />
             </Field></div>
             <Field label="Start date"><input type="date" value={form.startsAt} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value }))} style={inp} /></Field>
             <Field label="End date"><input type="date" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))} style={inp} /></Field>
           </div>
-          {form.imageUrl && <img src={form.imageUrl} alt="preview" style={{ width: '100%', maxHeight: 140, objectFit: 'cover', borderRadius: 10, marginTop: 12 }} />}
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', cursor: 'pointer' }}>
             <input type="checkbox" checked={form.active} onChange={e => setForm(f => ({ ...f, active: e.target.checked }))} /> Live immediately
           </label>

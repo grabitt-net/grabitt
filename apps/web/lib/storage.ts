@@ -32,6 +32,15 @@ export function listingPhotoPath(listingId: string): string {
   return `listings/${listingId}/${uuid}.jpg`
 }
 
+/**
+ * Generates a storage path for a CMS/homepage image (hero slides, banners).
+ * Pattern: cms/{kind}/{uuid}.jpg
+ */
+export function cmsImagePath(kind: string): string {
+  const uuid = crypto.randomUUID()
+  return `cms/${kind}/${uuid}.jpg`
+}
+
 async function compressImage(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
