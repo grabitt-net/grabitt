@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image } from 'react-native'
+import { useState, useEffect, useCallback } from 'react'
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image } from 'react-native'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../lib/trpc'
 
-// Bespoke Property board (parity with the web/HTML build) — live PropertyListings
-// via property.list, not the old static demo data.
+// Bespoke Property board with advanced search (parity with web /property).
 const TABS: [string, string][] = [
-  ['For Sale', 'sale'], ['To Rent', 'rent'], ['Holiday', 'holiday'], ['Commercial', 'commercial'],
+  ['For Sale', 'sale'], ['To Rent', 'rent'], ['Holiday', 'holiday'],
+  ['Commercial', 'commercial'], ['Land', 'land'], ['New Build', 'new_build'],
 ]
 
 type Prop = {
@@ -17,12 +17,32 @@ type Prop = {
 
 export default function PropertyScreen() {
   const [tab, setTab] = useState(0)
+  const [query, setQuery] = useState('')
+  const [location, setLocation] = useState('')
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
+  const [minBedrooms, setMinBedrooms] = useState(0)
+  const [minBathrooms, setMinBathrooms] = useState(0)
+  const [hasPool, setHasPool] = useState(false)
+  const [hasGarage, setHasGarage] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
   const [items, setItems] = useState<Prop[]>([])
 
-  useEffect(() => {
+  const run = useCallback(async () => {
     const type = TABS[tab][1]
-    apiClient().property.list.query({ type } as any)
-      .then((rows: any[]) => setItems(rows.map(p => {
+    try {
+      const rows: any[] = await apiClient().property.list.query({
+        type,
+        ...(query.trim() ? { query: query.trim() } : {}),
+        ...(location.trim() ? { location: location.trim() } : {}),
+        ...(minPrice ? { minPrice: Number(minPrice) } : {}),
+        ...(maxPrice ? { maxPrice: Number(maxPrice) } : {}),
+        ...(minBedrooms ? { minBedrooms } : {}),
+        ...(minBathrooms ? { minBathrooms } : {}),
+        ...(hasPool ? { hasPool: true } : {}),
+        ...(hasGarage ? { hasGarage: true } : {}),
+      } as any)
+      setItems(rows.map(p => {
         const l = p.listing ?? {}
         const price = Number(l.price ?? 0)
         const tag = p.hasPool ? 'Pool' : p.hasGarage ? 'Garage' : p.community || (p.m2 ? `${Number(p.m2)}m²` : '')
@@ -37,17 +57,62 @@ export default function PropertyScreen() {
           tag,
           image: Array.isArray(l.images) ? l.images[0] : undefined,
         }
-      })))
-      .catch(() => setItems([]))
-  }, [tab])
+      }))
+    } catch { setItems([]) }
+  }, [tab, query, location, minPrice, maxPrice, minBedrooms, minBathrooms, hasPool, hasGarage])
+
+  // Structured filters re-run immediately; free text / price run on submit.
+  useEffect(() => { run() }, [tab, minBedrooms, minBathrooms, hasPool, hasGarage]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const stepper = (label: string, val: number, set: (n: number) => void, max: number) => (
+    <View style={s.stepper}>
+      <Text style={s.stepperLabel}>{label}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <TouchableOpacity onPress={() => set(Math.max(0, val - 1))} style={s.stepBtn}><Text style={s.stepBtnText}>−</Text></TouchableOpacity>
+        <Text style={s.stepVal}>{val === 0 ? 'Any' : `${val}+`}</Text>
+        <TouchableOpacity onPress={() => set(Math.min(max, val + 1))} style={s.stepBtn}><Text style={s.stepBtnText}>+</Text></TouchableOpacity>
+      </View>
+    </View>
+  )
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()}><Text style={{ fontSize: 22, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading}>🏠 Property</Text>
+        <TouchableOpacity onPress={() => setShowFilters(v => !v)}><Text style={s.filterToggle}>{showFilters ? 'Hide' : 'Filters'}</Text></TouchableOpacity>
       </View>
 
+      {/* Keyword search */}
+      <View style={s.searchRow}>
+        <View style={s.searchBox}>
+          <Text style={{ fontSize: 13, marginRight: 6 }}>🔍</Text>
+          <TextInput value={query} onChangeText={setQuery} placeholder="Search property…" placeholderTextColor="#aaa"
+            style={s.searchInput} returnKeyType="search" onSubmitEditing={run} />
+        </View>
+      </View>
+
+      {/* Advanced filters */}
+      {showFilters && (
+        <View style={s.filters}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TextInput value={location} onChangeText={setLocation} placeholder="Location" placeholderTextColor="#aaa" style={[s.input, { flex: 1 }]} onSubmitEditing={run} returnKeyType="search" />
+            <TextInput value={minPrice} onChangeText={setMinPrice} placeholder="Min €" placeholderTextColor="#aaa" keyboardType="numeric" style={[s.input, { width: 80 }]} onSubmitEditing={run} returnKeyType="search" />
+            <TextInput value={maxPrice} onChangeText={setMaxPrice} placeholder="Max €" placeholderTextColor="#aaa" keyboardType="numeric" style={[s.input, { width: 80 }]} onSubmitEditing={run} returnKeyType="search" />
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            {stepper('Beds', minBedrooms, setMinBedrooms, 6)}
+            {stepper('Baths', minBathrooms, setMinBathrooms, 4)}
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+            <TouchableOpacity onPress={() => setHasPool(v => !v)} style={[s.checkChip, hasPool && s.checkChipOn]}><Text style={[s.checkChipText, hasPool && s.checkChipTextOn]}>{hasPool ? '✓ ' : ''}Pool</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => setHasGarage(v => !v)} style={[s.checkChip, hasGarage && s.checkChipOn]}><Text style={[s.checkChipText, hasGarage && s.checkChipTextOn]}>{hasGarage ? '✓ ' : ''}Garage</Text></TouchableOpacity>
+            <TouchableOpacity onPress={run} style={s.searchBtn}><Text style={s.searchBtnText}>Search</Text></TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Type tabs */}
       <View style={{ paddingVertical: 8 }}>
         <FlatList
           data={TABS}
@@ -89,7 +154,7 @@ export default function PropertyScreen() {
             </View>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<View style={s.empty}><Text style={{ fontSize: 40, marginBottom: 10 }}>🏠</Text><Text style={s.emptyText}>No property listed here right now.</Text></View>}
+        ListEmptyComponent={<View style={s.empty}><Text style={{ fontSize: 40, marginBottom: 10 }}>🏠</Text><Text style={s.emptyText}>No property matches your search.</Text></View>}
       />
     </SafeAreaView>
   )
@@ -97,7 +162,24 @@ export default function PropertyScreen() {
 
 const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: '#f0ebe4' },
-  heading: { fontFamily: 'Comfortaa', fontSize: 20, fontWeight: '700', color: colors.dark },
+  heading: { flex: 1, fontFamily: 'Comfortaa', fontSize: 20, fontWeight: '700', color: colors.dark },
+  filterToggle: { fontFamily: 'Nunito', fontSize: 13, fontWeight: '800', color: colors.orange },
+  searchRow: { paddingHorizontal: 12, paddingTop: 10 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f5f0e8', borderRadius: 50, paddingHorizontal: 14, paddingVertical: 8 },
+  searchInput: { flex: 1, fontFamily: 'Nunito', fontSize: 14, color: colors.dark },
+  filters: { paddingHorizontal: 12, paddingTop: 10 },
+  input: { backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#e5dccd', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, fontFamily: 'Nunito', fontSize: 13, color: colors.dark },
+  stepper: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#faf6ef', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5, borderColor: '#e5dccd' },
+  stepperLabel: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: '#555' },
+  stepBtn: { width: 26, height: 26, borderRadius: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5dccd', alignItems: 'center', justifyContent: 'center' },
+  stepBtnText: { fontSize: 16, fontWeight: '900', color: colors.orange, lineHeight: 18 },
+  stepVal: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: colors.dark, minWidth: 30, textAlign: 'center' },
+  checkChip: { borderWidth: 1.5, borderColor: '#e5dccd', borderRadius: 50, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#fff' },
+  checkChipOn: { backgroundColor: colors.orange, borderColor: colors.orange },
+  checkChipText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: '#555' },
+  checkChipTextOn: { color: '#fff' },
+  searchBtn: { marginLeft: 'auto', backgroundColor: colors.orange, borderRadius: 10, paddingHorizontal: 18, paddingVertical: 9 },
+  searchBtnText: { fontFamily: 'Nunito', fontSize: 13, fontWeight: '800', color: '#fff' },
   chip: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 50, backgroundColor: '#f5f0e8' },
   chipActive: { backgroundColor: colors.orange },
   chipLabel: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: '#555' },

@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 
 // Category tiles now use real photography (Unsplash) layered over the brand
@@ -30,9 +31,13 @@ export default function CategoryGrid() {
   const [active, setActive] = useState<string | null>(null)
   const [failed, setFailed] = useState<Record<string, boolean>>({})
   const { openPanel } = usePanel()
+  const router = useRouter()
 
   const handleTap = (cat: typeof categories[0]) => {
     setActive(cat.name)
+    // Jobs and Property have dedicated full pages with advanced search.
+    if (cat.name === 'Jobs') return void router.push('/jobs')
+    if (cat.name === 'Property') return void router.push('/property')
     if (cat.name === 'Grab It Now') {
       openPanel('grabit')
     } else {

@@ -1,14 +1,16 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import Icon from './Icon'
 
 export default function Hero() {
   const { openPanel } = usePanel()
+  const router = useRouter()
 
   const quickActions = [
     { label: 'Sponsorship', action: () => openPanel('advertise') },
-    { label: 'Find Work', action: () => openPanel('dept', { name: 'Jobs', icon: '💼', grad: 'linear-gradient(135deg,#2193b0,#6dd5ed)' }) },
-    { label: 'Find Home', action: () => openPanel('dept', { name: 'Property', icon: '🏠', grad: 'linear-gradient(135deg,#e96c2a,#f5a623)' }) },
+    { label: 'Find Work', action: () => router.push('/jobs') },
+    { label: 'Find Home', action: () => router.push('/property') },
     { label: 'Employers', action: () => openPanel('employers') },
     { label: 'Business', action: () => openPanel('business') },
   ]

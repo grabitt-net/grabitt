@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView } from 'react-native'
+import { useState, useEffect, useCallback } from 'react'
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView } from 'react-native'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../lib/trpc'
 
-// Bespoke Jobs board (parity with the web/HTML build) — live JobListings via
-// jobs.list, not the old static demo data.
+// Bespoke Jobs board with advanced search (parity with web /jobs).
 const JOB_TYPES: [string, string | undefined][] = [
   ['All', undefined], ['Full Time', 'full_time'], ['Part Time', 'part_time'],
   ['Contract', 'contract'], ['Temp', 'temporary'], ['Volunteer', 'volunteer'],
@@ -39,12 +38,24 @@ function salaryLabel(min?: string | number | null, max?: string | number | null)
 
 export default function JobsScreen() {
   const [filter, setFilter] = useState(0)
+  const [query, setQuery] = useState('')
+  const [location, setLocation] = useState('')
+  const [minSalary, setMinSalary] = useState('')
+  const [remote, setRemote] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
   const [jobs, setJobs] = useState<Job[]>([])
 
-  useEffect(() => {
+  const run = useCallback(async () => {
     const type = JOB_TYPES[filter][1]
-    apiClient().jobs.list.query({ ...(type ? { type } : {}) } as any)
-      .then((rows: any[]) => setJobs(rows.map(j => ({
+    try {
+      const rows: any[] = await apiClient().jobs.list.query({
+        ...(type ? { type } : {}),
+        ...(query.trim() ? { query: query.trim() } : {}),
+        ...(location.trim() ? { location: location.trim() } : {}),
+        ...(minSalary ? { minSalary: Number(minSalary) } : {}),
+        ...(remote ? { remote: true } : {}),
+      } as any)
+      setJobs(rows.map(j => ({
         ref: j.listing?.id ?? j.listingId ?? j.id,
         title: j.jobTitle ?? j.listing?.title ?? 'Job',
         company: j.company ?? '',
@@ -53,17 +64,47 @@ export default function JobsScreen() {
         type: TYPE_LABEL[j.type] ?? j.type ?? '',
         remote: !!j.remote,
         posted: relTime(j.createdAt ?? Date.now()),
-      }))))
-      .catch(() => setJobs([]))
-  }, [filter])
+      })))
+    } catch { setJobs([]) }
+  }, [filter, query, location, minSalary, remote])
+
+  // Structured filters re-run immediately; free text runs on submit.
+  useEffect(() => { run() }, [filter, remote]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()}><Text style={{ fontSize: 22, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading}>💼 Jobs</Text>
+        <TouchableOpacity onPress={() => setShowFilters(v => !v)}><Text style={s.filterToggle}>{showFilters ? 'Hide' : 'Filters'}</Text></TouchableOpacity>
       </View>
 
+      {/* Keyword search */}
+      <View style={s.searchRow}>
+        <View style={s.searchBox}>
+          <Text style={{ fontSize: 13, marginRight: 6 }}>🔍</Text>
+          <TextInput value={query} onChangeText={setQuery} placeholder="Job title or company…" placeholderTextColor="#aaa"
+            style={s.searchInput} returnKeyType="search" onSubmitEditing={run} />
+        </View>
+      </View>
+
+      {/* Advanced filters */}
+      {showFilters && (
+        <View style={s.filters}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TextInput value={location} onChangeText={setLocation} placeholder="Location" placeholderTextColor="#aaa" style={[s.input, { flex: 1 }]} onSubmitEditing={run} returnKeyType="search" />
+            <TextInput value={minSalary} onChangeText={setMinSalary} placeholder="Min €/mo" placeholderTextColor="#aaa" keyboardType="numeric" style={[s.input, { width: 100 }]} onSubmitEditing={run} returnKeyType="search" />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 }}>
+            <TouchableOpacity onPress={() => setRemote(v => !v)} style={[s.checkChip, remote && s.checkChipOn]}>
+              <Text style={[s.checkChipText, remote && s.checkChipTextOn]}>{remote ? '✓ ' : ''}Remote only</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={run} style={s.searchBtn}><Text style={s.searchBtnText}>Search</Text></TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Type chips */}
       <View style={{ paddingVertical: 8 }}>
         <FlatList
           data={JOB_TYPES}
@@ -98,7 +139,7 @@ export default function JobsScreen() {
             <Text style={s.posted}>{item.posted}</Text>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<View style={s.empty}><Text style={{ fontSize: 40, marginBottom: 10 }}>💼</Text><Text style={s.emptyText}>No jobs posted right now.</Text></View>}
+        ListEmptyComponent={<View style={s.empty}><Text style={{ fontSize: 40, marginBottom: 10 }}>💼</Text><Text style={s.emptyText}>No jobs match your search.</Text></View>}
       />
     </SafeAreaView>
   )
@@ -106,7 +147,19 @@ export default function JobsScreen() {
 
 const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: '#f0ebe4' },
-  heading: { fontFamily: 'Comfortaa', fontSize: 20, fontWeight: '700', color: colors.dark },
+  heading: { flex: 1, fontFamily: 'Comfortaa', fontSize: 20, fontWeight: '700', color: colors.dark },
+  filterToggle: { fontFamily: 'Nunito', fontSize: 13, fontWeight: '800', color: colors.orange },
+  searchRow: { paddingHorizontal: 12, paddingTop: 10 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f5f0e8', borderRadius: 50, paddingHorizontal: 14, paddingVertical: 8 },
+  searchInput: { flex: 1, fontFamily: 'Nunito', fontSize: 14, color: colors.dark },
+  filters: { paddingHorizontal: 12, paddingTop: 10 },
+  input: { backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#e5dccd', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, fontFamily: 'Nunito', fontSize: 13, color: colors.dark },
+  checkChip: { borderWidth: 1.5, borderColor: '#e5dccd', borderRadius: 50, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#fff' },
+  checkChipOn: { backgroundColor: colors.orange, borderColor: colors.orange },
+  checkChipText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: '#555' },
+  checkChipTextOn: { color: '#fff' },
+  searchBtn: { marginLeft: 'auto', backgroundColor: colors.orange, borderRadius: 10, paddingHorizontal: 18, paddingVertical: 9 },
+  searchBtnText: { fontFamily: 'Nunito', fontSize: 13, fontWeight: '800', color: '#fff' },
   chip: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 50, backgroundColor: '#f5f0e8' },
   chipActive: { backgroundColor: colors.orange },
   chipLabel: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: '#555' },
