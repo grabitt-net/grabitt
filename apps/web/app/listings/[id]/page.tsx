@@ -1,193 +1,153 @@
-import { createClient } from '@/lib/supabase-server'
-import { notFound } from 'next/navigation'
+'use client'
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import BottomNav from '@/components/marketplace/BottomNav'
+import { createTrpcClient } from '@/lib/trpc'
+import { DEPT_LABEL, COND_LABEL, deptEmoji } from '@/lib/listingMap'
 import MessageButton from '@/components/marketplace/MessageButton'
 
-const conditionLabel: Record<string, string> = {
-  new: 'New', like_new: 'Like New', good: 'Good', fair: 'Fair', poor: 'Poor',
+const gradeEmoji: Record<string, string> = { grabber: '🟠', dealer: '🟡', trader: '🔵', pro: '⭐' }
+const JOB_TYPE: Record<string, string> = { full_time: 'Full Time', part_time: 'Part Time', contract: 'Contract', temporary: 'Temp', volunteer: 'Volunteer' }
+const PROP_TYPE: Record<string, string> = { sale: 'For Sale', rent: 'To Rent', holiday: 'Holiday', commercial: 'Commercial', land: 'Land', new_build: 'New Build' }
+
+function salaryLabel(min?: number | string | null, max?: number | string | null) {
+  const lo = min != null ? Number(min) : null, hi = max != null ? Number(max) : null
+  if (lo && hi) return `€${lo.toLocaleString()}–${hi.toLocaleString()}/mo`
+  if (lo) return `€${lo.toLocaleString()}/mo`
+  if (hi) return `up to €${hi.toLocaleString()}/mo`
+  return 'Negotiable'
 }
 
-const typeLabel: Record<string, string> = {
-  sale: 'For Sale', rent: 'For Rent', service: 'Service', wanted: 'Wanted', free: 'Free',
-}
+export default function ListingDetailPage() {
+  const { id } = useParams<{ id: string }>()
+  const [listing, setListing] = useState<any>(null)
+  const [state, setState] = useState<'loading' | 'ready' | 'notfound'>('loading')
 
-export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const supabase = await createClient()
+  useEffect(() => {
+    createTrpcClient().listings.byId.query({ id })
+      .then(l => { setListing(l); setState('ready') })
+      .catch(() => setState('notfound'))
+  }, [id])
 
-  const { data: listing } = await supabase
-    .from('listings')
-    .select(`
-      *,
-      profiles!seller_id (id, full_name, grade, seller_rating, seller_review_count, avatar_url, created_at),
-      categories!category_id (name, slug, icon)
-    `)
-    .eq('id', id)
-    .single()
+  if (state === 'loading') return <Centered>Loading…</Centered>
+  if (state === 'notfound' || !listing) return <Centered>This listing is no longer available. <Link href="/" style={{ color: 'var(--orange)', fontWeight: 800 }}>Back home</Link></Centered>
 
-  if (!listing) notFound()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  const isOwner = user?.id === listing.seller_id
-  const seller = listing.profiles as any
-  const category = listing.categories as any
-
-  const gradeEmoji: Record<string, string> = {
-    grabber: '🟠', dealer: '🟡', trader: '🔵', pro: '⭐',
-  }
+  const job = listing.jobListing
+  const prop = listing.propertyListing
+  const seller = listing.seller
+  const isRent = prop?.type === 'rent'
+  const heroImg = Array.isArray(listing.images) ? listing.images[0] : null
 
   return (
-    <main style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: 100 }}>
-      {/* Header */}
-      <header style={{
-        background: 'var(--sand)', padding: '12px 16px',
-        display: 'flex', alignItems: 'center', gap: 12,
-        borderBottom: '1.5px solid var(--sand2)',
-        position: 'sticky', top: 0, zIndex: 100,
-      }}>
-        <Link href="/listings" style={{ fontSize: 22, textDecoration: 'none', color: 'var(--dark)' }}>←</Link>
+    <main style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 100 }}>
+      <header style={{ background: 'var(--sand)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1.5px solid var(--sand2)', position: 'sticky', top: 0, zIndex: 100 }}>
+        <Link href={job ? '/jobs' : prop ? '/property' : '/'} style={{ fontSize: 22, textDecoration: 'none', color: 'var(--dark)' }}>←</Link>
         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', flex: 1 }}>
-          {category?.name ?? 'Listing'}
+          {DEPT_LABEL[listing.department] ?? 'Listing'}
         </span>
-        {isOwner && (
-          <Link href={`/listings/${id}/edit`} style={{
-            background: '#f0f0f0', color: '#555', borderRadius: 50,
-            padding: '6px 14px', fontSize: 12, fontWeight: 800,
-            fontFamily: 'var(--font-nunito)', textDecoration: 'none',
-          }}>Edit</Link>
-        )}
       </header>
 
-      {/* Image placeholder */}
-      <div style={{
-        height: 240, background: 'var(--sand)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 80,
-      }}>
-        {category?.icon ?? '📦'}
+      <div style={{ height: 240, background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 80, position: 'relative', overflow: 'hidden' }}>
+        {heroImg ? <img src={heroImg} alt={listing.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : deptEmoji(listing.department)}
       </div>
 
-      {/* Content */}
-      <div style={{ padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-        {/* Title + price */}
-        <div style={{ background: '#fff', borderRadius: 16, padding: '16px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+      <div style={{ padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 720, margin: '0 auto' }}>
+        <div style={cardBox}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-            <span style={{
-              background: 'var(--sand)', color: 'var(--orange)',
-              borderRadius: 50, padding: '3px 10px',
-              fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800,
-            }}>
-              {typeLabel[listing.listing_type] ?? listing.listing_type}
-            </span>
-            {listing.condition && (
-              <span style={{
-                background: '#f0f0f0', color: '#555',
-                borderRadius: 50, padding: '3px 10px',
-                fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800,
-              }}>
-                {conditionLabel[listing.condition]}
-              </span>
-            )}
+            {job && <Chip>{JOB_TYPE[job.type] ?? job.type}</Chip>}
+            {prop && <Chip>{PROP_TYPE[prop.type] ?? prop.type}</Chip>}
+            {listing.condition && !job && !prop && <Chip muted>{COND_LABEL[listing.condition] ?? listing.condition}</Chip>}
+            {job?.remote && <Chip>Remote</Chip>}
           </div>
-          <h1 style={{
-            fontFamily: 'var(--font-nunito)', fontSize: 18, fontWeight: 900,
-            color: 'var(--dark)', lineHeight: 1.3, marginBottom: 8,
-          }}>
-            {listing.title}
+          <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.3, marginBottom: 8 }}>
+            {job?.jobTitle ?? listing.title}
           </h1>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 26, fontWeight: 900, color: 'var(--orange)' }}>
-            {listing.listing_type === 'free' ? 'Free' : listing.price ? `€${Number(listing.price).toLocaleString()}` : 'Contact for price'}
+            {job ? salaryLabel(job.salaryMin, job.salaryMax) : `€${Number(listing.price).toLocaleString()}${isRent ? '/mo' : ''}`}
           </div>
-          {listing.location && (
-            <div style={{ fontSize: 12, color: '#888', marginTop: 6, fontFamily: 'var(--font-nunito)' }}>
-              📍 {listing.location}
+          <div style={{ fontSize: 12, color: '#888', marginTop: 6, fontFamily: 'var(--font-nunito)' }}>
+            📍 {job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')}
+          </div>
+
+          {/* Job facts */}
+          {job && (
+            <div style={factRow}>
+              <Fact label="Company" value={job.company} />
+              {job.skills?.length ? <Fact label="Skills" value={job.skills.join(', ')} /> : null}
+            </div>
+          )}
+          {/* Property facts */}
+          {prop && (
+            <div style={factRow}>
+              {prop.bedrooms != null && <Fact label="Bedrooms" value={String(prop.bedrooms)} />}
+              {prop.bathrooms != null && <Fact label="Bathrooms" value={String(prop.bathrooms)} />}
+              {prop.m2 != null && <Fact label="Size" value={`${Number(prop.m2)}m²`} />}
+              {prop.hasPool && <Fact label="Pool" value="Yes" />}
+              {prop.hasGarage && <Fact label="Garage" value="Yes" />}
             </div>
           )}
         </div>
 
-        {/* Description */}
         {listing.description && (
-          <div style={{ background: '#fff', borderRadius: 16, padding: '16px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+          <div style={cardBox}>
             <div style={sectionTitle}>Description</div>
-            <p style={{ fontSize: 13, color: '#444', lineHeight: 1.6, fontFamily: 'var(--font-comfortaa)' }}>
-              {listing.description}
-            </p>
+            <p style={{ fontSize: 13, color: '#444', lineHeight: 1.6, fontFamily: 'var(--font-comfortaa)', whiteSpace: 'pre-wrap' }}>{listing.description}</p>
           </div>
         )}
 
-        {/* Seller */}
-        <div style={{ background: '#fff', borderRadius: 16, padding: '16px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
-          <div style={sectionTitle}>Seller</div>
+        <div style={cardBox}>
+          <div style={sectionTitle}>{job ? 'Employer' : 'Seller'}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: '50%', background: 'var(--orange)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 18, color: '#fff', fontWeight: 900, fontFamily: 'var(--font-nunito)',
-              flexShrink: 0,
-            }}>
-              {seller?.full_name?.[0]?.toUpperCase() ?? '?'}
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#fff', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>
+              {(seller?.displayName ?? job?.company ?? '?')[0]?.toUpperCase()}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>
-                {seller?.full_name ?? 'Grabitt User'}
-                {seller?.grade && (
-                  <span style={{ marginLeft: 6, fontSize: 12 }}>{gradeEmoji[seller.grade]}</span>
-                )}
+                {job?.company ?? seller?.displayName ?? 'Grabitt User'}
+                {seller?.grade && <span style={{ marginLeft: 6, fontSize: 12 }}>{gradeEmoji[seller.grade]}</span>}
               </div>
               <div style={{ fontSize: 11, color: '#888', marginTop: 2, fontFamily: 'var(--font-nunito)' }}>
-                {seller?.seller_rating
-                  ? `⭐ ${seller.seller_rating} (${seller.seller_review_count} reviews)`
-                  : 'New seller'}
+                {seller?.avgRating ? `⭐ ${seller.avgRating} · ${seller.salesCount ?? 0} sales` : 'New on Grabitt'}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Safety notice */}
-        <div style={{
-          background: '#f0fdf4', borderRadius: 14, padding: '12px 14px',
-          border: '1px solid #c8e6c9',
-        }}>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#2e7d32', marginBottom: 4 }}>
-            🛡️ Grabitt Buyer Protection
-          </div>
+        <div style={{ background: '#f0fdf4', borderRadius: 14, padding: '12px 14px', border: '1px solid #c8e6c9' }}>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#2e7d32', marginBottom: 4 }}>🛡️ Grabitt Buyer Protection</div>
           <div style={{ fontSize: 11, color: '#555', fontFamily: 'var(--font-nunito)', lineHeight: 1.5 }}>
-            Pay through Grabitt and your money is held safely until you confirm delivery.
+            {job ? 'Apply and message safely through Grabitt.' : 'Pay through Grabitt and your money is held in escrow until you confirm handover.'}
           </div>
         </div>
       </div>
 
-      {/* Sticky buy bar */}
-      {!isOwner && (
-        <div style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0,
-          background: '#fff', borderTop: '1px solid #eee',
-          padding: '12px 16px max(12px, env(safe-area-inset-bottom))',
-          display: 'flex', gap: 10, zIndex: 99,
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
-        }}>
-          <MessageButton listingId={id} sellerId={listing.seller_id} />
-          {listing.listing_type !== 'wanted' && (
-            <button style={{
-              flex: 2, background: 'var(--orange)', color: '#fff',
-              border: 'none', borderRadius: 14, padding: '14px 20px',
-              fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(255,69,0,0.35)',
-            }}>
-              {listing.listing_type === 'free' ? 'Claim for Free' : listing.listing_type === 'service' ? 'Book Now' : 'Buy Now'}
-            </button>
-          )}
+      {seller?.id && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #eee', padding: '12px 16px max(12px, env(safe-area-inset-bottom))', display: 'flex', gap: 10, zIndex: 99, boxShadow: '0 -4px 20px rgba(0,0,0,0.1)', maxWidth: 720, margin: '0 auto' }}>
+          <MessageButton listingId={id} sellerId={seller.id} />
+          <button style={{ flex: 2, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 14px rgba(255,69,0,0.35)' }}>
+            {job ? 'Apply / Enquire' : prop ? 'Enquire' : 'Buy Now'}
+          </button>
         </div>
       )}
-
-      {isOwner && <BottomNav />}
     </main>
   )
 }
 
-const sectionTitle: React.CSSProperties = {
-  fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800,
-  color: '#aaa', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10,
+function Centered({ children }: { children: React.ReactNode }) {
+  return <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40, textAlign: 'center', fontFamily: 'var(--font-nunito)', color: '#888', gap: 6, flexWrap: 'wrap' }}>{children}</main>
 }
+function Chip({ children, muted }: { children: React.ReactNode; muted?: boolean }) {
+  return <span style={{ background: muted ? '#f0f0f0' : 'var(--sand)', color: muted ? '#555' : 'var(--orange)', borderRadius: 50, padding: '3px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800 }}>{children}</span>
+}
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ flex: '1 0 40%' }}>
+      <div style={{ fontSize: 9, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: 'var(--font-nunito)' }}>{label}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--dark)', fontFamily: 'var(--font-nunito)', marginTop: 2 }}>{value}</div>
+    </div>
+  )
+}
+
+const cardBox: React.CSSProperties = { background: '#fff', borderRadius: 16, padding: '16px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }
+const factRow: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 14, paddingTop: 14, borderTop: '1px solid #f0ebe4' }
+const sectionTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }
