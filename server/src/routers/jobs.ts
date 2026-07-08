@@ -36,6 +36,23 @@ export const jobsRouter = router({
       })
     ),
 
+  // Distinct locations of active jobs (+counts) — powers the location filters,
+  // which update automatically as jobs are posted.
+  locations: publicProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.prisma.jobListing.findMany({
+      where: { listing: { status: 'active' } },
+      select: { listing: { select: { location: true } } },
+    })
+    const counts = new Map<string, number>()
+    for (const r of rows) {
+      const loc = r.listing?.location?.trim()
+      if (loc) counts.set(loc, (counts.get(loc) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .map(([location, count]) => ({ location, count }))
+      .sort((a, b) => b.count - a.count || a.location.localeCompare(b.location))
+  }),
+
   // Post a Job — creates the base Listing (department=jobs) plus the JobListing
   // detail row in one transaction. The poster is the employer.
   create: protectedProcedure

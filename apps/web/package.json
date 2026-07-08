@@ -27,7 +27,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "server": "workspace:*",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "leaflet": "^1.9.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -41,6 +42,7 @@
     "globals": "^15.14.0",
     "tailwindcss": "^4",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.18.0"
+    "typescript-eslint": "^8.18.0",
+    "@types/leaflet": "^1.9.12"
   }
 }
