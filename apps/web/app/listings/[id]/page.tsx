@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createTrpcClient } from '@/lib/trpc'
+import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { DEPT_LABEL, COND_LABEL, deptEmoji } from '@/lib/listingMap'
 import MessageButton from '@/components/marketplace/MessageButton'
 
@@ -24,6 +25,7 @@ export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [listing, setListing] = useState<any>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'notfound'>('loading')
+  const [meId, setMeId] = useState<string | null>(null)
 
   useEffect(() => {
     createTrpcClient().listings.byId.query({ id })
@@ -31,12 +33,23 @@ export default function ListingDetailPage() {
       .catch(() => setState('notfound'))
   }, [id])
 
+  // Resolve the signed-in user's id so we can hide "Enquire/Apply" on your own listing.
+  useEffect(() => {
+    (async () => {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      if (!token) return
+      try { const me: any = await trpcAuthed().users.me.query(); setMeId(me?.id ?? null) } catch { /* ignore */ }
+    })()
+  }, [])
+
   if (state === 'loading') return <Centered>Loading…</Centered>
   if (state === 'notfound' || !listing) return <Centered>This listing is no longer available. <Link href="/" style={{ color: 'var(--orange)', fontWeight: 800 }}>Back home</Link></Centered>
 
   const job = listing.jobListing
   const prop = listing.propertyListing
   const seller = listing.seller
+  const isOwner = !!meId && meId === seller?.id
   const isRent = prop?.type === 'rent'
   const heroImg = Array.isArray(listing.images) ? listing.images[0] : null
 
@@ -150,8 +163,12 @@ export default function ListingDetailPage() {
       </div>
 
       {seller?.id && (
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #eee', padding: '12px 16px max(12px, env(safe-area-inset-bottom))', display: 'flex', gap: 10, zIndex: 99, boxShadow: '0 -4px 20px rgba(0,0,0,0.1)', maxWidth: 720, margin: '0 auto' }}>
-          {(job || prop) ? (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #eee', padding: '12px 16px max(12px, env(safe-area-inset-bottom))', display: 'flex', gap: 10, zIndex: 99, boxShadow: '0 -4px 20px rgba(0,0,0,0.1)', maxWidth: 720, margin: '0 auto', alignItems: 'center' }}>
+          {isOwner ? (
+            <div style={{ flex: 1, textAlign: 'center', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 700, color: '#888' }}>
+              This is your {job ? 'job posting' : prop ? 'property listing' : 'listing'} — {job ? 'applicants' : 'enquiries'} appear in <Link href="/messages" style={{ color: 'var(--orange)', fontWeight: 800 }}>Messages</Link>.
+            </div>
+          ) : (job || prop) ? (
             // Jobs/property: the primary action is to contact the seller/employer.
             <MessageButton listingId={id} sellerId={seller.id} label={job ? 'Apply / Enquire' : 'Enquire'} primary flex={1} />
           ) : (
