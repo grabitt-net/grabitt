@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createTrpcClient } from '@/lib/trpc'
 import BottomNav from '@/components/marketplace/BottomNav'
+import SiteHeader from '@/components/marketplace/SiteHeader'
 
 const TYPES: { label: string; value?: string }[] = [
   { label: 'All' }, { label: 'For Sale', value: 'sale' }, { label: 'To Rent', value: 'rent' },
@@ -47,9 +48,9 @@ export default function PropertyPage() {
 
   return (
     <main style={{ background: '#f7f4ee', minHeight: '100dvh', paddingBottom: 90 }}>
-      <header style={{ background: 'var(--sand)', padding: '12px 14px', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1.5px solid var(--sand2)' }}>
+      <SiteHeader />
+      <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <Link href="/" style={{ textDecoration: 'none', fontSize: 22, color: 'var(--orange)', fontWeight: 700 }}>‹</Link>
           <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>🏠 Property</span>
         </div>
 

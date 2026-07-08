@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { createTrpcClient } from '@/lib/trpc'
 import { geocodeGC } from '@/lib/gcGeo'
 import BottomNav from '@/components/marketplace/BottomNav'
+import SiteHeader from '@/components/marketplace/SiteHeader'
 import type { JobPoint } from '@/components/marketplace/JobsMap'
 
 // Map is client-only (Leaflet needs window) — load without SSR.
@@ -70,9 +71,9 @@ export default function JobsPage() {
 
   return (
     <main style={{ background: '#f7f4ee', minHeight: '100dvh', paddingBottom: 90 }}>
-      <header style={{ background: 'var(--sand)', padding: '12px 14px', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1.5px solid var(--sand2)' }}>
+      <SiteHeader />
+      <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <Link href="/" style={{ textDecoration: 'none', fontSize: 22, color: 'var(--orange)', fontWeight: 700 }}>‹</Link>
           <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>💼 Jobs</span>
           <Link href="/jobs/new" style={{ marginLeft: 'auto', textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>+ Post a Job</Link>
         </div>

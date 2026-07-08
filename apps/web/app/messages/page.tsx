@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import BottomNav from '@/components/marketplace/BottomNav'
+import SiteHeader from '@/components/marketplace/SiteHeader'
 import { prisma } from 'server/src/db'
 
 export const runtime = 'nodejs'
@@ -30,10 +31,10 @@ export default async function MessagesPage() {
 
   return (
     <main style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: 90 }}>
+      <SiteHeader />
       <header style={{
         background: 'var(--sand)', padding: '14px 16px',
         borderBottom: '1.5px solid var(--sand2)',
-        position: 'sticky', top: 0, zIndex: 100,
       }}>
         <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>
           Messages

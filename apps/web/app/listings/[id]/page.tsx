@@ -6,6 +6,7 @@ import { createTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { DEPT_LABEL, COND_LABEL, deptEmoji } from '@/lib/listingMap'
 import MessageButton from '@/components/marketplace/MessageButton'
+import SiteHeader from '@/components/marketplace/SiteHeader'
 
 const gradeEmoji: Record<string, string> = { grabber: '🟠', dealer: '🟡', trader: '🔵', pro: '⭐' }
 const JOB_TYPE: Record<string, string> = { full_time: 'Full Time', part_time: 'Part Time', contract: 'Contract', temporary: 'Temp', volunteer: 'Volunteer' }
@@ -55,7 +56,8 @@ export default function ListingDetailPage() {
 
   return (
     <main style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 100 }}>
-      <header style={{ background: 'var(--sand)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1.5px solid var(--sand2)', position: 'sticky', top: 0, zIndex: 100 }}>
+      <SiteHeader />
+      <header style={{ background: 'var(--sand)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1.5px solid var(--sand2)' }}>
         <Link href={job ? '/jobs' : prop ? '/property' : '/'} style={{ fontSize: 22, textDecoration: 'none', color: 'var(--dark)' }}>←</Link>
         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', flex: 1 }}>
           {DEPT_LABEL[listing.department] ?? 'Listing'}

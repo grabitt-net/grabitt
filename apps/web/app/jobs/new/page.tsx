@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
+import SiteHeader from '@/components/marketplace/SiteHeader'
 
 const TYPES: [string, string][] = [
   ['Full Time', 'full_time'], ['Part Time', 'part_time'], ['Contract', 'contract'], ['Temp', 'temporary'], ['Volunteer', 'volunteer'],
@@ -61,7 +62,8 @@ export default function PostJobPage() {
 
   return (
     <main style={{ background: '#f7f4ee', minHeight: '100dvh', paddingBottom: 40 }}>
-      <header style={{ background: 'var(--sand)', padding: '12px 14px', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1.5px solid var(--sand2)', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <SiteHeader />
+      <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <Link href="/jobs" style={{ textDecoration: 'none', fontSize: 22, color: 'var(--orange)', fontWeight: 700 }}>‹</Link>
         <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>💼 Post a Job</span>
       </header>
