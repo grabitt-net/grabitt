@@ -151,10 +151,17 @@ export default function ListingDetailPage() {
 
       {seller?.id && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #eee', padding: '12px 16px max(12px, env(safe-area-inset-bottom))', display: 'flex', gap: 10, zIndex: 99, boxShadow: '0 -4px 20px rgba(0,0,0,0.1)', maxWidth: 720, margin: '0 auto' }}>
-          <MessageButton listingId={id} sellerId={seller.id} />
-          <button style={{ flex: 2, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 14px rgba(255,69,0,0.35)' }}>
-            {job ? 'Apply / Enquire' : prop ? 'Enquire' : 'Buy Now'}
-          </button>
+          {(job || prop) ? (
+            // Jobs/property: the primary action is to contact the seller/employer.
+            <MessageButton listingId={id} sellerId={seller.id} label={job ? 'Apply / Enquire' : 'Enquire'} primary flex={1} />
+          ) : (
+            <>
+              <MessageButton listingId={id} sellerId={seller.id} />
+              <button style={{ flex: 2, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 14px rgba(255,69,0,0.35)' }}>
+                Buy Now
+              </button>
+            </>
+          )}
         </div>
       )}
     </main>

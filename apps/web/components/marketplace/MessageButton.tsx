@@ -3,9 +3,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 
-interface Props { listingId: string; sellerId: string }
+interface Props { listingId: string; sellerId: string; label?: string; primary?: boolean; flex?: number }
 
-export default function MessageButton({ listingId, sellerId }: Props) {
+export default function MessageButton({ listingId, sellerId, label = '💬 Message', primary = false, flex = 1 }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -39,18 +39,19 @@ export default function MessageButton({ listingId, sellerId }: Props) {
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div style={{ flex, display: 'flex', flexDirection: 'column', gap: 4 }}>
       <button
         onClick={handleMessage}
         disabled={loading}
         style={{
-          background: '#f0f0f0', color: 'var(--dark)',
+          background: primary ? 'var(--orange)' : '#f0f0f0', color: primary ? '#fff' : 'var(--dark)',
           border: 'none', borderRadius: 14, padding: '14px 20px',
           fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900,
           cursor: 'pointer', opacity: loading ? 0.7 : 1,
+          boxShadow: primary ? '0 4px 14px rgba(255,69,0,0.35)' : 'none',
         }}
       >
-        {loading ? '…' : '💬 Message'}
+        {loading ? '…' : label}
       </button>
       {error && <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: '#c0392b', textAlign: 'center' }}>{error}</span>}
     </div>
