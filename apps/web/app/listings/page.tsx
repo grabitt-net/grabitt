@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import Link from 'next/link'
 import BottomNav from '@/components/marketplace/BottomNav'
+import SortSelect from '@/components/marketplace/SortSelect'
 
 interface SearchParams { category?: string; q?: string; sort?: string }
 
@@ -117,15 +118,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Pro
         <form method="GET" action="/listings">
           {params.category && <input type="hidden" name="category" value={params.category} />}
           {params.q && <input type="hidden" name="q" value={params.q} />}
-          <select name="sort" onChange={e => e.currentTarget.form?.submit()} defaultValue={params.sort ?? ''} style={{
-            border: '1.5px solid #eee', borderRadius: 50, padding: '5px 12px',
-            fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 700,
-            background: '#fff', cursor: 'pointer', outline: 'none',
-          }}>
-            <option value="">Newest</option>
-            <option value="price_asc">Price: Low → High</option>
-            <option value="price_desc">Price: High → Low</option>
-          </select>
+          <SortSelect defaultValue={params.sort} />
         </form>
       </div>
 
