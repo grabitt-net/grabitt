@@ -48,8 +48,10 @@ export const homepageRouter = router({
   upsertHeroSlide: execProcedure
     .input(z.object({
       id: z.string().optional(),
-      heading: z.string().max(120).optional(), // image-only slides need no text
-      subheading: z.string().max(200).optional(),
+      // nullish so clearing the field on an edit actually blanks it (null),
+      // not just omits it (which would keep the old value). Image-only slides.
+      heading: z.string().max(120).nullish(),
+      subheading: z.string().max(200).nullish(),
       imageUrl: z.string().url(),
       linkUrl: z.string().optional(),
       active: z.boolean().default(true),

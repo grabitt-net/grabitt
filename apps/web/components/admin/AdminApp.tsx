@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, createContext, useContext } from 'react'
+import { useState, useEffect, useRef, createContext, useContext } from 'react'
 import AdminSidebar from './Sidebar'
 import FunnelView from './FunnelView'
 import PipelineView from './PipelineView'
@@ -37,6 +37,14 @@ interface Props { execToken: string }
 export default function AdminApp({ execToken }: Props) {
   const api = makeCrmApi(execToken)
   const [view, setView] = useState<View>('funnel')
+  const mainRef = useRef<HTMLElement>(null)
+
+  // Return to the top of the page whenever the active view changes, so lower
+  // menu items don't leave the user scrolled halfway down the previous view.
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+    mainRef.current?.scrollTo({ top: 0 })
+  }, [view])
 
   const [contacts, setContacts] = useState<any[]>([])
   const [members, setMembers] = useState<any[]>([])
@@ -98,7 +106,7 @@ export default function AdminApp({ execToken }: Props) {
             counts={{ pipeline: contacts.length, disputes: openDisputeCount, reports: 0 }}
           />
 
-          <main style={{ padding: '24px 20px 40px', overflowY: 'auto' }}>
+          <main ref={mainRef} style={{ padding: '24px 20px 40px', overflowY: 'auto' }}>
             {loading ? (
               <div style={{ textAlign: 'center', padding: 60, color: '#bbb', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Loading data…</div>
             ) : (

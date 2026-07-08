@@ -1,18 +1,16 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createTrpcClient } from '@/lib/trpc'
 
 type Slide = { id: string; heading: string | null; subheading: string | null; imageUrl: string; linkUrl: string | null }
 
-// CMS-driven parallax hero header. Reads the active `home_top` banner (managed
-// from Admin → Banners), so the header image, headline and link are all
-// updatable from the backend. The background image scrolls slower than the
-// page for a subtle parallax effect. Falls back to a branded gradient when no
-// banner is set, so the page never looks empty.
+// CMS-driven hero header. Reads the hero slides (managed from Admin → Homepage),
+// so the header image, headline and link are all updatable from the backend.
+// The image is fixed within the header (no parallax movement). Falls back to a
+// branded gradient when no slide is set, so the page never looks empty.
 export default function ParallaxHeader() {
   const [slides, setSlides] = useState<Slide[]>([])
   const [idx, setIdx] = useState(0)
-  const imgRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     createTrpcClient().homepage.heroSlides.query()
@@ -29,18 +27,6 @@ export default function ParallaxHeader() {
 
   const slide = slides.length ? slides[idx % slides.length] : null
 
-  // Parallax: translate the background slower than scroll (transform only).
-  useEffect(() => {
-    let raf = 0
-    const onScroll = () => {
-      raf = requestAnimationFrame(() => {
-        if (imgRef.current) imgRef.current.style.transform = `translate3d(0, ${window.scrollY * 0.35}px, 0)`
-      })
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf) }
-  }, [])
-
   const hasImg = !!slide?.imageUrl
   // With no CMS slides at all, show the branded default copy. Once slides exist,
   // respect each slide exactly — an image-only slide (no heading) shows no text.
@@ -50,9 +36,9 @@ export default function ParallaxHeader() {
 
   const inner = (
     <section className="parallax-header" style={{ position: 'relative', width: '100%', overflow: 'hidden', background: 'linear-gradient(135deg,#2a2118,#4a3826)' }}>
-      {/* Background layer (image or gradient) — over-sized for parallax travel */}
-      <div ref={imgRef} style={{ position: 'absolute', top: -60, left: 0, right: 0, bottom: -60, willChange: 'transform' }}>
-        {hasImg && <img src={slide!.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+      {/* Background layer (image or gradient) — fixed within the header */}
+      <div style={{ position: 'absolute', inset: 0 }}>
+        {hasImg && <img src={slide!.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
         {!hasImg && <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#FF4500 0%,#FF8C00 100%)' }} />}
       </div>
       {/* Legibility scrim — only when there's text to keep readable */}

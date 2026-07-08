@@ -33,8 +33,8 @@ export default function HeroSlidesEditor() {
       const sortOrder = editing === 'new' ? slides.length : (slides.find(s => s.id === editing)?.sortOrder ?? 0)
       await api.upsertHeroSlide({
         ...(editing !== 'new' ? { id: editing } : {}),
-        heading: form.heading.trim() || undefined, // optional — image-only slides show no text
-        subheading: form.subheading.trim() || undefined,
+        heading: form.heading.trim() || null, // null clears it on edit (image-only slides)
+        subheading: form.subheading.trim() || null,
         imageUrl: form.imageUrl.trim(),
         linkUrl: form.linkUrl.trim() || undefined,
         active: form.active,
