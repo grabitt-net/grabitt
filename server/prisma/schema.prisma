@@ -736,10 +736,19 @@ model JobListing {
   type         JobType
   salaryMin    Decimal?  @db.Decimal(10, 2)
   salaryMax    Decimal?  @db.Decimal(10, 2)
+  salaryPeriod String?   // 'month' | 'year' | 'hour' — how the salary is quoted
   remote       Boolean   @default(false)
   skills       String[]
   applyUrl     String?
   expiresAt    DateTime?
+  // Extended job-post details (Post a Job form)
+  sector       String?   // job category e.g. Hostelería, Retail, Construction
+  address      String?   // full address (also drives the listing map)
+  hours        String?   // hours of operation e.g. "Mon–Fri 9:00–17:00"
+  startDate    DateTime? // expected start date
+  payments     Int?      // salary payments per year (e.g. 12 or 14)
+  overtime     Boolean   @default(false)
+  tips         Boolean   @default(false)
   createdAt    DateTime  @default(now())
 
   applications JobApplication[]

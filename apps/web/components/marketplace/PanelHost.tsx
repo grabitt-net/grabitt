@@ -935,7 +935,7 @@ function PanelBody() {
             <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
           </div>
         ))}
-        <a href="/listings/new" onClick={closePanel} style={{ textDecoration: 'none' }}>
+        <a href="/jobs/new" onClick={closePanel} style={{ textDecoration: 'none' }}>
           <button style={{ width: '100%', background: 'linear-gradient(135deg,#2193b0,#6dd5ed)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>Post a Job Now</button>
         </a>
         <button onClick={() => openPanel('applications')} style={{ width: '100%', background: '#fff', color: '#2193b0', border: '2px solid #2193b0', borderRadius: 14, padding: '13px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 10 }}>📋 View Applicants</button>
@@ -3072,7 +3072,9 @@ function PanelBody() {
             </div>
           </div>
         ))}
-        <button onClick={() => openPanel('createListing', { category: 'Jobs' })} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 8 }}>+ Post a Job</button>
+        <a href="/jobs/new" onClick={closePanel} style={{ textDecoration: 'none' }}>
+          <button style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 8 }}>+ Post a Job</button>
+        </a>
       </ActionPanel>
     )
   }

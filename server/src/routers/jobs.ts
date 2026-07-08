@@ -36,6 +36,64 @@ export const jobsRouter = router({
       })
     ),
 
+  // Post a Job — creates the base Listing (department=jobs) plus the JobListing
+  // detail row in one transaction. The poster is the employer.
+  create: protectedProcedure
+    .input(z.object({
+      jobTitle: z.string().min(3).max(120),
+      company: z.string().min(1).max(120),
+      type: z.enum(['full_time', 'part_time', 'contract', 'temporary', 'volunteer']),
+      location: z.string().min(1).max(120),
+      address: z.string().max(200).optional(),
+      sector: z.string().max(80).optional(),
+      description: z.string().max(4000).optional(),
+      salaryMin: z.number().min(0).optional(),
+      salaryMax: z.number().min(0).optional(),
+      salaryPeriod: z.enum(['month', 'year', 'hour']).default('month'),
+      payments: z.number().int().min(0).max(20).optional(),
+      overtime: z.boolean().default(false),
+      tips: z.boolean().default(false),
+      remote: z.boolean().default(false),
+      hours: z.string().max(120).optional(),
+      startDate: z.string().optional(),
+      images: z.array(z.string().url()).max(8).optional(),
+    }))
+    .mutation(({ ctx, input }) =>
+      ctx.prisma.listing.create({
+        data: {
+          sellerId: ctx.user.id,
+          title: input.jobTitle,
+          description: input.description || `${input.jobTitle} at ${input.company}.`,
+          price: input.salaryMin ?? 0,
+          department: 'jobs',
+          condition: 'good',
+          status: 'active',
+          images: input.images ?? [],
+          location: input.location,
+          jobListing: {
+            create: {
+              employerId: ctx.user.id,
+              jobTitle: input.jobTitle,
+              company: input.company,
+              type: input.type,
+              salaryMin: input.salaryMin,
+              salaryMax: input.salaryMax,
+              salaryPeriod: input.salaryPeriod,
+              remote: input.remote,
+              sector: input.sector,
+              address: input.address,
+              hours: input.hours,
+              startDate: input.startDate ? new Date(input.startDate) : undefined,
+              payments: input.payments,
+              overtime: input.overtime,
+              tips: input.tips,
+            },
+          },
+        },
+        include: { jobListing: true },
+      })
+    ),
+
   // Employer's applications board: their job listings with applicants.
   employerApplications: protectedProcedure.query(async ({ ctx }) => {
     const jobs = await ctx.prisma.jobListing.findMany({

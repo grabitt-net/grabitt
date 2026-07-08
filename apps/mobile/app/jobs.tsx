@@ -76,6 +76,7 @@ export default function JobsScreen() {
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()}><Text style={{ fontSize: 22, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading}>💼 Jobs</Text>
+        <TouchableOpacity onPress={() => router.push('/create-job' as any)} style={s.postBtn}><Text style={s.postBtnText}>+ Post</Text></TouchableOpacity>
         <TouchableOpacity onPress={() => setShowFilters(v => !v)}><Text style={s.filterToggle}>{showFilters ? 'Hide' : 'Filters'}</Text></TouchableOpacity>
       </View>
 
@@ -149,6 +150,8 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: '#f0ebe4' },
   heading: { flex: 1, fontFamily: 'Comfortaa', fontSize: 20, fontWeight: '700', color: colors.dark },
   filterToggle: { fontFamily: 'Nunito', fontSize: 13, fontWeight: '800', color: colors.orange },
+  postBtn: { backgroundColor: colors.orange, borderRadius: 50, paddingHorizontal: 12, paddingVertical: 6 },
+  postBtnText: { color: '#fff', fontFamily: 'Nunito', fontSize: 12, fontWeight: '900' },
   searchRow: { paddingHorizontal: 12, paddingTop: 10 },
   searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f5f0e8', borderRadius: 50, paddingHorizontal: 14, paddingVertical: 8 },
   searchInput: { flex: 1, fontFamily: 'Nunito', fontSize: 14, color: colors.dark },

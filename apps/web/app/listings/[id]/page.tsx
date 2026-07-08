@@ -10,11 +10,13 @@ const gradeEmoji: Record<string, string> = { grabber: '🟠', dealer: '🟡', tr
 const JOB_TYPE: Record<string, string> = { full_time: 'Full Time', part_time: 'Part Time', contract: 'Contract', temporary: 'Temp', volunteer: 'Volunteer' }
 const PROP_TYPE: Record<string, string> = { sale: 'For Sale', rent: 'To Rent', holiday: 'Holiday', commercial: 'Commercial', land: 'Land', new_build: 'New Build' }
 
-function salaryLabel(min?: number | string | null, max?: number | string | null) {
+const PERIOD: Record<string, string> = { month: '/mo', year: '/yr', hour: '/hr' }
+function salaryLabel(min?: number | string | null, max?: number | string | null, period?: string | null) {
+  const p = PERIOD[period ?? 'month'] ?? '/mo'
   const lo = min != null ? Number(min) : null, hi = max != null ? Number(max) : null
-  if (lo && hi) return `€${lo.toLocaleString()}–${hi.toLocaleString()}/mo`
-  if (lo) return `€${lo.toLocaleString()}/mo`
-  if (hi) return `up to €${hi.toLocaleString()}/mo`
+  if (lo && hi) return `€${lo.toLocaleString()}–${hi.toLocaleString()}${p}`
+  if (lo) return `€${lo.toLocaleString()}${p}`
+  if (hi) return `up to €${hi.toLocaleString()}${p}`
   return 'Negotiable'
 }
 
@@ -63,7 +65,7 @@ export default function ListingDetailPage() {
             {job?.jobTitle ?? listing.title}
           </h1>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 26, fontWeight: 900, color: 'var(--orange)' }}>
-            {job ? salaryLabel(job.salaryMin, job.salaryMax) : `€${Number(listing.price).toLocaleString()}${isRent ? '/mo' : ''}`}
+            {job ? salaryLabel(job.salaryMin, job.salaryMax, job.salaryPeriod) : `€${Number(listing.price).toLocaleString()}${isRent ? '/mo' : ''}`}
           </div>
           <div style={{ fontSize: 12, color: '#888', marginTop: 6, fontFamily: 'var(--font-nunito)' }}>
             📍 {job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')}
@@ -72,7 +74,13 @@ export default function ListingDetailPage() {
           {/* Job facts */}
           {job && (
             <div style={factRow}>
-              <Fact label="Company" value={job.company} />
+              <Fact label="Employer" value={job.company} />
+              {job.sector && <Fact label="Category" value={job.sector} />}
+              {job.hours && <Fact label="Hours" value={job.hours} />}
+              {job.startDate && <Fact label="Starts" value={new Date(job.startDate).toLocaleDateString()} />}
+              {job.payments && <Fact label="Payments/yr" value={String(job.payments)} />}
+              {(job.overtime || job.tips) && <Fact label="Extras" value={[job.overtime && 'Overtime', job.tips && 'Tips'].filter(Boolean).join(' · ')} />}
+              {job.address && <Fact label="Address" value={job.address} />}
               {job.skills?.length ? <Fact label="Skills" value={job.skills.join(', ')} /> : null}
             </div>
           )}
@@ -94,6 +102,26 @@ export default function ListingDetailPage() {
             <p style={{ fontSize: 13, color: '#444', lineHeight: 1.6, fontFamily: 'var(--font-comfortaa)', whiteSpace: 'pre-wrap' }}>{listing.description}</p>
           </div>
         )}
+
+        {/* Location map (jobs use the full address; others use the town/area) */}
+        {(() => {
+          const q = (job?.address || listing.location || '').trim()
+          if (!q) return null
+          return (
+            <div style={cardBox}>
+              <div style={sectionTitle}>Location</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#555', marginBottom: 8 }}>📍 {q}</div>
+              <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #ece3d7' }}>
+                <iframe
+                  title="Location map"
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(q)}&z=14&output=embed`}
+                  width="100%" height="220" style={{ border: 0, display: 'block' }}
+                  loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            </div>
+          )
+        })()}
 
         <div style={cardBox}>
           <div style={sectionTitle}>{job ? 'Employer' : 'Seller'}</div>

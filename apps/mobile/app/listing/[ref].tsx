@@ -1,14 +1,24 @@
 import { useEffect, useState } from 'react'
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
-import { Alert } from 'react-native'
+import { Alert, Linking } from 'react-native'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
 import { useAuth } from '../../lib/auth'
 
 const pretty = (s?: string) => (s ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
-type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; description?: string; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number } }
+type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; description?: string; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number }; job?: any }
+
+const PERIOD: Record<string, string> = { month: '/mo', year: '/yr', hour: '/hr' }
+function salaryLabel(min?: any, max?: any, period?: string | null) {
+  const p = PERIOD[period ?? 'month'] ?? '/mo'
+  const lo = min != null ? Number(min) : null, hi = max != null ? Number(max) : null
+  if (lo && hi) return `€${lo.toLocaleString()}–${hi.toLocaleString()}${p}`
+  if (lo) return `€${lo.toLocaleString()}${p}`
+  if (hi) return `up to €${hi.toLocaleString()}${p}`
+  return 'Negotiable'
+}
 
 // Fallback demo lookup for the old ref-keyed cards (F1, JL1…).
 const LISTINGS: Record<string, { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean }> = {
@@ -61,6 +71,7 @@ export default function ListingScreen() {
         description: l.description,
         sellerId: l.seller?.id,
         seller: l.seller ? { name: l.seller.displayName, grade: l.seller.grade, rating: l.seller.avgRating, sales: l.seller.salesCount } : undefined,
+        job: l.jobListing ?? undefined,
       }))
       .catch(() => {})
   }, [ref])
@@ -124,16 +135,46 @@ export default function ListingScreen() {
             <View style={s.pill}><Text style={s.pillText}>🤝 Collection</Text></View>
           </View>
 
+          {/* Job details */}
+          {item.job && (
+            <View style={s.jobBox}>
+              <Text style={s.jobBoxTitle}>Job details</Text>
+              <Text style={s.jobSalary}>{salaryLabel(item.job.salaryMin, item.job.salaryMax, item.job.salaryPeriod)}</Text>
+              {[
+                ['Employer', item.job.company],
+                ['Category', item.job.sector],
+                ['Hours', item.job.hours],
+                ['Starts', item.job.startDate ? new Date(item.job.startDate).toLocaleDateString() : ''],
+                ['Payments/yr', item.job.payments ? String(item.job.payments) : ''],
+                ['Extras', [item.job.overtime && 'Overtime', item.job.tips && 'Tips'].filter(Boolean).join(' · ')],
+                ['Remote', item.job.remote ? 'Yes' : ''],
+                ['Address', item.job.address],
+              ].filter(([, v]) => !!v).map(([k, v]) => (
+                <View key={k as string} style={s.jobRow}>
+                  <Text style={s.jobKey}>{k}</Text>
+                  <Text style={s.jobVal}>{v as string}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Description */}
           <Text style={s.desc}>
             {item.description ?? 'Great condition. Message the seller via Grabitt chat with any questions. Collection or local delivery available.'}
           </Text>
 
-          {/* Map placeholder */}
-          <View style={s.mapPlaceholder}>
+          {/* Map — opens the location in the device maps app */}
+          <TouchableOpacity
+            style={s.mapPlaceholder}
+            onPress={() => {
+              const q = (item.job?.address || item.location || '').trim()
+              if (q) Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`)
+            }}
+          >
             <Text style={{ fontSize: 28, marginBottom: 4 }}>📍</Text>
-            <Text style={s.mapText}>{item.location}, Gran Canaria</Text>
-          </View>
+            <Text style={s.mapText}>{item.job?.address || `${item.location}, Gran Canaria`}</Text>
+            <Text style={s.mapLink}>View on map ›</Text>
+          </TouchableOpacity>
 
           {/* Similar listings */}
           <Text style={s.similarHeading}>Similar listings</Text>
@@ -188,7 +229,14 @@ const s = StyleSheet.create({
   pillText: { fontFamily: 'Nunito', fontSize: 10, fontWeight: '800', color: '#555' },
   desc: { fontFamily: 'Nunito', fontSize: 13, color: '#555', lineHeight: 20, marginBottom: 14 },
   mapPlaceholder: { backgroundColor: '#eee', borderRadius: 12, padding: 18, alignItems: 'center', marginBottom: 18 },
-  mapText: { fontFamily: 'Nunito', fontSize: 12, color: '#666' },
+  mapText: { fontFamily: 'Nunito', fontSize: 12, color: '#666', textAlign: 'center' },
+  mapLink: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '900', color: colors.orange, marginTop: 6 },
+  jobBox: { backgroundColor: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 14, borderWidth: 1, borderColor: '#ece3d7' },
+  jobBoxTitle: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '900', color: colors.orange, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
+  jobSalary: { fontFamily: 'Georgia', fontSize: 18, fontWeight: '700', color: colors.dark, marginBottom: 10 },
+  jobRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#efe7db', gap: 12 },
+  jobKey: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: '#999' },
+  jobVal: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '700', color: colors.dark, flexShrink: 1, textAlign: 'right' },
   similarHeading: { fontFamily: 'Georgia', fontSize: 16, fontWeight: '700', color: colors.dark, marginBottom: 10 },
   similarRow: { flexDirection: 'row', gap: 10 },
   simCard: { flex: 1, backgroundColor: '#fff', borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: '#e8e0d5' },
