@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Alert, Linking } from 'react-native'
-import { colors } from '@grabitt/design-tokens'
+import { colors, PRICES } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
 import { useAuth } from '../../lib/auth'
 
@@ -44,6 +44,21 @@ export default function ListingScreen() {
   const { ref } = useLocalSearchParams<{ ref: string }>()
   const { token } = useAuth()
   const [fetched, setFetched] = useState<Item | null>(null)
+  const [meId, setMeId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (token) apiClient(token).users.me.query().then((u: any) => setMeId(u?.id ?? null)).catch(() => {})
+  }, [token])
+
+  const isOwner = !!meId && !!fetched?.sellerId && meId === fetched.sellerId
+
+  const promote = async (option: 'grab_it_now' | 'featured') => {
+    if (!token) { Alert.alert('Please log in', 'Log in to promote your listing.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
+    try {
+      const res: any = await apiClient(token).listings.promote.mutate({ listingId: ref as string, option, weeks: 1 })
+      if (res?.url) Linking.openURL(res.url)
+    } catch (e: any) { Alert.alert('Could not start payment', e?.message ?? 'Try again') }
+  }
 
   const startChat = async () => {
     // Messaging is for logged-in users only — prompt sign-in otherwise.
@@ -100,7 +115,14 @@ export default function ListingScreen() {
           {item.isFeatured && (
             <View style={s.featuredBadge}><Text style={s.featuredBadgeText}>👀 FEATURED</Text></View>
           )}
-          <TouchableOpacity style={s.heartBtn}><Text style={{ fontSize: 18 }}>🤍</Text></TouchableOpacity>
+          <TouchableOpacity
+            style={s.heartBtn}
+            onPress={async () => {
+              if (!token) { Alert.alert('Please log in', 'Log in to save favourites.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
+              try { await apiClient(token).wishlist.toggle.mutate({ listingId: ref as string }); Alert.alert('Saved', 'Updated your favourites.') }
+              catch (e: any) { Alert.alert('Could not save', e?.message ?? 'Try again') }
+            }}
+          ><Text style={{ fontSize: 18 }}>🤍</Text></TouchableOpacity>
         </View>
 
         <View style={s.body}>
@@ -192,12 +214,25 @@ export default function ListingScreen() {
 
       {/* Fixed action buttons */}
       <View style={s.actions}>
-        <TouchableOpacity style={s.buyBtn}>
-          <Text style={s.buyBtnText}>Buy Now</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={s.offerBtn}>
-          <Text style={s.offerBtnText}>Make Offer</Text>
-        </TouchableOpacity>
+        {isOwner ? (
+          <>
+            <TouchableOpacity style={s.buyBtn} onPress={() => promote('grab_it_now')}>
+              <Text style={s.buyBtnText}>⚡ Grab It Now €{PRICES.grabItNow}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.offerBtn} onPress={() => promote('featured')}>
+              <Text style={s.offerBtnText}>👀 Feature €{PRICES.featuredPerWeek}/wk</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity style={s.buyBtn}>
+              <Text style={s.buyBtnText}>Buy Now</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.offerBtn}>
+              <Text style={s.offerBtnText}>Make Offer</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   )

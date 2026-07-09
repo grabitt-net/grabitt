@@ -3,6 +3,9 @@ import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { CreateListingInputSchema, SearchInputSchema } from '@grabitt/types'
 import { LISTING_CAPS, GRADE_THRESHOLDS, PRICES } from '@grabitt/design-tokens'
+import { getStripe } from '../lib/stripe'
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
 export const listingsRouter = router({
   search: publicProcedure
@@ -36,6 +39,53 @@ export const listingsRouter = router({
       ])
 
       return { items, total, page, limit }
+    }),
+
+  // Paid promotion for a listing (Grab It Now flash deal or Featured/Sponsored).
+  // Returns a Stripe Checkout URL; the option is applied by the webhook once the
+  // payment succeeds (§10.2 — money handled server-side).
+  promote: protectedProcedure
+    .input(z.object({
+      listingId: z.string().min(1),
+      option: z.enum(['grab_it_now', 'featured']),
+      weeks: z.number().int().min(1).max(8).default(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUnique({
+        where: { id: input.listingId }, select: { sellerId: true, title: true },
+      })
+      if (!listing) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (listing.sellerId !== ctx.user.id) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'You can only promote your own listing' })
+      }
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: ctx.user.id }, select: { stripeCustomerId: true },
+      })
+      const amountCents = input.option === 'grab_it_now'
+        ? Math.round(PRICES.grabItNow * 100)
+        : Math.round(PRICES.featuredPerWeek * input.weeks * 100)
+      const label = input.option === 'grab_it_now'
+        ? 'Grab It Now — 24-hour flash deal'
+        : `Featured listing — ${input.weeks} week${input.weeks > 1 ? 's' : ''}`
+
+      const session = await getStripe().checkout.sessions.create({
+        mode: 'payment',
+        ...(user?.stripeCustomerId ? { customer: user.stripeCustomerId } : {}),
+        line_items: [{
+          quantity: 1,
+          price_data: { currency: 'eur', unit_amount: amountCents, product_data: { name: `Grabitt — ${label}` } },
+        }],
+        payment_intent_data: {
+          metadata: {
+            kind: 'listing_promo', userId: ctx.user.id, listingId: input.listingId,
+            option: input.option, weeks: String(input.weeks),
+          },
+        },
+        success_url: `${APP_URL}/listings/${input.listingId}?promo=success`,
+        cancel_url: `${APP_URL}/listings/${input.listingId}?promo=cancelled`,
+      })
+      if (!session.url) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Could not start checkout' })
+      return { url: session.url }
     }),
 
   byId: publicProcedure

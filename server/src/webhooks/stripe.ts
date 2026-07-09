@@ -83,6 +83,20 @@ export async function handleStripeEvent(event: Stripe.Event) {
       if (pi.metadata?.kind === 'business_verify' && pi.metadata.userId) {
         await prisma.user.update({ where: { id: pi.metadata.userId }, data: { businessVerified: true } })
       }
+      // Paid listing promotion → apply the option now that payment succeeded.
+      if (pi.metadata?.kind === 'listing_promo' && pi.metadata.listingId && pi.metadata.userId) {
+        const target = await prisma.listing.findUnique({ where: { id: pi.metadata.listingId }, select: { sellerId: true } })
+        if (target?.sellerId === pi.metadata.userId) {
+          if (pi.metadata.option === 'grab_it_now') {
+            const until = new Date(); until.setHours(24, 0, 0, 0) // expires tonight
+            await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'grab_it_now', grabItNowUntil: until } })
+          } else {
+            const weeks = Number(pi.metadata.weeks) || 1
+            const until = new Date(Date.now() + weeks * 7 * 86400000)
+            await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { isFeatured: true, featuredUntil: until } })
+          }
+        }
+      }
       break
     }
     // Subscription lifecycle (trial start, activation, renewal, cancel, pause).

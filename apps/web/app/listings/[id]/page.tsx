@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { DEPT_LABEL, COND_LABEL, deptEmoji } from '@/lib/listingMap'
+import { PRICES } from '@grabitt/design-tokens'
 import MessageButton from '@/components/marketplace/MessageButton'
 import SiteHeader from '@/components/marketplace/SiteHeader'
 
@@ -53,6 +54,16 @@ export default function ListingDetailPage() {
   const seller = listing.seller
   const isOwner = !!meId && meId === seller?.id
   const isRent = prop?.type === 'rent'
+
+  const promote = async (option: 'grab_it_now' | 'featured') => {
+    try {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      if (!token) { router.push(`/auth?next=/listings/${id}`); return }
+      const res: any = await trpcAuthed().listings.promote.mutate({ listingId: id, option, weeks: 1 })
+      if (res?.url) window.location.href = res.url
+    } catch { alert('Could not start the payment. Please try again.') }
+  }
   const heroImg = Array.isArray(listing.images) ? listing.images[0] : null
 
   return (
@@ -172,8 +183,16 @@ export default function ListingDetailPage() {
       {seller?.id && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #eee', padding: '12px 16px max(12px, env(safe-area-inset-bottom))', display: 'flex', gap: 10, zIndex: 99, boxShadow: '0 -4px 20px rgba(0,0,0,0.1)', maxWidth: 720, margin: '0 auto', alignItems: 'center' }}>
           {isOwner ? (
-            <div style={{ flex: 1, textAlign: 'center', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 700, color: '#888' }}>
-              This is your {job ? 'job posting' : prop ? 'property listing' : 'listing'} — {job ? 'applicants' : 'enquiries'} appear in <Link href="/messages" style={{ color: 'var(--orange)', fontWeight: 800 }}>Messages</Link>.
+            <div style={{ flex: 1 }}>
+              <div style={{ textAlign: 'center', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 700, color: '#888', marginBottom: (job || prop) ? 0 : 8 }}>
+                Your {job ? 'job posting' : prop ? 'property listing' : 'listing'} — {job ? 'applicants' : 'enquiries'} appear in <Link href="/messages" style={{ color: 'var(--orange)', fontWeight: 800 }}>Messages</Link>.
+              </div>
+              {!job && !prop && (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => promote('grab_it_now')} style={{ flex: 1, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: '11px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>⚡ Grab It Now · €{PRICES.grabItNow}</button>
+                  <button onClick={() => promote('featured')} style={{ flex: 1, background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 12, padding: '11px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>👀 Feature · €{PRICES.featuredPerWeek}/wk</button>
+                </div>
+              )}
             </div>
           ) : (job || prop) ? (
             // Jobs/property: the primary action is to contact the seller/employer.

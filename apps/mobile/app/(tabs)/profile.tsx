@@ -94,7 +94,7 @@ export default function ProfileScreen() {
       {/* Actions */}
       {[
         { icon: '🛒', label: 'My Purchases & Handovers', onPress: () => router.push('/purchases') },
-        { icon: '📋', label: 'My Listings', onPress: () => {} },
+        { icon: '📋', label: 'My Listings', onPress: () => router.push('/my-listings' as any) },
       ].map(item => (
         <TouchableOpacity key={item.label} style={s.menuRow} onPress={item.onPress}>
           <Text style={{ fontSize: 20, width: 32, textAlign: 'center' }}>{item.icon}</Text>
