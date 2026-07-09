@@ -41,6 +41,19 @@ export const listingsRouter = router({
       return { items, total, page, limit }
     }),
 
+  // The current user's own listings across all statuses (for the account hub —
+  // segmented into Active / Sold / Drafts client-side).
+  mine: protectedProcedure.query(({ ctx }) =>
+    ctx.prisma.listing.findMany({
+      where: { sellerId: ctx.user.id },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true, title: true, price: true, images: true, location: true,
+        department: true, status: true, isFeatured: true, createdAt: true,
+      },
+    })
+  ),
+
   // Paid promotion for a listing (Grab It Now flash deal or Featured/Sponsored).
   // Returns a Stripe Checkout URL; the option is applied by the webhook once the
   // payment succeeds (§10.2 — money handled server-side).

@@ -1885,40 +1885,58 @@ function PanelBody() {
   if (panel.id === 'mylistings') {
     const [myL, setMyL] = useState<any[] | null>(null)
     const [myLoading, setMyLoading] = useState(true)
+    const [seg, setSeg] = useState<'active' | 'sold' | 'draft'>((panel.data?.seg as any) || 'active')
     useEffect(() => {
       (async () => {
         try {
           const client = await getTrpcClient()
-          const me: any = await client.users.me.query()
-          if (!me?.id) { setMyL([]); return }
-          const res: any = await client.listings.bySeller.query({ sellerId: me.id })
-          setMyL(res?.listings ?? [])
+          const res: any = await client.listings.mine.query()
+          setMyL(res ?? [])
         } catch { setMyL([]) } finally { setMyLoading(false) }
       })()
     }, [])
 
+    const all = myL ?? []
+    const bucket = (l: any) => (l.status === 'sold' ? 'sold' : (l.status === 'active' || l.status === 'grab_it_now') ? 'active' : 'draft')
+    const counts = { active: all.filter(l => bucket(l) === 'active').length, sold: all.filter(l => bucket(l) === 'sold').length, draft: all.filter(l => bucket(l) === 'draft').length }
+    const shown = all.filter(l => bucket(l) === seg)
+    const SEGS: [typeof seg, string][] = [['active', 'On sale'], ['sold', 'Sold'], ['draft', 'Drafts']]
+
     return (
       <ActionPanel title="📋 My Listings" onClose={closePanel}>
+        <div style={{ display: 'flex', background: '#f5f0e8', borderRadius: 50, padding: 4, marginBottom: 14 }}>
+          {SEGS.map(([id, label]) => (
+            <button key={id} onClick={() => setSeg(id)} style={{ flex: 1, border: 'none', background: seg === id ? '#fff' : 'transparent', color: seg === id ? 'var(--dark)' : '#888', borderRadius: 50, padding: '7px 0', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer', boxShadow: seg === id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none' }}>
+              {label} {counts[id] > 0 && <span style={{ color: seg === id ? 'var(--orange)' : '#bbb' }}>{counts[id]}</span>}
+            </button>
+          ))}
+        </div>
+
         {myLoading ? (
           <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
-        ) : !myL || myL.length === 0 ? (
+        ) : shown.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No active listings</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', marginBottom: 16 }}>Items you list for sale appear here.</div>
-            <button onClick={() => openPanel('sell')} style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ New Listing</button>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{seg === 'active' ? 'Nothing on sale yet' : seg === 'sold' ? 'No sold items yet' : 'No drafts'}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', marginBottom: 16 }}>{seg === 'sold' ? 'Items you sell will appear here.' : 'Items you list for sale appear here.'}</div>
+            {seg !== 'sold' && <button onClick={() => openPanel('sell')} style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ New Listing</button>}
           </div>
         ) : (
           <>
-            {myL.map((l: any) => (
-              <div key={l.id} onClick={() => openPanel('listing', { id: l.id })} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
+            {shown.map((l: any) => (
+              <div key={l.id} onClick={() => openPanel('listing', { id: l.id })} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer', opacity: seg === 'sold' ? 0.7 : 1 }}>
                 <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0, overflow: 'hidden' }}>
                   {Array.isArray(l.images) && l.images[0] ? <img src={l.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🖼️'}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 2 }}>{l.title}</div>
                   <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: 'var(--orange)' }}>€{Number(l.price).toLocaleString()}</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>📍 {l.location}</div>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 2 }}>
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>📍 {l.location}</span>
+                    {l.status === 'grab_it_now' && <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, color: '#fff', background: 'var(--orange)', padding: '1px 6px', borderRadius: 50 }}>⚡ GRAB IT NOW</span>}
+                    {l.isFeatured && <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, color: '#fff', background: 'var(--sage)', padding: '1px 6px', borderRadius: 50 }}>👀 FEATURED</span>}
+                    {l.status === 'sold' && <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, color: '#555', background: '#eee', padding: '1px 6px', borderRadius: 50 }}>SOLD</span>}
+                  </div>
                 </div>
               </div>
             ))}
@@ -3435,14 +3453,14 @@ function PanelBody() {
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Your activity</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
               {([
-                { label: 'On sale', value: dash?.active, panel: 'mylistings' as PanelId },
-                { label: 'Sold', value: dash?.sold, panel: 'mylistings' as PanelId },
+                { label: 'On sale', value: dash?.active, panel: 'mylistings' as PanelId, data: { seg: 'active' } },
+                { label: 'Sold', value: dash?.sold, panel: 'mylistings' as PanelId, data: { seg: 'sold' } },
                 { label: 'Messages', value: dash?.unread, panel: 'messages' as PanelId, badge: !!dash?.unread },
                 { label: 'Offers', value: dash?.offers, panel: 'offers' as PanelId, badge: !!dash?.offers },
                 { label: 'Saved', value: dash?.saved, panel: 'favourites' as PanelId },
                 { label: 'Payouts', value: payout?.payoutsEnabled ? '✓' : '—', panel: 'profile' as PanelId },
               ]).map(t => (
-                <button key={t.label} onClick={() => t.panel !== 'profile' && openPanel(t.panel)} style={{ position: 'relative', background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '12px 6px', textAlign: 'center', cursor: t.panel !== 'profile' ? 'pointer' : 'default' }}>
+                <button key={t.label} onClick={() => t.panel !== 'profile' && openPanel(t.panel, (t as any).data)} style={{ position: 'relative', background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '12px 6px', textAlign: 'center', cursor: t.panel !== 'profile' ? 'pointer' : 'default' }}>
                   <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: 'var(--dark)', fontVariantNumeric: 'tabular-nums' }}>{t.value ?? '—'}</div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.label}</div>
                   {t.badge && <span style={{ position: 'absolute', top: 8, right: 10, width: 8, height: 8, borderRadius: '50%', background: 'var(--orange)' }} />}

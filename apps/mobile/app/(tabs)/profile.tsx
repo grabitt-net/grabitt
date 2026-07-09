@@ -79,8 +79,8 @@ export default function ProfileScreen() {
       {/* At-a-glance overview — real counts, tap to open the area */}
       <View style={s.statGrid}>
         {[
-          { label: 'On sale', value: dash?.active, go: () => router.push('/my-listings' as any) },
-          { label: 'Sold', value: dash?.sold, go: () => router.push('/my-listings' as any) },
+          { label: 'On sale', value: dash?.active, go: () => router.push('/my-listings?seg=active' as any) },
+          { label: 'Sold', value: dash?.sold, go: () => router.push('/my-listings?seg=sold' as any) },
           { label: 'Messages', value: dash?.unread, badge: !!dash?.unread, go: () => router.push('/(tabs)/messages') },
           { label: 'Offers', value: dash?.offers, badge: !!dash?.offers, go: () => {} },
           { label: 'Saved', value: dash?.saved, go: () => {} },
