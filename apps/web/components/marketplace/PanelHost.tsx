@@ -3068,7 +3068,7 @@ function PanelBody() {
                       'Good': 'good', 'Fair': 'fair', 'For Parts': 'spares', 'Spares': 'spares',
                     }
                     const client = await getTrpcClient()
-                    await client.listings.create.mutate({
+                    const created = await client.listings.create.mutate({
                       title: title.trim(),
                       description: desc.trim(),
                       price: freeItem ? 0 : parseFloat(price) || 0,
@@ -3080,6 +3080,16 @@ function PanelBody() {
                       deliveryMethod: offersDelivery ? deliveryMethod : undefined,
                       autoAcceptMin: !freeItem && parseFloat(autoAcceptMin) > 0 ? parseFloat(autoAcceptMin) : undefined,
                     })
+                    // Paid promotions: charge before they go live. Redirect to
+                    // Stripe Checkout; the webhook applies the option on payment.
+                    if ((grabItNow || featured) && created?.id) {
+                      const promo = await client.listings.promote.mutate({
+                        listingId: created.id,
+                        option: grabItNow ? 'grab_it_now' : 'featured',
+                        weeks: 1,
+                      })
+                      if (promo?.url) { window.location.href = promo.url; return }
+                    }
                     setStep('done')
                   } catch (err) {
                     alert((err as Error).message || 'Failed to publish listing')
