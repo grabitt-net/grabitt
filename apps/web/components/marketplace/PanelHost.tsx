@@ -1870,13 +1870,71 @@ function PanelBody() {
 
   // ── OFFERS ──────────────────────────────────────────────────────────────────
   if (panel.id === 'offers') {
+    const [tab, setTab] = useState<'received' | 'sent'>('received')
+    const [received, setReceived] = useState<any[] | null>(null)
+    const [sent, setSent] = useState<any[] | null>(null)
+    const [busyId, setBusyId] = useState<string | null>(null)
+
+    const load = useCallback(async () => {
+      try {
+        const c = await getTrpcClient()
+        const [r, s] = await Promise.all([c.offers.received.query(), c.offers.sent.query()])
+        setReceived(r as any[]); setSent(s as any[])
+      } catch { setReceived([]); setSent([]) }
+    }, [])
+    useEffect(() => { load() }, [load])
+
+    const respond = async (offerId: string, action: 'accept' | 'decline') => {
+      setBusyId(offerId)
+      try { const c = await getTrpcClient(); await c.offers.respond.mutate({ offerId, action }); await load(); toast(action === 'accept' ? '✅ Offer accepted' : 'Offer declined') }
+      catch (e) { toast(e instanceof Error ? e.message : 'Could not respond') }
+      finally { setBusyId(null) }
+    }
+
+    const STATUS_LABEL: Record<string, string> = { pending: 'Pending', accepted: 'Accepted', declined: 'Declined', countered: 'Countered', expired: 'Expired', withdrawn: 'Withdrawn' }
+    const list = tab === 'received' ? received : sent
+
     return (
       <ActionPanel title="💰 Offers" onClose={closePanel}>
-        <div style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>💰</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No offers yet</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Offers you make or receive on listings appear here.</div>
+        <div style={{ display: 'flex', background: '#f5f0e8', borderRadius: 50, padding: 4, marginBottom: 14 }}>
+          {(['received', 'sent'] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{ flex: 1, border: 'none', background: tab === t ? '#fff' : 'transparent', color: tab === t ? 'var(--dark)' : '#888', borderRadius: 50, padding: '7px 0', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer', boxShadow: tab === t ? '0 1px 4px rgba(0,0,0,0.1)' : 'none' }}>
+              {t === 'received' ? 'Received' : 'Sent'}{t === 'received' && received && received.length > 0 ? ` ${received.length}` : ''}
+            </button>
+          ))}
         </div>
+
+        {list === null ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : list.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>💰</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{tab === 'received' ? 'No offers to review' : "You haven't made any offers"}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>{tab === 'received' ? 'Offers buyers make on your listings appear here.' : 'Offers you make on listings appear here.'}</div>
+          </div>
+        ) : list.map((o: any) => (
+          <div key={o.id} style={{ borderBottom: '1px solid #f5f5f5', padding: '12px 0' }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 12, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                {o.listing?.images?.[0] ? <img src={o.listing.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.listing?.title}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>
+                  {tab === 'received' ? 'A buyer offered' : 'Your offer'} · <span style={{ color: tab === 'received' ? '#555' : 'var(--orange)', fontWeight: 800 }}>{STATUS_LABEL[o.status] ?? o.status}</span>
+                </div>
+              </div>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)', flexShrink: 0 }}>€{Number(o.amount).toLocaleString()}</div>
+            </div>
+            {o.message && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#666', marginTop: 6, background: '#faf7f2', borderRadius: 8, padding: '6px 10px' }}>“{o.message}”</div>}
+            {tab === 'received' && o.status === 'pending' && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <button onClick={() => respond(o.id, 'accept')} disabled={busyId === o.id} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 0', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>{busyId === o.id ? '…' : 'Accept'}</button>
+                <button onClick={() => respond(o.id, 'decline')} disabled={busyId === o.id} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '9px 0', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>Decline</button>
+              </div>
+            )}
+          </div>
+        ))}
       </ActionPanel>
     )
   }

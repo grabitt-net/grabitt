@@ -82,7 +82,7 @@ export default function ProfileScreen() {
           { label: 'On sale', value: dash?.active, go: () => router.push('/my-listings?seg=active' as any) },
           { label: 'Sold', value: dash?.sold, go: () => router.push('/my-listings?seg=sold' as any) },
           { label: 'Messages', value: dash?.unread, badge: !!dash?.unread, go: () => router.push('/(tabs)/messages') },
-          { label: 'Offers', value: dash?.offers, badge: !!dash?.offers, go: () => {} },
+          { label: 'Offers', value: dash?.offers, badge: !!dash?.offers, go: () => router.push('/offers' as any) },
           { label: 'Saved', value: dash?.saved, go: () => {} },
           { label: 'Purchases', value: undefined as any, go: () => router.push('/purchases') },
         ].map(t => (
