@@ -13,15 +13,18 @@ export default function ProfileScreen() {
   const [me, setMe] = useState<Me | null>(null)
   const [subs, setSubs] = useState<Sub[]>([])
   const [dash, setDash] = useState<{ active: number; sold: number; unread: number; offers: number; saved: number } | null>(null)
+  const [threads, setThreads] = useState<any[]>([])
+  const [meId, setMeId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!token) { setMe(null); setSubs([]); setDash(null); return }
+    if (!token) { setMe(null); setSubs([]); setDash(null); setThreads([]); return }
     setLoading(true)
     const api = apiClient(token)
     api.users.dashboard.query().then((d: any) => setDash(d)).catch(() => {})
+    api.messages.myThreads.query().then((d: any[]) => setThreads(d ?? [])).catch(() => {})
     Promise.all([
-      api.users.me.query().then((u: any) => setMe(u)).catch(() => {}),
+      api.users.me.query().then((u: any) => { setMe(u); setMeId(u?.id ?? null) }).catch(() => {}),
       api.subscriptions.mine.query().then((d: any[]) => setSubs(d)).catch(() => {}),
     ]).finally(() => setLoading(false))
   }, [token])
@@ -94,6 +97,32 @@ export default function ProfileScreen() {
         ))}
       </View>
 
+      {/* Recent messages */}
+      {threads.length > 0 && (
+        <View style={{ marginHorizontal: 14, marginTop: 12 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <Text style={s.sectionLabel}>RECENT MESSAGES</Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/messages')}><Text style={s.seeAll}>See all ›</Text></TouchableOpacity>
+          </View>
+          {threads.slice(0, 3).map((t: any) => {
+            const other = t.participants?.find((p: any) => p.userId !== meId)?.user
+            const last = t.messages?.[0]
+            const unread = !!last && last.senderId !== meId && !last.readAt
+            const preview = last ? (last.blocked ? '⚠️ Message hidden' : (last.senderId === meId ? 'You: ' : '') + last.body) : 'Start chatting…'
+            return (
+              <TouchableOpacity key={t.id} style={s.msgRow} onPress={() => router.push(`/chat/${t.id}?name=${encodeURIComponent(other?.displayName ?? 'Chat')}`)}>
+                <View style={s.msgAvatar}><Text style={{ color: '#fff', fontWeight: '900' }}>{(other?.displayName ?? '?')[0]?.toUpperCase()}</Text></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.msgName, unread && { fontWeight: '900' }]} numberOfLines={1}>{other?.displayName ?? 'Grabitt user'}</Text>
+                  <Text style={[s.msgPreview, unread && { color: colors.dark, fontWeight: '700' }]} numberOfLines={1}>{preview}</Text>
+                </View>
+                {unread && <View style={s.msgDot} />}
+              </TouchableOpacity>
+            )
+          })}
+        </View>
+      )}
+
       {/* Subscription */}
       <View style={s.block}>
         {activeSub ? (
@@ -154,6 +183,13 @@ const s = StyleSheet.create({
   statValue: { fontFamily: 'Georgia', fontSize: 20, fontWeight: '700', color: colors.dark },
   statLabel: { fontFamily: 'Nunito', fontSize: 9.5, fontWeight: '800', color: '#888', textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 2 },
   statDot: { position: 'absolute', top: 8, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.orange },
+  sectionLabel: { fontFamily: 'Nunito', fontSize: 10, fontWeight: '800', color: '#999', letterSpacing: 1 },
+  seeAll: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: colors.orange },
+  msgRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  msgAvatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.orange, alignItems: 'center', justifyContent: 'center' },
+  msgName: { fontFamily: 'Nunito', fontSize: 13, fontWeight: '700', color: colors.dark },
+  msgPreview: { fontFamily: 'Nunito', fontSize: 11.5, color: '#888', marginTop: 1 },
+  msgDot: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: colors.orange },
   block: { backgroundColor: '#fff', margin: 14, borderRadius: 14, padding: 16 },
   blockTitle: { fontFamily: 'Nunito', fontSize: 14, fontWeight: '900', color: colors.dark },
   blockSub: { fontFamily: 'Nunito', fontSize: 12, color: '#777', marginTop: 4, marginBottom: 10 },

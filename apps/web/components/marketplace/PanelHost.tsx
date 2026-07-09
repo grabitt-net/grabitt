@@ -3422,6 +3422,7 @@ function PanelBody() {
     const [subs, setSubs] = useState<Sub[]>([])
     const [portalBusy, setPortalBusy] = useState(false)
     const [dash, setDash] = useState<{ active: number; sold: number; unread: number; offers: number; saved: number } | null>(null)
+    const [threads, setThreads] = useState<any[] | null>(null)
 
     useEffect(() => {
       setLang(getLanguage())
@@ -3433,6 +3434,7 @@ function PanelBody() {
       getTrpcClient().then(c => c.users.payoutStatus.query()).then(s => setPayout(s)).catch(() => {})
       getTrpcClient().then(c => c.subscriptions.mine.query()).then(d => setSubs(d as unknown as Sub[])).catch(() => {})
       getTrpcClient().then(c => c.users.dashboard.query()).then(d => setDash(d)).catch(() => {})
+      getTrpcClient().then(c => c.messages.myThreads.query()).then(d => setThreads(d as any[])).catch(() => {})
     }, [isOwnProfile])
 
     const openBillingPortal = async () => {
@@ -3525,6 +3527,35 @@ function PanelBody() {
                 </button>
               ))}
             </div>
+
+            {/* Recent messages preview */}
+            {threads && threads.length > 0 && (() => {
+              const meId = (me as any)?.id
+              return (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1 }}>Recent messages</span>
+                    <button onClick={() => openPanel('messages')} style={{ background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>See all →</button>
+                  </div>
+                  {threads.slice(0, 3).map((t: any) => {
+                    const other = t.participants?.find((p: any) => p.userId !== meId)?.user
+                    const last = t.messages?.[0]
+                    const unread = !!last && last.senderId !== meId && !last.readAt
+                    const preview = last ? (last.blocked ? '⚠️ Message hidden' : (last.senderId === meId ? 'You: ' : '') + last.body) : 'Start chatting…'
+                    return (
+                      <div key={t.id} onClick={() => { window.location.href = `/messages/${t.id}` }} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f5f5f5', cursor: 'pointer' }}>
+                        <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 15, flexShrink: 0 }}>{(other?.displayName ?? '?')[0]?.toUpperCase()}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: unread ? 900 : 700, color: 'var(--dark)' }}>{other?.displayName ?? 'Grabitt user'}</div>
+                          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: unread ? 'var(--dark)' : '#888', fontWeight: unread ? 700 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preview}</div>
+                        </div>
+                        {unread && <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--orange)', flexShrink: 0 }} />}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
 
             {/* Preferences — interests */}
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>My interests</div>
