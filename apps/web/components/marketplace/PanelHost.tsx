@@ -66,7 +66,33 @@ const NOTIFS = [
   { icon: '💬', title: 'Message', body: 'Carlos: "Can you deliver?"', time: '7h ago', type: 'messages' },
 ]
 
+const FAQ_ITEM = (q: string, a: string) =>
+  `<details style="border:1px solid #eee;border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+    <summary style="font-family:Nunito,sans-serif;font-size:13px;font-weight:800;color:#1a1a1a;cursor:pointer;">${q}</summary>
+    <p style="font-family:Nunito,sans-serif;font-size:12.5px;color:#555;line-height:1.6;margin-top:8px;">${a}</p>
+  </details>`
+
 const SHIELD_CONTENT: Record<string, string> = {
+  faqs: `<div style="font-family:Nunito,sans-serif;">
+    <p style="font-size:12px;color:#888;margin-bottom:12px;">Quick answers to the most common questions. Still stuck? Use the <strong>Report</strong> tab to contact us.</p>
+    <div style="font-size:11px;font-weight:900;color:#FF4500;text-transform:uppercase;letter-spacing:0.5px;margin:6px 0 8px;">Buying</div>
+    ${FAQ_ITEM('How do I buy an item?', 'Open a listing and tap <strong>Buy Now</strong>, or <strong>Message</strong> the seller with any questions first. Payment is taken securely by card and held in escrow until you confirm you have received the item.')}
+    ${FAQ_ITEM('What is escrow / buyer protection?', 'Your money is held safely by Grabitt (via Stripe) and only released to the seller once you confirm handover. If the item never arrives, you are protected.')}
+    ${FAQ_ITEM('How does collection or delivery work?', 'For in-person handovers you confirm with a one-time code or QR when you meet. If the seller offers courier delivery you will see a delivery fee, and funds release once tracking shows delivered.')}
+    ${FAQ_ITEM('Can I make an offer?', 'Yes — use <strong>Make Offer</strong> on eligible listings. The seller can accept, decline or counter. Some sellers auto-accept offers above a threshold.')}
+    <div style="font-size:11px;font-weight:900;color:#FF4500;text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">Selling</div>
+    ${FAQ_ITEM('How do I list an item?', 'Tap <strong>Sell</strong>, add photos, a title, price, category, condition and location, then publish. Your listings appear under <strong>Account → My Listings</strong>.')}
+    ${FAQ_ITEM('What does it cost to sell?', 'Listing standard items is free. Grabitt charges a small commission only when an item sells, based on your seller grade. Optional promotions (below) carry a set fee.')}
+    ${FAQ_ITEM('What are Grab It Now and Featured/Sponsored listings?', 'Paid promotions that boost visibility: <strong>Grab It Now</strong> puts your item in the flash-deal strip, and <strong>Featured/Sponsored</strong> pins it to the top of its category. You will see the exact fee and pay before it goes live.')}
+    ${FAQ_ITEM('Where do I see my sales and messages?', 'Under <strong>Account</strong> you will find My Listings, orders and your inbox. Buyers reach you through <strong>Messages</strong>.')}
+    <div style="font-size:11px;font-weight:900;color:#FF4500;text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">Payments &amp; fees</div>
+    ${FAQ_ITEM('How am I paid as a seller?', 'Payouts go to your connected Stripe account after the buyer confirms handover. You can manage payouts from your Account.')}
+    ${FAQ_ITEM('Is my card safe?', 'Yes — all payments are processed by Stripe. Grabitt never sees or stores your full card number.')}
+    <div style="font-size:11px;font-weight:900;color:#FF4500;text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">Messaging &amp; safety</div>
+    ${FAQ_ITEM('Why can’t I share my phone number or email?', 'To keep you protected, contact details are blocked in chat. Keeping the conversation on Grabitt means your buyer protection and dispute support stay valid.')}
+    ${FAQ_ITEM('How do I report a problem or a user?', 'Use the <strong>Report</strong> tab in this Help centre, or the report option on a listing/profile. Our team reviews every report.')}
+    ${FAQ_ITEM('How do I delete my account / data?', 'Go to <strong>Account</strong> and choose delete your data. This removes your personal data in line with GDPR.')}
+  </div>`,
   promise: `<div style="font-family:Nunito,sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;">
     <p style="margin-bottom:12px;">At <strong>Grabitt</strong> we commit to making every transaction on Gran Canaria safe, fair and local. Our platform is built on three pillars:</p>
     <div style="background:#FFF3EE;border-radius:12px;padding:12px;margin-bottom:10px;"><strong>🔒 Secure payments</strong><br/>All payments go through Stripe escrow — funds are only released once both parties confirm the handover.</div>
@@ -737,7 +763,7 @@ function PanelBody() {
 
   // ── HELP / SAFETY SHIELD ────────────────────────────────────────────────────
   if (panel.id === 'shield' || panel.id === 'help') {
-    const tabs = [{ id: 'promise', label: 'Our Promise' }, { id: 'rules', label: 'Golden Rules' }, { id: 'scams', label: 'Known Scams' }, { id: 'tips', label: 'Safety Tips' }, { id: 'report', label: 'Report' }]
+    const tabs = [{ id: 'faqs', label: 'FAQs' }, { id: 'promise', label: 'Our Promise' }, { id: 'rules', label: 'Golden Rules' }, { id: 'scams', label: 'Known Scams' }, { id: 'tips', label: 'Safety Tips' }, { id: 'report', label: 'Report' }]
     return (
       <div onClick={closePanel} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400 }}>
         <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
@@ -1074,7 +1100,14 @@ function PanelBody() {
               {isFeatured && <div style={{ position: 'absolute', top: 12, left: 14, background: 'var(--orange)', color: '#fff', fontSize: 10, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50, zIndex: 1 }}>👀 FEATURED</div>}
             </div>
             <button onClick={closePanel} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-            <button style={{ position: 'absolute', top: 12, right: 56, background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤍</button>
+            <button
+              onClick={async () => {
+                if (!item.id) { toast('Open a saved listing to favourite it'); return }
+                try { const c = await getTrpcClient(); await c.wishlist.toggle.mutate({ listingId: item.id as string }); toast('❤️ Updated your favourites') }
+                catch { toast('Please log in to save favourites') }
+              }}
+              title="Save to favourites"
+              style={{ position: 'absolute', top: 12, right: 56, background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤍</button>
           </div>
 
           <div style={{ overflowY: 'auto', flex: 1, padding: '14px 16px 24px' }}>
@@ -1098,11 +1131,26 @@ function PanelBody() {
                   <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>⭐ 4.8 · 34 sales</span>
                 </div>
               </div>
-              {item.sellerId ? (
-                <button onClick={() => openPanel('storefront', { sellerId: item.sellerId })} style={{ background: '#fff', color: 'var(--ocean)', border: '1.5px solid var(--ocean)', borderRadius: 50, padding: '7px 13px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}>🏪 Store</button>
-              ) : (
-                <button style={{ background: 'var(--ocean)', color: '#fff', border: 'none', borderRadius: 50, padding: '7px 13px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}>Message</button>
-              )}
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                {!!item.sellerId && (
+                  <button onClick={() => openPanel('storefront', { sellerId: item.sellerId })} style={{ background: '#fff', color: 'var(--ocean)', border: '1.5px solid var(--ocean)', borderRadius: 50, padding: '7px 11px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🏪</button>
+                )}
+                <button
+                  onClick={async () => {
+                    if (!item.id || !item.sellerId) { toast('Open a real listing to message the seller'); return }
+                    try {
+                      const c = await getTrpcClient()
+                      const thread = await c.messages.thread.mutate({ listingId: item.id as string, sellerId: item.sellerId as string })
+                      if (thread?.id) window.location.href = `/messages/${thread.id}`
+                    } catch (e) {
+                      const m = (e as Error)?.message ?? ''
+                      if (/yourself/i.test(m)) toast('That’s your own listing')
+                      else if (/UNAUTHORIZED|FORBIDDEN|jwt|token/i.test(m)) window.location.href = '/auth'
+                      else toast('Could not start the chat')
+                    }
+                  }}
+                  style={{ background: 'var(--ocean)', color: '#fff', border: 'none', borderRadius: 50, padding: '7px 13px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>💬 Message</button>
+              </div>
             </div>
 
             {/* Tag pills */}
@@ -1835,14 +1883,48 @@ function PanelBody() {
 
   // ── MY LISTINGS ─────────────────────────────────────────────────────────────
   if (panel.id === 'mylistings') {
+    const [myL, setMyL] = useState<any[] | null>(null)
+    const [myLoading, setMyLoading] = useState(true)
+    useEffect(() => {
+      (async () => {
+        try {
+          const client = await getTrpcClient()
+          const me: any = await client.users.me.query()
+          if (!me?.id) { setMyL([]); return }
+          const res: any = await client.listings.bySeller.query({ sellerId: me.id })
+          setMyL(res?.listings ?? [])
+        } catch { setMyL([]) } finally { setMyLoading(false) }
+      })()
+    }, [])
+
     return (
       <ActionPanel title="📋 My Listings" onClose={closePanel}>
-        <div style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No active listings</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', marginBottom: 16 }}>Items you list for sale appear here.</div>
-          <button onClick={() => openPanel('sell')} style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ New Listing</button>
-        </div>
+        {myLoading ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : !myL || myL.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No active listings</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', marginBottom: 16 }}>Items you list for sale appear here.</div>
+            <button onClick={() => openPanel('sell')} style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ New Listing</button>
+          </div>
+        ) : (
+          <>
+            {myL.map((l: any) => (
+              <div key={l.id} onClick={() => openPanel('listing', { id: l.id })} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
+                <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0, overflow: 'hidden' }}>
+                  {Array.isArray(l.images) && l.images[0] ? <img src={l.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🖼️'}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 2 }}>{l.title}</div>
+                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: 'var(--orange)' }}>€{Number(l.price).toLocaleString()}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>📍 {l.location}</div>
+                </div>
+              </div>
+            ))}
+            <button onClick={() => openPanel('sell')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>+ New Listing</button>
+          </>
+        )}
       </ActionPanel>
     )
   }
@@ -2971,24 +3053,27 @@ function PanelBody() {
                     const imageUrls = photoFiles.length > 0
                       ? await Promise.all(photoFiles.map(f => compressAndUpload(f, listingPhotoPath(listingId))))
                       : ['https://placehold.co/800x600/f5f0e8/9E8F7A?text=No+photo']
-                    const DEPT_ENUM: Record<string, string> = {
+                    // Map UI labels to the exact Prisma enum values (invalid
+                    // values silently fail create, so the listing never saves).
+                    const DEPT_MAP: Record<string, string> = {
                       'Electronics': 'electronics', 'Fashion': 'fashion', 'Home & Garden': 'home_garden',
-                      'Sport & Leisure': 'sport_leisure', 'Retro & Vintage': 'retro_vintage', 'Gaming': 'gaming',
+                      'Sport & Leisure': 'sport', 'Sport': 'sport', 'Retro & Vintage': 'retro_vintage', 'Gaming': 'gaming',
                       'Pet Shop': 'pet_shop', 'Motors': 'motors', 'Kids & Baby': 'kids_baby',
                       'Handy Help': 'handy_help', 'Jobs': 'jobs', 'Property': 'property',
-                      'Services': 'services', 'Collectables': 'collectables', 'Other': 'other',
+                      'Services': 'services', 'Collectables': 'collectables', 'Gift Ideas': 'gift_ideas',
+                      'Health & Fitness': 'health_fitness', 'Food Store': 'food_store', 'Other': 'other',
                     }
-                    const COND_ENUM: Record<string, string> = {
+                    const COND_MAP: Record<string, string> = {
                       'New': 'new', 'Like New': 'like_new', 'Very Good': 'very_good',
-                      'Good': 'good', 'Fair': 'fair', 'For Parts': 'for_parts',
+                      'Good': 'good', 'Fair': 'fair', 'For Parts': 'spares', 'Spares': 'spares',
                     }
                     const client = await getTrpcClient()
                     await client.listings.create.mutate({
                       title: title.trim(),
                       description: desc.trim(),
                       price: freeItem ? 0 : parseFloat(price) || 0,
-                      department: (DEPT_ENUM[dept] ?? dept) as Parameters<typeof client.listings.create.mutate>[0]['department'],
-                      condition: (COND_ENUM[condition] ?? condition) as Parameters<typeof client.listings.create.mutate>[0]['condition'],
+                      department: (DEPT_MAP[dept] ?? 'other') as Parameters<typeof client.listings.create.mutate>[0]['department'],
+                      condition: (COND_MAP[condition] ?? 'good') as Parameters<typeof client.listings.create.mutate>[0]['condition'],
                       images: imageUrls,
                       location: town,
                       deliveryFee: offersDelivery ? (parseFloat(deliveryFee) || 0) : 0,

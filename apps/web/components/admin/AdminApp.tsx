@@ -130,7 +130,6 @@ export default function AdminApp({ execToken }: Props) {
                 {view === 'audit'      && <AuditTrailView onViewMember={() => setView('members')} />}
                 {view === 'compliance' && <ComplianceView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'homepage'   && <HomepageView onEditBanners={(pos) => { setBannerPosition(pos); setView('banners') }} />}
-                {view === 'rewards'    && <Placeholder view={view} />}
               </>
             )}
           </main>

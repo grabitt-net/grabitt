@@ -12,7 +12,6 @@ const sections = [
       { icon: '🪪', label: 'Members', id: 'members' as View },
       { icon: '⚖️', label: 'Disputes', id: 'disputes' as View, countKey: 'disputes' },
       { icon: '🚨', label: 'Reports', id: 'reports' as View, countKey: 'reports' },
-      { icon: '🎁', label: 'Rewards', id: 'rewards' as View },
       { icon: '💰', label: 'Financials', id: 'financials' as View },
       { icon: '📊', label: 'Retention', id: 'retention' as View },
       { icon: '💼', label: 'Jobs', id: 'jobs' as View },

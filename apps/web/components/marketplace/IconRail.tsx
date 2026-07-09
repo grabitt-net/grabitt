@@ -20,7 +20,6 @@ export default function IconRail() {
   const items: { icon: IconName; label: string; panel: PanelId; badge?: number }[] = [
     { icon: 'bell',    label: 'Alerts',   panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
     { icon: 'heart',   label: 'Saved',    panel: 'favourites' },
-    { icon: 'coins',   label: 'Rewards',  panel: 'rewards' },
     { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
     { icon: 'message', label: 'Messages', panel: 'messages' },
     { icon: 'package', label: 'Sell',     panel: 'sell' },

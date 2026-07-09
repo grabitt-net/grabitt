@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
@@ -24,6 +24,7 @@ function salaryLabel(min?: number | string | null, max?: number | string | null,
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const router = useRouter()
   const [listing, setListing] = useState<any>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'notfound'>('loading')
   const [meId, setMeId] = useState<string | null>(null)
@@ -58,7 +59,11 @@ export default function ListingDetailPage() {
     <main style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 100 }}>
       <SiteHeader />
       <header style={{ background: 'var(--sand)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1.5px solid var(--sand2)' }}>
-        <Link href={job ? '/jobs' : prop ? '/property' : '/'} style={{ fontSize: 22, textDecoration: 'none', color: 'var(--dark)' }}>←</Link>
+        <button
+          onClick={() => { if (window.history.length > 1) router.back(); else router.push(job ? '/jobs' : prop ? '/property' : '/') }}
+          style={{ fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--dark)', padding: 0, lineHeight: 1 }}
+          aria-label="Back"
+        >←</button>
         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', flex: 1 }}>
           {DEPT_LABEL[listing.department] ?? 'Listing'}
         </span>
