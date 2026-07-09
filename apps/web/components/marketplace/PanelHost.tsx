@@ -3345,6 +3345,7 @@ function PanelBody() {
     type Sub = { id: string; plan: string; status: string; currentPeriodEnd: string | null; trialEnd: string | null; cancelAtPeriodEnd: boolean }
     const [subs, setSubs] = useState<Sub[]>([])
     const [portalBusy, setPortalBusy] = useState(false)
+    const [dash, setDash] = useState<{ active: number; sold: number; unread: number; offers: number; saved: number } | null>(null)
 
     useEffect(() => {
       setLang(getLanguage())
@@ -3355,6 +3356,7 @@ function PanelBody() {
       }).catch(() => {})
       getTrpcClient().then(c => c.users.payoutStatus.query()).then(s => setPayout(s)).catch(() => {})
       getTrpcClient().then(c => c.subscriptions.mine.query()).then(d => setSubs(d as unknown as Sub[])).catch(() => {})
+      getTrpcClient().then(c => c.users.dashboard.query()).then(d => setDash(d)).catch(() => {})
     }, [isOwnProfile])
 
     const openBillingPortal = async () => {
@@ -3429,6 +3431,25 @@ function PanelBody() {
 
         {isOwnProfile && (
           <>
+            {/* At-a-glance overview — real counts, each opens the relevant area */}
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Your activity</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
+              {([
+                { label: 'On sale', value: dash?.active, panel: 'mylistings' as PanelId },
+                { label: 'Sold', value: dash?.sold, panel: 'mylistings' as PanelId },
+                { label: 'Messages', value: dash?.unread, panel: 'messages' as PanelId, badge: !!dash?.unread },
+                { label: 'Offers', value: dash?.offers, panel: 'offers' as PanelId, badge: !!dash?.offers },
+                { label: 'Saved', value: dash?.saved, panel: 'favourites' as PanelId },
+                { label: 'Payouts', value: payout?.payoutsEnabled ? '✓' : '—', panel: 'profile' as PanelId },
+              ]).map(t => (
+                <button key={t.label} onClick={() => t.panel !== 'profile' && openPanel(t.panel)} style={{ position: 'relative', background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '12px 6px', textAlign: 'center', cursor: t.panel !== 'profile' ? 'pointer' : 'default' }}>
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: 'var(--dark)', fontVariantNumeric: 'tabular-nums' }}>{t.value ?? '—'}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.label}</div>
+                  {t.badge && <span style={{ position: 'absolute', top: 8, right: 10, width: 8, height: 8, borderRadius: '50%', background: 'var(--orange)' }} />}
+                </button>
+              ))}
+            </div>
+
             {/* Preferences — interests */}
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>My interests</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>

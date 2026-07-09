@@ -11,6 +11,20 @@ export const usersRouter = router({
     ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
   ),
 
+  // At-a-glance counts for the account dashboard — active/sold listings, unread
+  // messages, pending offers on your listings, and saved (favourite) items.
+  dashboard: protectedProcedure.query(async ({ ctx }) => {
+    const uid = ctx.user.id
+    const [active, sold, unread, offers, saved] = await Promise.all([
+      ctx.prisma.listing.count({ where: { sellerId: uid, status: 'active' } }),
+      ctx.prisma.listing.count({ where: { sellerId: uid, status: 'sold' } }),
+      ctx.prisma.message.count({ where: { senderId: { not: uid }, readAt: null, thread: { participants: { some: { userId: uid } } } } }),
+      ctx.prisma.offer.count({ where: { status: 'pending', listing: { sellerId: uid } } }),
+      ctx.prisma.wishlistItem.count({ where: { userId: uid } }),
+    ])
+    return { active, sold, unread, offers, saved }
+  }),
+
   profile: publicProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(({ ctx, input }) =>

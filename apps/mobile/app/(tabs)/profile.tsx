@@ -12,12 +12,14 @@ export default function ProfileScreen() {
   const { user, token, signOut } = useAuth()
   const [me, setMe] = useState<Me | null>(null)
   const [subs, setSubs] = useState<Sub[]>([])
+  const [dash, setDash] = useState<{ active: number; sold: number; unread: number; offers: number; saved: number } | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!token) { setMe(null); setSubs([]); return }
+    if (!token) { setMe(null); setSubs([]); setDash(null); return }
     setLoading(true)
     const api = apiClient(token)
+    api.users.dashboard.query().then((d: any) => setDash(d)).catch(() => {})
     Promise.all([
       api.users.me.query().then((u: any) => setMe(u)).catch(() => {}),
       api.subscriptions.mine.query().then((d: any[]) => setSubs(d)).catch(() => {}),
@@ -74,6 +76,24 @@ export default function ProfileScreen() {
 
       {loading && <ActivityIndicator color={colors.orange} style={{ marginVertical: 10 }} />}
 
+      {/* At-a-glance overview — real counts, tap to open the area */}
+      <View style={s.statGrid}>
+        {[
+          { label: 'On sale', value: dash?.active, go: () => router.push('/my-listings' as any) },
+          { label: 'Sold', value: dash?.sold, go: () => router.push('/my-listings' as any) },
+          { label: 'Messages', value: dash?.unread, badge: !!dash?.unread, go: () => router.push('/(tabs)/messages') },
+          { label: 'Offers', value: dash?.offers, badge: !!dash?.offers, go: () => {} },
+          { label: 'Saved', value: dash?.saved, go: () => {} },
+          { label: 'Purchases', value: undefined as any, go: () => router.push('/purchases') },
+        ].map(t => (
+          <TouchableOpacity key={t.label} style={s.statTile} onPress={t.go}>
+            <Text style={s.statValue}>{t.value ?? (t.label === 'Purchases' ? '›' : '—')}</Text>
+            <Text style={s.statLabel}>{t.label}</Text>
+            {t.badge && <View style={s.statDot} />}
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* Subscription */}
       <View style={s.block}>
         {activeSub ? (
@@ -129,6 +149,11 @@ const s = StyleSheet.create({
   sub: { fontFamily: 'Nunito', fontSize: 12, color: '#7a6a55', marginTop: 4 },
   loginBtn: { backgroundColor: colors.orange, borderRadius: 50, paddingHorizontal: 24, paddingVertical: 11, marginTop: 12 },
   loginBtnText: { color: '#fff', fontWeight: '900', fontFamily: 'Nunito' },
+  statGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10, paddingTop: 12, gap: 8 },
+  statTile: { width: '31%', flexGrow: 1, backgroundColor: '#fff', borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: '#efe7db', position: 'relative' },
+  statValue: { fontFamily: 'Georgia', fontSize: 20, fontWeight: '700', color: colors.dark },
+  statLabel: { fontFamily: 'Nunito', fontSize: 9.5, fontWeight: '800', color: '#888', textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 2 },
+  statDot: { position: 'absolute', top: 8, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.orange },
   block: { backgroundColor: '#fff', margin: 14, borderRadius: 14, padding: 16 },
   blockTitle: { fontFamily: 'Nunito', fontSize: 14, fontWeight: '900', color: colors.dark },
   blockSub: { fontFamily: 'Nunito', fontSize: 12, color: '#777', marginTop: 4, marginBottom: 10 },
