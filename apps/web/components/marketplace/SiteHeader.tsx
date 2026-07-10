@@ -12,7 +12,7 @@ const NAV: [string, string][] = [
   ['Jobs', '/jobs'],
   ['Property', '/property'],
   ['Messages', '/messages'],
-  ['Account', '/profile'],
+  ['Account', '/account'],
 ]
 
 export default function SiteHeader() {
