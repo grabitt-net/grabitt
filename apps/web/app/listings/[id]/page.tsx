@@ -138,6 +138,17 @@ export default function ListingDetailPage() {
           </div>
         )}
 
+        {Array.isArray(listing.tags) && listing.tags.length > 0 && (
+          <div style={cardBox}>
+            <div style={sectionTitle}>Tags</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {listing.tags.map((t: string) => (
+                <Link key={t} href={`/listings?q=${encodeURIComponent(t)}`} style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, fontWeight: 600, color: '#6b5a41', background: '#f5f0e8', border: '1px solid #ece3d7', borderRadius: 999, padding: '5px 12px', textDecoration: 'none' }}>#{t}</Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Location map (jobs use the full address; others use the town/area) */}
         {(() => {
           const q = (job?.address || listing.location || '').trim()

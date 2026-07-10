@@ -7,6 +7,24 @@ import { getStripe } from '../lib/stripe'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
+// Lightweight auto-tagging: derive up to 8 keyword tags from a listing's title +
+// description. Strips punctuation, drops stop-words and short tokens, dedupes.
+const STOP_WORDS = new Set(['the','and','for','with','this','that','your','you','are','has','have','from','was','will','can','all','new','used','one','two','our','out','get','not','but','they','use','very','good','great','perfect','condition','sale','selling','includes','included','comes','like'])
+export function autoTags(title: string, description: string): string[] {
+  const words = `${title} ${description}`
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length >= 3 && !STOP_WORDS.has(w) && !/^\d+$/.test(w))
+  const seen = new Set<string>()
+  const tags: string[] = []
+  for (const w of words) {
+    if (!seen.has(w)) { seen.add(w); tags.push(w) }
+    if (tags.length >= 8) break
+  }
+  return tags
+}
+
 export const listingsRouter = router({
   search: publicProcedure
     .input(SearchInputSchema)
@@ -17,7 +35,10 @@ export const listingsRouter = router({
       const where: Record<string, unknown> = {
         status: 'active',
         ...(department && { department }),
-        ...(query && { title: { contains: query, mode: 'insensitive' } }),
+        ...(query && { OR: [
+          { title: { contains: query, mode: 'insensitive' } },
+          { tags: { has: query.toLowerCase() } },
+        ] }),
         ...(minPrice !== undefined || maxPrice !== undefined
           ? { price: { ...(minPrice && { gte: minPrice }), ...(maxPrice && { lte: maxPrice }) } }
           : {}),
@@ -185,7 +206,7 @@ export const listingsRouter = router({
       await checkGradeUpgrade(ctx.prisma, user)
 
       return ctx.prisma.listing.create({
-        data: { ...input, sellerId: user.id, status: 'active' },
+        data: { ...input, tags: autoTags(input.title, input.description), sellerId: user.id, status: 'active' },
       })
     }),
 

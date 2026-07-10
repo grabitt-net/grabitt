@@ -10,7 +10,7 @@ import { pushView } from '../../lib/recentViews'
 
 const pretty = (s?: string) => (s ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
-type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; description?: string; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number }; job?: any }
+type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; description?: string; tags?: string[]; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number }; job?: any }
 
 const PERIOD: Record<string, string> = { month: '/mo', year: '/yr', hour: '/hr' }
 function salaryLabel(min?: any, max?: any, period?: string | null) {
@@ -86,6 +86,7 @@ export default function ListingScreen() {
         isFeatured: l.isFeatured,
         image: Array.isArray(l.images) ? l.images[0] : undefined,
         description: l.description,
+        tags: Array.isArray(l.tags) ? l.tags : [],
         sellerId: l.seller?.id,
         seller: l.seller ? { name: l.seller.displayName, grade: l.seller.grade, rating: l.seller.avgRating, sales: l.seller.salesCount } : undefined,
         job: l.jobListing ?? undefined,
@@ -186,6 +187,17 @@ export default function ListingScreen() {
           <Text style={s.desc}>
             {item.description ?? 'Great condition. Message the seller via Grabitt chat with any questions. Collection or local delivery available.'}
           </Text>
+
+          {/* Tags */}
+          {Array.isArray(item.tags) && item.tags.length > 0 && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+              {item.tags.map((t) => (
+                <View key={t} style={{ backgroundColor: '#f5f0e8', borderColor: '#ece3d7', borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 }}>
+                  <Text style={{ color: '#6b5a41', fontSize: 12, fontWeight: '600' }}>#{t}</Text>
+                </View>
+              ))}
+            </View>
+          )}
 
           {/* Map — opens the location in the device maps app */}
           <TouchableOpacity

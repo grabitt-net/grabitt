@@ -284,6 +284,7 @@ model Listing {
   condition        ListingCondition
   status           ListingStatus    @default(draft)
   images           String[]
+  tags             String[]         @default([])  // auto-generated from title/description for search + discovery
   location         String
   lat              Float?
   lng              Float?
