@@ -86,6 +86,13 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('homepage.upsertHeroSlide', 'mutation', data, execToken),
     removeHeroSlide: (id: string) =>
       rpc<any>('homepage.removeHeroSlide', 'mutation', { id }, execToken),
+
+    // Community content (Grabitt Guides)
+    communityPosts: () => rpc<any[]>('community.all', 'query', undefined, execToken),
+    upsertCommunityPost: (data: Record<string, unknown>) =>
+      rpc<any>('community.upsert', 'mutation', data, execToken),
+    removeCommunityPost: (id: string) =>
+      rpc<any>('community.remove', 'mutation', { id }, execToken),
   }
 }
 
