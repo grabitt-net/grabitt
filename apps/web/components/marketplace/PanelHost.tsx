@@ -11,6 +11,7 @@ import { createTrpcClient } from '@/lib/trpc'
 import { createClient } from '@/lib/supabase'
 import { getAuthToken, refreshAuthToken, setAuthToken } from '@/lib/authToken'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
+import { pushView } from '@/lib/recentViews'
 import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
 import StripePayment from './StripePayment'
 import { toPanelItem, DEPT_ENUM, type DbListing } from '@/lib/listingMap'
@@ -1080,6 +1081,10 @@ function PanelBody() {
     const category = (item.category as string) || ''
     const condition= (item.condition as string) || ''
     const isFeatured = !!item.isFeatured
+
+    // Record this view for the homepage "Recently viewed" strip.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => { if (item.id) pushView({ id: item.id as string, title, price, image: heroImage, emoji, location }) }, [item.id])
 
     const SIMILAR = [
       { emoji: '📱', title: 'Samsung S24', price: '€580', location: 'Las Palmas' },

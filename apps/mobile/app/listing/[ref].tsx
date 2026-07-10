@@ -5,6 +5,8 @@ import { Alert, Linking } from 'react-native'
 import { colors, PRICES } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
 import { useAuth } from '../../lib/auth'
+import { toCard } from '../../lib/listingMap'
+import { pushView } from '../../lib/recentViews'
 
 const pretty = (s?: string) => (s ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
@@ -74,7 +76,7 @@ export default function ListingScreen() {
   useEffect(() => {
     if (!ref) return
     apiClient().listings.byId.query({ id: ref as string })
-      .then((l: any) => setFetched({
+      .then((l: any) => { pushView(toCard(l)); setFetched({
         emoji: '🛍️',
         title: l.title,
         price: `€${Number(l.price).toLocaleString()}`,
@@ -87,7 +89,7 @@ export default function ListingScreen() {
         sellerId: l.seller?.id,
         seller: l.seller ? { name: l.seller.displayName, grade: l.seller.grade, rating: l.seller.avgRating, sales: l.seller.salesCount } : undefined,
         job: l.jobListing ?? undefined,
-      }))
+      }) })
       .catch(() => {})
   }, [ref])
 

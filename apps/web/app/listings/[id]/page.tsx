@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { DEPT_LABEL, COND_LABEL, deptEmoji } from '@/lib/listingMap'
+import { pushView } from '@/lib/recentViews'
 import { PRICES } from '@grabitt/design-tokens'
 import MessageButton from '@/components/marketplace/MessageButton'
 import SiteHeader from '@/components/marketplace/SiteHeader'
@@ -32,7 +33,10 @@ export default function ListingDetailPage() {
 
   useEffect(() => {
     createTrpcClient().listings.byId.query({ id })
-      .then(l => { setListing(l); setState('ready') })
+      .then((l: any) => {
+        setListing(l); setState('ready')
+        pushView({ id: l.id, title: l.title, price: `€${Number(l.price).toLocaleString()}`, image: Array.isArray(l.images) ? l.images[0] : null, emoji: deptEmoji(l.department), location: l.location })
+      })
       .catch(() => setState('notfound'))
   }, [id])
 

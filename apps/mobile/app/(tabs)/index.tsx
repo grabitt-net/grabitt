@@ -6,6 +6,7 @@ import { apiClient } from '../../lib/trpc'
 import { useAuth } from '../../lib/auth'
 import { toCard, type Card } from '../../lib/listingMap'
 import { ListingCard } from '../../components/ListingCard'
+import { getViews } from '../../lib/recentViews'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -82,9 +83,11 @@ function useCountdown() {
 export default function HomeScreen() {
   const [query, setQuery] = useState('')
   const countdown = useCountdown()
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [featured, setFeatured] = useState<Card[]>([])
   const [justListed, setJustListed] = useState<Card[]>([])
+  const [recommended, setRecommended] = useState<Card[]>([])
+  const [recent, setRecent] = useState<Card[]>([])
   const [deptFailed, setDeptFailed] = useState<Record<string, boolean>>({})
 
   // Live data from the backend (public endpoints — same as web).
@@ -92,7 +95,14 @@ export default function HomeScreen() {
     const api = apiClient()
     api.listings.featured.query().then((d: any[]) => setFeatured(d.map(toCard))).catch(() => {})
     api.listings.recent.query().then((d: any[]) => setJustListed(d.map(toCard))).catch(() => {})
+    getViews().then(setRecent).catch(() => {})
   }, [])
+
+  // Personalised "Recommended for you" (needs login — uses your interests).
+  useEffect(() => {
+    if (!token) { setRecommended([]); return }
+    apiClient(token).listings.recommended.query().then((d: any[]) => setRecommended(d.map(toCard))).catch(() => {})
+  }, [token])
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -171,8 +181,23 @@ export default function HomeScreen() {
           })}
         </View>
 
+        {/* Recommended for you (personalised — logged-in) */}
+        {recommended.length > 0 && (
+          <>
+            <View style={s.sectionHeader}><Text style={s.sectionTitle}>✨ Recommended for you</Text></View>
+            <FlatList
+              data={recommended}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
+              keyExtractor={(i, idx) => i.ref + idx}
+              renderItem={({ item }) => <ListingCard item={item} width={158} />}
+            />
+          </>
+        )}
+
         {/* Featured strip */}
-        <View style={s.sectionHeader}>
+        <View style={[s.sectionHeader, recommended.length > 0 && { marginTop: 20 }]}>
           <Text style={s.sectionTitle}>👀 Featured</Text>
           <TouchableOpacity><Text style={s.seeAll}>See all</Text></TouchableOpacity>
         </View>
@@ -198,6 +223,21 @@ export default function HomeScreen() {
           keyExtractor={i => i.ref}
           renderItem={({ item }) => <ListingCard item={item} width={158} />}
         />
+
+        {/* Recently viewed */}
+        {recent.length > 0 && (
+          <>
+            <View style={[s.sectionHeader, { marginTop: 20 }]}><Text style={s.sectionTitle}>🕘 Recently viewed</Text></View>
+            <FlatList
+              data={recent}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
+              keyExtractor={(i, idx) => i.ref + idx}
+              renderItem={({ item }) => <ListingCard item={item} width={158} />}
+            />
+          </>
+        )}
       </ScrollView>
     </View>
   )

@@ -41,6 +41,30 @@ export const listingsRouter = router({
       return { items, total, page, limit }
     }),
 
+  // "Recommended for you" — active listings in the departments the user marked
+  // as interests (falls back to newest active listings when no interests set).
+  recommended: protectedProcedure.query(async ({ ctx }) => {
+    const INTEREST_TO_DEPT: Record<string, string> = {
+      'Electronics': 'electronics', 'Fashion': 'fashion', 'Home & Garden': 'home_garden',
+      'Sport': 'sport', 'Gaming': 'gaming', 'Motors': 'motors', 'Kids & Baby': 'kids_baby',
+      'Property': 'property', 'Pet Shop': 'pet_shop', 'Retro & Vintage': 'retro_vintage',
+      'Gift Ideas': 'gift_ideas', 'Health & Fitness': 'health_fitness', 'Food Store': 'food_store',
+      'Handy Help': 'handy_help', 'Collectables': 'collectables', 'Jobs': 'jobs',
+    }
+    const user = await ctx.prisma.user.findUnique({ where: { id: ctx.user.id }, select: { interests: true } })
+    const depts = (user?.interests ?? []).map(l => INTEREST_TO_DEPT[l]).filter(Boolean)
+    return ctx.prisma.listing.findMany({
+      where: {
+        status: 'active',
+        sellerId: { not: ctx.user.id },
+        ...(depts.length ? { department: { in: depts as never } } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 12,
+      include: { seller: { select: { id: true, displayName: true, avatar: true, grade: true } } },
+    })
+  }),
+
   // The current user's own listings across all statuses (for the account hub —
   // segmented into Active / Sold / Drafts client-side).
   mine: protectedProcedure.query(({ ctx }) =>
