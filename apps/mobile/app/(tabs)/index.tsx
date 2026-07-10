@@ -104,6 +104,7 @@ export default function HomeScreen() {
   const [justListed, setJustListed] = useState<Card[]>([])
   const [recommended, setRecommended] = useState<Card[]>([])
   const [recent, setRecent] = useState<Card[]>([])
+  const [guides, setGuides] = useState<any[]>([])
   const [deptFailed, setDeptFailed] = useState<Record<string, boolean>>({})
 
   // Live data from the backend (public endpoints — same as web).
@@ -112,6 +113,7 @@ export default function HomeScreen() {
     api.listings.featured.query().then((d: any[]) => setFeatured(d.map(toCard))).catch(() => {})
     api.listings.recent.query().then((d: any[]) => setJustListed(d.map(toCard))).catch(() => {})
     getViews().then(setRecent).catch(() => {})
+    api.community.list.query({ limit: 8 }).then((d: any[]) => setGuides(d)).catch(() => {})
   }, [])
 
   // Personalised "Recommended for you" (needs login — uses your interests).
@@ -269,6 +271,30 @@ export default function HomeScreen() {
             />
           </>
         )}
+
+        {/* Grabitt Guides (community content) */}
+        {guides.length > 0 && (
+          <>
+            <View style={[s.sectionHeader, { marginTop: 20 }]}><Text style={s.sectionTitle}>📰 Grabitt Guides</Text></View>
+            <FlatList
+              data={guides}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
+              keyExtractor={(i) => i.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity onPress={() => router.push(`/community/${item.id}` as any)} style={s.guideCard}>
+                  <View style={s.guideThumb}><Text style={{ fontSize: 34 }}>{item.emoji}</Text></View>
+                  <View style={{ padding: 10 }}>
+                    <Text style={s.guideCat}>{item.category}</Text>
+                    <Text numberOfLines={2} style={s.guideTitle}>{item.title}</Text>
+                    <Text numberOfLines={3} style={s.guideExcerpt}>{item.excerpt}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </>
+        )}
       </ScrollView>
     </View>
   )
@@ -300,6 +326,11 @@ const s = StyleSheet.create({
   seasonalTitle: { color: '#fff', fontFamily: 'Comfortaa', fontSize: 16, fontWeight: '700' },
   seasonalSub: { color: 'rgba(255,255,255,0.92)', fontFamily: 'Comfortaa', fontSize: 11.5, marginTop: 2 },
   seasonalCta: { color: '#fff', fontFamily: 'Comfortaa', fontSize: 12, fontWeight: '700', backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, overflow: 'hidden' },
+  guideCard: { width: 220, backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: '#ece3d7', overflow: 'hidden' },
+  guideThumb: { height: 84, backgroundColor: '#f0e7d8', alignItems: 'center', justifyContent: 'center' },
+  guideCat: { fontFamily: 'Comfortaa', fontSize: 10, fontWeight: '800', color: colors.orange, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 3 },
+  guideTitle: { fontFamily: 'Comfortaa', fontSize: 13, fontWeight: '700', color: '#2b2b2b', marginBottom: 4 },
+  guideExcerpt: { fontFamily: 'Comfortaa', fontSize: 11, color: '#7a6c56', lineHeight: 15 },
   grabitStrip: { backgroundColor: colors.orange, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
   grabitTitle: { color: '#fff', fontFamily: 'Comfortaa', fontSize: 13, fontWeight: '700' },
   grabitSub: { color: 'rgba(255,255,255,0.85)', fontFamily: 'Nunito', fontSize: 10, marginTop: 1 },

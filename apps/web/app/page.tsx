@@ -3,6 +3,7 @@ import Topbar from '@/components/marketplace/Topbar'
 import HomeSections from '@/components/marketplace/HomeSections'
 import { RecommendedStrip, RecentlyViewedStrip } from '@/components/marketplace/PersonalStrips'
 import SeasonalBanner from '@/components/marketplace/SeasonalBanner'
+import CommunityStrip from '@/components/marketplace/CommunityStrip'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
@@ -19,6 +20,7 @@ export default function HomePage() {
         <RecommendedStrip />
         <RecentlyViewedStrip />
         <HomeSections />
+        <CommunityStrip />
         <Footer />
         <CartFab />
         <PanelHost />

@@ -66,6 +66,26 @@ model HeroSlide {
   @@index([sortOrder])
 }
 
+// ── Community content ─────────────────────────────────────────────────────────
+// Editorial posts (island tips, economy write-ups, how-to guides) surfaced on the
+// homepage. Admin-managed; readers just view them.
+model CommunityPost {
+  id         String   @id @default(uuid())
+  title      String
+  excerpt    String                       // short teaser shown on the strip
+  body       String                       // full article (markdown-ish plain text)
+  category   String   @default("Guide")   // e.g. Guide, Island Tips, Economy, Selling
+  emoji      String   @default("📰")
+  imageUrl   String?
+  published  Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([published])
+  @@index([sortOrder])
+}
+
 // ── Compliance / GDPR ─────────────────────────────────────────────────────────
 enum ConsentKind {
   gdpr                // GDPR data-processing acceptance
