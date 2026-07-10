@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import type { PanelId } from '@/context/PanelContext'
 import { useNotifications } from '@/hooks/useNotifications'
@@ -13,6 +14,7 @@ import Logo from './Logo'
 // same data as mobile; just laid out for wide screens.
 export default function DesktopNav() {
   const { openPanel } = usePanel()
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const userId = useGrabittUid()
   const { unreadCount } = useNotifications(userId)
@@ -56,7 +58,7 @@ export default function DesktopNav() {
       {/* Account actions */}
       <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
         {actions.map(a => (
-          <button key={a.label} onClick={() => openPanel(a.panel)} title={a.label}
+          <button key={a.label} onClick={() => a.panel === 'profile' ? router.push('/account') : openPanel(a.panel)} title={a.label}
             style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 8px', color: 'var(--dark)' }}>
             <Icon name={a.icon} size={21} />
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#7a6a55' }}>{a.label}</span>

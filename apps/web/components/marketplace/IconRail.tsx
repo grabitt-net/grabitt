@@ -1,4 +1,5 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import type { PanelId } from '@/context/PanelContext'
 import { useNotifications } from '@/hooks/useNotifications'
@@ -12,6 +13,7 @@ import Icon, { IconName } from './Icon'
 
 export default function IconRail() {
   const { openPanel } = usePanel()
+  const router = useRouter()
   const userId = useGrabittUid()
 
   const { unreadCount } = useNotifications(userId)
@@ -32,7 +34,7 @@ export default function IconRail() {
         {items.map(item => (
           <button
             key={item.label}
-            onClick={() => openPanel(item.panel)}
+            onClick={() => item.panel === 'profile' ? router.push('/account') : openPanel(item.panel)}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '2px 0', position: 'relative' }}
           >
             <span style={{ lineHeight: 1, color: 'var(--dark)' }}><Icon name={item.icon} size={20} /></span>

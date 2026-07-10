@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { colors } from '@grabitt/design-tokens'
 
 export default function TabLayout() {
@@ -23,17 +24,12 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen name="index"    options={{ title: 'Browse',   tabBarIcon: ({ color }) => <TabIcon emoji="🏠" color={color} /> }} />
-      <Tabs.Screen name="sell"     options={{ title: 'Sell',     tabBarIcon: ({ color }) => <TabIcon emoji="📦" color={color} /> }} />
-      <Tabs.Screen name="messages" options={{ title: 'Messages', tabBarIcon: ({ color }) => <TabIcon emoji="💬" color={color} /> }} />
-      <Tabs.Screen name="profile"  options={{ title: 'Profile',  tabBarIcon: ({ color }) => <TabIcon emoji="👤" color={color} /> }} />
+      <Tabs.Screen name="index"    options={{ title: 'Browse',   tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} /> }} />
+      <Tabs.Screen name="sell"     options={{ title: 'Sell',     tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'add-circle' : 'add-circle-outline'} size={24} color={color} /> }} />
+      <Tabs.Screen name="messages" options={{ title: 'Messages', tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} size={21} color={color} /> }} />
+      <Tabs.Screen name="profile"  options={{ title: 'Profile',  tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={color} /> }} />
       {/* Admin/CRM is a web-only product — hide the placeholder Exec tab. */}
       <Tabs.Screen name="exec"     options={{ href: null }} />
     </Tabs>
   )
-}
-
-function TabIcon({ emoji, color }: { emoji: string; color: string }) {
-  const { Text } = require('react-native')
-  return <Text style={{ fontSize: 22, opacity: color === colors.orange ? 1 : 0.6 }}>{emoji}</Text>
 }
