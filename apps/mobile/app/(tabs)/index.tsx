@@ -18,6 +18,22 @@ function deptRoute(name: string): string {
   return `/dept/${encodeURIComponent(name)}`
 }
 
+// Seasonal promo banner — date-driven campaign (parity with the web
+// SeasonalBanner). Tapping opens the featured department.
+const SEASONAL = [
+  { months: [12, 1], emoji: '🎄', title: 'Christmas Gifting', sub: 'Find the perfect present on Gran Canaria', grad: '#c0392b', dept: 'Gift Ideas' },
+  { months: [2],     emoji: '🎭', title: 'Carnival Season!',  sub: 'Gran Canaria Carnival deals & costumes',  grad: '#b91d73', dept: 'Fashion' },
+  { months: [3, 4],  emoji: '🌸', title: 'Spring Refresh',    sub: 'New season, new home',                   grad: '#56ab2f', dept: 'Home & Garden' },
+  { months: [5],     emoji: '🌻', title: 'Pre-Summer',        sub: 'Get ready for the season',               grad: '#ff4e50', dept: 'Sport' },
+  { months: [6, 7, 8], emoji: '☀️', title: 'Summer Clearance', sub: 'Sun, sea & savings — shop the island',  grad: '#f7971e', dept: 'Sport' },
+  { months: [9, 10], emoji: '🍂', title: 'Autumn Deals',      sub: 'Cosy up for the cooler months',          grad: '#d35400', dept: 'Home & Garden' },
+  { months: [11],    emoji: '🎁', title: 'Pre-Christmas Hunt', sub: 'Get ahead of the Christmas rush',        grad: '#8e44ad', dept: 'Gift Ideas' },
+]
+function currentSeasonal() {
+  const m = new Date().getMonth() + 1
+  return SEASONAL.find(c => c.months.includes(m)) ?? SEASONAL[4]
+}
+
 // ── Data ─────────────────────────────────────────────────────────────────────
 
 // Department tiles use real photography (Unsplash) over the brand gradient —
@@ -133,6 +149,21 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Seasonal promo banner (date-driven) */}
+        {(() => {
+          const c = currentSeasonal()
+          return (
+            <TouchableOpacity style={[s.seasonalBanner, { backgroundColor: c.grad }]} onPress={() => router.push(deptRoute(c.dept) as any)}>
+              <Text style={{ fontSize: 34 }}>{c.emoji}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={s.seasonalTitle}>{c.title}</Text>
+                <Text style={s.seasonalSub}>{c.sub}</Text>
+              </View>
+              <Text style={s.seasonalCta}>Shop →</Text>
+            </TouchableOpacity>
+          )
+        })()}
 
         {/* Grab It Now strip */}
         <TouchableOpacity style={s.grabitStrip} onPress={() => router.push('/dept/Grab%20It%20Now')}>
@@ -265,6 +296,10 @@ const s = StyleSheet.create({
   searchInput: { flex: 1, fontFamily: 'Nunito', fontSize: 14, color: colors.dark },
   nearBtn: { backgroundColor: '#FFF3EE', borderRadius: 50, paddingHorizontal: 10, paddingVertical: 6 },
   nearBtnText: { color: colors.orange, fontFamily: 'Nunito', fontSize: 11, fontWeight: '900' },
+  seasonalBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 12, marginTop: 12, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14 },
+  seasonalTitle: { color: '#fff', fontFamily: 'Comfortaa', fontSize: 16, fontWeight: '700' },
+  seasonalSub: { color: 'rgba(255,255,255,0.92)', fontFamily: 'Comfortaa', fontSize: 11.5, marginTop: 2 },
+  seasonalCta: { color: '#fff', fontFamily: 'Comfortaa', fontSize: 12, fontWeight: '700', backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, overflow: 'hidden' },
   grabitStrip: { backgroundColor: colors.orange, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
   grabitTitle: { color: '#fff', fontFamily: 'Comfortaa', fontSize: 13, fontWeight: '700' },
   grabitSub: { color: 'rgba(255,255,255,0.85)', fontFamily: 'Nunito', fontSize: 10, marginTop: 1 },
