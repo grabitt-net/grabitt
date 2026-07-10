@@ -30,6 +30,7 @@ export default function ListingDetailPage() {
   const [listing, setListing] = useState<any>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'notfound'>('loading')
   const [meId, setMeId] = useState<string | null>(null)
+  const [comps, setComps] = useState<any>(null)
 
   useEffect(() => {
     createTrpcClient().listings.byId.query({ id })
@@ -38,6 +39,9 @@ export default function ListingDetailPage() {
         pushView({ id: l.id, title: l.title, price: `€${Number(l.price).toLocaleString()}`, image: Array.isArray(l.images) ? l.images[0] : null, emoji: deptEmoji(l.department), location: l.location })
       })
       .catch(() => setState('notfound'))
+    createTrpcClient().listings.comparables.query({ id })
+      .then((c: any) => { if (c && c.count > 0) setComps(c) })
+      .catch(() => {})
   }, [id])
 
   // Resolve the signed-in user's id so we can hide "Enquire/Apply" on your own listing.
@@ -146,6 +150,40 @@ export default function ListingDetailPage() {
                 <Link key={t} href={`/listings?q=${encodeURIComponent(t)}`} style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, fontWeight: 600, color: '#6b5a41', background: '#f5f0e8', border: '1px solid #ece3d7', borderRadius: 999, padding: '5px 12px', textDecoration: 'none' }}>#{t}</Link>
               ))}
             </div>
+          </div>
+        )}
+
+        {comps && listing.department !== 'jobs' && listing.department !== 'property' && (
+          <div style={cardBox}>
+            <div style={sectionTitle}>Recently sold — similar items</div>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+              {[{ k: 'Average', v: comps.avg }, { k: 'Lowest', v: comps.min }, { k: 'Highest', v: comps.max }].map(m => (
+                <div key={m.k} style={{ flex: 1, background: '#f5f0e8', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#9a8b74', marginBottom: 3 }}>{m.k}</div>
+                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 16, fontWeight: 800, color: 'var(--dark)' }}>€{Number(m.v).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
+            {(() => {
+              const price = Number(listing.price)
+              if (!comps.avg || !price) return null
+              const diff = Math.round(((price - comps.avg) / comps.avg) * 100)
+              const good = diff <= 0
+              return (
+                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, fontWeight: 700, color: good ? '#2d996b' : '#c1121f', marginBottom: 10 }}>
+                  {diff === 0 ? 'Priced right at the average' : `${Math.abs(diff)}% ${good ? 'below' : 'above'} the average sold price`}
+                </div>
+              )
+            })()}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {comps.recent.map((r: any, i: number) => (
+                <Link key={i} href={`/listings/${r.id}`} style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#555', textDecoration: 'none', padding: '4px 0', borderBottom: i < comps.recent.length - 1 ? '1px solid #f0e9df' : 'none' }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>{r.title}</span>
+                  <span style={{ fontWeight: 800, color: 'var(--dark)' }}>€{Number(r.amount).toLocaleString()}</span>
+                </Link>
+              ))}
+            </div>
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#9a8b74', marginTop: 8 }}>Based on {comps.count} recent sale{comps.count === 1 ? '' : 's'} in {DEPT_LABEL[listing.department] ?? 'this category'}.</div>
           </div>
         )}
 

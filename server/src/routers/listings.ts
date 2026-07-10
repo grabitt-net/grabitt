@@ -162,6 +162,50 @@ export const listingsRouter = router({
       return listing
     }),
 
+  // Sold-price comparables: recent completed sales for similar items, so a buyer
+  // can gauge whether a listing is fairly priced. Matches on department; items
+  // that share a tag with this listing are surfaced first as closer comps.
+  comparables: publicProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUnique({
+        where: { id: input.id },
+        select: { department: true, tags: true },
+      })
+      if (!listing) throw new TRPCError({ code: 'NOT_FOUND' })
+
+      const SOLD = ['confirmed_handover', 'completed', 'released'] as const
+      const txns = await ctx.prisma.transaction.findMany({
+        where: { status: { in: SOLD as unknown as never }, listing: { department: listing.department } },
+        orderBy: { updatedAt: 'desc' },
+        take: 60,
+        select: { amount: true, updatedAt: true, listing: { select: { id: true, title: true, tags: true } } },
+      })
+      if (txns.length === 0) return { count: 0, avg: null, min: null, max: null, recent: [] as { id: string; title: string; amount: number; soldAt: Date; matchedTags: number }[] }
+
+      const tagSet = new Set(listing.tags ?? [])
+      const rows = txns.map(t => ({
+        id: t.listing.id,
+        title: t.listing.title,
+        amount: Number(t.amount),
+        soldAt: t.updatedAt,
+        matchedTags: (t.listing.tags ?? []).filter(tg => tagSet.has(tg)).length,
+      }))
+      const amounts = rows.map(r => r.amount)
+      const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length
+      // Closest comps first: more shared tags, then most recent.
+      const recent = [...rows]
+        .sort((a, b) => b.matchedTags - a.matchedTags || b.soldAt.getTime() - a.soldAt.getTime())
+        .slice(0, 5)
+      return {
+        count: rows.length,
+        avg: Math.round(avg * 100) / 100,
+        min: Math.min(...amounts),
+        max: Math.max(...amounts),
+        recent,
+      }
+    }),
+
   // A seller's public storefront: their profile + active listings.
   bySeller: publicProcedure
     .input(z.object({ sellerId: z.string().uuid() }))

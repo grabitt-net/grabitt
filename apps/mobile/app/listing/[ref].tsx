@@ -47,6 +47,9 @@ export default function ListingScreen() {
   const { token } = useAuth()
   const [fetched, setFetched] = useState<Item | null>(null)
   const [meId, setMeId] = useState<string | null>(null)
+  const [comps, setComps] = useState<any>(null)
+  const [rawPrice, setRawPrice] = useState<number | null>(null)
+  const [dept, setDept] = useState<string | null>(null)
 
   useEffect(() => {
     if (token) apiClient(token).users.me.query().then((u: any) => setMeId(u?.id ?? null)).catch(() => {})
@@ -75,8 +78,11 @@ export default function ListingScreen() {
   // Fetch the real listing (any id). Falls back to the demo lookup on failure.
   useEffect(() => {
     if (!ref) return
+    apiClient().listings.comparables.query({ id: ref as string })
+      .then((c: any) => { if (c && c.count > 0) setComps(c) })
+      .catch(() => {})
     apiClient().listings.byId.query({ id: ref as string })
-      .then((l: any) => { pushView(toCard(l)); setFetched({
+      .then((l: any) => { pushView(toCard(l)); setRawPrice(Number(l.price)); setDept(l.department); setFetched({
         emoji: '🛍️',
         title: l.title,
         price: `€${Number(l.price).toLocaleString()}`,
@@ -196,6 +202,37 @@ export default function ListingScreen() {
                   <Text style={{ color: '#6b5a41', fontSize: 12, fontWeight: '600' }}>#{t}</Text>
                 </View>
               ))}
+            </View>
+          )}
+
+          {/* Sold-price comparables */}
+          {comps && dept !== 'jobs' && dept !== 'property' && (
+            <View style={{ backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: '#ece3d7', padding: 14, marginBottom: 16 }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#2b2b2b', marginBottom: 10 }}>Recently sold — similar items</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+                {[{ k: 'Average', v: comps.avg }, { k: 'Lowest', v: comps.min }, { k: 'Highest', v: comps.max }].map(m => (
+                  <View key={m.k} style={{ flex: 1, backgroundColor: '#f5f0e8', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 10.5, color: '#9a8b74', marginBottom: 2 }}>{m.k}</Text>
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#2b2b2b' }}>€{Number(m.v).toLocaleString()}</Text>
+                  </View>
+                ))}
+              </View>
+              {!!comps.avg && !!rawPrice && (() => {
+                const diff = Math.round(((rawPrice - comps.avg) / comps.avg) * 100)
+                const good = diff <= 0
+                return (
+                  <Text style={{ fontSize: 12.5, fontWeight: '700', color: good ? '#2d996b' : '#c1121f', marginBottom: 8 }}>
+                    {diff === 0 ? 'Priced right at the average' : `${Math.abs(diff)}% ${good ? 'below' : 'above'} the average sold price`}
+                  </Text>
+                )
+              })()}
+              {comps.recent.map((r: any, i: number) => (
+                <TouchableOpacity key={i} onPress={() => router.push(`/listing/${r.id}`)} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: i < comps.recent.length - 1 ? 1 : 0, borderBottomColor: '#f0e9df' }}>
+                  <Text numberOfLines={1} style={{ flex: 1, fontSize: 12.5, color: '#555', marginRight: 8 }}>{r.title}</Text>
+                  <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#2b2b2b' }}>€{Number(r.amount).toLocaleString()}</Text>
+                </TouchableOpacity>
+              ))}
+              <Text style={{ fontSize: 10.5, color: '#9a8b74', marginTop: 8 }}>Based on {comps.count} recent sale{comps.count === 1 ? '' : 's'}.</Text>
             </View>
           )}
 
