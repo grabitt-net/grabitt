@@ -2842,6 +2842,7 @@ function PanelBody() {
     const [condition, setCondition] = useState('')
     const [desc, setDesc] = useState('')
     const [price, setPrice] = useState('')
+    const [stock, setStock] = useState('1')
     const [freeItem, setFreeItem] = useState(false)
     const [autoAcceptMin, setAutoAcceptMin] = useState('')
     const [offersDelivery, setOffersDelivery] = useState(false)
@@ -2994,6 +2995,14 @@ function PanelBody() {
                     </div>
                     <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>This item is free / give-away</span>
                   </div>
+                </div>
+
+                {/* Quantity / stock — how many units are for sale */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Quantity available</div>
+                  <input type="number" value={stock} onChange={e => setStock(e.target.value)} min="1" max="999" step="1"
+                    style={{ width: 120, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '12px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#9a8b74', marginTop: 4 }}>Buyers can purchase multiple units until stock runs out.</div>
                 </div>
 
                 {/* Auto-accept offers minimum (seller-only; never shown to buyers) */}
@@ -3157,6 +3166,7 @@ function PanelBody() {
                       condition: (COND_MAP[condition] ?? 'good') as Parameters<typeof client.listings.create.mutate>[0]['condition'],
                       images: imageUrls,
                       location: town,
+                      stock: Math.max(1, Math.min(999, parseInt(stock) || 1)),
                       deliveryFee: offersDelivery ? (parseFloat(deliveryFee) || 0) : 0,
                       deliveryMethod: offersDelivery ? deliveryMethod : undefined,
                       autoAcceptMin: !freeItem && parseFloat(autoAcceptMin) > 0 ? parseFloat(autoAcceptMin) : undefined,

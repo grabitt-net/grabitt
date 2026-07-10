@@ -10,7 +10,7 @@ import { pushView } from '../../lib/recentViews'
 
 const pretty = (s?: string) => (s ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
-type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; description?: string; tags?: string[]; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number }; job?: any }
+type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; description?: string; tags?: string[]; stock?: number; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number }; job?: any }
 
 const PERIOD: Record<string, string> = { month: '/mo', year: '/yr', hour: '/hr' }
 function salaryLabel(min?: any, max?: any, period?: string | null) {
@@ -93,6 +93,7 @@ export default function ListingScreen() {
         image: Array.isArray(l.images) ? l.images[0] : undefined,
         description: l.description,
         tags: Array.isArray(l.tags) ? l.tags : [],
+        stock: typeof l.stock === 'number' ? l.stock : undefined,
         sellerId: l.seller?.id,
         seller: l.seller ? { name: l.seller.displayName, grade: l.seller.grade, rating: l.seller.avgRating, sales: l.seller.salesCount } : undefined,
         job: l.jobListing ?? undefined,
@@ -144,6 +145,11 @@ export default function ListingScreen() {
           {/* Title + price */}
           <Text style={s.title}>{item.title}</Text>
           <Text style={s.price}>{item.price}</Text>
+          {dept !== 'jobs' && dept !== 'property' && typeof item.stock === 'number' && (
+            <Text style={{ fontSize: 12.5, fontWeight: '700', color: item.stock > 0 ? '#2d996b' : '#c1121f', marginTop: 4 }}>
+              {item.stock > 0 ? `${item.stock} in stock${item.stock > 1 ? ' — multi-buy available' : ''}` : 'Out of stock'}
+            </Text>
+          )}
 
           {/* Seller */}
           <View style={s.sellerRow}>

@@ -109,6 +109,11 @@ export default function ListingDetailPage() {
           <div style={{ fontSize: 12, color: '#888', marginTop: 6, fontFamily: 'var(--font-nunito)' }}>
             📍 {job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')}
           </div>
+          {!job && listing.department !== 'property' && typeof listing.stock === 'number' && (
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, fontWeight: 700, color: listing.stock > 0 ? '#2d996b' : '#c1121f', marginTop: 6 }}>
+              {listing.stock > 0 ? `${listing.stock} in stock${listing.stock > 1 ? ' — multi-buy available' : ''}` : 'Out of stock'}
+            </div>
+          )}
 
           {/* Job facts */}
           {job && (

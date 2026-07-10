@@ -285,6 +285,7 @@ model Listing {
   status           ListingStatus    @default(draft)
   images           String[]
   tags             String[]         @default([])  // auto-generated from title/description for search + discovery
+  stock            Int              @default(1)    // units available; sold when it reaches 0 (multi-buy)
   location         String
   lat              Float?
   lng              Float?
@@ -300,7 +301,7 @@ model Listing {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  transaction      Transaction?
+  transactions     Transaction[]
   jobListing       JobListing?
   propertyListing  PropertyListing?
   handyListing     HandyListing?
@@ -343,7 +344,7 @@ enum DeliveryMethod {
 
 model Transaction {
   id                    String            @id @default(uuid())
-  listingId             String            @unique
+  listingId             String
   listing               Listing           @relation(fields: [listingId], references: [id])
   buyerId               String
   buyer                 User              @relation("Buyer", fields: [buyerId], references: [id])
@@ -374,6 +375,7 @@ model Transaction {
   @@index([sellerId])
   @@index([status])
   @@index([autoReleaseAt])
+  @@index([listingId])
 }
 
 // ── Messaging ────────────────────────────────────────────────────────────────

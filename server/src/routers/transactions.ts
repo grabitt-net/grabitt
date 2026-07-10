@@ -45,7 +45,7 @@ function shortCode(token: string): string {
 // (2) courier first-waypoint scan — tracked delivery. Never call from anywhere else.
 type ReleasableTx = {
   id: string; buyerId: string; sellerId: string; listingId: string
-  sellerNet: unknown; stripePaymentIntentId: string | null
+  sellerNet: unknown; stripePaymentIntentId: string | null; quantity: number
 }
 
 async function releaseFundsToSeller(
@@ -74,8 +74,15 @@ async function releaseFundsToSeller(
     transferId = transfer.id
   }
 
-  const listing = await prisma.listing.findUnique({ where: { id: tx.listingId }, select: { title: true } })
+  const listing = await prisma.listing.findUnique({ where: { id: tx.listingId }, select: { title: true, stock: true } })
   const now = new Date()
+
+  // Multi-buy: this sale consumes `quantity` units. Mark the listing sold only
+  // when the last unit goes; otherwise keep it live with reduced stock.
+  const remaining = Math.max(0, (listing?.stock ?? 1) - tx.quantity)
+  const listingUpdate = remaining <= 0
+    ? { status: 'sold' as const, stock: 0 }
+    : { stock: remaining }
 
   const txData: Prisma.TransactionUpdateInput = {
     status: 'released',
@@ -86,7 +93,7 @@ async function releaseFundsToSeller(
 
   await prisma.$transaction([
     prisma.transaction.update({ where: { id: tx.id }, data: txData }),
-    prisma.listing.update({ where: { id: tx.listingId }, data: { status: 'sold' } }),
+    prisma.listing.update({ where: { id: tx.listingId }, data: listingUpdate }),
     prisma.user.update({ where: { id: tx.sellerId }, data: { salesCount: { increment: 1 } } }),
     prisma.notification.create({
       data: {
@@ -146,6 +153,9 @@ export const transactionsRouter = router({
       }
       if (listing.sellerId === ctx.user.id) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot buy your own listing' })
+      }
+      if (input.quantity > listing.stock) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: `Only ${listing.stock} in stock` })
       }
 
       // Resolve fulfilment server-side. If the buyer wants delivery, the listing

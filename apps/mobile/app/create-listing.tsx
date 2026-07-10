@@ -25,6 +25,7 @@ export default function CreateListingScreen() {
   const [dept, setDept] = useState<string>(DEPTS.find(d => d[0] === params.category)?.[1] ?? '')
   const [condition, setCondition] = useState('')
   const [price, setPrice] = useState('')
+  const [stock, setStock] = useState('1')
   const [location, setLocation] = useState('Las Palmas')
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
@@ -52,6 +53,7 @@ export default function CreateListingScreen() {
       await apiClient(token).listings.create.mutate({
         title: title.trim(), description: description.trim(), price: Number(price),
         department: dept as any, condition: condition as any, images, location, deliveryFee: 0,
+        stock: Math.max(1, Math.min(999, parseInt(stock) || 1)),
       })
       Alert.alert('Listing live!', 'Your item is now on Grabitt.', [{ text: 'OK', onPress: () => router.replace('/(tabs)') }])
     } catch (e: any) { Alert.alert('Could not create listing', e?.message ?? 'Try again') }
@@ -92,6 +94,9 @@ export default function CreateListingScreen() {
 
       <Text style={s.label}>Price (€) *</Text>
       <TextInput value={price} onChangeText={setPrice} placeholder="0" placeholderTextColor="#aaa" keyboardType="numeric" style={s.input} />
+
+      <Text style={s.label}>Quantity available</Text>
+      <TextInput value={stock} onChangeText={setStock} placeholder="1" placeholderTextColor="#aaa" keyboardType="numeric" style={s.input} />
 
       <Text style={s.label}>Location</Text>
       <View style={s.chips}>{TOWNS.map(t => <Chip key={t} label={t} active={location === t} onPress={() => setLocation(t)} />)}</View>

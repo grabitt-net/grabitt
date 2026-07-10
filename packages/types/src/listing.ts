@@ -45,6 +45,7 @@ export const CreateListingInputSchema = z.object({
   condition: ListingCondition,
   images: z.array(z.string().url()).min(1).max(8),
   location: z.string().max(100),
+  stock: z.number().int().min(1).max(999).default(1),
   deliveryFee: z.number().min(0).default(0),
   deliveryMethod: z.enum(['courier', 'in_person']).optional(),
   autoAcceptMin: z.number().min(0).optional(),
