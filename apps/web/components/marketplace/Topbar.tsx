@@ -85,7 +85,7 @@ export default function Topbar() {
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSearch() }}
-              placeholder="Search..."
+              placeholder={t('Search...')}
               style={{ flex: 1, border: 'none', outline: 'none', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', background: 'transparent', minWidth: 0 }}
             />
             <button
@@ -93,7 +93,7 @@ export default function Topbar() {
               title="Show items near me"
               style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3, background: '#FFF3EE', color: 'var(--orange)', border: 'none', borderRadius: 50, padding: '5px 9px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
-              <Icon name="mapPin" size={12} strokeWidth={2.2} /> Near
+              <Icon name="mapPin" size={12} strokeWidth={2.2} /> {t('Near')}
             </button>
           </div>
         </div>

@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import Icon from './Icon'
+import { t } from '@/lib/i18n'
 
 export default function Hero() {
   const { openPanel } = usePanel()
@@ -30,7 +31,7 @@ export default function Hero() {
                 fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >
-              {a.label}
+              {t(a.label)}
             </button>
           ))}
         </div>

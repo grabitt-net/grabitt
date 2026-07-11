@@ -47,6 +47,14 @@ export const TRANSLATIONS: Record<string, Record<Lang, string>> = {
   'Recently viewed': { en: 'Recently viewed', es: 'Vistos recientemente', de: 'Zuletzt angesehen', da: 'Senest set', sv: 'Nyligen visade', nl: 'Onlangs bekeken', fr: 'Vus récemment', pt: 'Vistos recentemente' },
   'Grabitt Guides': { en: 'Grabitt Guides', es: 'Guías Grabitt', de: 'Grabitt-Ratgeber', da: 'Grabitt-guides', sv: 'Grabitt-guider', nl: 'Grabitt-gidsen', fr: 'Guides Grabitt', pt: 'Guias Grabitt' },
   'See all': { en: 'See all', es: 'Ver todo', de: 'Alle ansehen', da: 'Se alle', sv: 'Se alla', nl: 'Alles zien', fr: 'Voir tout', pt: 'Ver tudo' },
+  // Homepage quick actions + Near/search
+  'Sponsorship': { en: 'Sponsorship', es: 'Patrocinio', de: 'Sponsoring', da: 'Sponsorat', sv: 'Sponsring', nl: 'Sponsoring', fr: 'Parrainage', pt: 'Patrocínio' },
+  'Find Work': { en: 'Find Work', es: 'Buscar trabajo', de: 'Arbeit finden', da: 'Find arbejde', sv: 'Hitta jobb', nl: 'Werk zoeken', fr: 'Trouver un emploi', pt: 'Encontrar trabalho' },
+  'Find Home': { en: 'Find Home', es: 'Buscar vivienda', de: 'Zuhause finden', da: 'Find bolig', sv: 'Hitta bostad', nl: 'Woning zoeken', fr: 'Trouver un logement', pt: 'Encontrar casa' },
+  'Employers': { en: 'Employers', es: 'Empleadores', de: 'Arbeitgeber', da: 'Arbejdsgivere', sv: 'Arbetsgivare', nl: 'Werkgevers', fr: 'Employeurs', pt: 'Empregadores' },
+  'Business': { en: 'Business', es: 'Empresa', de: 'Unternehmen', da: 'Erhverv', sv: 'Företag', nl: 'Zakelijk', fr: 'Entreprise', pt: 'Empresa' },
+  'Near': { en: 'Near', es: 'Cerca', de: 'In der Nähe', da: 'Nær', sv: 'Nära', nl: 'Dichtbij', fr: 'Près', pt: 'Perto' },
+  'Search...': { en: 'Search...', es: 'Buscar...', de: 'Suchen...', da: 'Søg...', sv: 'Sök...', nl: 'Zoeken...', fr: 'Rechercher...', pt: 'Pesquisar...' },
 }
 
 let _lang: Lang = 'en'
