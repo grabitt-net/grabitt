@@ -2,7 +2,6 @@ import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import HomeSections from '@/components/marketplace/HomeSections'
 import { RecentlyViewedStrip } from '@/components/marketplace/PersonalStrips'
-import CommunityStrip from '@/components/marketplace/CommunityStrip'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
@@ -17,7 +16,6 @@ export default function HomePage() {
         <Topbar />
         <RecentlyViewedStrip />
         <HomeSections />
-        <CommunityStrip />
         <Footer />
         <CartFab />
         <PanelHost />

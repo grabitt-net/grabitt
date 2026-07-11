@@ -16,6 +16,7 @@ const META: Record<string, { edit?: 'home_mid'; slides?: boolean; note: string }
   featured:      { note: 'Auto — populated from featured listings.' },
   listings:      { note: 'Auto — the live "Browse listings" grid.' },
   just_listed:   { note: 'Auto — the most recent listings.' },
+  community:     { note: 'Auto — published Grabitt Guides (manage them under Guides).' },
   trust:         { note: 'Fixed Grabitt Guarantee / trust badges.' },
 }
 
