@@ -10,6 +10,7 @@ import ListingsGrid from './ListingsGrid'
 import BottomCarousel from './BottomCarousel'
 import TrustStrip from './TrustStrip'
 import SeasonalBanner from './SeasonalBanner'
+import { RecommendedStrip } from './PersonalStrips'
 
 // Homepage body rendered from the admin-controlled layout (Admin → Homepage).
 // The registry maps a section key to its component; order + visibility come
@@ -18,6 +19,7 @@ const REGISTRY: Record<string, React.ReactNode> = {
   hero_banner: <ParallaxHeader />,
   quick_actions: <Hero />,
   departments: <CategoryGrid />,
+  recommended: <RecommendedStrip />,
   seasonal_banner: <SeasonalBanner />,
   featured: <FeaturedStrip />,
   mid_banner: <BannerSlot position="home_mid" />,
@@ -26,7 +28,7 @@ const REGISTRY: Record<string, React.ReactNode> = {
   trust: <TrustStrip />,
 }
 
-const DEFAULT_ORDER = ['hero_banner', 'quick_actions', 'departments', 'seasonal_banner', 'featured', 'mid_banner', 'listings', 'just_listed', 'trust']
+const DEFAULT_ORDER = ['hero_banner', 'quick_actions', 'departments', 'recommended', 'seasonal_banner', 'featured', 'mid_banner', 'listings', 'just_listed', 'trust']
 
 export default function HomeSections() {
   const [keys, setKeys] = useState<string[]>(DEFAULT_ORDER)

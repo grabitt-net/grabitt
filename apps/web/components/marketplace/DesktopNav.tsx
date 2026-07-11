@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { usePanel } from '@/context/PanelContext'
 import type { PanelId } from '@/context/PanelContext'
 import { useNotifications } from '@/hooks/useNotifications'
@@ -32,9 +33,9 @@ export default function DesktopNav() {
   return (
     <div className="desktop-nav" style={{ alignItems: 'center', gap: 20, padding: '12px 28px', maxWidth: 1120, margin: '0 auto' }}>
       {/* Logo */}
-      <button onClick={() => openPanel('menu')} style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', flexShrink: 0, padding: 0 }}>
+      <Link href="/" style={{ cursor: 'pointer', textAlign: 'left', flexShrink: 0, padding: 0, textDecoration: 'none' }}>
         <Logo height={38} />
-      </button>
+      </Link>
 
       {/* Search — grows to fill */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 50, padding: '9px 8px 9px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>

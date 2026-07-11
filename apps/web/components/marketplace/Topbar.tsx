@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { usePanel } from '@/context/PanelContext'
 import IconRail from './IconRail'
 import DesktopNav from './DesktopNav'
@@ -69,12 +70,12 @@ export default function Topbar() {
       <div className="mobile-chrome">
       {/* Row 1 — logo + search + Near */}
       <div style={{ display: 'flex', alignItems: 'flex-start', padding: '10px 14px 0' }}>
-        <div onClick={() => openPanel('menu')} style={{ flexShrink: 0, cursor: 'pointer' }}>
+        <Link href="/" style={{ flexShrink: 0, cursor: 'pointer', textDecoration: 'none' }}>
           <Logo height={30} />
           <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: '#7a6a55', fontWeight: 700, marginTop: 2, whiteSpace: 'nowrap' }}>
             Your local everything
           </div>
-        </div>
+        </Link>
 
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginLeft: 8, minWidth: 0, maxWidth: '62%' }}>
           <div style={{ flex: 1, background: '#fff', borderRadius: 50, display: 'flex', alignItems: 'center', padding: '7px 5px 7px 11px', gap: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: 0 }}>
