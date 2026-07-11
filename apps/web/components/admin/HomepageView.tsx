@@ -11,6 +11,7 @@ const META: Record<string, { edit?: 'home_mid'; slides?: boolean; note: string }
   mid_banner:    { edit: 'home_mid', note: 'Advertising banner — edit the image & link.' },
   quick_actions: { note: 'Fixed quick links (Sponsorship, Find Work, Business…) + Grab It Now.' },
   departments:   { note: 'Auto — the department tiles.' },
+  seasonal_banner: { note: 'Auto — date-driven seasonal promo (Carnaval, Summer, Christmas…).' },
   featured:      { note: 'Auto — populated from featured listings.' },
   listings:      { note: 'Auto — the live "Browse listings" grid.' },
   just_listed:   { note: 'Auto — the most recent listings.' },
