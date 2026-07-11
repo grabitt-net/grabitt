@@ -30,6 +30,23 @@ export const TRANSLATIONS: Record<string, Record<Lang, string>> = {
   'Share': { en: 'Share', es: 'Compartir', de: 'Teilen', da: 'Del', sv: 'Dela', nl: 'Delen', fr: 'Partager', pt: 'Partilhar' },
   'Loading...': { en: 'Loading...', es: 'Cargando...', de: 'Lädt...', da: 'Indlæser...', sv: 'Laddar...', nl: 'Laden...', fr: 'Chargement...', pt: 'A carregar...' },
   'No results found': { en: 'No results found', es: 'No se encontraron resultados', de: 'Keine Ergebnisse', da: 'Ingen resultater', sv: 'Inga resultat', nl: 'Geen resultaten', fr: 'Aucun résultat', pt: 'Sem resultados' },
+  // Header / nav / account actions
+  'Search': { en: 'Search', es: 'Buscar', de: 'Suchen', da: 'Søg', sv: 'Sök', nl: 'Zoeken', fr: 'Rechercher', pt: 'Pesquisar' },
+  'Search for anything on Grabitt…': { en: 'Search for anything on Grabitt…', es: 'Busca lo que sea en Grabitt…', de: 'Suche alles auf Grabitt…', da: 'Søg efter alt på Grabitt…', sv: 'Sök efter allt på Grabitt…', nl: 'Zoek naar alles op Grabitt…', fr: 'Cherchez tout sur Grabitt…', pt: 'Pesquise tudo no Grabitt…' },
+  'Alerts': { en: 'Alerts', es: 'Alertas', de: 'Hinweise', da: 'Beskeder', sv: 'Aviseringar', nl: 'Meldingen', fr: 'Alertes', pt: 'Alertas' },
+  'Saved': { en: 'Saved', es: 'Guardados', de: 'Gespeichert', da: 'Gemte', sv: 'Sparade', nl: 'Opgeslagen', fr: 'Enregistrés', pt: 'Guardados' },
+  'Messages': { en: 'Messages', es: 'Mensajes', de: 'Nachrichten', da: 'Beskeder', sv: 'Meddelanden', nl: 'Berichten', fr: 'Messages', pt: 'Mensagens' },
+  'Account': { en: 'Account', es: 'Cuenta', de: 'Konto', da: 'Konto', sv: 'Konto', nl: 'Account', fr: 'Compte', pt: 'Conta' },
+  'Login': { en: 'Login', es: 'Entrar', de: 'Anmelden', da: 'Log ind', sv: 'Logga in', nl: 'Inloggen', fr: 'Connexion', pt: 'Entrar' },
+  'Help': { en: 'Help', es: 'Ayuda', de: 'Hilfe', da: 'Hjælp', sv: 'Hjälp', nl: 'Hulp', fr: 'Aide', pt: 'Ajuda' },
+  'Home': { en: 'Home', es: 'Inicio', de: 'Start', da: 'Hjem', sv: 'Hem', nl: 'Home', fr: 'Accueil', pt: 'Início' },
+  'Jobs': { en: 'Jobs', es: 'Empleos', de: 'Jobs', da: 'Jobs', sv: 'Jobb', nl: 'Vacatures', fr: 'Emplois', pt: 'Empregos' },
+  'Property': { en: 'Property', es: 'Inmuebles', de: 'Immobilien', da: 'Ejendom', sv: 'Fastigheter', nl: 'Vastgoed', fr: 'Immobilier', pt: 'Imóveis' },
+  'Your local everything': { en: 'Your local everything', es: 'Tu todo local', de: 'Dein lokales Alles', da: 'Dit lokale alt', sv: 'Ditt lokala allt', nl: 'Jouw lokale alles', fr: 'Votre tout local', pt: 'O teu tudo local' },
+  'Recommended for you': { en: 'Recommended for you', es: 'Recomendado para ti', de: 'Für dich empfohlen', da: 'Anbefalet til dig', sv: 'Rekommenderat för dig', nl: 'Aanbevolen voor jou', fr: 'Recommandé pour vous', pt: 'Recomendado para ti' },
+  'Recently viewed': { en: 'Recently viewed', es: 'Vistos recientemente', de: 'Zuletzt angesehen', da: 'Senest set', sv: 'Nyligen visade', nl: 'Onlangs bekeken', fr: 'Vus récemment', pt: 'Vistos recentemente' },
+  'Grabitt Guides': { en: 'Grabitt Guides', es: 'Guías Grabitt', de: 'Grabitt-Ratgeber', da: 'Grabitt-guides', sv: 'Grabitt-guider', nl: 'Grabitt-gidsen', fr: 'Guides Grabitt', pt: 'Guias Grabitt' },
+  'See all': { en: 'See all', es: 'Ver todo', de: 'Alle ansehen', da: 'Se alle', sv: 'Se alla', nl: 'Alles zien', fr: 'Voir tout', pt: 'Ver tudo' },
 }
 
 let _lang: Lang = 'en'

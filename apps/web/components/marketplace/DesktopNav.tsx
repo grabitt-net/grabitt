@@ -8,6 +8,7 @@ import { useNotifications } from '@/hooks/useNotifications'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
 import Icon, { IconName } from './Icon'
 import Logo from './Logo'
+import { t } from '@/lib/i18n'
 
 // Desktop-only top navigation (shown ≥820px via .desktop-nav in globals.css).
 // A persistent horizontal bar — logo, wide search, primary "Sell" CTA, and
@@ -29,6 +30,7 @@ export default function DesktopNav() {
     { icon: 'message', label: 'Messages', panel: 'messages' },
     { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
   ]
+  // labels above are translation keys; rendered via t() below
 
   return (
     <div className="desktop-nav" style={{ alignItems: 'center', gap: 20, padding: '12px 28px', maxWidth: 1120, margin: '0 auto' }}>
@@ -44,16 +46,16 @@ export default function DesktopNav() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') search() }}
-          placeholder="Search for anything on Grabitt…"
+          placeholder={t('Search for anything on Grabitt…')}
           aria-label="Search listings"
           style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', minWidth: 0 }}
         />
-        <button onClick={search} style={{ flexShrink: 0, background: 'var(--dark, #1a1a1a)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Search</button>
+        <button onClick={search} style={{ flexShrink: 0, background: 'var(--dark, #1a1a1a)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{t('Search')}</button>
       </div>
 
       {/* Sell CTA */}
       <button onClick={() => openPanel('sell')} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>
-        <Icon name="plus" size={17} strokeWidth={2.4} /> Sell
+        <Icon name="plus" size={17} strokeWidth={2.4} /> {t('Sell')}
       </button>
 
       {/* Account actions */}
@@ -62,7 +64,7 @@ export default function DesktopNav() {
           <button key={a.label} onClick={() => a.panel === 'profile' ? router.push('/account') : openPanel(a.panel)} title={a.label}
             style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 8px', color: 'var(--dark)' }}>
             <Icon name={a.icon} size={21} />
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#7a6a55' }}>{a.label}</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#7a6a55' }}>{t(a.label)}</span>
             {a.badge !== undefined && (
               <span style={{ position: 'absolute', top: 0, right: 2, background: 'var(--orange)', color: '#fff', fontSize: 8, fontWeight: 900, minWidth: 14, height: 14, borderRadius: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
                 {a.badge > 99 ? '99+' : a.badge}

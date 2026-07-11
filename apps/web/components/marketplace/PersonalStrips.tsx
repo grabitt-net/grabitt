@@ -4,6 +4,7 @@ import { usePanel } from '@/context/PanelContext'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { toPanelItem } from '@/lib/listingMap'
 import { getViews, type RecentCard } from '@/lib/recentViews'
+import { t } from '@/lib/i18n'
 
 function StripCard({ item, onClick }: { item: any; onClick: () => void }) {
   return (
@@ -44,7 +45,7 @@ export function RecommendedStrip() {
     })()
   }, [])
   if (items.length === 0) return null
-  return <Section title="✨ Recommended for you">{items.map(it => <StripCard key={it.id} item={it} onClick={() => openPanel('listing', it)} />)}</Section>
+  return <Section title={`✨ ${t('Recommended for you')}`}>{items.map(it => <StripCard key={it.id} item={it} onClick={() => openPanel('listing', it)} />)}</Section>
 }
 
 export function RecentlyViewedStrip() {
@@ -52,5 +53,5 @@ export function RecentlyViewedStrip() {
   const [items, setItems] = useState<RecentCard[]>([])
   useEffect(() => { setItems(getViews()) }, [])
   if (items.length === 0) return null
-  return <Section title="🕘 Recently viewed">{items.map(it => <StripCard key={it.id} item={it} onClick={() => openPanel('listing', { ...it })} />)}</Section>
+  return <Section title={`🕘 ${t('Recently viewed')}`}>{items.map(it => <StripCard key={it.id} item={it} onClick={() => openPanel('listing', { ...it })} />)}</Section>
 }

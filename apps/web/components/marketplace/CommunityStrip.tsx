@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createTrpcClient } from '@/lib/trpc'
+import { t } from '@/lib/i18n'
 
 type Post = { id: string; title: string; excerpt: string; category: string; emoji: string; imageUrl: string | null }
 
@@ -17,8 +18,8 @@ export default function CommunityStrip() {
   return (
     <section style={{ padding: '16px 0 0' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '0 14px 12px' }}>
-        <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>📰 Grabitt Guides</h2>
-        <Link href="/community" style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 700, color: 'var(--orange)', textDecoration: 'none' }}>See all</Link>
+        <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>📰 {t('Grabitt Guides')}</h2>
+        <Link href="/community" style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 700, color: 'var(--orange)', textDecoration: 'none' }}>{t('See all')}</Link>
       </div>
       <div style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none', gap: 10, padding: '0 14px 4px' }}>
         {posts.map(p => (

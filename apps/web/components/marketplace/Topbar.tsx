@@ -6,6 +6,7 @@ import IconRail from './IconRail'
 import DesktopNav from './DesktopNav'
 import Icon from './Icon'
 import Logo from './Logo'
+import { t } from '@/lib/i18n'
 
 // Mirrors the HTML .topbar: a single sticky header containing row1
 // (logo + tagline on the left, search + 📍Near on the right) and the
@@ -73,7 +74,7 @@ export default function Topbar() {
         <Link href="/" style={{ flexShrink: 0, cursor: 'pointer', textDecoration: 'none' }}>
           <Logo height={30} />
           <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: '#7a6a55', fontWeight: 700, marginTop: 2, whiteSpace: 'nowrap' }}>
-            Your local everything
+            {t('Your local everything')}
           </div>
         </Link>
 

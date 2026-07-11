@@ -5,6 +5,7 @@ import type { PanelId } from '@/context/PanelContext'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
 import Icon, { IconName } from './Icon'
+import { t } from '@/lib/i18n'
 
 // Mirrors the original HTML .icon-rail exactly: 7 buttons, evenly spread
 // (flex:1 each, justify-content:space-between) — Alerts, Saved, Rewards,
@@ -39,7 +40,7 @@ export default function IconRail() {
           >
             <span style={{ lineHeight: 1, color: 'var(--dark)' }}><Icon name={item.icon} size={20} /></span>
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 8, fontWeight: 800, color: '#7a6a55', lineHeight: 1.05, textAlign: 'center', whiteSpace: 'nowrap' }}>
-              {item.label}
+              {t(item.label)}
             </span>
             {item.badge !== undefined && (
               <span style={{
