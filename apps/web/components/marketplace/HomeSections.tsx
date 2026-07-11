@@ -31,7 +31,9 @@ const REGISTRY: Record<string, React.ReactNode> = {
   trust: <TrustStrip />,
 }
 
-const DEFAULT_ORDER = ['hero_banner', 'quick_actions', 'departments', 'recommended', 'recently_viewed', 'seasonal_banner', 'featured', 'mid_banner', 'listings', 'just_listed', 'community', 'trust']
+// Mirrors the v3 homepage template's flow: hero → quick actions → featured →
+// departments → discovery strips → mid banner → just listed → guides → trust.
+const DEFAULT_ORDER = ['hero_banner', 'quick_actions', 'featured', 'departments', 'recommended', 'recently_viewed', 'seasonal_banner', 'mid_banner', 'listings', 'just_listed', 'community', 'trust']
 
 export default function HomeSections() {
   const [keys, setKeys] = useState<string[]>(DEFAULT_ORDER)
