@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { DEPT_LABEL, COND_LABEL, deptEmoji } from '@/lib/listingMap'
+import { t } from '@/lib/i18n'
 import { pushView } from '@/lib/recentViews'
 import { PRICES } from '@grabitt/design-tokens'
 import MessageButton from '@/components/marketplace/MessageButton'
@@ -142,14 +143,14 @@ export default function ListingDetailPage() {
 
         {listing.description && (
           <div style={cardBox}>
-            <div style={sectionTitle}>Description</div>
+            <div style={sectionTitle}>{t('Description')}</div>
             <p style={{ fontSize: 13, color: '#444', lineHeight: 1.6, fontFamily: 'var(--font-comfortaa)', whiteSpace: 'pre-wrap' }}>{listing.description}</p>
           </div>
         )}
 
         {Array.isArray(listing.tags) && listing.tags.length > 0 && (
           <div style={cardBox}>
-            <div style={sectionTitle}>Tags</div>
+            <div style={sectionTitle}>{t('Tags')}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {listing.tags.map((t: string) => (
                 <Link key={t} href={`/listings?q=${encodeURIComponent(t)}`} style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, fontWeight: 600, color: '#6b5a41', background: '#f5f0e8', border: '1px solid #ece3d7', borderRadius: 999, padding: '5px 12px', textDecoration: 'none' }}>#{t}</Link>
@@ -160,7 +161,7 @@ export default function ListingDetailPage() {
 
         {comps && listing.department !== 'jobs' && listing.department !== 'property' && (
           <div style={cardBox}>
-            <div style={sectionTitle}>Recently sold — similar items</div>
+            <div style={sectionTitle}>{t('Recently sold — similar items')}</div>
             <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
               {[{ k: 'Average', v: comps.avg }, { k: 'Lowest', v: comps.min }, { k: 'Highest', v: comps.max }].map(m => (
                 <div key={m.k} style={{ flex: 1, background: '#f5f0e8', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
@@ -198,7 +199,7 @@ export default function ListingDetailPage() {
           if (!q) return null
           return (
             <div style={cardBox}>
-              <div style={sectionTitle}>Location</div>
+              <div style={sectionTitle}>{t('Location')}</div>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#555', marginBottom: 8 }}>📍 {q}</div>
               <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #ece3d7' }}>
                 <iframe

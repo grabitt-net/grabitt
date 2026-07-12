@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
+import { t } from '@/lib/i18n'
 
 interface Props { listingId: string; sellerId: string; label?: string; primary?: boolean; flex?: number }
 
@@ -51,7 +52,7 @@ export default function MessageButton({ listingId, sellerId, label = '💬 Messa
           boxShadow: primary ? '0 4px 14px rgba(255,69,0,0.35)' : 'none',
         }}
       >
-        {loading ? '…' : label}
+        {loading ? '…' : t(label)}
       </button>
       {error && <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: '#c0392b', textAlign: 'center' }}>{error}</span>}
     </div>

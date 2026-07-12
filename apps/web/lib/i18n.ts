@@ -55,6 +55,14 @@ export const TRANSLATIONS: Record<string, Record<Lang, string>> = {
   'Business': { en: 'Business', es: 'Empresa', de: 'Unternehmen', da: 'Erhverv', sv: 'Företag', nl: 'Zakelijk', fr: 'Entreprise', pt: 'Empresa' },
   'Near': { en: 'Near', es: 'Cerca', de: 'In der Nähe', da: 'Nær', sv: 'Nära', nl: 'Dichtbij', fr: 'Près', pt: 'Perto' },
   'Search...': { en: 'Search...', es: 'Buscar...', de: 'Suchen...', da: 'Søg...', sv: 'Sök...', nl: 'Zoeken...', fr: 'Rechercher...', pt: 'Pesquisar...' },
+  // Listing detail
+  'Description': { en: 'Description', es: 'Descripción', de: 'Beschreibung', da: 'Beskrivelse', sv: 'Beskrivning', nl: 'Beschrijving', fr: 'Description', pt: 'Descrição' },
+  'Tags': { en: 'Tags', es: 'Etiquetas', de: 'Tags', da: 'Tags', sv: 'Taggar', nl: 'Labels', fr: 'Mots-clés', pt: 'Etiquetas' },
+  'Location': { en: 'Location', es: 'Ubicación', de: 'Standort', da: 'Placering', sv: 'Plats', nl: 'Locatie', fr: 'Emplacement', pt: 'Localização' },
+  'Similar listings': { en: 'Similar listings', es: 'Anuncios similares', de: 'Ähnliche Anzeigen', da: 'Lignende annoncer', sv: 'Liknande annonser', nl: 'Vergelijkbare advertenties', fr: 'Annonces similaires', pt: 'Anúncios semelhantes' },
+  'Recently sold — similar items': { en: 'Recently sold — similar items', es: 'Vendidos recientemente — artículos similares', de: 'Kürzlich verkauft — ähnliche Artikel', da: 'Nyligt solgt — lignende varer', sv: 'Nyligen sålda — liknande varor', nl: 'Recent verkocht — vergelijkbare items', fr: 'Vendus récemment — articles similaires', pt: 'Vendidos recentemente — artigos semelhantes' },
+  'Enquire': { en: 'Enquire', es: 'Consultar', de: 'Anfragen', da: 'Forespørg', sv: 'Fråga', nl: 'Informeer', fr: 'Renseigner', pt: 'Consultar' },
+  'Apply / Enquire': { en: 'Apply / Enquire', es: 'Postularse / Consultar', de: 'Bewerben / Anfragen', da: 'Ansøg / Forespørg', sv: 'Ansök / Fråga', nl: 'Solliciteer / Informeer', fr: 'Postuler / Renseigner', pt: 'Candidatar / Consultar' },
 }
 
 let _lang: Lang = 'en'
