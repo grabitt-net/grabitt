@@ -2309,12 +2309,12 @@ function PanelBody() {
           <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>{emoji}</div>
           <div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{title}</div>
-            <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, color: '#888' }}>Listed at {price}</div>
+            <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, color: '#888' }}>{t('Listed at')} {price}</div>
           </div>
         </div>
 
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Your offer amount (€)</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Your offer amount (€)')}</div>
           <div style={{ position: 'relative' }}>
             <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 18, color: '#888' }}>€</span>
             <input
@@ -2331,7 +2331,7 @@ function PanelBody() {
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Message to seller (optional)</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Message to seller (optional)')}</div>
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}
@@ -2342,7 +2342,7 @@ function PanelBody() {
         </div>
 
         <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#a8460f' }}>
-          🔒 Offers are binding if accepted. Payment is processed via Stripe escrow.
+          🔒 {t('Offers are binding if accepted. Payment is processed via Stripe escrow.')}
         </div>
 
         <button
@@ -2350,7 +2350,7 @@ function PanelBody() {
           disabled={!amount || parseFloat(amount) <= 0}
           style={{ width: '100%', background: amount && parseFloat(amount) > 0 ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
         >
-          Send Offer — €{amount || '0'}
+          {t('Send Offer')} — €{amount || '0'}
         </button>
       </ActionPanel>
     )

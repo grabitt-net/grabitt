@@ -89,6 +89,12 @@ export const TRANSLATIONS: Record<string, Record<Lang, string>> = {
   'My Listings': { en: 'My Listings', es: 'Mis anuncios', de: 'Meine Anzeigen', da: 'Mine annoncer', sv: 'Mina annonser', nl: 'Mijn advertenties', fr: 'Mes annonces', pt: 'Os meus anúncios' },
   'My Purchases & Handovers': { en: 'My Purchases & Handovers', es: 'Mis compras y entregas', de: 'Meine Käufe & Übergaben', da: 'Mine køb & overdragelser', sv: 'Mina köp & överlämningar', nl: 'Mijn aankopen & overdrachten', fr: 'Mes achats et remises', pt: 'As minhas compras e entregas' },
   'Log out': { en: 'Log out', es: 'Cerrar sesión', de: 'Abmelden', da: 'Log ud', sv: 'Logga ut', nl: 'Uitloggen', fr: 'Se déconnecter', pt: 'Terminar sessão' },
+  // Make an offer panel
+  'Your offer amount (€)': { en: 'Your offer amount (€)', es: 'Importe de tu oferta (€)', de: 'Dein Angebotsbetrag (€)', da: 'Dit tilbudsbeløb (€)', sv: 'Ditt budbelopp (€)', nl: 'Jouw bodbedrag (€)', fr: 'Montant de votre offre (€)', pt: 'Valor da tua oferta (€)' },
+  'Message to seller (optional)': { en: 'Message to seller (optional)', es: 'Mensaje al vendedor (opcional)', de: 'Nachricht an Verkäufer (optional)', da: 'Besked til sælger (valgfrit)', sv: 'Meddelande till säljare (valfritt)', nl: 'Bericht aan verkoper (optioneel)', fr: 'Message au vendeur (facultatif)', pt: 'Mensagem ao vendedor (opcional)' },
+  'Send Offer': { en: 'Send Offer', es: 'Enviar oferta', de: 'Angebot senden', da: 'Send tilbud', sv: 'Skicka bud', nl: 'Bod versturen', fr: 'Envoyer l\'offre', pt: 'Enviar oferta' },
+  'Listed at': { en: 'Listed at', es: 'Precio', de: 'Angeboten für', da: 'Prissat til', sv: 'Listat till', nl: 'Vermeld voor', fr: 'Au prix de', pt: 'Anunciado a' },
+  'Offers are binding if accepted. Payment is processed via Stripe escrow.': { en: 'Offers are binding if accepted. Payment is processed via Stripe escrow.', es: 'Las ofertas son vinculantes si se aceptan. El pago se procesa mediante depósito de Stripe.', de: 'Angebote sind bei Annahme verbindlich. Zahlung erfolgt über Stripe-Treuhand.', da: 'Tilbud er bindende ved accept. Betaling behandles via Stripe-deponering.', sv: 'Bud är bindande om de accepteras. Betalning sker via Stripe-deposition.', nl: 'Biedingen zijn bindend indien geaccepteerd. Betaling via Stripe-escrow.', fr: 'Les offres sont contraignantes si acceptées. Paiement via séquestre Stripe.', pt: 'As ofertas são vinculativas se aceites. Pagamento processado via garantia Stripe.' },
 }
 
 let _lang: Lang = 'en'
