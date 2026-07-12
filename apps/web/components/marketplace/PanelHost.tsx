@@ -416,7 +416,7 @@ function PanelBody() {
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
           <div style={{ fontSize: 60, marginBottom: 14 }}>🌴</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>You're in!</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>Welcome back to Gran Canaria's marketplace.</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>{t("Welcome back to Gran Canaria's marketplace.")}</div>
           <button onClick={closePanel} style={btnPrimary}>Start browsing →</button>
         </div>
       </ActionPanel>
@@ -468,7 +468,7 @@ function PanelBody() {
               <>
                 <div style={{ textAlign: 'center', padding: '10px 0 20px' }}>
                   <div style={{ fontSize: 52, marginBottom: 10 }}>🌴</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Buy, sell & connect on the island</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{t('Buy, sell & connect on the island')}</div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>50 free credits when you join · Secure Stripe payments</div>
                 </div>
 
@@ -476,17 +476,17 @@ function PanelBody() {
                 {error && <div style={{ background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{error}</div>}
                 <button onClick={handleGoogle} style={{ width: '100%', background: '#fff', color: 'var(--dark)', border: '1.5px solid #e0d8d0', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.5l-6.6-5.6C29.6 34.5 26.9 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4 5.6l6.6 5.6C41.4 36.6 44 30.9 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
-                  Continue with Google
+                  {t('Continue with Google')}
                 </button>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 12px' }}>
                   <div style={{ flex: 1, height: 1, background: '#e0d8d0' }} />
-                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#aaa' }}>or</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#aaa' }}>{t('or')}</span>
                   <div style={{ flex: 1, height: 1, background: '#e0d8d0' }} />
                 </div>
 
-                <button onClick={() => setAuthStep('login')} style={btnPrimary}>Log in with email</button>
-                <button onClick={() => setAuthStep('register')} style={btnGhost}>Create account</button>
+                <button onClick={() => setAuthStep('login')} style={btnPrimary}>{t('Log in with email')}</button>
+                <button onClick={() => setAuthStep('register')} style={btnGhost}>{t('Create account')}</button>
 
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa', textAlign: 'center', lineHeight: 1.5, marginTop: 8 }}>
                   By continuing you agree to our <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Terms</span> and <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span>
@@ -497,18 +497,18 @@ function PanelBody() {
             {authStep === 'login' && (
               <>
                 {error && <div style={{ background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{error}</div>}
-                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" style={inputStyle} />
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder={t("Email address")} type="email" style={inputStyle} />
                 <div style={{ position: 'relative', marginBottom: 4 }}>
-                  <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" type={showPass ? 'text' : 'password'} style={{ ...inputStyle, marginBottom: 0, paddingRight: 44 }} />
+                  <input value={password} onChange={e => setPassword(e.target.value)} placeholder={t("Password")} type={showPass ? 'text' : 'password'} style={{ ...inputStyle, marginBottom: 0, paddingRight: 44 }} />
                   <button onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: 16, cursor: 'pointer' }}>{showPass ? '🙈' : '👁'}</button>
                 </div>
                 <div style={{ textAlign: 'right', marginBottom: 16 }}>
-                  <button onClick={() => setAuthStep('forgot')} style={link}>Forgot password?</button>
+                  <button onClick={() => setAuthStep('forgot')} style={link}>{t('Forgot password?')}</button>
                 </div>
-                <button onClick={submitAuth} disabled={loading || !email || !password} style={btnPrimary}>{loading ? '⏳ Logging in…' : 'Log In'}</button>
+                <button onClick={submitAuth} disabled={loading || !email || !password} style={btnPrimary}>{loading ? '⏳ Logging in…' : t('Log In')}</button>
                 <div style={{ textAlign: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>No account? </span>
-                  <button onClick={() => setAuthStep('register')} style={link}>Create one</button>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{t('No account?')} </span>
+                  <button onClick={() => setAuthStep('register')} style={link}>{t('Create one')}</button>
                 </div>
               </>
             )}
@@ -516,11 +516,11 @@ function PanelBody() {
             {authStep === 'register' && (
               <>
                 {error && <div style={{ background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{error}</div>}
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="Full name" style={inputStyle} />
-                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" style={inputStyle} />
-                <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone (optional)" type="tel" style={inputStyle} />
+                <input value={name} onChange={e => setName(e.target.value)} placeholder={t("Full name")} style={inputStyle} />
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder={t("Email address")} type="email" style={inputStyle} />
+                <input value={phone} onChange={e => setPhone(e.target.value)} placeholder={t("Phone (optional)")} type="tel" style={inputStyle} />
                 <div style={{ position: 'relative' }}>
-                  <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Create password (min 8 chars)" type={showPass ? 'text' : 'password'} style={{ ...inputStyle, paddingRight: 44 }} />
+                  <input value={password} onChange={e => setPassword(e.target.value)} placeholder={t("Create password (min 8 chars)")} type={showPass ? 'text' : 'password'} style={{ ...inputStyle, paddingRight: 44 }} />
                   <button onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: 16, cursor: 'pointer' }}>{showPass ? '🙈' : '👁'}</button>
                 </div>
 
@@ -546,7 +546,7 @@ function PanelBody() {
                 </div>
 
                 <button onClick={submitAuth} disabled={loading || !name || !email || password.length < 8} style={{ ...btnPrimary, background: loading || !name || !email || password.length < 8 ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>
-                  {loading ? '⏳ Creating account…' : '🚀 Create Account'}
+                  {loading ? '⏳ Creating account…' : `🚀 ${t('Create Account')}`}
                 </button>
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>Already have one? </span>
@@ -560,7 +560,7 @@ function PanelBody() {
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 16 }}>
                   Enter your email and we'll send a reset link.
                 </div>
-                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" style={inputStyle} />
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder={t("Email address")} type="email" style={inputStyle} />
                 <button onClick={submitAuth} disabled={loading || !email} style={{ ...btnPrimary, background: loading || !email ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>
                   {loading ? '⏳ Sending…' : 'Send Reset Link'}
                 </button>

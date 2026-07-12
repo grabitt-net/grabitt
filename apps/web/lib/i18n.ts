@@ -63,6 +63,23 @@ export const TRANSLATIONS: Record<string, Record<Lang, string>> = {
   'Recently sold — similar items': { en: 'Recently sold — similar items', es: 'Vendidos recientemente — artículos similares', de: 'Kürzlich verkauft — ähnliche Artikel', da: 'Nyligt solgt — lignende varer', sv: 'Nyligen sålda — liknande varor', nl: 'Recent verkocht — vergelijkbare items', fr: 'Vendus récemment — articles similaires', pt: 'Vendidos recentemente — artigos semelhantes' },
   'Enquire': { en: 'Enquire', es: 'Consultar', de: 'Anfragen', da: 'Forespørg', sv: 'Fråga', nl: 'Informeer', fr: 'Renseigner', pt: 'Consultar' },
   'Apply / Enquire': { en: 'Apply / Enquire', es: 'Postularse / Consultar', de: 'Bewerben / Anfragen', da: 'Ansøg / Forespørg', sv: 'Ansök / Fråga', nl: 'Solliciteer / Informeer', fr: 'Postuler / Renseigner', pt: 'Candidatar / Consultar' },
+  // Auth panel (login / register)
+  'Buy, sell & connect on the island': { en: 'Buy, sell & connect on the island', es: 'Compra, vende y conecta en la isla', de: 'Kaufen, verkaufen & vernetzen auf der Insel', da: 'Køb, sælg & forbind på øen', sv: 'Köp, sälj & anslut på ön', nl: 'Koop, verkoop & verbind op het eiland', fr: 'Achetez, vendez et connectez sur l\'île', pt: 'Compra, vende e conecta na ilha' },
+  'Continue with Google': { en: 'Continue with Google', es: 'Continuar con Google', de: 'Mit Google fortfahren', da: 'Fortsæt med Google', sv: 'Fortsätt med Google', nl: 'Doorgaan met Google', fr: 'Continuer avec Google', pt: 'Continuar com Google' },
+  'or': { en: 'or', es: 'o', de: 'oder', da: 'eller', sv: 'eller', nl: 'of', fr: 'ou', pt: 'ou' },
+  'Log in with email': { en: 'Log in with email', es: 'Entrar con correo', de: 'Mit E-Mail anmelden', da: 'Log ind med e-mail', sv: 'Logga in med e-post', nl: 'Inloggen met e-mail', fr: 'Se connecter par e-mail', pt: 'Entrar com e-mail' },
+  'Create account': { en: 'Create account', es: 'Crear cuenta', de: 'Konto erstellen', da: 'Opret konto', sv: 'Skapa konto', nl: 'Account aanmaken', fr: 'Créer un compte', pt: 'Criar conta' },
+  'Create Account': { en: 'Create Account', es: 'Crear cuenta', de: 'Konto erstellen', da: 'Opret konto', sv: 'Skapa konto', nl: 'Account aanmaken', fr: 'Créer un compte', pt: 'Criar conta' },
+  'Email address': { en: 'Email address', es: 'Correo electrónico', de: 'E-Mail-Adresse', da: 'E-mailadresse', sv: 'E-postadress', nl: 'E-mailadres', fr: 'Adresse e-mail', pt: 'Endereço de e-mail' },
+  'Password': { en: 'Password', es: 'Contraseña', de: 'Passwort', da: 'Adgangskode', sv: 'Lösenord', nl: 'Wachtwoord', fr: 'Mot de passe', pt: 'Palavra-passe' },
+  'Forgot password?': { en: 'Forgot password?', es: '¿Olvidaste tu contraseña?', de: 'Passwort vergessen?', da: 'Glemt adgangskode?', sv: 'Glömt lösenord?', nl: 'Wachtwoord vergeten?', fr: 'Mot de passe oublié ?', pt: 'Esqueceste a palavra-passe?' },
+  'Log In': { en: 'Log In', es: 'Entrar', de: 'Anmelden', da: 'Log ind', sv: 'Logga in', nl: 'Inloggen', fr: 'Se connecter', pt: 'Entrar' },
+  'No account?': { en: 'No account?', es: '¿Sin cuenta?', de: 'Kein Konto?', da: 'Ingen konto?', sv: 'Inget konto?', nl: 'Geen account?', fr: 'Pas de compte ?', pt: 'Sem conta?' },
+  'Create one': { en: 'Create one', es: 'Crea una', de: 'Erstellen', da: 'Opret en', sv: 'Skapa ett', nl: 'Maak er een', fr: 'Créez-en un', pt: 'Cria uma' },
+  'Full name': { en: 'Full name', es: 'Nombre completo', de: 'Vollständiger Name', da: 'Fulde navn', sv: 'Fullständigt namn', nl: 'Volledige naam', fr: 'Nom complet', pt: 'Nome completo' },
+  'Phone (optional)': { en: 'Phone (optional)', es: 'Teléfono (opcional)', de: 'Telefon (optional)', da: 'Telefon (valgfrit)', sv: 'Telefon (valfritt)', nl: 'Telefoon (optioneel)', fr: 'Téléphone (facultatif)', pt: 'Telefone (opcional)' },
+  'Create password (min 8 chars)': { en: 'Create password (min 8 chars)', es: 'Crear contraseña (mín. 8 caracteres)', de: 'Passwort erstellen (min. 8 Zeichen)', da: 'Opret adgangskode (min. 8 tegn)', sv: 'Skapa lösenord (min 8 tecken)', nl: 'Wachtwoord aanmaken (min. 8 tekens)', fr: 'Créer un mot de passe (min. 8 caractères)', pt: 'Criar palavra-passe (mín. 8 caracteres)' },
+  "Welcome back to Gran Canaria's marketplace.": { en: "Welcome back to Gran Canaria's marketplace.", es: 'Bienvenido de nuevo al mercado de Gran Canaria.', de: 'Willkommen zurück auf dem Marktplatz von Gran Canaria.', da: 'Velkommen tilbage til Gran Canarias markedsplads.', sv: 'Välkommen tillbaka till Gran Canarias marknad.', nl: 'Welkom terug op de marktplaats van Gran Canaria.', fr: 'Bon retour sur le marché de Gran Canaria.', pt: 'Bem-vindo de volta ao mercado de Gran Canaria.' },
 }
 
 let _lang: Lang = 'en'
