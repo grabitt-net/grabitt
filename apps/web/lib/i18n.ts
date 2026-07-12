@@ -80,6 +80,15 @@ export const TRANSLATIONS: Record<string, Record<Lang, string>> = {
   'Phone (optional)': { en: 'Phone (optional)', es: 'Teléfono (opcional)', de: 'Telefon (optional)', da: 'Telefon (valgfrit)', sv: 'Telefon (valfritt)', nl: 'Telefoon (optioneel)', fr: 'Téléphone (facultatif)', pt: 'Telefone (opcional)' },
   'Create password (min 8 chars)': { en: 'Create password (min 8 chars)', es: 'Crear contraseña (mín. 8 caracteres)', de: 'Passwort erstellen (min. 8 Zeichen)', da: 'Opret adgangskode (min. 8 tegn)', sv: 'Skapa lösenord (min 8 tecken)', nl: 'Wachtwoord aanmaken (min. 8 tekens)', fr: 'Créer un mot de passe (min. 8 caractères)', pt: 'Criar palavra-passe (mín. 8 caracteres)' },
   "Welcome back to Gran Canaria's marketplace.": { en: "Welcome back to Gran Canaria's marketplace.", es: 'Bienvenido de nuevo al mercado de Gran Canaria.', de: 'Willkommen zurück auf dem Marktplatz von Gran Canaria.', da: 'Velkommen tilbage til Gran Canarias markedsplads.', sv: 'Välkommen tillbaka till Gran Canarias marknad.', nl: 'Welkom terug op de marktplaats van Gran Canaria.', fr: 'Bon retour sur le marché de Gran Canaria.', pt: 'Bem-vindo de volta ao mercado de Gran Canaria.' },
+  // Preferences / account hub
+  'My interests': { en: 'My interests', es: 'Mis intereses', de: 'Meine Interessen', da: 'Mine interesser', sv: 'Mina intressen', nl: 'Mijn interesses', fr: 'Mes centres d\'intérêt', pt: 'Os meus interesses' },
+  'Language': { en: 'Language', es: 'Idioma', de: 'Sprache', da: 'Sprog', sv: 'Språk', nl: 'Taal', fr: 'Langue', pt: 'Idioma' },
+  'Save preferences': { en: 'Save preferences', es: 'Guardar preferencias', de: 'Einstellungen speichern', da: 'Gem indstillinger', sv: 'Spara inställningar', nl: 'Voorkeuren opslaan', fr: 'Enregistrer les préférences', pt: 'Guardar preferências' },
+  'Saving…': { en: 'Saving…', es: 'Guardando…', de: 'Speichern…', da: 'Gemmer…', sv: 'Sparar…', nl: 'Opslaan…', fr: 'Enregistrement…', pt: 'A guardar…' },
+  'My Sales': { en: 'My Sales', es: 'Mis ventas', de: 'Meine Verkäufe', da: 'Mine salg', sv: 'Mina försäljningar', nl: 'Mijn verkopen', fr: 'Mes ventes', pt: 'As minhas vendas' },
+  'My Listings': { en: 'My Listings', es: 'Mis anuncios', de: 'Meine Anzeigen', da: 'Mine annoncer', sv: 'Mina annonser', nl: 'Mijn advertenties', fr: 'Mes annonces', pt: 'Os meus anúncios' },
+  'My Purchases & Handovers': { en: 'My Purchases & Handovers', es: 'Mis compras y entregas', de: 'Meine Käufe & Übergaben', da: 'Mine køb & overdragelser', sv: 'Mina köp & överlämningar', nl: 'Mijn aankopen & overdrachten', fr: 'Mes achats et remises', pt: 'As minhas compras e entregas' },
+  'Log out': { en: 'Log out', es: 'Cerrar sesión', de: 'Abmelden', da: 'Log ud', sv: 'Logga ut', nl: 'Uitloggen', fr: 'Se déconnecter', pt: 'Terminar sessão' },
 }
 
 let _lang: Lang = 'en'

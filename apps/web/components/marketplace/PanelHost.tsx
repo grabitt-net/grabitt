@@ -3573,7 +3573,7 @@ function PanelBody() {
             })()}
 
             {/* Preferences — interests */}
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>My interests</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{t('My interests')}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
               {INTEREST_DEPTS.map(d => (
                 <button key={d} onClick={() => toggleInterest(d)} style={{ background: interests.includes(d) ? 'var(--orange)' : '#f5f0e8', color: interests.includes(d) ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{d}</button>
@@ -3581,12 +3581,12 @@ function PanelBody() {
             </div>
 
             {/* Preferences — language */}
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Language</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{t('Language')}</div>
             <select value={lang} onChange={e => setLang(e.target.value as Lang)} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', background: '#fff', marginBottom: 14, boxSizing: 'border-box' }}>
               {LANGS.map(l => <option key={l} value={l}>{langLabel(l)}</option>)}
             </select>
 
-            <button onClick={savePrefs} disabled={saving} style={{ width: '100%', background: saving ? '#ccc' : 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 16 }}>{saving ? 'Saving…' : 'Save preferences ✓'}</button>
+            <button onClick={savePrefs} disabled={saving} style={{ width: '100%', background: saving ? '#ccc' : 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 16 }}>{saving ? t('Saving…') : `${t('Save preferences')} ✓`}</button>
 
             {/* Seller payouts — Stripe Connect */}
             <div style={{ background: payout?.payoutsEnabled ? '#f0fdf4' : '#FFF3EE', borderRadius: 12, padding: 14, marginBottom: 16 }}>
@@ -3634,10 +3634,10 @@ function PanelBody() {
             )}
 
             {/* My Purchases — buyers view orders + complete handover later */}
-            <button onClick={() => openPanel('purchases')} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>🛒 My Purchases &amp; Handovers</button>
+            <button onClick={() => openPanel('purchases')} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>🛒 {t('My Purchases & Handovers')}</button>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => openPanel('mySales')} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>My Sales</button>
-              <button onClick={() => openPanel('mylistings')} style={{ flex: 1, background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>My Listings</button>
+              <button onClick={() => openPanel('mySales')} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{t('My Sales')}</button>
+              <button onClick={() => openPanel('mylistings')} style={{ flex: 1, background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>{t('My Listings')}</button>
             </div>
 
             <button
@@ -3650,7 +3650,7 @@ function PanelBody() {
               }}
               style={{ width: '100%', background: 'none', color: '#ef4444', border: '1px solid #f0ebe4', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginTop: 14 }}
             >
-              Log out
+              {t('Log out')}
             </button>
 
             {/* GDPR — right to erasure */}
