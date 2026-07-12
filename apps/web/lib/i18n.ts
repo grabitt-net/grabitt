@@ -95,6 +95,18 @@ export const TRANSLATIONS: Record<string, Record<Lang, string>> = {
   'Send Offer': { en: 'Send Offer', es: 'Enviar oferta', de: 'Angebot senden', da: 'Send tilbud', sv: 'Skicka bud', nl: 'Bod versturen', fr: 'Envoyer l\'offre', pt: 'Enviar oferta' },
   'Listed at': { en: 'Listed at', es: 'Precio', de: 'Angeboten für', da: 'Prissat til', sv: 'Listat till', nl: 'Vermeld voor', fr: 'Au prix de', pt: 'Anunciado a' },
   'Offers are binding if accepted. Payment is processed via Stripe escrow.': { en: 'Offers are binding if accepted. Payment is processed via Stripe escrow.', es: 'Las ofertas son vinculantes si se aceptan. El pago se procesa mediante depósito de Stripe.', de: 'Angebote sind bei Annahme verbindlich. Zahlung erfolgt über Stripe-Treuhand.', da: 'Tilbud er bindende ved accept. Betaling behandles via Stripe-deponering.', sv: 'Bud är bindande om de accepteras. Betalning sker via Stripe-deposition.', nl: 'Biedingen zijn bindend indien geaccepteerd. Betaling via Stripe-escrow.', fr: 'Les offres sont contraignantes si acceptées. Paiement via séquestre Stripe.', pt: 'As ofertas são vinculativas se aceites. Pagamento processado via garantia Stripe.' },
+  // Sell / create-listing panel
+  'Title': { en: 'Title', es: 'Título', de: 'Titel', da: 'Titel', sv: 'Titel', nl: 'Titel', fr: 'Titre', pt: 'Título' },
+  'Department': { en: 'Department', es: 'Departamento', de: 'Kategorie', da: 'Kategori', sv: 'Kategori', nl: 'Categorie', fr: 'Catégorie', pt: 'Departamento' },
+  'Price (€)': { en: 'Price (€)', es: 'Precio (€)', de: 'Preis (€)', da: 'Pris (€)', sv: 'Pris (€)', nl: 'Prijs (€)', fr: 'Prix (€)', pt: 'Preço (€)' },
+  'Quantity available': { en: 'Quantity available', es: 'Cantidad disponible', de: 'Verfügbare Menge', da: 'Antal tilgængeligt', sv: 'Tillgängligt antal', nl: 'Beschikbare hoeveelheid', fr: 'Quantité disponible', pt: 'Quantidade disponível' },
+  'This item is free / give-away': { en: 'This item is free / give-away', es: 'Este artículo es gratis / regalo', de: 'Dieser Artikel ist kostenlos / Verschenken', da: 'Denne vare er gratis / foræres væk', sv: 'Denna vara är gratis / skänkes', nl: 'Dit item is gratis / weggeefactie', fr: 'Cet article est gratuit / à donner', pt: 'Este artigo é grátis / oferta' },
+  'Add photos': { en: 'Add photos', es: 'Añadir fotos', de: 'Fotos hinzufügen', da: 'Tilføj billeder', sv: 'Lägg till bilder', nl: 'Foto\'s toevoegen', fr: 'Ajouter des photos', pt: 'Adicionar fotos' },
+  'Item details': { en: 'Item details', es: 'Detalles del artículo', de: 'Artikeldetails', da: 'Varedetaljer', sv: 'Varuuppgifter', nl: 'Itemdetails', fr: 'Détails de l\'article', pt: 'Detalhes do artigo' },
+  'Price & options': { en: 'Price & options', es: 'Precio y opciones', de: 'Preis & Optionen', da: 'Pris & valg', sv: 'Pris & alternativ', nl: 'Prijs & opties', fr: 'Prix et options', pt: 'Preço e opções' },
+  'Preview': { en: 'Preview', es: 'Vista previa', de: 'Vorschau', da: 'Forhåndsvisning', sv: 'Förhandsvisning', nl: 'Voorbeeld', fr: 'Aperçu', pt: 'Pré-visualização' },
+  'Continue': { en: 'Continue', es: 'Continuar', de: 'Weiter', da: 'Fortsæt', sv: 'Fortsätt', nl: 'Doorgaan', fr: 'Continuer', pt: 'Continuar' },
+  'Publish Listing': { en: 'Publish Listing', es: 'Publicar anuncio', de: 'Anzeige veröffentlichen', da: 'Udgiv annonce', sv: 'Publicera annons', nl: 'Advertentie plaatsen', fr: 'Publier l\'annonce', pt: 'Publicar anúncio' },
 }
 
 let _lang: Lang = 'en'

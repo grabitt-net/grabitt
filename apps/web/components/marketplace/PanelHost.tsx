@@ -2892,7 +2892,7 @@ function PanelBody() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 0', flexShrink: 0 }}>
             <div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>
-                {step === 'photos' ? '📷 Add photos' : step === 'details' ? '📝 Item details' : step === 'price' ? '💰 Price & options' : '👁 Preview'}
+                {step === 'photos' ? `📷 ${t('Add photos')}` : step === 'details' ? `📝 ${t('Item details')}` : step === 'price' ? `💰 ${t('Price & options')}` : `👁 ${t('Preview')}`}
               </div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 1 }}>
                 Step {Math.max(stepIdx + 1, 1)} of {STEPS.length}
@@ -2942,13 +2942,13 @@ function PanelBody() {
             {step === 'details' && (
               <>
                 <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Title *</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Title')} *</div>
                   <input value={title} onChange={e => setTitle(e.target.value)} placeholder='e.g. "iPhone 14 Pro — Unlocked, 256GB"' style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa', marginTop: 3 }}>{title.length}/80</div>
                 </div>
 
                 <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Department *</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Department')} *</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {DEPTS.map(d => (
                       <button key={d} onClick={() => setDept(d)} style={{ background: dept === d ? 'var(--orange)' : '#f5f0e8', color: dept === d ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{d}</button>
@@ -2957,7 +2957,7 @@ function PanelBody() {
                 </div>
 
                 <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Condition *</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Condition')} *</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {CONDITIONS.map(c => (
                       <button key={c} onClick={() => setCondition(c)} style={{ background: condition === c ? 'var(--sage)' : '#f5f0e8', color: condition === c ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{c}</button>
@@ -2971,7 +2971,7 @@ function PanelBody() {
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Location</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Location')}</div>
                   <select value={town} onChange={e => setTown(e.target.value)} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
                     {TOWNS.map(t => <option key={t}>{t}</option>)}
                   </select>
@@ -2983,7 +2983,7 @@ function PanelBody() {
             {step === 'price' && (
               <>
                 <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Price (€) *</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Price (€)')} *</div>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 20, color: freeItem ? '#ccc' : '#888' }}>€</span>
                     <input type="number" value={price} onChange={e => setPrice(e.target.value)} disabled={freeItem} placeholder="0.00" min="0" step="0.01"
@@ -2993,13 +2993,13 @@ function PanelBody() {
                     <div style={{ width: 20, height: 20, borderRadius: 4, border: `2px solid ${freeItem ? 'var(--sage)' : '#ccc'}`, background: freeItem ? 'var(--sage)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {freeItem && <span style={{ color: '#fff', fontSize: 11, fontWeight: 900 }}>✓</span>}
                     </div>
-                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>This item is free / give-away</span>
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>{t('This item is free / give-away')}</span>
                   </div>
                 </div>
 
                 {/* Quantity / stock — how many units are for sale */}
                 <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Quantity available</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Quantity available')}</div>
                   <input type="number" value={stock} onChange={e => setStock(e.target.value)} min="1" max="999" step="1"
                     style={{ width: 120, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '12px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#9a8b74', marginTop: 4 }}>Buyers can purchase multiple units until stock runs out.</div>
@@ -3191,7 +3191,7 @@ function PanelBody() {
                 disabled={uploading}
                 style={{ flex: 2, background: uploading ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: uploading ? 'not-allowed' : 'pointer' }}
               >
-                {uploading ? '⏳ Publishing…' : '🚀 Publish Listing'}
+                {uploading ? '⏳ Publishing…' : `🚀 ${t('Publish Listing')}`}
               </button>
             ) : (
               <button
@@ -3206,7 +3206,7 @@ function PanelBody() {
                 }
                 style={{ flex: 2, background: (step === 'details' && (!title.trim() || !dept || !condition)) || (step === 'price' && !freeItem && !price) ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
               >
-                {step === 'photos' ? (photos.length > 0 ? `Continue with ${photos.length} photo${photos.length > 1 ? 's' : ''} →` : 'Skip photos →') : 'Continue →'}
+                {step === 'photos' ? (photos.length > 0 ? `${t('Continue')} · ${photos.length} 📷 →` : `${t('Add photos')} →`) : `${t('Continue')} →`}
               </button>
             )}
           </div>
