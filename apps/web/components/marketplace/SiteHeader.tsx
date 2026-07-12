@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Logo from './Logo'
+import { t } from '@/lib/i18n'
 
 // Consistent site header for standalone pages (jobs, property, listing detail,
 // forms). The homepage uses the richer Topbar (search + panels); this gives the
@@ -39,7 +40,7 @@ export default function SiteHeader() {
                   color: active ? '#fff' : '#6b5d49',
                 }}
               >
-                {label}
+                {t(label)}
               </Link>
             )
           })}
