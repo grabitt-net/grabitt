@@ -93,7 +93,7 @@ export default function CategoryPage() {
         </select>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, padding: '0 12px' }}>
+      <div className="category-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, padding: '0 12px' }}>
         {filtered.map(l => {
           const img = Array.isArray(l.images) ? l.images[0] : null
           return (

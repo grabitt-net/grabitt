@@ -95,7 +95,7 @@ export default function PropertyPage() {
         {loading ? 'Searching…' : `${rows.length} propert${rows.length === 1 ? 'y' : 'ies'}`}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12, padding: '0 12px' }}>
+      <div className="category-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, padding: '0 12px' }}>
         {rows.map(p => {
           const l = p.listing ?? {}
           const isRent = p.type === 'rent'
@@ -103,22 +103,20 @@ export default function PropertyPage() {
           return (
             <Link key={p.id} href={`/listings/${l.id}`} style={{ textDecoration: 'none' }}>
               <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #ece3d7', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                <div style={{ height: 150, background: 'var(--sand)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 46 }}>
+                <div style={{ width: '100%', paddingTop: '72%', background: 'var(--sand)', position: 'relative' }}>
                   {Array.isArray(l.images) && l.images[0]
                     ? <img src={l.images[0]} alt={l.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : '🏠'}
-                  {tag && <span style={{ position: 'absolute', top: 10, right: 10, background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, padding: '3px 10px', borderRadius: 50 }}>{tag}</span>}
+                    : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>🏠</div>}
+                  {tag && <span style={{ position: 'absolute', top: 8, right: 8, background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50 }}>{tag}</span>}
                 </div>
-                <div style={{ padding: 12 }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{l.title}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888', marginTop: 1 }}>📍 {l.location ?? 'Gran Canaria'}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-                    <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--orange)' }}>€{Number(l.price ?? 0).toLocaleString()}{isRent ? '/mo' : ''}</span>
-                    <span style={{ display: 'flex', gap: 8, fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>
-                      {p.bedrooms > 0 && <span>🛏 {p.bedrooms}</span>}
-                      {p.bathrooms > 0 && <span>🚿 {p.bathrooms}</span>}
-                      {p.m2 && <span>📐 {Number(p.m2)}m²</span>}
-                    </span>
+                <div style={{ padding: '10px 11px 12px' }}>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>€{Number(l.price ?? 0).toLocaleString()}{isRent ? '/mo' : ''}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a8b74', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>📍 {l.location ?? 'Gran Canaria'}</div>
+                  <div style={{ display: 'flex', gap: 8, fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a8b74', marginTop: 2 }}>
+                    {p.bedrooms > 0 && <span>🛏 {p.bedrooms}</span>}
+                    {p.bathrooms > 0 && <span>🚿 {p.bathrooms}</span>}
+                    {p.m2 && <span>📐 {Number(p.m2)}m²</span>}
                   </div>
                 </div>
               </div>
