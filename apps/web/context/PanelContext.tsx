@@ -31,10 +31,24 @@ const PanelContext = createContext<PanelContextValue>({
   closePanel: () => {},
 })
 
+// Panels that require an authenticated user. Selling/creating a listing must
+// never be reachable while logged out — attempting it redirects to the login
+// panel, which resumes the original action once the user is signed in.
+const AUTH_REQUIRED: ReadonlySet<PanelId> = new Set(['sell', 'createListing'])
+
+function isLoggedIn() {
+  return typeof window !== 'undefined' && !!localStorage.getItem('grabitt_uid')
+}
+
 export function PanelProvider({ children }: { children: ReactNode }) {
   const [panel, setPanel] = useState<PanelState>({ id: null })
 
   const openPanel = useCallback((id: PanelId, data?: Record<string, unknown>) => {
+    if (AUTH_REQUIRED.has(id) && !isLoggedIn()) {
+      // Force login/registration first, remembering where they were headed.
+      setPanel({ id: 'login', data: { next: id, nextData: data } })
+      return
+    }
     setPanel({ id, data })
   }, [])
 

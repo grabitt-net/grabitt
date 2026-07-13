@@ -411,16 +411,23 @@ function PanelBody() {
     const btnGhost: React.CSSProperties = { width: '100%', background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }
     const link: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--orange)', cursor: 'pointer', textDecoration: 'underline', background: 'none', border: 'none', padding: 0 }
 
-    if (authStep === 'done') return (
-      <ActionPanel title="✅ Welcome!" onClose={closePanel}>
-        <div style={{ textAlign: 'center', padding: '30px 0' }}>
-          <div style={{ fontSize: 60, marginBottom: 14 }}>🌴</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>You're in!</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>{t("Welcome back to Gran Canaria's marketplace.")}</div>
-          <button onClick={closePanel} style={btnPrimary}>Start browsing →</button>
-        </div>
-      </ActionPanel>
-    )
+    if (authStep === 'done') {
+      // If login was triggered by a gated action (e.g. Sell), resume it now.
+      const nextPanel = panel.data?.next as PanelId | undefined
+      const nextData = panel.data?.nextData as Record<string, unknown> | undefined
+      return (
+        <ActionPanel title="✅ Welcome!" onClose={closePanel}>
+          <div style={{ textAlign: 'center', padding: '30px 0' }}>
+            <div style={{ fontSize: 60, marginBottom: 14 }}>🌴</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>You're in!</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>{t("Welcome back to Gran Canaria's marketplace.")}</div>
+            {nextPanel
+              ? <button onClick={() => openPanel(nextPanel, nextData)} style={btnPrimary}>Continue →</button>
+              : <button onClick={closePanel} style={btnPrimary}>Start browsing →</button>}
+          </div>
+        </ActionPanel>
+      )
+    }
 
     if (authStep === 'verify') return (
       <ActionPanel title="📧 Check your email" onClose={closePanel}>
