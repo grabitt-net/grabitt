@@ -1,42 +1,15 @@
 'use client'
-import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import Icon from './Icon'
-import { t } from '@/lib/i18n'
 
+// The Grabitt Now promo banner. The quick-actions pills that used to live here
+// are now the persistent <QuickActions/> bar rendered as page chrome.
 export default function Hero() {
   const { openPanel } = usePanel()
-  const router = useRouter()
-
-  const quickActions = [
-    { label: 'Sponsorship', action: () => openPanel('advertise') },
-    { label: 'Find Work', action: () => router.push('/jobs') },
-    { label: 'Find Home', action: () => router.push('/property') },
-    { label: 'Employers', action: () => openPanel('employers') },
-    { label: 'Business', action: () => openPanel('business') },
-  ]
 
   return (
-    <section style={{ padding: '12px 14px 4px' }} className="hero">
+    <section style={{ padding: '8px 14px 4px' }} className="hero">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingBottom: 2 }}>
-          {quickActions.map(a => (
-            <button
-              key={a.label}
-              onClick={a.action}
-              style={{
-                flex: '1 1 auto', background: '#fff', color: '#3a3226',
-                border: '1px solid #e5dccd', borderRadius: 50,
-                padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 13,
-                fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
-                textAlign: 'center',
-              }}
-            >
-              {t(a.label)}
-            </button>
-          ))}
-        </div>
-
         <button
           onClick={() => openPanel('grabit')}
           style={{

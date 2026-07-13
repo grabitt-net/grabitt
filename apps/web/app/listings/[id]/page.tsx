@@ -11,6 +11,7 @@ import { PRICES } from '@grabitt/design-tokens'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import MessageButton from '@/components/marketplace/MessageButton'
 import SiteHeader from '@/components/marketplace/SiteHeader'
+import QuickActions from '@/components/marketplace/QuickActions'
 import ShareSheet from '@/components/marketplace/ShareSheet'
 import PanelHost from '@/components/marketplace/PanelHost'
 
@@ -133,6 +134,7 @@ function ListingInner() {
         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', flex: 1 }}>{DEPT_LABEL[listing.department] ?? 'Listing'}</span>
         <button onClick={() => setShowShare(true)} aria-label="Share this listing" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--sand2)', borderRadius: 50, padding: '7px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--orange)', cursor: 'pointer' }}>📤 {t('Share')}</button>
       </header>
+      <QuickActions />
 
       <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 720, margin: '0 auto' }}>
         {/* Hero: image + vertical action rail */}

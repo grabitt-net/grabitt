@@ -1,5 +1,6 @@
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
+import QuickActions from '@/components/marketplace/QuickActions'
 import HomeSections from '@/components/marketplace/HomeSections'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
@@ -13,6 +14,7 @@ export default function HomePage() {
     <PanelProvider>
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
         <Topbar />
+        <QuickActions />
         <HomeSections />
         <Footer />
         <CartFab />
