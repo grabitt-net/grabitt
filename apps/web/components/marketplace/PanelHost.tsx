@@ -15,6 +15,7 @@ import { pushView } from '@/lib/recentViews'
 import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
 import StripePayment from './StripePayment'
 import ShareSheet from './ShareSheet'
+import FooterPanelActions from './FooterPanelActions'
 import { toPanelItem, DEPT_ENUM, type DbListing } from '@/lib/listingMap'
 
 // Protected tRPC calls must use our CONSUMER app JWT (verified with JWT_SECRET),
@@ -193,7 +194,7 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
      ['What if something goes wrong?', "Open a dispute from the transaction or the Disputes link. Don't confirm receipt until you're happy — that's what keeps your money protected."],
      ['How do I stay safe?', 'Meet in public, inspect before confirming, keep chat on Grabitt, and tap the safety shield any time for tips or to report a problem.']
     ].map(([q, a]) => `<details style="border:1px solid #eee;border-radius:12px;padding:0;margin-bottom:8px;overflow:hidden;"><summary style="padding:12px 14px;font-family:Nunito,sans-serif;font-size:12px;font-weight:800;color:#1a1a1a;cursor:pointer;">${q}</summary><div style="padding:0 14px 12px;font-family:Comfortaa,sans-serif;font-size:11px;color:#555;line-height:1.55;">${a}</div></details>`).join('') +
-    '<div style="margin-top:14px;font-family:Comfortaa,sans-serif;font-size:11px;color:#777;line-height:1.5;">Still stuck? Email <strong>hello@grabitt.es</strong> and our team will help.</div>' },
+    '<div style="margin-top:14px;font-family:Comfortaa,sans-serif;font-size:11px;color:#777;line-height:1.5;">Still stuck? Tap <b>Ask Us</b> below and our team will help.</div>' },
   pricing: { title: '💷 Pricing', body:
     _banner('linear-gradient(135deg,#1a1a1a,#3a3a3a)', 'Browsing & buying are free 🎉', 'You only pay when you sell, promote, or advertise. No subscriptions to browse.') +
     _head('Selling items', '#FF4500') +
@@ -212,7 +213,7 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
     _head('Extras', '#888') +
     _priceCard('🤝', 'Grabitt Assist', '€99–299', 'We photograph & sell on your behalf.') +
     _priceCard('🎁', 'Credits', 'FREE', 'Earn by inviting, selling & sharing. Spend on unlocks.') +
-    '<div style="background:linear-gradient(135deg,#16a34a,#22c55e);border-radius:14px;padding:14px 16px;margin-top:16px;"><div style="font-family:Nunito,sans-serif;font-size:13px;font-weight:900;color:#fff;margin-bottom:3px;">❤️ Charities & new small businesses</div><div style="font-size:11px;color:rgba(255,255,255,0.9);font-family:Comfortaa,sans-serif;line-height:1.5;">We help good causes & startups find their feet — apply for <strong>free listings, up to 10 items a month, no fees at all</strong>. Email <strong>hello@grabitt.es</strong> to apply.</div></div>' },
+    '<div style="background:linear-gradient(135deg,#16a34a,#22c55e);border-radius:14px;padding:14px 16px;margin-top:16px;"><div style="font-family:Nunito,sans-serif;font-size:13px;font-weight:900;color:#fff;margin-bottom:3px;">❤️ Charities & new small businesses</div><div style="font-size:11px;color:rgba(255,255,255,0.9);font-family:Comfortaa,sans-serif;line-height:1.5;">We help good causes & startups find their feet — apply for <strong>free listings, up to 10 items a month, no fees at all</strong>.</div></div>' },
   collection: { title: '🚚 Collection & Delivery', body:
     _para('Grabitt is local-first, so most items are handed over in person across the Canary Islands. You and the other person agree how to swap the item and the cash (or release the held payment) — here are your options and how to stay safe.') +
     _head('Ways to receive your item', '#FF4500') +
@@ -288,8 +289,7 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
       '</div>'
   })() },
   suggest: { title: '💡 Suggest a Feature', body:
-    _para('Got an idea to make Grabitt better? We read every suggestion.') +
-    '<div style="background:#FFF3EE;border-radius:12px;padding:14px;font-family:Comfortaa,sans-serif;font-size:12px;color:#7a4419;line-height:1.6;">Email your idea to <strong>hello@grabitt.es</strong> or message our team from your dashboard. Good suggestions can earn free credits!</div>' },
+    _para('Got an idea to make Grabitt better? We read every suggestion — good ones can earn free credits!') },
 }
 
 interface ActionPanelProps {
@@ -1138,6 +1138,7 @@ function PanelBody() {
     return (
       <ActionPanel title={content.title} onClose={closePanel}>
         <div dangerouslySetInnerHTML={{ __html: content.body }} />
+        <FooterPanelActions panelKey={key} onOpen={openPanel} />
       </ActionPanel>
     )
   }
