@@ -24,11 +24,12 @@ export default function DesktopNav() {
 
   const search = () => { if (query.trim()) openPanel('search', { q: query.trim() }) }
 
-  const actions: { icon: IconName; label: string; panel: PanelId; badge?: number }[] = [
+  const actions: { icon: IconName; label: string; panel: PanelId; badge?: number; emoji?: string }[] = [
     { icon: 'bell', label: 'Alerts', panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
     { icon: 'heart', label: 'Saved', panel: 'favourites' },
     { icon: 'message', label: 'Messages', panel: 'messages' },
     { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
+    { icon: 'lifebuoy', label: 'Help', panel: 'help', emoji: '🆘' },
   ]
   // labels above are translation keys; rendered via t() below
 
@@ -63,7 +64,7 @@ export default function DesktopNav() {
         {actions.map(a => (
           <button key={a.label} onClick={() => a.panel === 'profile' ? router.push('/account') : openPanel(a.panel)} title={a.label}
             style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 8px', color: 'var(--dark)' }}>
-            <Icon name={a.icon} size={21} />
+            {a.emoji ? <span style={{ fontSize: 20, lineHeight: 1.05 }}>{a.emoji}</span> : <Icon name={a.icon} size={21} />}
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#7a6a55' }}>{t(a.label)}</span>
             {a.badge !== undefined && (
               <span style={{ position: 'absolute', top: 0, right: 2, background: 'var(--orange)', color: '#fff', fontSize: 8, fontWeight: 900, minWidth: 14, height: 14, borderRadius: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
