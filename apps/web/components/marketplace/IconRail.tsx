@@ -20,13 +20,13 @@ export default function IconRail() {
   const { unreadCount } = useNotifications(userId)
   const loggedIn = !!userId
 
-  const items: { icon: IconName; label: string; panel: PanelId; badge?: number; highlight?: boolean; emoji?: string }[] = [
+  const items: { icon: IconName; label: string; panel: PanelId; badge?: number; highlight?: boolean }[] = [
     { icon: 'bell',    label: 'Alerts',   panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
     { icon: 'heart',   label: 'Saved',    panel: 'favourites' },
     { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
     { icon: 'message', label: 'Messages', panel: 'messages' },
     { icon: 'package', label: 'Sell',     panel: 'sell', highlight: true },
-    { icon: 'lifebuoy', label: 'Help',    panel: 'help', emoji: '🆘' },
+    { icon: 'lifebuoy', label: 'Help',    panel: 'help' },
   ]
 
   return (
@@ -41,7 +41,7 @@ export default function IconRail() {
             <span style={item.highlight
               ? { lineHeight: 1, color: '#fff', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(255,69,0,0.35)', marginTop: -4 }
               : { lineHeight: 1, color: 'var(--dark)' }}>
-              {item.emoji ? <span style={{ fontSize: 18, lineHeight: 1 }}>{item.emoji}</span> : <Icon name={item.icon} size={item.highlight ? 18 : 20} />}
+              <Icon name={item.icon} size={item.highlight ? 18 : 20} />
             </span>
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 8, fontWeight: item.highlight ? 900 : 800, color: item.highlight ? 'var(--orange)' : '#7a6a55', lineHeight: 1.05, textAlign: 'center', whiteSpace: 'nowrap' }}>
               {t(item.label)}
