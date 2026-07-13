@@ -126,18 +126,170 @@ const SHIELD_CONTENT: Record<string, string> = {
   </div>`,
 }
 
+// Footer info panels — content mirrors the v20 prototype (footerPanelContent),
+// rendered as static HTML in the app's panel layout. Interactive JS buttons from
+// the prototype are represented as informational text here.
+const _card = (emoji: string, title: string, body: string, border = '#eee', iconBg = '#f7f7f7') =>
+  `<div style="display:flex;gap:11px;align-items:flex-start;background:#fff;border:1px solid ${border};${border !== '#eee' ? `border-left:3px solid ${border};` : ''}border-radius:12px;padding:11px 12px;margin-bottom:8px;box-shadow:0 1px 5px rgba(0,0,0,0.04);"><div style="width:34px;height:34px;border-radius:9px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${emoji}</div><div style="flex:1;min-width:0;"><div style="font-family:Nunito,sans-serif;font-size:12px;font-weight:900;color:#1a1a1a;">${title}</div><div style="font-size:11px;color:#555;font-family:Comfortaa,sans-serif;line-height:1.5;margin-top:2px;">${body}</div></div></div>`
+const _head = (label: string, color: string) =>
+  `<div style="display:flex;align-items:center;gap:7px;margin:16px 0 8px;"><div style="width:7px;height:7px;border-radius:50%;background:${color};"></div><div style="font-family:Nunito,sans-serif;font-size:11px;font-weight:900;color:${color};text-transform:uppercase;letter-spacing:0.5px;">${label}</div><div style="flex:1;height:1px;background:${color}22;"></div></div>`
+const _banner = (grad: string, title: string, sub: string) =>
+  `<div style="background:${grad};border-radius:14px;padding:14px 16px;margin-bottom:12px;"><div style="font-family:Nunito,sans-serif;font-size:15px;font-weight:900;color:#fff;">${title}</div><div style="font-size:11px;color:rgba(255,255,255,0.9);font-family:Comfortaa,sans-serif;line-height:1.5;margin-top:3px;">${sub}</div></div>`
+const _tick = (text: string, color = '#FF4500', bold = false) =>
+  `<div style="display:flex;gap:9px;align-items:${bold ? 'center' : 'flex-start'};margin-bottom:8px;"><span style="color:${color};font-size:16px;font-weight:900;line-height:1;flex-shrink:0;">&#10003;</span><span style="font-family:${bold ? 'Nunito' : 'Comfortaa'},sans-serif;font-size:11px;${bold ? 'font-weight:800;color:#1a1a1a;' : 'color:#333;'}line-height:1.4;">${text}</span></div>`
+const _priceCard = (emoji: string, name: string, price: string, desc: string, accent = '#FF4500') =>
+  `<div style="display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:11px 12px;margin-bottom:7px;box-shadow:0 1px 5px rgba(0,0,0,0.04);"><div style="width:38px;height:38px;border-radius:10px;background:${accent}14;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${emoji}</div><div style="flex:1;min-width:0;"><div style="font-family:Nunito,sans-serif;font-size:13px;font-weight:900;color:#1a1a1a;">${name}</div><div style="font-size:11px;color:#555;font-family:Comfortaa,sans-serif;line-height:1.35;margin-top:1px;">${desc}</div></div><div style="font-family:Nunito,sans-serif;font-size:13px;font-weight:900;color:${accent};text-align:right;white-space:nowrap;flex-shrink:0;">${price}</div></div>`
+const _para = (text: string) => `<p style="font-size:12px;color:#444;font-family:Comfortaa,sans-serif;line-height:1.65;margin:0 0 10px;">${text}</p>`
+
 const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
-  about: { title: 'ℹ️ About Us', body: '<p style="font-family:Nunito,sans-serif;font-size:13px;color:#555;line-height:1.7;">Grabitt is Gran Canaria\'s own buy-and-sell marketplace, built to keep money in the local community. We launched in 2026 with a simple mission: make it easy for islanders and expats to trade safely, locally, and fairly.</p><p style="font-family:Nunito,sans-serif;font-size:13px;color:#555;line-height:1.7;margin-top:10px;">Whether you\'re selling a surfboard, looking for work, or renting a room — Grabitt is your platform.</p>' },
-  why: { title: '⭐ Why Us?', body: '<div style="font-family:Nunito,sans-serif;font-size:13px;color:#555;line-height:1.7;">' + ['🔒 Stripe escrow — your money is safe until handover','📍 100% local — every listing is on Gran Canaria','👤 Verified members — know who you\'re buying from','💶 Fair fees — from 2.5% for Pro members','🆘 Local support team — we pick up the phone','🌍 6 languages — EN, ES, DE, DA, SV & more coming'].map(t => `<div style="padding:8px 0;border-bottom:1px solid #f5f5f5;">${t}</div>`).join('') + '</div>' },
-  contact: { title: '✉️ Contact Us', body: '<div style="font-family:Nunito,sans-serif;font-size:13px;color:#555;line-height:1.7;"><div style="margin-bottom:12px;">📧 <strong>hello@grabitt.net</strong></div><div style="margin-bottom:12px;">🛡️ Safety issues: <strong>safety@grabitt.net</strong></div><div style="margin-bottom:12px;">📍 Gran Canaria, Canary Islands, Spain</div><div>We aim to respond within 24 hours Mon–Fri.</div></div>' },
-  help: { title: '💬 Help Centre', body: '<div style="font-family:Nunito,sans-serif;font-size:13px;color:#555;line-height:1.7;">' + ['How do I list an item?','How does Stripe payment work?','What are the seller fees?','How do I verify my account?','What if there\'s a dispute?','How do I cancel or refund?'].map((q, i) => `<div style="padding:10px 0;border-bottom:1px solid #f5f5f5;cursor:pointer;"><strong>${q}</strong> <span style="color:#FF4500;float:right;">›</span></div>`).join('') + '</div>' },
-  terms: { title: '📄 Terms & Conditions', body: '<p style="font-family:Nunito,sans-serif;font-size:13px;color:#555;line-height:1.7;">By using Grabitt you agree to our Terms of Service. Key points: all payments via Stripe; no illegal items; no off-platform payments; Grabitt holds 8–2.5% fee depending on member grade. Full terms at grabitt.net/terms.</p>' },
-  pricing: { title: '🏷️ Pricing', body: '<div style="font-family:Nunito,sans-serif;font-size:13px;color:#555;">' + [['🟠 Grabber','8%','0–10 sales'],['🟡 Dealer','6%','11–50 sales'],['🔵 Trader','4%','51–200 sales'],['⭐ Pro','2.5%','201+ sales']].map(([g, f, r]) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5;"><div><strong>${g}</strong><div style="font-size:11px;color:#888;">${r}</div></div><div style="font-weight:900;color:#FF4500;font-size:16px;">${f}</div></div>`).join('') + '</div>' },
-  collection: { title: '🚚 Delivery & Collection', body: '<p style="font-family:Nunito,sans-serif;font-size:13px;color:#555;line-height:1.7;">Most items on Grabitt are collected in person on Gran Canaria. Agree a safe public meeting point with your buyer/seller via Grabitt chat. Some sellers offer local delivery — check the listing details. Grabitt does not currently manage shipping or couriers.</p>' },
-  scams: { title: '🛡️ Scam Centre', body: '<p style="font-family:Nunito,sans-serif;font-size:13px;color:#555;line-height:1.7;">Never pay outside Grabitt. If you receive suspicious messages, report them immediately via the 🚨 Report button. See our Safety Shield (🆘 Help) for detailed scam patterns and how to avoid them.</p>' },
-  economic: { title: '🪙 Economic Living', body: '<p style="font-family:Nunito,sans-serif;font-size:13px;color:#555;line-height:1.7;">Grabitt believes in making island life more affordable. Buy second-hand to save money, sell what you no longer need, and keep goods in circulation. Every purchase local keeps the island economy strong.</p>' },
-  policy: { title: "✅ Dos & Don'ts", body: '<div style="font-family:Nunito,sans-serif;font-size:13px;color:#555;">' + [['✅ DO','Use Grabitt chat','Meet in public','Rate every transaction','Report scams immediately'],['❌ DON\'T','Pay outside Grabitt','Share bank details','Meet strangers at home','Ignore a gut feeling']].map(([label, ...items]) => `<div style="margin-bottom:14px;"><strong style="color:${label.startsWith('✅') ? '#16a34a' : '#ef4444'};">${label}</strong>${items.map(i => `<div style="padding:4px 0;">${label.startsWith('✅') ? '• ' : '• '}${i}</div>`).join('')}</div>`).join('') + '</div>' },
-  suggest: { title: '💡 Suggest an Idea', body: '<p style="font-family:Nunito,sans-serif;font-size:13px;color:#555;line-height:1.7;">We love feedback! Tell us what features you\'d like to see on Grabitt. Email us at <strong>ideas@grabitt.net</strong> or drop us a message on Instagram @grabittgc.</p>' },
+  about: { title: 'ℹ️ About Grabitt', body:
+    _para("Grabitt is the Canary Islands' first, dedicated, all-in-one marketplace connecting you with your target audience. It brings buyers, sellers, employers, jobseekers, businesses and charities all under one roof to significantly speed up getting what you want and helping each other.") +
+    _para('Based on Gran Canaria, we are constantly expanding and improving Grabitt — feel free to hit us up with ideas to earn free credits!') +
+    '<div style="margin-top:14px;display:flex;flex-direction:column;gap:9px;">' +
+    ["Looking for a job or staff? We've got you covered. Search jobs, list jobs, apply and manage applications — it's easy!",
+     "A structured, easy way to see what's for sale, who's selling, fast-ending offers, online stores — and convert your treasures into cash!",
+     'A genuine focus on community building and safety. Grabitt is a safe haven from fakes, scams, fraud and personal-safety risks.',
+     'A dedicated scam centre to help you avoid scams out there — not just online-marketplace ones.',
+     'Guides on how to save money and stay thrifty!',
+     'Best-practice guide for listing your items for sale.',
+     "No time to write it? We'll write your listing for €4.99.",
+     'Selling more than one? Offer multi-buy deals & discounts.',
+     "A wish-list service for when you can't find what you want.",
+     'A donate-to-charity portal with a list of charities to contact.'
+    ].map(txt => `<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:#FF4500;font-size:15px;font-weight:900;line-height:1.2;flex-shrink:0;">&#10003;</span><span style="font-family:Comfortaa,sans-serif;font-size:11px;color:#333;line-height:1.5;">${txt}</span></div>`).join('') +
+    '</div>' },
+  why: { title: '⭐ Why Grabitt?', body:
+    [['#16a34a','The Grabitt Guarantee — every purchase protected'],['#FF4500','Major safety shield'],['#FF4500','Find Jobs & Staff'],['#FF4500','Grab bargains & ending-soon deals'],['#FF4500','Convert old items to cash'],['#FF4500','Significant charity assist'],['#FF4500','Earn credits'],['#FF4500','Business services'],['#FF4500','Web & Marketing services'],['#FF4500','Home help for households'],['#FF4500','Rent, sell or find property & accommodation'],['#FF4500','Two-way ratings — buyers & sellers rate each other'],['#FF4500','Price-drop & saved-search alerts'],['#FF4500','See what items really sold for'],['#FF4500','Storage & removals']].map(([c, txt]) => _tick(txt, c, true)).join('') +
+    '<div style="margin-top:12px;font-family:Comfortaa,sans-serif;font-size:10px;color:#777;font-style:italic;">There\'s so much more — always message us with ideas for improvements.</div>' },
+  contact: { title: '✉️ Contact Us', body:
+    _card('📧', 'Email', 'hello@grabitt.es') +
+    _card('💬', 'In-app chat', 'Message our team any time from your dashboard.') +
+    _card('📍', 'Based in', 'Gran Canaria, Canary Islands') },
+  terms: { title: '📄 Terms of Service', body: (() => {
+    const sec = (t: string, b: string) => `<div style="font-family:Nunito,sans-serif;font-size:12px;font-weight:900;color:#FF4500;margin:12px 0 4px;">${t}</div><p style="font-size:11px;color:#555;font-family:Comfortaa,sans-serif;line-height:1.55;margin:0;">${b}</p>`
+    return '<p style="font-size:11px;color:#555;font-family:Comfortaa,sans-serif;line-height:1.55;margin:0 0 6px;">Last updated: June 2026. By using Grabitt you agree to these Terms.</p>' +
+      sec('1. About Grabitt', 'Grabitt is a local-first marketplace connecting buyers and sellers in Gran Canaria and the wider Canary Islands. We provide the technology that lets members list, discover, buy and sell. Except where stated, Grabitt is not the buyer or seller — we act as an intermediary.') +
+      sec('2. Accounts', 'You must be 18 or older to transact. Keep your details accurate and your login secure. You are responsible for activity under your account. We may suspend accounts that breach these Terms or appear fraudulent.') +
+      sec('3. Selling', 'As a Seller you confirm you have the right to sell the item, that it is accurately described, and that your prices and offer terms are honoured. You must not list prohibited items and must complete sales in good faith.') +
+      sec('4. Buying & Offers', 'When an offer is accepted you contract directly with the Seller, not Grabitt. You agree to pay the agreed price and collect or receive the item as arranged. Accepted offers, including auto-accepted ones, are binding.') +
+      sec('5. Prohibited Items', 'No illegal, stolen or counterfeit goods, weapons, drugs, IP-infringing items, or adult content. Do not harass members, post misleading content, or move transactions off-platform to avoid protections.') +
+      sec('6. Payments', 'Payments are processed by our third-party provider. Where Grabitt holds funds, they are released to the Seller once the transaction is confirmed complete. Some services (job listings, featured placements, advertising) carry fees shown before you commit.') +
+      sec('7. Credits & Rewards', 'Credits have no cash value unless stated, cannot be exchanged for cash, and may be subject to verification and expiry. We may withhold or reverse credits obtained through abuse or fraud, and may change the rewards programme at any time.') +
+      sec('8. Safety', 'We provide safety guidance including the Safety Shield, but you are responsible for your own conduct. Keep communications and payments on Grabitt, meet in safe public places, and report anything suspicious. Grabitt is not a party to member-to-member dealings.') +
+      sec('9. Consumer Rights', 'Nothing here removes rights you have under Spanish and EU consumer law that cannot lawfully be excluded. Where a Seller acts as a business selling to a consumer, additional statutory rights may apply.') +
+      sec('10. Liability', 'The Platform is provided "as is". To the extent permitted by law, Grabitt is not liable for member-to-member disputes or indirect losses. Nothing limits liability that cannot lawfully be limited.') +
+      sec('11. Changes', 'We may update these Terms and will take reasonable steps to notify you of material changes. Continued use after changes take effect means you accept them.') +
+      sec('12. Governing Law', 'These Terms are governed by the laws of Spain, without prejudice to mandatory consumer-protection rights in your place of residence.') +
+      sec('Contact', 'Questions? Reach us via the Grabitt app or the contact details on our website.') +
+      '<p style="font-size:10px;color:#666;font-family:Comfortaa,sans-serif;line-height:1.5;margin:12px 0 0;border-top:1px solid #eee;padding-top:8px;">This is a general summary for information only and does not constitute legal advice.</p>'
+  })() },
+  help: { title: '❓ Help Centre', body:
+    '<div style="font-family:Nunito,sans-serif;font-size:12px;font-weight:900;color:#1a1a1a;margin-bottom:10px;">Frequently asked questions</div>' +
+    [['How do I buy something?', "Open a listing, then tap Buy Now or Make Offer. Your payment is held safely until you confirm you've received the item."],
+     ['How do I sell an item?', "Tap Sell, add photos and details, set your price (and an optional auto-accept minimum), then publish. You're paid via Stripe once the buyer confirms collection."],
+     ['When do I get paid?', "Funds are released to you as soon as the buyer confirms they've received the item. Until then the money is held securely."],
+     ['Is my purchase protected?', "Yes — eligible purchases are covered by the Grabitt Guarantee. Payment is only released once you confirm everything's as described."],
+     ['How do collection & delivery work?', 'Most trades are local pickups across the Canary Islands. Arrange a safe, public meeting point in your in-app chat.'],
+     ['What if something goes wrong?', "Open a dispute from the transaction or the Disputes link. Don't confirm receipt until you're happy — that's what keeps your money protected."],
+     ['How do I stay safe?', 'Meet in public, inspect before confirming, keep chat on Grabitt, and tap the safety shield any time for tips or to report a problem.']
+    ].map(([q, a]) => `<details style="border:1px solid #eee;border-radius:12px;padding:0;margin-bottom:8px;overflow:hidden;"><summary style="padding:12px 14px;font-family:Nunito,sans-serif;font-size:12px;font-weight:800;color:#1a1a1a;cursor:pointer;">${q}</summary><div style="padding:0 14px 12px;font-family:Comfortaa,sans-serif;font-size:11px;color:#555;line-height:1.55;">${a}</div></details>`).join('') +
+    '<div style="margin-top:14px;font-family:Comfortaa,sans-serif;font-size:11px;color:#777;line-height:1.5;">Still stuck? Email <strong>hello@grabitt.es</strong> and our team will help.</div>' },
+  pricing: { title: '💷 Pricing', body:
+    _banner('linear-gradient(135deg,#1a1a1a,#3a3a3a)', 'Browsing & buying are free 🎉', 'You only pay when you sell, promote, or advertise. No subscriptions to browse.') +
+    _head('Selling items', '#FF4500') +
+    _priceCard('🆓', 'Free to list', 'FREE', 'Adverts auto-refresh weekly to stay fresh.') +
+    _priceCard('💳', 'Seller fee', '2.5–8%', 'Only on a sale, by grade: 8% → 2.5% as you rise.') +
+    _priceCard('👀', 'Featured listing', '€1.99', '7 days: top of search + homepage + highlighted.') +
+    _head('Jobs & trades', '#2193b0') +
+    _priceCard('💼', 'Post a job', '€29', 'One listing (€245 for 10). Applying is free.', '#2193b0') +
+    _priceCard('🛠️', 'Advertise a service', '€29/mo', 'Or €79/quarter. For local tradespeople.', '#00b09b') +
+    _priceCard('🔓', 'Handy Help lead', '5 credits', "Unlock a customer's help request.", '#00b09b') +
+    _head('Advertise your business', '#8b5cf6') +
+    _priceCard('🖼️', 'Page banners', '€39/mo', 'Across Grabitt pages, with click stats.', '#8b5cf6') +
+    _priceCard('📧', 'E-shots', '€129', 'Per campaign, with open & click stats.', '#8b5cf6') +
+    _priceCard('💬', 'WhatsApp blasts', '€129', 'Per blast, with interaction data.', '#8b5cf6') +
+    _priceCard('📒', 'Business directory', '€99/yr', 'Year-round listing, with click stats.', '#8b5cf6') +
+    _head('Extras', '#888') +
+    _priceCard('🤝', 'Grabitt Assist', '€99–299', 'We photograph & sell on your behalf.') +
+    _priceCard('🎁', 'Credits', 'FREE', 'Earn by inviting, selling & sharing. Spend on unlocks.') +
+    '<div style="background:linear-gradient(135deg,#16a34a,#22c55e);border-radius:14px;padding:14px 16px;margin-top:16px;"><div style="font-family:Nunito,sans-serif;font-size:13px;font-weight:900;color:#fff;margin-bottom:3px;">❤️ Charities & new small businesses</div><div style="font-size:11px;color:rgba(255,255,255,0.9);font-family:Comfortaa,sans-serif;line-height:1.5;">We help good causes & startups find their feet — apply for <strong>free listings, up to 10 items a month, no fees at all</strong>. Email <strong>hello@grabitt.es</strong> to apply.</div></div>' },
+  collection: { title: '🚚 Collection & Delivery', body:
+    _para('Grabitt is local-first, so most items are handed over in person across the Canary Islands. You and the other person agree how to swap the item and the cash (or release the held payment) — here are your options and how to stay safe.') +
+    _head('Ways to receive your item', '#FF4500') +
+    _card('🤝', 'Local pickup', 'The most common option. Buyer collects from the seller, or you meet at an agreed spot. Free, fast, and you can inspect the item before confirming.') +
+    _card('📍', 'Meet halfway', 'Pick a safe, public mid-point — a busy car park, café, shopping centre or petrol station. Good when buyer and seller are in different towns.') +
+    _card('📦', 'Courier or postal', 'For larger islands distances or bulky items, agree a courier (e.g. Correos, MRW, SEUR). Decide who books and who pays before you commit. Keep the tracking number.') +
+    _card('🚗', 'Seller delivery', 'Some sellers offer to drop off locally for a small fee or free within a few km. Agree any delivery charge up front in chat.') +
+    _head('How payment protection works', '#FF4500') +
+    _card('🛡️', 'Funds held until you confirm', "When you pay through Grabitt, the money is held securely. It's only released to the seller once you confirm you've received the item and it's as described — that's the Grabitt Guarantee.") +
+    _card('✅', 'Confirm only when happy', "Inspect the item at handover. Don't tap 'confirm received' until you're satisfied. If it's not as described, open a dispute instead of confirming.") +
+    _head('Safe handover tips', '#FF4500') +
+    _card('👥', 'Meet in public, daytime', 'Choose busy, well-lit places. Bring a friend for higher-value items. Avoid handing over at your home address where possible.') +
+    _card('💬', 'Keep it on Grabitt', 'Arrange everything in the in-app chat so there\'s a record. Be wary of anyone pushing you to pay outside Grabitt or to ship before payment is confirmed.') +
+    _card('💶', 'Who pays for delivery?', 'Postage and courier costs are agreed between buyer and seller. Confirm the total (item + any delivery) in chat before you pay so there are no surprises.') +
+    '<div style="margin-top:12px;background:#FFF4EE;border:1px solid #FFD4A0;border-radius:12px;padding:12px;font-family:Comfortaa,sans-serif;font-size:11px;color:#7a4419;line-height:1.55;">⚠️ Never release a held payment, send cash, or post an item before you\'ve confirmed the other side has genuinely done their part. If in doubt, pause and tap the safety shield or open a dispute.</div>' },
+  scams: { title: '😡 Scam Centre', body:
+    _banner('linear-gradient(135deg,#7f1d1d,#b91c1c)', '😡 Don\'t get caught out', 'Scammers are clever. Here are the tricks doing the rounds — online generally and on buy/sell boards — plus how to stay safe.') +
+    _head('On buy & sell boards', '#ef4444') +
+    _card('🚚', 'Fake courier / shipping', "'I'll send a courier, just pay the fee.' Real local deals are collected in person. Never pay shipping to a stranger for a local item.", '#ef4444', '#fef2f2') +
+    _card('💸', 'Overpayment trick', "Buyer 'accidentally' overpays and asks for the difference back — their original payment later bounces. Never refund an overpayment.", '#ef4444', '#fef2f2') +
+    _card('🔗', 'Fake payment confirmation', 'Screenshots or emails "proving" they paid. Only trust money you can see in your own account or in-app, never a screenshot.', '#ef4444', '#fef2f2') +
+    _card('📱', 'Move off-platform', "'Let's chat on WhatsApp/Telegram instead.' Moving off Grabitt removes your protection — that's exactly why they ask.", '#ef4444', '#fef2f2') +
+    _card('🎁', 'Too good to be true', "Brand-new iPhone for €100, luxury goods at a fraction of retail. If the price is unreal, it's a trap.", '#ef4444', '#fef2f2') +
+    _card('🏷️', 'Fakes & replicas', 'Counterfeit trainers, bags, watches & electronics sold as genuine. Check brand details, ask for receipts/proof. Selling fakes as real is fraud — and banned on Grabitt.', '#ef4444', '#fef2f2') +
+    _card('🏠', 'No-viewing rentals', "'I'm abroad, pay a deposit to hold it.' Never pay for a property you (or someone you trust) haven't viewed.", '#ef4444', '#fef2f2') +
+    _card('🔢', 'The "verify code" trick', "They send a code and ask you to read it back to 'prove you're real.' It's a login/2FA code — never share it.", '#ef4444', '#fef2f2') +
+    _head('General online scams', '#f59e0b') +
+    _card('🎣', 'Phishing links', "Fake emails/texts posing as your bank, courier or Grabitt. Don't click — go to the official app/site directly.", '#f59e0b', '#fffbeb') +
+    _card('💖', 'Romance scams', 'A fast online romance that soon needs money for an "emergency." Never send money to someone you haven\'t met.', '#f59e0b', '#fffbeb') +
+    _card('₿', 'Crypto / investment', '"Guaranteed returns" and "get in early." Real investments never guarantee profit. Walk away.', '#f59e0b', '#fffbeb') +
+    _card('📞', 'Fake support calls', '"Your account is compromised, install this app / give remote access." Real companies never ask for that.', '#f59e0b', '#fffbeb') +
+    _card('🏆', 'Prize & lottery', "'You've won! Just pay a small release fee.' You can't win a lottery you didn't enter.", '#f59e0b', '#fffbeb') +
+    _head('How to stay safe', '#22c55e') +
+    _card('🛡️', 'Keep it on Grabitt', "Chat, pay and arrange everything in-app. Our fee-hold protects both sides until you're happy.", '#22c55e', '#f0fdf4') +
+    _card('🤝', 'Meet safe & public', 'Hand over in a busy public place in daylight. Bring a friend for higher-value items.', '#22c55e', '#f0fdf4') +
+    _card('🔍', 'Inspect before you pay', "Check the item in person and only release funds once you're satisfied.", '#22c55e', '#f0fdf4') +
+    _card('🔕', 'Never share codes', 'No verification code, password or bank detail — ever — no matter who asks.', '#22c55e', '#f0fdf4') +
+    '<div style="background:#FFF3EE;border-radius:12px;padding:12px;margin-top:14px;text-align:center;"><div style="font-size:11px;color:#FF4500;font-family:Comfortaa,sans-serif;line-height:1.5;">Spotted something dodgy? Report it in the chat or tap the 🛡️ Safety Shield. We investigate every report.</div></div>' },
+  economic: { title: '💡 Economic Living', body:
+    _banner('linear-gradient(135deg,#16a34a,#22c55e)', '💡 Economic Living', 'Smart ways to save, reuse and live well for less on the island.') +
+    _card('🔄', 'Buy second-hand first', 'Check Grabitt before buying new — furniture, tech and tools are often half price and barely used.', '#22c55e', '#f0fdf4') +
+    _card('⚡', 'Grab It Now bargains', 'Watch the ⚡ Grab It Now deals for end-of-day food and clearance items at big discounts.', '#22c55e', '#f0fdf4') +
+    _card('🤝', "Sell what you don't use", "That clutter is someone's treasure. Listing is free — turn unused items into cash.", '#22c55e', '#f0fdf4') +
+    _card('🌱', 'Grow & share', 'Swap home-grown veg, herbs and plants with neighbours instead of buying.', '#22c55e', '#f0fdf4') +
+    _card('💡', 'Cut energy bills', 'LED bulbs, air-dry laundry in the GC sun, and run appliances on cooler hours.', '#22c55e', '#f0fdf4') +
+    _card('🛒', 'Buy in bulk & split', 'Team up with neighbours on bulk food/household buys and share the savings.', '#22c55e', '#f0fdf4') +
+    _card('🔧', "Repair, don't replace", 'Find a Handy Help tradesperson to fix it for a fraction of buying new.', '#22c55e', '#f0fdf4') },
+  policy: { title: "📋 Dos & Don'ts", body: (() => {
+    const doRow = (txt: string) => `<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;"><span style="color:#22c55e;flex-shrink:0;">✓</span><span style="font-size:12px;color:#444;font-family:Comfortaa,sans-serif;line-height:1.5;">${txt}</span></div>`
+    const dontRow = (txt: string) => `<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;"><span style="color:#ef4444;flex-shrink:0;">✕</span><span style="font-size:12px;color:#444;font-family:Comfortaa,sans-serif;line-height:1.5;">${txt}</span></div>`
+    return _banner('linear-gradient(135deg,#1a1a1a,#3a3a3a)', "📋 Community Dos & Don'ts", 'Grabitt works because we look after each other. Please keep it friendly, honest and safe.') +
+      _head('Do', '#22c55e') +
+      doRow('Be honest and accurate in your listings and messages.') +
+      doRow('Keep chat, payments and arrangements on Grabitt — it protects you.') +
+      doRow('Treat everyone with respect and patience.') +
+      doRow("Inspect items at handover and confirm only when you're happy.") +
+      doRow('Report anything that feels off — fakes, scams or rude behaviour.') +
+      _head("Don't", '#f59e0b') +
+      dontRow("Don't share or ask for personal contact details before a purchase.") +
+      dontRow("Don't list fakes, replicas or anything illegal.") +
+      dontRow("Don't try to dodge fees by taking deals off-platform.") +
+      dontRow("Don't pressure, harass or abuse other members.") +
+      '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:14px;margin-top:16px;"><div style="font-family:Nunito,sans-serif;font-size:13px;font-weight:900;color:#b91c1c;margin-bottom:6px;">🚫 Zero tolerance</div><div style="font-size:11px;color:#991b1b;font-family:Comfortaa,sans-serif;line-height:1.6;">The following lead to immediate removal and a permanent ban — and may be reported to authorities:</div><div style="margin-top:8px;">' +
+      ['Disrespect & harassment', 'Scams & fraud', 'Fakes & counterfeits', 'Abuse or threats', 'Circumventing Grabitt fees', 'Anything that endangers a child'].map(x => `<span style="display:inline-block;background:#fff;color:#b91c1c;border:1px solid #fecaca;font-size:10px;font-weight:800;font-family:Nunito,sans-serif;padding:3px 10px;border-radius:50px;margin:0 4px 4px 0;">${x}</span>`).join('') +
+      '</div></div>' +
+      _head('Meeting up safely', '#3b82f6') +
+      '<div style="background:#eff6ff;border-radius:12px;padding:14px;">' +
+      doRow('Meet in a <strong>busy public place</strong> in daylight — cafés, shopping centres, petrol stations.') +
+      doRow('<strong>Women and younger members:</strong> never go to a private address alone — take someone with you.') +
+      doRow("Keep your <strong>phone charged</strong> and tell someone where you're going and when.") +
+      doRow('Trust your instincts — if it feels wrong, walk away. No deal is worth your safety.') +
+      doRow('Use the QR handover at collection so the transaction is confirmed and protected.') +
+      '</div>'
+  })() },
+  suggest: { title: '💡 Suggest a Feature', body:
+    _para('Got an idea to make Grabitt better? We read every suggestion.') +
+    '<div style="background:#FFF3EE;border-radius:12px;padding:14px;font-family:Comfortaa,sans-serif;font-size:12px;color:#7a4419;line-height:1.6;">Email your idea to <strong>hello@grabitt.es</strong> or message our team from your dashboard. Good suggestions can earn free credits!</div>' },
 }
 
 interface ActionPanelProps {
