@@ -64,10 +64,10 @@ export default function Topbar() {
       zIndex: 200,
       borderBottom: '1.5px solid var(--sand2)',
     }}>
-      {/* Desktop (≥820px): persistent horizontal nav bar */}
+      {/* Desktop/tablet (≥600px): persistent horizontal nav bar */}
       <DesktopNav />
 
-      {/* Mobile (<820px): logo + search + icon rail */}
+      {/* Phone (<600px): logo + search + icon rail */}
       <div className="mobile-chrome">
       {/* Row 1 — logo + search + Near */}
       <div style={{ display: 'flex', alignItems: 'flex-start', padding: '10px 14px 0' }}>

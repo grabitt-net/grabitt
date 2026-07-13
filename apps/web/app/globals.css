@@ -49,7 +49,7 @@ body {
 .desktop-nav { display: none; }
 .mobile-chrome { display: block; }
 
-@media (min-width: 768px) {
+@media (min-width: 600px) {
   .app-shell { max-width: 1120px; }
   /* Swap the phone header for the persistent desktop nav bar */
   .desktop-nav { display: flex; }
