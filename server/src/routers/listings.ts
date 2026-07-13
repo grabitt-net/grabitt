@@ -155,6 +155,7 @@ export const listingsRouter = router({
           seller: { select: { id: true, displayName: true, avatar: true, grade: true, avgRating: true, salesCount: true } },
           jobListing: true,
           propertyListing: true,
+          _count: { select: { wishlistItems: true } }, // real "watching" count for the In-Demand box
         },
       })
       if (!listing) throw new TRPCError({ code: 'NOT_FOUND' })

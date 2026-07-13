@@ -27,9 +27,6 @@ function salaryLabel(min?: number | string | null, max?: number | string | null,
   if (hi) return `up to €${hi.toLocaleString()}${p}`
   return 'Negotiable'
 }
-// Deterministic pseudo-metric so the "In demand" box is stable per listing.
-function hashInt(s: string) { let n = 0; for (let i = 0; i < s.length; i++) n = (n * 31 + s.charCodeAt(i)) % 9999; return n }
-
 export default function ListingDetailPage() {
   // Wrap in PanelProvider + PanelHost so the Buy / Make-an-offer buttons open the
   // same checkout/offer flows used across the app.
@@ -92,10 +89,10 @@ function ListingInner() {
   const ref = String(id).replace(/-/g, '').slice(0, 6).toUpperCase()
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/listings/${id}` : `/listings/${id}`
 
-  // In-demand metrics (real view count when present, else deterministic).
-  const views = listing.viewCount && listing.viewCount > 0 ? listing.viewCount : 20 + (hashInt(listing.title || 'x') % 180)
-  const watchers = (views % 17) + (saved ? 1 : 0)
-  const searches = (views % 11) + 1
+  // In-demand metrics — real data only: view count and number of people who have
+  // this listing in their favourites/wishlist.
+  const views = Number(listing.viewCount ?? 0)
+  const watchers = Number(listing._count?.wishlistItems ?? 0)
 
   // The panel-item shape the checkout / offer panels expect.
   const panelItem = {
@@ -171,10 +168,10 @@ function ListingInner() {
           <div style={{ width: 112, flexShrink: 0, background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '8px 5px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 5 }}>🔥 In demand</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', gap: 2 }}>
-              {[[views, job ? 'views' : 'views'], [watchers, 'watch'], [searches, 'search']].map(([n, lab], i) => (
+              {[[views, 'views'], [watchers, 'watching']].map(([n, lab], i) => (
                 <div key={i} style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div>
-                  <div style={{ fontSize: 7, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{lab as string}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div>
+                  <div style={{ fontSize: 8, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{lab as string}</div>
                 </div>
               ))}
             </div>
