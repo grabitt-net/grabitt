@@ -95,7 +95,7 @@ export default function PropertyPage() {
         {loading ? 'Searching…' : `${rows.length} propert${rows.length === 1 ? 'y' : 'ies'}`}
       </div>
 
-      <div className="category-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, padding: '0 12px' }}>
+      <div className="category-grid">
         {rows.map(p => {
           const l = p.listing ?? {}
           const isRent = p.type === 'rent'

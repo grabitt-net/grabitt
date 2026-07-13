@@ -38,6 +38,13 @@ body {
 /* Responsive listing grid — 2 cols on mobile, fills columns on wider screens */
 .listing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
+/* Category/jobs/property result grids — 4-up on mobile, more per row as the
+   viewport widens so wide screens don't show sparse oversized cards. */
+.category-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 12px; }
+@media (min-width: 700px)  { .category-grid { grid-template-columns: repeat(5, 1fr); gap: 12px; } }
+@media (min-width: 900px)  { .category-grid { grid-template-columns: repeat(6, 1fr); } }
+@media (min-width: 1100px) { .category-grid { grid-template-columns: repeat(7, 1fr); } }
+
 /* Homepage phone-style chrome (search row, quick actions, categories) stays a
    comfortable width; the product grid below spans the full desktop width. */
 .home-chrome { }

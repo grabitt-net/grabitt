@@ -51,13 +51,18 @@ export default function CategoryPage() {
   }, [slug, sort])
 
   // Free-text + subcategory filtering happens client-side over the fetched set.
+  // There is no real "subcategory" column, so a pill matches when any of its
+  // meaningful words appears in the listing's title, description or auto-tags.
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const sub = activeSub !== 'All' ? activeSub.toLowerCase() : ''
+    const subWords = activeSub !== 'All'
+      ? activeSub.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length >= 3)
+      : []
     return items.filter(l => {
-      const title = (l.title || '').toLowerCase()
-      if (q && !title.includes(q)) return false
-      if (sub && !title.includes(sub)) return false
+      const li = l as DbListing & { description?: string; tags?: string[] }
+      const haystack = [li.title, li.description, ...(li.tags ?? [])].join(' ').toLowerCase()
+      if (q && !haystack.includes(q)) return false
+      if (subWords.length && !subWords.some(w => haystack.includes(w))) return false
       return true
     })
   }, [items, query, activeSub])
@@ -93,7 +98,7 @@ export default function CategoryPage() {
         </select>
       </div>
 
-      <div className="category-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, padding: '0 12px' }}>
+      <div className="category-grid">
         {filtered.map(l => {
           const img = Array.isArray(l.images) ? l.images[0] : null
           return (

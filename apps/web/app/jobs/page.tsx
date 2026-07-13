@@ -128,7 +128,7 @@ export default function JobsPage() {
           )}
         </div>
       ) : (
-        <div className="category-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, padding: '0 12px' }}>
+        <div className="category-grid">
           {rows.map(j => {
             const l = j.listing ?? {}
             const img = Array.isArray(l.images) ? l.images[0] : null
