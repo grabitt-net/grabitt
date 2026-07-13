@@ -5,7 +5,6 @@ import { ToastProvider } from '@/context/ToastContext'
 import { CartProvider } from '@/context/CartContext'
 import AuthBootstrap from '@/components/AuthBootstrap'
 import ConsentGate from '@/components/ConsentGate'
-import ViewportDebug from '@/components/ViewportDebug'
 import './globals.css'
 
 const nunito = Nunito({

@@ -10,7 +10,7 @@ import Icon, { IconName } from './Icon'
 import Logo from './Logo'
 import { t } from '@/lib/i18n'
 
-// Desktop/tablet top navigation (shown ≥600px via .desktop-nav in globals.css).
+// Desktop/tablet top navigation (shown ≥500px via .desktop-nav in globals.css).
 // A persistent horizontal bar — logo, wide search, primary "Sell" CTA, and
 // icon+label account actions — instead of the phone icon-rail. Same panels,
 // same data as mobile; just laid out for wide screens.
