@@ -10,6 +10,7 @@ import { pushView } from '@/lib/recentViews'
 import { PRICES } from '@grabitt/design-tokens'
 import MessageButton from '@/components/marketplace/MessageButton'
 import SiteHeader from '@/components/marketplace/SiteHeader'
+import ShareSheet from '@/components/marketplace/ShareSheet'
 
 const gradeEmoji: Record<string, string> = { grabber: '🟠', dealer: '🟡', trader: '🔵', pro: '⭐' }
 const JOB_TYPE: Record<string, string> = { full_time: 'Full Time', part_time: 'Part Time', contract: 'Contract', temporary: 'Temp', volunteer: 'Volunteer' }
@@ -32,6 +33,7 @@ export default function ListingDetailPage() {
   const [state, setState] = useState<'loading' | 'ready' | 'notfound'>('loading')
   const [meId, setMeId] = useState<string | null>(null)
   const [comps, setComps] = useState<any>(null)
+  const [showShare, setShowShare] = useState(false)
 
   useEffect(() => {
     createTrpcClient().listings.byId.query({ id })
@@ -87,6 +89,11 @@ export default function ListingDetailPage() {
         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', flex: 1 }}>
           {DEPT_LABEL[listing.department] ?? 'Listing'}
         </span>
+        <button
+          onClick={() => setShowShare(true)}
+          aria-label="Share this listing"
+          style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--sand2)', borderRadius: 50, padding: '7px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--orange)', cursor: 'pointer' }}
+        >📤 {t('Share')}</button>
       </header>
 
       <div style={{ height: 240, background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 80, position: 'relative', overflow: 'hidden' }}>
@@ -265,6 +272,16 @@ export default function ListingDetailPage() {
             </>
           )}
         </div>
+      )}
+
+      {showShare && (
+        <ShareSheet
+          title={job?.jobTitle ?? listing.title}
+          price={job ? salaryLabel(job.salaryMin, job.salaryMax, job.salaryPeriod) : `€${Number(listing.price).toLocaleString()}${isRent ? '/mo' : ''}`}
+          emoji={deptEmoji(listing.department)}
+          url={typeof window !== 'undefined' ? `${window.location.origin}/listings/${id}` : `/listings/${id}`}
+          onClose={() => setShowShare(false)}
+        />
       )}
     </main>
   )

@@ -14,6 +14,7 @@ import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
 import { pushView } from '@/lib/recentViews'
 import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
 import StripePayment from './StripePayment'
+import ShareSheet from './ShareSheet'
 import { toPanelItem, DEPT_ENUM, type DbListing } from '@/lib/listingMap'
 
 // Protected tRPC calls must use our CONSUMER app JWT (verified with JWT_SECRET),
@@ -1088,6 +1089,8 @@ function PanelBody() {
     const category = (item.category as string) || ''
     const condition= (item.condition as string) || ''
     const isFeatured = !!item.isFeatured
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [showShare, setShowShare] = useState(false)
 
     // Record this view for the homepage "Recently viewed" strip.
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -1235,10 +1238,19 @@ function PanelBody() {
             {/* Report / Share (HTML: report this listing / share this listing) */}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12 }}>
               <button onClick={() => openPanel('report', { ...item })} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🚨 Report this Listing</button>
-              <button onClick={() => { if (typeof navigator !== 'undefined' && navigator.share) navigator.share({ title, text: `${title} — ${price}` }).catch(() => {}) }} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>📤 Share this Listing</button>
+              <button onClick={() => setShowShare(true)} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>📤 Share this Listing</button>
             </div>
           </div>
         </div>
+        {showShare && (
+          <ShareSheet
+            title={title}
+            price={price}
+            emoji={emoji}
+            url={typeof window !== 'undefined' ? `${window.location.origin}/listings/${item.id ?? ''}` : `/listings/${item.id ?? ''}`}
+            onClose={() => setShowShare(false)}
+          />
+        )}
       </div>
     )
   }
