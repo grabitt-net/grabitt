@@ -19,16 +19,17 @@ export default function Hero() {
   return (
     <section style={{ padding: '12px 14px 4px' }} className="hero">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 2 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingBottom: 2 }}>
           {quickActions.map(a => (
             <button
               key={a.label}
               onClick={a.action}
               style={{
-                flex: '0 0 auto', background: '#fff', color: '#3a3226',
+                flex: '1 1 auto', background: '#fff', color: '#3a3226',
                 border: '1px solid #e5dccd', borderRadius: 50,
-                padding: '9px 18px', fontFamily: 'var(--font-ui)', fontSize: 13,
+                padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 13,
                 fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                textAlign: 'center',
               }}
             >
               {t(a.label)}
