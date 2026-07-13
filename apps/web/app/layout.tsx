@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${nunito.variable} ${comfortaa.variable}`}>
-      <body className="min-h-full"><TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate />{children}<ViewportDebug /></CartProvider></ToastProvider></TrpcProvider></body>
+      <body className="min-h-full"><TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate />{children}</CartProvider></ToastProvider></TrpcProvider></body>
     </html>
   )
 }
