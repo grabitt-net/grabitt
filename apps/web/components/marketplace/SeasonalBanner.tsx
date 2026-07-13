@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { usePanel } from '@/context/PanelContext'
+import { useRouter } from 'next/navigation'
+import { DEPT_ENUM } from '@/lib/listingMap'
 
 const CAMPAIGNS = [
   { months: [12, 1], emoji: '🎄', title: 'Christmas Gifting', sub: 'Find the perfect present on Gran Canaria', grad: 'linear-gradient(135deg,#c0392b,#27ae60)', dept: 'Gift Ideas', deptGrad: 'linear-gradient(135deg,#f953c6,#b91d73)' },
@@ -13,7 +14,7 @@ const CAMPAIGNS = [
 ]
 
 export default function SeasonalBanner() {
-  const { openPanel } = usePanel()
+  const router = useRouter()
   // Pick the campaign after mount so server (UTC) and client can't disagree on
   // the month at a boundary and cause a hydration mismatch. Default to the
   // summer campaign for the server-rendered/first-paint markup.
@@ -23,7 +24,7 @@ export default function SeasonalBanner() {
 
   return (
     <div
-      onClick={() => openPanel('dept', { name: campaign.dept, icon: campaign.emoji, grad: campaign.deptGrad })}
+      onClick={() => router.push(`/category/${DEPT_ENUM[campaign.dept] ?? ''}`)}
       style={{ margin: '12px 12px 0', borderRadius: 'var(--radius)', overflow: 'hidden', cursor: 'pointer', background: campaign.grad, padding: '18px 16px', position: 'relative' }}
     >
       <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 72, opacity: 0.18, lineHeight: 1 }}>

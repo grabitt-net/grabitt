@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
+import { DEPT_ENUM } from '@/lib/listingMap'
 
 // Category tiles now use real photography (Unsplash) layered over the brand
 // gradient. The gradient stays as a base so a failed image simply falls back to
@@ -38,11 +39,12 @@ export default function CategoryGrid() {
     // Jobs and Property have dedicated full pages with advanced search.
     if (cat.name === 'Jobs') return void router.push('/jobs')
     if (cat.name === 'Property') return void router.push('/property')
-    if (cat.name === 'Grab It Now') {
-      openPanel('grabit')
-    } else {
-      openPanel('dept', { name: cat.name, icon: cat.icon, grad: cat.grad })
-    }
+    if (cat.name === 'Grab It Now') return void openPanel('grabit')
+    // Every other department opens its own page (same shell as the rest of the
+    // site) rather than the old modal.
+    const slug = DEPT_ENUM[cat.name]
+    if (slug) router.push(`/category/${slug}`)
+    else openPanel('dept', { name: cat.name, icon: cat.icon, grad: cat.grad })
   }
 
   return (
