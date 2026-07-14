@@ -3047,6 +3047,7 @@ function PanelBody() {
     const [town, setTown] = useState('Las Palmas')
     const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
     const [showMap, setShowMap] = useState(false)
+    const [showGuide, setShowGuide] = useState(false)
     const [grabItNow, setGrabItNow] = useState(false)
     const [featured, setFeatured] = useState(false)
     const [uploading, setUploading] = useState(false)
@@ -3105,6 +3106,32 @@ function PanelBody() {
           </div>
 
           <div style={{ overflowY: 'auto', flex: 1, padding: '16px 16px 0' }}>
+
+            {/* Best-practice guide — collapsible, shown on every step */}
+            <div style={{ marginBottom: 14, border: '1px solid #ffe0cc', borderRadius: 12, overflow: 'hidden' }}>
+              <button onClick={() => setShowGuide(v => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, background: '#FFF8F4', border: 'none', padding: '11px 13px', cursor: 'pointer', textAlign: 'left' }}>
+                <span style={{ fontSize: 16 }}>📋</span>
+                <span style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>{t('Best-practice guide — sell faster')}</span>
+                <span style={{ color: 'var(--orange)', fontWeight: 900 }}>{showGuide ? '−' : '+'}</span>
+              </button>
+              {showGuide && (
+                <div style={{ padding: '4px 13px 12px' }}>
+                  {[
+                    ['📷', 'Great photos sell', 'Use natural daylight, a clean background and 4–8 angles. Show any flaws honestly.'],
+                    ['✍️', 'Clear, specific title', 'Include brand, model, size/colour and condition — buyers search for these.'],
+                    ['📝', 'Detailed description', 'Mention what\'s included, age, reason for selling and any defects. Honesty avoids disputes.'],
+                    ['💶', 'Price to sell', 'Check "Similar sold prices" on comparable listings and price competitively.'],
+                    ['📍', 'Exact location', 'Pin the real location so buyers know where to collect.'],
+                    ['🛡️', 'Stay on Grabitt', 'Keep chat and payment on Grabitt — that\'s what keeps you protected.'],
+                  ].map(([icon, ttl, body], i) => (
+                    <div key={i} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '6px 0', borderTop: i > 0 ? '1px solid #f5efe8' : 'none' }}>
+                      <span style={{ fontSize: 15, flexShrink: 0 }}>{icon}</span>
+                      <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--dark)' }}>{ttl}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#777', lineHeight: 1.45 }}>{body}</div></div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* ── Step 1: Photos ── */}
             {step === 'photos' && (
