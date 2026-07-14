@@ -50,6 +50,11 @@ function ListingInner() {
   const [similar, setSimilar] = useState<any[]>([])
   const [showShare, setShowShare] = useState(false)
   const [saved, setSaved] = useState(false)
+  // Job apply flow
+  const [applied, setApplied] = useState(false)
+  const [showApply, setShowApply] = useState(false)
+  const [coverNote, setCoverNote] = useState('')
+  const [applying, setApplying] = useState(false)
 
   useEffect(() => {
     createTrpcClient().listings.byId.query({ id })
@@ -76,12 +81,34 @@ function ListingInner() {
     })()
   }, [])
 
+  // For jobs, reflect whether the current user has already applied.
+  useEffect(() => {
+    if (!listing?.jobListing) return
+    ;(async () => {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      if (!token) return
+      try { const r: any = await trpcAuthed().jobs.hasApplied.query({ listingId: id }); setApplied(!!r?.applied) } catch { /* ignore */ }
+    })()
+  }, [listing, id])
+
   if (state === 'loading') return <Centered>Loading…</Centered>
   if (state === 'notfound' || !listing) return <Centered>This listing is no longer available. <Link href="/" style={{ color: 'var(--orange)', fontWeight: 800 }}>Back home</Link></Centered>
 
   const job = listing.jobListing
   const prop = listing.propertyListing
   const seller = listing.seller
+
+  const submitApply = async () => {
+    setApplying(true)
+    try {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      if (!token) { setShowApply(false); openPanel('login'); return }
+      await trpcAuthed().jobs.apply.mutate({ listingId: id, ...(coverNote.trim() && { coverNote: coverNote.trim() }) })
+      setApplied(true); setShowApply(false)
+    } catch { /* ignore */ } finally { setApplying(false) }
+  }
   const isOwner = !!meId && meId === seller?.id
   const isRent = prop?.type === 'rent'
   const heroImg = Array.isArray(listing.images) ? listing.images[0] : null
@@ -193,8 +220,16 @@ function ListingInner() {
               </div>
             )}
           </div>
-        ) : (job || prop) ? (
-          seller?.id && <MessageButton listingId={id} sellerId={seller.id} label={job ? 'Apply / Enquire' : 'Enquire'} primary flex={1} />
+        ) : job ? (
+          <div style={cardBox}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => { if (!applied) setShowApply(true) }} disabled={applied} style={{ flex: 1, background: applied ? 'var(--sage)' : 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 12, padding: '15px 8px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: applied ? 'default' : 'pointer', lineHeight: 1.25 }}>{applied ? '✓ Applied' : <>✉️ {t('Apply')}<br />{t('Now')}</>}</button>
+              {seller?.id && <MessageButton listingId={id} sellerId={seller.id} label={t('Message Employer')} flex={1} />}
+            </div>
+            <div style={{ textAlign: 'center', fontSize: 10.5, color: '#777', fontFamily: 'var(--font-comfortaa)', marginTop: 8 }}>{t('Free to apply · your application goes straight to the employer')}</div>
+          </div>
+        ) : prop ? (
+          seller?.id && <MessageButton listingId={id} sellerId={seller.id} label={t('Enquire')} primary flex={1} />
         ) : (
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => openPanel('checkout', panelItem)} style={{ flex: 1, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 12, padding: '15px 8px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>🛒 Buy Now<br /><span style={{ fontSize: 12 }}>{priceLabel}</span></button>
@@ -307,6 +342,18 @@ function ListingInner() {
 
       {showShare && (
         <ShareSheet title={job?.jobTitle ?? listing.title} price={priceLabel} emoji={emoji} url={shareUrl} onClose={() => setShowShare(false)} />
+      )}
+
+      {showApply && job && (
+        <div onClick={() => setShowApply(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', width: '100%', maxWidth: 520, borderRadius: '20px 20px 0 0', padding: 20 }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{t('Apply for')} {job.jobTitle}</div>
+            <div style={{ fontSize: 12, color: '#777', fontFamily: 'var(--font-comfortaa)', marginBottom: 12 }}>{t('Add a short note for the employer (optional).')}</div>
+            <textarea value={coverNote} onChange={e => setCoverNote(e.target.value)} placeholder={t("Why you're a great fit…")} style={{ width: '100%', boxSizing: 'border-box', minHeight: 96, border: '1.5px solid #e5dccd', borderRadius: 12, padding: 12, fontFamily: 'var(--font-comfortaa)', fontSize: 13, outline: 'none', resize: 'vertical' }} />
+            <button onClick={submitApply} disabled={applying} style={{ width: '100%', marginTop: 12, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: applying ? 'wait' : 'pointer' }}>{applying ? t('Sending…') : `${t('Send application')} →`}</button>
+            <button onClick={() => setShowApply(false)} style={{ width: '100%', marginTop: 8, background: 'none', color: '#888', border: 'none', padding: 8, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>{t('Cancel')}</button>
+          </div>
+        </div>
       )}
     </main>
   )

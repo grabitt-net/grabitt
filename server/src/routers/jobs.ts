@@ -1,7 +1,59 @@
 import { z } from 'zod'
+import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 
 export const jobsRouter = router({
+  // Candidate applies to a job. Free to apply; the application goes straight to
+  // the employer (a JobApplication row) and notifies them. Idempotent per
+  // (job, applicant) — re-applying just updates the cover note.
+  apply: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid(), coverNote: z.string().max(2000).optional(), cvUrl: z.string().url().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const jl = await ctx.prisma.jobListing.findFirst({
+        where: { listingId: input.listingId },
+        include: { listing: { select: { title: true, sellerId: true } } },
+      })
+      if (!jl) throw new TRPCError({ code: 'NOT_FOUND', message: 'Job not found' })
+      if (jl.employerId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: 'You cannot apply to your own job' })
+
+      const application = await ctx.prisma.jobApplication.upsert({
+        where: { jobListingId_applicantId: { jobListingId: jl.id, applicantId: ctx.user.id } },
+        create: { jobListingId: jl.id, applicantId: ctx.user.id, coverNote: input.coverNote, cvUrl: input.cvUrl },
+        update: { coverNote: input.coverNote, cvUrl: input.cvUrl },
+      })
+      await ctx.prisma.notification.create({
+        data: {
+          userId: jl.employerId,
+          kind: 'system',
+          title: '📩 New job application',
+          body: `You received an application for "${jl.jobTitle}".`,
+        },
+      })
+      return application
+    }),
+
+  // Whether the current user has already applied to this job (for the detail UI).
+  hasApplied: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const jl = await ctx.prisma.jobListing.findFirst({ where: { listingId: input.listingId }, select: { id: true } })
+      if (!jl) return { applied: false }
+      const app = await ctx.prisma.jobApplication.findUnique({
+        where: { jobListingId_applicantId: { jobListingId: jl.id, applicantId: ctx.user.id } },
+        select: { id: true, status: true },
+      })
+      return { applied: !!app, status: app?.status ?? null }
+    }),
+
+  // The candidate's own applications (for a future "My applications" view).
+  myApplications: protectedProcedure.query(({ ctx }) =>
+    ctx.prisma.jobApplication.findMany({
+      where: { applicantId: ctx.user.id },
+      orderBy: { createdAt: 'desc' },
+      include: { jobListing: { include: { listing: { select: { id: true, location: true } } } } },
+    })
+  ),
+
   list: publicProcedure
     .input(z.object({
       query: z.string().optional(),
