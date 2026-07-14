@@ -320,6 +320,7 @@ model Listing {
   deliveryMethod   DeliveryMethod?  // null = delivery not offered (collection only)
   autoAcceptMin    Decimal?         @db.Decimal(10, 2)  // offers >= this are auto-accepted (seller-only, never shown to buyers)
   viewCount        Int              @default(0)
+  relistCount      Int              @default(0)  // standard listings auto-relist free 3× every 21 days
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 

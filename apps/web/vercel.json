@@ -1,5 +1,8 @@
 {
   "framework": "nextjs",
   "installCommand": "cd ../.. && npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm --filter server exec prisma generate",
-  "buildCommand": "next build"
+  "buildCommand": "next build",
+  "crons": [
+    { "path": "/api/cron/relist", "schedule": "0 4 * * *" }
+  ]
 }
