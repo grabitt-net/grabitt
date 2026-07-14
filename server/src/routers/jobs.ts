@@ -142,6 +142,8 @@ export const jobsRouter = router({
       hours: z.string().max(120).optional(),
       startDate: z.string().optional(),
       images: z.array(z.string().url()).max(8).optional(),
+      lat: z.number().optional(),
+      lng: z.number().optional(),
     }))
     .mutation(({ ctx, input }) =>
       ctx.prisma.listing.create({
@@ -155,6 +157,7 @@ export const jobsRouter = router({
           status: 'active',
           images: input.images ?? [],
           location: input.location,
+          ...(input.lat != null && input.lng != null ? { lat: input.lat, lng: input.lng } : {}),
           jobListing: {
             create: {
               employerId: ctx.user.id,

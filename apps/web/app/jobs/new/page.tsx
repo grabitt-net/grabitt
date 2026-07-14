@@ -2,8 +2,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import SiteHeader from '@/components/marketplace/SiteHeader'
+
+const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
 
 const TYPES: [string, string][] = [
   ['Full Time', 'full_time'], ['Part Time', 'part_time'], ['Contract', 'contract'], ['Temp', 'temporary'], ['Volunteer', 'volunteer'],
@@ -17,6 +20,7 @@ export default function PostJobPage() {
     salaryMin: '', salaryMax: '', salaryPeriod: 'month', payments: '', overtime: false, tips: false,
     remote: false, hours: '', startDate: '', description: '',
   })
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -51,6 +55,7 @@ export default function PostJobPage() {
         remote: f.remote,
         ...(f.hours.trim() && { hours: f.hours.trim() }),
         ...(f.startDate && { startDate: f.startDate }),
+        ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
       })
       router.push(`/listings/${listing.id}`)
     } catch (err: any) {
@@ -89,8 +94,14 @@ export default function PostJobPage() {
         </Section>
 
         <Section title="Location">
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 4 }}>Give the job&apos;s address — this is where the work is, not your profile address.</div>
           <Field label="Location (town / area) *"><input value={f.location} onChange={e => set('location', e.target.value)} placeholder="e.g. Playa del Inglés" style={inp} /></Field>
           <Field label="Full address (shown with a map on the listing)"><input value={f.address} onChange={e => set('address', e.target.value)} placeholder="Street, number, postcode, town" style={inp} /></Field>
+          <div>
+            <label style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: '#999', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>Pin the exact location on the map</label>
+            <MapPicker value={coords} onChange={setCoords} />
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 6 }}>{coords ? `📍 Pinned at ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : 'Tap the map to drop a pin where the job is based.'}</div>
+          </div>
         </Section>
 
         <Section title="Pay">
