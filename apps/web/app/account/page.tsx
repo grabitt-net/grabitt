@@ -51,6 +51,7 @@ function AccountInner() {
   const [address, setAddress] = useState('')
   const [contactState, setContactState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [payoutBusy, setPayoutBusy] = useState(false)
+  const [payoutError, setPayoutError] = useState('')
 
   const load = useCallback(async () => {
     let token = getAuthToken()
@@ -85,11 +86,17 @@ function AccountInner() {
 
   const setupPayouts = async () => {
     setPayoutBusy(true)
+    setPayoutError('')
     try {
       const c: any = trpcAuthed()
       const res = payout?.connected ? await c.users.payoutDashboardLink.mutate() : await c.users.createPayoutOnboarding.mutate()
-      if (res?.url) window.location.href = res.url
-    } catch { setPayoutBusy(false) }
+      if (res?.url) { window.location.href = res.url; return }
+      setPayoutError('Stripe did not return an onboarding link. Please try again.')
+      setPayoutBusy(false)
+    } catch (e: any) {
+      setPayoutError(e?.message ? String(e.message) : 'Could not open Stripe. Please try again.')
+      setPayoutBusy(false)
+    }
   }
 
   const respond = async (offerId: string, action: 'accept' | 'decline') => {
@@ -157,6 +164,7 @@ function AccountInner() {
               </div>
               <span style={{ color: payout?.payoutsEnabled ? 'var(--sage)' : 'var(--orange)', fontWeight: 900, fontSize: 16 }}>›</span>
             </button>
+            {payoutError && <div style={{ marginTop: 8, background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 10, padding: '9px 11px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#ef4444', lineHeight: 1.5 }}>{payoutError}</div>}
             {/* Log out */}
             <button onClick={logout} style={{ width: '100%', marginTop: 14, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: '11px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
