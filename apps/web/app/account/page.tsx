@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
+import { getAuthToken, refreshAuthToken, setAuthToken, trpcAuthed } from '@/lib/authToken'
+import { createClient } from '@/lib/supabase'
 import SiteHeader from '@/components/marketplace/SiteHeader'
 import { deptEmoji } from '@/lib/listingMap'
 
@@ -50,6 +51,13 @@ export default function AccountPage() {
     c.messages.myThreads.query().then((d: any) => setThreads(d as any[])).catch(() => setThreads([]))
   }, [router])
   useEffect(() => { load() }, [load])
+
+  const logout = async () => {
+    try { await createClient().auth.signOut() } catch {}
+    setAuthToken(null)
+    if (typeof window !== 'undefined') localStorage.removeItem('grabitt_uid')
+    router.push('/')
+  }
 
   const respond = async (offerId: string, action: 'accept' | 'decline') => {
     setBusyId(offerId)
@@ -112,6 +120,11 @@ export default function AccountPage() {
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: payout?.payoutsEnabled ? 'var(--sage)' : 'var(--orange)' }}>{payout?.payoutsEnabled ? 'Payouts active' : 'Set up payouts'}</div>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#666', marginTop: 3 }}>{payout?.payoutsEnabled ? 'Sales pay out to you at handover.' : 'Connect Stripe to receive money from sales.'}</div>
             </div>
+            {/* Log out */}
+            <button onClick={logout} style={{ width: '100%', marginTop: 14, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: '11px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
+              Log out
+            </button>
           </div>
         </aside>
 

@@ -12,7 +12,7 @@ export default function Footer() {
     { heading: 'Grabitt', links: [['About Us', fp('about')], ['Why Us?', fp('why')], ['Pricing', fp('pricing')], ['Contact', fp('contact')]] },
     { heading: 'Buying & Selling', links: [['Sell an item', () => openPanel('sell')], ['Buy Credits', () => openPanel('buyCredits')], ['Delivery', fp('collection')], ['Sold prices', () => openPanel('soldprices')]] },
     { heading: 'Safety', links: [['Grabitt Guarantee', () => openPanel('shield')], ['Scam Centre', fp('scams')], ['Report a listing', () => openPanel('report')], ['My Disputes', () => openPanel('myDisputes')]] },
-    { heading: 'Help', links: [['Help Centre', fp('help')], ['Terms', fp('terms')], ['Dos & Don\'ts', fp('policy')], ['Suggest Ideas', fp('suggest')]] },
+    { heading: 'Help', links: [['Help Centre', () => openPanel('help')], ['Terms', fp('terms')], ['Dos & Don\'ts', fp('policy')], ['Suggest Ideas', fp('suggest')]] },
   ]
 
   return (
