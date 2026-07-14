@@ -466,6 +466,7 @@ enum NotificationKind {
   dispute_opened
   dispute_resolved
   wish_matched
+  price_drop
   system
 }
 

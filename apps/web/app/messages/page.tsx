@@ -29,6 +29,13 @@ export default async function MessagesPage() {
   const listings = await prisma.listing.findMany({ where: { id: { in: listingIds } }, select: { id: true, title: true } })
   const titleOf = new Map(listings.map(l => [l.id, l.title]))
 
+  // Listing alerts (price drops, saved-search / wishlist matches, expiring) are
+  // surfaced in a dedicated "Grabitt Alerts" channel, separate from chats.
+  const ALERT_KINDS = ['price_drop', 'wish_matched', 'listing_expiring'] as const
+  const alertUnread = await prisma.notification.count({
+    where: { userId: me.id, kind: { in: ALERT_KINDS as unknown as never[] }, readAt: null },
+  })
+
   return (
     <main style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: 90 }}>
       <SiteHeader />
@@ -42,6 +49,27 @@ export default async function MessagesPage() {
       </header>
 
       <div style={{ padding: '12px 0' }}>
+        {/* Pinned system channels */}
+        <Link href="/messages/team" style={{ textDecoration: 'none' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', padding: '14px 16px', borderBottom: '1px solid #f0f0f0', borderLeft: '3px solid var(--orange)' }}>
+            <div style={{ width: 46, height: 46, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>💬</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>Grabitt Team</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Welcome to Grabitt! Questions about buying, selling or safety? We&apos;re here.</div>
+            </div>
+          </div>
+        </Link>
+        <Link href="/messages/alerts" style={{ textDecoration: 'none' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', padding: '14px 16px', borderBottom: '1px solid #f0f0f0', borderLeft: alertUnread > 0 ? '3px solid var(--orange)' : '3px solid transparent' }}>
+            <div style={{ width: 46, height: 46, borderRadius: '50%', flexShrink: 0, background: '#FFF3EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🔔</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: alertUnread > 0 ? 900 : 700, color: 'var(--dark)' }}>Grabitt Alerts</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Price drops & saved-item alerts for listings you follow.</div>
+            </div>
+            {alertUnread > 0 && <span style={{ flexShrink: 0, background: 'var(--orange)', color: '#fff', fontSize: 11, fontWeight: 900, fontFamily: 'var(--font-nunito)', minWidth: 20, height: 20, borderRadius: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 6px' }}>{alertUnread > 99 ? '99+' : alertUnread}</span>}
+          </div>
+        </Link>
+
         {threads.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 800, color: '#aaa', marginBottom: 6 }}>
