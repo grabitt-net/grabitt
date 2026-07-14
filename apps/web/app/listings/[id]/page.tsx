@@ -55,6 +55,7 @@ function ListingInner() {
   const [showApply, setShowApply] = useState(false)
   const [coverNote, setCoverNote] = useState('')
   const [applying, setApplying] = useState(false)
+  const [empJobs, setEmpJobs] = useState<any[]>([])
 
   useEffect(() => {
     createTrpcClient().listings.byId.query({ id })
@@ -92,12 +93,26 @@ function ListingInner() {
     })()
   }, [listing, id])
 
+  // Other active jobs from the same employer.
+  useEffect(() => {
+    const empId = listing?.jobListing?.employerId
+    if (!empId) return
+    createTrpcClient().jobs.byEmployer.query({ employerId: empId, excludeListingId: id })
+      .then((r: any) => setEmpJobs((r ?? []) as any[]))
+      .catch(() => {})
+  }, [listing, id])
+
   if (state === 'loading') return <Centered>Loading…</Centered>
   if (state === 'notfound' || !listing) return <Centered>This listing is no longer available. <Link href="/" style={{ color: 'var(--orange)', fontWeight: 800 }}>Back home</Link></Centered>
 
   const job = listing.jobListing
   const prop = listing.propertyListing
   const seller = listing.seller
+
+  const jobKeywords: string[] = job
+    ? Array.from(new Set(`${job.sector ?? ''} ${JOB_TYPE[job.type] ?? job.type ?? ''} ${job.jobTitle ?? ''}`
+        .toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 3))).slice(0, 6)
+    : []
 
   const submitApply = async () => {
     setApplying(true)
@@ -261,6 +276,35 @@ function ListingInner() {
             </div>
           </div>
         </div>
+
+        {/* More jobs from this employer */}
+        {job && empJobs.length > 0 && (
+          <div style={cardBox}>
+            <div style={sectionTitle}>{t('More jobs from this employer')}</div>
+            <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
+              {empJobs.map((ej: any) => (
+                <Link key={ej.id} href={`/listings/${ej.listing.id}`} style={{ flex: '0 0 auto', width: 92, textDecoration: 'none' }}>
+                  <div style={{ height: 64, borderRadius: 10, background: 'linear-gradient(145deg,#FFF3EE,#FFE4D6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, overflow: 'hidden' }}>
+                    {Array.isArray(ej.listing.images) && ej.listing.images[0] ? <img src={ej.listing.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '💼'}
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, color: 'var(--dark)', marginTop: 4, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ej.jobTitle}</div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Keywords */}
+        {job && jobKeywords.length > 0 && (
+          <div style={cardBox}>
+            <div style={sectionTitle}>{t('Keywords')}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {jobKeywords.map(k => (
+                <span key={k} style={{ background: '#f0ebe4', color: '#6b5d48', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 700, padding: '4px 11px', borderRadius: 50 }}>{k}</span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Description */}
         {listing.description && (

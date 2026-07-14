@@ -45,6 +45,22 @@ export const jobsRouter = router({
       return { applied: !!app, status: app?.status ?? null }
     }),
 
+  // Other active jobs from the same employer — powers the "More jobs from this
+  // employer" strip on a job detail page.
+  byEmployer: publicProcedure
+    .input(z.object({ employerId: z.string().uuid(), excludeListingId: z.string().uuid().optional() }))
+    .query(({ ctx, input }) =>
+      ctx.prisma.jobListing.findMany({
+        where: {
+          employerId: input.employerId,
+          listing: { status: 'active', ...(input.excludeListingId ? { id: { not: input.excludeListingId } } : {}) },
+        },
+        include: { listing: { select: { id: true, images: true, location: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+      })
+    ),
+
   // The candidate's own applications (for a future "My applications" view).
   myApplications: protectedProcedure.query(({ ctx }) =>
     ctx.prisma.jobApplication.findMany({
