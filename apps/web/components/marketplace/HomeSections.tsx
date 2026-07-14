@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { createTrpcClient } from '@/lib/trpc'
 import ParallaxHeader from './ParallaxHeader'
-import Hero from './Hero'
 import CategoryGrid from './CategoryGrid'
 import FeaturedStrip from './FeaturedStrip'
 import BannerSlot from './BannerSlot'
@@ -18,7 +17,6 @@ import CommunityStrip from './CommunityStrip'
 // from homepage.layout. Falls back to the default order if the fetch fails.
 const REGISTRY: Record<string, React.ReactNode> = {
   hero_banner: <ParallaxHeader />,
-  quick_actions: <Hero />,
   departments: <CategoryGrid />,
   recommended: <RecommendedStrip />,
   recently_viewed: <RecentlyViewedStrip />,
@@ -33,7 +31,7 @@ const REGISTRY: Record<string, React.ReactNode> = {
 
 // Mirrors the v3 homepage template's flow: hero → quick actions → featured →
 // departments → discovery strips → mid banner → just listed → guides → trust.
-const DEFAULT_ORDER = ['hero_banner', 'quick_actions', 'featured', 'departments', 'recommended', 'recently_viewed', 'seasonal_banner', 'mid_banner', 'listings', 'just_listed', 'community', 'trust']
+const DEFAULT_ORDER = ['hero_banner', 'featured', 'departments', 'recommended', 'recently_viewed', 'seasonal_banner', 'mid_banner', 'listings', 'just_listed', 'community', 'trust']
 
 export default function HomeSections() {
   // Start empty so no section renders until the admin layout resolves — this

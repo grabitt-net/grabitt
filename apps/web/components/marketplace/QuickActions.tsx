@@ -37,6 +37,22 @@ export default function QuickActions() {
           </button>
         ))}
       </div>
+
+      {/* Grabitt Now promo — shown on every page, below the pills */}
+      <button
+        onClick={() => openPanel('grabit')}
+        style={{
+          width: '100%', marginTop: 10, background: 'linear-gradient(135deg, #FF4500, #FF8C00)',
+          color: '#fff', border: 'none', borderRadius: 14,
+          padding: '15px 18px', fontFamily: 'var(--font-ui)', fontSize: 18,
+          fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 16px rgba(255,69,0,0.25)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        }}
+      >
+        <span style={{ fontSize: 20, lineHeight: 1 }}>⚡</span>
+        <span>{t('Grabitt Now — limited-time offers')}</span>
+        <span style={{ fontSize: 20, lineHeight: 1 }}>⚡</span>
+      </button>
     </section>
   )
 }
