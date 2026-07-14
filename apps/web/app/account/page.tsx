@@ -89,7 +89,11 @@ function AccountInner() {
     setPayoutError('')
     try {
       const c: any = trpcAuthed()
-      const res = payout?.connected ? await c.users.payoutDashboardLink.mutate() : await c.users.createPayoutOnboarding.mutate()
+      // Only open the Express dashboard once payouts are fully enabled; otherwise
+      // (re)open onboarding — createPayoutOnboarding reuses an existing but
+      // incomplete account and returns a link to finish it. Opening the dashboard
+      // on an un-onboarded account errors (500).
+      const res = payout?.payoutsEnabled ? await c.users.payoutDashboardLink.mutate() : await c.users.createPayoutOnboarding.mutate()
       if (res?.url) { window.location.href = res.url; return }
       setPayoutError('Stripe did not return an onboarding link. Please try again.')
       setPayoutBusy(false)
