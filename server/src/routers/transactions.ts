@@ -437,17 +437,22 @@ export const transactionsRouter = router({
         include: {
           listing: { select: { title: true, images: true } },
           buyer: { select: { id: true, displayName: true } },
-          seller: { select: { id: true, displayName: true } },
+          seller: { select: { id: true, displayName: true, phone: true, collectionAddress: true } },
           dispute: { select: { status: true, reason: true } },
         },
       })
       if (tx.buyerId !== ctx.user.id && tx.sellerId !== ctx.user.id) {
         throw new TRPCError({ code: 'FORBIDDEN' })
       }
+      const isBuyer = tx.buyerId === ctx.user.id
+      // Seller's collection details are released to the BUYER only once the sale
+      // is paid (held onward) and it's a collection fulfilment — never before.
+      const paidStatuses = ['held', 'confirmed_handover', 'completed', 'released']
+      const collectionRevealed = isBuyer && tx.fulfilmentType === 'collection' && paidStatuses.includes(tx.status)
       return {
         id: tx.id,
         status: tx.status,
-        role: tx.buyerId === ctx.user.id ? 'buyer' : 'seller',
+        role: isBuyer ? 'buyer' : 'seller',
         title: tx.listing.title,
         image: tx.listing.images?.[0] ?? null,
         amount: Number(tx.amount),
@@ -456,7 +461,10 @@ export const transactionsRouter = router({
         fulfilmentType: tx.fulfilmentType,
         trackingCarrier: tx.trackingCarrier,
         trackingNumber: tx.trackingNumber,
-        counterparty: tx.buyerId === ctx.user.id ? tx.seller.displayName : tx.buyer.displayName,
+        counterparty: isBuyer ? tx.seller.displayName : tx.buyer.displayName,
+        collectionDetails: collectionRevealed
+          ? { sellerName: tx.seller.displayName, phone: tx.seller.phone ?? null, address: tx.seller.collectionAddress ?? null }
+          : null,
         dispute: tx.dispute,
         createdAt: tx.createdAt,
       }

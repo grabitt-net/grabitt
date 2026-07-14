@@ -70,6 +70,30 @@ export async function handleStripeEvent(event: Stripe.Event) {
         where: { stripePaymentIntentId: pi.id, status: 'pending_payment' },
         data: { status: 'held' },
       })
+      // Collection sales: now that the purchase is complete (funds held), auto-send
+      // the seller's collection address + phone to the buyer. These are hidden
+      // until this point.
+      const collectionTxs = await prisma.transaction.findMany({
+        where: { stripePaymentIntentId: pi.id, status: 'held', fulfilmentType: 'collection' },
+        select: {
+          buyerId: true,
+          listing: { select: { title: true } },
+          seller: { select: { displayName: true, phone: true, collectionAddress: true } },
+        },
+      })
+      for (const t of collectionTxs) {
+        if (!t.seller.collectionAddress && !t.seller.phone) continue
+        await prisma.notification.create({
+          data: {
+            userId: t.buyerId,
+            kind: 'system',
+            title: '📍 Collection details for your purchase',
+            body: `Collect "${t.listing.title}" from ${t.seller.displayName}.`
+              + (t.seller.collectionAddress ? ` Address: ${t.seller.collectionAddress}.` : '')
+              + (t.seller.phone ? ` Phone: ${t.seller.phone}.` : ''),
+          },
+        })
+      }
       break
     }
     // Fires after capture (purchase release) OR immediately for auto-capture

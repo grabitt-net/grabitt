@@ -164,6 +164,8 @@ model User {
   email              String    @unique
   displayName        String
   avatar             String?
+  phone              String?   // contact number, shared with a buyer only after a completed collection sale
+  collectionAddress  String?   // collection address, shared with a buyer only after a completed collection sale
   grade              UserGrade @default(grabber)
   salesCount         Int       @default(0)
   avgRating          Float?

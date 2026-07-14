@@ -4,7 +4,12 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getAuthToken, refreshAuthToken, setAuthToken, trpcAuthed } from '@/lib/authToken'
 import { createClient } from '@/lib/supabase'
-import SiteHeader from '@/components/marketplace/SiteHeader'
+import { PanelProvider, usePanel } from '@/context/PanelContext'
+import Topbar from '@/components/marketplace/Topbar'
+import QuickActions from '@/components/marketplace/QuickActions'
+import Footer from '@/components/marketplace/Footer'
+import CartFab from '@/components/marketplace/CartFab'
+import PanelHost from '@/components/marketplace/PanelHost'
 import { deptEmoji } from '@/lib/listingMap'
 
 // A real, deep-linkable account hub (route, not a modal). Desktop shows a sticky
@@ -26,7 +31,12 @@ const STATUS_LABEL: Record<string, string> = { pending: 'Pending', accepted: 'Ac
 const bucket = (s: string) => (s === 'sold' ? 'sold' : (s === 'active' || s === 'grab_it_now') ? 'active' : 'draft')
 
 export default function AccountPage() {
+  return <PanelProvider><AccountInner /></PanelProvider>
+}
+
+function AccountInner() {
   const router = useRouter()
+  const { openPanel } = usePanel()
   const [ready, setReady] = useState(false)
   const [me, setMe] = useState<any>(null)
   const [dash, setDash] = useState<any>(null)
@@ -36,6 +46,11 @@ export default function AccountPage() {
   const [threads, setThreads] = useState<any[] | null>(null)
   const [seg, setSeg] = useState<'active' | 'sold' | 'draft'>('active')
   const [busyId, setBusyId] = useState<string | null>(null)
+  // Collection contact details (phone + address) — editable any time.
+  const [phone, setPhone] = useState('')
+  const [address, setAddress] = useState('')
+  const [contactState, setContactState] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [payoutBusy, setPayoutBusy] = useState(false)
 
   const load = useCallback(async () => {
     let token = getAuthToken()
@@ -43,7 +58,7 @@ export default function AccountPage() {
     if (!token) { router.push('/auth?next=/account'); return }
     const c: any = trpcAuthed()
     setReady(true)
-    c.users.me.query().then(setMe).catch(() => {})
+    c.users.me.query().then((u: any) => { setMe(u); setPhone(u?.phone ?? ''); setAddress(u?.collectionAddress ?? '') }).catch(() => {})
     c.users.dashboard.query().then(setDash).catch(() => {})
     c.users.payoutStatus.query().then(setPayout).catch(() => {})
     c.listings.mine.query().then((d: any) => setListings(d as any[])).catch(() => setListings([]))
@@ -57,6 +72,24 @@ export default function AccountPage() {
     setAuthToken(null)
     if (typeof window !== 'undefined') localStorage.removeItem('grabitt_uid')
     router.push('/')
+  }
+
+  const saveContact = async () => {
+    setContactState('saving')
+    try {
+      await trpcAuthed().users.updateProfile.mutate({ phone: phone.trim(), collectionAddress: address.trim() })
+      setContactState('saved')
+      setTimeout(() => setContactState('idle'), 2500)
+    } catch { setContactState('idle') }
+  }
+
+  const setupPayouts = async () => {
+    setPayoutBusy(true)
+    try {
+      const c: any = trpcAuthed()
+      const res = payout?.connected ? await c.users.payoutDashboardLink.mutate() : await c.users.createPayoutOnboarding.mutate()
+      if (res?.url) window.location.href = res.url
+    } catch { setPayoutBusy(false) }
   }
 
   const respond = async (offerId: string, action: 'accept' | 'decline') => {
@@ -83,14 +116,15 @@ export default function AccountPage() {
     { label: 'Sold', value: dash?.sold, icon: I.check, onClick: () => setSeg('sold') },
     { label: 'Messages', value: dash?.unread, icon: I.message, dot: !!dash?.unread, href: '/messages' },
     { label: 'Offers', value: dash?.offers, icon: I.offer, dot: !!dash?.offers },
-    { label: 'Saved', value: dash?.saved, icon: I.heart, href: '/' },
+    { label: 'Saved', value: dash?.saved, icon: I.heart, onClick: () => openPanel('favourites') },
     { label: 'Payouts', value: payout?.payoutsEnabled ? '✓' : '—', icon: I.wallet },
   ]
 
   return (
-    <main style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 60 }}>
-      <SiteHeader />
-      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '16px 14px', display: 'grid', gap: 18, gridTemplateColumns: '1fr' }} className="account-grid">
+    <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
+      <Topbar />
+      <QuickActions />
+      <div style={{ padding: '16px 14px', display: 'grid', gap: 18, gridTemplateColumns: '1fr' }} className="account-grid">
         {/* Sidebar / identity */}
         <aside style={{ alignSelf: 'start' }} className="account-side">
           <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 18 }}>
@@ -115,11 +149,14 @@ export default function AccountPage() {
                   : <button key={t.label} onClick={t.onClick} style={{ border: 'none', background: 'none', padding: 0, width: '100%' }}>{inner}</button>
               })}
             </div>
-            {/* Payouts */}
-            <div style={{ marginTop: 14, background: payout?.payoutsEnabled ? '#f0fdf4' : '#FFF3EE', borderRadius: 12, padding: 12 }}>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: payout?.payoutsEnabled ? 'var(--sage)' : 'var(--orange)' }}>{payout?.payoutsEnabled ? 'Payouts active' : 'Set up payouts'}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#666', marginTop: 3 }}>{payout?.payoutsEnabled ? 'Sales pay out to you at handover.' : 'Connect Stripe to receive money from sales.'}</div>
-            </div>
+            {/* Payouts — links to Stripe onboarding (or the Express dashboard once set up) */}
+            <button onClick={setupPayouts} disabled={payoutBusy} style={{ width: '100%', textAlign: 'left', marginTop: 14, background: payout?.payoutsEnabled ? '#f0fdf4' : '#FFF3EE', border: `1px solid ${payout?.payoutsEnabled ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 12, padding: 12, cursor: payoutBusy ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: payout?.payoutsEnabled ? 'var(--sage)' : 'var(--orange)' }}>{payoutBusy ? 'Opening Stripe…' : payout?.payoutsEnabled ? 'Payouts active — manage' : 'Set up payouts'}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#666', marginTop: 3 }}>{payout?.payoutsEnabled ? 'Sales pay out to you at handover. Tap to manage.' : 'Connect Stripe to receive money from sales.'}</div>
+              </div>
+              <span style={{ color: payout?.payoutsEnabled ? 'var(--sage)' : 'var(--orange)', fontWeight: 900, fontSize: 16 }}>›</span>
+            </button>
             {/* Log out */}
             <button onClick={logout} style={{ width: '100%', marginTop: 14, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: '11px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
@@ -130,6 +167,21 @@ export default function AccountPage() {
 
         {/* Main content */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+          {/* Collection details — auto-shared with a buyer only after a completed collection sale */}
+          <div style={card}>
+            <div style={cardHead}>Collection details</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', lineHeight: 1.5, marginBottom: 12 }}>
+              Your address &amp; phone are shared with a buyer <strong>only after</strong> they complete a purchase where collection is selected. Buyers never see these before a sale. You can update them any time.
+            </div>
+            <label style={fieldLabel}>Contact phone</label>
+            <input value={phone} onChange={e => { setPhone(e.target.value); setContactState('idle') }} type="tel" placeholder="e.g. +34 600 000 000" style={field} />
+            <label style={fieldLabel}>Collection address</label>
+            <textarea value={address} onChange={e => { setAddress(e.target.value); setContactState('idle') }} placeholder="Street, town, postcode — where buyers collect" style={{ ...field, minHeight: 72, resize: 'vertical' }} />
+            <button onClick={saveContact} disabled={contactState === 'saving'} style={{ marginTop: 4, background: contactState === 'saved' ? 'var(--sage)' : 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: contactState === 'saving' ? 'wait' : 'pointer' }}>
+              {contactState === 'saving' ? 'Saving…' : contactState === 'saved' ? '✓ Saved' : 'Save collection details'}
+            </button>
+          </div>
+
           {/* My Listings */}
           <div style={card}>
             <div style={cardHead}>My Listings</div>
@@ -205,6 +257,9 @@ export default function AccountPage() {
         </section>
       </div>
 
+      <Footer />
+      <CartFab />
+      <PanelHost />
       <style>{`@media (min-width: 900px){ .account-grid{ grid-template-columns: 320px 1fr !important; } .account-side > div{ position: sticky; top: 70px; } }`}</style>
     </main>
   )
@@ -212,4 +267,6 @@ export default function AccountPage() {
 
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }
 const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }
+const fieldLabel: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 5 }
+const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, outline: 'none', background: '#fff', marginBottom: 12 }
 function Muted({ children }: { children: React.ReactNode }) { return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '16px 0', textAlign: 'center' }}>{children}</div> }

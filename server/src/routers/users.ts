@@ -45,6 +45,8 @@ export const usersRouter = router({
       avatar: z.string().url().optional(),
       locale: z.enum(['en', 'es', 'de', 'da', 'sv', 'nl', 'fr', 'pt']).optional(),
       interests: z.array(z.string()).max(20).optional(),
+      phone: z.string().max(40).optional(),
+      collectionAddress: z.string().max(400).optional(),
     }))
     .mutation(({ ctx, input }) =>
       ctx.prisma.user.update({ where: { id: ctx.user.id }, data: input })
