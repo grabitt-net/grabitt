@@ -16,6 +16,10 @@ import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/
 import StripePayment from './StripePayment'
 import ShareSheet from './ShareSheet'
 import FooterPanelActions from './FooterPanelActions'
+import dynamic from 'next/dynamic'
+
+// Leaflet needs window — load the map pin-picker client-only.
+const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false })
 import { toPanelItem, DEPT_ENUM, type DbListing } from '@/lib/listingMap'
 
 // Protected tRPC calls must use our CONSUMER app JWT (verified with JWT_SECRET),
@@ -3041,6 +3045,8 @@ function PanelBody() {
     const [deliveryMethod, setDeliveryMethod] = useState<'courier' | 'in_person'>('courier')
     const [deliveryFee, setDeliveryFee] = useState('')
     const [town, setTown] = useState('Las Palmas')
+    const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+    const [showMap, setShowMap] = useState(false)
     const [grabItNow, setGrabItNow] = useState(false)
     const [featured, setFeatured] = useState(false)
     const [uploading, setUploading] = useState(false)
@@ -3167,6 +3173,15 @@ function PanelBody() {
                   <select value={town} onChange={e => setTown(e.target.value)} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
                     {TOWNS.map(t => <option key={t}>{t}</option>)}
                   </select>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', cursor: 'pointer', marginTop: 10 }}>
+                    <input type="checkbox" checked={showMap} onChange={e => setShowMap(e.target.checked)} /> {t('Pin the exact location on a map')}
+                  </label>
+                  {showMap && (
+                    <div style={{ marginTop: 8 }}>
+                      <MapPicker value={coords} onChange={setCoords} />
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 6 }}>{coords ? `📍 ${t('Pinned at')} ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : t('Tap the map to drop a pin at the exact location.')}</div>
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -3358,6 +3373,7 @@ function PanelBody() {
                       condition: (COND_MAP[condition] ?? 'good') as Parameters<typeof client.listings.create.mutate>[0]['condition'],
                       images: imageUrls,
                       location: town,
+                      ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
                       stock: Math.max(1, Math.min(999, parseInt(stock) || 1)),
                       deliveryFee: offersDelivery ? (parseFloat(deliveryFee) || 0) : 0,
                       deliveryMethod: offersDelivery ? deliveryMethod : undefined,

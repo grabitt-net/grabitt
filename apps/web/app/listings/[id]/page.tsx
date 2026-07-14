@@ -341,16 +341,18 @@ function ListingInner() {
           </div>
         )}
 
-        {/* Location map */}
+        {/* Location map — use the exact pinned coordinates when set, else the address/town */}
         {(() => {
-          const q = (job?.address || listing.location || '').trim()
-          if (!q) return null
+          const hasPin = listing.lat != null && listing.lng != null
+          const label = (job?.address || listing.location || '').trim()
+          if (!hasPin && !label) return null
+          const q = hasPin ? `${listing.lat},${listing.lng}` : label
           return (
             <div style={cardBox}>
               <div style={sectionTitle}>{t('Location')}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#555', marginBottom: 8 }}>📍 {q}</div>
+              {label && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#555', marginBottom: 8 }}>📍 {label}</div>}
               <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #ece3d7' }}>
-                <iframe title="Location map" src={`https://www.google.com/maps?q=${encodeURIComponent(q)}&z=14&output=embed`} width="100%" height="220" style={{ border: 0, display: 'block' }} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                <iframe title="Location map" src={`https://www.google.com/maps?q=${encodeURIComponent(q)}&z=${hasPin ? 16 : 14}&output=embed`} width="100%" height="220" style={{ border: 0, display: 'block' }} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
               </div>
             </div>
           )

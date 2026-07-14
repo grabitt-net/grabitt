@@ -63,7 +63,9 @@ export default function JobsPage() {
 
   // Geocode job locations to pins for the map view.
   const points = useMemo<JobPoint[]>(() => rows.flatMap(j => {
-    const coords = geocodeGC(j.listing?.location)
+    const coords: [number, number] | null = (j.listing?.lat != null && j.listing?.lng != null)
+      ? [j.listing.lat, j.listing.lng]
+      : geocodeGC(j.listing?.location)
     if (!coords) return []
     return [{
       id: j.listing?.id, title: j.jobTitle, company: j.company,
