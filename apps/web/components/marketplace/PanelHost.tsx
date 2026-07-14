@@ -2068,6 +2068,14 @@ function PanelBody() {
       finally { setBusyId(null) }
     }
 
+    // Buyer responds to the seller's auto counter-offer.
+    const respondCounter = async (offerId: string, action: 'accept' | 'reject') => {
+      setBusyId(offerId)
+      try { const c = await getTrpcClient(); await c.offers.respondToCounter.mutate({ offerId, action }); await load(); toast(action === 'accept' ? '🤝 Counter accepted — proceed to pay' : 'Countered lower') }
+      catch (e) { toast(e instanceof Error ? e.message : 'Could not respond') }
+      finally { setBusyId(null) }
+    }
+
     const STATUS_LABEL: Record<string, string> = { pending: 'Pending', accepted: 'Accepted', declined: 'Declined', countered: 'Countered', expired: 'Expired', withdrawn: 'Withdrawn' }
     const list = tab === 'received' ? received : sent
 
@@ -2108,6 +2116,18 @@ function PanelBody() {
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <button onClick={() => respond(o.id, 'accept')} disabled={busyId === o.id} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 0', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>{busyId === o.id ? '…' : 'Accept'}</button>
                 <button onClick={() => respond(o.id, 'decline')} disabled={busyId === o.id} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '9px 0', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>Decline</button>
+              </div>
+            )}
+            {/* Buyer's view of the seller's auto counter-offer */}
+            {tab === 'sent' && o.status === 'countered' && o.counterAmount != null && (
+              <div style={{ marginTop: 8, background: '#FFF7F2', border: '1px solid #FFE0CC', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', marginBottom: 8 }}>
+                  {o.counterTier >= 3 ? 'Seller’s final counter' : 'Seller countered'}: <strong style={{ color: 'var(--orange)' }}>€{Number(o.counterAmount).toLocaleString()}</strong>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => respondCounter(o.id, 'accept')} disabled={busyId === o.id} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 0', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>{busyId === o.id ? '…' : `Accept €${Number(o.counterAmount).toLocaleString()}`}</button>
+                  <button onClick={() => respondCounter(o.id, 'reject')} disabled={busyId === o.id} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '9px 0', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>{o.counterTier >= 3 ? 'Decline' : 'Counter lower'}</button>
+                </div>
               </div>
             )}
           </div>

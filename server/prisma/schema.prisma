@@ -455,6 +455,7 @@ enum NotificationKind {
   offer_received
   offer_accepted
   offer_declined
+  offer_countered
   payment_held
   handover_confirmed
   funds_released
@@ -514,6 +515,8 @@ model Offer {
   amount    Decimal     @db.Decimal(10, 2)
   message   String?
   status    OfferStatus @default(pending)
+  counterAmount Decimal? @db.Decimal(10, 2)  // seller's (auto) counter price
+  counterTier   Int      @default(0)         // auto counter ladder: 0=none, 1/2/3 (3=final=min)
   expiresAt DateTime?
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
