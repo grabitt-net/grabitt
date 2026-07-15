@@ -13,6 +13,7 @@ export default function QuickActions() {
   const actions = [
     { label: 'Sponsorship', action: () => openPanel('advertise') },
     { label: 'Find Work', action: () => router.push('/jobs') },
+    { label: 'Find Staff', action: () => openPanel('findStaff') },
     { label: 'Find Home', action: () => router.push('/property') },
     { label: 'Employers', action: () => openPanel('employers') },
     { label: 'Business', action: () => openPanel('business') },

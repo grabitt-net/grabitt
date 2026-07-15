@@ -13,6 +13,7 @@ export type PanelId =
   | 'jobs' | 'property' | 'handy' | 'grabItNow' | 'profile' | 'featureListing'
   | 'myActivity' | 'myRatings' | 'report' | 'verifyMe' | 'following'
   | 'cart' | 'buyCredits' | 'transaction' | 'myDisputes' | 'storefront' | 'storefrontEdit' | 'applications'
+  | 'findStaff'
 
 interface PanelState {
   id: PanelId | null

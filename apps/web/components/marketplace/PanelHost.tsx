@@ -16,6 +16,7 @@ import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/
 import StripePayment from './StripePayment'
 import ShareSheet from './ShareSheet'
 import FooterPanelActions from './FooterPanelActions'
+import FindStaffPanel from './FindStaffPanel'
 import dynamic from 'next/dynamic'
 
 // Leaflet needs window — load the map pin-picker client-only.
@@ -1130,8 +1131,13 @@ function PanelBody() {
           <button style={{ width: '100%', background: 'linear-gradient(135deg,#2193b0,#6dd5ed)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>Post a Job Now</button>
         </a>
         <button onClick={() => openPanel('applications')} style={{ width: '100%', background: '#fff', color: '#2193b0', border: '2px solid #2193b0', borderRadius: 14, padding: '13px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 10 }}>📋 View Applicants</button>
+        <button onClick={() => openPanel('findStaff')} style={{ width: '100%', background: '#FF4500', color: '#fff', border: 'none', borderRadius: 14, padding: '13px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 10 }}>🧑‍💼 Find Staff</button>
       </ActionPanel>
     )
+  }
+
+  if (panel.id === 'findStaff') {
+    return <FindStaffPanel onClose={closePanel} openPanel={openPanel} />
   }
 
   // ── FOOTER PANELS ───────────────────────────────────────────────────────────
