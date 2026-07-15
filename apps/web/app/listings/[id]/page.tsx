@@ -154,6 +154,7 @@ function ListingInner() {
   // this listing in their favourites/wishlist.
   const views = Number(listing.viewCount ?? 0)
   const watchers = Number(listing._count?.wishlistItems ?? 0)
+  const wanted = Number(listing.wantedCount ?? 0)
 
   // The panel-item shape the checkout / offer panels expect.
   const panelItem = {
@@ -243,9 +244,9 @@ function ListingInner() {
           <div style={{ width: 112, flexShrink: 0, background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '8px 5px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 5 }}>🔥 In demand</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', gap: 2 }}>
-              {[[views, 'views'], [watchers, 'watching']].map(([n, lab], i) => (
+              {[[views, 'views'], [watchers, 'watching'], [wanted, 'wanted']].map(([n, lab], i) => (
                 <div key={i} style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div>
                   <div style={{ fontSize: 8, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{lab as string}</div>
                 </div>
               ))}

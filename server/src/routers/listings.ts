@@ -211,7 +211,18 @@ export const listingsRouter = router({
       })
       if (!listing) throw new TRPCError({ code: 'NOT_FOUND' })
       await ctx.prisma.listing.update({ where: { id: input.id }, data: { viewCount: { increment: 1 } } })
-      return listing
+      // Real "wanted" count for the In-Demand box: active wishes whose category
+      // and budget this listing satisfies (people actively looking for it).
+      const wantedCount = await ctx.prisma.wishItem.count({
+        where: {
+          active: true,
+          AND: [
+            { OR: [{ department: null }, { department: listing.department }] },
+            { OR: [{ maxPrice: null }, { maxPrice: { gte: listing.price } }] },
+          ],
+        },
+      })
+      return { ...listing, wantedCount }
     }),
 
   // Sold-price comparables: recent completed sales for similar items, so a buyer
