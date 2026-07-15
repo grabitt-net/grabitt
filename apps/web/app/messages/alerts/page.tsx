@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import SiteHeader from '@/components/marketplace/SiteHeader'
 import BottomNav from '@/components/marketplace/BottomNav'
+import WishManager from '@/components/marketplace/WishManager'
 import { prisma } from 'server/src/db'
 
 export const runtime = 'nodejs'
@@ -39,6 +40,8 @@ export default async function GrabittAlertsPage() {
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#FFF3EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🔔</div>
         <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 16, fontWeight: 700, color: 'var(--dark)' }}>Grabitt Alerts</div>
       </header>
+
+      <WishManager />
 
       {alerts.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 24px' }}>

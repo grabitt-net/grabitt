@@ -25,6 +25,49 @@ export function autoTags(title: string, description: string): string[] {
   return tags
 }
 
+// Notify buyers whose active WishItem ("I'm looking for X") is satisfied by a new
+// listing. A wish matches when department + max-price fit and at least one of its
+// keywords (or its title words, if it has none) appears in the listing text.
+async function notifyWishMatches(
+  prisma: { wishItem: any; notification: any },
+  listing: { id: string; title: string; description: string; department: string; price: any; sellerId: string; tags: string[] },
+) {
+  const wishes = await prisma.wishItem.findMany({
+    where: {
+      active: true,
+      userId: { not: listing.sellerId },
+      OR: [{ department: null }, { department: listing.department }],
+    },
+  })
+  if (!wishes.length) return
+
+  const haystack = `${listing.title} ${listing.description} ${listing.tags.join(' ')}`.toLowerCase()
+  const price = Number(listing.price)
+  const matched = wishes.filter((w: any) => {
+    if (w.maxPrice != null && price > Number(w.maxPrice)) return false
+    const terms: string[] = (w.keywords?.length ? w.keywords : String(w.title).split(/\s+/))
+      .map((t: string) => t.toLowerCase().trim())
+      .filter((t: string) => t.length >= 3)
+    if (!terms.length) return true
+    return terms.some(t => haystack.includes(t))
+  })
+  if (!matched.length) return
+
+  await prisma.notification.createMany({
+    data: matched.map((w: any) => ({
+      userId: w.userId,
+      kind: 'wish_matched' as const,
+      title: '✨ We found something you\'re after',
+      body: `A new listing "${listing.title}" (€${price.toLocaleString()}) matches your wish "${w.title}".`,
+      actionUrl: `/listings/${listing.id}`,
+    })),
+  })
+  await prisma.wishItem.updateMany({
+    where: { id: { in: matched.map((w: any) => w.id) } },
+    data: { lastMatchAt: new Date() },
+  })
+}
+
 export const listingsRouter = router({
   search: publicProcedure
     .input(SearchInputSchema)
@@ -250,9 +293,15 @@ export const listingsRouter = router({
       // Check grade upgrade eligibility on every submit
       await checkGradeUpgrade(ctx.prisma, user)
 
-      return ctx.prisma.listing.create({
+      const listing = await ctx.prisma.listing.create({
         data: { ...input, tags: autoTags(input.title, input.description), sellerId: user.id, status: 'active' },
       })
+
+      // Wish matching: alert buyers whose active "I'm looking for X" wish this
+      // new listing satisfies. Fires a wish_matched notification (Grabitt Alerts).
+      await notifyWishMatches(ctx.prisma, listing)
+
+      return listing
     }),
 
   // Change a listing's price (owner only). A price DROP notifies everyone who has
