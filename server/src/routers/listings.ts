@@ -31,6 +31,10 @@ export function autoTags(title: string, description: string): string[] {
 async function notifyWishMatches(
   prisma: { wishItem: any; notification: any },
   listing: { id: string; title: string; description: string; department: string; price: any; sellerId: string; tags: string[] },
+  // When set (the item's previous, higher price), only alert wishes that have
+  // just become affordable — i.e. their budget sits between new and old price.
+  // This is used on price drops so we don't re-alert wishes already in range.
+  newlyAffordableBelow?: number,
 ) {
   const wishes = await prisma.wishItem.findMany({
     where: {
@@ -45,6 +49,10 @@ async function notifyWishMatches(
   const price = Number(listing.price)
   const matched = wishes.filter((w: any) => {
     if (w.maxPrice != null && price > Number(w.maxPrice)) return false
+    if (newlyAffordableBelow !== undefined) {
+      // Only wishes with a budget the OLD price exceeded (now newly in reach).
+      if (w.maxPrice == null || Number(w.maxPrice) >= newlyAffordableBelow) return false
+    }
     const terms: string[] = (w.keywords?.length ? w.keywords : String(w.title).split(/\s+/))
       .map((t: string) => t.toLowerCase().trim())
       .filter((t: string) => t.length >= 3)
@@ -328,6 +336,9 @@ export const listingsRouter = router({
             actionUrl: `/listings/${listing.id}`,
           })),
         })
+        // Also alert buyers whose "looking for X" wish just became affordable —
+        // the item now sits within a budget the old price exceeded.
+        await notifyWishMatches(ctx.prisma, updated as any, oldPrice)
       }
       return { ok: true, price: newPrice, dropped: newPrice < oldPrice }
     }),
