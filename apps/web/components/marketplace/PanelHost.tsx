@@ -1416,10 +1416,12 @@ function PanelBody() {
   if (panel.id === 'cart') {
     // Server-side basket (source of truth): survives across devices, auto-clears
     // after 12h and drops items the moment they're bought by someone else.
-    const [cartStep, setCartStep] = useState<'summary' | 'processing' | 'success'>('summary')
+    const [cartStep, setCartStep] = useState<'summary' | 'card' | 'processing' | 'success'>('summary')
     const [payErr, setPayErr] = useState('')
     const [items, setItems] = useState<any[] | null>(null)
     const [busyId, setBusyId] = useState<string | null>(null)
+    const [setupSecret, setSetupSecret] = useState<string | null>(null)
+    const [result, setResult] = useState<{ succeeded: string[]; failed: { title: string; reason: string }[] } | null>(null)
     const justAdded = panel.data?.added === true
     const fmt = (n: number) => `€${n % 1 === 0 ? n : n.toFixed(2)}`
 
@@ -1452,15 +1454,27 @@ function PanelBody() {
       finally { setBusyId(null) }
     }
 
-    const payCart = async () => {
+    // Step 1 — collect the card once (SetupIntent).
+    const startCheckout = async () => {
+      setPayErr('')
+      try {
+        const c = await getTrpcClient()
+        const res: any = await c.transactions.startCartCheckout.mutate()
+        if (!res?.clientSecret) throw new Error('Could not start checkout')
+        setSetupSecret(res.clientSecret)
+        setCartStep('card')
+      } catch (err) { setPayErr((err as Error).message || 'Could not start checkout') }
+    }
+
+    // Step 2 — with the saved card, charge each item into its own escrow.
+    const onCardSaved = async (paymentMethodId?: string) => {
+      if (!paymentMethodId) { setPayErr('Card was not saved — please try again'); setCartStep('summary'); return }
       setCartStep('processing'); setPayErr('')
       try {
         const c = await getTrpcClient()
-        // Each item becomes its own held transaction (per-seller escrow).
-        for (const it of list) {
-          await c.transactions.initiate.mutate({ listingId: it.listingId, quantity: it.qty, fulfilment: 'collection' })
-        }
-        await c.cart.clearAll.mutate()
+        const r: any = await c.transactions.finishCartCheckout.mutate({ paymentMethodId })
+        setResult(r)
+        await load()
         setCartStep('success')
       } catch (err) { setPayErr((err as Error).message || 'Payment failed'); setCartStep('summary') }
     }
@@ -1468,15 +1482,36 @@ function PanelBody() {
     return (
       <ActionPanel title={`🛒 Your Basket${list.length ? ` (${list.length})` : ''}`} onClose={closePanel}>
         {cartStep === 'success' ? (
-          <div style={{ textAlign: 'center', padding: '30px 0' }}>
-            <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Order placed!</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>
-              Payment for each item is held safely in escrow. Arrange handover with each seller from My Purchases.
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>{result && result.succeeded.length > 0 ? '🎉' : '⚠️'}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>
+              {result && result.succeeded.length > 0 ? `${result.succeeded.length} item${result.succeeded.length === 1 ? '' : 's'} secured!` : 'Nothing was charged'}
             </div>
+            {result && result.succeeded.length > 0 && (
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 14 }}>
+                Payment for each is held safely in escrow. Arrange handover with each seller from My Purchases.
+              </div>
+            )}
+            {result && result.failed.length > 0 && (
+              <div style={{ background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 10, padding: '10px 12px', textAlign: 'left', marginBottom: 14 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#c0392b', marginBottom: 4 }}>Not charged — still in your basket:</div>
+                {result.failed.map((f, i) => (
+                  <div key={i} style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#7a1f1f', lineHeight: 1.5 }}>• {f.title} — {f.reason}</div>
+                ))}
+              </div>
+            )}
             <button onClick={() => openPanel('purchases')} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>🛒 View My Purchases</button>
             <button onClick={closePanel} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>Back to browsing</button>
           </div>
+        ) : cartStep === 'card' ? (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0 14px', borderBottom: '1px solid #f0f0f0', marginBottom: 14 }}>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555' }}>Authorising {list.length} item{list.length === 1 ? '' : 's'}</span>
+              <span style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>{fmt(subtotal)}</span>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', marginBottom: 12, lineHeight: 1.5 }}>Enter your card once — each item is authorised into its own escrow and only charged/released at that seller&apos;s handover.</div>
+            {setupSecret && <StripePayment clientSecret={setupSecret} mode="setup" label={`Pay ${fmt(subtotal)} securely`} onSuccess={onCardSaved} />}
+          </>
         ) : cartStep === 'processing' ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
@@ -1524,7 +1559,7 @@ function PanelBody() {
               🔒 Each item is paid into escrow and released to its seller at handover.
             </div>
             {payErr && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{payErr}</div>}
-            <button onClick={payCart} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+            <button onClick={startCheckout} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
               Checkout {fmt(subtotal)} →
             </button>
           </>

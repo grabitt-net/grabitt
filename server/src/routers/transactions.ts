@@ -204,6 +204,90 @@ export const transactionsRouter = router({
       return { transaction, clientSecret: paymentIntent.client_secret }
     }),
 
+  // ── MULTI-SELLER CART CHECKOUT ────────────────────────────────────────────────
+  // Step 1: collect the buyer's card ONCE. Returns a SetupIntent to save a card
+  // against the buyer's Stripe customer; the saved PaymentMethod is then used to
+  // authorise each item's escrow PaymentIntent server-side.
+  startCartCheckout: protectedProcedure.mutation(async ({ ctx }) => {
+    const count = await ctx.prisma.cartItem.count({ where: { userId: ctx.user.id } })
+    if (count === 0) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Your basket is empty' })
+
+    const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
+    let customerId = user.stripeCustomerId
+    if (!customerId) {
+      const customer = await getStripe().customers.create({ email: user.email, metadata: { userId: user.id } })
+      customerId = customer.id
+      await ctx.prisma.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } })
+    }
+    const setupIntent = await getStripe().setupIntents.create({
+      customer: customerId,
+      usage: 'off_session',
+      payment_method_types: ['card'],
+    })
+    return { clientSecret: setupIntent.client_secret }
+  }),
+
+  // Step 2: with the saved card, create + confirm one manual-capture (escrow)
+  // PaymentIntent per basket item. Each becomes its own held transaction released
+  // at that item's handover. Per-item failures (declines / SCA) are reported and
+  // those items are left in the basket.
+  finishCartCheckout: protectedProcedure
+    .input(z.object({ paymentMethodId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
+      if (!user.stripeCustomerId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No saved card' })
+
+      const cart = await ctx.prisma.cartItem.findMany({
+        where: { userId: ctx.user.id },
+        include: { listing: { include: { seller: true } } },
+      })
+
+      const succeeded: string[] = []
+      const failed: { title: string; reason: string }[] = []
+
+      for (const line of cart) {
+        const listing = line.listing
+        try {
+          if (listing.status !== 'active') throw new Error('No longer available')
+          if (listing.sellerId === ctx.user.id) throw new Error('Your own listing')
+          const qty = Math.min(line.qty, listing.stock)
+          if (qty < 1) throw new Error('Out of stock')
+
+          const itemSubtotal = Math.round(Number(listing.price) * qty * 100) / 100
+          const amount = itemSubtotal // basket items are collection; delivery handled per-item elsewhere
+          const feeRate = FEE_RATES[listing.seller.grade as keyof typeof FEE_RATES] ?? FEE_RATES.grabber
+          const platformFee = Math.round(itemSubtotal * feeRate * 100) / 100
+          const sellerNet = Math.round((amount - platformFee) * 100) / 100
+
+          const pi = await getStripe().paymentIntents.create({
+            amount: Math.round(amount * 100),
+            currency: 'eur',
+            capture_method: 'manual',
+            customer: user.stripeCustomerId,
+            payment_method: input.paymentMethodId,
+            confirm: true,
+            off_session: true,
+            metadata: { listingId: listing.id, buyerId: ctx.user.id, sellerId: listing.sellerId },
+          })
+          if (pi.status !== 'requires_capture') throw new Error('Card needs authentication — buy this item on its own')
+
+          await ctx.prisma.transaction.create({
+            data: {
+              listingId: listing.id, buyerId: ctx.user.id, sellerId: listing.sellerId,
+              amount, platformFee, sellerNet, quantity: qty, fulfilmentType: 'collection',
+              status: 'pending_payment', stripePaymentIntentId: pi.id,
+            },
+          })
+          await ctx.prisma.cartItem.delete({ where: { id: line.id } })
+          succeeded.push(listing.title)
+        } catch (e) {
+          failed.push({ title: listing.title, reason: e instanceof Error ? e.message : 'Payment failed' })
+        }
+      }
+
+      return { succeeded, failed }
+    }),
+
   // ── GENERATE HANDOVER QR ──────────────────────────────────────────────────────
   // Called by the SELLER once the buyer's payment is held.
   // Returns a QR code image (dataURL) + 6-char short code for manual entry.

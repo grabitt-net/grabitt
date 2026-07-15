@@ -9,7 +9,7 @@ import { getStripe } from '@/lib/stripe'
 // the card and moves the intent to `requires_capture` — funds are held, not yet
 // taken. Capture happens later at handover/tracking release.
 
-function InnerForm({ label, onSuccess }: { label: string; onSuccess: () => void }) {
+function InnerForm({ label, mode, onSuccess }: { label: string; mode: 'payment' | 'setup'; onSuccess: (paymentMethodId?: string) => void }) {
   const stripe = useStripe()
   const elements = useElements()
   const [submitting, setSubmitting] = useState(false)
@@ -19,6 +19,14 @@ function InnerForm({ label, onSuccess }: { label: string; onSuccess: () => void 
     if (!stripe || !elements) return
     setSubmitting(true)
     setError('')
+    if (mode === 'setup') {
+      // Save the card (for multi-item cart checkout) — no charge yet.
+      const { error: err, setupIntent } = await stripe.confirmSetup({ elements, redirect: 'if_required' })
+      if (err) { setError(err.message || 'Could not save card'); setSubmitting(false); return }
+      const pm = typeof setupIntent?.payment_method === 'string' ? setupIntent.payment_method : setupIntent?.payment_method?.id
+      onSuccess(pm)
+      return
+    }
     const { error: err } = await stripe.confirmPayment({
       elements,
       redirect: 'if_required', // stay in-app for card payments
@@ -49,13 +57,13 @@ function InnerForm({ label, onSuccess }: { label: string; onSuccess: () => void 
   )
 }
 
-export default function StripePayment({ clientSecret, label, onSuccess }: { clientSecret: string; label: string; onSuccess: () => void }) {
+export default function StripePayment({ clientSecret, label, mode = 'payment', onSuccess }: { clientSecret: string; label: string; mode?: 'payment' | 'setup'; onSuccess: (paymentMethodId?: string) => void }) {
   if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
     return <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#b91c1c', background: '#fef2f2', borderRadius: 10, padding: 12 }}>Payments are not configured (missing Stripe key).</div>
   }
   return (
     <Elements stripe={getStripe()} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#FF4500' } } }}>
-      <InnerForm label={label} onSuccess={onSuccess} />
+      <InnerForm label={label} mode={mode} onSuccess={onSuccess} />
     </Elements>
   )
 }
