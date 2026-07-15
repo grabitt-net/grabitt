@@ -255,6 +255,34 @@ export const listingsRouter = router({
       })
     }),
 
+  // Change a listing's price (owner only). A price DROP notifies everyone who has
+  // the item in their favourites/wishlist — these land in the Grabitt Alerts feed.
+  updatePrice: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid(), price: z.number().min(0).max(9_999_999) }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUniqueOrThrow({ where: { id: input.listingId } })
+      if (listing.sellerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the seller can change the price' })
+
+      const oldPrice = Number(listing.price)
+      const newPrice = Math.round(input.price * 100) / 100
+      const updated = await ctx.prisma.listing.update({ where: { id: listing.id }, data: { price: newPrice } })
+
+      if (newPrice < oldPrice) {
+        const watchers = await ctx.prisma.wishlistItem.findMany({ where: { listingId: listing.id }, select: { userId: true } })
+        const pct = oldPrice > 0 ? Math.round(((oldPrice - newPrice) / oldPrice) * 100) : 0
+        await ctx.prisma.notification.createMany({
+          data: watchers.map(w => ({
+            userId: w.userId,
+            kind: 'price_drop' as const,
+            title: '📉 Price drop on a saved item',
+            body: `"${listing.title}" dropped from €${oldPrice.toLocaleString()} to €${newPrice.toLocaleString()}${pct > 0 ? ` (−${pct}%)` : ''}.`,
+            actionUrl: `/listings/${listing.id}`,
+          })),
+        })
+      }
+      return { ok: true, price: newPrice, dropped: newPrice < oldPrice }
+    }),
+
   featured: publicProcedure
     .query(({ ctx }) =>
       ctx.prisma.listing.findMany({

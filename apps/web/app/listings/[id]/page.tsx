@@ -183,6 +183,22 @@ function ListingInner() {
     catch { alert('Could not start the payment. Please try again.') }
   }
 
+  const [editingPrice, setEditingPrice] = useState(false)
+  const [newPrice, setNewPrice] = useState('')
+  const [savingPrice, setSavingPrice] = useState(false)
+  const saveNewPrice = async () => {
+    const value = Number(newPrice)
+    if (!Number.isFinite(value) || value < 0) { alert('Enter a valid price.'); return }
+    setSavingPrice(true)
+    try {
+      const res: any = await trpcAuthed().listings.updatePrice.mutate({ listingId: id, price: value })
+      setListing((l: any) => ({ ...l, price: res.price }))
+      setEditingPrice(false)
+      if (res.dropped) alert('Price lowered — everyone who saved this item has been alerted. 📉')
+    } catch { alert('Could not update the price. Please try again.') }
+    finally { setSavingPrice(false) }
+  }
+
   return (
     <main style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 40 }}>
       <SiteHeader />
@@ -248,6 +264,22 @@ function ListingInner() {
                 <button onClick={() => promote('grab_it_now')} style={{ flex: 1, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: '11px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>⚡ Grab It Now · €{PRICES.grabItNow}</button>
                 <button onClick={() => promote('featured')} style={{ flex: 1, background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 12, padding: '11px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>👀 Feature · €{PRICES.featuredPerWeek}/wk</button>
               </div>
+            )}
+            {!job && !prop && (
+              editingPrice ? (
+                <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#555' }}>€</span>
+                  <input type="number" min={0} step="0.01" value={newPrice} onChange={e => setNewPrice(e.target.value)} autoFocus
+                    style={{ flex: 1, border: '1.5px solid var(--sand2)', borderRadius: 10, padding: '9px 10px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 800 }} />
+                  <button onClick={saveNewPrice} disabled={savingPrice} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', opacity: savingPrice ? 0.6 : 1 }}>{savingPrice ? '…' : 'Save'}</button>
+                  <button onClick={() => setEditingPrice(false)} style={{ background: 'transparent', color: '#888', border: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>Cancel</button>
+                </div>
+              ) : (
+                <button onClick={() => { setNewPrice(String(Number(listing.price))); setEditingPrice(true) }}
+                  style={{ width: '100%', marginTop: 8, background: '#fff', color: '#555', border: '1.5px solid var(--sand2)', borderRadius: 12, padding: '10px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>
+                  ✏️ Change price · lowering it alerts everyone who saved it
+                </button>
+              )
             )}
           </div>
         ) : job ? (
