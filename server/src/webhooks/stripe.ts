@@ -94,6 +94,16 @@ export async function handleStripeEvent(event: Stripe.Event) {
           },
         })
       }
+      // Real-time basket cleanup: once an item is bought, drop single-stock
+      // listings from everyone else's basket so no one else can check them out.
+      const heldForCart = await prisma.transaction.findMany({
+        where: { stripePaymentIntentId: pi.id, status: 'held' },
+        select: { listingId: true, listing: { select: { stock: true } } },
+      })
+      const soldOut = heldForCart.filter(t => t.listing.stock <= 1).map(t => t.listingId)
+      if (soldOut.length) {
+        await prisma.cartItem.deleteMany({ where: { listingId: { in: soldOut } } })
+      }
       break
     }
     // Fires after capture (purchase release) OR immediately for auto-capture
