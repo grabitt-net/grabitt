@@ -120,7 +120,7 @@ function ListingInner() {
       let token = getAuthToken()
       if (!token) token = await refreshAuthToken()
       if (!token) { setShowApply(false); openPanel('login'); return }
-      await trpcAuthed().jobs.apply.mutate({ listingId: id, ...(coverNote.trim() && { coverNote: coverNote.trim() }) })
+      await trpcAuthed().jobs.applyToJob.mutate({ listingId: id, ...(coverNote.trim() && { coverNote: coverNote.trim() }) })
       setApplied(true); setShowApply(false)
     } catch { /* ignore */ } finally { setApplying(false) }
   }

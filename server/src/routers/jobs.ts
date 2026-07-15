@@ -6,7 +6,7 @@ export const jobsRouter = router({
   // Candidate applies to a job. Free to apply; the application goes straight to
   // the employer (a JobApplication row) and notifies them. Idempotent per
   // (job, applicant) — re-applying just updates the cover note.
-  apply: protectedProcedure
+  applyToJob: protectedProcedure
     .input(z.object({ listingId: z.string().uuid(), coverNote: z.string().max(2000).optional(), cvUrl: z.string().url().optional() }))
     .mutation(async ({ ctx, input }) => {
       const jl = await ctx.prisma.jobListing.findFirst({
