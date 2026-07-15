@@ -58,6 +58,9 @@ function ListingInner() {
   const [empJobs, setEmpJobs] = useState<any[]>([])
   const [basketBusy, setBasketBusy] = useState(false)
   const [basketErr, setBasketErr] = useState('')
+  const [editingPrice, setEditingPrice] = useState(false)
+  const [newPrice, setNewPrice] = useState('')
+  const [savingPrice, setSavingPrice] = useState(false)
 
   useEffect(() => {
     createTrpcClient().listings.byId.query({ id })
@@ -183,9 +186,6 @@ function ListingInner() {
     catch { alert('Could not start the payment. Please try again.') }
   }
 
-  const [editingPrice, setEditingPrice] = useState(false)
-  const [newPrice, setNewPrice] = useState('')
-  const [savingPrice, setSavingPrice] = useState(false)
   const saveNewPrice = async () => {
     const value = Number(newPrice)
     if (!Number.isFinite(value) || value < 0) { alert('Enter a valid price.'); return }
