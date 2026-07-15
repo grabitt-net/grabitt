@@ -56,6 +56,8 @@ function ListingInner() {
   const [coverNote, setCoverNote] = useState('')
   const [applying, setApplying] = useState(false)
   const [empJobs, setEmpJobs] = useState<any[]>([])
+  const [basketBusy, setBasketBusy] = useState(false)
+  const [basketErr, setBasketErr] = useState('')
 
   useEffect(() => {
     createTrpcClient().listings.byId.query({ id })
@@ -113,6 +115,19 @@ function ListingInner() {
     ? Array.from(new Set(`${job.sector ?? ''} ${JOB_TYPE[job.type] ?? job.type ?? ''} ${job.jobTitle ?? ''}`
         .toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 3))).slice(0, 6)
     : []
+
+  const isGrabItNow = listing.status === 'grab_it_now'
+  const addToBasket = async () => {
+    setBasketErr(''); setBasketBusy(true)
+    try {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      if (!token) { openPanel('login'); return }
+      await trpcAuthed().cart.addItem.mutate({ listingId: id })
+      openPanel('cart', { added: true })
+    } catch (e: any) { setBasketErr(e?.message ?? 'Could not add to basket') }
+    finally { setBasketBusy(false) }
+  }
 
   const submitApply = async () => {
     setApplying(true)
@@ -247,10 +262,11 @@ function ListingInner() {
           seller?.id && <MessageButton listingId={id} sellerId={seller.id} label={t('Enquire')} primary flex={1} />
         ) : (
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => openPanel('checkout', panelItem)} style={{ flex: 1, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 12, padding: '15px 8px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>🛒 Buy Now<br /><span style={{ fontSize: 12 }}>{priceLabel}</span></button>
+            <button onClick={() => isGrabItNow ? openPanel('checkout', panelItem) : addToBasket()} disabled={basketBusy} style={{ flex: 1, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 12, padding: '15px 8px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: basketBusy ? 'wait' : 'pointer', lineHeight: 1.25 }}>{isGrabItNow ? <>⚡ {t('Buy Now')}</> : <>🛒 {t('Buy Now')}</>}<br /><span style={{ fontSize: 12 }}>{priceLabel}</span></button>
             <button onClick={() => openPanel('makeOffer', panelItem)} style={{ flex: 1, background: '#fff', color: '#FF4500', border: '2px solid #FF4500', borderRadius: 12, padding: '15px 8px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>💰 Make<br />an Offer</button>
           </div>
         )}
+        {basketErr && !job && !prop && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#c0392b', textAlign: 'center', marginTop: -4 }}>{basketErr}</div>}
 
         {/* Details */}
         {(job || prop || listing.condition || (typeof listing.stock === 'number')) && (

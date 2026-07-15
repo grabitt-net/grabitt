@@ -209,6 +209,7 @@ model User {
   updatedAt          DateTime  @updatedAt
 
   listings           Listing[]
+  cartItems          CartItem[]
   buyerTransactions  Transaction[]      @relation("Buyer")
   sellerTransactions Transaction[]      @relation("Seller")
   sentMessages       Message[]
@@ -329,6 +330,7 @@ model Listing {
   propertyListing  PropertyListing?
   handyListing     HandyListing?
   wishlistItems    WishlistItem[]
+  cartItems        CartItem[]
   reports          Report[]
   offers           Offer[]
 
@@ -526,6 +528,24 @@ model Offer {
   @@index([listingId])
   @@index([buyerId])
   @@index([status])
+}
+
+// Server-side basket. Items expire 12h after being added; warnings fire at 6h/10h.
+model CartItem {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId    String
+  listing      Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  qty          Int       @default(1)
+  warn6SentAt  DateTime?
+  warn10SentAt DateTime?
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime
+
+  @@unique([userId, listingId])
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 // ── Reviews ──────────────────────────────────────────────────────────────────

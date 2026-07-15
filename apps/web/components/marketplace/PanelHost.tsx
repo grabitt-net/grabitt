@@ -1414,31 +1414,59 @@ function PanelBody() {
 
   // ── CART ─────────────────────────────────────────────────────────────────────
   if (panel.id === 'cart') {
-    const [cartStep, setCartStep] = useState<'summary' | 'card' | 'processing' | 'success'>('summary')
+    // Server-side basket (source of truth): survives across devices, auto-clears
+    // after 12h and drops items the moment they're bought by someone else.
+    const [cartStep, setCartStep] = useState<'summary' | 'processing' | 'success'>('summary')
     const [payErr, setPayErr] = useState('')
+    const [items, setItems] = useState<any[] | null>(null)
+    const [busyId, setBusyId] = useState<string | null>(null)
+    const justAdded = panel.data?.added === true
     const fmt = (n: number) => `€${n % 1 === 0 ? n : n.toFixed(2)}`
 
+    const load = useCallback(async () => {
+      try { const c = await getTrpcClient(); setItems(await c.cart.items.query() as any[]) }
+      catch { setItems([]) }
+    }, [])
+    useEffect(() => { load() }, [load])
+
+    const list = items ?? []
+    const subtotal = list.reduce((s, it) => s + it.price * it.qty, 0)
+    const soonest = list.reduce<number | null>((min, it) => {
+      const ms = new Date(it.expiresAt).getTime() - Date.now()
+      return min == null || ms < min ? ms : min
+    }, null)
+    const countdown = (ms: number | null) => {
+      if (ms == null || ms <= 0) return '—'
+      const h = Math.floor(ms / 3600_000), m = Math.floor((ms % 3600_000) / 60_000)
+      return h > 0 ? `${h}h ${m}m` : `${m}m`
+    }
+
+    const changeQty = async (listingId: string, qty: number) => {
+      setBusyId(listingId)
+      try { const c = await getTrpcClient(); if (qty < 1) await c.cart.removeItem.mutate({ listingId }); else await c.cart.setItemQty.mutate({ listingId, qty }); await load() }
+      finally { setBusyId(null) }
+    }
+    const removeIt = async (listingId: string) => {
+      setBusyId(listingId)
+      try { const c = await getTrpcClient(); await c.cart.removeItem.mutate({ listingId }); await load(); toast('Removed from basket') }
+      finally { setBusyId(null) }
+    }
+
     const payCart = async () => {
-      setCartStep('processing')
-      setPayErr('')
+      setCartStep('processing'); setPayErr('')
       try {
-        const client = await getTrpcClient()
-        // Each listing becomes its own held transaction (per-listing escrow).
-        for (const it of cart.items) {
-          if (it.listingId) {
-            await client.transactions.initiate.mutate({ listingId: it.listingId, quantity: it.qty, fulfilment: 'collection' })
-          }
+        const c = await getTrpcClient()
+        // Each item becomes its own held transaction (per-seller escrow).
+        for (const it of list) {
+          await c.transactions.initiate.mutate({ listingId: it.listingId, quantity: it.qty, fulfilment: 'collection' })
         }
-        cart.clear()
+        await c.cart.clearAll.mutate()
         setCartStep('success')
-      } catch (err) {
-        setPayErr((err as Error).message || 'Payment failed')
-        setCartStep('card')
-      }
+      } catch (err) { setPayErr((err as Error).message || 'Payment failed'); setCartStep('summary') }
     }
 
     return (
-      <ActionPanel title={`🛒 Your Cart${cart.count > 0 ? ` (${cart.count})` : ''}`} onClose={closePanel}>
+      <ActionPanel title={`🛒 Your Basket${list.length ? ` (${list.length})` : ''}`} onClose={closePanel}>
         {cartStep === 'success' ? (
           <div style={{ textAlign: 'center', padding: '30px 0' }}>
             <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
@@ -1454,54 +1482,50 @@ function PanelBody() {
             <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>Placing your order…</div>
           </div>
-        ) : cart.items.length === 0 ? (
+        ) : items === null ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : list.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🛒</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Your cart is empty</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Add items from any listing to buy them together.</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Your basket is empty</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Tap Buy Now on any item to add it here.</div>
           </div>
-        ) : cartStep === 'card' ? (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 16px', borderBottom: '1px solid #f0f0f0', marginBottom: 16 }}>
-              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555' }}>Total to pay</span>
-              <span style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>{fmt(cart.total)}</span>
-            </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16 }}>
-              {['🔒 256-bit SSL', '🏦 Stripe Secured', '🛡️ Escrow Protected'].map(b => (
-                <span key={b} style={{ background: '#f0fdf4', color: '#555', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, padding: '3px 7px', borderRadius: 50 }}>{b}</span>
-              ))}
-            </div>
-            {payErr && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{payErr}</div>}
-            <button onClick={payCart} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
-              Pay {fmt(cart.total)} Securely
-            </button>
-          </>
         ) : (
           <>
-            {cart.items.map(it => (
-              <div key={it.key} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
-                <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{it.emoji || '🛍️'}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
-                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{fmt(it.price)}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    <button onClick={() => it.qty > 1 ? cart.setQty(it.key, it.qty - 1) : cart.remove(it.key)} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: '#f0f0f0', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>−</button>
-                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, minWidth: 16, textAlign: 'center' }}>{it.qty}</span>
-                    <button onClick={() => cart.setQty(it.key, it.qty + 1)} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: '#f0f0f0', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>+</button>
-                    <button onClick={() => { cart.remove(it.key); toast('Removed from cart') }} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Remove</button>
+            {justAdded && (
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '9px 12px', marginBottom: 10, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>✓ Added to your basket</div>
+            )}
+            <div style={{ background: '#FFF7ED', border: '1px solid #FFD4A0', borderRadius: 10, padding: '10px 12px', marginBottom: 12, fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#9a5b1a', lineHeight: 1.5 }}>
+              ⏳ Items are held for <strong>12 hours</strong> — complete checkout to secure them. We&apos;ll remind you at 6h and 10h.{soonest != null && soonest > 0 ? ` Soonest clears in ${countdown(soonest)}.` : ''}
+            </div>
+            {list.map(it => {
+              const ms = new Date(it.expiresAt).getTime() - Date.now()
+              return (
+                <div key={it.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
+                  <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0, overflow: 'hidden' }}>{it.image ? <img src={it.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
+                    <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{fmt(it.price)} <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#999', fontWeight: 700 }}>· {it.sellerName} · clears in {countdown(ms)}</span></div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                      <button disabled={busyId === it.listingId} onClick={() => changeQty(it.listingId, it.qty - 1)} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: '#f0f0f0', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>−</button>
+                      <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, minWidth: 16, textAlign: 'center' }}>{it.qty}</span>
+                      <button disabled={busyId === it.listingId || it.qty >= it.stock} onClick={() => changeQty(it.listingId, it.qty + 1)} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: '#f0f0f0', fontSize: 14, fontWeight: 900, cursor: it.qty >= it.stock ? 'not-allowed' : 'pointer' }}>+</button>
+                      <button disabled={busyId === it.listingId} onClick={() => removeIt(it.listingId)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Remove</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 0', fontFamily: 'var(--font-ui)' }}>
               <span style={{ fontSize: 14, fontWeight: 800, color: '#555' }}>Subtotal</span>
-              <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--orange)' }}>{fmt(cart.total)}</span>
+              <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--orange)' }}>{fmt(subtotal)}</span>
             </div>
             <div style={{ background: '#FFF3EE', borderRadius: 10, padding: '9px 12px', marginBottom: 14, fontFamily: 'var(--font-ui)', fontSize: 11, color: 'var(--orange)' }}>
               🔒 Each item is paid into escrow and released to its seller at handover.
             </div>
-            <button onClick={() => setCartStep('card')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
-              Checkout →
+            {payErr && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{payErr}</div>}
+            <button onClick={payCart} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+              Checkout {fmt(subtotal)} →
             </button>
           </>
         )}

@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS "CartItem" ("id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE, "listingId" TEXT NOT NULL REFERENCES "Listing"("id") ON DELETE CASCADE, "qty" INTEGER NOT NULL DEFAULT 1, "warn6SentAt" TIMESTAMP, "warn10SentAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "expiresAt" TIMESTAMP NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS "CartItem_userId_listingId_key" ON "CartItem"("userId","listingId");
