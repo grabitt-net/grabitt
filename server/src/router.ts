@@ -22,11 +22,13 @@ import { complianceRouter } from './routers/compliance'
 import { homepageRouter } from './routers/homepage'
 import { communityRouter } from './routers/community'
 import { cartRouter } from './routers/cart'
+import { followRouter } from './routers/follow'
 
 export const appRouter = router({
   auth: authRouter,
   listings: listingsRouter,
   cart: cartRouter,
+  follow: followRouter,
   transactions: transactionsRouter,
   offers: offersRouter,
   messages: messagesRouter,

@@ -11,6 +11,36 @@ export const usersRouter = router({
     ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
   ),
 
+  // Public: reviews received by a user (seller or buyer), plus a rating summary.
+  reviews: publicProcedure
+    .input(z.object({ userId: z.string().uuid(), page: z.number().int().min(1).default(1) }))
+    .query(async ({ ctx, input }) => {
+      const [rows, total, agg] = await Promise.all([
+        ctx.prisma.review.findMany({
+          where: { subjectId: input.userId },
+          orderBy: { createdAt: 'desc' },
+          skip: (input.page - 1) * 20,
+          take: 20,
+          include: { author: { select: { id: true, displayName: true, avatar: true } } },
+        }),
+        ctx.prisma.review.count({ where: { subjectId: input.userId } }),
+        ctx.prisma.review.aggregate({ where: { subjectId: input.userId }, _avg: { rating: true, accuracyRating: true, communicationRating: true, speedRating: true } }),
+      ])
+      return {
+        total,
+        avg: agg._avg.rating,
+        breakdown: { accuracy: agg._avg.accuracyRating, communication: agg._avg.communicationRating, speed: agg._avg.speedRating },
+        reviews: rows.map(r => ({
+          id: r.id,
+          rating: r.rating,
+          comment: r.comment,
+          createdAt: r.createdAt,
+          authorName: r.author.displayName,
+          authorAvatar: r.author.avatar,
+        })),
+      }
+    }),
+
   // At-a-glance counts for the account dashboard — active/sold listings, unread
   // messages, pending offers on your listings, and saved (favourite) items.
   dashboard: protectedProcedure.query(async ({ ctx }) => {

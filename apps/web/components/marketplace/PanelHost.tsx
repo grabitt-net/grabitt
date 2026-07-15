@@ -1785,11 +1785,27 @@ function PanelBody() {
     }
     const [store, setStore] = useState<Store | null>(null)
     const [loaded, setLoaded] = useState(false)
+    const [followData, setFollowData] = useState<{ following: boolean; followers: number } | null>(null)
+    const [followBusy, setFollowBusy] = useState(false)
+    const [reviewsData, setReviewsData] = useState<{ total: number; avg: number | null; reviews: { id: string; rating: number; comment: string | null; createdAt: string; authorName: string }[] } | null>(null)
+    const isOwnStore = !!currentUserId && currentUserId === sellerId
     useEffect(() => {
       if (!sellerId) { setLoaded(true); return }
-      getTrpcClient().then(c => c.listings.bySeller.query({ sellerId }))
-        .then(d => { setStore(d as Store); setLoaded(true) }).catch(() => setLoaded(true))
+      getTrpcClient().then(c => {
+        c.listings.bySeller.query({ sellerId }).then(d => { setStore(d as Store); setLoaded(true) }).catch(() => setLoaded(true))
+        c.follow.status.query({ sellerId }).then((s: any) => setFollowData(s)).catch(() => {})
+        c.users.reviews.query({ userId: sellerId }).then((r: any) => setReviewsData(r)).catch(() => {})
+      })
     }, [sellerId])
+    const toggleFollow = async () => {
+      if (!followData) return
+      setFollowBusy(true)
+      try {
+        const c = await getTrpcClient()
+        if (followData.following) { await c.follow.unfollow.mutate({ sellerId }); setFollowData({ following: false, followers: Math.max(0, followData.followers - 1) }) }
+        else { await c.follow.follow.mutate({ sellerId }); setFollowData({ following: true, followers: followData.followers + 1 }) }
+      } catch { /* ignore */ } finally { setFollowBusy(false) }
+    }
 
     const GRADE_ICONS: Record<string, string> = { grabber: '🟠', dealer: '🟡', trader: '🔵', pro: '⭐' }
 
@@ -1819,7 +1835,13 @@ function PanelBody() {
               <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 6 }}>
                 <span style={{ background: '#FFF3EE', color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, padding: '3px 10px', borderRadius: 50 }}>{GRADE_ICONS[store.seller.grade] ?? '🟠'} {store.seller.grade}</span>
                 <span style={{ background: '#f9f6f2', color: '#555', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 50 }}>⭐ {store.seller.avgRating ? Number(store.seller.avgRating).toFixed(1) : '—'} · {store.seller.salesCount} sales</span>
+                {followData && <span style={{ background: '#f9f6f2', color: '#555', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 50 }}>👥 {followData.followers} following</span>}
               </div>
+              {!isOwnStore && followData && (
+                <button onClick={toggleFollow} disabled={followBusy} style={{ marginTop: 12, background: followData.following ? '#fff' : 'var(--orange)', color: followData.following ? 'var(--orange)' : '#fff', border: `1.5px solid var(--orange)`, borderRadius: 50, padding: '9px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: followBusy ? 'wait' : 'pointer' }}>
+                  {followData.following ? '✓ Following' : '+ Follow'}
+                </button>
+              )}
             </div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>{store.listings.length} listings</div>
             {store.listings.length === 0 ? (
@@ -1835,6 +1857,25 @@ function PanelBody() {
                       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.title}</div>
                       <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>€{Number(l.price).toFixed(2)}</div>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Reviews */}
+            {reviewsData && reviewsData.total > 0 && (
+              <div style={{ marginTop: 20, borderTop: '1px solid #f0ebe4', paddingTop: 16 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+                  Reviews ({reviewsData.total}) · ⭐ {reviewsData.avg ? Number(reviewsData.avg).toFixed(1) : '—'}
+                </div>
+                {reviewsData.reviews.map(r => (
+                  <div key={r.id} style={{ padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)' }}>{r.authorName}</span>
+                      <span style={{ fontSize: 12 }}>{'★'.repeat(r.rating)}<span style={{ color: '#ddd' }}>{'★'.repeat(5 - r.rating)}</span></span>
+                    </div>
+                    {r.comment && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', marginTop: 3, lineHeight: 1.5 }}>{r.comment}</div>}
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#bbb', marginTop: 3 }}>{new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                   </div>
                 ))}
               </div>
@@ -4229,31 +4270,39 @@ function PanelBody() {
 
   // ── FOLLOWING ─────────────────────────────────────────────────────────────────
   if (panel.id === 'following') {
-    const FOLLOWING_LIST = [
-      { id: '1', name: 'GC Gaming Shop', handle: '@gcgaming', grade: 'dealer', items: 45, emoji: '🎮' },
-      { id: '2', name: 'María Moda', handle: '@mariamoda', grade: 'grabber', items: 12, emoji: '👗' },
-      { id: '3', name: 'TechGC', handle: '@techgc', grade: 'trader', items: 89, emoji: '📱' },
-    ]
+    const [list, setList] = useState<any[] | null>(null)
+    const [busyId, setBusyId] = useState<string | null>(null)
+    const load = useCallback(async () => {
+      try { const c = await getTrpcClient(); setList(await c.follow.myFollowing.query() as any[]) } catch { setList([]) }
+    }, [])
+    useEffect(() => { load() }, [load])
+    const unfollow = async (sellerId: string) => {
+      setBusyId(sellerId)
+      try { const c = await getTrpcClient(); await c.follow.unfollow.mutate({ sellerId }); setList(prev => (prev ?? []).filter(s => s.id !== sellerId)) }
+      finally { setBusyId(null) }
+    }
     const GRADE_C: Record<string, string> = { grabber: 'var(--orange)', dealer: '#eab308', trader: '#3b82f6', pro: '#8b5cf6' }
     return (
       <ActionPanel title="👥 Following" onClose={closePanel}>
-        {FOLLOWING_LIST.length === 0 ? (
+        {list === null ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : list.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>👥</div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>Not following anyone yet</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Follow sellers to see their new listings instantly.</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Follow sellers from their storefront to see their new listings.</div>
           </div>
-        ) : FOLLOWING_LIST.map(s => (
+        ) : list.map(s => (
           <div key={s.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
-            <div style={{ width: 50, height: 50, background: '#f5f0e8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>{s.emoji}</div>
-            <div style={{ flex: 1 }}>
+            <div onClick={() => openPanel('storefront', { sellerId: s.id })} style={{ width: 50, height: 50, background: 'linear-gradient(135deg,var(--orange),#FF8C00)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, fontFamily: 'var(--font-ui)', flexShrink: 0, cursor: 'pointer' }}>{(s.displayName ?? '?')[0]?.toUpperCase()}</div>
+            <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => openPanel('storefront', { sellerId: s.id })}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{s.name}</span>
-                <span style={{ background: `${GRADE_C[s.grade]}22`, color: GRADE_C[s.grade], fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '2px 7px', borderRadius: 50 }}>{s.grade}</span>
+                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.displayName}</span>
+                <span style={{ background: `${GRADE_C[s.grade] ?? 'var(--orange)'}22`, color: GRADE_C[s.grade] ?? 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '2px 7px', borderRadius: 50 }}>{s.grade}</span>
               </div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{s.handle} · {s.items} listings</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>⭐ {s.avgRating ? Number(s.avgRating).toFixed(1) : '—'} · {s.salesCount ?? 0} sales</div>
             </div>
-            <button style={{ background: '#f5f0e8', color: '#555', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Unfollow</button>
+            <button onClick={() => unfollow(s.id)} disabled={busyId === s.id} style={{ background: '#f5f0e8', color: '#555', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{busyId === s.id ? '…' : 'Unfollow'}</button>
           </div>
         ))}
       </ActionPanel>
