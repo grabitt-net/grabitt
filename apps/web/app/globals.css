@@ -2,7 +2,7 @@
 @import "@grabitt/design-tokens/css";
 
 /* ── Global resets ── */
-/* (build: category pages + jobs/property shell) */
+/* (build nudge: cart checkout stages A+B) */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
