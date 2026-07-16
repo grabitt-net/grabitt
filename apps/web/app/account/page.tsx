@@ -143,6 +143,7 @@ function AccountInner() {
               <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: 22, fontFamily: 'var(--font-nunito)' }}>{(me?.displayName ?? '?')[0]?.toUpperCase()}</div>
               <div>
                 <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 18, fontWeight: 700, color: 'var(--dark)' }}>{me?.displayName ?? 'Your account'}</div>
+                {me?.email && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#666', wordBreak: 'break-all' }}>{me.email}</div>}
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888' }}>{grade.charAt(0).toUpperCase() + grade.slice(1)} · ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'} · since {memberSince}</div>
               </div>
             </div>
