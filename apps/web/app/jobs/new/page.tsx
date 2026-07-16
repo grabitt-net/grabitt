@@ -5,6 +5,8 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import SiteHeader from '@/components/marketplace/SiteHeader'
+import type { JobQuestion, JobQuestionType } from '@/lib/jobQuestions'
+import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
 
 const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
 
@@ -23,8 +25,12 @@ export default function PostJobPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [questions, setQuestions] = useState<JobQuestion[]>([])
 
   const set = (k: string, v: any) => setF(prev => ({ ...prev, [k]: v }))
+  const addQ = () => setQuestions(qs => [...qs, { id: crypto.randomUUID().slice(0, 8), label: '', type: 'short', required: false }])
+  const updateQ = (id: string, patch: Partial<JobQuestion>) => setQuestions(qs => qs.map(q => q.id === id ? { ...q, ...patch } : q))
+  const removeQ = (id: string) => setQuestions(qs => qs.filter(q => q.id !== id))
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -56,6 +62,17 @@ export default function PostJobPage() {
         ...(f.hours.trim() && { hours: f.hours.trim() }),
         ...(f.startDate && { startDate: f.startDate }),
         ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
+        ...(questions.some(q => q.label.trim()) ? {
+          applicationQuestions: questions
+            .filter(q => q.label.trim())
+            .map(q => ({
+              id: q.id,
+              label: q.label.trim(),
+              type: q.type,
+              required: q.required,
+              ...(q.type === 'choice' ? { options: (q.options ?? []).filter(Boolean) } : {}),
+            })),
+        } : {}),
       })
       router.push(`/listings/${listing.id}`)
     } catch (err: any) {
@@ -130,6 +147,28 @@ export default function PostJobPage() {
         <Section title="Details">
           <Field label="Expected start date"><input type="date" value={f.startDate} onChange={e => set('startDate', e.target.value)} style={inp} /></Field>
           <Field label="Description"><textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the role, responsibilities and requirements…" style={{ ...inp, resize: 'vertical' }} /></Field>
+        </Section>
+
+        <Section title="Screening questions">
+          <div style={{ fontSize: 12, color: '#777', fontFamily: 'var(--font-ui)', marginTop: -4, marginBottom: 4 }}>Optional. Ask candidates specific questions they answer when applying.</div>
+          {questions.map(q => (
+            <div key={q.id} style={{ border: '1px solid #e5dccd', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input value={q.label} onChange={e => updateQ(q.id, { label: e.target.value })} placeholder="Question, e.g. Do you have a driving licence?" style={{ ...inp, flex: 1 }} />
+                <button type="button" onClick={() => removeQ(q.id)} style={{ background: '#fff', border: '1px solid #e5dccd', borderRadius: 8, padding: '0 12px', color: '#c00', cursor: 'pointer', fontSize: 15 }}>✕</button>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <select value={q.type} onChange={e => updateQ(q.id, { type: e.target.value as JobQuestionType })} style={{ ...inp, width: 'auto' }}>
+                  {(Object.keys(QUESTION_TYPE_LABEL) as JobQuestionType[]).map(t => <option key={t} value={t}>{QUESTION_TYPE_LABEL[t]}</option>)}
+                </select>
+                <label style={chk}><input type="checkbox" checked={q.required} onChange={e => updateQ(q.id, { required: e.target.checked })} /> Required</label>
+              </div>
+              {q.type === 'choice' && (
+                <input value={(q.options ?? []).join(', ')} onChange={e => updateQ(q.id, { options: e.target.value.split(',').map(s => s.trim()) })} placeholder="Options, comma separated" style={inp} />
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addQ} style={{ background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ Add a question</button>
         </Section>
 
         {error && <div style={{ background: '#fff0f0', border: '1px solid #ffcdd2', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#c62828', fontFamily: 'var(--font-ui)' }}>{error}</div>}

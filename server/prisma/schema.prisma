@@ -839,6 +839,9 @@ model JobListing {
   payments     Int?      // salary payments per year (e.g. 12 or 14)
   overtime     Boolean   @default(false)
   tips         Boolean   @default(false)
+  // Employer-defined screening questions candidates answer on Apply.
+  // Shape: [{ id, label, type: 'short'|'long'|'choice'|'boolean'|'number', required, options? }]
+  applicationQuestions Json?
   createdAt    DateTime  @default(now())
 
   applications JobApplication[]
@@ -853,6 +856,21 @@ model JobApplication {
   coverNote    String?
   cvUrl        String?
   employerNote String?           // e.g. a required reason when an employer rejects
+  // Structured recruitment data collected at apply time (owned platform data,
+  // also shown to the employer). Prefilled from the applicant's SeekerProfile.
+  fullName         String?
+  email            String?
+  phone            String?
+  location         String?
+  rightToWork      String?
+  languages        String[]          @default([])
+  experienceMonths Int?
+  currentRole      String?
+  expectedSalary   Int?
+  availability     String?
+  linkedinUrl      String?
+  answers          Json?             // answers to the employer's screening questions
+  dataConsent      Boolean           @default(false)
   status       ApplicationStatus @default(applied)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt

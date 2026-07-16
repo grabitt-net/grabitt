@@ -7,8 +7,21 @@ import { trpcAuthed } from '@/lib/authToken'
 // applicant list with a pipeline status control. Rejections require a reason note.
 
 const ORANGE = '#FF4500'
-type App = { id: string; status: string; applicant: string; applicantId: string; coverNote: string | null; employerNote: string | null; createdAt: string }
-type Job = { id: string; jobTitle: string; company: string; applications: App[] }
+type App = {
+  id: string; status: string; applicant: string; applicantId: string; coverNote: string | null; employerNote: string | null; createdAt: string
+  fullName: string | null; email: string | null; phone: string | null; location: string | null; rightToWork: string | null
+  languages: string[]; experienceMonths: number | null; currentRole: string | null; expectedSalary: number | null
+  availability: string | null; linkedinUrl: string | null; cvUrl: string | null; answers: Record<string, string | number | boolean>
+}
+type Question = { id: string; label: string }
+type Job = { id: string; jobTitle: string; company: string; questions: Question[]; applications: App[] }
+
+function expLabel(m: number | null) {
+  if (!m) return null
+  if (m < 12) return `${m} mo experience`
+  const y = Math.floor(m / 12)
+  return `${y}+ yr${y > 1 ? 's' : ''} experience`
+}
 
 const STATUS: Record<string, { label: string; color: string }> = {
   applied: { label: 'New Applicant', color: '#3b82f6' },
@@ -23,6 +36,8 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
   const [jobs, setJobs] = useState<Job[]>([])
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState<string | null>(null)
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set())
+  const toggleOpen = (id: string) => setOpenIds(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
 
   const load = () => trpcAuthed().jobs.employerApplications.query()
     .then((d: any) => { setJobs(d as Job[]); setLoaded(true) })
@@ -94,6 +109,36 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
                           {a.coverNote && <div style={{ marginTop: 6, background: '#f8f9fa', borderRadius: 8, padding: '6px 8px', fontSize: 11, color: '#555', fontFamily: 'var(--font-ui)' }}>💬 {a.coverNote}</div>}
                           {a.employerNote && <div style={{ marginTop: 6, background: '#fef2f2', borderRadius: 8, padding: '6px 8px', fontSize: 10, color: '#b91c1c', fontFamily: 'var(--font-ui)' }}>📝 {a.employerNote}</div>}
 
+                          <button onClick={() => toggleOpen(a.id)} style={{ marginTop: 8, background: 'none', border: 'none', color: ORANGE, fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', padding: 0 }}>{openIds.has(a.id) ? '▲ Hide details' : '▼ View full application'}</button>
+
+                          {openIds.has(a.id) && (
+                            <div style={{ marginTop: 8, background: '#f8f9fa', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                              {a.fullName && <Detail icon="👤" label="Name" value={a.fullName} />}
+                              {a.email && <Detail icon="📧" label="Email" value={a.email} />}
+                              {a.phone && <Detail icon="📱" label="Phone" value={a.phone} />}
+                              {a.currentRole && <Detail icon="💼" label="Current role" value={a.currentRole} />}
+                              {expLabel(a.experienceMonths) && <Detail icon="📈" label="Experience" value={expLabel(a.experienceMonths)!} />}
+                              {a.languages.length > 0 && <Detail icon="🌐" label="Languages" value={a.languages.join(', ')} />}
+                              {a.location && <Detail icon="📍" label="Location" value={a.location} />}
+                              {a.rightToWork && <Detail icon="🛂" label="Right to work" value={a.rightToWork} />}
+                              {a.availability && <Detail icon="🗓️" label="Availability" value={a.availability} />}
+                              {a.expectedSalary != null && <Detail icon="💶" label="Expected salary" value={`€${a.expectedSalary.toLocaleString()}/mo`} />}
+                              {a.linkedinUrl && <div style={{ fontSize: 11, fontFamily: 'var(--font-ui)' }}>🔗 <a href={a.linkedinUrl} target="_blank" rel="noreferrer" style={{ color: ORANGE, fontWeight: 800 }}>LinkedIn / portfolio</a></div>}
+                              {a.cvUrl && <a href={a.cvUrl} target="_blank" rel="noreferrer" style={{ marginTop: 2, background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>📄 Download CV</a>}
+
+                              {j.questions.length > 0 && Object.keys(a.answers).length > 0 && (
+                                <div style={{ marginTop: 4, paddingTop: 6, borderTop: '1px solid #eee' }}>
+                                  {j.questions.map(q => a.answers[q.id] !== undefined && a.answers[q.id] !== '' ? (
+                                    <div key={q.id} style={{ marginBottom: 5 }}>
+                                      <div style={{ fontSize: 9.5, fontWeight: 800, color: '#888', fontFamily: 'var(--font-ui)', textTransform: 'uppercase' }}>{q.label}</div>
+                                      <div style={{ fontSize: 11.5, color: '#1a1a1a', fontFamily: 'var(--font-ui)' }}>{String(a.answers[q.id])}</div>
+                                    </div>
+                                  ) : null)}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           <div style={{ marginTop: 8 }}>
                             <div style={{ fontSize: 9, fontWeight: 800, color: '#555', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', marginBottom: 4 }}>Status</div>
                             <select value={a.status} disabled={saving === a.id} onChange={e => changeStatus(a, e.target.value)} style={{ width: '100%', border: `1.5px solid ${st.color}`, borderRadius: 10, padding: '8px 10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, color: st.color, background: '#fff', outline: 'none', boxSizing: 'border-box' }}>
@@ -110,6 +155,16 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
           })}
         </div>
       </div>
+    </div>
+  )
+}
+
+function Detail({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <div style={{ display: 'flex', gap: 6, fontSize: 11.5, fontFamily: 'var(--font-ui)' }}>
+      <span>{icon}</span>
+      <span style={{ color: '#888', fontWeight: 700 }}>{label}:</span>
+      <span style={{ color: '#1a1a1a', fontWeight: 700 }}>{value}</span>
     </div>
   )
 }

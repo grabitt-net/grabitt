@@ -2,12 +2,40 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 
+// Employer-defined screening question shape.
+const questionSchema = z.object({
+  id: z.string().min(1).max(40),
+  label: z.string().min(1).max(200),
+  type: z.enum(['short', 'long', 'choice', 'boolean', 'number']),
+  required: z.boolean().default(false),
+  options: z.array(z.string().min(1).max(100)).max(12).optional(),
+})
+
 export const jobsRouter = router({
   // Candidate applies to a job. Free to apply; the application goes straight to
   // the employer (a JobApplication row) and notifies them. Idempotent per
   // (job, applicant) — re-applying just updates the cover note.
   applyToJob: protectedProcedure
-    .input(z.object({ listingId: z.string().uuid(), coverNote: z.string().max(2000).optional(), cvUrl: z.string().url().optional() }))
+    .input(z.object({
+      listingId: z.string().uuid(),
+      coverNote: z.string().max(2000).optional(),
+      cvUrl: z.string().url().optional(),
+      // Structured recruitment data.
+      fullName: z.string().max(120).optional(),
+      email: z.string().email().max(160).optional(),
+      phone: z.string().max(40).optional(),
+      location: z.string().max(120).optional(),
+      rightToWork: z.string().max(60).optional(),
+      languages: z.array(z.string().max(40)).max(15).optional(),
+      experienceMonths: z.number().int().min(0).max(720).optional(),
+      currentRole: z.string().max(120).optional(),
+      expectedSalary: z.number().int().min(0).max(9_999_999).optional(),
+      availability: z.string().max(60).optional(),
+      linkedinUrl: z.string().url().max(200).optional(),
+      // Answers to the employer's screening questions, keyed by question id.
+      answers: z.record(z.string(), z.union([z.string(), z.boolean(), z.number()])).optional(),
+      dataConsent: z.boolean().default(false),
+    }))
     .mutation(async ({ ctx, input }) => {
       const jl = await ctx.prisma.jobListing.findFirst({
         where: { listingId: input.listingId },
@@ -16,11 +44,64 @@ export const jobsRouter = router({
       if (!jl) throw new TRPCError({ code: 'NOT_FOUND', message: 'Job not found' })
       if (jl.employerId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: 'You cannot apply to your own job' })
 
+      // Validate required screening questions were answered.
+      const questions = (jl.applicationQuestions as { id: string; label: string; required: boolean }[] | null) ?? []
+      for (const q of questions) {
+        const a = input.answers?.[q.id]
+        if (q.required && (a === undefined || a === '' || a === null)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: `Please answer: ${q.label}` })
+        }
+      }
+
+      const data = {
+        coverNote: input.coverNote,
+        cvUrl: input.cvUrl,
+        fullName: input.fullName,
+        email: input.email,
+        phone: input.phone,
+        location: input.location,
+        rightToWork: input.rightToWork,
+        languages: input.languages ?? [],
+        experienceMonths: input.experienceMonths,
+        currentRole: input.currentRole,
+        expectedSalary: input.expectedSalary,
+        availability: input.availability,
+        linkedinUrl: input.linkedinUrl,
+        answers: input.answers ?? undefined,
+        dataConsent: input.dataConsent,
+      }
       const application = await ctx.prisma.jobApplication.upsert({
         where: { jobListingId_applicantId: { jobListingId: jl.id, applicantId: ctx.user.id } },
-        create: { jobListingId: jl.id, applicantId: ctx.user.id, coverNote: input.coverNote, cvUrl: input.cvUrl },
-        update: { coverNote: input.coverNote, cvUrl: input.cvUrl },
+        create: { jobListingId: jl.id, applicantId: ctx.user.id, ...data },
+        update: data,
       })
+
+      // Harvest the standard data into the applicant's SeekerProfile so it's
+      // reusable across applications and searchable via Find Staff.
+      if (input.dataConsent) {
+        await ctx.prisma.seekerProfile.upsert({
+          where: { userId: ctx.user.id },
+          create: {
+            userId: ctx.user.id,
+            headline: input.currentRole ?? null,
+            languages: input.languages ?? [],
+            experienceMonths: input.experienceMonths ?? 0,
+            availability: input.availability ?? null,
+            rightToWork: input.rightToWork ?? null,
+            location: input.location ?? null,
+            active: false, // opt-in to Find Staff separately
+          },
+          update: {
+            ...(input.currentRole ? { headline: input.currentRole } : {}),
+            ...(input.languages?.length ? { languages: input.languages } : {}),
+            ...(input.experienceMonths !== undefined ? { experienceMonths: input.experienceMonths } : {}),
+            ...(input.availability ? { availability: input.availability } : {}),
+            ...(input.rightToWork ? { rightToWork: input.rightToWork } : {}),
+            ...(input.location ? { location: input.location } : {}),
+          },
+        })
+      }
+
       await ctx.prisma.notification.create({
         data: {
           userId: jl.employerId,
@@ -30,6 +111,56 @@ export const jobsRouter = router({
         },
       })
       return application
+    }),
+
+  // Everything the Apply form needs: the job's screening questions + prefill
+  // data from the applicant's profile / prior application.
+  applyInfo: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const jl = await ctx.prisma.jobListing.findFirst({
+        where: { listingId: input.listingId },
+        select: { id: true, jobTitle: true, applicationQuestions: true },
+      })
+      if (!jl) throw new TRPCError({ code: 'NOT_FOUND', message: 'Job not found' })
+
+      const [user, profile, prior] = await Promise.all([
+        ctx.prisma.user.findUnique({ where: { id: ctx.user.id }, select: { displayName: true, email: true, phone: true } }),
+        ctx.prisma.seekerProfile.findUnique({ where: { userId: ctx.user.id } }),
+        ctx.prisma.jobApplication.findUnique({
+          where: { jobListingId_applicantId: { jobListingId: jl.id, applicantId: ctx.user.id } },
+        }),
+      ])
+
+      // Prefer prior application, then profile, then account basics.
+      const prefill = {
+        fullName: prior?.fullName ?? user?.displayName ?? '',
+        email: prior?.email ?? user?.email ?? '',
+        phone: prior?.phone ?? user?.phone ?? '',
+        location: prior?.location ?? profile?.location ?? '',
+        rightToWork: prior?.rightToWork ?? profile?.rightToWork ?? '',
+        languages: prior?.languages?.length ? prior.languages : (profile?.languages ?? []),
+        experienceMonths: prior?.experienceMonths ?? profile?.experienceMonths ?? 0,
+        currentRole: prior?.currentRole ?? profile?.headline ?? '',
+        expectedSalary: prior?.expectedSalary ?? null,
+        availability: prior?.availability ?? profile?.availability ?? '',
+        linkedinUrl: prior?.linkedinUrl ?? '',
+        coverNote: prior?.coverNote ?? '',
+        cvUrl: prior?.cvUrl ?? '',
+        answers: (prior?.answers as Record<string, unknown> | null) ?? {},
+      }
+      return { jobTitle: jl.jobTitle, questions: (jl.applicationQuestions ?? []) as unknown[], alreadyApplied: !!prior, prefill }
+    }),
+
+  // Employer edits the screening questions on one of their job listings.
+  setJobQuestions: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid(), questions: z.array(questionSchema).max(15) }))
+    .mutation(async ({ ctx, input }) => {
+      const jl = await ctx.prisma.jobListing.findFirst({ where: { listingId: input.listingId }, select: { id: true, employerId: true } })
+      if (!jl) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (jl.employerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'This is not your job listing' })
+      await ctx.prisma.jobListing.update({ where: { id: jl.id }, data: { applicationQuestions: input.questions } })
+      return { ok: true }
     }),
 
   // Whether the current user has already applied to this job (for the detail UI).
@@ -144,6 +275,7 @@ export const jobsRouter = router({
       images: z.array(z.string().url()).max(8).optional(),
       lat: z.number().optional(),
       lng: z.number().optional(),
+      applicationQuestions: z.array(questionSchema).max(15).optional(),
     }))
     .mutation(({ ctx, input }) =>
       ctx.prisma.listing.create({
@@ -175,6 +307,7 @@ export const jobsRouter = router({
               payments: input.payments,
               overtime: input.overtime,
               tips: input.tips,
+              applicationQuestions: input.applicationQuestions ?? undefined,
             },
           },
         },
@@ -205,6 +338,7 @@ export const jobsRouter = router({
       listingStatus: j.listing.status,
       postedAt: j.listing.createdAt,
       image: j.listing.images[0] ?? null,
+      questions: (j.applicationQuestions ?? []) as { id: string; label: string }[],
       applications: j.applications.map(a => ({
         id: a.id,
         status: a.status,
@@ -213,6 +347,20 @@ export const jobsRouter = router({
         applicantId: a.applicant.id,
         applicant: a.applicant.displayName,
         createdAt: a.createdAt,
+        // Full application detail for the employer.
+        fullName: a.fullName,
+        email: a.email,
+        phone: a.phone,
+        location: a.location,
+        rightToWork: a.rightToWork,
+        languages: a.languages,
+        experienceMonths: a.experienceMonths,
+        currentRole: a.currentRole,
+        expectedSalary: a.expectedSalary,
+        availability: a.availability,
+        linkedinUrl: a.linkedinUrl,
+        cvUrl: a.cvUrl,
+        answers: (a.answers ?? {}) as Record<string, string | number | boolean>,
       })),
     }))
   }),
