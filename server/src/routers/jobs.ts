@@ -278,8 +278,11 @@ export const jobsRouter = router({
       lng: z.number().optional(),
       applicationQuestions: z.array(questionSchema).max(15).optional(),
     }))
-    .mutation(({ ctx, input }) =>
-      ctx.prisma.listing.create({
+    .mutation(async ({ ctx, input }) => {
+      // Only Business accounts may post job adverts.
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true } })
+      if (!me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A Business account is required to post jobs' })
+      return ctx.prisma.listing.create({
         data: {
           sellerId: ctx.user.id,
           title: input.jobTitle,
@@ -314,7 +317,7 @@ export const jobsRouter = router({
         },
         include: { jobListing: true },
       })
-    ),
+    }),
 
   // Employer's applications board: their job listings with applicants. Powers
   // the Employer Dashboard (stats, listing cards, per-applicant pipeline).

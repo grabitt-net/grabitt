@@ -1,10 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
+import { PanelProvider, usePanel } from '@/context/PanelContext'
 import SiteHeader from '@/components/marketplace/SiteHeader'
+import PanelHost from '@/components/marketplace/PanelHost'
 import type { JobQuestion, JobQuestionType } from '@/lib/jobQuestions'
 import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
 
@@ -26,6 +28,20 @@ export default function PostJobPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [questions, setQuestions] = useState<JobQuestion[]>([])
+  // Only business accounts may post jobs.
+  const [gate, setGate] = useState<'checking' | 'ok' | 'needbusiness'>('checking')
+
+  useEffect(() => {
+    (async () => {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      if (!token) { router.push('/auth?next=/jobs/new'); return }
+      try {
+        const me: any = await trpcAuthed().users.me.query()
+        setGate(me?.isBusiness ? 'ok' : 'needbusiness')
+      } catch { router.push('/auth?next=/jobs/new') }
+    })()
+  }, [router])
 
   const set = (k: string, v: any) => setF(prev => ({ ...prev, [k]: v }))
   const addQ = () => setQuestions(qs => [...qs, { id: crypto.randomUUID().slice(0, 8), label: '', type: 'short', required: false }])
@@ -83,6 +99,7 @@ export default function PostJobPage() {
   }
 
   return (
+    <PanelProvider>
     <main style={{ background: '#f7f4ee', minHeight: '100dvh', paddingBottom: 40 }}>
       <SiteHeader />
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -90,6 +107,10 @@ export default function PostJobPage() {
         <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>💼 Post a Job</span>
       </header>
 
+      {gate === 'checking' && <div style={{ textAlign: 'center', padding: 60, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Checking your account…</div>}
+      {gate === 'needbusiness' && <BusinessGate />}
+
+      {gate === 'ok' && (
       <form onSubmit={submit} style={{ maxWidth: 640, margin: '0 auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <Section title="The role">
           <Field label="Job title *"><input value={f.jobTitle} onChange={e => set('jobTitle', e.target.value)} placeholder="e.g. Bar Staff" style={inp} /></Field>
@@ -177,7 +198,29 @@ export default function PostJobPage() {
           {saving ? 'Posting…' : 'Post Job →'}
         </button>
       </form>
+      )}
+      <PanelHost />
     </main>
+    </PanelProvider>
+  )
+}
+
+// Shown when a signed-in, non-business user tries to post a job. Jobs can only
+// be posted from a Business account, so we prompt them to sign up as one.
+function BusinessGate() {
+  const { openPanel } = usePanel()
+  return (
+    <div style={{ maxWidth: 520, margin: '0 auto', padding: 16 }}>
+      <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 24, textAlign: 'center' }}>
+        <div style={{ fontSize: 44, marginBottom: 10 }}>🏢</div>
+        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 18, fontWeight: 700, color: 'var(--dark)', marginBottom: 8 }}>Business account required</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 18 }}>
+          Job adverts can only be posted from a Grabitt Business account. Sign up as a business to post jobs, manage applicants and access your Employer Dashboard.
+        </div>
+        <button onClick={() => openPanel('business')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Sign up as a business →</button>
+        <Link href="/jobs" style={{ display: 'inline-block', marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#888', textDecoration: 'none' }}>← Back to jobs</Link>
+      </div>
+    </div>
   )
 }
 
