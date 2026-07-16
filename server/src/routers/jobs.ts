@@ -182,12 +182,14 @@ export const jobsRouter = router({
       })
     ),
 
-  // Employer's applications board: their job listings with applicants.
+  // Employer's applications board: their job listings with applicants. Powers
+  // the Employer Dashboard (stats, listing cards, per-applicant pipeline).
   employerApplications: protectedProcedure.query(async ({ ctx }) => {
     const jobs = await ctx.prisma.jobListing.findMany({
       where: { employerId: ctx.user.id },
       orderBy: { createdAt: 'desc' },
       include: {
+        listing: { select: { id: true, status: true, createdAt: true, images: true } },
         applications: {
           orderBy: { createdAt: 'desc' },
           include: { applicant: { select: { id: true, displayName: true } } },
@@ -196,15 +198,66 @@ export const jobsRouter = router({
     })
     return jobs.map(j => ({
       id: j.id,
+      listingId: j.listingId,
       jobTitle: j.jobTitle,
       company: j.company,
+      type: j.type,
+      listingStatus: j.listing.status,
+      postedAt: j.listing.createdAt,
+      image: j.listing.images[0] ?? null,
       applications: j.applications.map(a => ({
         id: a.id,
         status: a.status,
         coverNote: a.coverNote,
+        employerNote: a.employerNote,
+        applicantId: a.applicant.id,
         applicant: a.applicant.displayName,
         createdAt: a.createdAt,
       })),
     }))
   }),
+
+  // Employer moves an applicant along the hiring pipeline. Rejections require a
+  // reason note (mirrors the V20 flow). Only the job's owner may change status.
+  setApplicationStatus: protectedProcedure
+    .input(z.object({
+      applicationId: z.string().uuid(),
+      status: z.enum(['applied', 'viewed', 'shortlisted', 'rejected', 'hired']),
+      note: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const app = await ctx.prisma.jobApplication.findUnique({
+        where: { id: input.applicationId },
+        include: { jobListing: { select: { employerId: true, jobTitle: true } } },
+      })
+      if (!app) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (app.jobListing.employerId !== ctx.user.id) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'This is not your job listing' })
+      }
+      if (input.status === 'rejected' && !input.note?.trim()) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'A reason note is required when rejecting a candidate' })
+      }
+
+      await ctx.prisma.jobApplication.update({
+        where: { id: app.id },
+        data: {
+          status: input.status,
+          // Keep the rejection reason; clear it when moving back into the pipeline.
+          employerNote: input.status === 'rejected' ? input.note!.trim() : null,
+        },
+      })
+
+      // Let the applicant know their application progressed.
+      const MESSAGE: Record<string, string> = {
+        shortlisted: `You've been shortlisted for "${app.jobListing.jobTitle}".`,
+        hired: `Great news — you've been hired for "${app.jobListing.jobTitle}"!`,
+        rejected: `Your application for "${app.jobListing.jobTitle}" wasn't successful this time.`,
+      }
+      if (MESSAGE[input.status]) {
+        await ctx.prisma.notification.create({
+          data: { userId: app.applicantId, kind: 'system', title: '💼 Application update', body: MESSAGE[input.status] },
+        })
+      }
+      return { ok: true, status: input.status }
+    }),
 })

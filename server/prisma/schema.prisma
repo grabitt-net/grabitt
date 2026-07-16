@@ -852,6 +852,7 @@ model JobApplication {
   applicant    User              @relation(fields: [applicantId], references: [id])
   coverNote    String?
   cvUrl        String?
+  employerNote String?           // e.g. a required reason when an employer rejects
   status       ApplicationStatus @default(applied)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt

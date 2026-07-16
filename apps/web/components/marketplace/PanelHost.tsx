@@ -18,6 +18,8 @@ import ShareSheet from './ShareSheet'
 import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
 import SeekerProfilePanel from './SeekerProfilePanel'
+import EmployerDashboardPanel from './EmployerDashboardPanel'
+import ApplicationsBoardPanel from './ApplicationsBoardPanel'
 import dynamic from 'next/dynamic'
 
 // Leaflet needs window — load the map pin-picker client-only.
@@ -1115,26 +1117,7 @@ function PanelBody() {
 
   // ── EMPLOYERS ───────────────────────────────────────────────────────────────
   if (panel.id === 'employers') {
-    return (
-      <ActionPanel title="🏢 Employer Dashboard" onClose={closePanel}>
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>🏢</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 4 }}>Post a Job on Grabitt</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Reach thousands of workers across Gran Canaria</div>
-        </div>
-        {[['✅','Free to post','Your first 3 job listings are completely free'],['👤','Verified candidates','Browse profiles with skills and ratings'],['💬','Direct messaging','Chat with applicants instantly'],['📊','Application tracking','See who applied and manage offers']].map(([icon, title, desc], i) => (
-          <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
-            <div style={{ fontSize: 22 }}>{icon}</div>
-            <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
-          </div>
-        ))}
-        <a href="/jobs/new" onClick={closePanel} style={{ textDecoration: 'none' }}>
-          <button style={{ width: '100%', background: 'linear-gradient(135deg,#2193b0,#6dd5ed)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>Post a Job Now</button>
-        </a>
-        <button onClick={() => openPanel('applications')} style={{ width: '100%', background: '#fff', color: '#2193b0', border: '2px solid #2193b0', borderRadius: 14, padding: '13px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 10 }}>📋 View Applicants</button>
-        <button onClick={() => openPanel('findStaff')} style={{ width: '100%', background: '#FF4500', color: '#fff', border: 'none', borderRadius: 14, padding: '13px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 10 }}>🧑‍💼 Find Staff</button>
-      </ActionPanel>
-    )
+    return <EmployerDashboardPanel onClose={closePanel} openPanel={openPanel} />
   }
 
   if (panel.id === 'findStaff') {
@@ -1973,45 +1956,7 @@ function PanelBody() {
 
   // ── EMPLOYER APPLICATIONS BOARD ──────────────────────────────────────────────
   if (panel.id === 'applications') {
-    type JobApps = { id: string; jobTitle: string; company: string; applications: { id: string; status: string; coverNote: string | null; applicant: string; createdAt: string }[] }
-    const [jobs, setJobs] = useState<JobApps[]>([])
-    const [loaded, setLoaded] = useState(false)
-    useEffect(() => {
-      getTrpcClient().then(c => c.jobs.employerApplications.query())
-        .then(d => { setJobs(d as unknown as JobApps[]); setLoaded(true) }).catch(() => setLoaded(true))
-    }, [])
-
-    const ASTATUS: Record<string, string> = { applied: '#3b82f6', viewed: '#6b7280', shortlisted: 'var(--sage)', rejected: '#ef4444', hired: '#16a34a' }
-
-    return (
-      <ActionPanel title="📋 Applicants" onClose={closePanel}>
-        {!loaded ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
-        ) : jobs.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No job posts yet</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Post a job and applicants will appear here.</div>
-          </div>
-        ) : jobs.map(j => (
-          <div key={j.id} style={{ marginBottom: 16 }}>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{j.jobTitle} <span style={{ color: '#888', fontWeight: 700 }}>· {j.company}</span></div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginBottom: 8 }}>{j.applications.length} applicant{j.applications.length === 1 ? '' : 's'}</div>
-            {j.applications.length === 0 ? (
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#bbb', paddingLeft: 4 }}>No applicants yet.</div>
-            ) : j.applications.map(a => (
-              <div key={a.id} style={{ background: '#f9f6f2', borderRadius: 10, padding: 12, marginBottom: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{a.applicant}</span>
-                  <span style={{ background: `${ASTATUS[a.status] ?? '#888'}22`, color: ASTATUS[a.status] ?? '#888', borderRadius: 50, padding: '2px 10px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800 }}>{a.status}</span>
-                </div>
-                {a.coverNote && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#555', marginTop: 4 }}>{a.coverNote}</div>}
-              </div>
-            ))}
-          </div>
-        ))}
-      </ActionPanel>
-    )
+    return <ApplicationsBoardPanel onClose={closePanel} openPanel={openPanel} focusJobId={panel.data?.jobId as string | undefined} />
   }
 
   // ── SEARCH RESULTS ──────────────────────────────────────────────────────────
