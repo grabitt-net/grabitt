@@ -4,7 +4,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { createTrpcClient } from '@/lib/trpc'
 import { geocodeGC } from '@/lib/gcGeo'
-import { PanelProvider } from '@/context/PanelContext'
+import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
@@ -83,7 +83,8 @@ export default function JobsPage() {
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>💼 Jobs</span>
-          <Link href="/jobs/new" style={{ marginLeft: 'auto', textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>+ Post a Job</Link>
+          <SeekerCta />
+          <Link href="/jobs/new" style={{ textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>+ Post a Job</Link>
         </div>
 
         <form onSubmit={e => { e.preventDefault(); run() }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -170,6 +171,15 @@ export default function JobsPage() {
       <PanelHost />
     </main>
     </PanelProvider>
+  )
+}
+
+// "List yourself for work" — opens the seeker profile editor. Must live inside
+// PanelProvider (JobsPage renders the provider, so it can't call usePanel itself).
+function SeekerCta() {
+  const { openPanel } = usePanel()
+  return (
+    <button onClick={() => openPanel('seekerProfile')} style={{ marginLeft: 'auto', border: '1.5px solid var(--orange)', background: '#fff', color: 'var(--orange)', borderRadius: 50, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>🙋 List yourself for work</button>
   )
 }
 

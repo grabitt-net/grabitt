@@ -17,6 +17,7 @@ import StripePayment from './StripePayment'
 import ShareSheet from './ShareSheet'
 import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
+import SeekerProfilePanel from './SeekerProfilePanel'
 import dynamic from 'next/dynamic'
 
 // Leaflet needs window — load the map pin-picker client-only.
@@ -1138,6 +1139,10 @@ function PanelBody() {
 
   if (panel.id === 'findStaff') {
     return <FindStaffPanel onClose={closePanel} openPanel={openPanel} />
+  }
+
+  if (panel.id === 'seekerProfile') {
+    return <SeekerProfilePanel onClose={closePanel} />
   }
 
   // ── FOOTER PANELS ───────────────────────────────────────────────────────────

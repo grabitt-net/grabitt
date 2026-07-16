@@ -234,9 +234,49 @@ model User {
   execAuditLogs      ExecAuditLog[]     @relation("ExecTarget")
   subscriptions      Subscription[]
   consents           Consent[]
+  seekerProfile      SeekerProfile?
+  candidateUnlocks   CandidateUnlock[]  @relation("EmployerUnlocks")
+  unlockedBy         CandidateUnlock[]  @relation("SeekerUnlocked")
 
   @@index([grade])
   @@index([email])
+}
+
+// A job-seeker's "available for work" profile. Employers search these anonymously
+// via Find Staff and spend credits to unlock the person's contact details.
+model SeekerProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  headline         String?
+  sector           String?
+  roles            String[] @default([])
+  experienceMonths Int      @default(0)
+  languages        String[] @default([])
+  hours            String[] @default([])
+  availability     String?
+  rightToWork      String?
+  location         String?
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([active])
+  @@index([sector])
+}
+
+// Records that an employer has paid credits to reveal a seeker — so re-viewing
+// an already-unlocked candidate is free (idempotent unlock).
+model CandidateUnlock {
+  id         String   @id @default(uuid())
+  employerId String
+  employer   User     @relation("EmployerUnlocks", fields: [employerId], references: [id])
+  seekerId   String
+  seeker     User     @relation("SeekerUnlocked", fields: [seekerId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([employerId, seekerId])
+  @@index([employerId])
 }
 
 model ExecUser {

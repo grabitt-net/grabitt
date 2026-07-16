@@ -23,12 +23,14 @@ import { homepageRouter } from './routers/homepage'
 import { communityRouter } from './routers/community'
 import { cartRouter } from './routers/cart'
 import { followRouter } from './routers/follow'
+import { seekersRouter } from './routers/seekers'
 
 export const appRouter = router({
   auth: authRouter,
   listings: listingsRouter,
   cart: cartRouter,
   follow: followRouter,
+  seekers: seekersRouter,
   transactions: transactionsRouter,
   offers: offersRouter,
   messages: messagesRouter,
