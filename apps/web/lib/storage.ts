@@ -41,22 +41,27 @@ export function cmsImagePath(kind: string): string {
   return `cms/${kind}/${uuid}.jpg`
 }
 
+export const CVS_BUCKET = 'cvs'
+
 /**
- * Uploads a candidate CV (PDF/DOC/DOCX) to Supabase Storage and returns the
- * public URL. Max 5 MB. Stored under an unguessable path so it's not listable.
+ * Uploads a candidate CV (PDF/DOC/DOCX) to the PRIVATE `cvs` bucket. Returns the
+ * storage path (stored on the application) plus a short-lived signed URL for the
+ * uploader's own preview. Employers view CVs via the /api/cv route, which mints
+ * a signed URL after authorising the request server-side. Max 5 MB.
  */
-export async function uploadCv(file: File, userId: string): Promise<string> {
+export async function uploadCv(file: File, userId: string): Promise<{ path: string; previewUrl: string | null }> {
   const okTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
   if (!okTypes.includes(file.type)) throw new Error('CV must be a PDF or Word document')
   if (file.size > 5 * 1024 * 1024) throw new Error('CV must be under 5 MB')
 
   const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf'
-  const path = `cvs/${userId}/${crypto.randomUUID()}.${ext}`
+  const path = `${userId}/${crypto.randomUUID()}.${ext}`
   const client = createClient()
-  const { error } = await client.storage.from(PHOTOS_BUCKET).upload(path, file, { contentType: file.type, upsert: false })
+  const { error } = await client.storage.from(CVS_BUCKET).upload(path, file, { contentType: file.type, upsert: false })
   if (error) throw new Error(`CV upload failed: ${error.message}`)
-  const { data } = client.storage.from(PHOTOS_BUCKET).getPublicUrl(path)
-  return data.publicUrl
+  // Owner-only signed URL for an immediate preview (RLS lets the owner read).
+  const { data } = await client.storage.from(CVS_BUCKET).createSignedUrl(path, 600)
+  return { path, previewUrl: data?.signedUrl ?? null }
 }
 
 async function compressImage(file: File): Promise<Blob> {

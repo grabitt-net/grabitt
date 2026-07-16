@@ -30,6 +30,7 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
   const [langs, setLangs] = useState<string[]>([])
   const [answers, setAnswers] = useState<Record<string, AnswerVal>>({})
   const [consent, setConsent] = useState(false)
+  const [cvPreview, setCvPreview] = useState<string | null>(null)
 
   useEffect(() => {
     trpcAuthed().jobs.applyInfo.query({ listingId }).then((info: any) => {
@@ -57,7 +58,7 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
     const file = e.target.files?.[0]
     if (!file) return
     setCvUploading(true)
-    try { const url = await uploadCv(file, userId); set('cvUrl', url) }
+    try { const { path, previewUrl } = await uploadCv(file, userId); set('cvUrl', path); setCvPreview(previewUrl) }
     catch (err: any) { alert(err?.message || 'CV upload failed') }
     finally { setCvUploading(false) }
   }
@@ -145,8 +146,12 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
                 {f.cvUrl ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '9px 11px' }}>
                     <span style={{ fontSize: 15 }}>📄</span>
-                    <a href={f.cvUrl} target="_blank" rel="noreferrer" style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a', textDecoration: 'none' }}>CV uploaded — view</a>
-                    <button onClick={() => set('cvUrl', '')} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13 }}>✕</button>
+                    {cvPreview ? (
+                      <a href={cvPreview} target="_blank" rel="noreferrer" style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a', textDecoration: 'none' }}>CV uploaded — view</a>
+                    ) : (
+                      <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>CV on file ✓</span>
+                    )}
+                    <button onClick={() => { set('cvUrl', ''); setCvPreview(null) }} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13 }}>✕</button>
                   </div>
                 ) : (
                   <label style={{ display: 'block', border: '1.5px dashed #e5dccd', borderRadius: 10, padding: '12px', textAlign: 'center', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: cvUploading ? '#bbb' : ORANGE }}>

@@ -124,7 +124,7 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
                               {a.availability && <Detail icon="🗓️" label="Availability" value={a.availability} />}
                               {a.expectedSalary != null && <Detail icon="💶" label="Expected salary" value={`€${a.expectedSalary.toLocaleString()}/mo`} />}
                               {a.linkedinUrl && <div style={{ fontSize: 11, fontFamily: 'var(--font-ui)' }}>🔗 <a href={a.linkedinUrl} target="_blank" rel="noreferrer" style={{ color: ORANGE, fontWeight: 800 }}>LinkedIn / portfolio</a></div>}
-                              {a.cvUrl && <a href={a.cvUrl} target="_blank" rel="noreferrer" style={{ marginTop: 2, background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>📄 Download CV</a>}
+                              {a.cvUrl && <a href={`/api/cv?applicationId=${a.id}`} target="_blank" rel="noreferrer" style={{ marginTop: 2, background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>📄 View CV</a>}
 
                               {j.questions.length > 0 && Object.keys(a.answers).length > 0 && (
                                 <div style={{ marginTop: 4, paddingTop: 6, borderTop: '1px solid #eee' }}>

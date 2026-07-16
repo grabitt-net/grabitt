@@ -19,7 +19,7 @@ export const jobsRouter = router({
     .input(z.object({
       listingId: z.string().uuid(),
       coverNote: z.string().max(2000).optional(),
-      cvUrl: z.string().url().optional(),
+      cvUrl: z.string().max(300).optional(), // private storage path in the `cvs` bucket
       // Structured recruitment data.
       fullName: z.string().max(120).optional(),
       email: z.string().email().max(160).optional(),
