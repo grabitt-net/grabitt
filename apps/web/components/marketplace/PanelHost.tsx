@@ -421,11 +421,11 @@ function PanelBody() {
 
     // Fall back to stub data when no user is logged in
     const STUB_NOTIFS = [
-      { id: 's1', kind: 'offer_received',   title: 'Offer received!',   body: 'Dave M. offered €85 on your Surfboard', readAt: null,  createdAt: new Date(Date.now()-120000).toISOString() },
-      { id: 's2', kind: 'new_message',      title: 'New message',       body: 'Maria: "Is the bike still available?"',  readAt: null,  createdAt: new Date(Date.now()-480000).toISOString() },
-      { id: 's3', kind: 'price_drop',       title: 'Price drop!',       body: 'MacBook Air M2 dropped to €890',         readAt: '.',   createdAt: new Date(Date.now()-3600000).toISOString() },
-      { id: 's4', kind: 'review_received',  title: 'New review',        body: 'Emma gave you 5 stars! ⭐⭐⭐⭐⭐',      readAt: '.',   createdAt: new Date(Date.now()-7200000).toISOString() },
-      { id: 's5', kind: 'offer_accepted',   title: 'Counter offer',     body: 'Seller countered at €300 on Guitar',     readAt: '.',   createdAt: new Date(Date.now()-18000000).toISOString() },
+      { id: 's1', kind: 'offer_received',   title: 'Offer received!',   body: 'Dave M. offered €85 on your Surfboard', actionUrl: null, readAt: null,  createdAt: new Date(Date.now()-120000).toISOString() },
+      { id: 's2', kind: 'new_message',      title: 'New message',       body: 'Maria: "Is the bike still available?"',  actionUrl: null, readAt: null,  createdAt: new Date(Date.now()-480000).toISOString() },
+      { id: 's3', kind: 'price_drop',       title: 'Price drop!',       body: 'MacBook Air M2 dropped to €890',         actionUrl: null, readAt: '.',   createdAt: new Date(Date.now()-3600000).toISOString() },
+      { id: 's4', kind: 'review_received',  title: 'New review',        body: 'Emma gave you 5 stars! ⭐⭐⭐⭐⭐',      actionUrl: null, readAt: '.',   createdAt: new Date(Date.now()-7200000).toISOString() },
+      { id: 's5', kind: 'offer_accepted',   title: 'Counter offer',     body: 'Seller countered at €300 on Guitar',     actionUrl: null, readAt: '.',   createdAt: new Date(Date.now()-18000000).toISOString() },
     ]
     const displayNotifs = currentUserId ? notifications : STUB_NOTIFS
 
@@ -457,7 +457,10 @@ function PanelBody() {
         </div>
         {shown.length === 0 && <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No notifications here yet.</div>}
         {shown.map((n) => (
-          <div key={n.id} onClick={() => currentUserId && markRead([n.id])}
+          <div key={n.id} onClick={() => {
+              if (currentUserId) markRead([n.id])
+              if (n.actionUrl) { closePanel(); window.location.href = n.actionUrl }
+            }}
             style={{ display: 'flex', gap: 12, borderBottom: '1px solid #f5f5f5', alignItems: 'flex-start', cursor: 'pointer', background: !n.readAt ? '#fffaf8' : 'transparent', margin: '0 -16px', padding: '12px 16px' }}>
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{kindIcon(n.kind)}</div>

@@ -14,7 +14,7 @@ export const followRouter = router({
         update: {},
       })
       await ctx.prisma.notification.create({
-        data: { userId: input.sellerId, kind: 'system', title: '👤 New follower', body: 'Someone started following your listings.' },
+        data: { userId: input.sellerId, kind: 'system', title: '👤 New follower', body: 'Someone started following your listings.', actionUrl: '/account' },
       })
       return { following: true }
     }),

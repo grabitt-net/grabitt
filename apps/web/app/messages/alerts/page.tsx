@@ -51,16 +51,23 @@ export default async function GrabittAlertsPage() {
         </div>
       ) : (
         <div style={{ padding: '10px 0' }}>
-          {alerts.map(a => (
-            <div key={a.id} style={{ display: 'flex', gap: 12, background: '#fff', padding: '13px 16px', borderBottom: '1px solid #f0f0f0' }}>
-              <div style={{ width: 42, height: 42, borderRadius: 12, background: '#FFF3EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{ICON[a.kind] ?? '🔔'}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{a.title}</div>
-                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#666', marginTop: 2, lineHeight: 1.5 }}>{a.body}</div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: '#bbb', marginTop: 4 }}>{new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
-              </div>
-            </div>
-          ))}
+          {alerts.map(a => {
+            const inner = (
+              <>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: '#FFF3EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{ICON[a.kind] ?? '🔔'}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{a.title}</div>
+                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#666', marginTop: 2, lineHeight: 1.5 }}>{a.body}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: '#bbb', marginTop: 4 }}>{new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
+                </div>
+                {a.actionUrl && <div style={{ alignSelf: 'center', color: 'var(--orange)', fontWeight: 800, fontSize: 16 }}>›</div>}
+              </>
+            )
+            const rowStyle: React.CSSProperties = { display: 'flex', gap: 12, background: '#fff', padding: '13px 16px', borderBottom: '1px solid #f0f0f0', textDecoration: 'none' }
+            return a.actionUrl
+              ? <Link key={a.id} href={a.actionUrl} style={rowStyle}>{inner}</Link>
+              : <div key={a.id} style={rowStyle}>{inner}</div>
+          })}
         </div>
       )}
 

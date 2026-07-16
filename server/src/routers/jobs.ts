@@ -108,6 +108,7 @@ export const jobsRouter = router({
           kind: 'system',
           title: '📩 New job application',
           body: `You received an application for "${jl.jobTitle}".`,
+          actionUrl: '/employers',
         },
       })
       return application
@@ -376,7 +377,7 @@ export const jobsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const app = await ctx.prisma.jobApplication.findUnique({
         where: { id: input.applicationId },
-        include: { jobListing: { select: { employerId: true, jobTitle: true } } },
+        include: { jobListing: { select: { employerId: true, jobTitle: true, listingId: true } } },
       })
       if (!app) throw new TRPCError({ code: 'NOT_FOUND' })
       if (app.jobListing.employerId !== ctx.user.id) {
@@ -403,7 +404,7 @@ export const jobsRouter = router({
       }
       if (MESSAGE[input.status]) {
         await ctx.prisma.notification.create({
-          data: { userId: app.applicantId, kind: 'system', title: '💼 Application update', body: MESSAGE[input.status] },
+          data: { userId: app.applicantId, kind: 'system', title: '💼 Application update', body: MESSAGE[input.status], actionUrl: `/listings/${app.jobListing.listingId}` },
         })
       }
       return { ok: true, status: input.status }

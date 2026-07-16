@@ -151,7 +151,7 @@ export const seekersRouter = router({
         ])
         // Let the seeker know an employer is interested.
         await ctx.prisma.notification.create({
-          data: { userId: input.seekerId, kind: 'system', title: '👀 An employer unlocked your profile', body: 'A registered employer has viewed your work profile and contact details.' },
+          data: { userId: input.seekerId, kind: 'system', title: '👀 An employer unlocked your profile', body: 'A registered employer has viewed your work profile and contact details.', actionUrl: '/account' },
         })
       }
 

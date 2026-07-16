@@ -7,6 +7,7 @@ export interface AppNotification {
   kind: string
   title: string
   body: string
+  actionUrl: string | null
   readAt: string | null
   createdAt: string
 }
@@ -60,8 +61,9 @@ export function useNotifications(userId: string | null) {
     setLoading(true)
     try {
       const rows = await trpcAuthed().notifications.list.query({ unreadOnly: false })
-      setNotifications((rows as Array<{ id: string; kind: string; title: string; body: string; readAt: string | null; createdAt: string }>).map(r => ({
+      setNotifications((rows as Array<{ id: string; kind: string; title: string; body: string; actionUrl: string | null; readAt: string | null; createdAt: string }>).map(r => ({
         id: r.id, kind: r.kind, title: r.title, body: r.body,
+        actionUrl: r.actionUrl ?? null,
         readAt: r.readAt ? String(r.readAt) : null,
         createdAt: String(r.createdAt),
       })))
