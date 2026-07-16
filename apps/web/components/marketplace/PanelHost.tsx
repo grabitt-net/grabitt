@@ -2360,9 +2360,7 @@ function PanelBody() {
           </div>
         ))}
 
-        <a href="mailto:ads@grabitt.net?subject=Grabitt%20Sponsorship%20enquiry" style={{ textDecoration: 'none' }}>
-          <button style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 6 }}>Enquire about sponsorship →</button>
-        </a>
+        <a href="mailto:ads@grabitt.net?subject=Grabitt%20Sponsorship%20enquiry" style={{ display: 'block', boxSizing: 'border-box', textAlign: 'center', textDecoration: 'none', width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 6 }}>Enquire about sponsorship →</a>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 8 }}>
           Our team will confirm availability and set you up: ads@grabitt.net
         </div>
@@ -3546,9 +3544,7 @@ function PanelBody() {
             </div>
           </div>
         ))}
-        <a href="/jobs/new" onClick={closePanel} style={{ textDecoration: 'none' }}>
-          <button style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 8 }}>+ Post a Job</button>
-        </a>
+        <a href="/jobs/new" onClick={closePanel} style={{ display: 'block', boxSizing: 'border-box', textAlign: 'center', textDecoration: 'none', width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 8 }}>+ Post a Job</a>
       </ActionPanel>
     )
   }
