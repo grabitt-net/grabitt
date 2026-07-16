@@ -121,7 +121,7 @@ export async function initJobs() {
     })
     // Batch send via Resend
     for (const u of users) {
-      await resend.emails.send({ from: 'noreply@grabitt.com', to: u.email, subject: eshot.subject, html: eshot.bodyHtml })
+      await resend.emails.send({ from: 'Grabitt <noreply@grabitt.net>', to: u.email, subject: eshot.subject, html: eshot.bodyHtml })
     }
   })
 
