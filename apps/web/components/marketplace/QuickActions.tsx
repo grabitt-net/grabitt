@@ -15,7 +15,7 @@ export default function QuickActions() {
     { label: 'Find Work', action: () => router.push('/jobs') },
     { label: 'Find Staff', action: () => openPanel('findStaff') },
     { label: 'Find Home', action: () => router.push('/property') },
-    { label: 'Employers', action: () => openPanel('employers') },
+    { label: 'Employers', action: () => router.push('/employers') },
     { label: 'Business', action: () => openPanel('business') },
   ]
 

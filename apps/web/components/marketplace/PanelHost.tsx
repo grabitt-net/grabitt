@@ -18,7 +18,6 @@ import ShareSheet from './ShareSheet'
 import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
 import SeekerProfilePanel from './SeekerProfilePanel'
-import EmployerDashboardPanel from './EmployerDashboardPanel'
 import ApplicationsBoardPanel from './ApplicationsBoardPanel'
 import dynamic from 'next/dynamic'
 
@@ -1113,11 +1112,6 @@ function PanelBody() {
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 8 }}>Want to advertise on Grabitt? Email ads@grabitt.net</div>
       </ActionPanel>
     )
-  }
-
-  // ── EMPLOYERS ───────────────────────────────────────────────────────────────
-  if (panel.id === 'employers') {
-    return <EmployerDashboardPanel onClose={closePanel} openPanel={openPanel} />
   }
 
   if (panel.id === 'findStaff') {
