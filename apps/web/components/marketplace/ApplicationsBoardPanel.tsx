@@ -37,7 +37,7 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState<string | null>(null)
   const [openIds, setOpenIds] = useState<Set<string>>(new Set())
-  const toggleOpen = (id: string) => setOpenIds(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggleOpen = (id: string) => setOpenIds(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
 
   const load = () => trpcAuthed().jobs.employerApplications.query()
     .then((d: any) => { setJobs(d as Job[]); setLoaded(true) })
