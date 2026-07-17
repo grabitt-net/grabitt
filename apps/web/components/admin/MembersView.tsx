@@ -51,6 +51,7 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<typeof FILTERS[number]>('All')
   const [selected, setSelected] = useState<Member | null>(null)
+  const [creating, setCreating] = useState(false)
 
   const refresh = useCallback(async () => {
     try {
@@ -84,8 +85,11 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
           <span style={{ color: '#FF4500' }}>Members</span>
           <span style={{ fontSize: 12, color: '#aaa', fontWeight: 400, marginLeft: 8 }}>{members.length} total</span>
         </h2>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email, business…"
-          style={{ padding: '8px 14px', border: '1.5px solid #e5e7eb', borderRadius: 50, fontFamily: 'Nunito, sans-serif', fontSize: 12, width: 240, outline: 'none' }} />
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email, business…"
+            style={{ padding: '8px 14px', border: '1.5px solid #e5e7eb', borderRadius: 50, fontFamily: 'Nunito, sans-serif', fontSize: 12, width: 240, outline: 'none' }} />
+          <button onClick={() => setCreating(true)} style={{ background: '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 16px', fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ New member</button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
@@ -130,6 +134,79 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
       </div>
 
       {selected && <MemberDrawer member={selected} onClose={() => setSelected(null)} onSaved={refresh} />}
+      {creating && <CreateMemberModal onClose={() => setCreating(false)} onCreated={refresh} />}
+    </div>
+  )
+}
+
+// Invite a new member: creates their Supabase Auth identity + our User row and
+// emails them a link to set their own password (we never set one for them).
+function CreateMemberModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const api = useCrmApi()
+  const [f, setF] = useState({ email: '', displayName: '', grade: 'grabber', isBusiness: false, phone: '', businessName: '' })
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const [done, setDone] = useState('')
+  const set = (k: string, v: any) => setF(p => ({ ...p, [k]: v }))
+
+  const create = async () => {
+    setBusy(true); setErr('')
+    try {
+      const r = await api.memberAuthAction({
+        action: 'create_member',
+        email: f.email.trim(),
+        displayName: f.displayName.trim(),
+        grade: f.grade,
+        isBusiness: f.isBusiness,
+        ...(f.phone.trim() && { phone: f.phone.trim() }),
+        ...(f.businessName.trim() && { businessName: f.businessName.trim() }),
+      })
+      setDone(r.email ?? f.email.trim())
+      onCreated()
+    } catch (e: any) { setErr(e?.message ?? 'Could not create the member') }
+    finally { setBusy(false) }
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 99997, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: 420, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+        <div style={{ background: '#E8DDD5', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>New member</div>
+          <button onClick={onClose} style={{ background: '#fff', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15 }}>✕</button>
+        </div>
+
+        <div style={{ padding: 16 }}>
+          {done ? (
+            <>
+              <Banner color="#16a34a" bg="#f0fdf4" border="#bbf7d0">✓ Invited <strong>{done}</strong> — they&apos;ve been emailed a link to set their password.</Banner>
+              <button onClick={onClose} style={{ ...primary, width: '100%', marginTop: 14 }}>Done</button>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 11.5, color: '#888', fontFamily: 'Nunito, sans-serif', lineHeight: 1.5, marginBottom: 10 }}>
+                We&apos;ll email an invite so they set their own password — no password is created here.
+              </div>
+              {err && <Banner color="#b91c1c" bg="#fef2f2" border="#fecaca">{err}</Banner>}
+
+              <L>Email *</L><input value={f.email} onChange={e => set('email', e.target.value)} type="email" placeholder="member@example.com" style={inp} />
+              <L>Full name *</L><input value={f.displayName} onChange={e => set('displayName', e.target.value)} placeholder="Jane Doe" style={inp} />
+              <L>Phone</L><input value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="+34 600 000 000" style={inp} />
+              <L>Grade</L>
+              <select value={f.grade} onChange={e => set('grade', e.target.value)} style={inp}>
+                {GRADES.map(g => <option key={g} value={g}>{g[0].toUpperCase() + g.slice(1)}</option>)}
+              </select>
+              <div style={{ marginTop: 10 }}>
+                <Check label="Business account" checked={f.isBusiness} onChange={v => set('isBusiness', v)} />
+              </div>
+              {f.isBusiness && (<><L>Business name</L><input value={f.businessName} onChange={e => set('businessName', e.target.value)} placeholder="Acme Estates" style={inp} /></>)}
+
+              <button onClick={create} disabled={busy || !f.email.trim() || !f.displayName.trim()} style={{ ...primary, width: '100%', marginTop: 16, opacity: busy ? 0.7 : 1 }}>
+                {busy ? 'Inviting…' : 'Create & send invite'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

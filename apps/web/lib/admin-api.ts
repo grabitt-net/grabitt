@@ -104,8 +104,13 @@ export function makeCrmApi(execToken: string) {
     updateMember: (data: Record<string, unknown>) =>
       rpc<any>('crm.updateMember', 'mutation', data, execToken),
 
-    // Email / password live in Supabase Auth, so they go via a dedicated route.
-    memberAuthAction: async (body: { action: 'change_email' | 'reset_password'; userId: string; email?: string }) => {
+    // Creating a member / email / password live in Supabase Auth, so they go
+    // via a dedicated exec-gated route rather than the tRPC routers.
+    memberAuthAction: async (body:
+      | { action: 'change_email'; userId: string; email: string }
+      | { action: 'reset_password'; userId: string }
+      | { action: 'create_member'; email: string; displayName: string; grade?: string; isBusiness?: boolean; phone?: string; businessName?: string }
+    ) => {
       const res = await fetch('/api/admin/user-auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${execToken}` },
@@ -113,7 +118,7 @@ export function makeCrmApi(execToken: string) {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error ?? 'Request failed')
-      return json as { ok: true; email?: string; sentTo?: string }
+      return json as { ok: true; id?: string; email?: string; sentTo?: string; invited?: boolean }
     },
   }
 }

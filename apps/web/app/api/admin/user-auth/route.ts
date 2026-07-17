@@ -6,8 +6,11 @@ import { verifyExecJwt } from 'server/src/middleware/auth'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+
 // Exec-only auth actions on a member. These can't live in the tRPC routers
 // because they touch Supabase Auth (the identity), not just our User table:
+//   - create_member:  invites a new member (auth identity + our User row)
 //   - change_email:   updates the Supabase identity + our User.email in step
 //   - reset_password: sends the member a password-reset email (we never see it)
 export async function POST(req: Request) {
@@ -18,21 +21,67 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Exec access required' }, { status: 401 })
   }
 
-  const { action, userId, email } = await req.json().catch(() => ({}))
-  if (!action || !userId) return NextResponse.json({ error: 'Missing action or userId' }, { status: 400 })
-
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { supabaseId: true, email: true } })
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+  const body = await req.json().catch(() => ({}))
+  const { action, userId, email } = body
+  if (!action) return NextResponse.json({ error: 'Missing action' }, { status: 400 })
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const origin = new URL(req.url).origin
+
+  // ── Create a member ────────────────────────────────────────────────────────
+  if (action === 'create_member') {
+    const addr = String(email ?? '').trim().toLowerCase()
+    const displayName = String(body.displayName ?? '').trim()
+    if (!EMAIL_RE.test(addr)) return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 })
+    if (displayName.length < 2) return NextResponse.json({ error: 'Enter a name (2+ characters)' }, { status: 400 })
+    if (!serviceKey) return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not configured' }, { status: 500 })
+
+    const existing = await prisma.user.findUnique({ where: { email: addr }, select: { id: true } })
+    if (existing) return NextResponse.json({ error: 'A member with that email already exists' }, { status: 400 })
+
+    const admin = createSupabaseAdmin(url, serviceKey)
+    // Invite: creates the auth identity AND emails them a link to set a password.
+    // We never set a password on their behalf.
+    const { data, error } = await admin.auth.admin.inviteUserByEmail(addr, {
+      redirectTo: `${origin}/auth/callback?next=/account`,
+    })
+    if (error || !data?.user) {
+      return NextResponse.json({ error: error?.message ?? 'Could not invite that address' }, { status: 400 })
+    }
+
+    try {
+      const created = await prisma.user.create({
+        data: {
+          supabaseId: data.user.id,
+          email: addr,
+          displayName,
+          ...(body.grade ? { grade: body.grade } : {}),
+          ...(typeof body.isBusiness === 'boolean' ? { isBusiness: body.isBusiness } : {}),
+          ...(body.phone ? { phone: String(body.phone).trim() } : {}),
+          ...(body.businessName ? { businessName: String(body.businessName).trim() } : {}),
+        },
+        select: { id: true, email: true, displayName: true },
+      })
+      return NextResponse.json({ ok: true, ...created, invited: true })
+    } catch (e) {
+      // Don't leave an orphaned auth identity behind if our row failed.
+      await admin.auth.admin.deleteUser(data.user.id).catch(() => {})
+      return NextResponse.json({ error: 'Could not create the member record' }, { status: 400 })
+    }
+  }
+
+  // ── Actions on an existing member ──────────────────────────────────────────
+  if (!userId) return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { supabaseId: true, email: true } })
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
   if (action === 'reset_password') {
     // Sends a recovery email to the member — the admin never sets/sees a password.
     const anon = createSupabaseAdmin(url, anonKey)
     const { error } = await anon.auth.resetPasswordForEmail(user.email, {
-      redirectTo: `${new URL(req.url).origin}/auth/callback?next=/account`,
+      redirectTo: `${origin}/auth/callback?next=/account`,
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ ok: true, sentTo: user.email })
@@ -40,7 +89,7 @@ export async function POST(req: Request) {
 
   if (action === 'change_email') {
     const next = String(email ?? '').trim().toLowerCase()
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(next)) {
+    if (!EMAIL_RE.test(next)) {
       return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 })
     }
     if (!serviceKey) return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not configured' }, { status: 500 })
