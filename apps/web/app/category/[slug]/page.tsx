@@ -28,6 +28,7 @@ const SUBCATS: Record<string, string[]> = {
   'Retro & Vintage':    ['All', 'Vinyl', 'Clothing', 'Electronics', 'Instruments', 'Collectables'],
   'Gift Ideas':         ['All', 'Experiences', 'Hampers', 'Beauty', 'Books', 'Jewellery'],
   'Grab It Now':        ['All', 'Electronics', 'Furniture', 'Fashion', 'Sport', 'Other'],
+  'Hobbies & Crafts':   ['All', 'Wool & Yarn', 'Fabric & Sewing', 'Art Supplies', 'Model Making', 'Scrapbooking', 'Beads & Jewellery', 'Tools'],
 }
 
 export default function CategoryPage() {

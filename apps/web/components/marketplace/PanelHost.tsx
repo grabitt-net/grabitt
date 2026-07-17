@@ -987,6 +987,7 @@ function PanelBody() {
       'Kids & Baby':    ['All', 'Toys', 'Clothing', 'Prams', 'Books', 'Nursery'],
       'Pet Shop':       ['All', 'Dogs', 'Cats', 'Birds', 'Fish', 'Reptiles', 'Services'],
       'Handy Help':     ['All', 'Plumbing', 'Electric', 'Cleaning', 'Building', 'Gardening'],
+      'Hobbies & Crafts': ['All', 'Wool & Yarn', 'Fabric & Sewing', 'Art Supplies', 'Model Making', 'Scrapbooking', 'Beads & Jewellery', 'Tools'],
       'Food Store':     ['All', 'Bakery', 'Dairy', 'Wine', 'Oils', 'Coffee', 'Organic'],
       'Retro & Vintage':['All', 'Vinyl', 'Clothing', 'Electronics', 'Instruments', 'Collectables'],
       'Gift Ideas':     ['All', 'Experiences', 'Hampers', 'Beauty', 'Books', 'Jewellery'],
@@ -3077,7 +3078,7 @@ function PanelBody() {
   if (panel.id === 'createListing') {
     const prefillCat = (panel.data?.category as string) || ''
 
-    const DEPTS = ['Electronics','Fashion','Home & Garden','Sport & Leisure','Retro & Vintage','Gaming','Pet Shop','Motors','Kids & Baby','Handy Help','Jobs','Property','Services','Collectables','Other']
+    const DEPTS = ['Electronics','Fashion','Home & Garden','Sport & Leisure','Retro & Vintage','Gaming','Pet Shop','Motors','Kids & Baby','Handy Help','Hobbies & Crafts','Jobs','Property','Services','Collectables','Other']
     const CONDITIONS = ['New','Like New','Very Good','Good','Fair','For Parts']
     const TOWNS = ['Las Palmas','Maspalomas','Playa del Inglés','Puerto Rico','Arucas','Telde','Santa Lucía','Ingenio','Agüimes','Gáldar','Mogán','San Bartolomé de Tirajana','Vecindario','Tejeda','Other']
 
@@ -3436,7 +3437,8 @@ function PanelBody() {
                       'Pet Shop': 'pet_shop', 'Motors': 'motors', 'Kids & Baby': 'kids_baby',
                       'Handy Help': 'handy_help', 'Jobs': 'jobs', 'Property': 'property',
                       'Services': 'services', 'Collectables': 'collectables', 'Gift Ideas': 'gift_ideas',
-                      'Health & Fitness': 'health_fitness', 'Food Store': 'food_store', 'Other': 'other',
+                      'Health & Fitness': 'health_fitness', 'Food Store': 'food_store',
+                      'Hobbies & Crafts': 'hobbies_crafts', 'Other': 'other',
                     }
                     const COND_MAP: Record<string, string> = {
                       'New': 'new', 'Like New': 'like_new', 'Very Good': 'very_good',

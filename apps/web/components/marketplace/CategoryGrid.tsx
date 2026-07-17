@@ -26,6 +26,7 @@ const categories = [
   { icon: '🛍️', name: 'Grab It Now', grad: 'linear-gradient(135deg,#FF4500,#FF8C00)', img: '' }, // brand tile — no photo
   { icon: '🔧', name: 'Handy Help', grad: 'linear-gradient(135deg,#00b09b,#96c93d)', img: IMG('photo-1581578731548-c64695cc6952') },
   { icon: '🐾', name: 'Pet Shop', grad: 'linear-gradient(135deg,#f093fb,#f5576c)', img: IMG('photo-1425082661705-1834bfd09dca') },
+  { icon: '🧶', name: 'Hobbies & Crafts', grad: 'linear-gradient(135deg,#ff9a9e,#fecfef)', img: IMG('photo-1522145085346-fbc07f16dc46') },
 ]
 
 export default function CategoryGrid() {
@@ -48,16 +49,7 @@ export default function CategoryGrid() {
   }
 
   return (
-    <section className="dept-grid-wrap">
-      <div style={{
-        display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-        padding: '20px 16px 10px',
-      }}>
-        <span style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>
-          Departments
-        </span>
-      </div>
-
+    <section className="dept-grid-wrap" style={{ paddingTop: 16 }}>
       <div className="dept-grid" style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
         gap: 8, padding: '0 12px',
@@ -84,11 +76,16 @@ export default function CategoryGrid() {
                   alt=""
                   loading="lazy"
                   onError={() => setFailed(f => ({ ...f, [cat.name]: true }))}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                  style={{
+                    position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                    // Lift the photography — many of the source shots are dark.
+                    filter: 'brightness(1.18) saturate(1.05)',
+                  }}
                 />
               )}
-              {/* Dark scrim for text legibility (contrast) */}
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0) 70%)' }} />
+              {/* Scrim: only as strong as the label needs, and confined to the
+                  bottom third so the image itself stays bright. */}
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.60) 0%, rgba(0,0,0,0.28) 28%, rgba(0,0,0,0) 55%)' }} />
               {/* Emoji fallback badge when no photo */}
               {!showImg && (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30 }}>
@@ -97,9 +94,12 @@ export default function CategoryGrid() {
               )}
               <span style={{
                 position: 'absolute', left: 8, right: 8, bottom: 7,
-                fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900,
-                color: '#fff', textAlign: 'left', lineHeight: 1.12,
-                textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                fontFamily: 'var(--font-nunito)', fontWeight: 900,
+                // Scales with the tile: bigger on desktop, never cramped on a
+                // narrow phone. Capped so wide screens don't over-inflate it.
+                fontSize: 'clamp(12px, 2.6vw, 18px)',
+                color: '#fff', textAlign: 'left', lineHeight: 1.15,
+                textShadow: '0 1px 4px rgba(0,0,0,0.75)',
               }}>
                 {cat.name}
               </span>

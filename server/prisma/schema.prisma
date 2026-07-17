@@ -315,6 +315,7 @@ enum Department {
   motors
   services
   collectables
+  hobbies_crafts
   other
 }
 

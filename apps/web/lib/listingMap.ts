@@ -7,7 +7,7 @@ export const DEPT_LABEL: Record<string, string> = {
   property: 'Property', health_fitness: 'Health, Fitness & Diet', food_store: 'Food Store',
   retro_vintage: 'Retro & Vintage', grab_it_now: 'Grab It Now', handy_help: 'Handy Help',
   pet_shop: 'Pet Shop', motors: 'Motors', services: 'Services', collectables: 'Collectables',
-  jobs: 'Jobs', other: 'Other',
+  hobbies_crafts: 'Hobbies & Crafts', jobs: 'Jobs', other: 'Other',
 }
 
 export const COND_LABEL: Record<string, string> = {
@@ -24,7 +24,7 @@ const DEPT_EMOJI: Record<string, string> = {
   electronics: '📱', fashion: '👕', home_garden: '🛋️', sport: '🚴', gaming: '🎮',
   gift_ideas: '🎁', kids_baby: '🧸', property: '🏠', health_fitness: '💊', food_store: '🛒',
   retro_vintage: '📻', grab_it_now: '⚡', handy_help: '🛠️', pet_shop: '🐾', motors: '🏍️',
-  services: '💼', collectables: '🃏', jobs: '💼', other: '🛍️',
+  services: '💼', collectables: '🃏', hobbies_crafts: '🧶', jobs: '💼', other: '🛍️',
 }
 
 export interface DbListing {
