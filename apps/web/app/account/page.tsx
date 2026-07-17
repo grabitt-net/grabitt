@@ -52,6 +52,28 @@ function AccountInner() {
   const [contactState, setContactState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [payoutBusy, setPayoutBusy] = useState(false)
   const [payoutError, setPayoutError] = useState('')
+  // Account email change — Supabase owns the identity, so this sends a
+  // confirmation link; the address only changes once the user clicks it.
+  const [newEmail, setNewEmail] = useState('')
+  const [emailState, setEmailState] = useState<'idle' | 'saving' | 'sent'>('idle')
+  const [emailError, setEmailError] = useState('')
+
+  const changeEmail = async () => {
+    const next = newEmail.trim().toLowerCase()
+    setEmailError('')
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(next)) { setEmailError('Enter a valid email address.'); return }
+    if (next === (me?.email ?? '').toLowerCase()) { setEmailError('That is already your email address.'); return }
+    setEmailState('saving')
+    try {
+      // Land the confirmation on our callback so User.email is synced there.
+      const { error } = await createClient().auth.updateUser(
+        { email: next },
+        { emailRedirectTo: `${window.location.origin}/auth/callback?next=/account` },
+      )
+      if (error) { setEmailError(error.message); setEmailState('idle'); return }
+      setEmailState('sent')
+    } catch { setEmailError('Could not start the email change. Please try again.'); setEmailState('idle') }
+  }
 
   const load = useCallback(async () => {
     let token = getAuthToken()
@@ -180,6 +202,30 @@ function AccountInner() {
 
         {/* Main content */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+          {/* Account email — changing it re-verifies via Supabase Auth */}
+          <div style={card}>
+            <div style={cardHead}>Account email</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', lineHeight: 1.5, marginBottom: 12 }}>
+              This is the address you sign in with. Changing it sends a confirmation link to the new address — your email only changes once you click that link.
+            </div>
+            <label style={fieldLabel}>Current email</label>
+            <div style={{ ...field, background: '#f7f4ee', color: '#555', display: 'flex', alignItems: 'center' }}>{me?.email ?? '—'}</div>
+            {emailState === 'sent' ? (
+              <div style={{ marginTop: 10, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#16a34a', lineHeight: 1.5 }}>
+                ✓ Confirmation sent to <strong>{newEmail.trim().toLowerCase()}</strong>. Click the link in that email to finish the change. (Check spam if it doesn&apos;t arrive.)
+              </div>
+            ) : (
+              <>
+                <label style={fieldLabel}>New email</label>
+                <input value={newEmail} onChange={e => { setNewEmail(e.target.value); setEmailError('') }} type="email" placeholder="you@example.com" style={field} />
+                {emailError && <div style={{ marginTop: 6, fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#ef4444' }}>{emailError}</div>}
+                <button onClick={changeEmail} disabled={emailState === 'saving'} style={{ marginTop: 10, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: emailState === 'saving' ? 'wait' : 'pointer' }}>
+                  {emailState === 'saving' ? 'Sending…' : 'Send confirmation link'}
+                </button>
+              </>
+            )}
+          </div>
+
           {/* Collection details — auto-shared with a buyer only after a completed collection sale */}
           <div style={card}>
             <div style={cardHead}>Collection details</div>
