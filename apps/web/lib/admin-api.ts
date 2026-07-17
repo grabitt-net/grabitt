@@ -99,6 +99,22 @@ export function makeCrmApi(execToken: string) {
       rpc<any[]>('jobs.adminList', 'query', { status: status ?? 'all' }, execToken),
     adminProperties: (status?: string) =>
       rpc<any[]>('property.adminList', 'query', { status: status ?? 'all' }, execToken),
+
+    // Member administration
+    updateMember: (data: Record<string, unknown>) =>
+      rpc<any>('crm.updateMember', 'mutation', data, execToken),
+
+    // Email / password live in Supabase Auth, so they go via a dedicated route.
+    memberAuthAction: async (body: { action: 'change_email' | 'reset_password'; userId: string; email?: string }) => {
+      const res = await fetch('/api/admin/user-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${execToken}` },
+        body: JSON.stringify(body),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error ?? 'Request failed')
+      return json as { ok: true; email?: string; sentTo?: string }
+    },
   }
 }
 

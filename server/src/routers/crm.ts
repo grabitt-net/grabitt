@@ -73,10 +73,61 @@ export const crmRouter = router({
         where: input.grade ? { grade: input.grade } : {},
         orderBy: { createdAt: 'desc' },
         skip: (input.page - 1) * 50,
-        take: 50,
-        select: { id: true, displayName: true, email: true, grade: true, salesCount: true, avgRating: true, credits: true, createdAt: true },
+        take: 500,
+        select: {
+          id: true, displayName: true, email: true, grade: true, salesCount: true, avgRating: true,
+          credits: true, createdAt: true, phone: true, collectionAddress: true, avatar: true,
+          isBusiness: true, businessVerified: true, businessName: true, isVerified: true,
+          emailVerified: true, phoneVerified: true, idVerified: true, addressVerified: true,
+          strikeCount: true, suspendedUntil: true, suspendedReason: true, deletedAt: true, locale: true,
+        },
       })
     ),
+
+  // Exec suite: full member edit — profile details, account level, verification,
+  // credits and suspension. Email/password are handled by /api/admin/user-auth
+  // because they live in Supabase Auth, not just our DB.
+  updateMember: execProcedure
+    .input(z.object({
+      userId: z.string().uuid(),
+      displayName: z.string().min(2).max(60).optional(),
+      phone: z.string().max(40).nullable().optional(),
+      collectionAddress: z.string().max(300).nullable().optional(),
+      businessName: z.string().max(80).nullable().optional(),
+      grade: z.enum(['grabber', 'dealer', 'trader', 'pro']).optional(),
+      isBusiness: z.boolean().optional(),
+      businessVerified: z.boolean().optional(),
+      isVerified: z.boolean().optional(),
+      emailVerified: z.boolean().optional(),
+      phoneVerified: z.boolean().optional(),
+      idVerified: z.boolean().optional(),
+      addressVerified: z.boolean().optional(),
+      credits: z.number().int().min(0).max(1_000_000).optional(),
+      // Suspension: pass a date to suspend, or null to lift.
+      suspendedUntil: z.string().datetime().nullable().optional(),
+      suspendedReason: z.string().max(300).nullable().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { userId, suspendedUntil, ...rest } = input
+      const data: Record<string, unknown> = {}
+      for (const [k, v] of Object.entries(rest)) if (v !== undefined) data[k] = v
+      if (suspendedUntil !== undefined) {
+        data.suspendedUntil = suspendedUntil ? new Date(suspendedUntil) : null
+        data.suspendedAt = suspendedUntil ? new Date() : null
+      }
+      if (Object.keys(data).length === 0) return { ok: true }
+
+      const updated = await ctx.prisma.user.update({ where: { id: userId }, data })
+      await ctx.prisma.execAuditLog.create({
+        data: {
+          execUserId: ctx.execUser.id,
+          targetUserId: userId,
+          action: 'member_update',
+          detail: { fields: Object.keys(data) },
+        },
+      }).catch(() => { /* audit is best-effort */ })
+      return { ok: true, id: updated.id }
+    }),
 
   disputes: execProcedure
     .input(z.object({ status: z.enum(['open','under_review','resolved_buyer','resolved_seller','escalated']).optional() }))
