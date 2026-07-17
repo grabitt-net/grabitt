@@ -93,6 +93,12 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('community.upsert', 'mutation', data, execToken),
     removeCommunityPost: (id: string) =>
       rpc<any>('community.remove', 'mutation', { id }, execToken),
+
+    // Job & property listing oversight
+    adminJobs: (status?: string) =>
+      rpc<any[]>('jobs.adminList', 'query', { status: status ?? 'all' }, execToken),
+    adminProperties: (status?: string) =>
+      rpc<any[]>('property.adminList', 'query', { status: status ?? 'all' }, execToken),
   }
 }
 

@@ -18,6 +18,7 @@ import EshotsView from './EshotsView'
 import CommunityView from './CommunityView'
 import ToolboxView from './ToolboxView'
 import JobsView from './JobsView'
+import PropertyView from './PropertyView'
 import AuditTrailView from './AuditTrailView'
 import ComplianceView from './ComplianceView'
 import HomepageView from './HomepageView'
@@ -31,7 +32,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'disputes' | 'reports' | 'rewards' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'audit' | 'compliance' | 'homepage' | 'community'
+export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'disputes' | 'reports' | 'rewards' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community'
 
 interface Props { execToken: string }
 
@@ -128,6 +129,7 @@ export default function AdminApp({ execToken }: Props) {
                 {view === 'emails'     && <EshotsView />}
                 {view === 'toolbox'    && <ToolboxView />}
                 {view === 'jobs'       && <JobsView />}
+                {view === 'property'   && <PropertyView />}
                 {view === 'audit'      && <AuditTrailView onViewMember={() => setView('members')} />}
                 {view === 'compliance' && <ComplianceView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'homepage'   && <HomepageView onEditBanners={(pos) => { setBannerPosition(pos); setView('banners') }} />}

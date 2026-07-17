@@ -1,123 +1,155 @@
 'use client'
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCrmApi } from './AdminApp'
 
-interface JobListing {
+// Exec suite — oversight of every job listing on the platform (real data).
+interface AdminJob {
   id: string
+  listingId: string
+  jobTitle: string
   company: string
-  role: string
-  location: string
   type: string
-  credits: number
-  posted: string
-  status: 'live' | 'expired'
+  sector: string | null
+  salaryMin: number | null
+  salaryMax: number | null
+  status: string
+  location: string
+  createdAt: string
+  views: number
+  applicants: number
+  employer: string
+  employerEmail: string
+  employerIsBusiness: boolean
 }
 
-const INITIAL_JOBS: JobListing[] = [
-  { id: 'j01', company: 'Nordic Travel GC', role: 'Tourist Guide', location: 'Las Palmas', type: 'Full-time', credits: 400, posted: 'Jun 5', status: 'live' },
-  { id: 'j02', company: 'GC Supermarket', role: 'Store Manager', location: 'Maspalomas', type: 'Full-time', credits: 400, posted: 'Jun 10', status: 'live' },
-]
+const FILTERS = ['all', 'active', 'expired'] as const
+const JOB_LIFE_DAYS = 21
 
-const JOB_TYPES = ['Full-time', 'Part-time', 'Seasonal', 'Contract']
-
-function toast(msg: string) {
-  // reuse browser alert as simple feedback — matches HTML build behaviour
-  const el = document.createElement('div')
-  el.textContent = msg
-  el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:50px;font-family:Nunito,sans-serif;font-size:12px;font-weight:700;z-index:99999;'
-  document.body.appendChild(el)
-  setTimeout(() => el.remove(), 2500)
+function daysLeft(createdAt: string) {
+  return Math.ceil((new Date(createdAt).getTime() + JOB_LIFE_DAYS * 86400000 - Date.now()) / 86400000)
+}
+function salary(j: AdminJob) {
+  if (j.salaryMin && j.salaryMax) return `€${j.salaryMin.toLocaleString()}–${j.salaryMax.toLocaleString()}`
+  if (j.salaryMin) return `€${j.salaryMin.toLocaleString()}+`
+  if (j.salaryMax) return `up to €${j.salaryMax.toLocaleString()}`
+  return '—'
 }
 
 export default function JobsView() {
-  const [jobs, setJobs] = useState<JobListing[]>(INITIAL_JOBS)
-  const [showModal, setShowModal] = useState(false)
-  const [company, setCompany] = useState('')
-  const [role, setRole] = useState('')
-  const [location, setLocation] = useState('')
-  const [type, setType] = useState('Full-time')
+  const api = useCrmApi()
+  const [jobs, setJobs] = useState<AdminJob[]>([])
+  const [filter, setFilter] = useState<typeof FILTERS[number]>('all')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  function removeJob(id: string) {
-    setJobs(prev => prev.filter(j => j.id !== id))
-    toast('Job listing removed ✓')
-  }
+  const load = useCallback(async () => {
+    setLoading(true); setError('')
+    try { setJobs((await api.adminJobs(filter)) as AdminJob[]) }
+    catch { setError('Could not load job listings.') }
+    finally { setLoading(false) }
+  }, [api, filter])
+  useEffect(() => { load() }, [load])
 
-  function saveJob() {
-    if (!company.trim() || !role.trim()) { alert('Please enter company and role'); return }
-    const posted = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
-    const newJob: JobListing = { id: 'j' + Date.now(), company: company.trim(), role: role.trim(), location: location.trim() || '—', type, credits: 400, posted, status: 'live' }
-    setJobs(prev => [newJob, ...prev])
-    setShowModal(false)
-    setCompany(''); setRole(''); setLocation(''); setType('Full-time')
-    toast(`${newJob.role} at ${newJob.company} posted ✓`)
-  }
+  const stats = useMemo(() => ({
+    total: jobs.length,
+    live: jobs.filter(j => j.status === 'active' && daysLeft(j.createdAt) > 0).length,
+    applicants: jobs.reduce((n, j) => n + j.applicants, 0),
+    views: jobs.reduce((n, j) => n + j.views, 0),
+  }), [jobs])
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>
-          <span style={{ color: '#FF4500' }}>Jobs</span> 💼
-        </div>
-        <button onClick={() => setShowModal(true)} style={{ background: '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: '7px 14px', fontFamily: 'Nunito, sans-serif', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>
-          + Post Job
-        </button>
-      </div>
-      <div style={{ fontSize: 11, color: '#666', fontFamily: 'Comfortaa, sans-serif', marginBottom: 14 }}>
-        400 credits (€20) per job listing posted
+      <h1 style={h1}>💼 Job Listings</h1>
+      <p style={sub}>Every job posted on Grabitt. Listings run for {JOB_LIFE_DAYS} days.</p>
+
+      <div style={statRow}>
+        <Stat label="Listings" value={stats.total} />
+        <Stat label="Live" value={stats.live} color="#16a34a" />
+        <Stat label="Applicants" value={stats.applicants} color="#FF4500" />
+        <Stat label="Views" value={stats.views} />
       </div>
 
-      {/* Job list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {jobs.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 20, color: '#777', fontSize: 12, fontFamily: 'Comfortaa, sans-serif' }}>
-            No job listings yet
-          </div>
-        )}
-        {jobs.map(j => (
-          <div key={j.id} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', padding: 14, borderLeft: '4px solid #FF4500' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 14, fontWeight: 900, color: '#1a1a1a' }}>{j.role}</div>
-                <div style={{ fontSize: 11, color: '#666', fontFamily: 'Comfortaa, sans-serif', marginTop: 2 }}>{j.company} · {j.location}</div>
-                <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-                  <span style={{ background: '#FFF3EE', color: '#FF4500', borderRadius: 50, padding: '2px 8px', fontSize: 9, fontWeight: 800, fontFamily: 'Nunito, sans-serif' }}>{j.type}</span>
-                  <span style={{ background: '#f0f0f0', color: '#666', borderRadius: 50, padding: '2px 8px', fontSize: 9, fontWeight: 800, fontFamily: 'Nunito, sans-serif' }}>🪙 {j.credits} credits</span>
-                  <span style={{ background: j.status === 'live' ? '#22c55e' : '#94a3b8', color: '#fff', borderRadius: 50, padding: '2px 8px', fontSize: 9, fontWeight: 800, fontFamily: 'Nunito, sans-serif' }}>{j.status}</span>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 9, color: '#666' }}>{j.posted}</div>
-                <button onClick={() => removeJob(j.id)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: 11, cursor: 'pointer', marginTop: 6, fontFamily: 'Nunito, sans-serif', fontWeight: 800 }}>
-                  Remove
-                </button>
-              </div>
-            </div>
-          </div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+        {FILTERS.map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={chip(filter === f)}>{f[0].toUpperCase() + f.slice(1)}</button>
         ))}
+        <button onClick={load} style={{ ...chip(false), marginLeft: 'auto' }}>↻ Refresh</button>
       </div>
 
-      {/* Post Job modal */}
-      {showModal && (
-        <div onClick={() => setShowModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 99998, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: 380, maxWidth: '95vw', overflow: 'hidden' }}>
-            <div style={{ background: '#FF4500', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 15, fontWeight: 700, color: '#fff' }}>💼 Post Job Listing</div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 16 }}>✕</button>
-            </div>
-            <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input value={company} onChange={e => setCompany(e.target.value)} placeholder="Company name" style={{ border: '1.5px solid #eee', borderRadius: 10, padding: 10, fontFamily: 'Comfortaa, sans-serif', fontSize: 12, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-              <input value={role} onChange={e => setRole(e.target.value)} placeholder="Role / position" style={{ border: '1.5px solid #eee', borderRadius: 10, padding: 10, fontFamily: 'Comfortaa, sans-serif', fontSize: 12, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-              <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={{ border: '1.5px solid #eee', borderRadius: 10, padding: 10, fontFamily: 'Comfortaa, sans-serif', fontSize: 12, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-              <select value={type} onChange={e => setType(e.target.value)} style={{ border: '1.5px solid #eee', borderRadius: 10, padding: 10, fontFamily: 'Comfortaa, sans-serif', fontSize: 12, outline: 'none', width: '100%', boxSizing: 'border-box' }}>
-                {JOB_TYPES.map(t => <option key={t}>{t}</option>)}
-              </select>
-              <button onClick={saveJob} style={{ background: '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, cursor: 'pointer', marginTop: 4 }}>
-                Post Job →
-              </button>
-            </div>
-          </div>
+      {loading ? <div style={empty}>Loading…</div>
+        : error ? <div style={{ ...empty, color: '#ef4444' }}>{error}</div>
+        : jobs.length === 0 ? <div style={empty}>No job listings yet.</div>
+        : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={table}>
+            <thead>
+              <tr>
+                {['Role', 'Employer', 'Location', 'Salary', 'Applicants', 'Views', 'Status', ''].map(h => <th key={h} style={th}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.map(j => {
+                const d = daysLeft(j.createdAt)
+                const expired = j.status !== 'active' || d <= 0
+                return (
+                  <tr key={j.id} style={{ borderTop: '1px solid #f0ece5' }}>
+                    <td style={td}>
+                      <div style={{ fontWeight: 800, color: '#1a1a1a' }}>{j.jobTitle}</div>
+                      <div style={{ fontSize: 11, color: '#999' }}>{j.sector ?? j.type.replace('_', ' ')}</div>
+                    </td>
+                    <td style={td}>
+                      <div>{j.company}</div>
+                      <div style={{ fontSize: 11, color: '#999' }}>
+                        {j.employer}{!j.employerIsBusiness && <span style={warnPill}>not business</span>}
+                      </div>
+                    </td>
+                    <td style={td}>{j.location}</td>
+                    <td style={td}>{salary(j)}</td>
+                    <td style={{ ...td, fontWeight: 800, color: j.applicants ? '#FF4500' : '#bbb' }}>{j.applicants}</td>
+                    <td style={td}>{j.views}</td>
+                    <td style={td}>
+                      {expired
+                        ? <span style={pill('#ef4444')}>Expired</span>
+                        : <span style={pill(d <= 3 ? '#f59e0b' : '#16a34a')}>{d}d left</span>}
+                    </td>
+                    <td style={td}>
+                      <a href={`/listings/${j.listingId}`} target="_blank" rel="noreferrer" style={{ color: '#FF4500', fontWeight: 800, textDecoration: 'none', fontSize: 12 }}>View ↗</a>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
   )
 }
+
+function Stat({ label, value, color }: { label: string; value: number; color?: string }) {
+  return (
+    <div style={statCard}>
+      <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 22, fontWeight: 900, color: color ?? '#1a1a1a' }}>{value}</div>
+      <div style={{ fontSize: 10, color: '#888', fontWeight: 800, textTransform: 'uppercase' }}>{label}</div>
+    </div>
+  )
+}
+
+const h1: React.CSSProperties = { fontFamily: 'Comfortaa, sans-serif', fontSize: 22, fontWeight: 700, color: '#1a1a1a', margin: '0 0 4px' }
+const sub: React.CSSProperties = { fontFamily: 'Nunito, sans-serif', fontSize: 13, color: '#888', margin: '0 0 16px' }
+const statRow: React.CSSProperties = { display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }
+const statCard: React.CSSProperties = { flex: 1, minWidth: 110, background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: 12, textAlign: 'center' }
+const table: React.CSSProperties = { width: '100%', borderCollapse: 'collapse', background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, fontFamily: 'Nunito, sans-serif', fontSize: 13 }
+const th: React.CSSProperties = { textAlign: 'left', padding: '10px 12px', fontSize: 10, fontWeight: 800, color: '#999', textTransform: 'uppercase', letterSpacing: 0.4, whiteSpace: 'nowrap' }
+const td: React.CSSProperties = { padding: '10px 12px', color: '#555', verticalAlign: 'top' }
+const empty: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: 40, textAlign: 'center', color: '#888', fontFamily: 'Nunito, sans-serif', fontSize: 13 }
+const warnPill: React.CSSProperties = { marginLeft: 6, background: '#fef2f2', color: '#b91c1c', borderRadius: 50, padding: '1px 6px', fontSize: 9, fontWeight: 800 }
+const chip = (active: boolean): React.CSSProperties => ({
+  background: active ? '#FF4500' : '#fff', color: active ? '#fff' : '#666',
+  border: '1px solid #ece3d7', borderRadius: 50, padding: '6px 14px',
+  fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+})
+const pill = (color: string): React.CSSProperties => ({
+  background: `${color}1a`, color, borderRadius: 50, padding: '3px 9px',
+  fontSize: 10, fontWeight: 800, whiteSpace: 'nowrap',
+})

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
-import { router, publicProcedure, protectedProcedure } from '../trpc'
+import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
 
 // Employer-defined screening question shape.
 const questionSchema = z.object({
@@ -411,5 +411,45 @@ export const jobsRouter = router({
         })
       }
       return { ok: true, status: input.status }
+    }),
+
+  // Exec suite: every job listing on the platform, for admin monitoring.
+  adminList: execProcedure
+    .input(z.object({ status: z.enum(['all', 'active', 'expired']).default('all') }).optional())
+    .query(async ({ ctx, input }) => {
+      const status = input?.status ?? 'all'
+      const rows = await ctx.prisma.jobListing.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+        include: {
+          listing: {
+            select: {
+              id: true, status: true, location: true, createdAt: true, viewCount: true,
+              seller: { select: { id: true, displayName: true, email: true, isBusiness: true } },
+            },
+          },
+          _count: { select: { applications: true } },
+        },
+      })
+      return rows
+        .filter(r => status === 'all' || r.listing.status === status)
+        .map(r => ({
+          id: r.id,
+          listingId: r.listingId,
+          jobTitle: r.jobTitle,
+          company: r.company,
+          type: r.type,
+          sector: r.sector,
+          salaryMin: r.salaryMin ? Number(r.salaryMin) : null,
+          salaryMax: r.salaryMax ? Number(r.salaryMax) : null,
+          status: r.listing.status,
+          location: r.listing.location,
+          createdAt: r.listing.createdAt,
+          views: r.listing.viewCount,
+          applicants: r._count.applications,
+          employer: r.listing.seller.displayName,
+          employerEmail: r.listing.seller.email,
+          employerIsBusiness: r.listing.seller.isBusiness,
+        }))
     }),
 })
