@@ -1,80 +1,113 @@
 'use client'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useCrmApi } from './AdminApp'
 
-const MOCK_AUDIT = [
-  { id: 'a1', member: 'Alex Thompson', initial: 'A', action: 'Listing approved: "Sony PlayStation 5"', time: '2 min ago', by: 'Admin' },
-  { id: 'a2', member: 'Sarah Mitchell', initial: 'S', action: 'Account suspended for 7 days — repeated no-shows', time: '18 min ago', by: 'Admin' },
-  { id: 'a3', member: 'James Rodriguez', initial: 'J', action: 'Dispute resolved — refund issued to buyer', time: '1 hour ago', by: 'Admin' },
-  { id: 'a4', member: 'Emma Wilson', initial: 'E', action: 'Grade upgraded: Grabber → Dealer', time: '3 hours ago', by: 'System' },
-  { id: 'a5', member: 'Mark Davies', initial: 'M', action: 'Ban applied — fraudulent listings', time: '5 hours ago', by: 'Admin' },
-  { id: 'a6', member: 'Laura Chen', initial: 'L', action: 'Follow-up scheduled: 15 Jul 2026', time: 'Yesterday', by: 'Admin' },
-  { id: 'a7', member: 'Peter Novak', initial: 'P', action: 'Listing removed: "Fake Rolex Watch"', time: 'Yesterday', by: 'Admin' },
-  { id: 'a8', member: 'Niamh Brady', initial: 'N', action: 'Strike issued — misleading description', time: '2 days ago', by: 'Admin' },
-  { id: 'a9', member: 'Carlos Pérez', initial: 'C', action: 'Message sent via WhatsApp re: handover', time: '2 days ago', by: 'Admin' },
-  { id: 'a10', member: 'Fiona Campbell', initial: 'F', action: 'Review flag cleared — resolved by seller', time: '3 days ago', by: 'System' },
-]
-
+// Exec suite — the real audit trail: every privileged admin action, attributed
+// to the admin who performed it (see ExecAuditLog / crm.auditTrail).
 interface AuditEntry {
   id: string
-  member: string
-  initial: string
   action: string
-  time: string
+  detail: Record<string, unknown> | null
+  createdAt: string
   by: string
+  byRole: string
+  targetId: string | null
+  target: string | null
+  targetEmail: string | null
 }
 
-interface Props {
-  onViewMember?: (name: string) => void
+// Known actions get a friendly label + icon; anything else falls back to the raw
+// action name, so new actions still show up rather than silently vanishing.
+const ACTIONS: Record<string, { label: string; icon: string; color: string }> = {
+  member_update: { label: 'Member updated', icon: '✏️', color: '#3b82f6' },
+  member_created: { label: 'Member created', icon: '➕', color: '#16a34a' },
+  admin_granted: { label: 'Admin access granted', icon: '🔐', color: '#7c3aed' },
+  admin_revoked: { label: 'Admin access revoked', icon: '🔓', color: '#ef4444' },
+  email_changed: { label: 'Email changed', icon: '📧', color: '#f59e0b' },
+  password_reset_sent: { label: 'Password reset sent', icon: '🔑', color: '#f59e0b' },
 }
+
+function relative(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  if (diff < 60000) return 'just now'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function summarise(e: AuditEntry): string {
+  const d = e.detail ?? {}
+  if (e.action === 'member_update' && Array.isArray(d.fields)) return `Changed: ${(d.fields as string[]).join(', ')}`
+  if (e.action === 'email_changed') return `${d.from ?? '?'} → ${d.to ?? '?'}`
+  if (e.action === 'password_reset_sent') return `Sent to ${d.to ?? '—'}`
+  if (e.action === 'member_created') return `Invited ${d.email ?? '—'}`
+  if (e.action === 'admin_granted' || e.action === 'admin_revoked') return String(d.email ?? '')
+  return ''
+}
+
+interface Props { onViewMember?: (id: string) => void }
 
 export default function AuditTrailView({ onViewMember }: Props) {
-  const [entries] = useState<AuditEntry[]>(MOCK_AUDIT)
-  const [search, setSearch] = useState('')
+  const api = useCrmApi()
+  const [entries, setEntries] = useState<AuditEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const filtered = search
-    ? entries.filter(e => [e.member, e.action].some(v => v.toLowerCase().includes(search.toLowerCase())))
-    : entries
+  const load = useCallback(async () => {
+    setLoading(true); setError('')
+    try { setEntries((await api.auditTrail()) as AuditEntry[]) }
+    catch { setError('Could not load the audit trail.') }
+    finally { setLoading(false) }
+  }, [api])
+  useEffect(() => { load() }, [load])
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}>
-          <span style={{ color: '#FF4500' }}>Audit</span> Trail
-        </h2>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search audit log…"
-          style={{ padding: '8px 14px', border: '1.5px solid #e5e7eb', borderRadius: 50, fontFamily: 'var(--font-ui)', fontSize: 12, width: 200, outline: 'none' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <h1 style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 22, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>📋 Audit Trail</h1>
+        <button onClick={load} style={chip}>↻ Refresh</button>
       </div>
+      <p style={{ fontFamily: 'Nunito, sans-serif', fontSize: 13, color: '#888', margin: '0 0 16px' }}>
+        Every privileged action taken in the executive suite, and who took it.
+      </p>
 
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-        {filtered.length === 0 ? (
-          <div style={{ padding: '60px 20px', textAlign: 'center', color: '#ccc', fontFamily: 'var(--font-ui)', fontSize: 13 }}>No audit entries found</div>
-        ) : (
-          filtered.map((e, i) => (
-            <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderBottom: i < filtered.length - 1 ? '1px solid #f5f5f5' : 'none' }}>
-              {/* Avatar */}
-              <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#FF4500', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Comfortaa, sans-serif', fontWeight: 700, fontSize: 16, flexShrink: 0 }}>
-                {e.initial}
+      {loading ? <div style={empty}>Loading…</div>
+        : error ? <div style={{ ...empty, color: '#ef4444' }}>{error}</div>
+        : entries.length === 0 ? <div style={empty}>No admin actions recorded yet.</div>
+        : (
+        <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden' }}>
+          {entries.map(e => {
+            const meta = ACTIONS[e.action] ?? { label: e.action, icon: '•', color: '#888' }
+            const note = summarise(e)
+            return (
+              <div key={e.id} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderBottom: '1px solid #f6f3ee', alignItems: 'flex-start' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: `${meta.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{meta.icon}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>
+                    {meta.label}
+                    {e.target && <span style={{ fontWeight: 600, color: '#666' }}> — {e.target}</span>}
+                  </div>
+                  {note && <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 11.5, color: '#777', marginTop: 2 }}>{note}</div>}
+                  <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 11, color: '#aaa', marginTop: 3 }}>
+                    by <strong style={{ color: '#888' }}>{e.by}</strong>
+                    <span style={{ background: '#f0ece5', color: '#888', borderRadius: 50, padding: '1px 6px', fontSize: 9, fontWeight: 800, marginLeft: 5 }}>{e.byRole}</span>
+                  </div>
+                  {onViewMember && e.targetId && (
+                    <button onClick={() => onViewMember(e.targetId!)} style={{ background: 'none', border: 'none', color: '#FF4500', fontFamily: 'Nunito, sans-serif', fontSize: 10, fontWeight: 800, cursor: 'pointer', marginTop: 4, padding: 0 }}>
+                      View member →
+                    </button>
+                  )}
+                </div>
+                <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 10.5, color: '#bbb', flexShrink: 0, whiteSpace: 'nowrap' }}>{relative(e.createdAt)}</div>
               </div>
-              {/* Content */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 13, color: '#1a1a1a' }}>{e.member}</div>
-                <div style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 11, color: '#555', marginTop: 2, lineHeight: 1.4 }}>{e.action}</div>
-              </div>
-              {/* Time + by */}
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 10, color: '#bbb' }}>{e.time}</div>
-                <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 9, color: '#ccc', marginTop: 2 }}>by {e.by}</div>
-                {onViewMember && (
-                  <button onClick={() => onViewMember(e.member)} style={{ background: 'none', border: 'none', color: '#FF4500', fontFamily: 'Nunito, sans-serif', fontSize: 10, fontWeight: 800, cursor: 'pointer', marginTop: 4, padding: 0 }}>
-                    View →
-                  </button>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
+
+const empty: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: 40, textAlign: 'center', color: '#888', fontFamily: 'Nunito, sans-serif', fontSize: 13 }
+const chip: React.CSSProperties = { background: '#fff', color: '#666', border: '1px solid #ece3d7', borderRadius: 50, padding: '6px 14px', fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, cursor: 'pointer' }

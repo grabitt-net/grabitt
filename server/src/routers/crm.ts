@@ -1,5 +1,22 @@
 import { z } from 'zod'
 import { router, execProcedure, publicProcedure } from '../trpc'
+import type { PrismaClient, Prisma } from '@prisma/client'
+
+// Records a privileged action against the acting admin. Best-effort: an audit
+// failure must never break the action the admin actually asked for.
+export async function writeAudit(
+  prisma: PrismaClient,
+  execUserId: string,
+  targetUserId: string | null,
+  action: string,
+  detail?: Prisma.InputJsonValue,
+) {
+  try {
+    await prisma.execAuditLog.create({
+      data: { execUserId, targetUserId, action, ...(detail ? { detail } : {}) },
+    })
+  } catch { /* never block the action on audit */ }
+}
 
 export const crmRouter = router({
   // Public inbound submissions from the footer info panels (suggestions,
@@ -123,12 +140,34 @@ export const crmRouter = router({
       if (Object.keys(data).length === 0) return { ok: true }
 
       const updated = await ctx.prisma.user.update({ where: { id: userId }, data })
-      // NOTE: no ExecAuditLog write here. ExecAuditLog.execUserId is an FK to
-      // ExecUser, but that table is unused — /admin mints a shared exec token
-      // with the literal id 'admin-page', so there's no real acting-admin row to
-      // attribute this to. Wiring per-admin identity is a separate change;
-      // logging against a fake id would just fail the FK silently.
+      await writeAudit(ctx.prisma, ctx.execUser.id, userId, 'member_update', { fields: Object.keys(data) })
       return { ok: true, id: updated.id }
+    }),
+
+  // Exec suite: who did what, to whom, when.
+  auditTrail: execProcedure
+    .input(z.object({ targetUserId: z.string().uuid().optional(), limit: z.number().int().min(1).max(200).default(100) }).optional())
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.prisma.execAuditLog.findMany({
+        where: input?.targetUserId ? { targetUserId: input.targetUserId } : {},
+        orderBy: { createdAt: 'desc' },
+        take: input?.limit ?? 100,
+        include: {
+          execUser: { select: { email: true, role: true } },
+          targetUser: { select: { id: true, displayName: true, email: true } },
+        },
+      })
+      return rows.map(r => ({
+        id: r.id,
+        action: r.action,
+        detail: r.detail as Record<string, unknown> | null,
+        createdAt: r.createdAt,
+        by: r.execUser.email,
+        byRole: r.execUser.role,
+        targetId: r.targetUser?.id ?? null,
+        target: r.targetUser?.displayName ?? null,
+        targetEmail: r.targetUser?.email ?? null,
+      }))
     }),
 
   disputes: execProcedure

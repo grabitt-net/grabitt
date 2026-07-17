@@ -34,9 +34,9 @@ export function useCrmApi() {
 
 export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'disputes' | 'reports' | 'rewards' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community'
 
-interface Props { execToken: string }
+interface Props { execToken: string; execEmail?: string; execRole?: string }
 
-export default function AdminApp({ execToken }: Props) {
+export default function AdminApp({ execToken, execEmail, execRole }: Props) {
   const api = makeCrmApi(execToken)
   const [view, setView] = useState<View>('funnel')
   const mainRef = useRef<HTMLElement>(null)
@@ -78,6 +78,12 @@ export default function AdminApp({ execToken }: Props) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/grabitt-logo.png" alt="Grabitt" style={{ height: 26, width: 'auto', display: 'block' }} />
             <span style={{ color: '#999', fontSize: 13, fontWeight: 400 }}>/ Exec</span>
+            {execEmail && (
+              <span title={`Signed in as ${execEmail}`} style={{ marginLeft: 10, fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', fontWeight: 700 }}>
+                {execEmail}
+                {execRole && <span style={{ background: '#f0ece5', color: '#888', borderRadius: 50, padding: '1px 6px', fontSize: 9, fontWeight: 800, marginLeft: 5 }}>{execRole}</span>}
+              </span>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             {loading ? (
@@ -130,7 +136,7 @@ export default function AdminApp({ execToken }: Props) {
                 {view === 'toolbox'    && <ToolboxView />}
                 {view === 'jobs'       && <JobsView />}
                 {view === 'property'   && <PropertyView />}
-                {view === 'audit'      && <AuditTrailView onViewMember={() => setView('members')} />}
+                {view === 'audit'      && <AuditTrailView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'compliance' && <ComplianceView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'homepage'   && <HomepageView onEditBanners={(pos) => { setBannerPosition(pos); setView('banners') }} />}
                 {view === 'community'  && <CommunityView />}

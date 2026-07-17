@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 import { prisma } from 'server/src/db'
 import { verifyExecJwt } from 'server/src/middleware/auth'
+import { writeAudit } from 'server/src/routers/crm'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -17,7 +18,8 @@ export async function POST(req: Request) {
   // Exec gate — same JWT the admin app uses for tRPC.
   const auth = req.headers.get('authorization')
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
-  if (!token || !verifyExecJwt(token)) {
+  const actor = token ? verifyExecJwt(token) : null
+  if (!actor) {
     return NextResponse.json({ error: 'Exec access required' }, { status: 401 })
   }
 
@@ -64,6 +66,7 @@ export async function POST(req: Request) {
         },
         select: { id: true, email: true, displayName: true },
       })
+      await writeAudit(prisma, actor.id, created.id, 'member_created', { email: addr, invited: true })
       return NextResponse.json({ ok: true, ...created, invited: true })
     } catch (e) {
       // Don't leave an orphaned auth identity behind if our row failed.
@@ -84,6 +87,7 @@ export async function POST(req: Request) {
       redirectTo: `${origin}/auth/callback?next=/account`,
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    await writeAudit(prisma, actor.id, userId, 'password_reset_sent', { to: user.email })
     return NextResponse.json({ ok: true, sentTo: user.email })
   }
 
@@ -99,6 +103,7 @@ export async function POST(req: Request) {
       .from('profiles')
       .upsert({ id: user.supabaseId, email: user.email, is_admin: isAdmin }, { onConflict: 'id' })
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    await writeAudit(prisma, actor.id, userId, isAdmin ? 'admin_granted' : 'admin_revoked', { email: user.email })
     return NextResponse.json({ ok: true, isAdmin })
   }
 
@@ -119,6 +124,7 @@ export async function POST(req: Request) {
     } catch {
       return NextResponse.json({ error: 'That email is already used by another account' }, { status: 400 })
     }
+    await writeAudit(prisma, actor.id, userId, 'email_changed', { from: user.email, to: next })
     return NextResponse.json({ ok: true, email: next })
   }
 

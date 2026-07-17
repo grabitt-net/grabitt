@@ -104,6 +104,10 @@ export function makeCrmApi(execToken: string) {
     updateMember: (data: Record<string, unknown>) =>
       rpc<any>('crm.updateMember', 'mutation', data, execToken),
 
+    // Audit trail — who did what, to whom
+    auditTrail: (targetUserId?: string) =>
+      rpc<any[]>('crm.auditTrail', 'query', { targetUserId, limit: 100 }, execToken),
+
     // Creating a member / email / password live in Supabase Auth, so they go
     // via a dedicated exec-gated route rather than the tRPC routers.
     memberAuthAction: async (body:
