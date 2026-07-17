@@ -109,6 +109,7 @@ export function makeCrmApi(execToken: string) {
     memberAuthAction: async (body:
       | { action: 'change_email'; userId: string; email: string }
       | { action: 'reset_password'; userId: string }
+      | { action: 'set_admin'; userId: string; isAdmin: boolean }
       | { action: 'create_member'; email: string; displayName: string; grade?: string; isBusiness?: boolean; phone?: string; businessName?: string }
     ) => {
       const res = await fetch('/api/admin/user-auth', {
@@ -118,7 +119,7 @@ export function makeCrmApi(execToken: string) {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error ?? 'Request failed')
-      return json as { ok: true; id?: string; email?: string; sentTo?: string; invited?: boolean }
+      return json as { ok: true; id?: string; email?: string; sentTo?: string; invited?: boolean; isAdmin?: boolean }
     },
   }
 }

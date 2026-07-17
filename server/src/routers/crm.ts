@@ -68,21 +68,26 @@ export const crmRouter = router({
 
   members: execProcedure
     .input(z.object({ grade: z.enum(['grabber','dealer','trader','pro']).optional(), page: z.number().default(1) }))
-    .query(({ ctx, input }) =>
-      ctx.prisma.user.findMany({
+    .query(async ({ ctx, input }) => {
+      const users = await ctx.prisma.user.findMany({
         where: input.grade ? { grade: input.grade } : {},
         orderBy: { createdAt: 'desc' },
         skip: (input.page - 1) * 50,
         take: 500,
         select: {
-          id: true, displayName: true, email: true, grade: true, salesCount: true, avgRating: true,
-          credits: true, createdAt: true, phone: true, collectionAddress: true, avatar: true,
+          id: true, supabaseId: true, displayName: true, email: true, grade: true, salesCount: true,
+          avgRating: true, credits: true, createdAt: true, phone: true, collectionAddress: true, avatar: true,
           isBusiness: true, businessVerified: true, businessName: true, isVerified: true,
           emailVerified: true, phoneVerified: true, idVerified: true, addressVerified: true,
           strikeCount: true, suspendedUntil: true, suspendedReason: true, deletedAt: true, locale: true,
         },
       })
-    ),
+      // Admin access lives in Supabase's `profiles.is_admin` (that's what gates
+      // /admin), not on our User table — so read it alongside.
+      const adminRows = await ctx.prisma.$queryRaw<{ id: string }[]>`SELECT id FROM profiles WHERE is_admin = true`
+      const adminIds = new Set(adminRows.map(r => r.id))
+      return users.map(({ supabaseId, ...u }) => ({ ...u, isAdmin: adminIds.has(supabaseId) }))
+    }),
 
   // Exec suite: full member edit — profile details, account level, verification,
   // credits and suspension. Email/password are handled by /api/admin/user-auth
@@ -118,14 +123,11 @@ export const crmRouter = router({
       if (Object.keys(data).length === 0) return { ok: true }
 
       const updated = await ctx.prisma.user.update({ where: { id: userId }, data })
-      await ctx.prisma.execAuditLog.create({
-        data: {
-          execUserId: ctx.execUser.id,
-          targetUserId: userId,
-          action: 'member_update',
-          detail: { fields: Object.keys(data) },
-        },
-      }).catch(() => { /* audit is best-effort */ })
+      // NOTE: no ExecAuditLog write here. ExecAuditLog.execUserId is an FK to
+      // ExecUser, but that table is unused — /admin mints a shared exec token
+      // with the literal id 'admin-page', so there's no real acting-admin row to
+      // attribute this to. Wiring per-admin identity is a separate change;
+      // logging against a fake id would just fail the FK silently.
       return { ok: true, id: updated.id }
     }),
 

@@ -31,6 +31,7 @@ interface Member {
   suspendedReason: string | null
   deletedAt: string | null
   locale: string
+  isAdmin: boolean
 }
 
 const GRADES = ['grabber', 'dealer', 'trader', 'pro'] as const
@@ -119,7 +120,10 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
                   </td>
                   <td style={{ ...td, color: '#888' }}>{m.email}</td>
                   <td style={td}><span style={{ color: gradeColors[m.grade] ?? '#aaa', fontWeight: 900, fontSize: 11, textTransform: 'capitalize' }}>{m.grade}</span></td>
-                  <td style={td}>{m.isBusiness ? <span style={pill('#7c3aed')}>Business{m.businessVerified ? ' ✓' : ''}</span> : <span style={{ color: '#bbb', fontSize: 11 }}>Personal</span>}</td>
+                  <td style={td}>
+                    {m.isAdmin && <span style={{ ...pill('#111'), marginRight: 4 }}>ADMIN</span>}
+                    {m.isBusiness ? <span style={pill('#7c3aed')}>Business{m.businessVerified ? ' ✓' : ''}</span> : <span style={{ color: '#bbb', fontSize: 11 }}>Personal</span>}
+                  </td>
                   <td style={td}>{m.salesCount}</td>
                   <td style={td}>{m.credits}</td>
                   <td style={{ ...td, fontSize: 11, color: '#999' }}>{new Date(m.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
@@ -279,6 +283,18 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
     } catch (e) { fail(e) } finally { setBusy('') }
   }
 
+  const setAdmin = async (grant: boolean) => {
+    const warn = grant
+      ? `Grant ADMIN access to ${member.email}?\n\nThey will get the full executive suite: every member's details, listings, financials, and the ability to change accounts.`
+      : `Revoke admin access from ${member.email}?`
+    if (!confirm(warn)) return
+    setBusy('admin'); setErr('')
+    try {
+      await api.memberAuthAction({ action: 'set_admin', userId: member.id, isAdmin: grant })
+      flash(grant ? '✓ Admin access granted' : '✓ Admin access revoked'); onSaved()
+    } catch (e) { fail(e) } finally { setBusy('') }
+  }
+
   const applySuspension = async (lift: boolean) => {
     setBusy('suspend'); setErr('')
     try {
@@ -351,6 +367,20 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
             <button onClick={resetPassword} disabled={!!busy} style={{ ...secondary, width: '100%', marginTop: 10 }}>
               {busy === 'password' ? 'Sending…' : '🔑 Send password reset email'}
             </button>
+          </Card>
+
+          <Card title="Admin access">
+            <div style={{ fontSize: 11, color: '#888', fontFamily: 'Nunito, sans-serif', lineHeight: 1.5, marginBottom: 8 }}>
+              Admins get the full executive suite — every member, listing and financial, and the ability to edit accounts. Grant sparingly.
+            </div>
+            {member.isAdmin ? (
+              <>
+                <div style={{ ...pill('#111'), display: 'inline-block', marginBottom: 8 }}>ADMIN</div>
+                <button onClick={() => setAdmin(false)} disabled={!!busy} style={{ ...danger, width: '100%' }}>{busy === 'admin' ? '…' : 'Revoke admin access'}</button>
+              </>
+            ) : (
+              <button onClick={() => setAdmin(true)} disabled={!!busy} style={{ ...secondary, width: '100%' }}>{busy === 'admin' ? '…' : '🔐 Grant admin access'}</button>
+            )}
           </Card>
 
           <Card title="Suspension">

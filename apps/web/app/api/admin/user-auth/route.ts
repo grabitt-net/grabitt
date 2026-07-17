@@ -87,6 +87,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, sentTo: user.email })
   }
 
+  // Grant/revoke admin access. This flips Supabase `profiles.is_admin`, which is
+  // what /admin actually gates on (the ExecUser table is not used for auth).
+  if (action === 'set_admin') {
+    const isAdmin = body.isAdmin === true
+    if (!serviceKey) return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not configured' }, { status: 500 })
+
+    const admin = createSupabaseAdmin(url, serviceKey)
+    // Upsert so members without a profiles row can still be granted access.
+    const { error } = await admin
+      .from('profiles')
+      .upsert({ id: user.supabaseId, email: user.email, is_admin: isAdmin }, { onConflict: 'id' })
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json({ ok: true, isAdmin })
+  }
+
   if (action === 'change_email') {
     const next = String(email ?? '').trim().toLowerCase()
     if (!EMAIL_RE.test(next)) {
