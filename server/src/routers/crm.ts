@@ -144,6 +144,149 @@ export const crmRouter = router({
       return { ok: true, id: updated.id }
     }),
 
+  // Exec suite: everything about one member, for the 360° detail view —
+  // listings, sales, purchases, jobs, applications, property, messages,
+  // reviews, disputes, credits and consents.
+  memberDetail: execProcedure
+    .input(z.object({ userId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const id = input.userId
+      const [
+        user, listings, sales, purchases, jobsPosted, applications,
+        reviewsGiven, reviewsReceived, disputes, credits, threads,
+        messageCount, consents, subscriptions, seeker, strikes,
+      ] = await Promise.all([
+        ctx.prisma.user.findUniqueOrThrow({ where: { id } }),
+        ctx.prisma.listing.findMany({
+          where: { sellerId: id }, orderBy: { createdAt: 'desc' }, take: 200,
+          include: { jobListing: true, propertyListing: true, _count: { select: { wishlistItems: true } } },
+        }),
+        ctx.prisma.transaction.findMany({
+          where: { sellerId: id }, orderBy: { createdAt: 'desc' }, take: 100,
+          include: { listing: { select: { title: true } }, buyer: { select: { id: true, displayName: true } } },
+        }),
+        ctx.prisma.transaction.findMany({
+          where: { buyerId: id }, orderBy: { createdAt: 'desc' }, take: 100,
+          include: { listing: { select: { title: true } }, seller: { select: { id: true, displayName: true } } },
+        }),
+        ctx.prisma.jobListing.findMany({
+          where: { employerId: id }, orderBy: { createdAt: 'desc' }, take: 100,
+          include: { listing: { select: { id: true, status: true } }, _count: { select: { applications: true } } },
+        }),
+        ctx.prisma.jobApplication.findMany({
+          where: { applicantId: id }, orderBy: { createdAt: 'desc' }, take: 100,
+          include: { jobListing: { select: { jobTitle: true, company: true, listingId: true } } },
+        }),
+        ctx.prisma.review.findMany({
+          where: { authorId: id }, orderBy: { createdAt: 'desc' }, take: 50,
+          include: { subject: { select: { id: true, displayName: true } } },
+        }),
+        ctx.prisma.review.findMany({
+          where: { subjectId: id }, orderBy: { createdAt: 'desc' }, take: 50,
+          include: { author: { select: { id: true, displayName: true } } },
+        }),
+        ctx.prisma.dispute.findMany({
+          where: { raisedById: id }, orderBy: { createdAt: 'desc' }, take: 50,
+          include: { transaction: { include: { listing: { select: { title: true } } } } },
+        }),
+        ctx.prisma.creditEvent.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' }, take: 50 }),
+        ctx.prisma.threadParticipant.findMany({
+          where: { userId: id }, take: 50,
+          include: {
+            thread: {
+              include: {
+                participants: { include: { user: { select: { id: true, displayName: true } } } },
+                messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+                _count: { select: { messages: true } },
+              },
+            },
+          },
+        }),
+        ctx.prisma.message.count({ where: { senderId: id } }),
+        ctx.prisma.consent.findMany({ where: { userId: id }, orderBy: { acceptedAt: 'desc' } }),
+        ctx.prisma.subscription.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' } }),
+        ctx.prisma.seekerProfile.findUnique({ where: { userId: id } }),
+        ctx.prisma.userStrike.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' }, take: 50 }),
+      ])
+
+      const money = (v: unknown) => (v == null ? null : Number(v))
+      const properties = listings.filter(l => l.propertyListing)
+
+      return {
+        user: {
+          ...user,
+          credits: user.credits,
+          avgRating: user.avgRating,
+        },
+        totals: {
+          listings: listings.length,
+          liveListings: listings.filter(l => l.status === 'active').length,
+          properties: properties.length,
+          jobsPosted: jobsPosted.length,
+          applications: applications.length,
+          sales: sales.length,
+          purchases: purchases.length,
+          salesValue: sales.reduce((n, t) => n + Number(t.amount), 0),
+          purchaseValue: purchases.reduce((n, t) => n + Number(t.amount), 0),
+          feesPaid: sales.reduce((n, t) => n + Number(t.platformFee), 0),
+          messagesSent: messageCount,
+          threads: threads.length,
+          disputes: disputes.length,
+          strikes: strikes.length,
+        },
+        listings: listings.map(l => ({
+          id: l.id, title: l.title, price: money(l.price), status: l.status,
+          department: l.department, location: l.location, createdAt: l.createdAt,
+          views: l.viewCount, saves: l._count.wishlistItems,
+          kind: l.jobListing ? 'job' : l.propertyListing ? 'property' : 'item',
+        })),
+        properties: properties.map(l => ({
+          id: l.id, title: l.title, price: money(l.price), status: l.status, location: l.location,
+          type: l.propertyListing!.type, bedrooms: l.propertyListing!.bedrooms,
+          bathrooms: l.propertyListing!.bathrooms, m2: money(l.propertyListing!.m2),
+          createdAt: l.createdAt,
+        })),
+        jobsPosted: jobsPosted.map(j => ({
+          id: j.id, listingId: j.listingId, jobTitle: j.jobTitle, company: j.company,
+          type: j.type, status: j.listing.status, applicants: j._count.applications, createdAt: j.createdAt,
+        })),
+        applications: applications.map(a => ({
+          id: a.id, status: a.status, createdAt: a.createdAt,
+          jobTitle: a.jobListing.jobTitle, company: a.jobListing.company, listingId: a.jobListing.listingId,
+          coverNote: a.coverNote, cvOnFile: !!a.cvUrl,
+        })),
+        sales: sales.map(t => ({
+          id: t.id, item: t.listing.title, amount: money(t.amount), fee: money(t.platformFee),
+          net: money(t.sellerNet), status: t.status, createdAt: t.createdAt,
+          counterparty: t.buyer.displayName, counterpartyId: t.buyer.id,
+        })),
+        purchases: purchases.map(t => ({
+          id: t.id, item: t.listing.title, amount: money(t.amount), status: t.status,
+          createdAt: t.createdAt, counterparty: t.seller.displayName, counterpartyId: t.seller.id,
+        })),
+        threads: threads.map(tp => {
+          const other = tp.thread.participants.find(p => p.userId !== id)
+          const last = tp.thread.messages[0]
+          return {
+            id: tp.thread.id,
+            with: other?.user.displayName ?? 'Unknown',
+            withId: other?.user.id ?? null,
+            messages: tp.thread._count.messages,
+            lastAt: last?.createdAt ?? null,
+            lastPreview: last ? last.body.slice(0, 120) : null,
+          }
+        }).sort((a, b) => (b.lastAt?.getTime() ?? 0) - (a.lastAt?.getTime() ?? 0)),
+        reviewsGiven: reviewsGiven.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, about: r.subject.displayName, createdAt: r.createdAt })),
+        reviewsReceived: reviewsReceived.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, by: r.author.displayName, createdAt: r.createdAt })),
+        disputes: disputes.map(d => ({ id: d.id, status: d.status, reason: d.reason, item: d.transaction.listing.title, createdAt: d.createdAt })),
+        credits: credits.map(c => ({ id: c.id, kind: c.kind, delta: c.delta, balance: c.balance, note: c.note, createdAt: c.createdAt })),
+        consents: consents.map(c => ({ id: c.id, kind: c.kind, acceptedAt: c.acceptedAt, ipAddress: c.ipAddress })),
+        subscriptions: subscriptions.map(s => ({ id: s.id, plan: s.plan, status: s.status, currentPeriodEnd: s.currentPeriodEnd, cancelAtPeriodEnd: s.cancelAtPeriodEnd })),
+        strikes: strikes.map(s => ({ id: s.id, reason: s.reason, createdAt: s.createdAt })),
+        seekerProfile: seeker,
+      }
+    }),
+
   // Exec suite: who did what, to whom, when.
   auditTrail: execProcedure
     .input(z.object({ targetUserId: z.string().uuid().optional(), limit: z.number().int().min(1).max(200).default(100) }).optional())

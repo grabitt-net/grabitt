@@ -108,6 +108,10 @@ export function makeCrmApi(execToken: string) {
     auditTrail: (targetUserId?: string) =>
       rpc<any[]>('crm.auditTrail', 'query', { targetUserId, limit: 100 }, execToken),
 
+    // Everything about one member (360° view)
+    memberDetail: (userId: string) =>
+      rpc<any>('crm.memberDetail', 'query', { userId }, execToken),
+
     // Creating a member / email / password live in Supabase Auth, so they go
     // via a dedicated exec-gated route rather than the tRPC routers.
     memberAuthAction: async (body:

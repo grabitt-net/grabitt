@@ -1,6 +1,7 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
+import MemberActivity from './MemberActivity'
 
 // Exec suite — full member administration: profile details, account level,
 // verification, credits, suspension, plus email change & password reset
@@ -217,6 +218,7 @@ function CreateMemberModal({ onClose, onCreated }: { onClose: () => void; onCrea
 
 function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: () => void; onSaved: () => void }) {
   const api = useCrmApi()
+  const [view, setView] = useState<'activity' | 'manage'>('activity')
   const [f, setF] = useState({
     displayName: member.displayName ?? '',
     phone: member.phone ?? '',
@@ -311,16 +313,26 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 99996 }}>
-      <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', right: 0, top: 0, width: 420, maxWidth: '95vw', height: '100vh', background: '#fff', overflowY: 'auto', boxShadow: '-8px 0 40px rgba(0,0,0,0.2)' }}>
+      <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', right: 0, top: 0, width: 880, maxWidth: '96vw', height: '100vh', background: '#fff', overflowY: 'auto', boxShadow: '-8px 0 40px rgba(0,0,0,0.2)' }}>
         <div style={{ background: '#E8DDD5', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
           <div>
-            <div style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>{member.displayName}</div>
-            <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{member.email}</div>
+            <div style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>
+              {member.displayName}
+              {member.isAdmin && <span style={{ ...pill('#111'), marginLeft: 8 }}>ADMIN</span>}
+              {member.isBusiness && <span style={{ ...pill('#7c3aed'), marginLeft: 4 }}>BUSINESS</span>}
+            </div>
+            <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{member.email} · {member.grade} · joined {new Date(member.createdAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</div>
           </div>
-          <button onClick={onClose} style={{ background: '#fff', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15 }}>✕</button>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <button onClick={() => setView('activity')} style={topTab(view === 'activity')}>Activity</button>
+            <button onClick={() => setView('manage')} style={topTab(view === 'manage')}>Manage</button>
+            <button onClick={onClose} style={{ background: '#fff', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15, marginLeft: 4 }}>✕</button>
+          </div>
         </div>
 
-        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {view === 'activity' && <div style={{ padding: 16 }}><MemberActivity userId={member.id} /></div>}
+
+        <div style={{ padding: 16, display: view === 'manage' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
           {msg && <Banner color="#16a34a" bg="#f0fdf4" border="#bbf7d0">{msg}</Banner>}
           {err && <Banner color="#b91c1c" bg="#fef2f2" border="#fecaca">{err}</Banner>}
 
@@ -444,4 +456,9 @@ const chip = (active: boolean): React.CSSProperties => ({
 const pill = (color: string): React.CSSProperties => ({
   background: `${color}18`, color, borderRadius: 50, padding: '3px 10px',
   fontSize: 10, fontWeight: 800, fontFamily: 'Nunito, sans-serif', whiteSpace: 'nowrap',
+})
+const topTab = (active: boolean): React.CSSProperties => ({
+  background: active ? '#1a1a1a' : '#fff', color: active ? '#fff' : '#666',
+  border: 'none', borderRadius: 50, padding: '7px 16px',
+  fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, cursor: 'pointer',
 })
