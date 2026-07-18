@@ -1,5 +1,47 @@
 import { z } from 'zod'
+import type { PrismaClient } from '@prisma/client'
 import { router, protectedProcedure, execProcedure } from '../trpc'
+
+// GDPR erasure of the application record: strips PII from the User row and logs
+// the request. Transactions are deliberately KEPT (legal retention + the other
+// party's rights) — the row is anonymised, not deleted, so those records stay
+// intact but are detached from a real person.
+//
+// NOTE: this only covers OUR database. The Supabase Auth identity still holds
+// the user's email and active sessions, so callers must also erase that — see
+// apps/web/app/api/account/delete/route.ts, which is the complete flow.
+export async function anonymiseUser(prisma: PrismaClient, userId: string) {
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
+  if (user.deletedAt) return { alreadyDeleted: true, supabaseId: user.supabaseId }
+
+  await prisma.deletionRequest.create({
+    data: {
+      userId: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      status: 'completed',
+      completedAt: new Date(),
+    },
+  })
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      email: `deleted+${user.id}@grabitt.invalid`,
+      displayName: 'Deleted user',
+      avatar: null,
+      phone: null,
+      collectionAddress: null,
+      businessName: null,
+      businessBio: null,
+      businessBanner: null,
+      isBusiness: false,
+      interests: [],
+      deletedAt: new Date(),
+    },
+  })
+  return { alreadyDeleted: false, supabaseId: user.supabaseId }
+}
 
 export const complianceRouter = router({
   // Current user's consent status — decides which blocking modals to show.
@@ -36,38 +78,12 @@ export const complianceRouter = router({
       return { ok: true }
     }),
 
-  // GDPR erasure: record the request, anonymise PII, revoke access. Sales and
-  // purchase records (Transactions) are intentionally KEPT — the User row is
-  // anonymised, not deleted, to preserve those records' integrity.
+  // Database-side erasure only. Prefer POST /api/account/delete, which runs this
+  // AND erases the Supabase Auth identity (email + sessions). Kept for the
+  // mobile client until it moves to the full flow.
   requestDeletion: protectedProcedure.mutation(async ({ ctx }) => {
-    const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
-    if (user.deletedAt) return { ok: true, alreadyDeleted: true }
-
-    await ctx.prisma.deletionRequest.create({
-      data: {
-        userId: user.id,
-        email: user.email,
-        displayName: user.displayName,
-        status: 'completed',
-        completedAt: new Date(),
-      },
-    })
-
-    await ctx.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        email: `deleted+${user.id}@grabitt.invalid`,
-        displayName: 'Deleted user',
-        avatar: null,
-        businessName: null,
-        businessBio: null,
-        businessBanner: null,
-        isBusiness: false,
-        interests: [],
-        deletedAt: new Date(),
-      },
-    })
-    return { ok: true }
+    const res = await anonymiseUser(ctx.prisma, ctx.user.id)
+    return { ok: true, alreadyDeleted: res.alreadyDeleted }
   }),
 
   // ── Exec / admin views ──────────────────────────────────────────────────────

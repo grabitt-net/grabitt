@@ -68,7 +68,11 @@ function AccountInner() {
     if (!confirm('This permanently anonymises your account and signs you out. It cannot be undone. Continue?')) return
     setDeleting(true)
     try {
-      await trpcAuthed().compliance.requestDeletion.mutate()
+      // Erases both our record and the Supabase Auth identity (email + sessions).
+      const res = await fetch('/api/account/delete', { method: 'POST' })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json?.error ?? 'failed')
+      if (json?.warning) alert(json.warning)
       await createClient().auth.signOut()
       window.location.href = '/?deleted=1'
     } catch {
