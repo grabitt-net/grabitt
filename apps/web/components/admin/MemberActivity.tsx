@@ -198,19 +198,26 @@ export default function MemberActivity({ userId }: { userId: string }) {
 
       {tab === 'records' && (
         <>
-          <h4 style={h4}>Reviews received ({d.reviewsReceived.length})</h4>
-          <Table head={['By', 'Rating', 'Comment', 'Date']} rows={d.reviewsReceived} empty="None."
+          <h4 style={h4}>Reviews received ({t.reviewsReceived})</h4>
+          <Table head={['By', 'Rating', 'Comment', 'Date']} rows={rowsFor('reviewsReceived', d.reviewsReceived)} empty="None."
             row={(r: any) => [r.by, `★ ${r.rating}`, r.comment ?? '—', date(r.createdAt)]} />
-          <h4 style={h4}>Reviews given ({d.reviewsGiven.length})</h4>
-          <Table head={['About', 'Rating', 'Comment', 'Date']} rows={d.reviewsGiven} empty="None."
+          <More section="reviewsReceived" base={d.reviewsReceived} total={t.reviewsReceived} />
+
+          <h4 style={h4}>Reviews given ({t.reviewsGiven})</h4>
+          <Table head={['About', 'Rating', 'Comment', 'Date']} rows={rowsFor('reviewsGiven', d.reviewsGiven)} empty="None."
             row={(r: any) => [r.about, `★ ${r.rating}`, r.comment ?? '—', date(r.createdAt)]} />
-          <h4 style={h4}>Disputes raised ({d.disputes.length})</h4>
-          <Table head={['Item', 'Reason', 'Status', 'Date', '']} rows={d.disputes} empty="None."
+          <More section="reviewsGiven" base={d.reviewsGiven} total={t.reviewsGiven} />
+
+          <h4 style={h4}>Disputes raised ({t.disputes})</h4>
+          <Table head={['Item', 'Reason', 'Status', 'Date', '']} rows={rowsFor('disputes', d.disputes)} empty="None."
             row={(x: any) => [x.item, x.reason, <span style={pill('#f59e0b')}>{x.status}</span>, date(x.createdAt),
               <button onClick={() => openTranscript(x.id)} style={{ ...link, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>💬 Transcript</button>]} />
-          <h4 style={h4}>Strikes ({d.strikes.length})</h4>
-          <Table head={['Reason', 'Date']} rows={d.strikes} empty="None."
+          <More section="disputes" base={d.disputes} total={t.disputes} />
+
+          <h4 style={h4}>Strikes ({t.strikes})</h4>
+          <Table head={['Reason', 'Date']} rows={rowsFor('strikes', d.strikes)} empty="None."
             row={(s: any) => [s.reason, date(s.createdAt)]} />
+          <More section="strikes" base={d.strikes} total={t.strikes} />
           <h4 style={h4}>Credit history</h4>
           <Table head={['Type', 'Change', 'Balance', 'Note', 'Date']} rows={rowsFor('credits', d.credits)} empty="None."
             row={(c: any) => [c.kind, <span style={{ color: c.delta < 0 ? '#ef4444' : '#16a34a', fontWeight: 800 }}>{c.delta > 0 ? '+' : ''}{c.delta}</span>, c.balance, c.note ?? '—', date(c.createdAt)]} />

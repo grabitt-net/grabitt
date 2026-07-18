@@ -220,7 +220,7 @@ export const crmRouter = router({
       const [
         cListings, cLive, cProperties, cJobs, cApplications,
         cSales, cPurchases, cThreads, cDisputes, cStrikes,
-        salesAgg, purchaseAgg,
+        salesAgg, purchaseAgg, cReviewsGiven, cReviewsReceived,
       ] = await Promise.all([
         ctx.prisma.listing.count({ where: { sellerId: id } }),
         ctx.prisma.listing.count({ where: { sellerId: id, status: 'active' } }),
@@ -234,6 +234,8 @@ export const crmRouter = router({
         ctx.prisma.userStrike.count({ where: { userId: id } }),
         ctx.prisma.transaction.aggregate({ where: { sellerId: id }, _sum: { amount: true, platformFee: true } }),
         ctx.prisma.transaction.aggregate({ where: { buyerId: id }, _sum: { amount: true } }),
+        ctx.prisma.review.count({ where: { authorId: id } }),
+        ctx.prisma.review.count({ where: { subjectId: id } }),
       ])
 
       const money = (v: unknown) => (v == null ? null : Number(v))
@@ -261,6 +263,8 @@ export const crmRouter = router({
           threads: cThreads,
           disputes: cDisputes,
           strikes: cStrikes,
+          reviewsGiven: cReviewsGiven,
+          reviewsReceived: cReviewsReceived,
         },
         listings: listings.map(l => ({
           id: l.id, title: l.title, price: money(l.price), status: l.status,
@@ -320,7 +324,10 @@ export const crmRouter = router({
   memberSection: execProcedure
     .input(z.object({
       userId: z.string().uuid(),
-      section: z.enum(['listings', 'sales', 'purchases', 'jobsPosted', 'applications', 'properties', 'threads', 'credits']),
+      section: z.enum([
+        'listings', 'sales', 'purchases', 'jobsPosted', 'applications', 'properties', 'threads', 'credits',
+        'reviewsGiven', 'reviewsReceived', 'disputes', 'strikes',
+      ]),
       page: z.number().int().min(1).default(1),
     }))
     .query(async ({ ctx, input }) => {
@@ -423,6 +430,33 @@ export const crmRouter = router({
             where: { userId: id }, orderBy: { createdAt: 'desc' }, skip, take,
           })
           return page(rows.map(c => ({ id: c.id, kind: c.kind, delta: c.delta, balance: c.balance, note: c.note, createdAt: c.createdAt })))
+        }
+        case 'reviewsGiven': {
+          const rows = await ctx.prisma.review.findMany({
+            where: { authorId: id }, orderBy: { createdAt: 'desc' }, skip, take,
+            include: { subject: { select: { id: true, displayName: true } } },
+          })
+          return page(rows.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, about: r.subject.displayName, createdAt: r.createdAt })))
+        }
+        case 'reviewsReceived': {
+          const rows = await ctx.prisma.review.findMany({
+            where: { subjectId: id }, orderBy: { createdAt: 'desc' }, skip, take,
+            include: { author: { select: { id: true, displayName: true } } },
+          })
+          return page(rows.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, by: r.author.displayName, createdAt: r.createdAt })))
+        }
+        case 'disputes': {
+          const rows = await ctx.prisma.dispute.findMany({
+            where: { raisedById: id }, orderBy: { createdAt: 'desc' }, skip, take,
+            include: { transaction: { include: { listing: { select: { title: true } } } } },
+          })
+          return page(rows.map(d => ({ id: d.id, status: d.status, reason: d.reason, item: d.transaction.listing.title, createdAt: d.createdAt })))
+        }
+        case 'strikes': {
+          const rows = await ctx.prisma.userStrike.findMany({
+            where: { userId: id }, orderBy: { createdAt: 'desc' }, skip, take,
+          })
+          return page(rows.map(s => ({ id: s.id, reason: s.reason, createdAt: s.createdAt })))
         }
       }
     }),
