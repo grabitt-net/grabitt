@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createTrpcClient } from '@/lib/trpc'
 import SiteHeader from '@/components/marketplace/SiteHeader'
+import EconomicLiving from '@/components/marketplace/EconomicLiving'
 
 type Post = { id: string; title: string; excerpt: string; category: string; emoji: string; imageUrl: string | null }
 
@@ -33,6 +34,8 @@ export default function CommunityIndexPage() {
             </Link>
           ))}
         </div>
+
+        <EconomicLiving />
       </div>
     </main>
   )
