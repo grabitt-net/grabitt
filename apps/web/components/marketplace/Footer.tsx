@@ -7,11 +7,15 @@ import Logo from './Logo'
 export default function Footer() {
   const { openPanel } = usePanel()
   const fp = (key: string) => () => openPanel('footer', { key })
+  const go = (href: string) => () => { window.location.href = href }
 
   const cols: { heading: string; links: [string, () => void][] }[] = [
     { heading: 'Grabitt', links: [['About Us', fp('about')], ['Why Us?', fp('why')], ['Pricing', fp('pricing')], ['Contact', fp('contact')]] },
     { heading: 'Buying & Selling', links: [['Sell an item', () => openPanel('sell')], ['Buy Credits', () => openPanel('buyCredits')], ['Delivery', fp('collection')], ['Sold prices', () => openPanel('soldprices')]] },
     { heading: 'Safety', links: [['Grabitt Guarantee', () => openPanel('shield')], ['Scam Centre', fp('scams')], ['Report a listing', () => openPanel('report')], ['My Disputes', () => openPanel('myDisputes')]] },
+    // Economic Living lives in Grabitt Guides — link through rather than
+    // duplicating the content in a panel.
+    { heading: 'Guides', links: [['Grabitt Guides', go('/community')], ['Economic Living', go('/community#economic-living')]] },
     { heading: 'Help', links: [['Help Centre', () => openPanel('help')], ['Terms', fp('terms')], ['Dos & Don\'ts', fp('policy')], ['Suggest Ideas', fp('suggest')]] },
   ]
 

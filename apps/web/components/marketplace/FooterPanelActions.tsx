@@ -79,9 +79,6 @@ export default function FooterPanelActions({ panelKey, onOpen }: { panelKey: str
   if (panelKey === 'suggest') {
     return <div style={{ marginTop: 6 }}><MessageForm type="suggestion" placeholder="Your idea…" buttonText="Send Suggestion →" done="💡 Suggestion sent — thank you!" withEmail /></div>
   }
-  if (panelKey === 'economic') {
-    return <div style={{ marginTop: 10 }}><MessageForm type="economic_tip" placeholder="Your money-saving tip…" buttonText="💬 Send a money-saving tip" color="#16a34a" done="💡 Thanks! Your tip has been sent for review." /></div>
-  }
   if (panelKey === 'pricing') {
     return <div style={{ marginTop: 12, borderTop: '1px solid #f0ebe4', paddingTop: 14 }}>
       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>❤️ Apply for free listings</div>

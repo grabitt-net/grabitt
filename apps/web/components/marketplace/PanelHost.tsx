@@ -259,15 +259,8 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
     _card('🔍', 'Inspect before you pay', "Check the item in person and only release funds once you're satisfied.", '#22c55e', '#f0fdf4') +
     _card('🔕', 'Never share codes', 'No verification code, password or bank detail — ever — no matter who asks.', '#22c55e', '#f0fdf4') +
     '<div style="background:#FFF3EE;border-radius:12px;padding:12px;margin-top:14px;text-align:center;"><div style="font-size:11px;color:#FF4500;font-family:Comfortaa,sans-serif;line-height:1.5;">Spotted something dodgy? Report it in the chat or tap the 🛡️ Safety Shield. We investigate every report.</div></div>' },
-  economic: { title: '💡 Economic Living', body:
-    _banner('linear-gradient(135deg,#16a34a,#22c55e)', '💡 Economic Living', 'Smart ways to save, reuse and live well for less on the island.') +
-    _card('🔄', 'Buy second-hand first', 'Check Grabitt before buying new — furniture, tech and tools are often half price and barely used.', '#22c55e', '#f0fdf4') +
-    _card('⚡', 'Grab It Now bargains', 'Watch the ⚡ Grab It Now deals for end-of-day food and clearance items at big discounts.', '#22c55e', '#f0fdf4') +
-    _card('🤝', "Sell what you don't use", "That clutter is someone's treasure. Listing is free — turn unused items into cash.", '#22c55e', '#f0fdf4') +
-    _card('🌱', 'Grow & share', 'Swap home-grown veg, herbs and plants with neighbours instead of buying.', '#22c55e', '#f0fdf4') +
-    _card('💡', 'Cut energy bills', 'LED bulbs, air-dry laundry in the GC sun, and run appliances on cooler hours.', '#22c55e', '#f0fdf4') +
-    _card('🛒', 'Buy in bulk & split', 'Team up with neighbours on bulk food/household buys and share the savings.', '#22c55e', '#f0fdf4') +
-    _card('🔧', "Repair, don't replace", 'Find a Handy Help tradesperson to fix it for a fraction of buying new.', '#22c55e', '#f0fdf4') },
+  // NOTE: Economic Living now lives in Grabitt Guides (/community#economic-living)
+  // — the footer links there, so there's no panel version to keep in sync.
   policy: { title: "📋 Dos & Don'ts", body: (() => {
     const doRow = (txt: string) => `<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;"><span style="color:#22c55e;flex-shrink:0;">✓</span><span style="font-size:12px;color:#444;font-family:Comfortaa,sans-serif;line-height:1.5;">${txt}</span></div>`
     const dontRow = (txt: string) => `<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;"><span style="color:#ef4444;flex-shrink:0;">✕</span><span style="font-size:12px;color:#444;font-family:Comfortaa,sans-serif;line-height:1.5;">${txt}</span></div>`

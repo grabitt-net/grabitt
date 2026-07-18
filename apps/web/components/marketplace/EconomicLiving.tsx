@@ -41,7 +41,7 @@ export default function EconomicLiving() {
   }
 
   return (
-    <section style={{ marginTop: 36 }}>
+    <section id="economic-living" style={{ marginTop: 36, scrollMarginTop: 20 }}>
       {/* Header banner */}
       <div style={{ background: 'linear-gradient(135deg,#16a34a,#22c55e)', borderRadius: 14, padding: '14px 16px', marginBottom: 14 }}>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: '#fff' }}>💡 Economic Living</div>
