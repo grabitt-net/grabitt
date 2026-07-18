@@ -77,10 +77,21 @@ export const usersRouter = router({
       interests: z.array(z.string()).max(20).optional(),
       phone: z.string().max(40).optional(),
       collectionAddress: z.string().max(400).optional(),
+      marketingConsent: z.boolean().optional(),
     }))
-    .mutation(({ ctx, input }) =>
-      ctx.prisma.user.update({ where: { id: ctx.user.id }, data: input })
-    ),
+    .mutation(({ ctx, input }) => {
+      const { marketingConsent, ...rest } = input
+      return ctx.prisma.user.update({
+        where: { id: ctx.user.id },
+        data: {
+          ...rest,
+          // Stamp when consent was given — GDPR requires us to evidence it.
+          ...(marketingConsent !== undefined
+            ? { marketingConsent, marketingConsentAt: marketingConsent ? new Date() : null }
+            : {}),
+        },
+      })
+    }),
 
   // Business storefront customisation — only for active Business accounts.
   updateBusinessProfile: protectedProcedure

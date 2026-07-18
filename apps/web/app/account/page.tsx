@@ -249,6 +249,33 @@ function AccountInner() {
             )}
           </div>
 
+          {/* Marketing email — GDPR consent, freely given and withdrawable */}
+          <div style={card}>
+            <div style={cardHead}>Email preferences</div>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={!!me?.marketingConsent}
+                onChange={async e => {
+                  const next = e.target.checked
+                  setMe((m: any) => ({ ...m, marketingConsent: next }))
+                  try { await trpcAuthed().users.updateProfile.mutate({ marketingConsent: next }) }
+                  catch { setMe((m: any) => ({ ...m, marketingConsent: !next })) }
+                }}
+                style={{ width: 17, height: 17, accentColor: 'var(--orange)', marginTop: 1, flexShrink: 0 }}
+              />
+              <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#444', lineHeight: 1.6 }}>
+                <strong>Send me Grabitt news &amp; offers</strong><br />
+                <span style={{ color: '#777', fontSize: 12 }}>
+                  Island deals, new features and seller tips. You can unsubscribe any time — from here or the link in any email.
+                </span>
+              </span>
+            </label>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#999', marginTop: 10, lineHeight: 1.5 }}>
+              This doesn&apos;t affect essential emails about your orders, offers and account.
+            </div>
+          </div>
+
           {/* Collection details — auto-shared with a buyer only after a completed collection sale */}
           <div style={card}>
             <div style={cardHead}>Collection details</div>

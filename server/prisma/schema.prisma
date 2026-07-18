@@ -201,6 +201,11 @@ model User {
   // Snowbird mode — member marks themselves away
   snowbirdMode       Boolean   @default(false)
   snowbirdUntil      DateTime?
+  // Marketing email: consent is the GDPR lawful basis, so campaigns may only go
+  // to marketingConsent = true. The token powers one-click unsubscribe.
+  marketingConsent   Boolean   @default(false)
+  marketingConsentAt DateTime?
+  unsubscribeToken   String    @unique @default(uuid())
 
   // Department interests used for personalisation & alerts
   interests          String[]  @default([])
@@ -237,6 +242,7 @@ model User {
   seekerProfile      SeekerProfile?
   candidateUnlocks   CandidateUnlock[]  @relation("EmployerUnlocks")
   unlockedBy         CandidateUnlock[]  @relation("SeekerUnlocked")
+  eshotRecipients    EshotRecipient[]
 
   @@index([grade])
   @@index([email])
@@ -1018,14 +1024,48 @@ model Eshot {
   id          String       @id @default(uuid())
   subject     String
   bodyHtml    String
+  preheader   String?      // inbox preview line
+  fromName    String?      // overrides the default sender name
   segment     EshotSegment
+  status      String       @default("draft") // draft | sending | sent | failed
   scheduledAt DateTime?
   sentAt      DateTime?
+  // Rolled up from EshotRecipient by the Resend webhook.
+  recipientCount Int       @default(0)
+  deliveredCount Int       @default(0)
+  bounceCount    Int       @default(0)
+  complaintCount Int       @default(0)
   openCount   Int          @default(0)
   clickCount  Int          @default(0)
   createdAt   DateTime     @default(now())
 
+  recipients  EshotRecipient[]
+
   @@index([sentAt])
+}
+
+// One row per person per campaign — the unit of delivery and engagement.
+// resendId links a Resend email back to us when its webhook events arrive.
+model EshotRecipient {
+  id         String    @id @default(uuid())
+  eshotId    String
+  eshot      Eshot     @relation(fields: [eshotId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id])
+  email      String
+  resendId   String?   @unique
+  status     String    @default("queued") // queued | sent | delivered | bounced | complained | failed
+  openCount  Int       @default(0)
+  clickCount Int       @default(0)
+  openedAt   DateTime?
+  clickedAt  DateTime?
+  bouncedAt  DateTime?
+  error      String?
+  createdAt  DateTime  @default(now())
+
+  @@unique([eshotId, email])
+  @@index([eshotId])
+  @@index([userId])
 }
 
 // ── Affiliate / Referral ──────────────────────────────────────────────────────

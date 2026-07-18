@@ -108,22 +108,12 @@ export async function initJobs() {
   })
 
   // 9. Send e-shot batches
-  boss.work('send-eshot', async ([job]) => {
-    const { prisma } = await import('../db')
-    const { Resend } = await import('resend')
-    const resend = new Resend(process.env.RESEND_API_KEY!)
-    const { eshotId, segment } = job.data as { eshotId: string; segment: string }
-    const eshot = await prisma.eshot.findUniqueOrThrow({ where: { id: eshotId } })
-    const users = await prisma.user.findMany({
-      where: segment === 'all' ? {} : { grade: segment as 'grabber' | 'dealer' | 'trader' | 'pro' },
-      select: { email: true },
-      take: 1000,
-    })
-    // Batch send via Resend
-    for (const u of users) {
-      await resend.emails.send({ from: 'Grabitt <noreply@grabitt.net>', to: u.email, subject: eshot.subject, html: eshot.bodyHtml })
-    }
-  })
+  // NOTE: the 'send-eshot' worker was removed. It never ran (nothing calls
+  // initJobs, and pg-boss needs a long-running worker, which serverless can't
+  // provide) AND it ignored marketing consent and sent no unsubscribe link.
+  // Campaigns now send synchronously via server/src/lib/eshotSend.ts, called
+  // from the eshots router. Do not reinstate a queue worker here without
+  // removing that path first, or campaigns will send twice.
 
   // 10. Daily financials snapshot
   await boss.schedule('daily-snapshot', '0 1 * * *', {})

@@ -108,6 +108,23 @@ export function makeCrmApi(execToken: string) {
     auditTrail: (targetUserId?: string) =>
       rpc<any[]>('crm.auditTrail', 'query', { targetUserId, limit: 100 }, execToken),
 
+    // E-marketing
+    eshots: () => rpc<any[]>('eshots.list', 'query', undefined, execToken),
+    eshotAudienceSize: (segment: string) =>
+      rpc<number>('eshots.audienceSize', 'query', { segment }, execToken),
+    createEshot: (data: Record<string, unknown>) =>
+      rpc<any>('eshots.create', 'mutation', data, execToken),
+    updateEshot: (data: Record<string, unknown>) =>
+      rpc<any>('eshots.update', 'mutation', data, execToken),
+    removeEshot: (id: string) =>
+      rpc<any>('eshots.remove', 'mutation', { id }, execToken),
+    sendEshotTest: (id: string, to: string) =>
+      rpc<any>('eshots.sendTest', 'mutation', { id, to }, execToken),
+    sendEshot: (id: string) =>
+      rpc<{ sent: number; failed: number; recipients: number }>('eshots.send', 'mutation', { id }, execToken),
+    eshotRecipients: (id: string, page = 1) =>
+      rpc<{ rows: any[]; page: number; hasMore: boolean }>('eshots.recipients', 'query', { id, page }, execToken),
+
     // Everything about one member (360° view)
     memberDetail: (userId: string) =>
       rpc<any>('crm.memberDetail', 'query', { userId }, execToken),
