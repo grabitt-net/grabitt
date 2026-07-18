@@ -112,6 +112,14 @@ export function makeCrmApi(execToken: string) {
     memberDetail: (userId: string) =>
       rpc<any>('crm.memberDetail', 'query', { userId }, execToken),
 
+    // Page through one section of that view
+    memberSection: (userId: string, section: string, page: number) =>
+      rpc<{ rows: any[]; page: number; hasMore: boolean }>('crm.memberSection', 'query', { userId, section, page }, execToken),
+
+    // Full transcript for a disputed trade (audit-logged)
+    disputeTranscript: (disputeId: string) =>
+      rpc<any>('crm.disputeTranscript', 'query', { disputeId }, execToken),
+
     // Creating a member / email / password live in Supabase Auth, so they go
     // via a dedicated exec-gated route rather than the tRPC routers.
     memberAuthAction: async (body:

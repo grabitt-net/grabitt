@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { TRPCError } from '@trpc/server'
 import { router, execProcedure, publicProcedure } from '../trpc'
 import type { PrismaClient, Prisma } from '@prisma/client'
 
@@ -17,6 +18,10 @@ export async function writeAudit(
     })
   } catch { /* never block the action on audit */ }
 }
+
+// Rows per page in the member detail view. memberDetail returns page 1 of each
+// section; memberSection pages through the rest.
+const MEMBER_PAGE_SIZE = 25
 
 export const crmRouter = router({
   // Public inbound submissions from the footer info panels (suggestions,
@@ -151,6 +156,7 @@ export const crmRouter = router({
     .input(z.object({ userId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const id = input.userId
+      const PAGE = MEMBER_PAGE_SIZE
       const [
         user, listings, sales, purchases, jobsPosted, applications,
         reviewsGiven, reviewsReceived, disputes, credits, threads,
@@ -158,40 +164,40 @@ export const crmRouter = router({
       ] = await Promise.all([
         ctx.prisma.user.findUniqueOrThrow({ where: { id } }),
         ctx.prisma.listing.findMany({
-          where: { sellerId: id }, orderBy: { createdAt: 'desc' }, take: 200,
+          where: { sellerId: id }, orderBy: { createdAt: 'desc' }, take: PAGE,
           include: { jobListing: true, propertyListing: true, _count: { select: { wishlistItems: true } } },
         }),
         ctx.prisma.transaction.findMany({
-          where: { sellerId: id }, orderBy: { createdAt: 'desc' }, take: 100,
+          where: { sellerId: id }, orderBy: { createdAt: 'desc' }, take: PAGE,
           include: { listing: { select: { title: true } }, buyer: { select: { id: true, displayName: true } } },
         }),
         ctx.prisma.transaction.findMany({
-          where: { buyerId: id }, orderBy: { createdAt: 'desc' }, take: 100,
+          where: { buyerId: id }, orderBy: { createdAt: 'desc' }, take: PAGE,
           include: { listing: { select: { title: true } }, seller: { select: { id: true, displayName: true } } },
         }),
         ctx.prisma.jobListing.findMany({
-          where: { employerId: id }, orderBy: { createdAt: 'desc' }, take: 100,
+          where: { employerId: id }, orderBy: { createdAt: 'desc' }, take: PAGE,
           include: { listing: { select: { id: true, status: true } }, _count: { select: { applications: true } } },
         }),
         ctx.prisma.jobApplication.findMany({
-          where: { applicantId: id }, orderBy: { createdAt: 'desc' }, take: 100,
+          where: { applicantId: id }, orderBy: { createdAt: 'desc' }, take: PAGE,
           include: { jobListing: { select: { jobTitle: true, company: true, listingId: true } } },
         }),
         ctx.prisma.review.findMany({
-          where: { authorId: id }, orderBy: { createdAt: 'desc' }, take: 50,
+          where: { authorId: id }, orderBy: { createdAt: 'desc' }, take: PAGE,
           include: { subject: { select: { id: true, displayName: true } } },
         }),
         ctx.prisma.review.findMany({
-          where: { subjectId: id }, orderBy: { createdAt: 'desc' }, take: 50,
+          where: { subjectId: id }, orderBy: { createdAt: 'desc' }, take: PAGE,
           include: { author: { select: { id: true, displayName: true } } },
         }),
         ctx.prisma.dispute.findMany({
-          where: { raisedById: id }, orderBy: { createdAt: 'desc' }, take: 50,
+          where: { raisedById: id }, orderBy: { createdAt: 'desc' }, take: PAGE,
           include: { transaction: { include: { listing: { select: { title: true } } } } },
         }),
-        ctx.prisma.creditEvent.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' }, take: 50 }),
+        ctx.prisma.creditEvent.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' }, take: PAGE }),
         ctx.prisma.threadParticipant.findMany({
-          where: { userId: id }, take: 50,
+          where: { userId: id }, take: PAGE,
           include: {
             thread: {
               include: {
@@ -206,7 +212,28 @@ export const crmRouter = router({
         ctx.prisma.consent.findMany({ where: { userId: id }, orderBy: { acceptedAt: 'desc' } }),
         ctx.prisma.subscription.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' } }),
         ctx.prisma.seekerProfile.findUnique({ where: { userId: id } }),
-        ctx.prisma.userStrike.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' }, take: 50 }),
+        ctx.prisma.userStrike.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' }, take: PAGE }),
+      ])
+
+      // Totals come from count/aggregate queries, NOT from the arrays above —
+      // those are only the first page, so counting them would under-report.
+      const [
+        cListings, cLive, cProperties, cJobs, cApplications,
+        cSales, cPurchases, cThreads, cDisputes, cStrikes,
+        salesAgg, purchaseAgg,
+      ] = await Promise.all([
+        ctx.prisma.listing.count({ where: { sellerId: id } }),
+        ctx.prisma.listing.count({ where: { sellerId: id, status: 'active' } }),
+        ctx.prisma.propertyListing.count({ where: { listing: { sellerId: id } } }),
+        ctx.prisma.jobListing.count({ where: { employerId: id } }),
+        ctx.prisma.jobApplication.count({ where: { applicantId: id } }),
+        ctx.prisma.transaction.count({ where: { sellerId: id } }),
+        ctx.prisma.transaction.count({ where: { buyerId: id } }),
+        ctx.prisma.threadParticipant.count({ where: { userId: id } }),
+        ctx.prisma.dispute.count({ where: { raisedById: id } }),
+        ctx.prisma.userStrike.count({ where: { userId: id } }),
+        ctx.prisma.transaction.aggregate({ where: { sellerId: id }, _sum: { amount: true, platformFee: true } }),
+        ctx.prisma.transaction.aggregate({ where: { buyerId: id }, _sum: { amount: true } }),
       ])
 
       const money = (v: unknown) => (v == null ? null : Number(v))
@@ -218,21 +245,22 @@ export const crmRouter = router({
           credits: user.credits,
           avgRating: user.avgRating,
         },
+        pageSize: PAGE,
         totals: {
-          listings: listings.length,
-          liveListings: listings.filter(l => l.status === 'active').length,
-          properties: properties.length,
-          jobsPosted: jobsPosted.length,
-          applications: applications.length,
-          sales: sales.length,
-          purchases: purchases.length,
-          salesValue: sales.reduce((n, t) => n + Number(t.amount), 0),
-          purchaseValue: purchases.reduce((n, t) => n + Number(t.amount), 0),
-          feesPaid: sales.reduce((n, t) => n + Number(t.platformFee), 0),
+          listings: cListings,
+          liveListings: cLive,
+          properties: cProperties,
+          jobsPosted: cJobs,
+          applications: cApplications,
+          sales: cSales,
+          purchases: cPurchases,
+          salesValue: Number(salesAgg._sum.amount ?? 0),
+          purchaseValue: Number(purchaseAgg._sum.amount ?? 0),
+          feesPaid: Number(salesAgg._sum.platformFee ?? 0),
           messagesSent: messageCount,
-          threads: threads.length,
-          disputes: disputes.length,
-          strikes: strikes.length,
+          threads: cThreads,
+          disputes: cDisputes,
+          strikes: cStrikes,
         },
         listings: listings.map(l => ({
           id: l.id, title: l.title, price: money(l.price), status: l.status,
@@ -284,6 +312,180 @@ export const crmRouter = router({
         subscriptions: subscriptions.map(s => ({ id: s.id, plan: s.plan, status: s.status, currentPeriodEnd: s.currentPeriodEnd, cancelAtPeriodEnd: s.cancelAtPeriodEnd })),
         strikes: strikes.map(s => ({ id: s.id, reason: s.reason, createdAt: s.createdAt })),
         seekerProfile: seeker,
+      }
+    }),
+
+  // Pages through one section of the member detail view. memberDetail returns
+  // page 1; this fetches the rest on demand.
+  memberSection: execProcedure
+    .input(z.object({
+      userId: z.string().uuid(),
+      section: z.enum(['listings', 'sales', 'purchases', 'jobsPosted', 'applications', 'properties', 'threads', 'credits']),
+      page: z.number().int().min(1).default(1),
+    }))
+    .query(async ({ ctx, input }) => {
+      const id = input.userId
+      const take = MEMBER_PAGE_SIZE
+      const skip = (input.page - 1) * take
+      const money = (v: unknown) => (v == null ? null : Number(v))
+      const page = <T>(rows: T[]) => ({ rows, page: input.page, hasMore: rows.length === take })
+
+      switch (input.section) {
+        case 'listings': {
+          const rows = await ctx.prisma.listing.findMany({
+            where: { sellerId: id }, orderBy: { createdAt: 'desc' }, skip, take,
+            include: { jobListing: true, propertyListing: true, _count: { select: { wishlistItems: true } } },
+          })
+          return page(rows.map(l => ({
+            id: l.id, title: l.title, price: money(l.price), status: l.status, department: l.department,
+            location: l.location, createdAt: l.createdAt, views: l.viewCount, saves: l._count.wishlistItems,
+            kind: l.jobListing ? 'job' : l.propertyListing ? 'property' : 'item',
+          })))
+        }
+        case 'properties': {
+          const rows = await ctx.prisma.propertyListing.findMany({
+            where: { listing: { sellerId: id } }, orderBy: { createdAt: 'desc' }, skip, take,
+            include: { listing: { select: { id: true, title: true, price: true, status: true, location: true, createdAt: true } } },
+          })
+          return page(rows.map(p => ({
+            id: p.listing.id, title: p.listing.title, price: money(p.listing.price), status: p.listing.status,
+            location: p.listing.location, createdAt: p.listing.createdAt,
+            type: p.type, bedrooms: p.bedrooms, bathrooms: p.bathrooms, m2: money(p.m2),
+          })))
+        }
+        case 'sales': {
+          const rows = await ctx.prisma.transaction.findMany({
+            where: { sellerId: id }, orderBy: { createdAt: 'desc' }, skip, take,
+            include: { listing: { select: { title: true } }, buyer: { select: { id: true, displayName: true } } },
+          })
+          return page(rows.map(t => ({
+            id: t.id, item: t.listing.title, amount: money(t.amount), fee: money(t.platformFee),
+            net: money(t.sellerNet), status: t.status, createdAt: t.createdAt,
+            counterparty: t.buyer.displayName, counterpartyId: t.buyer.id,
+          })))
+        }
+        case 'purchases': {
+          const rows = await ctx.prisma.transaction.findMany({
+            where: { buyerId: id }, orderBy: { createdAt: 'desc' }, skip, take,
+            include: { listing: { select: { title: true } }, seller: { select: { id: true, displayName: true } } },
+          })
+          return page(rows.map(t => ({
+            id: t.id, item: t.listing.title, amount: money(t.amount), status: t.status,
+            createdAt: t.createdAt, counterparty: t.seller.displayName, counterpartyId: t.seller.id,
+          })))
+        }
+        case 'jobsPosted': {
+          const rows = await ctx.prisma.jobListing.findMany({
+            where: { employerId: id }, orderBy: { createdAt: 'desc' }, skip, take,
+            include: { listing: { select: { id: true, status: true } }, _count: { select: { applications: true } } },
+          })
+          return page(rows.map(j => ({
+            id: j.id, listingId: j.listingId, jobTitle: j.jobTitle, company: j.company,
+            type: j.type, status: j.listing.status, applicants: j._count.applications, createdAt: j.createdAt,
+          })))
+        }
+        case 'applications': {
+          const rows = await ctx.prisma.jobApplication.findMany({
+            where: { applicantId: id }, orderBy: { createdAt: 'desc' }, skip, take,
+            include: { jobListing: { select: { jobTitle: true, company: true, listingId: true } } },
+          })
+          return page(rows.map(a => ({
+            id: a.id, status: a.status, createdAt: a.createdAt, jobTitle: a.jobListing.jobTitle,
+            company: a.jobListing.company, listingId: a.jobListing.listingId,
+            coverNote: a.coverNote, cvOnFile: !!a.cvUrl,
+          })))
+        }
+        case 'threads': {
+          const rows = await ctx.prisma.threadParticipant.findMany({
+            where: { userId: id }, skip, take,
+            include: {
+              thread: {
+                include: {
+                  participants: { include: { user: { select: { id: true, displayName: true } } } },
+                  messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+                  _count: { select: { messages: true } },
+                },
+              },
+            },
+          })
+          return page(rows.map(tp => {
+            const other = tp.thread.participants.find(p => p.userId !== id)
+            const last = tp.thread.messages[0]
+            return {
+              id: tp.thread.id, with: other?.user.displayName ?? 'Unknown', withId: other?.user.id ?? null,
+              messages: tp.thread._count.messages, lastAt: last?.createdAt ?? null,
+              lastPreview: last ? last.body.slice(0, 120) : null,
+            }
+          }))
+        }
+        case 'credits': {
+          const rows = await ctx.prisma.creditEvent.findMany({
+            where: { userId: id }, orderBy: { createdAt: 'desc' }, skip, take,
+          })
+          return page(rows.map(c => ({ id: c.id, kind: c.kind, delta: c.delta, balance: c.balance, note: c.note, createdAt: c.createdAt })))
+        }
+      }
+    }),
+
+  // Full message transcript for a DISPUTED transaction only.
+  //
+  // Deliberately scoped: reading private conversations is intrusive, so this is
+  // limited to threads about the disputed listing between the two parties to
+  // that trade, and only while a dispute exists. It is not a general message
+  // reader. Access is audit-logged.
+  disputeTranscript: execProcedure
+    .input(z.object({ disputeId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const dispute = await ctx.prisma.dispute.findUnique({
+        where: { id: input.disputeId },
+        include: {
+          transaction: {
+            include: {
+              listing: { select: { id: true, title: true } },
+              buyer: { select: { id: true, displayName: true } },
+              seller: { select: { id: true, displayName: true } },
+            },
+          },
+        },
+      })
+      if (!dispute) throw new TRPCError({ code: 'NOT_FOUND', message: 'Dispute not found' })
+
+      const { listing, buyer, seller } = dispute.transaction
+      // Threads about this listing that both parties to the trade are in.
+      const threads = await ctx.prisma.thread.findMany({
+        where: {
+          listingId: listing.id,
+          AND: [
+            { participants: { some: { userId: buyer.id } } },
+            { participants: { some: { userId: seller.id } } },
+          ],
+        },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'asc' },
+            include: { sender: { select: { id: true, displayName: true } } },
+          },
+        },
+      })
+
+      await writeAudit(ctx.prisma, ctx.execUser.id, dispute.raisedById, 'dispute_transcript_viewed', {
+        disputeId: dispute.id, listingId: listing.id,
+      })
+
+      return {
+        dispute: { id: dispute.id, reason: dispute.reason, status: dispute.status, createdAt: dispute.createdAt },
+        item: listing.title,
+        buyer: buyer.displayName,
+        seller: seller.displayName,
+        messages: threads.flatMap(t => t.messages).map(m => ({
+          id: m.id,
+          body: m.body,
+          senderId: m.senderId,
+          sender: m.sender.displayName,
+          side: m.senderId === buyer.id ? 'buyer' : m.senderId === seller.id ? 'seller' : 'other',
+          createdAt: m.createdAt,
+          readAt: m.readAt,
+        })).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
       }
     }),
 

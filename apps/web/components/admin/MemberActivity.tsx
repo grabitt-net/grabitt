@@ -22,14 +22,49 @@ export default function MemberActivity({ userId }: { userId: string }) {
   const [d, setD] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  // Extra pages fetched per section, appended to the first page from memberDetail.
+  const [pages, setPages] = useState<Record<string, { page: number; hasMore: boolean }>>({})
+  const [extra, setExtra] = useState<Record<string, any[]>>({})
+  const [loadingMore, setLoadingMore] = useState('')
+  const [transcript, setTranscript] = useState<any | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
-    try { setD(await api.memberDetail(userId)) }
-    catch { setError('Could not load this member&apos;s activity.') }
+    try { setD(await api.memberDetail(userId)); setPages({}); setExtra({}) }
+    catch { setError('Could not load this member’s activity.') }
     finally { setLoading(false) }
   }, [api, userId])
   useEffect(() => { load() }, [load])
+
+  // Rows for a section = first page (from memberDetail) + any pages loaded since.
+  const rowsFor = (section: string, base: any[]) => [...(base ?? []), ...(extra[section] ?? [])]
+  const moreFor = (section: string, base: any[], total: number) => {
+    const state = pages[section]
+    if (state) return state.hasMore
+    return (base?.length ?? 0) < total
+  }
+  const loadMore = async (section: string) => {
+    setLoadingMore(section)
+    try {
+      const next = (pages[section]?.page ?? 1) + 1
+      const res = await api.memberSection(userId, section, next)
+      setExtra(e => ({ ...e, [section]: [...(e[section] ?? []), ...res.rows] }))
+      setPages(p => ({ ...p, [section]: { page: next, hasMore: res.hasMore } }))
+    } catch { /* leave what we have */ }
+    finally { setLoadingMore('') }
+  }
+  const More = ({ section, base, total }: { section: string; base: any[]; total: number }) =>
+    moreFor(section, base, total)
+      ? <button onClick={() => loadMore(section)} disabled={loadingMore === section} style={moreBtn}>
+          {loadingMore === section ? 'Loading…' : `Load more (${rowsFor(section, base).length} of ${total})`}
+        </button>
+      : null
+
+  const openTranscript = async (disputeId: string) => {
+    setTranscript({ loading: true })
+    try { setTranscript(await api.disputeTranscript(disputeId)) }
+    catch { setTranscript({ error: 'Could not load the transcript.' }) }
+  }
 
   if (loading) return <div style={empty}>Loading activity…</div>
   if (error || !d) return <div style={{ ...empty, color: '#ef4444' }}>{error || 'No data'}</div>
@@ -88,46 +123,54 @@ export default function MemberActivity({ userId }: { userId: string }) {
       )}
 
       {tab === 'listings' && (
-        <Table head={['Item', 'Type', 'Price', 'Views', 'Saves', 'Status', '']} rows={d.listings} empty="No listings."
-          row={(l: any) => [
-            <>{l.title}<br /><span style={dim}>{l.location} · {date(l.createdAt)}</span></>,
-            l.kind, money(l.price), l.views, l.saves,
-            <span style={pill(l.status === 'active' ? '#16a34a' : '#888')}>{l.status}</span>,
-            <a href={`/listings/${l.id}`} target="_blank" rel="noreferrer" style={link}>View ↗</a>,
-          ]} />
+        <>
+          <Table head={['Item', 'Type', 'Price', 'Views', 'Saves', 'Status', '']} rows={rowsFor('listings', d.listings)} empty="No listings."
+            row={(l: any) => [
+              <>{l.title}<br /><span style={dim}>{l.location} · {date(l.createdAt)}</span></>,
+              l.kind, money(l.price), l.views, l.saves,
+              <span style={pill(l.status === 'active' ? '#16a34a' : '#888')}>{l.status}</span>,
+              <a href={`/listings/${l.id}`} target="_blank" rel="noreferrer" style={link}>View ↗</a>,
+            ]} />
+          <More section="listings" base={d.listings} total={t.listings} />
+        </>
       )}
 
       {tab === 'trades' && (
         <>
-          <h4 style={h4}>Sales ({d.sales.length})</h4>
-          <Table head={['Item', 'Buyer', 'Amount', 'Fee', 'Net', 'Status', 'Date']} rows={d.sales} empty="No sales."
+          <h4 style={h4}>Sales ({t.sales})</h4>
+          <Table head={['Item', 'Buyer', 'Amount', 'Fee', 'Net', 'Status', 'Date']} rows={rowsFor('sales', d.sales)} empty="No sales."
             row={(s: any) => [s.item, s.counterparty, money(s.amount), money(s.fee), money(s.net),
               <span style={pill(s.status === 'released' ? '#16a34a' : s.status === 'cancelled' ? '#ef4444' : '#f59e0b')}>{s.status}</span>, date(s.createdAt)]} />
-          <h4 style={h4}>Purchases ({d.purchases.length})</h4>
-          <Table head={['Item', 'Seller', 'Amount', 'Status', 'Date']} rows={d.purchases} empty="No purchases."
+          <More section="sales" base={d.sales} total={t.sales} />
+          <h4 style={h4}>Purchases ({t.purchases})</h4>
+          <Table head={['Item', 'Seller', 'Amount', 'Status', 'Date']} rows={rowsFor('purchases', d.purchases)} empty="No purchases."
             row={(p: any) => [p.item, p.counterparty, money(p.amount),
               <span style={pill(p.status === 'released' ? '#16a34a' : p.status === 'cancelled' ? '#ef4444' : '#f59e0b')}>{p.status}</span>, date(p.createdAt)]} />
+          <More section="purchases" base={d.purchases} total={t.purchases} />
         </>
       )}
 
       {tab === 'jobs' && (
         <>
-          <h4 style={h4}>Jobs posted ({d.jobsPosted.length})</h4>
-          <Table head={['Role', 'Company', 'Type', 'Applicants', 'Status', '']} rows={d.jobsPosted} empty="No jobs posted."
+          <h4 style={h4}>Jobs posted ({t.jobsPosted})</h4>
+          <Table head={['Role', 'Company', 'Type', 'Applicants', 'Status', '']} rows={rowsFor('jobsPosted', d.jobsPosted)} empty="No jobs posted."
             row={(j: any) => [j.jobTitle, j.company, String(j.type).replace('_', ' '), j.applicants,
               <span style={pill(j.status === 'active' ? '#16a34a' : '#888')}>{j.status}</span>,
               <a href={`/listings/${j.listingId}`} target="_blank" rel="noreferrer" style={link}>View ↗</a>]} />
-          <h4 style={h4}>Applications made ({d.applications.length})</h4>
-          <Table head={['Role', 'Company', 'CV', 'Status', 'Date', '']} rows={d.applications} empty="No applications."
+          <More section="jobsPosted" base={d.jobsPosted} total={t.jobsPosted} />
+          <h4 style={h4}>Applications made ({t.applications})</h4>
+          <Table head={['Role', 'Company', 'CV', 'Status', 'Date', '']} rows={rowsFor('applications', d.applications)} empty="No applications."
             row={(a: any) => [a.jobTitle, a.company, a.cvOnFile ? '📄 Yes' : '—',
               <span style={pill(a.status === 'hired' ? '#16a34a' : a.status === 'rejected' ? '#ef4444' : '#3b82f6')}>{a.status}</span>,
               date(a.createdAt),
               <a href={`/listings/${a.listingId}`} target="_blank" rel="noreferrer" style={link}>View ↗</a>]} />
+          <More section="applications" base={d.applications} total={t.applications} />
         </>
       )}
 
       {tab === 'property' && (
-        <Table head={['Property', 'Type', 'Spec', 'Price', 'Status', '']} rows={d.properties} empty="No property listed."
+        <>
+        <Table head={['Property', 'Type', 'Spec', 'Price', 'Status', '']} rows={rowsFor('properties', d.properties)} empty="No property listed."
           row={(p: any) => [
             <>{p.title}<br /><span style={dim}>{p.location} · {date(p.createdAt)}</span></>,
             p.type,
@@ -136,14 +179,20 @@ export default function MemberActivity({ userId }: { userId: string }) {
             <span style={pill(p.status === 'active' ? '#16a34a' : '#888')}>{p.status}</span>,
             <a href={`/listings/${p.id}`} target="_blank" rel="noreferrer" style={link}>View ↗</a>,
           ]} />
+        <More section="properties" base={d.properties} total={t.properties} />
+        </>
       )}
 
       {tab === 'messages' && (
         <>
-          <div style={{ ...dim, marginBottom: 8 }}>{t.messagesSent} messages sent across {t.threads} conversations.</div>
-          <Table head={['With', 'Messages', 'Last message', 'When']} rows={d.threads} empty="No conversations."
+          <div style={{ ...dim, marginBottom: 8 }}>
+            {t.messagesSent} messages sent across {t.threads} conversations. Previews only —
+            full transcripts are available for disputed trades, under Records.
+          </div>
+          <Table head={['With', 'Messages', 'Last message', 'When']} rows={rowsFor('threads', d.threads)} empty="No conversations."
             row={(th: any) => [th.with, th.messages,
               <span style={{ color: '#666' }}>{th.lastPreview ?? '—'}</span>, date(th.lastAt)]} />
+          <More section="threads" base={d.threads} total={t.threads} />
         </>
       )}
 
@@ -156,19 +205,71 @@ export default function MemberActivity({ userId }: { userId: string }) {
           <Table head={['About', 'Rating', 'Comment', 'Date']} rows={d.reviewsGiven} empty="None."
             row={(r: any) => [r.about, `★ ${r.rating}`, r.comment ?? '—', date(r.createdAt)]} />
           <h4 style={h4}>Disputes raised ({d.disputes.length})</h4>
-          <Table head={['Item', 'Reason', 'Status', 'Date']} rows={d.disputes} empty="None."
-            row={(x: any) => [x.item, x.reason, <span style={pill('#f59e0b')}>{x.status}</span>, date(x.createdAt)]} />
+          <Table head={['Item', 'Reason', 'Status', 'Date', '']} rows={d.disputes} empty="None."
+            row={(x: any) => [x.item, x.reason, <span style={pill('#f59e0b')}>{x.status}</span>, date(x.createdAt),
+              <button onClick={() => openTranscript(x.id)} style={{ ...link, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>💬 Transcript</button>]} />
           <h4 style={h4}>Strikes ({d.strikes.length})</h4>
           <Table head={['Reason', 'Date']} rows={d.strikes} empty="None."
             row={(s: any) => [s.reason, date(s.createdAt)]} />
-          <h4 style={h4}>Credit history ({d.credits.length})</h4>
-          <Table head={['Type', 'Change', 'Balance', 'Note', 'Date']} rows={d.credits} empty="None."
+          <h4 style={h4}>Credit history</h4>
+          <Table head={['Type', 'Change', 'Balance', 'Note', 'Date']} rows={rowsFor('credits', d.credits)} empty="None."
             row={(c: any) => [c.kind, <span style={{ color: c.delta < 0 ? '#ef4444' : '#16a34a', fontWeight: 800 }}>{c.delta > 0 ? '+' : ''}{c.delta}</span>, c.balance, c.note ?? '—', date(c.createdAt)]} />
+          {(pages.credits?.hasMore ?? d.credits.length >= d.pageSize) && (
+            <button onClick={() => loadMore('credits')} disabled={loadingMore === 'credits'} style={moreBtn}>
+              {loadingMore === 'credits' ? 'Loading…' : 'Load more'}
+            </button>
+          )}
           <h4 style={h4}>Consents (GDPR &amp; withdrawal)</h4>
           <Table head={['Consent', 'Accepted', 'IP']} rows={d.consents} empty="No consents recorded."
             row={(c: any) => [c.kind === 'gdpr' ? 'GDPR / privacy' : 'Right-of-withdrawal notice', date(c.acceptedAt), c.ipAddress ?? '—']} />
         </>
       )}
+
+      {transcript && <TranscriptModal data={transcript} onClose={() => setTranscript(null)} />}
+    </div>
+  )
+}
+
+// Full conversation for a disputed trade. Only reachable from a dispute, and
+// opening it is written to the audit trail.
+function TranscriptModal({ data, onClose }: { data: any; onClose: () => void }) {
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: 620, maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+        <div style={{ background: '#E8DDD5', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '16px 16px 0 0' }}>
+          <div>
+            <div style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>💬 Dispute transcript</div>
+            {data.item && <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{data.item} · {data.buyer} ↔ {data.seller}</div>}
+          </div>
+          <button onClick={onClose} style={{ background: '#fff', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15 }}>✕</button>
+        </div>
+
+        <div style={{ overflowY: 'auto', padding: 16, flex: 1 }}>
+          {data.loading ? <div style={empty}>Loading transcript…</div>
+            : data.error ? <div style={{ ...empty, color: '#ef4444' }}>{data.error}</div>
+            : (
+            <>
+              <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 10, padding: '9px 11px', marginBottom: 12, fontFamily: 'Nunito, sans-serif', fontSize: 11.5, color: '#9a3412', lineHeight: 1.5 }}>
+                Private messages, shown because this trade is disputed ({data.dispute?.reason}). Viewing is recorded in the audit trail.
+              </div>
+              {data.messages?.length === 0 && <div style={empty}>No messages between these parties about this listing.</div>}
+              {data.messages?.map((m: any) => (
+                <div key={m.id} style={{ display: 'flex', justifyContent: m.side === 'buyer' ? 'flex-start' : 'flex-end', marginBottom: 8 }}>
+                  <div style={{ maxWidth: '78%', background: m.side === 'buyer' ? '#f2ede6' : '#FFF3EE', border: `1px solid ${m.side === 'buyer' ? '#e5ddd2' : '#FFD4C0'}`, borderRadius: 12, padding: '8px 11px' }}>
+                    <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 10, fontWeight: 900, color: m.side === 'buyer' ? '#666' : '#FF4500', marginBottom: 2 }}>
+                      {m.sender} · {m.side}
+                    </div>
+                    <div style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 12.5, color: '#1a1a1a', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.body}</div>
+                    <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 9.5, color: '#aaa', marginTop: 3 }}>
+                      {new Date(m.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -224,6 +325,12 @@ const td: React.CSSProperties = { padding: '7px 8px', color: '#555', verticalAli
 const dim: React.CSSProperties = { fontFamily: 'Nunito, sans-serif', fontSize: 11, color: '#aaa' }
 const link: React.CSSProperties = { color: '#FF4500', fontWeight: 800, textDecoration: 'none', fontSize: 11, whiteSpace: 'nowrap' }
 const empty: React.CSSProperties = { padding: 30, textAlign: 'center', color: '#888', fontFamily: 'Nunito, sans-serif', fontSize: 12.5 }
+const moreBtn: React.CSSProperties = {
+  display: 'block', width: '100%', background: '#fff', color: '#666',
+  border: '1px solid #ece3d7', borderRadius: 10, padding: '9px 12px',
+  fontFamily: 'Nunito, sans-serif', fontSize: 11.5, fontWeight: 800,
+  cursor: 'pointer', marginBottom: 14,
+}
 const chip = (active: boolean): React.CSSProperties => ({
   padding: '5px 11px', borderRadius: 50, border: 'none', cursor: 'pointer',
   fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 11,
