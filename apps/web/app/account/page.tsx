@@ -58,6 +58,25 @@ function AccountInner() {
   const [emailState, setEmailState] = useState<'idle' | 'saving' | 'sent'>('idle')
   const [emailError, setEmailError] = useState('')
 
+  // GDPR erasure — anonymises the account immediately (no admin step). Sales and
+  // purchase records are retained: we're legally required to keep them, and the
+  // other party to each trade has rights over them too.
+  const [confirmDelete, setConfirmDelete] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const deleteAccount = async () => {
+    if (confirmDelete.trim().toUpperCase() !== 'DELETE') return
+    if (!confirm('This permanently anonymises your account and signs you out. It cannot be undone. Continue?')) return
+    setDeleting(true)
+    try {
+      await trpcAuthed().compliance.requestDeletion.mutate()
+      await createClient().auth.signOut()
+      window.location.href = '/?deleted=1'
+    } catch {
+      alert('Could not complete the deletion. Please contact privacy@grabitt.net.')
+      setDeleting(false)
+    }
+  }
+
   const changeEmail = async () => {
     const next = newEmail.trim().toLowerCase()
     setEmailError('')
@@ -312,6 +331,33 @@ function AccountInner() {
                 </Link>
               )
             })}
+          </div>
+
+          {/* GDPR erasure — self-service, no admin step */}
+          <div style={{ ...card, border: '1px solid #fecaca' }}>
+            <div style={{ ...cardHead, color: '#ef4444' }}>Delete my account &amp; data</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', lineHeight: 1.6, marginBottom: 10 }}>
+              Under the GDPR you can erase your personal data at any time. This happens <strong>immediately</strong> — no request queue, no admin approval.
+            </div>
+            <div style={{ background: '#f9f6f2', borderRadius: 10, padding: '10px 12px', marginBottom: 12 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#555', lineHeight: 1.6 }}>
+                <strong>Erased:</strong> your name, email, phone, address, avatar and business details.<br />
+                <strong>Retained:</strong> sales and purchase records, which we&apos;re legally required to keep for tax and accounting and which the other party to each trade also has rights over. They are detached from your identity.
+              </div>
+            </div>
+            <label style={fieldLabel}>Type DELETE to confirm</label>
+            <input value={confirmDelete} onChange={e => setConfirmDelete(e.target.value)} placeholder="DELETE" style={field} />
+            <button
+              onClick={deleteAccount}
+              disabled={deleting || confirmDelete.trim().toUpperCase() !== 'DELETE'}
+              style={{
+                width: '100%', marginTop: 10, background: confirmDelete.trim().toUpperCase() === 'DELETE' ? '#ef4444' : '#f0f0f0',
+                color: confirmDelete.trim().toUpperCase() === 'DELETE' ? '#fff' : '#aaa',
+                border: 'none', borderRadius: 12, padding: '12px', fontFamily: 'var(--font-nunito)',
+                fontSize: 13, fontWeight: 900, cursor: confirmDelete.trim().toUpperCase() === 'DELETE' ? 'pointer' : 'not-allowed',
+              }}>
+              {deleting ? 'Deleting…' : 'Permanently delete my data'}
+            </button>
           </div>
         </section>
       </div>

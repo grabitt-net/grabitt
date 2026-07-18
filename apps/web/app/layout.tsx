@@ -5,6 +5,7 @@ import { ToastProvider } from '@/context/ToastContext'
 import { CartProvider } from '@/context/CartContext'
 import AuthBootstrap from '@/components/AuthBootstrap'
 import ConsentGate from '@/components/ConsentGate'
+import CookieBanner from '@/components/CookieBanner'
 import './globals.css'
 
 const nunito = Nunito({
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${nunito.variable} ${comfortaa.variable}`}>
-      <body className="min-h-full"><TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate />{children}</CartProvider></ToastProvider></TrpcProvider></body>
+      <body className="min-h-full"><TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate />{children}<CookieBanner /></CartProvider></ToastProvider></TrpcProvider></body>
     </html>
   )
 }
