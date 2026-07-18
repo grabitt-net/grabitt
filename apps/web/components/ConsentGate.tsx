@@ -55,14 +55,16 @@ export default function ConsentGate() {
         cta: 'Accept & continue',
       }
     : {
-        title: 'Right to withdraw — important notice',
+        title: 'Right of withdrawal — how it works here',
         body: (
           <>
-            <p style={p}><strong>Sales made on Grabitt are exempt from the EU right of withdrawal.</strong> Grabitt is a digital marketplace that connects buyers and sellers — we do not hold, own, or handle the physical goods sold on the platform.</p>
-            <p style={p}>Any request to withdraw from, cancel, or return a sale is the sole responsibility of the buying and selling parties directly, and must be arranged between them. Grabitt is not a party to the sale and provides no right of withdrawal in respect of it.</p>
+            <p style={p}><strong>Buying from a private seller:</strong> the 14-day right of withdrawal does not apply, because it exists only against traders. Returns and refunds are agreed directly between buyer and seller. Grabitt is not a party to the sale.</p>
+            <p style={p}><strong>Buying from a business seller:</strong> your statutory 14-day right does apply, against that seller. It cannot be waived, and we require business sellers to honour it.</p>
+            <p style={p}><strong>Grabitt&apos;s own services</strong> (credits, promotions and subscriptions) start immediately. By continuing you expressly request that immediate performance and acknowledge that you lose your 14-day right of withdrawal for those services once they have been supplied. Your statutory rights over faulty or misdescribed goods are unaffected.</p>
+            <p style={p}>Full detail is in our <a href="/terms" target="_blank" style={link}>Terms of Service</a> (section 7).</p>
           </>
         ),
-        check: 'I understand and accept that Grabitt sales are exempt from the right of withdrawal, and that withdrawals are strictly between buyer and seller.',
+        check: 'I have read the above, request immediate performance of Grabitt services, and understand when the 14-day right does and does not apply.',
         cta: 'I understand & accept',
       }
 
