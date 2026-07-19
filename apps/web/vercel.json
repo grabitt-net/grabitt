@@ -4,6 +4,7 @@
   "buildCommand": "next build",
   "crons": [
     { "path": "/api/cron/relist", "schedule": "0 4 * * *" },
-    { "path": "/api/cron/cart", "schedule": "0 3 * * *" }
+    { "path": "/api/cron/cart", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/release-funds", "schedule": "0 2 * * *" }
   ]
 }

@@ -1,15 +1,22 @@
 import type { Request, Response } from 'express'
 import { prisma } from '../db'
-import { releaseCourierByTracking } from '../routers/transactions'
+import { markCourierDelivered, markCourierShipped } from '../routers/transactions'
 
 // Courier tracking webhook. A tracking provider (AfterShip, EasyPost, etc.) or
-// the carrier posts status events here. When an event reports the FIRST waypoint
-// scan — i.e. the parcel is now "in transit" — we release the held funds to the
-// seller for the matching courier order (§ delivery fund-release rule).
+// the carrier posts status events here.
+//
+// IMPORTANT: a DELIVERED event is what starts the payment clock — funds release
+// 48h later, and the buyer's 24h dispute window opens. In-transit events only
+// record dispatch. (This used to release funds on the first scan, paying the
+// seller while the parcel was still in the van.)
 
 const IN_TRANSIT_STATUSES = new Set([
   'in_transit', 'intransit', 'in transit', 'transit',
   'accepted', 'picked_up', 'pickup', 'collected', 'out_for_delivery',
+])
+
+const DELIVERED_STATUSES = new Set([
+  'delivered', 'delivery', 'completed', 'signed', 'collected_by_recipient',
 ])
 
 function pick(obj: Record<string, unknown>, keys: string[]): string | undefined {
@@ -30,16 +37,25 @@ export async function handleTrackingPayload(body: Record<string, unknown>): Prom
   const status = (pick(inner, ['status', 'tag', 'checkpoint_status', 'current_status']) ?? '').toLowerCase()
 
   if (!trackingNumber) return { status: 400, body: { error: 'Missing tracking number' } }
-  if (!IN_TRANSIT_STATUSES.has(status)) {
-    return { status: 200, body: { ok: true, released: false, reason: `status "${status}" is not an in-transit event` } }
+
+  if (DELIVERED_STATUSES.has(status)) {
+    const delivered = await markCourierDelivered(prisma, trackingNumber)
+    return { status: 200, body: { ok: true, delivered } }
   }
-  const released = await releaseCourierByTracking(prisma, trackingNumber)
-  return { status: 200, body: { ok: true, released } }
+  if (IN_TRANSIT_STATUSES.has(status)) {
+    const shipped = await markCourierShipped(prisma, trackingNumber)
+    return { status: 200, body: { ok: true, shipped, delivered: false } }
+  }
+  return { status: 200, body: { ok: true, ignored: `status "${status}" is not a tracked event` } }
 }
 
+// Fails CLOSED: without a configured secret we reject everything. Previously an
+// unset secret accepted any request, so anyone who could guess a tracking
+// number could fake a delivery event and trigger a payout.
 export function trackingSecretValid(provided: string | undefined | null): boolean {
   const expected = process.env.TRACKING_WEBHOOK_SECRET
-  return !expected || provided === expected
+  if (!expected) return false
+  return provided === expected
 }
 
 // Express adapter (standalone server)
@@ -51,7 +67,7 @@ export async function trackingWebhookHandler(req: Request, res: Response) {
     const result = await handleTrackingPayload((req.body ?? {}) as Record<string, unknown>)
     return res.status(result.status).json(result.body)
   } catch (err) {
-    console.error('tracking webhook release failed', err)
-    return res.status(500).json({ error: 'Fund release failed' })
+    console.error('tracking webhook failed', err)
+    return res.status(500).json({ error: 'Tracking update failed' })
   }
 }

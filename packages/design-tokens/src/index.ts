@@ -81,3 +81,11 @@ export const GRAB_IT_NOW_WINDOWS = [2, 4, 6, 12, 24] as const
 export const EXEC_SESSION_TTL_MS = 4 * 60 * 60 * 1000 // 4 hours, NO silent refresh
 
 export const FUND_RELEASE_AUTO_DAYS = 14
+
+// Postal/courier orders. Funds are released 48 hours AFTER the parcel is
+// confirmed delivered — never on dispatch — so the buyer has the item in hand
+// before the seller is paid. The buyer has 24 hours from delivery to raise a
+// dispute; after that the item is deemed accepted. The 24h window closing
+// before the 48h release leaves a deliberate buffer to action a late dispute.
+export const COURIER_RELEASE_HOURS = 48
+export const COURIER_DISPUTE_WINDOW_HOURS = 24

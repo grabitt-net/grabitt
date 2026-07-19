@@ -433,10 +433,14 @@ model Transaction {
   handoverQrToken       String?           // signed token for QR handover confirmation
   handoverConfirmedAt   DateTime?
   trackingCarrier       String?           // courier fulfilment: carrier name/slug
-  trackingNumber        String?           // courier fulfilment: tracking number
-  firstScanAt           DateTime?         // courier: first waypoint scan → funds release trigger
+  trackingNumber        String?           // courier fulfilment: tracking number (tracked service required)
+  firstScanAt           DateTime?         // legacy: kept for historical orders
+  shippedAt             DateTime?         // courier: dispatched / first carrier scan
+  deliveredAt           DateTime?         // courier: delivery confirmed → starts both timers below
+  disputeWindowEndsAt   DateTime?         // deliveredAt + 24h; after this the item is deemed accepted
   fundsReleasedAt       DateTime?
-  autoReleaseAt         DateTime?         // 14 days after handoverConfirmedAt (§10.2)
+  // Collection: handoverConfirmedAt + 14 days. Courier: deliveredAt + 48 hours.
+  autoReleaseAt         DateTime?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
 

@@ -337,7 +337,14 @@ export default function PanelHost() {
 // the seller does not release funds here.
 function CourierTrackingForm({ transactionId, title, onClose }: { transactionId: string; title: string; onClose: () => void }) {
   const [carrier, setCarrier] = useState('')
+  const [carriers, setCarriers] = useState<{ slug: string; name: string }[]>([])
   const [trackingNumber, setTrackingNumber] = useState('')
+
+  // Real carrier list, so the tracking number resolves to a working track link.
+  useEffect(() => {
+    getTrpcClient().then(c => c.transactions.carriers.query())
+      .then(d => setCarriers(d as { slug: string; name: string }[])).catch(() => {})
+  }, [])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
@@ -362,7 +369,7 @@ function CourierTrackingForm({ transactionId, title, onClose }: { transactionId:
         <div style={{ fontSize: 56, marginBottom: 14 }}>📦</div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Tracking submitted</div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>
-          Your payment for "{title}" will be released automatically once the courier's first scan shows the parcel in transit.
+          The buyer has been notified that &ldquo;{title}&rdquo; is on its way. Your payment is released <strong>48 hours after the parcel is delivered</strong>, once the buyer&apos;s 24-hour window to report a problem has passed.
         </div>
         <button onClick={onClose} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
       </div>
@@ -371,13 +378,19 @@ function CourierTrackingForm({ transactionId, title, onClose }: { transactionId:
 
   return (
     <ActionPanel title="📦 Add courier tracking" onClose={onClose}>
-      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 16 }}>
-        Post <strong>{title}</strong> by a tracked courier and enter the details below. You'll be paid automatically once tracking shows the parcel in transit — no QR needed.
+      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>
+        Post <strong>{title}</strong> using a <strong>tracked service</strong> and enter the details below — no QR needed.
+      </div>
+      <div style={{ background: '#f9f6f2', border: '1px solid #ece3d7', borderRadius: 10, padding: '10px 12px', marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#6b5d48', lineHeight: 1.55 }}>
+        🔒 You&apos;re paid <strong>48 hours after delivery</strong>, not when you post. Tracking is what proves delivery, so a tracked service is required — an untracked parcel can&apos;t trigger your payment.
       </div>
       <div style={{ marginBottom: 12 }}>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Courier</div>
-        <input value={carrier} onChange={e => setCarrier(e.target.value)} placeholder="e.g. Correos, SEUR, DHL, GLS"
-          style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+        <select value={carrier} onChange={e => setCarrier(e.target.value)}
+          style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box', background: '#fff', cursor: 'pointer' }}>
+          <option value="">Select courier…</option>
+          {carriers.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+        </select>
       </div>
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Tracking number</div>
@@ -1638,15 +1651,31 @@ function PanelBody() {
     type TxDetail = {
       id: string; status: string; role: 'buyer' | 'seller'; title: string; amount: number; sellerNet: number
       quantity: number; fulfilmentType: string; trackingCarrier: string | null; trackingNumber: string | null
+      trackingUrl: string | null; shippedAt: string | null; deliveredAt: string | null
+      disputeWindowEndsAt: string | null; disputeWindowOpen: boolean; autoReleaseAt: string | null
       counterparty: string; dispute: { status: string; reason: string } | null
     }
     const [tx, setTx] = useState<TxDetail | null>(null)
     const [loaded, setLoaded] = useState(false)
-    useEffect(() => {
+    const [confirmingDelivery, setConfirmingDelivery] = useState(false)
+
+    const reload = useCallback(() => {
       if (!txId) { setLoaded(true); return }
       getTrpcClient().then(c => c.transactions.getById.query({ transactionId: txId }))
         .then(d => { setTx(d as TxDetail); setLoaded(true) }).catch(() => setLoaded(true))
     }, [txId])
+    useEffect(() => { reload() }, [reload])
+
+    const confirmDelivery = async () => {
+      if (!confirm('Confirm you’ve received this item?\n\nYou’ll then have 24 hours to report a problem before it’s treated as accepted.')) return
+      setConfirmingDelivery(true)
+      try {
+        const c = await getTrpcClient()
+        await c.transactions.confirmDelivery.mutate({ transactionId: txId })
+        reload()
+      } catch { toast('Could not confirm delivery — please try again') }
+      finally { setConfirmingDelivery(false) }
+    }
 
     const STATUS: Record<string, { label: string; color: string }> = {
       pending_payment: { label: '⏳ Payment pending', color: '#f59e0b' },
@@ -1687,7 +1716,29 @@ function PanelBody() {
 
             {tx.trackingNumber && (
               <div style={{ background: '#eff6ff', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#2563eb' }}>
-                📦 {tx.trackingCarrier} · {tx.trackingNumber}
+                <div>📦 {tx.trackingCarrier} · {tx.trackingNumber}</div>
+                {tx.trackingUrl && (
+                  <a href={tx.trackingUrl} target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontWeight: 800, textDecoration: 'underline' }}>Track this parcel ↗</a>
+                )}
+              </div>
+            )}
+
+            {/* Postal timeline: delivery starts the buyer's 24h window and the
+                seller's 48h payout clock. */}
+            {tx.fulfilmentType === 'courier' && tx.status === 'held' && (
+              <div style={{ background: tx.deliveredAt ? '#fffbeb' : '#f9f6f2', border: `1px solid ${tx.deliveredAt ? '#fde68a' : '#ece3d7'}`, borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11.5, lineHeight: 1.55, color: tx.deliveredAt ? '#92400e' : '#6b5d48' }}>
+                {!tx.deliveredAt ? (
+                  <>🔒 Your payment is held. It stays held until the parcel is delivered — the seller is paid 48 hours after delivery, not when they post it.</>
+                ) : tx.disputeWindowOpen ? (
+                  <>
+                    <strong>📦 Delivered.</strong> You have until{' '}
+                    <strong>{new Date(tx.disputeWindowEndsAt!).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</strong>{' '}
+                    to report a problem. After that the item is treated as accepted, and the seller is paid at{' '}
+                    {new Date(tx.autoReleaseAt!).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}.
+                  </>
+                ) : (
+                  <>✅ Delivered and accepted — the 24-hour window to report a problem has closed. Payment releases to the seller automatically.</>
+                )}
               </div>
             )}
 
@@ -1703,7 +1754,19 @@ function PanelBody() {
                 {tx.role === 'buyer' && tx.fulfilmentType !== 'courier' && (
                   <button onClick={() => openPanel('handover', { transactionId: tx.id, role: 'buyer', title: tx.title })} style={btnPrimary}>✅ Confirm handover</button>
                 )}
-                <button onClick={() => openPanel('dispute', { transactionId: tx.id, title: tx.title, amount: tx.amount })} style={btnDanger}>🚨 Raise a dispute</button>
+                {/* Buyer can confirm receipt themselves if the carrier hasn't
+                    reported yet — this starts their 24h window, it doesn't pay
+                    the seller straight away. */}
+                {tx.role === 'buyer' && tx.fulfilmentType === 'courier' && !tx.deliveredAt && tx.trackingNumber && (
+                  <button onClick={confirmDelivery} disabled={confirmingDelivery} style={btnPrimary}>
+                    {confirmingDelivery ? 'Confirming…' : '📦 I’ve received this'}
+                  </button>
+                )}
+                {/* Once the postal window has closed the item is accepted, so
+                    there's nothing to dispute. */}
+                {!(tx.fulfilmentType === 'courier' && tx.deliveredAt && !tx.disputeWindowOpen) && (
+                  <button onClick={() => openPanel('dispute', { transactionId: tx.id, title: tx.title, amount: tx.amount })} style={btnDanger}>🚨 Raise a dispute</button>
+                )}
               </div>
             )}
             {tx.status === 'released' && tx.role === 'buyer' && (

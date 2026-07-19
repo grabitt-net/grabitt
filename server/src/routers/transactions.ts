@@ -5,9 +5,10 @@ import { getStripe } from '../lib/stripe'
 import jwt from 'jsonwebtoken'
 import QRCode from 'qrcode'
 import { Prisma, type PrismaClient } from '@prisma/client'
-import { router, protectedProcedure } from '../trpc'
+import { router, protectedProcedure, publicProcedure } from '../trpc'
 import { RateTransactionInputSchema } from '@grabitt/types'
-import { FEE_RATES, FUND_RELEASE_AUTO_DAYS } from '@grabitt/design-tokens'
+import { FEE_RATES, FUND_RELEASE_AUTO_DAYS, COURIER_RELEASE_HOURS, COURIER_DISPUTE_WINDOW_HOURS } from '@grabitt/design-tokens'
+import { trackingUrlFor, CARRIERS } from '../lib/tracking'
 
 
 // Handover token lives for 30 minutes — long enough for an in-person meetup
@@ -48,7 +49,7 @@ type ReleasableTx = {
   sellerNet: unknown; stripePaymentIntentId: string | null; quantity: number
 }
 
-async function releaseFundsToSeller(
+export async function releaseFundsToSeller(
   prisma: PrismaClient,
   tx: ReleasableTx,
   via: 'handover' | 'courier',
@@ -118,15 +119,51 @@ async function releaseFundsToSeller(
   return { ok: true, sellerNet: Number(tx.sellerNet) }
 }
 
-// Called by the tracking webhook when a courier reports the first scan / in-transit.
-// Finds the held courier transaction for this tracking number and releases funds.
-// Returns true if a release happened, false if nothing matched (idempotent).
-export async function releaseCourierByTracking(prisma: PrismaClient, trackingNumber: string): Promise<boolean> {
+// Courier dispatch. Records that the parcel is moving — this does NOT pay the
+// seller. (It used to: funds were released on the first carrier scan, i.e.
+// before the buyer had the item. Payment now waits for delivery.)
+export async function markCourierShipped(prisma: PrismaClient, trackingNumber: string): Promise<boolean> {
+  const res = await prisma.transaction.updateMany({
+    where: { trackingNumber, fulfilmentType: 'courier', status: 'held', shippedAt: null },
+    data: { shippedAt: new Date() },
+  })
+  return res.count > 0
+}
+
+/**
+ * Courier delivery confirmed. Starts both clocks:
+ *   • buyer has COURIER_DISPUTE_WINDOW_HOURS (24h) to raise a dispute
+ *   • funds auto-release COURIER_RELEASE_HOURS (48h) later, via the cron
+ * Idempotent — a repeated delivery event won't restart the timers.
+ */
+export async function markCourierDelivered(prisma: PrismaClient, trackingNumber: string): Promise<boolean> {
   const tx = await prisma.transaction.findFirst({
-    where: { trackingNumber, fulfilmentType: 'courier', status: 'held' },
+    where: { trackingNumber, fulfilmentType: 'courier', status: 'held', deliveredAt: null },
+    include: { listing: { select: { title: true } } },
   })
   if (!tx) return false
-  await releaseFundsToSeller(prisma, tx, 'courier')
+
+  const now = new Date()
+  await prisma.transaction.update({
+    where: { id: tx.id },
+    data: {
+      deliveredAt: now,
+      disputeWindowEndsAt: new Date(now.getTime() + COURIER_DISPUTE_WINDOW_HOURS * 3600_000),
+      autoReleaseAt: new Date(now.getTime() + COURIER_RELEASE_HOURS * 3600_000),
+      ...(tx.shippedAt ? {} : { shippedAt: now }),
+    },
+  })
+
+  // Tell the buyer their window has started — they must act inside it.
+  await prisma.notification.create({
+    data: {
+      userId: tx.buyerId,
+      kind: 'system',
+      title: '📦 Delivered — please check your item',
+      body: `"${tx.listing.title}" is marked delivered. If something's wrong, raise a dispute within ${COURIER_DISPUTE_WINDOW_HOURS} hours; after that the item is treated as accepted.`,
+      actionUrl: '/account',
+    },
+  })
   return true
 }
 
@@ -417,10 +454,13 @@ export const transactionsRouter = router({
       return releaseFundsToSeller(ctx.prisma, tx, 'handover')
     }),
 
+  // Carriers the seller can pick from when adding tracking.
+  carriers: publicProcedure.query(() => CARRIERS.map(c => ({ slug: c.slug, name: c.name }))),
+
   // ── SUBMIT TRACKING (courier fulfilment) ─────────────────────────────────────
-  // Seller records the tracking number after posting a courier order. Funds are
-  // NOT released here — release happens when the tracking webhook reports the
-  // first waypoint scan (in transit). See releaseCourierByTracking / the webhook.
+  // Postal orders MUST use a tracked service — the tracking number is what
+  // proves delivery, which is what starts the payment clock. Funds are not
+  // released here, nor on dispatch: see markCourierDelivered.
   submitTracking: protectedProcedure
     .input(z.object({
       transactionId: z.string().uuid(),
@@ -442,18 +482,47 @@ export const transactionsRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Payment must be held before adding tracking' })
       }
 
+      const carrier = input.carrier.trim()
+      const number = input.trackingNumber.trim()
       await ctx.prisma.transaction.update({
         where: { id: tx.id },
-        data: { trackingCarrier: input.carrier.trim(), trackingNumber: input.trackingNumber.trim() },
+        data: { trackingCarrier: carrier, trackingNumber: number, shippedAt: tx.shippedAt ?? new Date() },
       })
       await ctx.prisma.notification.create({
         data: {
           userId: tx.buyerId,
           kind: 'system',
           title: '📦 Your order has shipped',
-          body: `"${tx.listing.title}" is on its way via ${input.carrier.trim()} (${input.trackingNumber.trim()}).`,
+          body: `"${tx.listing.title}" is on its way via ${carrier} (${number}). You'll have ${COURIER_DISPUTE_WINDOW_HOURS} hours after delivery to report a problem.`,
+          actionUrl: '/account',
         },
       })
+      return { ok: true, trackingUrl: trackingUrlFor(carrier, number) }
+    }),
+
+  // ── CONFIRM DELIVERY (courier) ───────────────────────────────────────────────
+  // The buyer can confirm receipt themselves rather than waiting for the
+  // carrier's event — useful when the carrier doesn't report, or reports late.
+  // This starts the same two clocks; it does NOT pay the seller immediately,
+  // so the buyer keeps their full dispute window.
+  confirmDelivery: protectedProcedure
+    .input(z.object({ transactionId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const tx = await ctx.prisma.transaction.findUniqueOrThrow({ where: { id: input.transactionId } })
+      if (tx.buyerId !== ctx.user.id) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the buyer can confirm delivery' })
+      }
+      if (tx.fulfilmentType !== 'courier') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This order is not a postal delivery' })
+      }
+      if (tx.status !== 'held') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This order is not awaiting delivery' })
+      }
+      if (tx.deliveredAt) return { ok: true, alreadyConfirmed: true }
+      if (!tx.trackingNumber) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'The seller has not added tracking yet' })
+      }
+      await markCourierDelivered(ctx.prisma, tx.trackingNumber)
       return { ok: true }
     }),
 
@@ -545,6 +614,14 @@ export const transactionsRouter = router({
         fulfilmentType: tx.fulfilmentType,
         trackingCarrier: tx.trackingCarrier,
         trackingNumber: tx.trackingNumber,
+        trackingUrl: tx.trackingCarrier && tx.trackingNumber ? trackingUrlFor(tx.trackingCarrier, tx.trackingNumber) : null,
+        shippedAt: tx.shippedAt,
+        deliveredAt: tx.deliveredAt,
+        // Buyer's window to report a problem; once past, the item is accepted.
+        disputeWindowEndsAt: tx.disputeWindowEndsAt,
+        disputeWindowOpen: !!tx.disputeWindowEndsAt && new Date() < tx.disputeWindowEndsAt,
+        // When the seller gets paid if nothing is raised.
+        autoReleaseAt: tx.autoReleaseAt,
         counterparty: isBuyer ? tx.seller.displayName : tx.buyer.displayName,
         collectionDetails: collectionRevealed
           ? { sellerName: tx.seller.displayName, phone: tx.seller.phone ?? null, address: tx.seller.collectionAddress ?? null }

@@ -14,6 +14,22 @@ export const disputesRouter = router({
       const existing = await ctx.prisma.dispute.findUnique({ where: { transactionId: input.transactionId } })
       if (existing) throw new TRPCError({ code: 'CONFLICT', message: 'Dispute already open' })
 
+      // Funds already paid out — there's nothing left to hold.
+      if (tx.status === 'released' || tx.fundsReleasedAt) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This payment has already been released. Contact support@grabitt.net.' })
+      }
+
+      // Postal orders: the buyer has 24 hours from delivery to report a problem,
+      // after which the item is deemed accepted.
+      if (tx.disputeWindowEndsAt && new Date() > tx.disputeWindowEndsAt) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'The 24-hour window to report a problem closed on '
+            + tx.disputeWindowEndsAt.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+            + ', so the item is treated as accepted. Contact support@grabitt.net if you believe this is wrong.',
+        })
+      }
+
       // Freeze funds
       await ctx.prisma.transaction.update({ where: { id: input.transactionId }, data: { status: 'disputed' } })
 

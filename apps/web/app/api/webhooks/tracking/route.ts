@@ -1,6 +1,8 @@
 import { handleTrackingPayload, trackingSecretValid } from 'server/src/webhooks/tracking'
 
-// Courier tracking webhook — releases held funds on the first waypoint scan.
+// Courier tracking webhook. A DELIVERED event starts the buyer's 24h window to
+// report a problem and the seller's 48h payout clock; in-transit events only
+// record dispatch. Funds are released by /api/cron/release-funds, never here.
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
