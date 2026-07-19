@@ -134,12 +134,29 @@ export default function DisputesView({ disputes: initial, onUpdate }: Props) {
                 </div>
               </PanelSection>
 
-              {/* Buyer case */}
+              {/* Buyer case — the written reason, plus any photos attached.
+                  evidence is an array of private storage paths, so each opens
+                  through /api/dispute-evidence rather than a public URL. */}
               <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 14 }}>
-                <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 10, fontWeight: 800, color: '#f97316', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>🛒 Buyer's Case</div>
+                <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 10, fontWeight: 800, color: '#f97316', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>🛒 Buyer&apos;s Case</div>
                 <div style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 12, color: '#333', lineHeight: 1.5 }}>
-                  {selected.evidence ?? 'No statement provided'}
+                  {selected.reason ?? 'No statement provided'}
                 </div>
+                {Array.isArray(selected.evidence) && selected.evidence.length > 0 && (
+                  <>
+                    <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 9.5, fontWeight: 800, color: '#f97316', textTransform: 'uppercase', letterSpacing: 0.6, margin: '10px 0 5px' }}>
+                      Evidence ({selected.evidence.length})
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {selected.evidence.map((_: string, i: number) => (
+                        <a key={i} href={`/api/dispute-evidence?disputeId=${selected.id}&i=${i}`} target="_blank" rel="noreferrer"
+                          style={{ width: 60, height: 60, borderRadius: 8, border: '1px solid #ffd4c0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, textDecoration: 'none' }}>
+                          📷
+                        </a>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Seller case */}

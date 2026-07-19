@@ -10,7 +10,7 @@ import { useGrabittUid } from '@/hooks/useGrabittUid'
 import { createTrpcClient } from '@/lib/trpc'
 import { createClient } from '@/lib/supabase'
 import { getAuthToken, refreshAuthToken, setAuthToken } from '@/lib/authToken'
-import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
+import { compressAndUpload, listingPhotoPath, uploadDisputeEvidence } from '@/lib/storage'
 import { pushView } from '@/lib/recentViews'
 import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
 import StripePayment from './StripePayment'
@@ -1722,7 +1722,7 @@ function PanelBody() {
 
   // ── MY DISPUTES ──────────────────────────────────────────────────────────────
   if (panel.id === 'myDisputes') {
-    type Disp = { id: string; status: string; reason: string; createdAt: string; transaction: { listing: { title: string } } }
+    type Disp = { id: string; status: string; reason: string; createdAt: string; evidence: string[]; transaction: { listing: { title: string } } }
     const [disputes, setDisputes] = useState<Disp[]>([])
     const [loaded, setLoaded] = useState(false)
     const [expandedDispute, setExpandedDispute] = useState<string | null>(null)
@@ -1792,6 +1792,20 @@ function PanelBody() {
                       </div>
                     )
                   })}
+                  {d.evidence?.length > 0 && (
+                    <div style={{ marginTop: 4, marginBottom: 8 }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: '#888', textTransform: 'uppercase', marginBottom: 5 }}>Evidence you attached</div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {d.evidence.map((_, i) => (
+                          <a key={i} href={`/api/dispute-evidence?disputeId=${d.id}&i=${i}`} target="_blank" rel="noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            style={{ width: 54, height: 54, borderRadius: 8, border: '1px solid #e5dccd', background: '#f5f0e8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, textDecoration: 'none' }}>
+                            📷
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', marginTop: 4 }}>
                     Raised {new Date(d.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </div>
@@ -2987,6 +3001,26 @@ function PanelBody() {
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
     const [submitted, setSubmitted] = useState(false)
+    // Evidence photos: uploaded to the private bucket as they're picked, so the
+    // dispute carries storage paths (schema allows up to 5).
+    const [evidence, setEvidence] = useState<{ path: string; previewUrl: string | null }[]>([])
+    const [uploading, setUploading] = useState(false)
+
+    const pickEvidence = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files ?? [])
+      if (!files.length) return
+      const room = 5 - evidence.length
+      if (room <= 0) { setError('You can attach up to 5 photos.'); return }
+      setUploading(true); setError('')
+      try {
+        const uid = currentUserId
+        if (!uid) { setError('Please sign in again to attach photos.'); return }
+        const added = await Promise.all(files.slice(0, room).map(f => uploadDisputeEvidence(f, uid)))
+        setEvidence(prev => [...prev, ...added])
+      } catch (err: any) {
+        setError(err?.message ?? 'Could not upload that photo.')
+      } finally { setUploading(false); e.target.value = '' }
+    }
 
     const submit = async () => {
       if (!transactionId) { setError('This dispute is missing its transaction — open it from the order and try again.'); return }
@@ -2998,7 +3032,7 @@ function PanelBody() {
         await client.disputes.open.mutate({
           transactionId,
           reason: `${reason} — ${detail.trim()}`,
-          evidence: [],
+          evidence: evidence.map(x => x.path),
         })
         setSubmitted(true)
       } catch (e: any) {
@@ -3071,11 +3105,35 @@ function PanelBody() {
           style={{ width: '100%', border: '1.5px solid #eee', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-comfortaa)', fontSize: 13, outline: 'none', resize: 'none', height: 80, boxSizing: 'border-box', marginBottom: 10 }}
         />
 
+        {/* Evidence photos — real uploads to the private bucket */}
+        {evidence.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+            {evidence.map((p, i) => (
+              <div key={p.path} style={{ position: 'relative', width: 68, height: 68, borderRadius: 10, overflow: 'hidden', border: '1px solid #e5dccd' }}>
+                {p.previewUrl
+                  ? <img src={p.previewUrl} alt={`Evidence ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <div style={{ width: '100%', height: '100%', background: '#f5f0e8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📷</div>}
+                <button
+                  onClick={() => setEvidence(prev => prev.filter(x => x.path !== p.path))}
+                  aria-label={`Remove photo ${i + 1}`}
+                  style={{ position: 'absolute', top: 2, right: 2, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: 11, cursor: 'pointer', lineHeight: 1 }}
+                >✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+        {evidence.length < 5 && (
+          <label style={{ display: 'block', border: '1.5px dashed #ccc', borderRadius: 10, padding: 14, textAlign: 'center', fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: uploading ? '#bbb' : '#999', cursor: uploading ? 'wait' : 'pointer', marginBottom: 14 }}>
+            {uploading ? 'Uploading…' : `📷 Add photos as evidence (optional · ${evidence.length}/5)`}
+            <input type="file" accept="image/*" multiple onChange={pickEvidence} disabled={uploading} style={{ display: 'none' }} />
+          </label>
+        )}
+
         {error && <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '9px 11px', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#b91c1c', marginBottom: 10 }}>{error}</div>}
 
         <button
           onClick={submit}
-          disabled={busy || !reason || detail.trim().length < 5}
+          disabled={busy || uploading || !reason || detail.trim().length < 5}
           style={{ width: '100%', background: reason && detail.trim().length >= 5 ? '#dc2626' : '#ccc', color: '#fff', border: 'none', borderRadius: 50, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: busy || !reason || detail.trim().length < 5 ? 'not-allowed' : 'pointer' }}
         >
           {busy ? 'Raising…' : 'Raise dispute'}

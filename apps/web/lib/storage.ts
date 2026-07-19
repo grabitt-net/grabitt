@@ -42,6 +42,28 @@ export function cmsImagePath(kind: string): string {
 }
 
 export const CVS_BUCKET = 'cvs'
+export const DISPUTE_BUCKET = 'dispute-evidence'
+
+/**
+ * Uploads a dispute evidence photo to the PRIVATE `dispute-evidence` bucket.
+ * Evidence often includes receipts and correspondence, so it is not public.
+ * Returns the storage path (stored on the dispute) plus a short-lived signed
+ * URL so the uploader can preview it. The other party and admins read it via
+ * /api/dispute-evidence, which authorises server-side.
+ */
+export async function uploadDisputeEvidence(file: File, userId: string): Promise<{ path: string; previewUrl: string | null }> {
+  if (!file.type.startsWith('image/')) throw new Error('Evidence must be an image')
+  if (file.size > 10 * 1024 * 1024) throw new Error('Each photo must be under 10 MB')
+
+  // Reuse the listing-photo compressor: evidence only needs to be legible.
+  const blob = await compressImage(file)
+  const path = `${userId}/${crypto.randomUUID()}.jpg`
+  const client = createClient()
+  const { error } = await client.storage.from(DISPUTE_BUCKET).upload(path, blob, { contentType: 'image/jpeg', upsert: false })
+  if (error) throw new Error(`Upload failed: ${error.message}`)
+  const { data } = await client.storage.from(DISPUTE_BUCKET).createSignedUrl(path, 600)
+  return { path, previewUrl: data?.signedUrl ?? null }
+}
 
 /**
  * Uploads a candidate CV (PDF/DOC/DOCX) to the PRIVATE `cvs` bucket. Returns the

@@ -8,7 +8,9 @@ export const DisputeSchema = z.object({
   transactionId: z.string().uuid(),
   raisedBy: z.string().uuid(),
   reason: z.string().max(2000),
-  evidence: z.array(z.string().url()),
+  // Storage paths in the private `dispute-evidence` bucket, NOT public URLs —
+  // evidence often contains receipts, so it's read through /api/dispute-evidence.
+  evidence: z.array(z.string()),
   status: DisputeStatus,
   resolution: z.string().nullable(),
   resolvedAt: z.date().nullable(),
@@ -20,6 +22,6 @@ export type Dispute = z.infer<typeof DisputeSchema>
 export const OpenDisputeInputSchema = z.object({
   transactionId: z.string().uuid(),
   reason: z.string().min(10).max(2000),
-  evidence: z.array(z.string().url()).max(5),
+  evidence: z.array(z.string().max(300)).max(5),
 })
 export type OpenDisputeInput = z.infer<typeof OpenDisputeInputSchema>
