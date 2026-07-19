@@ -4,6 +4,16 @@ import { router, protectedProcedure } from '../trpc'
 import { SendMessageInputSchema } from '@grabitt/types'
 import { containsContactInfo } from '../lib/contactScan'
 
+// Withholds a blocked message's text from anyone other than its sender. Keeping
+// the row (rather than dropping it) preserves the audit trail for disputes and
+// lets the sender see that their message was stopped.
+const WITHHELD = 'This message was hidden because it contained contact details. Keep deals on Grabitt so your payment stays protected.'
+
+function maskBlocked<T extends { body: string; blocked: boolean; senderId: string }>(m: T, viewerId: string): T {
+  if (!m.blocked || m.senderId === viewerId) return m
+  return { ...m, body: WITHHELD }
+}
+
 export const messagesRouter = router({
   thread: protectedProcedure
     .input(z.object({ listingId: z.string().min(1), sellerId: z.string().min(1) }))
@@ -75,14 +85,19 @@ export const messagesRouter = router({
       if (!thread.participants.some(p => p.userId === ctx.user.id)) {
         throw new TRPCError({ code: 'FORBIDDEN' })
       }
-      return ctx.prisma.message.findMany({
+      const rows = await ctx.prisma.message.findMany({
         where: { threadId: input.threadId },
         orderBy: { createdAt: 'asc' },
       })
+      // A blocked message is withheld from the RECIPIENT — previously the flag
+      // was set but the full text was still delivered, so contact details (and
+      // therefore off-platform deals) got through anyway. The sender still sees
+      // their own text, with a note that it wasn't delivered.
+      return rows.map(m => maskBlocked(m, ctx.user.id))
     }),
 
-  myThreads: protectedProcedure.query(({ ctx }) =>
-    ctx.prisma.thread.findMany({
+  myThreads: protectedProcedure.query(async ({ ctx }) => {
+    const threads = await ctx.prisma.thread.findMany({
       where: { participants: { some: { userId: ctx.user.id } } },
       orderBy: { lastMessageAt: 'desc' },
       include: {
@@ -90,7 +105,10 @@ export const messagesRouter = router({
         messages: { take: 1, orderBy: { createdAt: 'desc' } },
       },
     })
-  ),
+    // The inbox preview shows the last message — mask it too, or blocked
+    // contact details leak through the preview even though the thread hides them.
+    return threads.map(t => ({ ...t, messages: t.messages.map(m => maskBlocked(m, ctx.user.id)) }))
+  }),
 
   // Marks every message in a thread NOT sent by the caller as read.
   markThreadRead: protectedProcedure
