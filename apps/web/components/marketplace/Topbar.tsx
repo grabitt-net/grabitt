@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import IconRail from './IconRail'
 import DesktopNav from './DesktopNav'
@@ -39,6 +40,10 @@ function nearestTown(lat: number, lng: number) {
 export default function Topbar() {
   const { openPanel } = usePanel()
   const [query, setQuery] = useState('')
+  // On the home page the logo opens the Grabitt menu (as in the V20 prototype).
+  // Everywhere else it stays a link home — that's the only way back from a
+  // deep page, so it must not be replaced by a menu.
+  const isHome = usePathname() === '/'
 
   const handleSearch = () => {
     if (query.trim()) openPanel('search', { q: query.trim() })
@@ -71,12 +76,22 @@ export default function Topbar() {
       <div className="mobile-chrome">
       {/* Row 1 — logo + search + Near */}
       <div style={{ display: 'flex', alignItems: 'flex-start', padding: '10px 14px 0' }}>
-        <Link href="/" style={{ flexShrink: 0, cursor: 'pointer', textDecoration: 'none' }}>
-          <Logo height={30} />
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: '#7a6a55', fontWeight: 700, marginTop: 2, whiteSpace: 'nowrap' }}>
-            {t('Your local everything')}
-          </div>
-        </Link>
+        {isHome ? (
+          <button onClick={() => openPanel('menu')} aria-label="Grabitt menu"
+            style={{ flexShrink: 0, cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}>
+            <Logo height={30} />
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: '#7a6a55', fontWeight: 700, marginTop: 2, whiteSpace: 'nowrap' }}>
+              {t('Your local everything')}
+            </div>
+          </button>
+        ) : (
+          <Link href="/" style={{ flexShrink: 0, cursor: 'pointer', textDecoration: 'none' }}>
+            <Logo height={30} />
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: '#7a6a55', fontWeight: 700, marginTop: 2, whiteSpace: 'nowrap' }}>
+              {t('Your local everything')}
+            </div>
+          </Link>
+        )}
 
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginLeft: 8, minWidth: 0, maxWidth: '62%' }}>
           <div style={{ flex: 1, background: '#fff', borderRadius: 50, display: 'flex', alignItems: 'center', padding: '7px 5px 7px 11px', gap: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: 0 }}>

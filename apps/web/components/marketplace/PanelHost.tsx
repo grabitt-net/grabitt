@@ -1146,32 +1146,42 @@ function PanelBody() {
   }
 
   // ── GRABITT MENU ────────────────────────────────────────────────────────────
+  // Opened by tapping the logo on the home page (openGrabittMenu in the V20
+  // prototype). Info/about entries only — account and orders live in the icon
+  // rail, so duplicating them here would give two routes to the same panels.
   if (panel.id === 'menu') {
+    // Each row is either a footer info panel, another panel, or a link out.
+    const rows: [string, string, () => void][] = [
+      ['ℹ️', 'About Us', () => openPanel('footer', { key: 'about' })],
+      ['⭐', 'Why Us?', () => openPanel('footer', { key: 'why' })],
+      ['✉️', 'Contact Us', () => openPanel('footer', { key: 'contact' })],
+      ['📋', 'Terms', () => openPanel('footer', { key: 'terms' })],
+      ['❓', 'Help', () => openPanel('help')],
+      ['💰', 'Pricing', () => openPanel('footer', { key: 'pricing' })],
+      ['🤝', 'Delivery & Collection', () => openPanel('footer', { key: 'collection' })],
+      ['😡', 'Scam Centre', () => openPanel('footer', { key: 'scams' })],
+      // Economic Living lives in Grabitt Guides, not a panel — same target as
+      // the footer link, so there's one copy of it.
+      ['💡', 'Economic Living', () => { window.location.href = '/community#economic-living' }],
+      ['📋', "Dos & Don'ts", () => openPanel('footer', { key: 'policy' })],
+      ['💡', 'Suggest Ideas', () => openPanel('footer', { key: 'suggest' })],
+      ['🕘', 'Recently viewed', () => openPanel('recentviewed')],
+      ['🧠', 'Executive Suite', () => { window.location.href = '/admin' }],
+    ]
     return (
-      <ActionPanel title="Grabitt!" onClose={closePanel}>
-        <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 28, fontWeight: 700 }}>
-            <span style={{ color: '#FF4500' }}>Grab</span><span style={{ color: '#1a1a1a' }}>itt</span><span style={{ color: '#FF4500' }}>!</span>
-          </div>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#7a6a55', fontWeight: 700 }}>Your local everything</div>
+      <ActionPanel title="Grabitt" onClose={closePanel}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {rows.map(([icon, label, go]) => (
+            <button
+              key={label}
+              onClick={go}
+              style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: '14px 16px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a', cursor: 'pointer', textAlign: 'left', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+            >
+              <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
+              <span>{t(label)}</span>
+            </button>
+          ))}
         </div>
-        {/* Account / orders — open in-app panels */}
-        {([['🛒','My purchases','purchases'],['📊','My sales','mySales'],['💰','My offers','offers'],['🛡️','My disputes','myDisputes'],['🪙','Buy credits','buyCredits'],['👤','My profile','profile']] as [string, string, PanelId][]).map(([icon, label, pid], i) => (
-          <div key={`p${i}`} onClick={() => openPanel(pid)} style={{ display: 'flex', gap: 14, padding: '13px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
-            <div style={{ fontSize: 22, width: 32, textAlign: 'center' }}>{icon}</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: '#1a1a1a', flex: 1 }}>{label}</div>
-            <span style={{ color: '#ccc' }}>›</span>
-          </div>
-        ))}
-        {[['🏪','Browse all listings','/listings'],['💬','My messages','/messages'],['🛡️','Safety Shield','#shield'],['ℹ️','About Grabitt','#about']].map(([icon, label, href], i) => (
-          <a key={i} href={href as string} onClick={closePanel} style={{ textDecoration: 'none' }}>
-            <div style={{ display: 'flex', gap: 14, padding: '13px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
-              <div style={{ fontSize: 22, width: 32, textAlign: 'center' }}>{icon}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: '#1a1a1a', flex: 1 }}>{label as string}</div>
-              <span style={{ color: '#ccc' }}>›</span>
-            </div>
-          </a>
-        ))}
       </ActionPanel>
     )
   }

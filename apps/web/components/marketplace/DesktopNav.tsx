@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { usePanel } from '@/context/PanelContext'
 import type { PanelId } from '@/context/PanelContext'
@@ -17,6 +17,7 @@ import { t } from '@/lib/i18n'
 export default function DesktopNav() {
   const { openPanel } = usePanel()
   const router = useRouter()
+  const isHome = usePathname() === '/'
   const [query, setQuery] = useState('')
   const userId = useGrabittUid()
   const { unreadCount } = useNotifications(userId)
@@ -35,10 +36,17 @@ export default function DesktopNav() {
 
   return (
     <div className="desktop-nav" style={{ alignItems: 'center', gap: 20, padding: '12px 28px', maxWidth: 1120, margin: '0 auto' }}>
-      {/* Logo */}
-      <Link href="/" style={{ cursor: 'pointer', textAlign: 'left', flexShrink: 0, padding: 0, textDecoration: 'none' }}>
-        <Logo height={38} />
-      </Link>
+      {/* Logo — opens the Grabitt menu on the home page, links home elsewhere */}
+      {isHome ? (
+        <button onClick={() => openPanel('menu')} aria-label="Grabitt menu"
+          style={{ cursor: 'pointer', textAlign: 'left', flexShrink: 0, padding: 0, background: 'none', border: 'none' }}>
+          <Logo height={38} />
+        </button>
+      ) : (
+        <Link href="/" style={{ cursor: 'pointer', textAlign: 'left', flexShrink: 0, padding: 0, textDecoration: 'none' }}>
+          <Logo height={38} />
+        </Link>
+      )}
 
       {/* Search — grows to fill */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 50, padding: '9px 8px 9px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
