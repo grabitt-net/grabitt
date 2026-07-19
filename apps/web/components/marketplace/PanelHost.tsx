@@ -1703,7 +1703,7 @@ function PanelBody() {
                 {tx.role === 'buyer' && tx.fulfilmentType !== 'courier' && (
                   <button onClick={() => openPanel('handover', { transactionId: tx.id, role: 'buyer', title: tx.title })} style={btnPrimary}>✅ Confirm handover</button>
                 )}
-                <button onClick={() => openPanel('dispute', { transactionId: tx.id, title: tx.title })} style={btnDanger}>🚨 Raise a dispute</button>
+                <button onClick={() => openPanel('dispute', { transactionId: tx.id, title: tx.title, amount: tx.amount })} style={btnDanger}>🚨 Raise a dispute</button>
               </div>
             )}
             {tx.status === 'released' && tx.role === 'buyer' && (
@@ -1725,6 +1725,7 @@ function PanelBody() {
     type Disp = { id: string; status: string; reason: string; createdAt: string; transaction: { listing: { title: string } } }
     const [disputes, setDisputes] = useState<Disp[]>([])
     const [loaded, setLoaded] = useState(false)
+    const [expandedDispute, setExpandedDispute] = useState<string | null>(null)
     useEffect(() => {
       getTrpcClient().then(c => c.disputes.mine.query())
         .then(d => { setDisputes(d as unknown as Disp[]); setLoaded(true) }).catch(() => setLoaded(true))
@@ -1743,20 +1744,62 @@ function PanelBody() {
         {!loaded ? (
           <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
         ) : disputes.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🛡️</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>No disputes</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Disputes you raise appear here so you can track their status.</div>
-          </div>
-        ) : disputes.map(d => (
-          <div key={d.id} style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{d.transaction?.listing?.title ?? 'Item'}</span>
-              <span style={{ background: `${DSTATUS[d.status]?.color ?? '#888'}22`, color: DSTATUS[d.status]?.color ?? '#888', borderRadius: 50, padding: '3px 10px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800 }}>{DSTATUS[d.status]?.label ?? d.status}</span>
+          // Reassurance-first empty state, matching the prototype: no disputes
+          // is good news, and it explains how to raise one if needed.
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 14, padding: 20, textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>🛡️</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: '#16a34a' }}>You&apos;re protected on every purchase</div>
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#15803d', lineHeight: 1.5, marginTop: 6 }}>
+              No disputes — here&apos;s hoping it stays that way! If anything goes wrong, your funds stay held in escrow until it&apos;s resolved.
             </div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>{d.reason}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#16a34a', fontWeight: 700, marginTop: 10 }}>
+              To raise one: open the order from your Activity and tap &ldquo;Raise a dispute&rdquo;.
+            </div>
           </div>
-        ))}
+        ) : disputes.map(d => {
+          const open = expandedDispute === d.id
+          const resolved = d.status.startsWith('resolved')
+          // Progress mirrors the prototype's four stages.
+          const stage = resolved ? 3 : d.status === 'under_review' || d.status === 'escalated' ? 1 : 0
+          const steps: [string, number][] = [['Dispute raised', 0], ['Grabitt reviewing', 1], ['Seller responds', 2], ['Resolution', 3]]
+          return (
+            <div key={d.id} style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 10, cursor: 'pointer' }}
+              onClick={() => setExpandedDispute(open ? null : d.id)}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{d.transaction?.listing?.title ?? 'Item'}</span>
+                <span style={{ background: `${DSTATUS[d.status]?.color ?? '#888'}22`, color: DSTATUS[d.status]?.color ?? '#888', borderRadius: 50, padding: '3px 10px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800 }}>{DSTATUS[d.status]?.label ?? d.status}</span>
+              </div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>{d.reason}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: 'var(--orange)', fontWeight: 800, marginTop: 6 }}>
+                {open ? '▲ Hide progress' : '▼ View progress'}
+              </div>
+
+              {open && (
+                <div style={{ marginTop: 12, borderTop: '1px solid #ece3d7', paddingTop: 12 }}>
+                  {!resolved && (
+                    <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '10px 12px', marginBottom: 12, fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#92400e', lineHeight: 1.5 }}>
+                      🔒 Your funds stay held while we review. We aim to resolve disputes within 3 working days.
+                    </div>
+                  )}
+                  {steps.map(([label, idx]) => {
+                    const state = idx < stage ? 'done' : idx === stage ? 'active' : 'pending'
+                    const col = state === 'done' ? '#22c55e' : state === 'active' ? '#f59e0b' : '#ddd'
+                    const ic = state === 'done' ? '✓' : state === 'active' ? '●' : '○'
+                    return (
+                      <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 9 }}>
+                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: col, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900, flexShrink: 0 }}>{ic}</div>
+                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: state === 'pending' ? 600 : 800, color: state === 'pending' ? '#999' : 'var(--dark)' }}>{label}</div>
+                      </div>
+                    )
+                  })}
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', marginTop: 4 }}>
+                    Raised {new Date(d.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
       </ActionPanel>
     )
   }
@@ -2935,56 +2978,107 @@ function PanelBody() {
   if (panel.id === 'dispute') {
     const item = panel.data as Record<string, unknown>
     const title = (item.title as string) || 'Item'
-    const REASONS = ['Item not as described', 'Item not received', 'Wrong item sent', 'Item damaged', 'Seller unresponsive', 'Other']
+    const transactionId = item.transactionId as string | undefined
+    const amount = item.amount as number | undefined
+    // Reasons mirror the V20 prototype's DISPUTE_REASONS.
+    const REASONS = ['Item not as described', 'Item not received', 'Damaged / faulty', 'Fake / counterfeit', 'Wrong item sent', 'Seller unresponsive', 'Other']
     const [reason, setReason] = useState('')
-    const [evidence, setEvidence] = useState('')
+    const [detail, setDetail] = useState('')
+    const [busy, setBusy] = useState(false)
+    const [error, setError] = useState('')
     const [submitted, setSubmitted] = useState(false)
 
+    const submit = async () => {
+      if (!transactionId) { setError('This dispute is missing its transaction — open it from the order and try again.'); return }
+      setBusy(true); setError('')
+      try {
+        // reason must be >= 10 chars server-side, so send the category plus the
+        // buyer's own account of what happened.
+        const client = await getTrpcClient()
+        await client.disputes.open.mutate({
+          transactionId,
+          reason: `${reason} — ${detail.trim()}`,
+          evidence: [],
+        })
+        setSubmitted(true)
+      } catch (e: any) {
+        setError(/already/i.test(e?.message ?? '') ? 'A dispute is already open on this order.' : 'Could not raise the dispute. Please try again.')
+      } finally { setBusy(false) }
+    }
+
+    // Progress tracker, matching the prototype's openDisputeStatus steps.
     if (submitted) return (
-      <ActionPanel title="🚨 Dispute opened" onClose={closePanel}>
-        <div style={{ textAlign: 'center', padding: '30px 0' }}>
-          <div style={{ fontSize: 56, marginBottom: 14 }}>🚨</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Dispute raised — funds frozen</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 8 }}>Your payment is frozen until the dispute is resolved. Our team will review within 24 hours.</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 20 }}>Questions? Email safety@grabitt.net</div>
-          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
+      <ActionPanel title="🛡️ Dispute raised" onClose={closePanel}>
+        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 14, padding: 16, textAlign: 'center', marginBottom: 14 }}>
+          <div style={{ fontSize: 30 }}>🛡️</div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: '#b45309', fontFamily: 'var(--font-ui)', marginTop: 4 }}>Under review by Grabitt</div>
+          <div style={{ fontSize: 11.5, color: '#92400e', fontFamily: 'var(--font-ui)', marginTop: 4, lineHeight: 1.5 }}>
+            {amount ? `Your €${Number(amount).toLocaleString()} stays held.` : 'Your payment stays held.'} We aim to resolve disputes within 3 working days.
+          </div>
         </div>
+
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 14, padding: 14, marginBottom: 14 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{title}</div>
+          <div style={{ fontSize: 11.5, color: '#666', fontFamily: 'var(--font-ui)' }}>{reason}</div>
+          {detail.trim() && <div style={{ fontSize: 11.5, color: '#555', fontFamily: 'var(--font-comfortaa)', fontStyle: 'italic', marginTop: 6 }}>&ldquo;{detail.trim()}&rdquo;</div>}
+        </div>
+
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: '#555', textTransform: 'uppercase', marginBottom: 10 }}>Progress</div>
+        {([['Dispute raised', 'done'], ['Grabitt reviewing', 'active'], ['Seller responds', 'pending'], ['Resolution', 'pending']] as [string, string][]).map(([label, state]) => {
+          const col = state === 'done' ? '#22c55e' : state === 'active' ? '#f59e0b' : '#ddd'
+          const ic = state === 'done' ? '✓' : state === 'active' ? '●' : '○'
+          return (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 24, height: 24, borderRadius: '50%', background: col, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, flexShrink: 0 }}>{ic}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: state === 'pending' ? 600 : 800, color: state === 'pending' ? '#999' : 'var(--dark)' }}>{label}</div>
+            </div>
+          )
+        })}
+        <button onClick={() => { closePanel(); openPanel('myDisputes') }} style={{ width: '100%', background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer', marginTop: 6 }}>Done</button>
       </ActionPanel>
     )
 
     return (
-      <ActionPanel title={`🚨 Raise Dispute — ${title}`} onClose={closePanel}>
-        <div style={{ background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 12, padding: 12, marginBottom: 16 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#ef4444', fontWeight: 800 }}>⚠️ Raising a dispute freezes funds immediately.</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 4 }}>Only do this if you have a genuine problem. False disputes may result in account suspension.</div>
-        </div>
-
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 8 }}>Reason</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {REASONS.map(r => (
-              <button key={r} onClick={() => setReason(r)} style={{ background: reason === r ? '#ef4444' : '#fff', color: reason === r ? '#fff' : '#555', border: `1.5px solid ${reason === r ? '#ef4444' : '#e0d8d0'}`, borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{r}</button>
-            ))}
+      <ActionPanel title="⚠️ Raise a dispute" onClose={closePanel}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: 12, marginBottom: 14 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#dc2626' }}>
+            🔒 {amount ? `Your €${Number(amount).toLocaleString()} stays protected` : 'Your payment stays protected'}
+          </div>
+          <div style={{ fontSize: 11.5, color: '#991b1b', fontFamily: 'var(--font-ui)', lineHeight: 1.5, marginTop: 3 }}>
+            Funds are held while Grabitt reviews. Tell us what went wrong and we&apos;ll step in.
           </div>
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Evidence / description</div>
-          <textarea
-            value={evidence}
-            onChange={e => setEvidence(e.target.value)}
-            placeholder='Describe what happened in detail...'
-            rows={4}
-            style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
-          />
+        <div style={{ fontSize: 11.5, color: '#555', fontFamily: 'var(--font-ui)', marginBottom: 12 }}>
+          {title}{amount ? ` · €${Number(amount).toLocaleString()}` : ''}
         </div>
 
+        <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--orange)', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', marginBottom: 6 }}>What&apos;s the problem?</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+          {REASONS.map(r => (
+            <button key={r} onClick={() => setReason(r)}
+              style={{ textAlign: 'left', background: reason === r ? '#4A2E1A' : '#fff', color: reason === r ? '#fff' : 'var(--dark)', border: '1.5px solid #4A2E1A', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+              {r}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--orange)', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', marginBottom: 6 }}>Tell us more</div>
+        <textarea
+          value={detail}
+          onChange={e => { setDetail(e.target.value); setError('') }}
+          placeholder="Describe what happened…"
+          style={{ width: '100%', border: '1.5px solid #eee', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-comfortaa)', fontSize: 13, outline: 'none', resize: 'none', height: 80, boxSizing: 'border-box', marginBottom: 10 }}
+        />
+
+        {error && <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '9px 11px', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#b91c1c', marginBottom: 10 }}>{error}</div>}
+
         <button
-          onClick={() => setSubmitted(true)}
-          disabled={!reason || !evidence}
-          style={{ width: '100%', background: reason && evidence ? '#ef4444' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: reason && evidence ? 'pointer' : 'not-allowed' }}
+          onClick={submit}
+          disabled={busy || !reason || detail.trim().length < 5}
+          style={{ width: '100%', background: reason && detail.trim().length >= 5 ? '#dc2626' : '#ccc', color: '#fff', border: 'none', borderRadius: 50, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: busy || !reason || detail.trim().length < 5 ? 'not-allowed' : 'pointer' }}
         >
-          🚨 Open Dispute
+          {busy ? 'Raising…' : 'Raise dispute'}
         </button>
       </ActionPanel>
     )
