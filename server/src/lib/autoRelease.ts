@@ -1,5 +1,38 @@
 import type { PrismaClient } from '@prisma/client'
-import { releaseFundsToSeller } from '../routers/transactions'
+import { releaseFundsToSeller, markCourierDelivered } from '../routers/transactions'
+
+// Safety net for postal orders where no delivery was ever confirmed — 17TRACK
+// never reported (carrier didn't scan, number mistyped) and the buyer never
+// tapped "I've received this". Without this the money would sit held forever.
+// After this long from dispatch we treat it as delivered, which still gives the
+// buyer their full 24h window before anything is paid out.
+const ASSUME_DELIVERED_AFTER_DAYS = 14
+
+/**
+ * Starts the delivery clock on postal orders that were dispatched long ago but
+ * never got a delivery confirmation. Returns how many were nudged.
+ */
+export async function assumeStalePostalDeliveries(prisma: PrismaClient) {
+  const cutoff = new Date(Date.now() - ASSUME_DELIVERED_AFTER_DAYS * 86400_000)
+  const stale = await prisma.transaction.findMany({
+    where: {
+      status: 'held',
+      fulfilmentType: 'courier',
+      deliveredAt: null,
+      shippedAt: { not: null, lte: cutoff },
+      trackingNumber: { not: null },
+      dispute: { is: null },
+    },
+    select: { trackingNumber: true },
+    take: 100,
+  })
+
+  let started = 0
+  for (const tx of stale) {
+    if (tx.trackingNumber && await markCourierDelivered(prisma, tx.trackingNumber)) started++
+  }
+  return started
+}
 
 /**
  * Releases every payment that has become due, and skips anything disputed.
@@ -13,6 +46,11 @@ import { releaseFundsToSeller } from '../routers/transactions'
  * stop the rest from paying out.
  */
 export async function autoReleaseDueFunds(prisma: PrismaClient) {
+  // First, rescue any postal orders stuck with no delivery confirmation. They
+  // won't release on this run — the buyer's 24h window opens now — but they
+  // stop being stranded.
+  const assumedDelivered = await assumeStalePostalDeliveries(prisma)
+
   const due = await prisma.transaction.findMany({
     where: {
       status: 'held',
@@ -36,5 +74,5 @@ export async function autoReleaseDueFunds(prisma: PrismaClient) {
     }
   }
 
-  return { due: due.length, released, failed: failures.length, failures }
+  return { due: due.length, released, failed: failures.length, assumedDelivered, failures }
 }

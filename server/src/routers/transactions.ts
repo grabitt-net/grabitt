@@ -9,6 +9,7 @@ import { router, protectedProcedure, publicProcedure } from '../trpc'
 import { RateTransactionInputSchema } from '@grabitt/types'
 import { FEE_RATES, FUND_RELEASE_AUTO_DAYS, COURIER_RELEASE_HOURS, COURIER_DISPUTE_WINDOW_HOURS } from '@grabitt/design-tokens'
 import { trackingUrlFor, CARRIERS } from '../lib/tracking'
+import { registerTracking } from '../lib/track17'
 
 
 // Handover token lives for 30 minutes — long enough for an in-person meetup
@@ -488,6 +489,11 @@ export const transactionsRouter = router({
         where: { id: tx.id },
         data: { trackingCarrier: carrier, trackingNumber: number, shippedAt: tx.shippedAt ?? new Date() },
       })
+
+      // Ask 17TRACK to watch this parcel; its delivery event is what starts the
+      // payout clock. Best-effort — if registration fails the seller isn't
+      // blocked, and the buyer can still confirm receipt manually.
+      const registered = await registerTracking(number)
       await ctx.prisma.notification.create({
         data: {
           userId: tx.buyerId,
@@ -497,7 +503,7 @@ export const transactionsRouter = router({
           actionUrl: '/account',
         },
       })
-      return { ok: true, trackingUrl: trackingUrlFor(carrier, number) }
+      return { ok: true, trackingUrl: trackingUrlFor(carrier, number), autoTracked: registered }
     }),
 
   // ── CONFIRM DELIVERY (courier) ───────────────────────────────────────────────
