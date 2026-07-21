@@ -2597,7 +2597,7 @@ function PanelBody() {
         <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>
-              {step === 'success' ? '✅ Payment confirmed' : '🔒 Secure Checkout'}
+              {step === 'success' ? `✅ ${t('Payment confirmed')}` : `🔒 ${t('Secure Checkout')}`}
             </span>
             {step !== 'processing' && <button onClick={closePanel} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>}
           </div>
@@ -2606,28 +2606,28 @@ function PanelBody() {
             {step === 'success' ? (
               <div style={{ textAlign: 'center', padding: '30px 0' }}>
                 <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Payment held in escrow!</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t('Payment held in escrow!')}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>
-                  Your {price} is safely held by Grabitt. Arrange collection with the seller, then confirm handover to release payment.
+                  {t('Your {amount} is safely held by Grabitt. Arrange collection with the seller, then confirm handover to release payment.').replace('{amount}', price)}
                 </div>
                 <div style={{ background: '#f0fdf4', border: '1px solid var(--sage)', borderRadius: 12, padding: 14, marginBottom: 20, textAlign: 'left' }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--sage)', marginBottom: 6 }}>Next steps</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--sage)', marginBottom: 6 }}>{t('Next steps')}</div>
                   {['Message the seller to arrange pickup','Meet in a safe public place','Inspect the item carefully','Confirm handover in the app to release payment'].map((s, i) => (
-                    <div key={i} style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', padding: '4px 0' }}>✅ {s}</div>
+                    <div key={i} style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', padding: '4px 0' }}>✅ {t(s)}</div>
                   ))}
                 </div>
                 <button onClick={() => openPanel('handover', { ...item, transactionId, role: 'buyer' })} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>
-                  Confirm Handover
+                  {t('Confirm Handover')}
                 </button>
                 <button onClick={closePanel} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
-                  Back to browsing
+                  {t('Back to browsing')}
                 </button>
               </div>
             ) : step === 'processing' ? (
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>Processing payment…</div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginTop: 8 }}>Please don't close this window</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>{t('Processing payment…')}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginTop: 8 }}>{t('Please don\'t close this window')}</div>
               </div>
             ) : step === 'card' ? (
               <>
@@ -2638,9 +2638,9 @@ function PanelBody() {
                 </div>
 
                 {clientSecret ? (
-                  <StripePayment clientSecret={clientSecret} label={`Pay ${fmt(total)} Securely`} onSuccess={() => setStep('success')} />
+                  <StripePayment clientSecret={clientSecret} label={t('Pay {amount} Securely').replace('{amount}', fmt(total))} onSuccess={() => setStep('success')} />
                 ) : (
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#b91c1c', background: '#fef2f2', borderRadius: 10, padding: 12 }}>Payments are not configured yet.</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#b91c1c', background: '#fef2f2', borderRadius: 10, padding: 12 }}>{t('Payments are not configured yet.')}</div>
                 )}
               </>
             ) : (
@@ -2653,7 +2653,7 @@ function PanelBody() {
 
                 {/* Quantity */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555' }}>Quantity</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555' }}>{t('Quantity')}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <button onClick={() => setQty(q => Math.max(1, q - 1))} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: 'var(--orange)', color: '#fff', fontSize: 16, fontWeight: 900, cursor: 'pointer' }}>−</button>
                     <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', minWidth: 20, textAlign: 'center' }}>{qty}</span>
@@ -2663,25 +2663,23 @@ function PanelBody() {
 
                 {/* Fulfilment choice */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                  <button onClick={() => setFulfil('collection')} style={{ flex: 1, background: fulfil === 'collection' ? 'var(--orange)' : '#f0f0f0', color: fulfil === 'collection' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🤝 Collection</button>
-                  <button onClick={() => setFulfil('delivery')} style={{ flex: 1, background: fulfil === 'delivery' ? 'var(--orange)' : '#f0f0f0', color: fulfil === 'delivery' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🚚 Delivery{deliveryFee > 0 ? ` +${fmt(deliveryFee)}` : ' free'}</button>
+                  <button onClick={() => setFulfil('collection')} style={{ flex: 1, background: fulfil === 'collection' ? 'var(--orange)' : '#f0f0f0', color: fulfil === 'collection' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🤝 {t('Collection')}</button>
+                  <button onClick={() => setFulfil('delivery')} style={{ flex: 1, background: fulfil === 'delivery' ? 'var(--orange)' : '#f0f0f0', color: fulfil === 'delivery' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🚚 {t('Delivery')}{deliveryFee > 0 ? ` +${fmt(deliveryFee)}` : ` ${t('free')}`}</button>
                 </div>
                 <div style={{ background: fulfil === 'delivery' ? '#eef6ff' : '#FFF3EE', borderRadius: 10, padding: '9px 12px', marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11, color: fulfil === 'delivery' ? '#2563eb' : 'var(--orange)' }}>
                   {fulfil === 'delivery'
-                    ? (deliveryMethod === 'in_person'
-                        ? `🚚 Delivery${delFee > 0 ? ` (+${fmt(delFee)})` : ' (free)'} — the seller delivers in person; scan the QR code on arrival to release funds.`
-                        : `🚚 Delivery${delFee > 0 ? ` (+${fmt(delFee)})` : ' (free)'} — sent by tracked courier; funds release once tracking shows the item in transit.`)
-                    : '🤝 Collection — scan the QR code at handover to release funds.'}
+                    ? `🚚 ${t('Delivery')}${delFee > 0 ? ` (+${fmt(delFee)})` : ` (${t('free')})`} — ${deliveryMethod === 'in_person' ? t('the seller delivers in person; scan the QR code on arrival to release funds.') : t('sent by tracked courier; funds release once tracking shows the item in transit.')}`
+                    : `🤝 ${t('Collection')} — ${t('scan the QR code at handover to release funds.')}`}
                 </div>
 
                 {/* Price breakdown */}
                 <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 16 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 10 }}>Order summary</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 10 }}>{t('Order summary')}</div>
                   {[
-                    [`Item price${qty > 1 ? ` × ${qty}` : ''}`, fmt(priceNum * qty)],
-                    ['Delivery', fulfil === 'delivery' ? (delFee > 0 ? fmt(delFee) : 'Free') : '—'],
-                    ['Platform fee', 'Paid by seller'],
-                    ['You pay', fmt(total)],
+                    [`${t('Item price')}${qty > 1 ? ` × ${qty}` : ''}`, fmt(priceNum * qty)],
+                    [t('Delivery'), fulfil === 'delivery' ? (delFee > 0 ? fmt(delFee) : t('Free')) : '—'],
+                    [t('Platform fee'), t('Paid by seller')],
+                    [t('You pay'), fmt(total)],
                   ].map(([label, val], i, arr) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid #ede0c4' : 'none' }}>
                       <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>{label}</span>
@@ -2694,13 +2692,13 @@ function PanelBody() {
                 <div style={{ display: 'flex', gap: 10, background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16 }}>
                   <span style={{ fontSize: 22 }}>🔒</span>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5 }}>
-                    Your payment is held in <strong>Stripe escrow</strong> and only released to the seller after you confirm receipt.
+                    {t('Your payment is held in')} <strong>{t('Stripe escrow')}</strong> {t('and only released to the seller after you confirm receipt.')}
                   </div>
                 </div>
 
                 {payError && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{payError}</div>}
                 <button onClick={startPayment} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
-                  Continue to Payment →
+                  {t('Continue to Payment')} →
                 </button>
               </>
             )}
