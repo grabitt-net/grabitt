@@ -1663,7 +1663,7 @@ function PanelBody() {
       quantity: number; fulfilmentType: string; trackingCarrier: string | null; trackingNumber: string | null
       trackingUrl: string | null; shippedAt: string | null; deliveredAt: string | null
       disputeWindowEndsAt: string | null; disputeWindowOpen: boolean; autoReleaseAt: string | null
-      counterparty: string; dispute: { status: string; reason: string } | null
+      counterparty: string; dispute: { status: string; reason: string } | null; hasReviewed: boolean
     }
     const [tx, setTx] = useState<TxDetail | null>(null)
     const [loaded, setLoaded] = useState(false)
@@ -1779,8 +1779,15 @@ function PanelBody() {
                 )}
               </div>
             )}
-            {tx.status === 'released' && tx.role === 'buyer' && (
-              <button onClick={() => openPanel('reviewTx', { transactionId: tx.id, title: tx.title })} style={btnPrimary}>⭐ Leave a review</button>
+            {/* Both sides review each other once the trade is complete. */}
+            {tx.status === 'released' && (
+              tx.hasReviewed ? (
+                <div style={{ ...btnPrimary, background: '#f0faf4', color: '#16a34a', cursor: 'default', textAlign: 'center' }}>✓ Review submitted</div>
+              ) : (
+                <button onClick={() => openPanel('reviewTx', { transactionId: tx.id, title: tx.title, counterparty: tx.counterparty, role: tx.role })} style={btnPrimary}>
+                  ⭐ Review {tx.role === 'buyer' ? 'the seller' : 'the buyer'}
+                </button>
+              )
             )}
             {tx.dispute && (
               <div style={{ background: '#fef2f2', borderRadius: 12, padding: 12, marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#b91c1c' }}>
@@ -2973,6 +2980,10 @@ function PanelBody() {
     const item = panel.data as Record<string, unknown>
     const title = (item.title as string) || 'Item'
     const transactionId = (item.transactionId as string) || ''
+    const counterparty = (item.counterparty as string) || ''
+    // A buyer reviewing a seller rates the item/handover; a seller reviewing a
+    // buyer just gives an overall score + comment (the sub-ratings don't apply).
+    const reviewingSeller = (item.role as string) !== 'seller'
 
     const [overall, setOverall] = useState(0)
     const [accuracy, setAccuracy] = useState(0)
@@ -3032,13 +3043,17 @@ function PanelBody() {
     }
 
     return (
-      <ActionPanel title={`⭐ Review — ${title}`} onClose={closePanel}>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 16 }}>Rate your experience across all aspects. Your overall score is the one that counts toward the seller's grade.</div>
+      <ActionPanel title={`⭐ Review ${counterparty ? counterparty : title}`} onClose={closePanel}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 16 }}>
+          {reviewingSeller
+            ? "Rate your experience across all aspects. Your overall score is the one that counts toward the seller's grade."
+            : 'Rate your experience with this buyer. Your overall score counts toward their grade.'}
+        </div>
 
         <StarRow label="Overall ★" value={overall} onChange={setOverall} />
-        <StarRow label="As described" value={accuracy} onChange={setAccuracy} />
+        {reviewingSeller && <StarRow label="As described" value={accuracy} onChange={setAccuracy} />}
         <StarRow label="Communication" value={comms} onChange={setComms} />
-        <StarRow label="Speed" value={speed} onChange={setSpeed} />
+        {reviewingSeller && <StarRow label="Speed" value={speed} onChange={setSpeed} />}
 
         <textarea
           value={comment}
@@ -4357,34 +4372,76 @@ function PanelBody() {
 
   // ── MY RATINGS ────────────────────────────────────────────────────────────────
   if (panel.id === 'myRatings') {
-    const RATINGS = [
-      { from: 'Anna T.', rating: 5, comment: 'Quick and easy — great condition, exactly as described!', date: '28 Jun', role: 'buyer' },
-      { from: 'Carlos M.', rating: 5, comment: 'Super fast payment, would buy from again.', date: '22 Jun', role: 'seller' },
-      { from: 'Emma W.', rating: 4, comment: 'Nice item, slight delay but all good in the end.', date: '15 Jun', role: 'buyer' },
-      { from: 'Pete L.', rating: 5, comment: 'Excellent seller — recommended!', date: '8 Jun', role: 'buyer' },
-    ]
-    const avgRating = RATINGS.reduce((s, r) => s + r.rating, 0) / RATINGS.length
+    type ReviewRow = { id: string; rating: number; comment: string | null; createdAt: string; authorName: string; authorAvatar: string | null }
+    type ReviewData = { total: number; avg: number | null; breakdown: { accuracy: number | null; communication: number | null; speed: number | null }; reviews: ReviewRow[] }
+    const [data, setData] = useState<ReviewData | null>(null)
+    const [loaded, setLoaded] = useState(false)
+    useEffect(() => {
+      if (!currentUserId) { setLoaded(true); return }
+      let live = true
+      ;(async () => {
+        try {
+          const c = await getTrpcClient()
+          const res = await c.users.reviews.query({ userId: currentUserId }) as ReviewData
+          if (live) setData(res)
+        } catch { /* leave data null → empty state */ }
+        finally { if (live) setLoaded(true) }
+      })()
+      return () => { live = false }
+    }, [])
+
+    const avg = data?.avg ?? 0
+    const total = data?.total ?? 0
+    const bd = data?.breakdown
+    const subRow = (label: string, v: number | null | undefined) => v == null ? null : (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
+        <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{label}</span>
+        <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--dark)' }}>{v.toFixed(1)} ⭐</span>
+      </div>
+    )
+
     return (
       <ActionPanel title="⭐ My Ratings" onClose={closePanel}>
-        <div style={{ background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: 14, padding: 20, marginBottom: 16, textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 48, fontWeight: 700, color: '#fff' }}>{avgRating.toFixed(1)}</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, color: 'rgba(255,255,255,0.9)' }}>{'⭐'.repeat(Math.round(avgRating))} · {RATINGS.length} reviews</div>
-        </div>
-        {RATINGS.map((r, i) => (
-          <div key={i} style={{ background: '#fff', borderRadius: 12, border: '1px solid #f0ebe4', padding: '14px 12px', marginBottom: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <div style={{ width: 32, height: 32, background: '#f5f0e8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>👤</div>
-                <div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--dark)' }}>{r.from}</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>as {r.role} · {r.date}</div>
-                </div>
-              </div>
-              <div style={{ fontSize: 14, color: '#f59e0b' }}>{'⭐'.repeat(r.rating)}</div>
-            </div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', lineHeight: 1.5, fontStyle: 'italic' }}>"{r.comment}"</div>
+        {!loaded ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : total === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>⭐</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>No reviews yet</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Once you complete a trade, the other party can review you — and their feedback shows here.</div>
           </div>
-        ))}
+        ) : (
+          <>
+            <div style={{ background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: 14, padding: 20, marginBottom: 16, textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 48, fontWeight: 700, color: '#fff' }}>{avg.toFixed(1)}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, color: 'rgba(255,255,255,0.9)' }}>{'⭐'.repeat(Math.round(avg))} · {total} review{total === 1 ? '' : 's'}</div>
+            </div>
+            {bd && (bd.accuracy != null || bd.communication != null || bd.speed != null) && (
+              <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #f0ebe4', padding: '10px 14px', marginBottom: 14 }}>
+                {subRow('Item as described', bd.accuracy)}
+                {subRow('Communication', bd.communication)}
+                {subRow('Handover speed', bd.speed)}
+              </div>
+            )}
+            {(data?.reviews ?? []).map(r => (
+              <div key={r.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #f0ebe4', padding: '14px 12px', marginBottom: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <div style={{ width: 32, height: 32, background: '#f5f0e8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, overflow: 'hidden' }}>
+                      {r.authorAvatar ? <img src={r.authorAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '👤'}
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--dark)' }}>{r.authorName}</div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>{new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 14, color: '#f59e0b' }}>{'⭐'.repeat(r.rating)}</div>
+                </div>
+                {r.comment && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', lineHeight: 1.5, fontStyle: 'italic' }}>&ldquo;{r.comment}&rdquo;</div>}
+              </div>
+            ))}
+          </>
+        )}
       </ActionPanel>
     )
   }

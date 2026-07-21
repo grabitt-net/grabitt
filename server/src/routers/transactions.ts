@@ -545,18 +545,26 @@ export const transactionsRouter = router({
 
       const subjectId = isBuyer ? tx.sellerId : tx.buyerId
 
-      await ctx.prisma.review.create({
-        data: {
-          transactionId: tx.id,
-          authorId: ctx.user.id,
-          subjectId,
-          rating: input.rating,
-          accuracyRating: input.accuracyRating ?? null,
-          communicationRating: input.communicationRating ?? null,
-          speedRating: input.speedRating ?? null,
-          comment: input.comment ?? null,
-        },
-      })
+      try {
+        await ctx.prisma.review.create({
+          data: {
+            transactionId: tx.id,
+            authorId: ctx.user.id,
+            subjectId,
+            rating: input.rating,
+            accuracyRating: input.accuracyRating ?? null,
+            communicationRating: input.communicationRating ?? null,
+            speedRating: input.speedRating ?? null,
+            comment: input.comment ?? null,
+          },
+        })
+      } catch (err) {
+        // One review per person per order (unique transactionId+authorId).
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+          throw new TRPCError({ code: 'CONFLICT', message: "You've already reviewed this order." })
+        }
+        throw err
+      }
 
       const agg = await ctx.prisma.review.aggregate({
         where: { subjectId },
@@ -604,6 +612,13 @@ export const transactionsRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN' })
       }
       const isBuyer = tx.buyerId === ctx.user.id
+      // Has this user already left their review for this order? Drives the
+      // "Leave a review" vs "✓ Reviewed" state, so they can't hit the unique
+      // constraint by opening the panel twice.
+      const myReview = await ctx.prisma.review.findUnique({
+        where: { transactionId_authorId: { transactionId: tx.id, authorId: ctx.user.id } },
+        select: { id: true },
+      })
       // Seller's collection details are released to the BUYER only once the sale
       // is paid (held onward) and it's a collection fulfilment — never before.
       const paidStatuses = ['held', 'confirmed_handover', 'completed', 'released']
@@ -612,6 +627,7 @@ export const transactionsRouter = router({
         id: tx.id,
         status: tx.status,
         role: isBuyer ? 'buyer' : 'seller',
+        hasReviewed: !!myReview,
         title: tx.listing.title,
         image: tx.listing.images?.[0] ?? null,
         amount: Number(tx.amount),
