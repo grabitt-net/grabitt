@@ -1,49 +1,74 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useCrmApi } from './AdminApp'
 
 type Channel = 'grabitt' | 'email' | 'whatsapp'
 
 const CHANNEL_CONFIG: Record<Channel, { label: string; icon: string; color: string; placeholder: string }> = {
-  grabitt:  { label: 'Grabitt Chat', icon: '💬', color: 'var(--orange)', placeholder: 'Message via Grabitt…' },
-  email:    { label: 'Email',        icon: '📧', color: '#3b82f6',      placeholder: 'Write an email…' },
-  whatsapp: { label: 'WhatsApp',     icon: '🟢', color: '#25d366',      placeholder: 'WhatsApp message…' },
+  grabitt:  { label: 'Grabitt',  icon: '💬', color: 'var(--orange)', placeholder: 'Message via Grabitt (in-app notification)…' },
+  email:    { label: 'Email',    icon: '📧', color: '#3b82f6',      placeholder: 'Write an email…' },
+  whatsapp: { label: 'WhatsApp', icon: '🟢', color: '#25d366',      placeholder: 'WhatsApp message…' },
 }
 
-const MOCK_HISTORY = [
-  { contact: 'Dave W.', channel: 'email' as Channel, text: 'Hi Dave, following up on the storefront renewal…', sent: '2h ago', opened: true },
-  { contact: 'María G.', channel: 'whatsapp' as Channel, text: 'Hola María, ¿te gustaría una cuenta business?', sent: '1d ago', opened: false },
-  { contact: 'Klaus B.', channel: 'grabitt' as Channel, text: 'Your featured listing expires in 3 days.', sent: '2d ago', opened: true },
-]
+interface Member { id: string; displayName: string; email: string; phone?: string | null }
 
 export default function CrmMessagesView() {
   const api = useCrmApi()
   const [channel, setChannel] = useState<Channel>('grabitt')
-  const [recipient, setRecipient] = useState('')
+  const [members, setMembers] = useState<Member[]>([])
+  const [recipientId, setRecipientId] = useState('')
+  const [search, setSearch] = useState('')
+  const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
+  const [error, setError] = useState('')
+  const [history, setHistory] = useState<{ id: string; contact: string; channel: string; subject: string; createdAt: string }[]>([])
 
   const cfg = CHANNEL_CONFIG[channel]
 
+  const loadHistory = useCallback(() => {
+    api.recentAdminMessages(15).then(setHistory).catch(() => setHistory([]))
+  }, [api])
+
+  useEffect(() => {
+    api.members().then(m => setMembers(m ?? [])).catch(() => setMembers([]))
+    loadHistory()
+  }, [api, loadHistory])
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return members.slice(0, 50)
+    return members.filter(m => m.displayName?.toLowerCase().includes(q) || m.email?.toLowerCase().includes(q)).slice(0, 50)
+  }, [members, search])
+
+  const recipient = members.find(m => m.id === recipientId)
+
   async function send() {
-    if (!message.trim() || !recipient.trim()) return
+    if (!message.trim() || !recipientId) return
+    setError('')
+    if (channel === 'whatsapp' && !recipient?.phone) { setError('This member has no phone number on file.'); return }
     setSending(true)
-    await new Promise(r => setTimeout(r, 800))
-    setSending(false)
-    setSent(true)
-    setTimeout(() => setSent(false), 3000)
-    setMessage('')
+    try {
+      await api.messageMember({ userId: recipientId, channel, subject: subject.trim() || undefined, message: message.trim() })
+      setSent(true); setMessage(''); setSubject('')
+      setTimeout(() => setSent(false), 3000)
+      loadHistory()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not send — please try again.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
     <div>
       <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, marginBottom: 20 }}>
-        <span style={{ color: 'var(--orange)' }}>Chats</span> & Messages
+        <span style={{ color: 'var(--orange)' }}>Message</span> a member
       </h2>
 
       {/* Channel selector */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         {(Object.keys(CHANNEL_CONFIG) as Channel[]).map(ch => {
           const c = CHANNEL_CONFIG[ch]
           return (
@@ -60,49 +85,66 @@ export default function CrmMessagesView() {
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
           {cfg.icon} Send via {cfg.label}
         </div>
-        <input
-          value={recipient}
-          onChange={e => setRecipient(e.target.value)}
-          placeholder="Recipient name or email…"
-          style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
-        />
-        <textarea
-          value={message}
-          onChange={e => setMessage(e.target.value)}
-          placeholder={cfg.placeholder}
-          rows={4}
-          style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, resize: 'vertical', boxSizing: 'border-box', marginBottom: 10 }}
-        />
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button style={{ background: '#f5f0e8', color: '#555', border: 'none', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>📎 Attach</button>
-          <button style={{ background: '#f5f0e8', color: '#555', border: 'none', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🏷️ Template</button>
-          <button
-            onClick={send}
-            disabled={sending || !message.trim() || !recipient.trim()}
-            style={{ flex: 1, background: sending || !message.trim() || !recipient.trim() ? '#ccc' : cfg.color, color: '#fff', border: 'none', borderRadius: 10, padding: 9, fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 13, cursor: sending || !message.trim() ? 'not-allowed' : 'pointer' }}
-          >
-            {sent ? '✅ Sent!' : sending ? 'Sending…' : `Send via ${cfg.label}`}
-          </button>
-        </div>
+
+        {/* Recipient */}
+        {recipient ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f9f6f2', borderRadius: 10, padding: '8px 12px', marginBottom: 8 }}>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{recipient.displayName}</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{channel === 'whatsapp' ? (recipient.phone ?? 'no phone') : recipient.email}</span>
+            <button onClick={() => { setRecipientId(''); setSearch('') }} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800 }}>Change</button>
+          </div>
+        ) : (
+          <div style={{ marginBottom: 8 }}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search members by name or email…" style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+            {search.trim() && (
+              <div style={{ border: '1px solid #f0ebe4', borderRadius: 10, marginTop: 6, maxHeight: 180, overflowY: 'auto' }}>
+                {filtered.length === 0 ? (
+                  <div style={{ padding: 12, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#bbb' }}>No members found</div>
+                ) : filtered.map(m => (
+                  <div key={m.id} onClick={() => { setRecipientId(m.id); setSearch('') }} style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f7f4ef' }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 700, color: 'var(--dark)' }}>{m.displayName}</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{m.email}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {channel === 'email' && (
+          <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Subject…" style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
+        )}
+        <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder={cfg.placeholder} rows={4} style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, resize: 'vertical', boxSizing: 'border-box', marginBottom: 10 }} />
+
+        {error && <div style={{ background: '#fff5f5', color: '#ef4444', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 10 }}>⚠️ {error}</div>}
+
+        <button
+          onClick={send}
+          disabled={sending || !message.trim() || !recipientId}
+          style={{ width: '100%', background: sending || !message.trim() || !recipientId ? '#ccc' : cfg.color, color: '#fff', border: 'none', borderRadius: 10, padding: 10, fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 13, cursor: sending || !message.trim() || !recipientId ? 'not-allowed' : 'pointer' }}
+        >
+          {sent ? '✅ Sent!' : sending ? 'Sending…' : `Send via ${cfg.label}`}
+        </button>
       </div>
 
       {/* History */}
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.07)', padding: 16 }}>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: '#555', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>Recent messages</div>
-        {MOCK_HISTORY.map((h, i) => {
-          const hcfg = CHANNEL_CONFIG[h.channel]
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: '#555', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>Recently sent</div>
+        {history.length === 0 ? (
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#bbb', textAlign: 'center', padding: '16px 0' }}>No messages sent yet</div>
+        ) : history.map(h => {
+          const hcfg = CHANNEL_CONFIG[(h.channel as Channel)] ?? CHANNEL_CONFIG.grabitt
           return (
-            <div key={i} style={{ display: 'flex', gap: 10, padding: '10px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'flex-start' }}>
+            <div key={h.id} style={{ display: 'flex', gap: 10, padding: '10px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
               <div style={{ width: 36, height: 36, background: `${hcfg.color}18`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{hcfg.icon}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{h.contact}</span>
                   <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: hcfg.color, background: `${hcfg.color}18`, padding: '1px 6px', borderRadius: 50 }}>{hcfg.label}</span>
-                  {h.opened && <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#888' }}>👁 Opened</span>}
                 </div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', fontStyle: 'italic' }}>{h.text}</div>
+                {h.subject && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', fontStyle: 'italic', marginTop: 2 }}>{h.subject}</div>}
               </div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#bbb', flexShrink: 0 }}>{h.sent}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#bbb', flexShrink: 0 }}>{new Date(h.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
             </div>
           )
         })}

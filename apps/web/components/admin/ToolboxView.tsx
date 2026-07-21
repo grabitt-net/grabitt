@@ -18,7 +18,6 @@ const DEFAULT_LAYOUT = [
   { id: 'members', label: '🪪 Members', visible: true },
   { id: 'disputes', label: '⚖️ Disputes', visible: true },
   { id: 'reports', label: '🚨 Reports', visible: true },
-  { id: 'rewards', label: '🎁 Rewards', visible: false },
   { id: 'financials', label: '💰 Financials', visible: true },
   { id: 'retention', label: '📊 Retention', visible: true },
 ]

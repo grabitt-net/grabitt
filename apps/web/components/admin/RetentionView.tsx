@@ -1,32 +1,48 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useCrmApi } from './AdminApp'
 
-const GRADE_DATA = [
-  { grade: 'Pro', color: '#8b5cf6', count: 12, pct: 4 },
-  { grade: 'Trader', color: '#3b82f6', count: 47, pct: 15 },
-  { grade: 'Dealer', color: '#eab308', count: 89, pct: 28 },
-  { grade: 'Grabber', color: 'var(--orange)', count: 170, pct: 53 },
-]
+interface AtRisk { id: string; name: string; email: string; hasPhone: boolean; grade: string; sales: number; value: number; daysSince: number; risk: string }
+interface Data {
+  totalMembers: number; avgLtv: number; churnRate: number
+  gradeDistribution: { grade: string; color: string; count: number; pct: number }[]
+  atRisk: AtRisk[]
+}
 
-const AT_RISK = [
-  { name: 'John S.', lastSeen: '22 days ago', sales: 8, grade: 'grabber', risk: 'high' },
-  { name: 'Karim A.', lastSeen: '18 days ago', sales: 34, grade: 'dealer', risk: 'medium' },
-  { name: 'Lucia P.', lastSeen: '14 days ago', sales: 5, grade: 'grabber', risk: 'medium' },
-  { name: 'Peter M.', lastSeen: '12 days ago', sales: 67, grade: 'trader', risk: 'low' },
-]
-
-const SNOWBIRDS = [
-  { name: 'Dave W.', homeCountry: '🇬🇧 UK', arrivedAt: 'Nov 2025', leavesAt: 'Apr 2026', status: 'present' },
-  { name: 'Klaus B.', homeCountry: '🇩🇪 Germany', arrivedAt: 'Dec 2025', leavesAt: 'Mar 2026', status: 'left' },
-  { name: 'Anna L.', homeCountry: '🇸🇪 Sweden', arrivedAt: 'Jan 2026', leavesAt: 'May 2026', status: 'present' },
-]
+const fmt = (n: number) => `€${n.toLocaleString('en-GB', { maximumFractionDigits: 0 })}`
 
 export default function RetentionView() {
+  const api = useCrmApi()
+  const [data, setData] = useState<Data | null>(null)
+  const [loading, setLoading] = useState(true)
   const [riskFilter, setRiskFilter] = useState('all')
+  const [nudged, setNudged] = useState<Set<string>>(new Set())
+  const [nudging, setNudging] = useState<string | null>(null)
 
-  const shownRisk = riskFilter === 'all' ? AT_RISK : AT_RISK.filter(m => m.risk === riskFilter)
-  const churnRate = 3.2
-  const totalMembers = 318
+  const load = useCallback(() => {
+    setLoading(true)
+    api.retention().then(setData).catch(() => setData(null)).finally(() => setLoading(false))
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  async function nudge(m: AtRisk) {
+    setNudging(m.id)
+    try {
+      await api.messageMember({
+        userId: m.id,
+        channel: 'grabitt',
+        subject: 'We miss you at Grabitt',
+        message: `Hi ${m.name}, it's been a little while since your last sale. New buyers are searching every day — relist an item or add something new and get back in front of them.`,
+      })
+      setNudged(prev => new Set(prev).add(m.id))
+    } catch { /* leave un-nudged so it can be retried */ }
+    finally { setNudging(null) }
+  }
+
+  if (loading) return <div style={{ textAlign: 'center', padding: 60, color: '#bbb', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Loading retention data…</div>
+  if (!data) return <div style={{ textAlign: 'center', padding: 60, color: '#bbb', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Couldn&rsquo;t load retention data.</div>
+
+  const shownRisk = riskFilter === 'all' ? data.atRisk : data.atRisk.filter(m => m.risk === riskFilter)
 
   return (
     <div>
@@ -37,9 +53,9 @@ export default function RetentionView() {
       {/* KPI row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Churn Rate (30d)', value: `${churnRate}%`, color: '#ef4444', icon: '📉' },
-          { label: 'Total Members', value: totalMembers, color: 'var(--orange)', icon: '👤' },
-          { label: 'Avg. LTV', value: '€142', color: '#8b5cf6', icon: '💶' },
+          { label: 'Seller churn (30d)', value: `${data.churnRate}%`, color: '#ef4444', icon: '📉' },
+          { label: 'Total Members', value: String(data.totalMembers), color: 'var(--orange)', icon: '👤' },
+          { label: 'Avg. buyer LTV', value: fmt(data.avgLtv), color: '#8b5cf6', icon: '💶' },
         ].map(kpi => (
           <div key={kpi.label} style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.07)', padding: '16px 14px', borderTop: `4px solid ${kpi.color}` }}>
             <div style={{ fontSize: 22, marginBottom: 6 }}>{kpi.icon}</div>
@@ -49,10 +65,10 @@ export default function RetentionView() {
         ))}
       </div>
 
-      {/* Grade donut */}
+      {/* Grade distribution */}
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.07)', padding: '20px', marginBottom: 20 }}>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#555', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.5 }}>Grade distribution</div>
-        {GRADE_DATA.map(g => (
+        {data.gradeDistribution.map(g => (
           <div key={g.grade} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--dark)', width: 60, flexShrink: 0 }}>{g.grade}</div>
             <div style={{ flex: 1, height: 10, background: '#f5f0e8', borderRadius: 5, overflow: 'hidden' }}>
@@ -64,46 +80,40 @@ export default function RetentionView() {
         ))}
       </div>
 
-      {/* At-risk members */}
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.07)', padding: 20, marginBottom: 20 }}>
+      {/* At-risk sellers */}
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.07)', padding: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5 }}>At-risk members</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5 }}>At-risk sellers</div>
           <div style={{ display: 'flex', gap: 4 }}>
             {['all', 'high', 'medium', 'low'].map(f => (
               <button key={f} onClick={() => setRiskFilter(f)} style={{ padding: '4px 10px', borderRadius: 50, border: 'none', cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, background: riskFilter === f ? 'var(--orange)' : '#f5f0e8', color: riskFilter === f ? '#fff' : '#666', textTransform: 'capitalize' }}>{f}</button>
             ))}
           </div>
         </div>
-        {shownRisk.map(m => {
+        {shownRisk.length === 0 ? (
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#bbb', textAlign: 'center', padding: '20px 0' }}>
+            {data.atRisk.length === 0 ? 'No at-risk sellers — nobody active has gone quiet.' : 'None in this band.'}
+          </div>
+        ) : shownRisk.map(m => {
           const riskColor = m.risk === 'high' ? '#ef4444' : m.risk === 'medium' ? '#f59e0b' : '#16a34a'
+          const done = nudged.has(m.id)
           return (
-            <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
+            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
               <div style={{ width: 36, height: 36, background: `${riskColor}18`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>👤</div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{m.name}</div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>Last seen {m.lastSeen} · {m.sales} sales</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>Last sale {m.daysSince}d ago · {m.sales} sales · {fmt(m.value)} lifetime</div>
               </div>
               <span style={{ background: `${riskColor}18`, color: riskColor, fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50, textTransform: 'uppercase' }}>{m.risk}</span>
-              <button style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, cursor: 'pointer' }}>Nudge</button>
+              <button onClick={() => nudge(m)} disabled={done || nudging === m.id} style={{ background: done ? '#f0faf4' : 'var(--orange)', color: done ? '#16a34a' : '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, cursor: done ? 'default' : 'pointer', flexShrink: 0 }}>
+                {done ? '✓ Nudged' : nudging === m.id ? '…' : 'Nudge'}
+              </button>
             </div>
           )
         })}
-      </div>
-
-      {/* Snowbird tracker */}
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.07)', padding: 20 }}>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#555', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.5 }}>Snowbird tracker 🐦</div>
-        {SNOWBIRDS.map(s => (
-          <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{s.name}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>{s.homeCountry} · Arrived {s.arrivedAt} · Leaves {s.leavesAt}</div>
-            </div>
-            <span style={{ background: s.status === 'present' ? '#d1fae5' : '#f0f0f0', color: s.status === 'present' ? '#065f46' : '#888', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50 }}>
-              {s.status === 'present' ? '🌴 On island' : '✈️ Away'}
-            </span>
-          </div>
-        ))}
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#bbb', marginTop: 12 }}>
+          Nudge sends the member an in-app message inviting them back.
+        </div>
       </div>
     </div>
   )

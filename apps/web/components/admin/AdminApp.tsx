@@ -32,7 +32,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'disputes' | 'reports' | 'rewards' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community'
+export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -166,17 +166,3 @@ function StatChip({ label, value, onClick, urgent }: { label: string; value: num
   )
 }
 
-function Placeholder({ view }: { view: string }) {
-  const labels: Record<string, string> = {
-    rewards: '🎁 Rewards & Accounts', retention: '📊 Retention & LTV',
-    calendar: '📅 Calendar', todo: '✅ To Do',
-    messages: '💬 Chats', emails: '📧 E-shots', toolbox: '🧰 Toolbox',
-  }
-  return (
-    <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', padding: '60px 20px', textAlign: 'center' }}>
-      <div style={{ fontSize: 48, marginBottom: 14 }}>{labels[view]?.split(' ')[0]}</div>
-      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#aaa', marginBottom: 6 }}>{labels[view]?.slice(2)}</div>
-      <div style={{ fontSize: 12, color: '#bbb' }}>Coming soon</div>
-    </div>
-  )
-}

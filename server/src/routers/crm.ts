@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, execProcedure, publicProcedure } from '../trpc'
 import type { PrismaClient, Prisma } from '@prisma/client'
+import { notifyUser } from '../lib/notify'
 
 // Records a privileged action against the acting admin. Best-effort: an audit
 // failure must never break the action the admin actually asked for.
@@ -580,5 +581,127 @@ export const crmRouter = router({
       const totalGmv = txs.reduce((s, t) => s + Number(t.amount), 0)
       const totalFees = txs.reduce((s, t) => s + Number(t.platformFee), 0)
       return { totalGmv, totalFees, count: txs.length, byDay: txs }
+    }),
+
+  // Retention & LTV, all derived from real data (was fully hardcoded). Retention
+  // for a marketplace is a seller story, so churn and the at-risk list are built
+  // from sellers' most recent sale; LTV is average buyer lifetime spend.
+  retention: execProcedure.query(async ({ ctx }) => {
+    const now = Date.now()
+    const d30 = new Date(now - 30 * 86_400_000)
+    const d21 = new Date(now - 21 * 86_400_000)
+
+    const [gradeGroups, totalMembers, sellerAgg, buyerAgg] = await Promise.all([
+      ctx.prisma.user.groupBy({ by: ['grade'], where: { deletedAt: null }, _count: true }),
+      ctx.prisma.user.count({ where: { deletedAt: null } }),
+      ctx.prisma.transaction.groupBy({
+        by: ['sellerId'], where: { status: { in: ['completed', 'released'] } },
+        _max: { createdAt: true }, _sum: { sellerNet: true }, _count: true,
+      }),
+      ctx.prisma.transaction.groupBy({
+        by: ['buyerId'], where: { status: { in: ['completed', 'released'] } },
+        _sum: { amount: true },
+      }),
+    ])
+
+    const GRADE_META: Record<string, { label: string; color: string }> = {
+      pro: { label: 'Pro', color: '#8b5cf6' },
+      trader: { label: 'Trader', color: '#3b82f6' },
+      dealer: { label: 'Dealer', color: '#eab308' },
+      grabber: { label: 'Grabber', color: '#FF4500' },
+    }
+    const gradeCounts: Record<string, number> = Object.fromEntries(gradeGroups.map(g => [g.grade, g._count]))
+    const gradeDistribution = ['pro', 'trader', 'dealer', 'grabber'].map(grade => {
+      const count = gradeCounts[grade] ?? 0
+      return { grade: GRADE_META[grade].label, color: GRADE_META[grade].color, count, pct: totalMembers ? Math.round((count / totalMembers) * 100) : 0 }
+    })
+
+    // Average buyer lifetime value across buyers who have ever purchased.
+    const buyerTotals = buyerAgg.map(b => Number(b._sum.amount ?? 0))
+    const avgLtv = buyerTotals.length ? buyerTotals.reduce((a, b) => a + b, 0) / buyerTotals.length : 0
+
+    // Churn: of sellers who have ever sold, the share whose last sale was >30d ago.
+    const sellersWithSales = sellerAgg.length
+    const churnedSellers = sellerAgg.filter(s => s._max.createdAt && s._max.createdAt < d30).length
+    const churnRate = sellersWithSales ? Math.round((churnedSellers / sellersWithSales) * 1000) / 10 : 0
+
+    // At-risk: sellers who were active but haven't sold in 21+ days, ranked by
+    // the lifetime value we'd lose — the ones worth a nudge first.
+    const atRiskRaw = sellerAgg
+      .filter(s => s._max.createdAt && s._max.createdAt < d21)
+      .sort((a, b) => Number(b._sum.sellerNet ?? 0) - Number(a._sum.sellerNet ?? 0))
+      .slice(0, 10)
+    const riskUsers = atRiskRaw.length
+      ? await ctx.prisma.user.findMany({
+          where: { id: { in: atRiskRaw.map(s => s.sellerId) }, deletedAt: null },
+          select: { id: true, displayName: true, grade: true, email: true, phone: true },
+        })
+      : []
+    const userById = new Map(riskUsers.map(u => [u.id, u]))
+    const atRisk = atRiskRaw.flatMap(s => {
+      const u = userById.get(s.sellerId)
+      if (!u) return []
+      const days = s._max.createdAt ? Math.floor((now - s._max.createdAt.getTime()) / 86_400_000) : 0
+      const risk = days > 45 ? 'high' : days > 30 ? 'medium' : 'low'
+      return [{ id: u.id, name: u.displayName, email: u.email, hasPhone: !!u.phone, grade: u.grade, sales: s._count, value: Number(s._sum.sellerNet ?? 0), daysSince: days, risk }]
+    })
+
+    return { totalMembers, avgLtv, churnRate, gradeDistribution, atRisk }
+  }),
+
+  // Send a member a real message from the exec suite. Replaces the fake
+  // "Chats" composer that only ran a setTimeout. Grabitt = an in-app
+  // notification; email/whatsapp go through the shared notify helpers.
+  messageMember: execProcedure
+    .input(z.object({
+      userId: z.string().uuid(),
+      channel: z.enum(['grabitt', 'email', 'whatsapp']),
+      subject: z.string().max(160).optional(),
+      message: z.string().min(1).max(4000),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: input.userId },
+        select: { id: true, displayName: true, email: true, phone: true, deletedAt: true },
+      })
+      if (!user || user.deletedAt) throw new TRPCError({ code: 'NOT_FOUND', message: 'Member not found' })
+
+      const subject = input.subject?.trim() || 'A message from Grabitt'
+      if (input.channel === 'grabitt') {
+        await ctx.prisma.notification.create({
+          data: { userId: user.id, kind: 'system', title: subject, body: input.message },
+        })
+      } else if (input.channel === 'email') {
+        await notifyUser({ email: user.email, subject, bodyText: input.message })
+      } else {
+        if (!user.phone) throw new TRPCError({ code: 'BAD_REQUEST', message: 'This member has no phone number on file' })
+        await notifyUser({ phone: user.phone, subject, bodyText: input.message })
+      }
+
+      await writeAudit(ctx.prisma, ctx.execUser.id, user.id, 'member_message', { channel: input.channel, subject })
+      return { ok: true }
+    }),
+
+  // Recent exec→member messages, for the Chats history panel — read back from
+  // the audit trail so there's no second store to keep in sync.
+  recentAdminMessages: execProcedure
+    .input(z.object({ limit: z.number().min(1).max(50).default(15) }).optional())
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.prisma.execAuditLog.findMany({
+        where: { action: 'member_message' },
+        orderBy: { createdAt: 'desc' },
+        take: input?.limit ?? 15,
+        include: { targetUser: { select: { displayName: true, email: true } } },
+      })
+      return rows.map(r => {
+        const detail = (r.detail ?? {}) as { channel?: string; subject?: string }
+        return {
+          id: r.id,
+          contact: r.targetUser?.displayName ?? r.targetUser?.email ?? 'Member',
+          channel: detail.channel ?? 'grabitt',
+          subject: detail.subject ?? '',
+          createdAt: r.createdAt,
+        }
+      })
     }),
 })

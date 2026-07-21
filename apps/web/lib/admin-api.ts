@@ -104,6 +104,20 @@ export function makeCrmApi(execToken: string) {
     ordersThisYear: () =>
       rpc<{ amount: number; createdAt: string }[]>('financials.ordersThisYear', 'query', undefined, execToken),
 
+    // Retention & LTV (real, derived from members + transactions)
+    retention: () =>
+      rpc<{
+        totalMembers: number; avgLtv: number; churnRate: number
+        gradeDistribution: { grade: string; color: string; count: number; pct: number }[]
+        atRisk: { id: string; name: string; email: string; hasPhone: boolean; grade: string; sales: number; value: number; daysSince: number; risk: string }[]
+      }>('crm.retention', 'query', undefined, execToken),
+
+    // Message a member for real (in-app / email / whatsapp)
+    messageMember: (data: { userId: string; channel: 'grabitt' | 'email' | 'whatsapp'; subject?: string; message: string }) =>
+      rpc<{ ok: true }>('crm.messageMember', 'mutation', data, execToken),
+    recentAdminMessages: (limit = 15) =>
+      rpc<{ id: string; contact: string; channel: string; subject: string; createdAt: string }[]>('crm.recentAdminMessages', 'query', { limit }, execToken),
+
     // Internal exec to-do / calendar tasks (persisted per admin)
     execTasks: () =>
       rpc<{ id: string; text: string; tier: string | null; dueDate: string | null; color: string | null; done: boolean }[]>('execTasks.list', 'query', undefined, execToken),
