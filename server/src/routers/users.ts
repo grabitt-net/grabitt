@@ -5,8 +5,14 @@ import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { makeReferralCode } from './auth'
 import { PRICES } from '@grabitt/design-tokens'
+import { sendSms } from '../lib/notify'
+import { createHash } from 'node:crypto'
 
 const APP_URL = () => process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+
+const smsConfigured = () => !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)
+const hashOtp = (code: string, userId: string) => createHash('sha256').update(`${code}:${userId}`).digest('hex')
+const PHONE_RE = /^\+?[0-9\s-]{7,20}$/
 
 export const usersRouter = router({
   me: protectedProcedure.query(({ ctx }) =>
@@ -46,6 +52,90 @@ export const usersRouter = router({
       creditsEarned: credited * PRICES.referralBonus,
     }
   }),
+
+  // ── VERIFICATION ─────────────────────────────────────────────────────────────
+  // The four trust signals, with real state. ID/address are reviewed by the team
+  // (docStatus 'pending' after upload); email/phone are self-service.
+  verificationStatus: protectedProcedure.query(async ({ ctx }) => {
+    const u = await ctx.prisma.user.findUniqueOrThrow({
+      where: { id: ctx.user.id },
+      select: {
+        emailVerified: true, phoneVerified: true, idVerified: true, addressVerified: true,
+        isVerified: true, phone: true, idDocStatus: true, addressDocStatus: true,
+      },
+    })
+    return {
+      email: u.emailVerified,
+      phone: u.phoneVerified,
+      id: u.idVerified ? 'verified' : u.idDocStatus, // 'verified' | 'pending' | 'none'
+      address: u.addressVerified ? 'verified' : u.addressDocStatus,
+      overall: u.isVerified,
+      phoneNumber: u.phone,
+      smsAvailable: smsConfigured(),
+    }
+  }),
+
+  // Send a 6-digit code by SMS to prove the phone number. Stored hashed with a
+  // 10-minute expiry; the plaintext never touches the DB.
+  startPhoneVerify: protectedProcedure
+    .input(z.object({ phone: z.string().regex(PHONE_RE, 'Enter a valid phone number') }))
+    .mutation(async ({ ctx, input }) => {
+      if (!smsConfigured()) return { sent: false, reason: 'sms_unavailable' as const }
+      const code = String(Math.floor(100000 + Math.random() * 900000))
+      const phone = input.phone.replace(/[\s-]/g, '')
+      await ctx.prisma.user.update({
+        where: { id: ctx.user.id },
+        data: {
+          phone,
+          phoneOtpHash: hashOtp(code, ctx.user.id),
+          phoneOtpExpiresAt: new Date(Date.now() + 10 * 60_000),
+        },
+      })
+      await sendSms(phone, `Your Grabitt verification code is ${code}. It expires in 10 minutes.`)
+      return { sent: true as const }
+    }),
+
+  confirmPhoneVerify: protectedProcedure
+    .input(z.object({ code: z.string().min(4).max(8) }))
+    .mutation(async ({ ctx, input }) => {
+      const u = await ctx.prisma.user.findUniqueOrThrow({
+        where: { id: ctx.user.id },
+        select: { phoneOtpHash: true, phoneOtpExpiresAt: true, emailVerified: true },
+      })
+      if (!u.phoneOtpHash || !u.phoneOtpExpiresAt || u.phoneOtpExpiresAt < new Date()) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Your code has expired — request a new one.' })
+      }
+      if (hashOtp(input.code.trim(), ctx.user.id) !== u.phoneOtpHash) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'That code is not correct.' })
+      }
+      await ctx.prisma.user.update({
+        where: { id: ctx.user.id },
+        data: {
+          phoneVerified: true,
+          phoneOtpHash: null,
+          phoneOtpExpiresAt: null,
+          // Basic verified badge once email + phone are both confirmed.
+          ...(u.emailVerified ? { isVerified: true } : {}),
+        },
+      })
+      return { ok: true }
+    }),
+
+  // Record that an ID or proof-of-address document has been uploaded to the
+  // private verification bucket, and flag it for the team to review. The path is
+  // resolved and the file is only ever served to the owner or an admin via a
+  // signed URL — never made public.
+  submitVerificationDoc: protectedProcedure
+    .input(z.object({ kind: z.enum(['id', 'address']), path: z.string().min(1).max(300) }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.prisma.user.update({
+        where: { id: ctx.user.id },
+        data: input.kind === 'id'
+          ? { idDocPath: input.path, idDocStatus: 'pending' }
+          : { addressDocPath: input.path, addressDocStatus: 'pending' },
+      })
+      return { ok: true }
+    }),
 
   // Public: reviews received by a user (seller or buyer), plus a rating summary.
   reviews: publicProcedure

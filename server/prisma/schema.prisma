@@ -192,9 +192,12 @@ model User {
   idVerified         Boolean   @default(false)
   addressVerified    Boolean   @default(false)
   // ID / address docs awaiting manual review: 'none' | 'pending'. Approval flips
-  // idVerified/addressVerified via the exec member admin.
+  // idVerified/addressVerified via the exec member admin. The doc itself lives in
+  // a private bucket; the path is served only to the owner/admin via signed URL.
   idDocStatus        String    @default("none")
   addressDocStatus   String    @default("none")
+  idDocPath          String?
+  addressDocPath     String?
   // Phone OTP (hashed code + expiry); cleared once verified.
   phoneOtpHash       String?
   phoneOtpExpiresAt  DateTime?

@@ -4607,30 +4607,138 @@ function PanelBody() {
 
   // ── VERIFY ME ─────────────────────────────────────────────────────────────────
   if (panel.id === 'verifyMe') {
-    const VERIFY_STEPS = [
-      { id: 'email', label: '📧 Email', done: true },
-      { id: 'phone', label: '📱 Phone number', done: false },
-      { id: 'id', label: '🪪 ID document', done: false },
-      { id: 'address', label: '🏠 Address', done: false },
-    ]
+    type VStatus = { email: boolean; phone: boolean; id: string; address: string; overall: boolean; phoneNumber: string | null; smsAvailable: boolean }
+    const [vs, setVs] = useState<VStatus | null>(null)
+    const [loaded, setLoaded] = useState(false)
+    const [phoneStep, setPhoneStep] = useState<'idle' | 'entering' | 'code'>('idle')
+    const [phoneInput, setPhoneInput] = useState('')
+    const [otp, setOtp] = useState('')
+    const [busy, setBusy] = useState(false)
+    const [msg, setMsg] = useState('')
+    const [docBusy, setDocBusy] = useState<'id' | 'address' | null>(null)
+
+    const load = useCallback(async () => {
+      try { const c = await getTrpcClient(); setVs(await c.users.verificationStatus.query() as VStatus) }
+      catch { setVs(null) }
+      finally { setLoaded(true) }
+    }, [])
+    useEffect(() => { load() }, [load])
+
+    const sendCode = async () => {
+      setBusy(true); setMsg('')
+      try {
+        const c = await getTrpcClient()
+        const r = await c.users.startPhoneVerify.mutate({ phone: phoneInput.trim() }) as { sent: boolean; reason?: string }
+        if (r.sent) { setPhoneStep('code'); setMsg('') }
+        else setMsg('SMS verification isn’t available just yet — please check back soon.')
+      } catch (e) { setMsg(e instanceof Error ? e.message : 'Could not send code') }
+      finally { setBusy(false) }
+    }
+    const confirmCode = async () => {
+      setBusy(true); setMsg('')
+      try {
+        const c = await getTrpcClient()
+        await c.users.confirmPhoneVerify.mutate({ code: otp.trim() })
+        setPhoneStep('idle'); setOtp(''); toast('📱 Phone verified ✓'); await load()
+      } catch (e) { setMsg(e instanceof Error ? e.message : 'Could not verify code') }
+      finally { setBusy(false) }
+    }
+    const uploadDoc = async (kind: 'id' | 'address', file: File) => {
+      setDocBusy(kind); setMsg('')
+      try {
+        const { uploadVerificationDoc } = await import('@/lib/storage')
+        const uid = currentUserId
+        if (!uid) throw new Error('Please log in')
+        const path = await uploadVerificationDoc(file, uid, kind)
+        const c = await getTrpcClient()
+        await c.users.submitVerificationDoc.mutate({ kind, path })
+        toast('Document submitted for review ✓'); await load()
+      } catch (e) { setMsg(e instanceof Error ? e.message : 'Upload failed') }
+      finally { setDocBusy(null) }
+    }
+
+    const badge = (state: 'verified' | 'pending' | 'none' | boolean) => {
+      const s = state === true ? 'verified' : state === false ? 'none' : state
+      if (s === 'verified') return <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#16a34a', fontWeight: 800 }}>✅ Verified</span>
+      if (s === 'pending') return <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#f59e0b', fontWeight: 800 }}>⏳ Under review</span>
+      return <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>Not verified</span>
+    }
+    const rowStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f5f5f5' } as const
+    const verifyBtn = { background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, cursor: 'pointer' } as const
+
     return (
       <ActionPanel title="✅ Verify Me" onClose={closePanel}>
         <div style={{ background: '#FFF3EE', borderRadius: 14, padding: 14, marginBottom: 16, textAlign: 'center' }}>
-          <div style={{ fontSize: 36, marginBottom: 8 }}>🔒</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Build trust with buyers & sellers</div>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>{vs?.overall ? '🛡️' : '🔒'}</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{vs?.overall ? 'You’re a verified member' : 'Build trust with buyers & sellers'}</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>Verified members get 2× more responses</div>
         </div>
-        {VERIFY_STEPS.map(step => (
-          <div key={step.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f5f5f5' }}>
-            <div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{step.label}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: step.done ? '#16a34a' : '#888', marginTop: 2 }}>{step.done ? '✅ Verified' : 'Not verified'}</div>
-            </div>
-            {!step.done && (
-              <button style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, cursor: 'pointer' }}>Verify →</button>
-            )}
+
+        {msg && <div style={{ background: '#fff5f5', color: '#ef4444', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 12 }}>{msg}</div>}
+
+        {!loaded ? (
+          <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : !vs ? (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#666', marginBottom: 14 }}>Log in to verify your account.</div>
+            <button onClick={() => openPanel('login')} style={verifyBtn}>Log in</button>
           </div>
-        ))}
+        ) : (
+          <>
+            {/* Email */}
+            <div style={rowStyle}>
+              <div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>📧 Email</div>
+                <div style={{ marginTop: 2 }}>{badge(vs.email)}</div>
+              </div>
+            </div>
+
+            {/* Phone */}
+            <div style={{ padding: '14px 0', borderBottom: '1px solid #f5f5f5' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>📱 Phone number</div>
+                  <div style={{ marginTop: 2 }}>{badge(vs.phone)}</div>
+                </div>
+                {!vs.phone && phoneStep === 'idle' && (
+                  <button onClick={() => { setPhoneInput(vs.phoneNumber ?? ''); setPhoneStep('entering') }} style={verifyBtn}>Verify →</button>
+                )}
+              </div>
+              {!vs.phone && phoneStep === 'entering' && (
+                <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                  <input value={phoneInput} onChange={e => setPhoneInput(e.target.value)} placeholder="+34 6XX XXX XXX" style={{ flex: 1, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none' }} />
+                  <button onClick={sendCode} disabled={busy || phoneInput.trim().length < 7} style={{ ...verifyBtn, background: busy ? '#ccc' : 'var(--orange)' }}>{busy ? '…' : 'Send code'}</button>
+                </div>
+              )}
+              {!vs.phone && phoneStep === 'code' && (
+                <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                  <input value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))} placeholder="6-digit code" maxLength={6} style={{ flex: 1, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, letterSpacing: 2, outline: 'none' }} />
+                  <button onClick={confirmCode} disabled={busy || otp.length < 4} style={{ ...verifyBtn, background: busy ? '#ccc' : '#16a34a' }}>{busy ? '…' : 'Confirm'}</button>
+                </div>
+              )}
+            </div>
+
+            {/* ID + Address (team-reviewed document upload) */}
+            {([['id', '🪪 ID document', vs.id], ['address', '🏠 Proof of address', vs.address]] as ['id' | 'address', string, string][]).map(([kind, label, state]) => (
+              <div key={kind} style={rowStyle}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{label}</div>
+                  <div style={{ marginTop: 2 }}>{badge(state as 'verified' | 'pending' | 'none')}</div>
+                </div>
+                {state === 'none' && (
+                  <label style={{ ...verifyBtn, display: 'inline-block', opacity: docBusy === kind ? 0.6 : 1 }}>
+                    {docBusy === kind ? 'Uploading…' : 'Upload →'}
+                    <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} disabled={docBusy === kind}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) uploadDoc(kind, f) }} />
+                  </label>
+                )}
+              </div>
+            ))}
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa', marginTop: 12, lineHeight: 1.5 }}>
+              ID and address documents are stored privately and reviewed by our team, usually within 48 hours.
+            </div>
+          </>
+        )}
       </ActionPanel>
     )
   }

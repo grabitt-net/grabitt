@@ -55,6 +55,10 @@ export const authRouter = router({
           displayName: input.displayName,
           locale: input.locale,
           credits: PRICES.registrationBonus,
+          // A Supabase session only exists after email confirmation (email/pass)
+          // or a provider that vouches for the address (OAuth), so the email is
+          // verified by the time we provision.
+          emailVerified: true,
           referralCode: makeReferralCode(),
           ...(referrer ? { referredById: referrer.id } : {}),
         },

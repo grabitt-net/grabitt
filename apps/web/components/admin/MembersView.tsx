@@ -27,6 +27,8 @@ interface Member {
   phoneVerified: boolean
   idVerified: boolean
   addressVerified: boolean
+  idDocStatus?: string
+  addressDocStatus?: string
   strikeCount: number
   suspendedUntil: string | null
   suspendedReason: string | null
@@ -363,6 +365,17 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
               <Check label="ID verified" checked={f.idVerified} onChange={v => set('idVerified', v)} />
               <Check label="Address verified" checked={f.addressVerified} onChange={v => set('addressVerified', v)} />
             </div>
+            {/* Review submitted documents (private — signed URL, admin only). */}
+            {((member.idDocStatus === 'pending' && !member.idVerified) || (member.addressDocStatus === 'pending' && !member.addressVerified)) && (
+              <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {member.idDocStatus === 'pending' && !member.idVerified && (
+                  <a href={`/api/verification-doc?userId=${member.id}&kind=id`} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#FF4500', background: '#FFF3EE', borderRadius: 8, padding: '6px 10px', textDecoration: 'none' }}>⏳ Review ID document ↗</a>
+                )}
+                {member.addressDocStatus === 'pending' && !member.addressVerified && (
+                  <a href={`/api/verification-doc?userId=${member.id}&kind=address`} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#FF4500', background: '#FFF3EE', borderRadius: 8, padding: '6px 10px', textDecoration: 'none' }}>⏳ Review address document ↗</a>
+                )}
+              </div>
+            )}
           </Card>
 
           <button onClick={saveDetails} disabled={!!busy} style={primary}>{busy === 'details' ? 'Saving…' : 'Save changes'}</button>

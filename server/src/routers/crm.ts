@@ -102,6 +102,7 @@ export const crmRouter = router({
           avgRating: true, credits: true, createdAt: true, phone: true, collectionAddress: true, avatar: true,
           isBusiness: true, businessVerified: true, businessName: true, isVerified: true,
           emailVerified: true, phoneVerified: true, idVerified: true, addressVerified: true,
+          idDocStatus: true, addressDocStatus: true,
           strikeCount: true, suspendedUntil: true, suspendedReason: true, deletedAt: true, locale: true,
         },
       })

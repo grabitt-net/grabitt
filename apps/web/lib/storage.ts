@@ -86,6 +86,27 @@ export async function uploadCv(file: File, userId: string): Promise<{ path: stri
   return { path, previewUrl: data?.signedUrl ?? null }
 }
 
+export const VERIFICATION_BUCKET = 'verification'
+
+/**
+ * Uploads an ID or proof-of-address document (image or PDF) to the PRIVATE
+ * `verification` bucket. Returns the storage path, which the caller records via
+ * users.submitVerificationDoc. Admins review it through /api/verification-doc,
+ * which authorises the request and mints a signed URL. Max 8 MB.
+ */
+export async function uploadVerificationDoc(file: File, userId: string, kind: 'id' | 'address'): Promise<string> {
+  const okTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic']
+  if (!okTypes.includes(file.type)) throw new Error('Upload a photo (JPG/PNG) or PDF')
+  if (file.size > 8 * 1024 * 1024) throw new Error('File must be under 8 MB')
+
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const path = `${userId}/${kind}-${crypto.randomUUID()}.${ext}`
+  const client = createClient()
+  const { error } = await client.storage.from(VERIFICATION_BUCKET).upload(path, file, { contentType: file.type, upsert: false })
+  if (error) throw new Error(`Upload failed: ${error.message}`)
+  return path
+}
+
 async function compressImage(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
