@@ -24,6 +24,8 @@ import { communityRouter } from './routers/community'
 import { cartRouter } from './routers/cart'
 import { followRouter } from './routers/follow'
 import { seekersRouter } from './routers/seekers'
+import { reportsRouter } from './routers/reports'
+import { execTasksRouter } from './routers/execTasks'
 
 export const appRouter = router({
   auth: authRouter,
@@ -40,6 +42,8 @@ export const appRouter = router({
   wishlist: wishlistRouter,
   savedSearches: savedSearchesRouter,
   disputes: disputesRouter,
+  reports: reportsRouter,
+  execTasks: execTasksRouter,
   jobs: jobsRouter,
   property: propertyRouter,
   handy: handyRouter,

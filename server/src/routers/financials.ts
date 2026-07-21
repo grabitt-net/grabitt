@@ -26,4 +26,18 @@ export const financialsRouter = router({
         disputes,
       }
     }),
+
+  // Completed transactions for the current calendar year, powering the Forecast
+  // view's monthly marketplace-revenue chart, GMV and commission KPIs. Returns
+  // only settled money (completed/released), already filtered so the client
+  // doesn't have to know our status vocabulary.
+  ordersThisYear: execProcedure.query(async ({ ctx }) => {
+    const yearStart = new Date(new Date().getFullYear(), 0, 1)
+    const txs = await ctx.prisma.transaction.findMany({
+      where: { status: { in: ['completed', 'released'] }, createdAt: { gte: yearStart } },
+      select: { amount: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    })
+    return txs.map(t => ({ amount: Number(t.amount), createdAt: t.createdAt.toISOString() }))
+  }),
 })

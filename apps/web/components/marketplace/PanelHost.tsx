@@ -4404,6 +4404,11 @@ function PanelBody() {
     const [reportNotes, setReportNotes] = useState('')
     const [reportDone, setReportDone] = useState(false)
     const [reportSubmitting, setReportSubmitting] = useState(false)
+    const [reportError, setReportError] = useState('')
+    // Only forward a listingId that's a real UUID — the report panel can open
+    // from the footer (no listing) or over demo tiles whose ids aren't real.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    const reportListingId = typeof panel.data?.id === 'string' && UUID_RE.test(panel.data.id) ? panel.data.id : undefined
     if (reportDone) return (
       <ActionPanel title="✅ Report submitted" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
@@ -4430,7 +4435,20 @@ function PanelBody() {
           </div>
         ))}
         <textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} placeholder="Additional details (optional)…" rows={3} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, resize: 'vertical' as const, boxSizing: 'border-box' as const, marginTop: 8, marginBottom: 16 }} />
-        <button onClick={async () => { if (!reportReason) return; setReportSubmitting(true); await new Promise(r => setTimeout(r, 800)); setReportSubmitting(false); setReportDone(true) }} disabled={!reportReason || reportSubmitting} style={{ width: '100%', background: !reportReason || reportSubmitting ? '#ccc' : '#ef4444', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: !reportReason ? 'not-allowed' : 'pointer' }}>
+        {reportError && <div style={{ background: '#fff5f5', color: '#ef4444', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 12 }}>⚠️ {reportError}</div>}
+        <button onClick={async () => {
+          if (!reportReason) return
+          setReportSubmitting(true); setReportError('')
+          try {
+            const c = await getTrpcClient()
+            await c.reports.create.mutate({ reason: reportReason, notes: reportNotes.trim() || undefined, listingId: reportListingId })
+            setReportDone(true)
+          } catch (e) {
+            setReportError(e instanceof Error ? e.message : 'Could not submit — please try again.')
+          } finally {
+            setReportSubmitting(false)
+          }
+        }} disabled={!reportReason || reportSubmitting} style={{ width: '100%', background: !reportReason || reportSubmitting ? '#ccc' : '#ef4444', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: !reportReason ? 'not-allowed' : 'pointer' }}>
           {reportSubmitting ? 'Submitting…' : '🚨 Submit Report'}
         </button>
       </ActionPanel>

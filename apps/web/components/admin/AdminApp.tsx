@@ -53,11 +53,16 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
   const [focusMemberId, setFocusMemberId] = useState<string | null>(null)
   const [bannerPosition, setBannerPosition] = useState<string | null>(null)
   const [disputes, setDisputes] = useState<any[]>([])
+  const [orders, setOrders] = useState<any[]>([])
+  const [reportsOpen, setReportsOpen] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([api.contacts(), api.members(), api.disputes()])
-      .then(([c, m, d]) => { setContacts(c ?? []); setMembers(m ?? []); setDisputes(d ?? []) })
+    Promise.all([api.contacts(), api.members(), api.disputes(), api.ordersThisYear(), api.reports('open')])
+      .then(([c, m, d, o, r]) => {
+        setContacts(c ?? []); setMembers(m ?? []); setDisputes(d ?? [])
+        setOrders(o ?? []); setReportsOpen((r ?? []).length)
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,7 +116,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
           <AdminSidebar
             activeView={view}
             onViewChange={setView}
-            counts={{ pipeline: contacts.length, disputes: openDisputeCount, reports: 0 }}
+            counts={{ pipeline: contacts.length, disputes: openDisputeCount, reports: reportsOpen }}
           />
 
           <main ref={mainRef} style={{ padding: '24px 20px 40px', overflowY: 'auto' }}>
@@ -122,10 +127,10 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'funnel'      && <FunnelView    contacts={contacts} onNavigate={setView} />}
                 {view === 'pipeline'   && <PipelineView  contacts={contacts} onUpdate={setContacts} />}
                 {view === 'contacts'   && <ContactsView  contacts={contacts} onUpdate={setContacts} />}
-                {view === 'forecast'   && <ForecastView  contacts={contacts} orders={[]} />}
+                {view === 'forecast'   && <ForecastView  contacts={contacts} orders={orders} />}
                 {view === 'members'    && <MembersView   members={members} focusUserId={focusMemberId} />}
                 {view === 'disputes'   && <DisputesView  disputes={disputes} onUpdate={setDisputes} />}
-                {view === 'reports'    && <ReportsView   reports={[]} />}
+                {view === 'reports'    && <ReportsView   onCountChange={setReportsOpen} />}
                 {view === 'banners'    && <BannersView initialPosition={bannerPosition} />}
                 {view === 'financials' && <FinancialsView />}
                 {view === 'retention'  && <RetentionView />}

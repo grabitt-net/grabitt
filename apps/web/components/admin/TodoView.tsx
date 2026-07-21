@@ -1,19 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useCrmApi } from './AdminApp'
 
 type Tier = 'urgent' | 'soon' | 'someday'
-interface Task { id: string; text: string; tier: Tier; done: boolean; nudge?: string }
-
-const INITIAL_TASKS: Task[] = [
-  { id: '1', text: 'Call Dave re: storefront renewal', tier: 'urgent', done: false, nudge: '2nd nudge' },
-  { id: '2', text: 'Send June invoice to García & Co.', tier: 'urgent', done: false },
-  { id: '3', text: 'Review open disputes (×3)', tier: 'urgent', done: true },
-  { id: '4', text: 'Draft July e-shot copy', tier: 'soon', done: false },
-  { id: '5', text: 'Update featured banner — summer theme', tier: 'soon', done: false },
-  { id: '6', text: 'Follow up with 5 at-risk members', tier: 'soon', done: false, nudge: '1st nudge' },
-  { id: '7', text: 'Research competitor pricing', tier: 'someday', done: false },
-  { id: '8', text: 'Plan Q3 partner webinar', tier: 'someday', done: false },
-]
+interface Task { id: string; text: string; tier: string | null; done: boolean }
 
 const TIER_CONFIG: Record<Tier, { label: string; color: string; bg: string }> = {
   urgent: { label: '🔴 Urgent', color: '#ef4444', bg: '#fff5f5' },
@@ -21,6 +11,7 @@ const TIER_CONFIG: Record<Tier, { label: string; color: string; bg: string }> = 
   someday: { label: '🟢 Someday', color: '#16a34a', bg: '#f0fdf4' },
 }
 
+// Static reference — a suggested weekly rhythm, not user data.
 const WEEKLY_PLAN = [
   { day: 'Mon', tasks: ['Review pipeline', 'Check disputes', 'Answer queries'] },
   { day: 'Tue', tasks: ['Follow-up calls', 'E-shot planning'] },
@@ -30,15 +21,43 @@ const WEEKLY_PLAN = [
 ]
 
 export default function TodoView() {
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS)
+  const api = useCrmApi()
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
   const [newTask, setNewTask] = useState('')
   const [newTier, setNewTier] = useState<Tier>('soon')
+  const [adding, setAdding] = useState(false)
 
-  const toggle = (id: string) => setTasks(ts => ts.map(t => t.id === id ? { ...t, done: !t.done } : t))
-  const add = () => {
-    if (!newTask.trim()) return
-    setTasks(ts => [...ts, { id: Date.now().toString(), text: newTask.trim(), tier: newTier, done: false }])
-    setNewTask('')
+  const load = useCallback(() => {
+    setLoading(true)
+    api.execTasks()
+      // Only tier-based (To-Do) items belong here; dated items live on the Calendar.
+      .then(rows => setTasks((rows ?? []).filter(r => r.tier)))
+      .catch(() => setTasks([]))
+      .finally(() => setLoading(false))
+  }, [api])
+
+  useEffect(() => { load() }, [load])
+
+  const toggle = async (t: Task) => {
+    setTasks(ts => ts.map(x => x.id === t.id ? { ...x, done: !x.done } : x))
+    try { await api.toggleExecTask(t.id, !t.done) } catch { load() }
+  }
+
+  const add = async () => {
+    if (!newTask.trim() || adding) return
+    setAdding(true)
+    try {
+      const created = await api.createExecTask({ text: newTask.trim(), tier: newTier })
+      setTasks(ts => [created, ...ts])
+      setNewTask('')
+    } catch { /* leave input so the user can retry */ }
+    finally { setAdding(false) }
+  }
+
+  const remove = async (id: string) => {
+    setTasks(ts => ts.filter(x => x.id !== id))
+    try { await api.removeExecTask(id) } catch { load() }
   }
 
   return (
@@ -61,11 +80,12 @@ export default function TodoView() {
           <option value="soon">Soon</option>
           <option value="someday">Someday</option>
         </select>
-        <button onClick={add} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>+</button>
+        <button onClick={add} disabled={adding} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>+</button>
       </div>
 
-      {/* Tasks by tier */}
-      {(['urgent', 'soon', 'someday'] as Tier[]).map(tier => {
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 40, color: '#bbb', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Loading tasks…</div>
+      ) : (['urgent', 'soon', 'someday'] as Tier[]).map(tier => {
         const tierTasks = tasks.filter(t => t.tier === tier)
         const cfg = TIER_CONFIG[tier]
         return (
@@ -74,27 +94,25 @@ export default function TodoView() {
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: cfg.color, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>{tierTasks.filter(t => !t.done).length} remaining</div>
             </div>
-            {tierTasks.length === 0 && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#bbb', textAlign: 'center', padding: '12px 0' }}>All done! 🎉</div>}
+            {tierTasks.length === 0 && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#bbb', textAlign: 'center', padding: '12px 0' }}>Nothing here yet</div>}
             {tierTasks.map(task => (
               <div key={task.id} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
-                <div onClick={() => toggle(task.id)} style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${task.done ? cfg.color : '#e0d8d0'}`, background: task.done ? cfg.color : '#fff', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div onClick={() => toggle(task)} style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${task.done ? cfg.color : '#e0d8d0'}`, background: task.done ? cfg.color : '#fff', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {task.done && <div style={{ width: 8, height: 8, background: '#fff', borderRadius: '50%' }} />}
                 </div>
                 <div style={{ flex: 1 }}>
                   <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: task.done ? '#bbb' : 'var(--dark)', textDecoration: task.done ? 'line-through' : 'none' }}>{task.text}</span>
-                  {task.nudge && !task.done && (
-                    <span style={{ background: `${cfg.bg}`, color: cfg.color, fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '1px 7px', borderRadius: 50, marginLeft: 8 }}>{task.nudge}</span>
-                  )}
                 </div>
+                <button onClick={() => remove(task.id)} title="Delete" style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 14, flexShrink: 0 }}>×</button>
               </div>
             ))}
           </div>
         )
       })}
 
-      {/* Weekly plan */}
+      {/* Weekly plan (static reference) */}
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.07)', padding: 16 }}>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#555', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.5 }}>Marketing weekly plan</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#555', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.5 }}>Suggested weekly rhythm</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
           {WEEKLY_PLAN.map(day => (
             <div key={day.day} style={{ background: '#f9f6f2', borderRadius: 10, padding: '10px 8px' }}>

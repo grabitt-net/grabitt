@@ -292,6 +292,24 @@ model ExecUser {
   createdAt    DateTime       @default(now())
 
   auditLogs    ExecAuditLog[]
+  tasks        ExecTask[]
+}
+
+// Internal exec to-do / calendar item. One model serves both views: the To-Do
+// board groups by `tier`, the Calendar places items by `dueDate`. Scoped to the
+// exec who created it so each admin has their own list.
+model ExecTask {
+  id         String    @id @default(uuid())
+  execUserId String
+  execUser   ExecUser  @relation(fields: [execUserId], references: [id])
+  text       String
+  tier       String?   // 'urgent' | 'soon' | 'someday' (To-Do)
+  dueDate    DateTime? @db.Date // (Calendar)
+  color      String?   // dot colour on the calendar
+  done       Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  @@index([execUserId])
 }
 
 enum ExecRole {

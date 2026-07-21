@@ -8,14 +8,13 @@ export default function ForecastView({ contacts, orders }: Props) {
   const now = new Date()
   const thisYear = now.getFullYear()
 
-  // Revenue from orders per month (current year)
+  // Revenue from orders per month (current year). Orders arrive already
+  // filtered to settled transactions from financials.ordersThisYear.
   const revenueByMonth = Array(12).fill(0)
   orders.forEach(o => {
-    if (o.status === 'completed' || o.status === 'delivered') {
-      const d = new Date(o.created_at)
-      if (d.getFullYear() === thisYear) {
-        revenueByMonth[d.getMonth()] += Number(o.amount ?? 0)
-      }
+    const d = new Date(o.createdAt ?? o.created_at)
+    if (d.getFullYear() === thisYear) {
+      revenueByMonth[d.getMonth()] += Number(o.amount ?? 0)
     }
   })
 

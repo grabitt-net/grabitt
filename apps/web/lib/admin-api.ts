@@ -94,6 +94,26 @@ export function makeCrmApi(execToken: string) {
     removeCommunityPost: (id: string) =>
       rpc<any>('community.remove', 'mutation', { id }, execToken),
 
+    // Reports / moderation queue
+    reports: (status?: 'all' | 'open' | 'under_review' | 'actioned' | 'dismissed') =>
+      rpc<any[]>('reports.adminList', 'query', { status: status ?? 'open' }, execToken),
+    resolveReport: (id: string, action: 'dismiss' | 'takedown', note?: string) =>
+      rpc<{ ok: true; status: string }>('reports.resolve', 'mutation', { id, action, note }, execToken),
+
+    // Forecast — completed transactions for the current year's revenue chart
+    ordersThisYear: () =>
+      rpc<{ amount: number; createdAt: string }[]>('financials.ordersThisYear', 'query', undefined, execToken),
+
+    // Internal exec to-do / calendar tasks (persisted per admin)
+    execTasks: () =>
+      rpc<{ id: string; text: string; tier: string | null; dueDate: string | null; color: string | null; done: boolean }[]>('execTasks.list', 'query', undefined, execToken),
+    createExecTask: (data: { text: string; tier?: string; dueDate?: string; color?: string }) =>
+      rpc<{ id: string; text: string; tier: string | null; dueDate: string | null; color: string | null; done: boolean }>('execTasks.create', 'mutation', data, execToken),
+    toggleExecTask: (id: string, done: boolean) =>
+      rpc<{ ok: true }>('execTasks.toggle', 'mutation', { id, done }, execToken),
+    removeExecTask: (id: string) =>
+      rpc<{ ok: true }>('execTasks.remove', 'mutation', { id }, execToken),
+
     // Job & property listing oversight
     adminJobs: (status?: string) =>
       rpc<any[]>('jobs.adminList', 'query', { status: status ?? 'all' }, execToken),
