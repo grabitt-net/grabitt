@@ -11,6 +11,7 @@ import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import { deptEmoji } from '@/lib/listingMap'
+import { t } from '@/lib/i18n'
 
 // A real, deep-linkable account hub (route, not a modal). Desktop shows a sticky
 // sidebar; mobile stacks. Icons are inline SVG (Lucide-style) — no emoji.
@@ -65,7 +66,7 @@ function AccountInner() {
   const [deleting, setDeleting] = useState(false)
   const deleteAccount = async () => {
     if (confirmDelete.trim().toUpperCase() !== 'DELETE') return
-    if (!confirm('This permanently anonymises your account and signs you out. It cannot be undone. Continue?')) return
+    if (!confirm(t('This permanently anonymises your account and signs you out. It cannot be undone. Continue?'))) return
     setDeleting(true)
     try {
       // Erases both our record and the Supabase Auth identity (email + sessions).
@@ -76,7 +77,7 @@ function AccountInner() {
       await createClient().auth.signOut()
       window.location.href = '/?deleted=1'
     } catch {
-      alert('Could not complete the deletion. Please contact privacy@grabitt.net.')
+      alert(t('Could not complete the deletion. Please contact privacy@grabitt.net.'))
       setDeleting(false)
     }
   }
@@ -84,8 +85,8 @@ function AccountInner() {
   const changeEmail = async () => {
     const next = newEmail.trim().toLowerCase()
     setEmailError('')
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(next)) { setEmailError('Enter a valid email address.'); return }
-    if (next === (me?.email ?? '').toLowerCase()) { setEmailError('That is already your email address.'); return }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(next)) { setEmailError(t('Enter a valid email address.')); return }
+    if (next === (me?.email ?? '').toLowerCase()) { setEmailError(t('That is already your email address.')); return }
     setEmailState('saving')
     try {
       // Land the confirmation on our callback so User.email is synced there.
@@ -95,7 +96,7 @@ function AccountInner() {
       )
       if (error) { setEmailError(error.message); setEmailState('idle'); return }
       setEmailState('sent')
-    } catch { setEmailError('Could not start the email change. Please try again.'); setEmailState('idle') }
+    } catch { setEmailError(t('Could not start the email change. Please try again.')); setEmailState('idle') }
   }
 
   const load = useCallback(async () => {
@@ -163,17 +164,17 @@ function AccountInner() {
     image: Array.isArray(l.images) ? l.images[0] : null, emoji: deptEmoji(l.department),
   }))
 
-  if (!ready) return <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-nunito)', color: '#888' }}>Loading your account…</main>
+  if (!ready) return <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-nunito)', color: '#888' }}>{t('Loading your account…')}</main>
 
   const grade = me?.grade ?? 'grabber'
   const memberSince = me?.createdAt ? new Date(me.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '—'
   const tiles = [
-    { label: 'On sale', value: dash?.active, icon: I.tag, onClick: () => setSeg('active') },
-    { label: 'Sold', value: dash?.sold, icon: I.check, onClick: () => setSeg('sold') },
-    { label: 'Messages', value: dash?.unread, icon: I.message, dot: !!dash?.unread, href: '/messages' },
-    { label: 'Offers', value: dash?.offers, icon: I.offer, dot: !!dash?.offers },
-    { label: 'Saved', value: dash?.saved, icon: I.heart, onClick: () => openPanel('favourites') },
-    { label: 'Payouts', value: payout?.payoutsEnabled ? '✓' : '—', icon: I.wallet },
+    { label: t('On sale'), value: dash?.active, icon: I.tag, onClick: () => setSeg('active') },
+    { label: t('Sold'), value: dash?.sold, icon: I.check, onClick: () => setSeg('sold') },
+    { label: t('Messages'), value: dash?.unread, icon: I.message, dot: !!dash?.unread, href: '/messages' },
+    { label: t('Offers'), value: dash?.offers, icon: I.offer, dot: !!dash?.offers },
+    { label: t('Saved'), value: dash?.saved, icon: I.heart, onClick: () => openPanel('favourites') },
+    { label: t('Payouts'), value: payout?.payoutsEnabled ? '✓' : '—', icon: I.wallet },
   ]
 
   return (
@@ -187,23 +188,23 @@ function AccountInner() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: 22, fontFamily: 'var(--font-nunito)' }}>{(me?.displayName ?? '?')[0]?.toUpperCase()}</div>
               <div>
-                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 18, fontWeight: 700, color: 'var(--dark)' }}>{me?.displayName ?? 'Your account'}</div>
+                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 18, fontWeight: 700, color: 'var(--dark)' }}>{me?.displayName ?? t('Your account')}</div>
                 {me?.email && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#666', wordBreak: 'break-all' }}>{me.email}</div>}
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888' }}>{grade.charAt(0).toUpperCase() + grade.slice(1)} · ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'} · since {memberSince}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888' }}>{grade.charAt(0).toUpperCase() + grade.slice(1)} · ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'} · {t('since')} {memberSince}</div>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 16 }}>
-              {tiles.map(t => {
+              {tiles.map(tile => {
                 const inner = (
-                  <div style={{ position: 'relative', background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '12px 6px', textAlign: 'center', cursor: (t.onClick || t.href) ? 'pointer' : 'default' }}>
-                    <span style={{ color: 'var(--orange)', display: 'inline-flex' }}><Svg d={t.icon} /></span>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', fontVariantNumeric: 'tabular-nums', marginTop: 2 }}>{t.value ?? '—'}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9.5, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.label}</div>
-                    {t.dot && <span style={{ position: 'absolute', top: 8, right: 10, width: 8, height: 8, borderRadius: '50%', background: 'var(--orange)' }} />}
+                  <div style={{ position: 'relative', background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '12px 6px', textAlign: 'center', cursor: (tile.onClick || tile.href) ? 'pointer' : 'default' }}>
+                    <span style={{ color: 'var(--orange)', display: 'inline-flex' }}><Svg d={tile.icon} /></span>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', fontVariantNumeric: 'tabular-nums', marginTop: 2 }}>{tile.value ?? '—'}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9.5, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.3 }}>{tile.label}</div>
+                    {tile.dot && <span style={{ position: 'absolute', top: 8, right: 10, width: 8, height: 8, borderRadius: '50%', background: 'var(--orange)' }} />}
                   </div>
                 )
-                return t.href ? <Link key={t.label} href={t.href} style={{ textDecoration: 'none' }}>{inner}</Link>
-                  : <button key={t.label} onClick={t.onClick} style={{ border: 'none', background: 'none', padding: 0, width: '100%' }}>{inner}</button>
+                return tile.href ? <Link key={tile.label} href={tile.href} style={{ textDecoration: 'none' }}>{inner}</Link>
+                  : <button key={tile.label} onClick={tile.onClick} style={{ border: 'none', background: 'none', padding: 0, width: '100%' }}>{inner}</button>
               })}
             </div>
             {/* Payouts — links to Stripe onboarding (or the Express dashboard once set up) */}
@@ -218,7 +219,7 @@ function AccountInner() {
             {/* Log out */}
             <button onClick={logout} style={{ width: '100%', marginTop: 14, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: '11px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
-              Log out
+              {t('Log out')}
             </button>
           </div>
         </aside>
@@ -227,23 +228,23 @@ function AccountInner() {
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
           {/* Account email — changing it re-verifies via Supabase Auth */}
           <div style={card}>
-            <div style={cardHead}>Account email</div>
+            <div style={cardHead}>{t('Account email')}</div>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', lineHeight: 1.5, marginBottom: 12 }}>
-              This is the address you sign in with. Changing it sends a confirmation link to the new address — your email only changes once you click that link.
+              {t('This is the address you sign in with. Changing it sends a confirmation link to the new address — your email only changes once you click that link.')}
             </div>
-            <label style={fieldLabel}>Current email</label>
+            <label style={fieldLabel}>{t('Current email')}</label>
             <div style={{ ...field, background: '#f7f4ee', color: '#555', display: 'flex', alignItems: 'center' }}>{me?.email ?? '—'}</div>
             {emailState === 'sent' ? (
               <div style={{ marginTop: 10, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#16a34a', lineHeight: 1.5 }}>
-                ✓ Confirmation sent to <strong>{newEmail.trim().toLowerCase()}</strong>. Click the link in that email to finish the change. (Check spam if it doesn&apos;t arrive.)
+                ✓ {t('Confirmation sent to {email}. Click the link in that email to finish the change. (Check spam if it doesn’t arrive.)').replace('{email}', newEmail.trim().toLowerCase())}
               </div>
             ) : (
               <>
-                <label style={fieldLabel}>New email</label>
+                <label style={fieldLabel}>{t('New email')}</label>
                 <input value={newEmail} onChange={e => { setNewEmail(e.target.value); setEmailError('') }} type="email" placeholder="you@example.com" style={field} />
                 {emailError && <div style={{ marginTop: 6, fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#ef4444' }}>{emailError}</div>}
                 <button onClick={changeEmail} disabled={emailState === 'saving'} style={{ marginTop: 10, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: emailState === 'saving' ? 'wait' : 'pointer' }}>
-                  {emailState === 'saving' ? 'Sending…' : 'Send confirmation link'}
+                  {emailState === 'saving' ? t('Sending…') : t('Send confirmation link')}
                 </button>
               </>
             )}
@@ -251,7 +252,7 @@ function AccountInner() {
 
           {/* Marketing email — GDPR consent, freely given and withdrawable */}
           <div style={card}>
-            <div style={cardHead}>Email preferences</div>
+            <div style={cardHead}>{t('Email preferences')}</div>
             <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
               <input
                 type="checkbox"
@@ -265,41 +266,41 @@ function AccountInner() {
                 style={{ width: 17, height: 17, accentColor: 'var(--orange)', marginTop: 1, flexShrink: 0 }}
               />
               <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#444', lineHeight: 1.6 }}>
-                <strong>Send me Grabitt news &amp; offers</strong><br />
+                <strong>{t('Send me Grabitt news & offers')}</strong><br />
                 <span style={{ color: '#777', fontSize: 12 }}>
-                  Island deals, new features and seller tips. You can unsubscribe any time — from here or the link in any email.
+                  {t('Island deals, new features and seller tips. You can unsubscribe any time — from here or the link in any email.')}
                 </span>
               </span>
             </label>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#999', marginTop: 10, lineHeight: 1.5 }}>
-              This doesn&apos;t affect essential emails about your orders, offers and account.
+              {t('This doesn’t affect essential emails about your orders, offers and account.')}
             </div>
           </div>
 
           {/* Collection details — auto-shared with a buyer only after a completed collection sale */}
           <div style={card}>
-            <div style={cardHead}>Collection details</div>
+            <div style={cardHead}>{t('Collection details')}</div>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', lineHeight: 1.5, marginBottom: 12 }}>
-              Your address &amp; phone are shared with a buyer <strong>only after</strong> they complete a purchase where collection is selected. Buyers never see these before a sale. You can update them any time.
+              {t('Your address & phone are shared with a buyer only after they complete a purchase where collection is selected. Buyers never see these before a sale. You can update them any time.')}
             </div>
-            <label style={fieldLabel}>Contact phone</label>
+            <label style={fieldLabel}>{t('Contact phone')}</label>
             <input value={phone} onChange={e => { setPhone(e.target.value); setContactState('idle') }} type="tel" placeholder="e.g. +34 600 000 000" style={field} />
-            <label style={fieldLabel}>Collection address</label>
-            <textarea value={address} onChange={e => { setAddress(e.target.value); setContactState('idle') }} placeholder="Street, town, postcode — where buyers collect" style={{ ...field, minHeight: 72, resize: 'vertical' }} />
+            <label style={fieldLabel}>{t('Collection address')}</label>
+            <textarea value={address} onChange={e => { setAddress(e.target.value); setContactState('idle') }} placeholder={t('Street, town, postcode — where buyers collect')} style={{ ...field, minHeight: 72, resize: 'vertical' }} />
             <button onClick={saveContact} disabled={contactState === 'saving'} style={{ marginTop: 4, background: contactState === 'saved' ? 'var(--sage)' : 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: contactState === 'saving' ? 'wait' : 'pointer' }}>
-              {contactState === 'saving' ? 'Saving…' : contactState === 'saved' ? '✓ Saved' : 'Save collection details'}
+              {contactState === 'saving' ? t('Saving…') : contactState === 'saved' ? t('Saved ✓') : t('Save collection details')}
             </button>
           </div>
 
           {/* My Listings */}
           <div style={card}>
-            <div style={cardHead}>My Listings</div>
+            <div style={cardHead}>{t('My Listings')}</div>
             <div style={{ display: 'flex', background: '#f5f0e8', borderRadius: 50, padding: 4, marginBottom: 12 }}>
-              {([['active', 'On sale'], ['sold', 'Sold'], ['draft', 'Drafts']] as [typeof seg, string][]).map(([id, label]) => (
+              {([['active', t('On sale')], ['sold', t('Sold')], ['draft', t('Drafts')]] as [typeof seg, string][]).map(([id, label]) => (
                 <button key={id} onClick={() => setSeg(id)} style={{ flex: 1, border: 'none', background: seg === id ? '#fff' : 'transparent', color: seg === id ? 'var(--dark)' : '#888', borderRadius: 50, padding: '7px 0', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{label}{counts[id] > 0 ? ` ${counts[id]}` : ''}</button>
               ))}
             </div>
-            {listings === null ? <Muted>Loading…</Muted> : shown.length === 0 ? <Muted>{seg === 'sold' ? 'No sold items yet.' : 'Nothing here yet.'}</Muted> : (
+            {listings === null ? <Muted>{t('Loading…')}</Muted> : shown.length === 0 ? <Muted>{seg === 'sold' ? t('No sold items yet.') : t('Nothing here yet.')}</Muted> : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
                 {shown.map(c => (
                   <Link key={c.ref} href={`/listings/${c.ref}`} style={{ textDecoration: 'none' }}>
@@ -320,21 +321,21 @@ function AccountInner() {
 
           {/* Offers received */}
           <div style={card}>
-            <div style={cardHead}>Offers received</div>
-            {offers === null ? <Muted>Loading…</Muted> : offers.length === 0 ? <Muted>No offers to review.</Muted> : offers.map(o => (
+            <div style={cardHead}>{t('Offers received')}</div>
+            {offers === null ? <Muted>{t('Loading…')}</Muted> : offers.length === 0 ? <Muted>{t('No offers to review.')}</Muted> : offers.map(o => (
               <div key={o.id} style={{ borderBottom: '1px solid #f5f5f5', padding: '10px 0' }}>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   <div style={{ width: 44, height: 44, borderRadius: 10, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{o.listing?.images?.[0] ? <img src={o.listing.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.listing?.title}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>A buyer offered · {STATUS_LABEL[o.status] ?? o.status}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>{t('A buyer offered')} · {t(STATUS_LABEL[o.status] ?? o.status)}</div>
                   </div>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)' }}>€{Number(o.amount).toLocaleString()}</div>
                 </div>
                 {o.status === 'pending' && (
                   <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                    <button onClick={() => respond(o.id, 'accept')} disabled={busyId === o.id} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 0', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>{busyId === o.id ? '…' : 'Accept'}</button>
-                    <button onClick={() => respond(o.id, 'decline')} disabled={busyId === o.id} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '8px 0', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>Decline</button>
+                    <button onClick={() => respond(o.id, 'accept')} disabled={busyId === o.id} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 0', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>{busyId === o.id ? '…' : t('Accept')}</button>
+                    <button onClick={() => respond(o.id, 'decline')} disabled={busyId === o.id} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '8px 0', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>{t('Decline')}</button>
                   </div>
                 )}
               </div>
@@ -343,18 +344,18 @@ function AccountInner() {
 
           {/* Messages */}
           <div style={card}>
-            <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between' }}><span>Recent messages</span><Link href="/messages" style={{ color: 'var(--orange)', fontSize: 12, textDecoration: 'none' }}>See all →</Link></div>
-            {threads === null ? <Muted>Loading…</Muted> : threads.length === 0 ? <Muted>No conversations yet.</Muted> : threads.slice(0, 4).map((t: any) => {
-              const other = t.participants?.find((p: any) => p.userId !== me?.id)?.user
-              const last = t.messages?.[0]
+            <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between' }}><span>{t('Recent messages')}</span><Link href="/messages" style={{ color: 'var(--orange)', fontSize: 12, textDecoration: 'none' }}>{t('See all →')}</Link></div>
+            {threads === null ? <Muted>{t('Loading…')}</Muted> : threads.length === 0 ? <Muted>{t('No conversations yet.')}</Muted> : threads.slice(0, 4).map((th: any) => {
+              const other = th.participants?.find((p: any) => p.userId !== me?.id)?.user
+              const last = th.messages?.[0]
               const unread = !!last && last.senderId !== me?.id && !last.readAt
-              const preview = last ? (last.blocked ? '⚠️ Message hidden' : (last.senderId === me?.id ? 'You: ' : '') + last.body) : 'Start chatting…'
+              const preview = last ? (last.blocked ? `⚠️ ${t('Message hidden')}` : (last.senderId === me?.id ? t('You: ') : '') + last.body) : t('Start chatting…')
               return (
-                <Link key={t.id} href={`/messages/${t.id}`} style={{ textDecoration: 'none' }}>
+                <Link key={th.id} href={`/messages/${th.id}`} style={{ textDecoration: 'none' }}>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f5f5' }}>
                     <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontFamily: 'var(--font-nunito)' }}>{(other?.displayName ?? '?')[0]?.toUpperCase()}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: unread ? 900 : 700, color: 'var(--dark)' }}>{other?.displayName ?? 'Grabitt user'}</div>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: unread ? 900 : 700, color: 'var(--dark)' }}>{other?.displayName ?? t('Grabitt user')}</div>
                       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: unread ? 'var(--dark)' : '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preview}</div>
                     </div>
                     {unread && <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--orange)' }} />}
@@ -366,17 +367,17 @@ function AccountInner() {
 
           {/* GDPR erasure — self-service, no admin step */}
           <div style={{ ...card, border: '1px solid #fecaca' }}>
-            <div style={{ ...cardHead, color: '#ef4444' }}>Delete my account &amp; data</div>
+            <div style={{ ...cardHead, color: '#ef4444' }}>{t('Delete my account & data')}</div>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', lineHeight: 1.6, marginBottom: 10 }}>
-              Under the GDPR you can erase your personal data at any time. This happens <strong>immediately</strong> — no request queue, no admin approval.
+              {t('Under the GDPR you can erase your personal data at any time. This happens immediately — no request queue, no admin approval.')}
             </div>
             <div style={{ background: '#f9f6f2', borderRadius: 10, padding: '10px 12px', marginBottom: 12 }}>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#555', lineHeight: 1.6 }}>
-                <strong>Erased:</strong> your name, email, phone, address, avatar and business details.<br />
-                <strong>Retained:</strong> sales and purchase records, which we&apos;re legally required to keep for tax and accounting and which the other party to each trade also has rights over. They are detached from your identity.
+                <strong>{t('Erased:')}</strong> {t('your name, email, phone, address, avatar and business details.')}<br />
+                <strong>{t('Retained:')}</strong> {t('sales and purchase records, which we’re legally required to keep for tax and accounting and which the other party to each trade also has rights over. They are detached from your identity.')}
               </div>
             </div>
-            <label style={fieldLabel}>Type DELETE to confirm</label>
+            <label style={fieldLabel}>{t('Type DELETE to confirm')}</label>
             <input value={confirmDelete} onChange={e => setConfirmDelete(e.target.value)} placeholder="DELETE" style={field} />
             <button
               onClick={deleteAccount}
@@ -387,7 +388,7 @@ function AccountInner() {
                 border: 'none', borderRadius: 12, padding: '12px', fontFamily: 'var(--font-nunito)',
                 fontSize: 13, fontWeight: 900, cursor: confirmDelete.trim().toUpperCase() === 'DELETE' ? 'pointer' : 'not-allowed',
               }}>
-              {deleting ? 'Deleting…' : 'Permanently delete my data'}
+              {deleting ? t('Deleting…') : t('Permanently delete my data')}
             </button>
           </div>
         </section>
