@@ -1277,24 +1277,24 @@ function PanelBody() {
               {heroImage
                 ? <img src={heroImage} alt={title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 88 }}>{emoji}</div>}
-              {isFeatured && <div style={{ position: 'absolute', top: 12, left: 14, background: 'var(--orange)', color: '#fff', fontSize: 10, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50, zIndex: 1 }}>👀 FEATURED</div>}
+              {isFeatured && <div style={{ position: 'absolute', top: 12, left: 14, background: 'var(--orange)', color: '#fff', fontSize: 10, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50, zIndex: 1 }}>👀 {t('Featured')}</div>}
             </div>
             <button onClick={closePanel} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             <button
               onClick={async () => {
-                if (!item.id) { toast('Open a saved listing to favourite it'); return }
-                try { const c = await getTrpcClient(); await c.wishlist.toggle.mutate({ listingId: item.id as string }); toast('❤️ Updated your favourites') }
-                catch { toast('Please log in to save favourites') }
+                if (!item.id) { toast(t('Open a saved listing to favourite it')); return }
+                try { const c = await getTrpcClient(); await c.wishlist.toggle.mutate({ listingId: item.id as string }); toast(`❤️ ${t('Updated your favourites')}`) }
+                catch { toast(t('Please log in to save favourites')) }
               }}
-              title="Save to favourites"
+              title={t('Save to favourites')}
               style={{ position: 'absolute', top: 12, right: 56, background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤍</button>
           </div>
 
           <div style={{ overflowY: 'auto', flex: 1, padding: '14px 16px 24px' }}>
             {/* Demand signals */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-              <span style={{ background: '#FFF3EE', color: 'var(--orange)', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>👁 42 views today</span>
-              <span style={{ background: '#FFF3EE', color: 'var(--orange)', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>⚡ 7 watching</span>
+              <span style={{ background: '#FFF3EE', color: 'var(--orange)', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>👁 42 {t('views today')}</span>
+              <span style={{ background: '#FFF3EE', color: 'var(--orange)', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>⚡ 7 {t('watching')}</span>
             </div>
 
             {/* Title + price */}
@@ -1308,7 +1308,7 @@ function PanelBody() {
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>@seller_GC</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
                   <span style={{ background: 'var(--orange)', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '1px 6px', borderRadius: 50 }}>🟠 Grabber</span>
-                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>⭐ 4.8 · 34 sales</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>⭐ 4.8 · 34 {t('sales')}</span>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
@@ -1317,19 +1317,19 @@ function PanelBody() {
                 )}
                 <button
                   onClick={async () => {
-                    if (!item.id || !item.sellerId) { toast('Open a real listing to message the seller'); return }
+                    if (!item.id || !item.sellerId) { toast(t('Open a real listing to message the seller')); return }
                     try {
                       const c = await getTrpcClient()
                       const thread = await c.messages.thread.mutate({ listingId: item.id as string, sellerId: item.sellerId as string })
                       if (thread?.id) window.location.href = `/messages/${thread.id}`
                     } catch (e) {
                       const m = (e as Error)?.message ?? ''
-                      if (/yourself/i.test(m)) toast('That’s your own listing')
+                      if (/yourself/i.test(m)) toast(t('That’s your own listing'))
                       else if (/UNAUTHORIZED|FORBIDDEN|jwt|token/i.test(m)) window.location.href = '/auth'
-                      else toast('Could not start the chat')
+                      else toast(t('Could not start the chat'))
                     }
                   }}
-                  style={{ background: 'var(--ocean)', color: '#fff', border: 'none', borderRadius: 50, padding: '7px 13px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>💬 Message</button>
+                  style={{ background: 'var(--ocean)', color: '#fff', border: 'none', borderRadius: 50, padding: '7px 13px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>💬 {t('Message')}</button>
               </div>
             </div>
 
@@ -1338,7 +1338,7 @@ function PanelBody() {
               {condition && <span style={{ background: '#edf7ed', color: 'var(--sage)', border: '1px solid var(--sage)', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>{condition}</span>}
               {category  && <span style={{ background: '#f5f0e8', color: '#555', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>{category}</span>}
               <span style={{ background: '#f5f0e8', color: '#555', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>📍 {location}</span>
-              <span style={{ background: '#f5f0e8', color: '#555', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>🤝 Collection</span>
+              <span style={{ background: '#f5f0e8', color: '#555', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>🤝 {t('Collection')}</span>
             </div>
 
             {/* Description */}
@@ -1354,7 +1354,7 @@ function PanelBody() {
 
             {/* Similar listings */}
             <div style={{ marginBottom: 18 }}>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--dark)', marginBottom: 10 }}>Similar listings</div>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--dark)', marginBottom: 10 }}>{t('Similar listings')}</div>
               <div style={{ display: 'flex', gap: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
                 {SIMILAR.map((sim, i) => (
                   <div key={i} onClick={() => openPanel('listing', { ...sim, ref: `SIM${i}`, category })} style={{ flex: '0 0 120px', background: '#fff', border: '1px solid #e8e0d5', borderRadius: 10, overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
@@ -1388,22 +1388,22 @@ function PanelBody() {
                     deliveryFee: Number(item.deliveryFee) || 0,
                     deliveryMethod: item.deliveryMethod as ('courier' | 'in_person' | undefined),
                   })
-                  toast('🛒 Added to cart')
+                  toast(`🛒 ${t('Added to cart')}`)
                 }}
-                title="Add to cart"
+                title={t('Add to cart')}
                 style={{ flexShrink: 0, background: '#fff', color: 'var(--dark)', border: '2px solid #e0d8d0', borderRadius: 14, padding: '15px 16px', fontSize: 18, cursor: 'pointer' }}
               >🛒</button>
             </div>
 
             {/* Grabitt Guarantee — trust notice (HTML: openGrabittGuarantee) */}
             <div onClick={() => openPanel('shield')} style={{ textAlign: 'center', fontSize: 11, color: '#16a34a', fontFamily: 'var(--font-ui)', fontWeight: 800, marginTop: 10, cursor: 'pointer' }}>
-              🛡️ Protected by the Grabitt Guarantee · Funds held until you confirm ›
+              🛡️ {t('Protected by the Grabitt Guarantee · Funds held until you confirm')} ›
             </div>
 
             {/* Report / Share (HTML: report this listing / share this listing) */}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12 }}>
-              <button onClick={() => openPanel('report', { ...item })} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🚨 Report this Listing</button>
-              <button onClick={() => setShowShare(true)} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>📤 Share this Listing</button>
+              <button onClick={() => openPanel('report', { ...item })} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🚨 {t('Report this Listing')}</button>
+              <button onClick={() => setShowShare(true)} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>📤 {t('Share this Listing')}</button>
             </div>
           </div>
         </div>
