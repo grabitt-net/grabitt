@@ -2392,6 +2392,32 @@ function PanelBody() {
 
   // ── INVITE FRIENDS ───────────────────────────────────────────────────────────
   if (panel.id === 'invite') {
+    type Ref = { code: string; link: string; joined: number; credited: number; creditsEarned: number }
+    const [ref, setRef] = useState<Ref | null>(null)
+    const [loaded, setLoaded] = useState(false)
+    const [copied, setCopied] = useState(false)
+    useEffect(() => {
+      let live = true
+      ;(async () => {
+        try { const c = await getTrpcClient(); const r = await c.users.myReferral.query() as Ref; if (live) setRef(r) }
+        catch { /* not logged in → prompt below */ }
+        finally { if (live) setLoaded(true) }
+      })()
+      return () => { live = false }
+    }, [])
+
+    const link = ref?.link ?? ''
+    const shareMsg = `Join me on Grabitt — Gran Canaria's local marketplace. Sign up with my link and we both earn 50 credits when you list your first item: ${link}`
+    const copyLink = async () => {
+      try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2000); toast('Link copied ✓') }
+      catch { toast('Could not copy — long-press to copy') }
+    }
+    const shares: [string, string, () => void][] = [
+      ['WhatsApp', '💚', () => window.open(`https://wa.me/?text=${encodeURIComponent(shareMsg)}`, '_blank')],
+      ['Share on Facebook', '📘', () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`, '_blank')],
+      ['Share via Email', '📧', () => { window.location.href = `mailto:?subject=${encodeURIComponent('Join me on Grabitt')}&body=${encodeURIComponent(shareMsg)}` }],
+    ]
+
     return (
       <ActionPanel title="➕ Invite Friends" onClose={closePanel}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -2399,15 +2425,41 @@ function PanelBody() {
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Earn 50 credits per referral!</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5 }}>Invite friends to Grabitt. When they list their first item, you both earn 50 credits.</div>
         </div>
-        <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 14, textAlign: 'center', marginBottom: 16 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 4 }}>Your referral link</div>
-          <div style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>grabitt.net/join?ref=USER123</div>
-        </div>
-        {[['WhatsApp', '💚'], ['Copy link', '🔗'], ['Share on Facebook', '📘'], ['Share via Email', '📧']].map(([label, icon]) => (
-          <button key={label as string} style={{ width: '100%', background: '#fff', color: 'var(--dark)', border: '1.5px solid #e0d8d0', borderRadius: 12, padding: '12px 14px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 8, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 20 }}>{icon as string}</span>{label as string}
-          </button>
-        ))}
+
+        {!loaded ? (
+          <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        ) : !ref ? (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#666', marginBottom: 14 }}>Log in to get your personal referral link.</div>
+            <button onClick={() => openPanel('login')} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '11px 22px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Log in</button>
+          </div>
+        ) : (
+          <>
+            {/* Stats */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+              {[['Signed up', ref.joined], ['Listed & paid', ref.credited], ['Credits earned', ref.creditsEarned]].map(([label, val]) => (
+                <div key={label as string} style={{ flex: 1, background: '#fff', border: '1px solid #f0ebe4', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, color: 'var(--orange)' }}>{val as number}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>{label as string}</div>
+                </div>
+              ))}
+            </div>
+
+            <div onClick={copyLink} style={{ background: '#FFF3EE', borderRadius: 12, padding: 14, textAlign: 'center', marginBottom: 16, cursor: 'pointer' }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 4 }}>Your referral link — tap to copy</div>
+              <div style={{ fontFamily: 'monospace', fontSize: 12.5, fontWeight: 700, color: 'var(--orange)', wordBreak: 'break-all' }}>{link}</div>
+            </div>
+
+            <button onClick={copyLink} style={{ width: '100%', background: copied ? '#16a34a' : 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 14px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer', marginBottom: 8 }}>
+              {copied ? '✓ Copied' : '🔗 Copy link'}
+            </button>
+            {shares.map(([label, icon, onClick]) => (
+              <button key={label} onClick={onClick} style={{ width: '100%', background: '#fff', color: 'var(--dark)', border: '1.5px solid #e0d8d0', borderRadius: 12, padding: '12px 14px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 8, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 20 }}>{icon}</span>{label}
+              </button>
+            ))}
+          </>
+        )}
       </ActionPanel>
     )
   }

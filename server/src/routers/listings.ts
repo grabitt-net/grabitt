@@ -7,6 +7,29 @@ import { getStripe } from '../lib/stripe'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
+// Credit both the referred user and their referrer, once, and mark it done so it
+// can never fire twice. Each side gets a CreditEvent with the running balance.
+async function awardReferral(
+  prisma: { user: any; creditEvent: any; notification: any; $transaction: any },
+  referredId: string,
+  referrerId: string,
+) {
+  const bonus = PRICES.referralBonus
+  const [referred, referrer] = await Promise.all([
+    prisma.user.findUnique({ where: { id: referredId }, select: { credits: true, displayName: true } }),
+    prisma.user.findUnique({ where: { id: referrerId }, select: { credits: true } }),
+  ])
+  if (!referred || !referrer) return
+
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: referredId }, data: { credits: { increment: bonus }, referralRewarded: true } }),
+    prisma.user.update({ where: { id: referrerId }, data: { credits: { increment: bonus } } }),
+    prisma.creditEvent.create({ data: { userId: referredId, kind: 'referral', delta: bonus, balance: referred.credits + bonus, note: 'Referral welcome — first listing' } }),
+    prisma.creditEvent.create({ data: { userId: referrerId, kind: 'referral', delta: bonus, balance: referrer.credits + bonus, note: `Referral reward — ${referred.displayName} listed their first item` } }),
+    prisma.notification.create({ data: { userId: referrerId, kind: 'credits_received', title: '🎁 Referral reward!', body: `${referred.displayName} just listed their first item — you both earned ${bonus} credits.` } }),
+  ])
+}
+
 // Lightweight auto-tagging: derive up to 8 keyword tags from a listing's title +
 // description. Strips punctuation, drops stop-words and short tokens, dedupes.
 const STOP_WORDS = new Set(['the','and','for','with','this','that','your','you','are','has','have','from','was','will','can','all','new','used','one','two','our','out','get','not','but','they','use','very','good','great','perfect','condition','sale','selling','includes','included','comes','like'])
@@ -319,6 +342,15 @@ export const listingsRouter = router({
       // Wish matching: alert buyers whose active "I'm looking for X" wish this
       // new listing satisfies. Fires a wish_matched notification (Grabitt Alerts).
       await notifyWishMatches(ctx.prisma, listing)
+
+      // Referral reward: the promise is "when they list their first item, you both
+      // earn 50 credits". Fire once, on this user's very first listing.
+      if (user.referredById && !user.referralRewarded) {
+        const totalListings = await ctx.prisma.listing.count({ where: { sellerId: user.id } })
+        if (totalListings === 1) {
+          await awardReferral(ctx.prisma, user.id, user.referredById)
+        }
+      }
 
       return listing
     }),

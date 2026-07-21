@@ -191,6 +191,22 @@ model User {
   phoneVerified      Boolean   @default(false)
   idVerified         Boolean   @default(false)
   addressVerified    Boolean   @default(false)
+  // ID / address docs awaiting manual review: 'none' | 'pending'. Approval flips
+  // idVerified/addressVerified via the exec member admin.
+  idDocStatus        String    @default("none")
+  addressDocStatus   String    @default("none")
+  // Phone OTP (hashed code + expiry); cleared once verified.
+  phoneOtpHash       String?
+  phoneOtpExpiresAt  DateTime?
+
+  // Referral: each user has a shareable code; referredBy links to whoever's code
+  // they signed up with. referralRewarded guards the one-time "first listing"
+  // bonus so both parties are credited exactly once.
+  referralCode       String?   @unique
+  referredById       String?
+  referredBy         User?     @relation("Referrals", fields: [referredById], references: [id])
+  referrals          User[]    @relation("Referrals")
+  referralRewarded   Boolean   @default(false)
 
   // Moderation
   strikeCount        Int       @default(0)

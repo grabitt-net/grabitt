@@ -36,14 +36,22 @@ export default function AuthBootstrap() {
         user.email?.split('@')[0] ||
         'Grabitt user'
 
+      // Referral code from a /join?ref= link, captured before sign-up. Only used
+      // when the profile is first created; harmless afterwards.
+      const ref = (() => { try { return localStorage.getItem('grabitt_ref') || undefined } catch { return undefined } })()
+
       try {
         const res = await createTrpcClient().auth.provisionProfile.mutate({
           supabaseId: user.id,
           email: user.email ?? '',
           displayName,
           locale: 'en',
+          ...(ref ? { ref } : {}),
         })
         if (cancelled) return
+        // Consume the referral code once the profile exists so it can't later
+        // attach to a different account on a shared device.
+        if (res?.created && ref) { try { localStorage.removeItem('grabitt_ref') } catch { /* noop */ } }
         // GDPR-erased account: block access — sign out, don't establish identity.
         if ((res?.user as { deletedAt?: string | null } | undefined)?.deletedAt) {
           setAuthToken(null)

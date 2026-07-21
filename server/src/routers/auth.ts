@@ -12,6 +12,16 @@ import { PRICES } from '@grabitt/design-tokens'
 // lookup. The previous login/execLogin did exactly that (no password check),
 // which allowed anyone to impersonate any user or exec. They are removed.
 
+// Short, unambiguous share code (no 0/O/1/I). Uniqueness is enforced by the DB
+// unique index; a collision on insert is astronomically unlikely at this scale
+// and would surface as a normal error the client retries.
+export function makeReferralCode(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let code = ''
+  for (let i = 0; i < 7; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)]
+  return code
+}
+
 export const authRouter = router({
   // Provisions the Prisma profile row that mirrors a freshly-created Supabase user.
   // Requires a verified Supabase user id — never issues a session token itself.
@@ -23,12 +33,20 @@ export const authRouter = router({
       email: z.string().email(),
       displayName: z.string().min(1).max(80),
       locale: z.enum(['en', 'es', 'de']).default('en'),
+      // Referral code from a ?ref= invite link, if the user arrived via one.
+      ref: z.string().max(20).optional(),
     }))
     .mutation(async ({ input }) => {
       const existing = await prisma.user.findFirst({
         where: { OR: [{ email: input.email }, { supabaseId: input.supabaseId }] },
       })
       if (existing) return { user: existing, created: false }
+
+      // Resolve the referrer from their code. Self-referral is impossible here
+      // (the new user has no code yet), so no guard is needed.
+      const referrer = input.ref
+        ? await prisma.user.findUnique({ where: { referralCode: input.ref.trim().toUpperCase() }, select: { id: true } })
+        : null
 
       const user = await prisma.user.create({
         data: {
@@ -37,6 +55,8 @@ export const authRouter = router({
           displayName: input.displayName,
           locale: input.locale,
           credits: PRICES.registrationBonus,
+          referralCode: makeReferralCode(),
+          ...(referrer ? { referredById: referrer.id } : {}),
         },
       })
 

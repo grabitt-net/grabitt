@@ -58,6 +58,9 @@ export const PRICES = {
   creditsPerShare: 10,
   maxSharesPerMonth: 10,
   registrationBonus: 50,
+  // Both referrer and referred earn this when the referred user lists their
+  // first item.
+  referralBonus: 50,
 } as const
 
 // Recurring subscription catalogue (from the original prototype). Amounts are

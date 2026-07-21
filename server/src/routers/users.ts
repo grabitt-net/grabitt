@@ -3,6 +3,8 @@ import Stripe from 'stripe'
 import { getStripe } from '../lib/stripe'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
+import { makeReferralCode } from './auth'
+import { PRICES } from '@grabitt/design-tokens'
 
 const APP_URL = () => process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
@@ -10,6 +12,40 @@ export const usersRouter = router({
   me: protectedProcedure.query(({ ctx }) =>
     ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
   ),
+
+  // The user's referral code + link and how it's performing. Backfills a code
+  // for accounts created before referrals existed, on first open.
+  myReferral: protectedProcedure.query(async ({ ctx }) => {
+    let me = await ctx.prisma.user.findUniqueOrThrow({
+      where: { id: ctx.user.id },
+      select: { referralCode: true },
+    })
+    if (!me.referralCode) {
+      // Retry a couple of times on the unlikely unique collision.
+      for (let attempt = 0; attempt < 3 && !me.referralCode; attempt++) {
+        try {
+          me = await ctx.prisma.user.update({
+            where: { id: ctx.user.id },
+            data: { referralCode: makeReferralCode() },
+            select: { referralCode: true },
+          })
+        } catch { /* collision — try again */ }
+      }
+    }
+
+    const [joined, credited] = await Promise.all([
+      ctx.prisma.user.count({ where: { referredById: ctx.user.id } }),
+      ctx.prisma.user.count({ where: { referredById: ctx.user.id, referralRewarded: true } }),
+    ])
+    const code = me.referralCode ?? ''
+    return {
+      code,
+      link: `${APP_URL()}/join?ref=${code}`,
+      joined,          // how many signed up with my code
+      credited,        // how many have listed their first item (bonus paid)
+      creditsEarned: credited * PRICES.referralBonus,
+    }
+  }),
 
   // Public: reviews received by a user (seller or buyer), plus a rating summary.
   reviews: publicProcedure
