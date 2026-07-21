@@ -76,16 +76,12 @@ export async function releaseFundsToSeller(
     transferId = transfer.id
   }
 
-  const listing = await prisma.listing.findUnique({ where: { id: tx.listingId }, select: { title: true, stock: true } })
+  const listing = await prisma.listing.findUnique({ where: { id: tx.listingId }, select: { title: true } })
   const now = new Date()
 
-  // Multi-buy: this sale consumes `quantity` units. Mark the listing sold only
-  // when the last unit goes; otherwise keep it live with reduced stock.
-  const remaining = Math.max(0, (listing?.stock ?? 1) - tx.quantity)
-  const listingUpdate = remaining <= 0
-    ? { status: 'sold' as const, stock: 0 }
-    : { stock: remaining }
-
+  // Stock was already consumed when the payment was authorised (reserved at
+  // 'held' in the Stripe webhook), so releasing funds must NOT decrement it
+  // again — doing so double-counted the sale. Release only settles the money.
   const txData: Prisma.TransactionUpdateInput = {
     status: 'released',
     fundsReleasedAt: now,
@@ -95,7 +91,6 @@ export async function releaseFundsToSeller(
 
   await prisma.$transaction([
     prisma.transaction.update({ where: { id: tx.id }, data: txData }),
-    prisma.listing.update({ where: { id: tx.listingId }, data: listingUpdate }),
     prisma.user.update({ where: { id: tx.sellerId }, data: { salesCount: { increment: 1 } } }),
     prisma.notification.create({
       data: {

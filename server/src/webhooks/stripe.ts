@@ -66,43 +66,67 @@ export async function handleStripeEvent(event: Stripe.Event) {
     // (not yet captured). Capture happens later at handover/tracking release.
     case 'payment_intent.amount_capturable_updated': {
       const pi = event.data.object as Stripe.PaymentIntent
-      await prisma.transaction.updateMany({
+      // One PaymentIntent = one escrow transaction. Reserving stock here — the
+      // moment the card is authorised — is what stops two buyers securing the
+      // same last unit: the conditional decrement is an atomic lock. (Filtering
+      // on status='pending_payment' also makes a redelivered webhook a no-op.)
+      const pending = await prisma.transaction.findMany({
         where: { stripePaymentIntentId: pi.id, status: 'pending_payment' },
-        data: { status: 'held' },
-      })
-      // Collection sales: now that the purchase is complete (funds held), auto-send
-      // the seller's collection address + phone to the buyer. These are hidden
-      // until this point.
-      const collectionTxs = await prisma.transaction.findMany({
-        where: { stripePaymentIntentId: pi.id, status: 'held', fulfilmentType: 'collection' },
         select: {
-          buyerId: true,
+          id: true, listingId: true, quantity: true, buyerId: true, fulfilmentType: true,
           listing: { select: { title: true } },
           seller: { select: { displayName: true, phone: true, collectionAddress: true } },
         },
       })
-      for (const t of collectionTxs) {
-        if (!t.seller.collectionAddress && !t.seller.phone) continue
-        await prisma.notification.create({
-          data: {
-            userId: t.buyerId,
-            kind: 'system',
-            title: '📍 Collection details for your purchase',
-            body: `Collect "${t.listing.title}" from ${t.seller.displayName}.`
-              + (t.seller.collectionAddress ? ` Address: ${t.seller.collectionAddress}.` : '')
-              + (t.seller.phone ? ` Phone: ${t.seller.phone}.` : ''),
-          },
-        })
-      }
-      // Real-time basket cleanup: once an item is bought, drop single-stock
-      // listings from everyone else's basket so no one else can check them out.
-      const heldForCart = await prisma.transaction.findMany({
-        where: { stripePaymentIntentId: pi.id, status: 'held' },
-        select: { listingId: true, listing: { select: { stock: true } } },
-      })
-      const soldOut = heldForCart.filter(t => t.listing.stock <= 1).map(t => t.listingId)
-      if (soldOut.length) {
-        await prisma.cartItem.deleteMany({ where: { listingId: { in: soldOut } } })
+
+      for (const tx of pending) {
+        // Atomic reserve: succeeds only while the listing is still buyable AND has
+        // the units. Marks it sold when the last unit goes.
+        const reserved = await prisma.$executeRaw`
+          UPDATE "Listing"
+          SET stock = stock - ${tx.quantity},
+              status = CASE WHEN stock - ${tx.quantity} <= 0 THEN 'sold'::"ListingStatus" ELSE status END
+          WHERE id = ${tx.listingId}
+            AND status IN ('active', 'grab_it_now')
+            AND stock >= ${tx.quantity}`
+
+        if (reserved === 0) {
+          // Sold out from under this buyer between authorising and now. Void the
+          // authorisation so their card is never charged, and tell them.
+          try { await getStripe().paymentIntents.cancel(pi.id) } catch { /* already voided */ }
+          await prisma.transaction.update({ where: { id: tx.id }, data: { status: 'cancelled' } })
+          await prisma.notification.create({
+            data: {
+              userId: tx.buyerId, kind: 'system',
+              title: 'Sold out — you were not charged',
+              body: `"${tx.listing.title}" sold out before your payment completed, so no money was taken.`,
+            },
+          })
+          continue
+        }
+
+        // Reserved — the purchase is now held in escrow.
+        await prisma.transaction.update({ where: { id: tx.id }, data: { status: 'held' } })
+
+        // Collection sales: release the seller's collection address + phone to the
+        // buyer. These are hidden until the purchase is secured.
+        if (tx.fulfilmentType === 'collection' && (tx.seller.collectionAddress || tx.seller.phone)) {
+          await prisma.notification.create({
+            data: {
+              userId: tx.buyerId, kind: 'system',
+              title: '📍 Collection details for your purchase',
+              body: `Collect "${tx.listing.title}" from ${tx.seller.displayName}.`
+                + (tx.seller.collectionAddress ? ` Address: ${tx.seller.collectionAddress}.` : '')
+                + (tx.seller.phone ? ` Phone: ${tx.seller.phone}.` : ''),
+            },
+          })
+        }
+
+        // If that reservation emptied the listing, drop it from everyone's basket.
+        const fresh = await prisma.listing.findUnique({ where: { id: tx.listingId }, select: { stock: true } })
+        if ((fresh?.stock ?? 0) <= 0) {
+          await prisma.cartItem.deleteMany({ where: { listingId: tx.listingId } })
+        }
       }
       break
     }
@@ -146,6 +170,27 @@ export async function handleStripeEvent(event: Stripe.Event) {
         where: { stripePaymentIntentId: pi.id },
         data: { status: 'cancelled' },
       })
+      break
+    }
+    // A held (reserved) authorisation is being voided — Stripe auto-cancels an
+    // uncaptured manual-capture PI after 7 days, or we cancel it ourselves. Give
+    // the reserved stock back and re-list it if that unit had sold the item out.
+    // Only rows still 'held' are restored, so this can't double-refund stock
+    // against the sold-out branch above (which never reached 'held').
+    case 'payment_intent.canceled': {
+      const pi = event.data.object as Stripe.PaymentIntent
+      const held = await prisma.transaction.findMany({
+        where: { stripePaymentIntentId: pi.id, status: 'held' },
+        select: { id: true, listingId: true, quantity: true },
+      })
+      for (const tx of held) {
+        await prisma.$executeRaw`
+          UPDATE "Listing"
+          SET stock = stock + ${tx.quantity},
+              status = CASE WHEN status = 'sold' THEN 'active'::"ListingStatus" ELSE status END
+          WHERE id = ${tx.listingId}`
+        await prisma.transaction.update({ where: { id: tx.id }, data: { status: 'cancelled' } })
+      }
       break
     }
     case 'transfer.created': {
