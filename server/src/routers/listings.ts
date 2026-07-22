@@ -99,6 +99,26 @@ async function notifyWishMatches(
   })
 }
 
+// A price CUT alerts everyone watching the item, and re-runs wish matching in
+// case the drop brings it inside someone's budget. Shared by the quick price
+// editor and the full edit form so the two can't drift apart. A price rise is
+// deliberately silent.
+async function notifyPriceDrop(prisma: any, listing: any, oldPrice: number, newPrice: number) {
+  if (!(newPrice < oldPrice)) return
+  const watchers = await prisma.wishlistItem.findMany({ where: { listingId: listing.id }, select: { userId: true } })
+  const pct = oldPrice > 0 ? Math.round(((oldPrice - newPrice) / oldPrice) * 100) : 0
+  await prisma.notification.createMany({
+    data: watchers.map((w: any) => ({
+      userId: w.userId,
+      kind: 'price_drop' as const,
+      title: '📉 Price drop on a saved item',
+      body: `"${listing.title}" dropped from €${oldPrice.toLocaleString()} to €${newPrice.toLocaleString()}${pct > 0 ? ` (−${pct}%)` : ''}.`,
+      actionUrl: `/listings/${listing.id}`,
+    })),
+  })
+  await notifyWishMatches(prisma, listing, oldPrice)
+}
+
 export const listingsRouter = router({
   search: publicProcedure
     .input(SearchInputSchema)
@@ -366,24 +386,74 @@ export const listingsRouter = router({
       const oldPrice = Number(listing.price)
       const newPrice = Math.round(input.price * 100) / 100
       const updated = await ctx.prisma.listing.update({ where: { id: listing.id }, data: { price: newPrice } })
-
-      if (newPrice < oldPrice) {
-        const watchers = await ctx.prisma.wishlistItem.findMany({ where: { listingId: listing.id }, select: { userId: true } })
-        const pct = oldPrice > 0 ? Math.round(((oldPrice - newPrice) / oldPrice) * 100) : 0
-        await ctx.prisma.notification.createMany({
-          data: watchers.map(w => ({
-            userId: w.userId,
-            kind: 'price_drop' as const,
-            title: '📉 Price drop on a saved item',
-            body: `"${listing.title}" dropped from €${oldPrice.toLocaleString()} to €${newPrice.toLocaleString()}${pct > 0 ? ` (−${pct}%)` : ''}.`,
-            actionUrl: `/listings/${listing.id}`,
-          })),
-        })
-        // Also alert buyers whose "looking for X" wish just became affordable —
-        // the item now sits within a budget the old price exceeded.
-        await notifyWishMatches(ctx.prisma, updated as any, oldPrice)
-      }
+      await notifyPriceDrop(ctx.prisma, updated, oldPrice, newPrice)
       return { ok: true, price: newPrice, dropped: newPrice < oldPrice }
+    }),
+
+  // Full edit of a listing the caller owns. Everything is optional so the client
+  // can send only what changed. Sold listings are frozen — the item has already
+  // been transacted and the buyer's record must keep matching what they bought.
+  update: protectedProcedure
+    .input(z.object({
+      listingId: z.string().uuid(),
+      title: z.string().min(4).max(100).optional(),
+      description: z.string().max(2000).optional(),
+      price: z.number().min(0).max(9_999_999).optional(),
+      department: z.string().optional(),
+      condition: z.string().optional(),
+      images: z.array(z.string().url()).min(1).max(8).optional(),
+      location: z.string().max(100).optional(),
+      stock: z.number().int().min(1).max(999).optional(),
+      deliveryFee: z.number().min(0).optional(),
+      deliveryMethod: z.enum(['courier', 'in_person']).nullable().optional(),
+      autoAcceptMin: z.number().min(0).nullable().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { listingId, ...fields } = input
+      const listing = await ctx.prisma.listing.findUniqueOrThrow({ where: { id: listingId } })
+      if (listing.sellerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the seller can edit this listing' })
+      if (listing.status === 'sold') throw new TRPCError({ code: 'BAD_REQUEST', message: 'A sold listing can no longer be edited.' })
+
+      // Drop keys the client didn't send, so an omitted field is left untouched.
+      const data: Record<string, unknown> = {}
+      for (const [k, v] of Object.entries(fields)) if (v !== undefined) data[k] = v
+      // Re-derive search tags whenever the words change.
+      if (data.title !== undefined || data.description !== undefined) {
+        data.tags = autoTags(
+          (data.title as string) ?? listing.title,
+          (data.description as string) ?? listing.description,
+        )
+      }
+      if (Object.keys(data).length === 0) return { ok: true, id: listing.id }
+
+      const oldPrice = Number(listing.price)
+      const updated = await ctx.prisma.listing.update({ where: { id: listing.id }, data: data as never })
+
+      // A price cut from the edit form must alert watchers exactly as the
+      // quick price editor does.
+      if (data.price !== undefined) {
+        await notifyPriceDrop(ctx.prisma, updated, oldPrice, Number(updated.price))
+      }
+      return { ok: true, id: updated.id }
+    }),
+
+  // Take a listing down or put it back up. Soft — the row is kept so orders,
+  // reviews and disputes that reference it stay intact.
+  setStatus: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid(), status: z.enum(['active', 'removed']) }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUniqueOrThrow({ where: { id: input.listingId } })
+      if (listing.sellerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the seller can change this listing' })
+      if (listing.status === 'sold') throw new TRPCError({ code: 'BAD_REQUEST', message: 'This listing has sold.' })
+      if (input.status === 'active' && listing.stock < 1) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Add stock before relisting.' })
+      }
+      await ctx.prisma.listing.update({ where: { id: listing.id }, data: { status: input.status } })
+      // Relisting shouldn't leave it sitting in anyone's stale basket.
+      if (input.status === 'removed') {
+        await ctx.prisma.cartItem.deleteMany({ where: { listingId: listing.id } })
+      }
+      return { ok: true, status: input.status }
     }),
 
   featured: publicProcedure

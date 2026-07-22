@@ -278,6 +278,10 @@ function ListingInner() {
                 </button>
               )
             )}
+            {/* Full edit — photos, title, description, stock, delivery, unlist */}
+            <Link href={`/listings/${id}/edit`} style={{ display: 'block', marginTop: 8, textAlign: 'center', textDecoration: 'none', background: '#fff', color: '#555', border: '1.5px solid var(--sand2)', borderRadius: 12, padding: '10px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900 }}>
+              {t('Edit listing')}
+            </Link>
           </div>
         ) : job ? (
           <div style={cardBox}>
