@@ -102,10 +102,39 @@ function BusinessUpsell({ signedOut }: { signedOut: boolean }) {
           ))}
         </div>
 
+        {/* Grades: every business starts at Dealer; the lower-fee grades are
+            earned through sales and rating, never bought. */}
+        <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, padding: 16, marginTop: 12 }}>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{t('You start at Dealer')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6b5d48', lineHeight: 1.55, marginBottom: 12 }}>
+            {t('Every business account begins at Dealer. Trader and Pro are earned as you sell — they can’t be bought.')}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
+            {([
+              ['🟡', 'Dealer', '6%', '50', true],
+              ['🔵', 'Trader', '4%', '200', false],
+              ['⭐', 'Pro', '2.5%', t('unlimited'), false],
+            ] as [string, string, string, string, boolean][]).map(([emoji, name, fee, cap, start]) => (
+              <div key={name} style={{ border: `1.5px solid ${start ? 'var(--orange)' : '#ece3d7'}`, borderRadius: 12, padding: '10px 12px', background: start ? '#FFF3EE' : '#fff' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 18 }}>{emoji}</span>
+                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{name}</span>
+                  {start
+                    ? <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-nunito)', fontSize: 8.5, fontWeight: 900, color: '#fff', background: 'var(--orange)', borderRadius: 50, padding: '2px 7px', textTransform: 'uppercase' }}>{t('Start here')}</span>
+                    : <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-nunito)', fontSize: 9, color: '#9a8b74' }}>{t('earned')}</span>}
+                </div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#6b5d48', marginTop: 5 }}>
+                  {fee} {t('seller fee')} · {cap} {t('listings/mo')}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Price + call to action */}
-        <div style={{ background: '#fff', border: '2px solid var(--orange)', borderRadius: 16, padding: 20, marginTop: 16, textAlign: 'center' }}>
+        <div style={{ background: '#fff', border: '2px solid var(--orange)', borderRadius: 16, padding: 20, marginTop: 12, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 30, fontWeight: 700, color: 'var(--orange)' }}>€29<span style={{ fontSize: 15, color: '#8a7d68', fontWeight: 400 }}>/{t('month')}</span></div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#6b5d48', marginTop: 4, marginBottom: 16 }}>{t('7 days free — cancel any time.')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#6b5d48', marginTop: 4, marginBottom: 16 }}>{t('Free for 21 days — then €29/mo. Pause any time, nothing lost.')}</div>
 
           {signedOut ? (
             <>

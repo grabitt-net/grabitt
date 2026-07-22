@@ -67,8 +67,11 @@ export const PRICES = {
 // in cents (EUR). `trialDays` 0 = no trial. `grantsGrade` = a grade floor while
 // the sub is active. `verifyFeeCents` = one-off business verification.
 export const SUBSCRIPTION_PLANS = {
-  business:    { label: 'Business',            amountCents: 2900, interval: 'month', trialDays: 7, grantsGrade: 'dealer', verifyFeeCents: 1900,
-                 blurb: 'Your own storefront, 🏢 badge & instant Dealer status. 7 days free, then €29/mo.' },
+  // 21 days free per the V20 prototype — sign up as a business at no cost, then
+  // billing starts. Feeds Stripe's trial_period_days, so this constant IS the
+  // free period; changing it changes what customers actually get.
+  business:    { label: 'Business',            amountCents: 2900, interval: 'month', trialDays: 21, grantsGrade: 'dealer', verifyFeeCents: 1900,
+                 blurb: 'Your own storefront, 🏢 badge & instant Dealer status. 21 days free, then €29/mo — pause any time.' },
   service_ad:  { label: 'Advertise a service', amountCents: 2900, interval: 'month', trialDays: 0,
                  blurb: 'Promote your service to locals. €29/mo.' },
   page_banner: { label: 'Page banners',        amountCents: 3900, interval: 'month', trialDays: 0,
