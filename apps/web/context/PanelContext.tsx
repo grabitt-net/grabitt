@@ -5,7 +5,7 @@ export type PanelId =
   | 'alerts' | 'saved' | 'rewards' | 'login' | 'messages' | 'sell' | 'help'
   | 'shield' | 'affiliate' | 'dept' | 'near' | 'grabit' | 'sponsors'
   | 'business' | 'footer' | 'menu' | 'justlisted'
-  | 'listing' | 'search' | 'savesearch' | 'savedSearches'
+  | 'search' | 'savesearch' | 'savedSearches'
   | 'offers' | 'purchases' | 'mylistings' | 'wishlist'
   | 'invite' | 'recentviewed' | 'favourites' | 'soldprices' | 'advertise'
   | 'checkout' | 'makeOffer' | 'offerReceived' | 'handover' | 'reviewTx' | 'dispute' | 'mySales'

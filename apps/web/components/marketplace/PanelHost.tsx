@@ -1,8 +1,8 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import type { PanelId } from '@/context/PanelContext'
-import { useCart } from '@/context/CartContext'
 import { useToast } from '@/context/ToastContext'
 import { useChat } from '@/hooks/useChat'
 import { useNotifications, kindIcon, kindTab, relativeTime } from '@/hooks/useNotifications'
@@ -11,10 +11,8 @@ import { createTrpcClient } from '@/lib/trpc'
 import { createClient } from '@/lib/supabase'
 import { getAuthToken, refreshAuthToken, setAuthToken } from '@/lib/authToken'
 import { compressAndUpload, listingPhotoPath, uploadDisputeEvidence } from '@/lib/storage'
-import { pushView } from '@/lib/recentViews'
 import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
 import StripePayment from './StripePayment'
-import ShareSheet from './ShareSheet'
 import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
 import SeekerProfilePanel from './SeekerProfilePanel'
@@ -408,8 +406,13 @@ function CourierTrackingForm({ transactionId, title, onClose }: { transactionId:
 
 function PanelBody() {
   const { panel, closePanel, openPanel } = usePanel()
-  const cart = useCart()
+  const router = useRouter()
   const toast = useToast()
+
+  // Opening a listing always goes to the real /listings/[id] page — there is no
+  // in-app listing panel any more, so a listing looks identical wherever it's
+  // opened from. Closes the panel first so the user isn't left behind an overlay.
+  const goListing = (id: string) => { closePanel(); router.push(`/listings/${id}`) }
   const [shieldTab, setShieldTab] = useState<string>('promise')
   const [notifTab, setNotifTab] = useState<string>('all')
 
@@ -1055,7 +1058,7 @@ function PanelBody() {
               {items.map((l, i) => {
                 const item = toPanelItem(l)
                 return (
-                  <div key={l.id} onClick={() => openPanel('listing', item)} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                  <div key={l.id} onClick={() => goListing(l.id)} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
                     <div style={{ width: '100%', paddingTop: '72%', background: CARD_GRADS[i % CARD_GRADS.length], position: 'relative' }}>
                       {item.image
                         ? <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1240,183 +1243,6 @@ function PanelBody() {
           })}
         </div>
       </ActionPanel>
-    )
-  }
-
-  // ── LISTING DETAIL (§4.4) ──────────────────────────────────────────────────
-  if (panel.id === 'listing') {
-    const item = panel.data as Record<string, unknown>
-    const emoji    = (item.emoji    as string) || '🛍️'
-    const heroImage = (item.image as string) || (Array.isArray(item.images) ? (item.images as string[])[0] : null)
-    const title    = (item.title    as string) || 'Item'
-    const price    = (item.price    as string) || '€0'
-    const location = (item.location as string) || 'Gran Canaria'
-    const category = (item.category as string) || ''
-    const condition= (item.condition as string) || ''
-    const isFeatured = !!item.isFeatured
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [showShare, setShowShare] = useState(false)
-
-    // Record this view for the homepage "Recently viewed" strip.
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => { if (item.id) pushView({ id: item.id as string, title, price, image: heroImage, emoji, location }) }, [item.id])
-
-    const SIMILAR = [
-      { emoji: '📱', title: 'Samsung S24', price: '€580', location: 'Las Palmas' },
-      { emoji: '💻', title: 'iPad Pro 12.9"', price: '€720', location: 'Telde' },
-      { emoji: '🎧', title: 'Sony WH-1000XM5', price: '€220', location: 'Maspalomas' },
-      { emoji: '🖥️', title: 'Dell Monitor 27"', price: '€190', location: 'Las Palmas' },
-    ]
-
-    return (
-      <div onClick={closePanel} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }}>
-        <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
-          {/* Hero */}
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <div style={{ width: '100%', paddingTop: 'min(52%, 300px)', background: '#f5f0e8', borderRadius: 'inherit', position: 'relative', overflow: 'hidden' }}>
-              {heroImage
-                ? <img src={heroImage} alt={title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 88 }}>{emoji}</div>}
-              {isFeatured && <div style={{ position: 'absolute', top: 12, left: 14, background: 'var(--orange)', color: '#fff', fontSize: 10, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50, zIndex: 1 }}>👀 {t('Featured')}</div>}
-            </div>
-            <button onClick={closePanel} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-            <button
-              onClick={async () => {
-                if (!item.id) { toast(t('Open a saved listing to favourite it')); return }
-                try { const c = await getTrpcClient(); await c.wishlist.toggle.mutate({ listingId: item.id as string }); toast(`❤️ ${t('Updated your favourites')}`) }
-                catch { toast(t('Please log in to save favourites')) }
-              }}
-              title={t('Save to favourites')}
-              style={{ position: 'absolute', top: 12, right: 56, background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤍</button>
-          </div>
-
-          <div style={{ overflowY: 'auto', flex: 1, padding: '14px 16px 24px' }}>
-            {/* Demand signals */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-              <span style={{ background: '#FFF3EE', color: 'var(--orange)', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>👁 42 {t('views today')}</span>
-              <span style={{ background: '#FFF3EE', color: 'var(--orange)', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>⚡ 7 {t('watching')}</span>
-            </div>
-
-            {/* Title + price */}
-            <div style={{ fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 700, color: 'var(--dark)', lineHeight: 1.2, marginBottom: 6 }}>{title}</div>
-            <div style={{ fontFamily: 'Georgia,serif', fontSize: 28, fontWeight: 700, color: 'var(--orange)', marginBottom: 14 }}>{price}</div>
-
-            {/* Seller */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#f9f6f2', borderRadius: 12, marginBottom: 14 }}>
-              <div style={{ width: 42, height: 42, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>👤</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>@seller_GC</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                  <span style={{ background: 'var(--orange)', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '1px 6px', borderRadius: 50 }}>🟠 Grabber</span>
-                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>⭐ 4.8 · 34 {t('sales')}</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                {!!item.sellerId && (
-                  <button onClick={() => openPanel('storefront', { sellerId: item.sellerId })} style={{ background: '#fff', color: 'var(--ocean)', border: '1.5px solid var(--ocean)', borderRadius: 50, padding: '7px 11px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🏪</button>
-                )}
-                <button
-                  onClick={async () => {
-                    if (!item.id || !item.sellerId) { toast(t('Open a real listing to message the seller')); return }
-                    try {
-                      const c = await getTrpcClient()
-                      const thread = await c.messages.thread.mutate({ listingId: item.id as string, sellerId: item.sellerId as string })
-                      if (thread?.id) window.location.href = `/messages/${thread.id}`
-                    } catch (e) {
-                      const m = (e as Error)?.message ?? ''
-                      if (/yourself/i.test(m)) toast(t('That’s your own listing'))
-                      else if (/UNAUTHORIZED|FORBIDDEN|jwt|token/i.test(m)) window.location.href = '/auth'
-                      else toast(t('Could not start the chat'))
-                    }
-                  }}
-                  style={{ background: 'var(--ocean)', color: '#fff', border: 'none', borderRadius: 50, padding: '7px 13px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>💬 {t('Message')}</button>
-              </div>
-            </div>
-
-            {/* Tag pills */}
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-              {condition && <span style={{ background: '#edf7ed', color: 'var(--sage)', border: '1px solid var(--sage)', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>{condition}</span>}
-              {category  && <span style={{ background: '#f5f0e8', color: '#555', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>{category}</span>}
-              <span style={{ background: '#f5f0e8', color: '#555', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>📍 {location}</span>
-              <span style={{ background: '#f5f0e8', color: '#555', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>🤝 {t('Collection')}</span>
-            </div>
-
-            {/* Description */}
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.65, marginBottom: 14 }}>
-              Great condition — selling due to upgrade. Happy to answer any questions via Grabitt chat. Pickup preferred; local delivery available for a small fee. Cash or Grabitt Pay accepted.
-            </div>
-
-            {/* Map placeholder */}
-            <div style={{ background: '#eee', borderRadius: 12, padding: 18, textAlign: 'center', marginBottom: 14 }}>
-              <div style={{ fontSize: 30, marginBottom: 4 }}>📍</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>{location}, Gran Canaria</div>
-            </div>
-
-            {/* Similar listings */}
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--dark)', marginBottom: 10 }}>{t('Similar listings')}</div>
-              <div style={{ display: 'flex', gap: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
-                {SIMILAR.map((sim, i) => (
-                  <div key={i} onClick={() => openPanel('listing', { ...sim, ref: `SIM${i}`, category })} style={{ flex: '0 0 120px', background: '#fff', border: '1px solid #e8e0d5', borderRadius: 10, overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ width: '100%', paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
-                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30 }}>{sim.emoji}</div>
-                    </div>
-                    <div style={{ padding: '6px 8px 8px' }}>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sim.title}</div>
-                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 12, fontWeight: 700, color: 'var(--orange)' }}>{sim.price}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => openPanel('checkout', { ...item })} style={{ flex: 1, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '15px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
-                {t('Buy Now')}
-              </button>
-              <button onClick={() => openPanel('makeOffer', { ...item })} style={{ flex: 1, background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 14, padding: '15px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
-                {t('Make Offer')}
-              </button>
-              <button
-                onClick={() => {
-                  const priceNum = parseFloat(price.replace(/[^0-9.]/g, '')) || 0
-                  cart.add({
-                    key: (item.id as string) || (item.listingId as string) || title,
-                    listingId: (item.id as string) || (item.listingId as string),
-                    title, price: priceNum, emoji, location,
-                    deliveryFee: Number(item.deliveryFee) || 0,
-                    deliveryMethod: item.deliveryMethod as ('courier' | 'in_person' | undefined),
-                  })
-                  toast(`🛒 ${t('Added to cart')}`)
-                }}
-                title={t('Add to cart')}
-                style={{ flexShrink: 0, background: '#fff', color: 'var(--dark)', border: '2px solid #e0d8d0', borderRadius: 14, padding: '15px 16px', fontSize: 18, cursor: 'pointer' }}
-              >🛒</button>
-            </div>
-
-            {/* Grabitt Guarantee — trust notice (HTML: openGrabittGuarantee) */}
-            <div onClick={() => openPanel('shield')} style={{ textAlign: 'center', fontSize: 11, color: '#16a34a', fontFamily: 'var(--font-ui)', fontWeight: 800, marginTop: 10, cursor: 'pointer' }}>
-              🛡️ {t('Protected by the Grabitt Guarantee · Funds held until you confirm')} ›
-            </div>
-
-            {/* Report / Share (HTML: report this listing / share this listing) */}
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12 }}>
-              <button onClick={() => openPanel('report', { ...item })} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🚨 {t('Report this Listing')}</button>
-              <button onClick={() => setShowShare(true)} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>📤 {t('Share this Listing')}</button>
-            </div>
-          </div>
-        </div>
-        {showShare && (
-          <ShareSheet
-            title={title}
-            price={price}
-            emoji={emoji}
-            url={typeof window !== 'undefined' ? `${window.location.origin}/listings/${item.id ?? ''}` : `/listings/${item.id ?? ''}`}
-            onClose={() => setShowShare(false)}
-          />
-        )}
-      </div>
     )
   }
 
@@ -1971,7 +1797,7 @@ function PanelBody() {
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {store.listings.map(l => (
-                  <div key={l.id} onClick={() => openPanel('listing', { id: l.id, title: l.title, price: `€${Number(l.price).toFixed(2)}`, location: l.location })} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 12, overflow: 'hidden', cursor: 'pointer' }}>
+                  <div key={l.id} onClick={() => goListing(l.id)} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 12, overflow: 'hidden', cursor: 'pointer' }}>
                     <div style={{ width: '100%', paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
                       {l.images?.[0] ? <img src={l.images[0]} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30 }}>🛍️</div>}
                     </div>
@@ -2142,7 +1968,7 @@ function PanelBody() {
               {sorted.slice(0, 40).map(l => {
                 const item = toPanelItem(l)
                 return (
-                  <div key={l.id} onClick={() => openPanel('listing', item)} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                  <div key={l.id} onClick={() => goListing(l.id)} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
                     <div style={{ width: '100%', paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
                       {item.image
                         ? <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -2367,7 +2193,7 @@ function PanelBody() {
         ) : (
           <>
             {shown.map((l: any) => (
-              <div key={l.id} onClick={() => openPanel('listing', { id: l.id })} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer', opacity: seg === 'sold' ? 0.7 : 1 }}>
+              <div key={l.id} onClick={() => goListing(l.id)} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer', opacity: seg === 'sold' ? 0.7 : 1 }}>
                 <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0, overflow: 'hidden' }}>
                   {Array.isArray(l.images) && l.images[0] ? <img src={l.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🖼️'}
                 </div>
@@ -3836,7 +3662,7 @@ function PanelBody() {
           ))}
         </div>
         {filteredJobs.map(job => (
-          <div key={job.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #f0ebe4', padding: '14px 12px', marginBottom: 10, cursor: 'pointer' }} onClick={() => openPanel('listing', { id: job.id })}>
+          <div key={job.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #f0ebe4', padding: '14px 12px', marginBottom: 10, cursor: 'pointer' }} onClick={() => goListing(job.id)}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
               <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>{job.emoji}</div>
               <div style={{ flex: 1 }}>
@@ -3879,7 +3705,7 @@ function PanelBody() {
           ))}
         </div>
         {shownProps.map(p => (
-          <div key={p.id} onClick={() => openPanel('listing', { id: p.id })} style={{ background: '#fff', borderRadius: 14, border: '1px solid #f0ebe4', marginBottom: 10, overflow: 'hidden', cursor: 'pointer' }}>
+          <div key={p.id} onClick={() => goListing(p.id)} style={{ background: '#fff', borderRadius: 14, border: '1px solid #f0ebe4', marginBottom: 10, overflow: 'hidden', cursor: 'pointer' }}>
             <div style={{ background: '#f5f0e8', height: 110, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56, position: 'relative' }}>
               {p.emoji}
               <span style={{ position: 'absolute', top: 10, right: 10, background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50 }}>{p.tag}</span>
@@ -4389,7 +4215,7 @@ function PanelBody() {
         ) : favItems.map(f => {
           const isSold = f.listing.status === 'sold'
           return (
-            <div key={f.listingId} onClick={() => !isSold && openPanel('listing', { id: f.listingId })} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: isSold ? 'default' : 'pointer', opacity: isSold ? 0.6 : 1 }}>
+            <div key={f.listingId} onClick={() => { if (!isSold) goListing(f.listingId) }} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: isSold ? 'default' : 'pointer', opacity: isSold ? 0.6 : 1 }}>
               <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, flexShrink: 0, overflow: 'hidden' }}>
                 {f.listing.images[0] ? <img src={f.listing.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🖼️'}
               </div>

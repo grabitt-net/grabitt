@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { usePanel } from '@/context/PanelContext'
+import { useRouter } from 'next/navigation'
 import { createTrpcClient } from '@/lib/trpc'
 import { toPanelItem, type DbListing } from '@/lib/listingMap'
 import Icon from './Icon'
@@ -25,7 +25,7 @@ const CATS: { label: string; dept?: string }[] = [
 ]
 
 export default function ListingsGrid() {
-  const { openPanel } = usePanel()
+  const router = useRouter()
   const [cat, setCat] = useState(0)
   const [sort, setSort] = useState('newest')
   const [items, setItems] = useState<DbListing[]>([])
@@ -70,7 +70,7 @@ export default function ListingsGrid() {
           {items.map(l => {
             const item = toPanelItem(l)
             return (
-              <div key={l.id} onClick={() => openPanel('listing', item)} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'transform 0.15s, box-shadow 0.15s' }}
+              <div key={l.id} onClick={() => router.push(`/listings/${l.id}`)} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'transform 0.15s, box-shadow 0.15s' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 26px rgba(0,0,0,0.12)' }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)' }}>
                 <div style={{ width: '100%', paddingTop: '80%', background: '#f5f0e8', position: 'relative' }}>
