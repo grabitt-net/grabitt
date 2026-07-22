@@ -2721,18 +2721,18 @@ function PanelBody() {
     const [sent, setSent] = useState(false)
 
     if (sent) return (
-      <ActionPanel title="💰 Offer sent!" onClose={closePanel}>
+      <ActionPanel title={`💰 ${t('Offer sent!')}`} onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
           <div style={{ fontSize: 56, marginBottom: 14 }}>💰</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Offer sent to seller</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>You offered <strong>€{amount}</strong> for "{title}". The seller has 48 hours to respond.</div>
-          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t('Offer sent to seller')}</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>{t('You offered {amount} for “{title}”. The seller has 48 hours to respond.').replace('{amount}', `€${amount}`).replace('{title}', title)}</div>
+          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{t('Done')}</button>
         </div>
       </ActionPanel>
     )
 
     return (
-      <ActionPanel title={`💰 Make Offer — ${title}`} onClose={closePanel}>
+      <ActionPanel title={`💰 ${t('Make Offer')} — ${title}`} onClose={closePanel}>
         <div style={{ display: 'flex', gap: 12, padding: '0 0 16px', borderBottom: '1px solid #f0f0f0', marginBottom: 16, alignItems: 'center' }}>
           <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>{emoji}</div>
           <div>
@@ -2754,7 +2754,7 @@ function PanelBody() {
             />
           </div>
           {priceNum > 0 && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 4 }}>
-            {Math.round((1 - parseFloat(amount || '0') / priceNum) * 100)}% below asking price
+            {t('{pct}% below asking price').replace('{pct}', String(Math.round((1 - parseFloat(amount || '0') / priceNum) * 100)))}
           </div>}
         </div>
 
@@ -2763,7 +2763,7 @@ function PanelBody() {
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}
-            placeholder='e.g. "Happy to collect today if you accept"'
+            placeholder={t('e.g. "Happy to collect today if you accept"')}
             rows={3}
             style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
           />
@@ -2801,23 +2801,23 @@ function PanelBody() {
       try {
         const client = await getTrpcClient()
         await client.offers.respond.mutate({ offerId, action })
-        toast(action === 'accept' ? '✅ Offer accepted' : 'Offer declined')
-      } catch { toast('Could not update offer') }
+        toast(action === 'accept' ? `✅ ${t('Offer accepted')}` : t('Offer declined'))
+      } catch { toast(t('Could not update offer')) }
     }
 
     return (
-      <ActionPanel title="💰 Offers Received" onClose={closePanel}>
+      <ActionPanel title={`💰 ${t('Offers Received')}`} onClose={closePanel}>
         {!loaded ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>{t('Loading…')}</div>
         ) : offers.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No pending offers right now.</div>
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>{t('No pending offers right now.')}</div>
         ) : offers.map(offer => (
           <div key={offer.id} style={{ background: '#f9f6f2', borderRadius: 14, padding: 14, marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>👤</div>
               <div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>Offer</div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>on {offer.listing.title} · {new Date(offer.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{t('Offer')}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>{t('on')} {offer.listing.title} · {new Date(offer.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
               </div>
               <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
                 <div style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>€{Number(offer.amount).toFixed(2)}</div>
@@ -2827,12 +2827,12 @@ function PanelBody() {
             {offer.message && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 10 }}>"{offer.message}"</div>}
             {responded[offer.id] ? (
               <div style={{ textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: responded[offer.id] === 'accepted' ? 'var(--sage)' : '#ef4444' }}>
-                {responded[offer.id] === 'accepted' ? '✅ Accepted' : '❌ Declined'}
+                {responded[offer.id] === 'accepted' ? `✅ ${t('Accepted')}` : `❌ ${t('Declined')}`}
               </div>
             ) : (
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => respond(offer.id, 'accept')} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>✅ Accept</button>
-                <button onClick={() => respond(offer.id, 'decline')} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>❌ Decline</button>
+                <button onClick={() => respond(offer.id, 'accept')} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>✅ {t('Accept')}</button>
+                <button onClick={() => respond(offer.id, 'decline')} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>❌ {t('Decline')}</button>
               </div>
             )}
           </div>
