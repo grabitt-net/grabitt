@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import { createTrpcClient } from '@/lib/trpc'
 import { toPanelItem, type DbListing } from '@/lib/listingMap'
@@ -9,6 +10,7 @@ import Icon from './Icon'
 // section in the page flow (a full-width strip with its own tinted surface).
 export default function BottomCarousel() {
   const { openPanel } = usePanel()
+  const router = useRouter()
   const [items, setItems] = useState<DbListing[]>([])
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function BottomCarousel() {
           {items.map(l => {
             const item = toPanelItem(l)
             return (
-              <button key={l.id} onClick={() => openPanel('listing', item)} style={{ flexShrink: 0, width: 104, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+              <button key={l.id} onClick={() => router.push(`/listings/${l.id}`)} style={{ flexShrink: 0, width: 104, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
                 <div style={{ position: 'relative', width: 104, height: 104, background: '#f3ede4', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
                   {item.image
                     ? <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />

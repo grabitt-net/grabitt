@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import IconRail from './IconRail'
 import DesktopNav from './DesktopNav'
@@ -39,6 +39,7 @@ function nearestTown(lat: number, lng: number) {
 
 export default function Topbar() {
   const { openPanel } = usePanel()
+  const router = useRouter()
   const [query, setQuery] = useState('')
   // On the home page the logo opens the Grabitt menu (as in the V20 prototype).
   // Everywhere else it stays a link home — that's the only way back from a
@@ -46,7 +47,7 @@ export default function Topbar() {
   const isHome = usePathname() === '/'
 
   const handleSearch = () => {
-    if (query.trim()) openPanel('search', { q: query.trim() })
+    if (query.trim()) router.push(`/search?q=${encodeURIComponent(query.trim())}`)
   }
 
   const handleNearMe = () => {

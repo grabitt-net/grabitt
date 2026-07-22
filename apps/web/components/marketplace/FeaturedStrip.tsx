@@ -1,12 +1,12 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { usePanel } from '@/context/PanelContext'
+import { useRouter } from 'next/navigation'
 import { createTrpcClient } from '@/lib/trpc'
 import { toPanelItem, type DbListing } from '@/lib/listingMap'
 import Icon from './Icon'
 
 export default function FeaturedStrip() {
-  const { openPanel } = usePanel()
+  const router = useRouter()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [items, setItems] = useState<DbListing[]>([])
 
@@ -32,13 +32,13 @@ export default function FeaturedStrip() {
     <section style={{ padding: '16px 0 0' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px 12px' }}>
         <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>Featured</h2>
-        <button onClick={() => openPanel('search', { featured: true })} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--orange)', fontWeight: 800, cursor: 'pointer' }}>See all <Icon name="arrowRight" size={15} /></button>
+        <button onClick={() => router.push('/search?featured=1')} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--orange)', fontWeight: 800, cursor: 'pointer' }}>See all <Icon name="arrowRight" size={15} /></button>
       </div>
       <div ref={scrollRef} style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none', gap: 10, padding: '0 14px 4px' }}>
         {items.map(l => {
           const item = toPanelItem(l)
           return (
-            <div key={l.id} onClick={() => openPanel('listing', item)} style={{ flex: '0 0 150px', background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', position: 'relative' }}>
+            <div key={l.id} onClick={() => router.push(`/listings/${l.id}`)} style={{ flex: '0 0 150px', background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', position: 'relative' }}>
               <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(26,26,26,0.82)', color: '#fff', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50, zIndex: 1, letterSpacing: 0.3 }}><Icon name="star" size={10} strokeWidth={0} style={{ fill: '#FFB800' }} /> FEATURED</div>
               <div style={{ width: '100%', paddingTop: '78%', background: '#f5f0e8', position: 'relative' }}>
                 {item.image

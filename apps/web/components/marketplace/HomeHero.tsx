@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 
 // Search-first marketplace hero (per the UI/UX marketplace pattern: the search
@@ -9,8 +10,12 @@ const POPULAR = ['iPhone', 'Bike', 'Sofa', 'PS5', 'Surfboard', 'Guitar']
 
 export default function HomeHero() {
   const { openPanel } = usePanel()
+  const router = useRouter()
   const [q, setQ] = useState('')
-  const search = (term?: string) => openPanel('search', { q: (term ?? q).trim() })
+  const search = (term?: string) => {
+    const term2 = (term ?? q).trim()
+    if (term2) router.push(`/search?q=${encodeURIComponent(term2)}`)
+  }
 
   return (
     <section style={{ padding: '28px 16px 8px' }}>

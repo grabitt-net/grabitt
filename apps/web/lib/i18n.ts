@@ -236,6 +236,16 @@ export const TRANSLATIONS: Record<string, Record<Lang, string>> = {
   'Offer accepted': { en: 'Offer accepted', es: 'Oferta aceptada', de: 'Angebot angenommen', da: 'Tilbud accepteret', sv: 'Bud accepterat', nl: 'Bod geaccepteerd', fr: 'Offre acceptée', pt: 'Oferta aceite' },
   'Offer declined': { en: 'Offer declined', es: 'Oferta rechazada', de: 'Angebot abgelehnt', da: 'Tilbud afvist', sv: 'Bud avböjt', nl: 'Bod geweigerd', fr: 'Offre refusée', pt: 'Oferta recusada' },
   'Could not update offer': { en: 'Could not update offer', es: 'No se pudo actualizar la oferta', de: 'Angebot konnte nicht aktualisiert werden', da: 'Kunne ikke opdatere tilbuddet', sv: 'Det gick inte att uppdatera budet', nl: 'Kon bod niet bijwerken', fr: 'Impossible de mettre à jour l\'offre', pt: 'Não foi possível atualizar a oferta' },
+  'This demo listing cannot receive offers.': { en: 'This demo listing cannot receive offers.', es: 'Este anuncio de demostración no puede recibir ofertas.', de: 'Diese Demo-Anzeige kann keine Angebote erhalten.', da: 'Denne demo-annonce kan ikke modtage tilbud.', sv: 'Denna demoannons kan inte ta emot bud.', nl: 'Deze demo-advertentie kan geen biedingen ontvangen.', fr: 'Cette annonce de démonstration ne peut pas recevoir d\'offres.', pt: 'Este anúncio de demonstração não pode receber ofertas.' },
+  'Could not send your offer — please try again.': { en: 'Could not send your offer — please try again.', es: 'No se pudo enviar tu oferta — inténtalo de nuevo.', de: 'Angebot konnte nicht gesendet werden — bitte versuche es erneut.', da: 'Dit tilbud kunne ikke sendes — prøv igen.', sv: 'Det gick inte att skicka ditt bud — försök igen.', nl: 'Kon je bod niet versturen — probeer het opnieuw.', fr: 'Impossible d\'envoyer votre offre — veuillez réessayer.', pt: 'Não foi possível enviar a tua oferta — tenta novamente.' },
+  // Search results page
+  'All': { en: 'All', es: 'Todo', de: 'Alle', da: 'Alle', sv: 'Alla', nl: 'Alles', fr: 'Tout', pt: 'Tudo' },
+  'listing': { en: 'listing', es: 'anuncio', de: 'Anzeige', da: 'annonce', sv: 'annons', nl: 'advertentie', fr: 'annonce', pt: 'anúncio' },
+  'listings': { en: 'listings', es: 'anuncios', de: 'Anzeigen', da: 'annoncer', sv: 'annonser', nl: 'advertenties', fr: 'annonces', pt: 'anúncios' },
+  'Newest first': { en: 'Newest first', es: 'Más recientes primero', de: 'Neueste zuerst', da: 'Nyeste først', sv: 'Nyaste först', nl: 'Nieuwste eerst', fr: 'Plus récents d\'abord', pt: 'Mais recentes primeiro' },
+  'Price: low to high': { en: 'Price: low to high', es: 'Precio: de menor a mayor', de: 'Preis: aufsteigend', da: 'Pris: lav til høj', sv: 'Pris: lågt till högt', nl: 'Prijs: laag naar hoog', fr: 'Prix : croissant', pt: 'Preço: do menor ao maior' },
+  'Price: high to low': { en: 'Price: high to low', es: 'Precio: de mayor a menor', de: 'Preis: absteigend', da: 'Pris: høj til lav', sv: 'Pris: högt till lågt', nl: 'Prijs: hoog naar laag', fr: 'Prix : décroissant', pt: 'Preço: do maior ao menor' },
+  'View': { en: 'View', es: 'Ver', de: 'Ansehen', da: 'Vis', sv: 'Visa', nl: 'Bekijken', fr: 'Voir', pt: 'Ver' },
 }
 
 let _lang: Lang = 'en'

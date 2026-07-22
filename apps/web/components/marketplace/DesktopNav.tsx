@@ -23,7 +23,7 @@ export default function DesktopNav() {
   const { unreadCount } = useNotifications(userId)
   const loggedIn = !!userId
 
-  const search = () => { if (query.trim()) openPanel('search', { q: query.trim() }) }
+  const search = () => { if (query.trim()) router.push(`/search?q=${encodeURIComponent(query.trim())}`) }
 
   const actions: { icon: IconName; label: string; panel: PanelId; badge?: number }[] = [
     { icon: 'bell', label: 'Alerts', panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },

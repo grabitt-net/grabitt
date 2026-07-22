@@ -2213,7 +2213,7 @@ function PanelBody() {
         {MOCK_SAVED.length === 0
           ? <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No saved searches yet. Use the 🔖 Save button in search results.</div>
           : MOCK_SAVED.map((s, i) => (
-            <div key={i} onClick={() => openPanel('search', { q: s.query })} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
+            <div key={i} onClick={() => { window.location.href = `/search?q=${encodeURIComponent(s.query ?? '')}` }} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
               <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🔖</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{s.name}</div>
@@ -2719,6 +2719,26 @@ function PanelBody() {
     const [amount, setAmount] = useState(String(Math.round(priceNum * 0.9) || ''))
     const [message, setMessage] = useState('')
     const [sent, setSent] = useState(false)
+    const [offerBusy, setOfferBusy] = useState(false)
+    const [offerErr, setOfferErr] = useState('')
+    const listingId = (item.id as string) || (item.listingId as string) || ''
+
+    const sendOffer = async () => {
+      const value = parseFloat(amount)
+      if (!value || value <= 0) return
+      if (!listingId) { setOfferErr(t('This demo listing cannot receive offers.')); return }
+      setOfferBusy(true); setOfferErr('')
+      try {
+        const c = await getTrpcClient()
+        await c.offers.make.mutate({ listingId, amount: value, message: message.trim() || undefined })
+        setSent(true)
+      } catch (e) {
+        const m = e instanceof Error ? e.message : ''
+        if (/own listing/i.test(m)) setOfferErr(t('That’s your own listing'))
+        else if (/UNAUTHORIZED|FORBIDDEN|jwt|token/i.test(m)) { window.location.href = '/auth'; return }
+        else setOfferErr(t('Could not send your offer — please try again.'))
+      } finally { setOfferBusy(false) }
+    }
 
     if (sent) return (
       <ActionPanel title={`💰 ${t('Offer sent!')}`} onClose={closePanel}>
@@ -2773,12 +2793,14 @@ function PanelBody() {
           🔒 {t('Offers are binding if accepted. Payment is processed via Stripe escrow.')}
         </div>
 
+        {offerErr && <div style={{ background: '#fff5f5', color: '#ef4444', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 12 }}>⚠️ {offerErr}</div>}
+
         <button
-          onClick={() => setSent(true)}
-          disabled={!amount || parseFloat(amount) <= 0}
-          style={{ width: '100%', background: amount && parseFloat(amount) > 0 ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
+          onClick={sendOffer}
+          disabled={offerBusy || !amount || parseFloat(amount) <= 0}
+          style={{ width: '100%', background: !offerBusy && amount && parseFloat(amount) > 0 ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: offerBusy ? 'wait' : 'pointer' }}
         >
-          {t('Send Offer')} — €{amount || '0'}
+          {offerBusy ? t('Sending…') : `${t('Send Offer')} — €${amount || '0'}`}
         </button>
       </ActionPanel>
     )
@@ -4329,7 +4351,7 @@ function PanelBody() {
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{w.dept} · {w.price}</div>
               {w.matched && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: 'var(--orange)', fontWeight: 900, marginTop: 2 }}>⚡ Match found — tap to view</div>}
             </div>
-            <button onClick={() => openPanel('search', { query: w.title })} style={{ background: w.matched ? 'var(--orange)' : '#f5f0e8', color: w.matched ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>{w.matched ? 'View' : 'Search'}</button>
+            <button onClick={() => { window.location.href = `/search?q=${encodeURIComponent(w.title ?? '')}` }} style={{ background: w.matched ? 'var(--orange)' : '#f5f0e8', color: w.matched ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>{w.matched ? t('View') : t('Search')}</button>
           </div>
         ))}
         <button onClick={() => openPanel('search')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>+ Add wish</button>
