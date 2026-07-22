@@ -65,12 +65,12 @@ export default function AuthBootstrap() {
         // tRPC calls (notifications etc.) work immediately after this load.
         await refreshAuthToken()
         if (cancelled) return
-        if (uid && localStorage.getItem('grabitt_uid') !== uid) {
-          localStorage.setItem('grabitt_uid', uid)
-          // Notify the chrome (IconRail/DesktopNav/PanelHost) to re-read the
-          // identity reactively — no page reload (which caused a reload loop).
-          window.dispatchEvent(new Event('grabitt-auth'))
-        }
+        if (uid) localStorage.setItem('grabitt_uid', uid)
+        // Always announce, even when the uid is unchanged. Listeners (the chrome,
+        // and ConsentGate) can only act once the app JWT exists, and the token is
+        // minted here — announcing only on a *change* meant a returning user was
+        // never re-checked, so the consent gate silently never appeared.
+        window.dispatchEvent(new Event('grabitt-auth'))
       } catch {
         // Non-fatal: the user is still authenticated at the Supabase layer.
       }

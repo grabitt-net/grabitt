@@ -14,18 +14,31 @@ export default function ConsentGate() {
   const [checked, setChecked] = useState(false)
 
   const refresh = useCallback(async () => {
-    if (!getAuthToken()) { setStatus(null); return }
+    if (!getAuthToken()) { setStatus(null); return false }
     try {
       const s = await trpcAuthed().compliance.status.query()
       setStatus(s as Status)
-    } catch { setStatus(null) }
+      return true
+    } catch { setStatus(null); return false }
   }, [])
 
   useEffect(() => {
-    refresh()
-    const h = () => refresh()
+    let stop = false
+    // The app JWT is minted asynchronously by AuthBootstrap, so on a cold load
+    // this component usually runs before the token exists. The grabitt-auth
+    // event covers that, but don't rely on it alone — a missed event would mean
+    // the consent gate never appears and acceptance is never recorded. Poll
+    // briefly until the token shows up, then stop.
+    const poll = async () => {
+      for (let i = 0; i < 10 && !stop; i++) {
+        if (await refresh()) return
+        await new Promise(r => setTimeout(r, 600))
+      }
+    }
+    poll()
+    const h = () => { refresh() }
     window.addEventListener('grabitt-auth', h)
-    return () => window.removeEventListener('grabitt-auth', h)
+    return () => { stop = true; window.removeEventListener('grabitt-auth', h) }
   }, [refresh])
 
   if (!status || status.deleted) return null

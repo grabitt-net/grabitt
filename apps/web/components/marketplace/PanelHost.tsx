@@ -1191,23 +1191,50 @@ function PanelBody() {
 
   // ── JUST LISTED ─────────────────────────────────────────────────────────────
   if (panel.id === 'justlisted') {
-    const allItems: [string, string, string, string, string][] = []
-    Object.entries(DEPT_LISTINGS).forEach(([dept, items]) => items.forEach(([e, t, p, l]) => allItems.push([e, t, p, l, dept])))
-    allItems.sort(() => Math.random() - 0.5)
+    // Real newest-first listings (was a shuffled set of hardcoded demo tuples
+    // whose cards weren't even clickable). Each card opens the real listing page.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [recent, setRecent] = useState<any[] | null>(null)
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      let live = true
+      getTrpcClient()
+        .then(c => c.listings.recent.query())
+        .then(d => { if (live) setRecent(d as any[]) })
+        .catch(() => { if (live) setRecent([]) })
+      return () => { live = false }
+    }, [])
+
+    const rows = recent ?? []
     return (
-      <ActionPanel title={`🆕 Just Listed — ${allItems.length} items`} onClose={closePanel}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {allItems.map(([emoji, title, price, location, dept], i) => (
-            <div key={i} style={{ background: '#fff', border: '1px solid #1a1a1a', borderRadius: 12, padding: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-              <div style={{ width: '100%', height: 64, background: CARD_GRADS[i % CARD_GRADS.length], borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, marginBottom: 8 }}>{emoji}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
-                <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, fontWeight: 700, color: '#FF4500' }}>{price}</div>
-                <div style={{ fontSize: 9, color: '#666', fontFamily: 'var(--font-ui)' }}>{location}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <ActionPanel title={`🆕 ${t('Just Listed')}${rows.length ? ` — ${rows.length}` : ''}`} onClose={closePanel}>
+        {recent === null ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>{t('Loading…')}</div>
+        ) : rows.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>{t('No results found')}</div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {rows.map(l => {
+              const it = toPanelItem(l)
+              return (
+                <div key={l.id} onClick={() => goListing(l.id)} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                  <div style={{ width: '100%', paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
+                    {it.image
+                      ? <img src={it.image} alt={it.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{it.emoji}</div>}
+                  </div>
+                  <div style={{ padding: '8px 10px 10px' }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.title}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
+                      <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, fontWeight: 700, color: '#FF4500' }}>{it.price}</div>
+                      <div style={{ fontSize: 9, color: '#666', fontFamily: 'var(--font-ui)' }}>{it.location}</div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </ActionPanel>
     )
   }
