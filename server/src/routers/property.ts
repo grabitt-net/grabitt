@@ -62,6 +62,67 @@ export const propertyRouter = router({
     }),
 
   // Exec suite: every property listing on the platform, for admin monitoring.
+  // Edit a property listing you own. Writes the parent Listing and the
+  // PropertyListing detail together, mirroring create's mapping.
+  update: protectedProcedure
+    .input(z.object({
+      listingId: z.string().uuid(),
+      title: z.string().min(4).max(120).optional(),
+      description: z.string().max(4000).optional(),
+      price: z.number().min(0).optional(),
+      location: z.string().min(1).max(120).optional(),
+      images: z.array(z.string().url()).max(8).optional(),
+      type: z.enum(['sale', 'rent', 'holiday', 'commercial', 'land', 'new_build']).optional(),
+      bedrooms: z.number().int().min(0).max(50).nullable().optional(),
+      bathrooms: z.number().int().min(0).max(50).nullable().optional(),
+      m2: z.number().min(0).max(1_000_000).nullable().optional(),
+      community: z.string().max(120).nullable().optional(),
+      floor: z.number().int().min(-5).max(200).nullable().optional(),
+      hasPool: z.boolean().optional(),
+      hasGarage: z.boolean().optional(),
+      energyRating: z.string().max(4).nullable().optional(),
+      lat: z.number().nullable().optional(),
+      lng: z.number().nullable().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUniqueOrThrow({
+        where: { id: input.listingId },
+        include: { propertyListing: true },
+      })
+      if (listing.sellerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the agent can edit this property' })
+      if (!listing.propertyListing) throw new TRPCError({ code: 'BAD_REQUEST', message: 'This listing is not a property' })
+
+      await ctx.prisma.$transaction([
+        ctx.prisma.listing.update({
+          where: { id: listing.id },
+          data: {
+            ...(input.title !== undefined ? { title: input.title } : {}),
+            ...(input.description !== undefined ? { description: input.description || listing.title } : {}),
+            ...(input.price !== undefined ? { price: input.price } : {}),
+            ...(input.location !== undefined ? { location: input.location } : {}),
+            ...(input.images !== undefined ? { images: input.images } : {}),
+          },
+        }),
+        ctx.prisma.propertyListing.update({
+          where: { id: listing.propertyListing.id },
+          data: {
+            ...(input.type !== undefined ? { type: input.type } : {}),
+            ...(input.bedrooms !== undefined ? { bedrooms: input.bedrooms } : {}),
+            ...(input.bathrooms !== undefined ? { bathrooms: input.bathrooms } : {}),
+            ...(input.m2 !== undefined ? { m2: input.m2 } : {}),
+            ...(input.community !== undefined ? { community: input.community } : {}),
+            ...(input.floor !== undefined ? { floor: input.floor } : {}),
+            ...(input.hasPool !== undefined ? { hasPool: input.hasPool } : {}),
+            ...(input.hasGarage !== undefined ? { hasGarage: input.hasGarage } : {}),
+            ...(input.energyRating !== undefined ? { energyRating: input.energyRating } : {}),
+            ...(input.lat !== undefined ? { lat: input.lat } : {}),
+            ...(input.lng !== undefined ? { lng: input.lng } : {}),
+          },
+        }),
+      ])
+      return { ok: true, id: listing.id }
+    }),
+
   adminList: execProcedure
     .input(z.object({ status: z.enum(['all', 'active', 'sold', 'expired']).default('all') }).optional())
     .query(async ({ ctx, input }) => {

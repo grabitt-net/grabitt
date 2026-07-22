@@ -40,6 +40,30 @@ function EditInner() {
   const [err, setErr] = useState('')
   const [saved, setSaved] = useState(false)
 
+  // Jobs and property hang extra detail off the listing, so the form has three
+  // shapes. Shared fields (photos, title, description, location) are common.
+  const [kind, setKind] = useState<'item' | 'job' | 'property'>('item')
+  // Job fields
+  const [company, setCompany] = useState('')
+  const [jobType, setJobType] = useState('full_time')
+  const [sector, setSector] = useState('')
+  const [salaryMin, setSalaryMin] = useState('')
+  const [salaryMax, setSalaryMax] = useState('')
+  const [salaryPeriod, setSalaryPeriod] = useState('month')
+  const [hours, setHours] = useState('')
+  const [remote, setRemote] = useState(false)
+  const [address, setAddress] = useState('')
+  // Property fields
+  const [propType, setPropType] = useState('sale')
+  const [bedrooms, setBedrooms] = useState('')
+  const [bathrooms, setBathrooms] = useState('')
+  const [m2, setM2] = useState('')
+  const [community, setCommunity] = useState('')
+  const [floor, setFloor] = useState('')
+  const [hasPool, setHasPool] = useState(false)
+  const [hasGarage, setHasGarage] = useState(false)
+  const [energyRating, setEnergyRating] = useState('')
+
   const load = useCallback(async () => {
     if (!id) return
     let token = getAuthToken()
@@ -62,6 +86,33 @@ function EditInner() {
       setDeliveryFee(String(Number(l.deliveryFee ?? 0)))
       setDeliveryMethod((l.deliveryMethod ?? '') as '' | 'courier' | 'in_person')
       setImages(Array.isArray(l.images) ? l.images : [])
+
+      if (l.jobListing) {
+        const j = l.jobListing
+        setKind('job')
+        setCompany(j.company ?? '')
+        setJobType(j.type ?? 'full_time')
+        setSector(j.sector ?? '')
+        setSalaryMin(j.salaryMin != null ? String(Number(j.salaryMin)) : '')
+        setSalaryMax(j.salaryMax != null ? String(Number(j.salaryMax)) : '')
+        setSalaryPeriod(j.salaryPeriod ?? 'month')
+        setHours(j.hours ?? '')
+        setRemote(!!j.remote)
+        setAddress(j.address ?? '')
+      } else if (l.propertyListing) {
+        const p = l.propertyListing
+        setKind('property')
+        setPropType(p.type ?? 'sale')
+        setBedrooms(p.bedrooms != null ? String(p.bedrooms) : '')
+        setBathrooms(p.bathrooms != null ? String(p.bathrooms) : '')
+        setM2(p.m2 != null ? String(Number(p.m2)) : '')
+        setCommunity(p.community ?? '')
+        setFloor(p.floor != null ? String(p.floor) : '')
+        setHasPool(!!p.hasPool)
+        setHasGarage(!!p.hasGarage)
+        setEnergyRating(p.energyRating ?? '')
+      }
+
       setState(l.status === 'sold' ? 'sold' : 'ready')
     } catch { setState('missing') }
   }, [id, router])
@@ -84,19 +135,58 @@ function EditInner() {
     if (title.trim().length < 4) { setErr(t('Give your listing a title of at least 4 characters.')); return }
     if (images.length === 0) { setErr(t('Keep at least one photo.')); return }
     setBusy(true)
+    const num = (v: string) => (v.trim() === '' ? null : Number(v))
     try {
-      await (trpcAuthed() as any).listings.update.mutate({
-        listingId: id,
-        title: title.trim(),
-        description: description.trim(),
-        price: Number(price) || 0,
-        condition,
-        location: location.trim(),
-        stock: Math.max(1, Number(stock) || 1),
-        deliveryFee: Number(deliveryFee) || 0,
-        deliveryMethod: deliveryMethod === '' ? null : deliveryMethod,
-        images,
-      })
+      const c: any = trpcAuthed()
+      if (kind === 'job') {
+        await c.jobs.update.mutate({
+          listingId: id,
+          jobTitle: title.trim(),
+          company: company.trim(),
+          type: jobType,
+          location: location.trim(),
+          address: address.trim() || null,
+          sector: sector.trim() || null,
+          description: description.trim(),
+          salaryMin: num(salaryMin),
+          salaryMax: num(salaryMax),
+          salaryPeriod,
+          hours: hours.trim() || null,
+          remote,
+          images,
+        })
+      } else if (kind === 'property') {
+        await c.property.update.mutate({
+          listingId: id,
+          title: title.trim(),
+          description: description.trim(),
+          price: Number(price) || 0,
+          location: location.trim(),
+          images,
+          type: propType,
+          bedrooms: num(bedrooms),
+          bathrooms: num(bathrooms),
+          m2: num(m2),
+          community: community.trim() || null,
+          floor: num(floor),
+          hasPool,
+          hasGarage,
+          energyRating: energyRating.trim() || null,
+        })
+      } else {
+        await c.listings.update.mutate({
+          listingId: id,
+          title: title.trim(),
+          description: description.trim(),
+          price: Number(price) || 0,
+          condition,
+          location: location.trim(),
+          stock: Math.max(1, Number(stock) || 1),
+          deliveryFee: Number(deliveryFee) || 0,
+          deliveryMethod: deliveryMethod === '' ? null : deliveryMethod,
+          images,
+        })
+      }
       setSaved(true)
       setTimeout(() => router.push(`/listings/${id}`), 700)
     } catch (e) { setErr(e instanceof Error ? e.message : t('Could not save your changes.')) }
@@ -164,38 +254,135 @@ function EditInner() {
         <div style={hint}>{t('First photo is the cover. Up to 8.')}</div>
       </Card>
 
-      <Card title={t('Item details')}>
-        <label style={lbl}>{t('Title')}</label>
+      <Card title={kind === 'job' ? t('Job details') : kind === 'property' ? t('Property details') : t('Item details')}>
+        <label style={lbl}>{kind === 'job' ? t('Job title') : t('Title')}</label>
         <input value={title} onChange={e => setTitle(e.target.value)} style={field} />
         <label style={lbl}>{t('Description')}</label>
         <textarea value={description} onChange={e => setDescription(e.target.value)} rows={5} style={{ ...field, resize: 'vertical' }} />
-        <label style={lbl}>{t('Condition')}</label>
-        <select value={condition} onChange={e => setCondition(e.target.value)} style={field}>
-          {Object.entries(COND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
+        {kind === 'item' && (
+          <>
+            <label style={lbl}>{t('Condition')}</label>
+            <select value={condition} onChange={e => setCondition(e.target.value)} style={field}>
+              {Object.entries(COND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </>
+        )}
         <label style={lbl}>{t('Location')}</label>
         <input value={location} onChange={e => setLocation(e.target.value)} style={field} />
       </Card>
 
-      <Card title={t('Price & options')}>
-        <label style={lbl}>{t('Price (€)')}</label>
-        <input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(e.target.value)} style={field} />
-        <div style={hint}>{t('Lowering the price alerts everyone who saved this item.')}</div>
-        <label style={lbl}>{t('Quantity available')}</label>
-        <input type="number" min={1} max={999} value={stock} onChange={e => setStock(e.target.value)} style={field} />
-        <label style={lbl}>{t('Delivery')}</label>
-        <select value={deliveryMethod} onChange={e => setDeliveryMethod(e.target.value as '' | 'courier' | 'in_person')} style={field}>
-          <option value="">{t('Collection only')}</option>
-          <option value="courier">{t('Tracked courier')}</option>
-          <option value="in_person">{t('I deliver in person')}</option>
-        </select>
-        {deliveryMethod !== '' && (
-          <>
-            <label style={lbl}>{t('Delivery fee (€)')}</label>
-            <input type="number" min={0} step="0.01" value={deliveryFee} onChange={e => setDeliveryFee(e.target.value)} style={field} />
-          </>
-        )}
-      </Card>
+      {kind === 'job' && (
+        <Card title={t('Role & pay')}>
+          <label style={lbl}>{t('Company')}</label>
+          <input value={company} onChange={e => setCompany(e.target.value)} style={field} />
+          <label style={lbl}>{t('Contract type')}</label>
+          <select value={jobType} onChange={e => setJobType(e.target.value)} style={field}>
+            <option value="full_time">{t('Full time')}</option>
+            <option value="part_time">{t('Part time')}</option>
+            <option value="contract">{t('Contract')}</option>
+            <option value="temporary">{t('Temporary')}</option>
+            <option value="volunteer">{t('Volunteer')}</option>
+          </select>
+          <label style={lbl}>{t('Sector')}</label>
+          <input value={sector} onChange={e => setSector(e.target.value)} style={field} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <label style={lbl}>{t('Salary from (€)')}</label>
+              <input type="number" min={0} value={salaryMin} onChange={e => setSalaryMin(e.target.value)} style={field} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={lbl}>{t('Salary to (€)')}</label>
+              <input type="number" min={0} value={salaryMax} onChange={e => setSalaryMax(e.target.value)} style={field} />
+            </div>
+          </div>
+          <label style={lbl}>{t('Salary period')}</label>
+          <select value={salaryPeriod} onChange={e => setSalaryPeriod(e.target.value)} style={field}>
+            <option value="month">{t('per month')}</option>
+            <option value="year">{t('per year')}</option>
+            <option value="hour">{t('per hour')}</option>
+          </select>
+          <label style={lbl}>{t('Hours')}</label>
+          <input value={hours} onChange={e => setHours(e.target.value)} placeholder="Mon–Fri 9:00–17:00" style={field} />
+          <label style={lbl}>{t('Address')}</label>
+          <input value={address} onChange={e => setAddress(e.target.value)} style={field} />
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#444' }}>
+            <input type="checkbox" checked={remote} onChange={e => setRemote(e.target.checked)} style={{ width: 17, height: 17, accentColor: 'var(--orange)' }} />
+            {t('Remote / work from home')}
+          </label>
+        </Card>
+      )}
+
+      {kind === 'property' && (
+        <Card title={t('Property & price')}>
+          <label style={lbl}>{t('Listing type')}</label>
+          <select value={propType} onChange={e => setPropType(e.target.value)} style={field}>
+            <option value="sale">{t('For sale')}</option>
+            <option value="rent">{t('Long-term rent')}</option>
+            <option value="holiday">{t('Holiday let')}</option>
+            <option value="commercial">{t('Commercial')}</option>
+            <option value="land">{t('Land')}</option>
+            <option value="new_build">{t('New build')}</option>
+          </select>
+          <label style={lbl}>{t('Price (€)')}</label>
+          <input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(e.target.value)} style={field} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <label style={lbl}>{t('Bedrooms')}</label>
+              <input type="number" min={0} value={bedrooms} onChange={e => setBedrooms(e.target.value)} style={field} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={lbl}>{t('Bathrooms')}</label>
+              <input type="number" min={0} value={bathrooms} onChange={e => setBathrooms(e.target.value)} style={field} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <label style={lbl}>{t('Size (m²)')}</label>
+              <input type="number" min={0} value={m2} onChange={e => setM2(e.target.value)} style={field} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={lbl}>{t('Floor')}</label>
+              <input type="number" value={floor} onChange={e => setFloor(e.target.value)} style={field} />
+            </div>
+          </div>
+          <label style={lbl}>{t('Community fees')}</label>
+          <input value={community} onChange={e => setCommunity(e.target.value)} style={field} />
+          <label style={lbl}>{t('Energy rating')}</label>
+          <input value={energyRating} onChange={e => setEnergyRating(e.target.value)} maxLength={4} style={field} />
+          <div style={{ display: 'flex', gap: 16 }}>
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#444' }}>
+              <input type="checkbox" checked={hasPool} onChange={e => setHasPool(e.target.checked)} style={{ width: 17, height: 17, accentColor: 'var(--orange)' }} />
+              {t('Pool')}
+            </label>
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#444' }}>
+              <input type="checkbox" checked={hasGarage} onChange={e => setHasGarage(e.target.checked)} style={{ width: 17, height: 17, accentColor: 'var(--orange)' }} />
+              {t('Garage')}
+            </label>
+          </div>
+        </Card>
+      )}
+
+      {kind === 'item' && (
+        <Card title={t('Price & options')}>
+          <label style={lbl}>{t('Price (€)')}</label>
+          <input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(e.target.value)} style={field} />
+          <div style={hint}>{t('Lowering the price alerts everyone who saved this item.')}</div>
+          <label style={lbl}>{t('Quantity available')}</label>
+          <input type="number" min={1} max={999} value={stock} onChange={e => setStock(e.target.value)} style={field} />
+          <label style={lbl}>{t('Delivery')}</label>
+          <select value={deliveryMethod} onChange={e => setDeliveryMethod(e.target.value as '' | 'courier' | 'in_person')} style={field}>
+            <option value="">{t('Collection only')}</option>
+            <option value="courier">{t('Tracked courier')}</option>
+            <option value="in_person">{t('I deliver in person')}</option>
+          </select>
+          {deliveryMethod !== '' && (
+            <>
+              <label style={lbl}>{t('Delivery fee (€)')}</label>
+              <input type="number" min={0} step="0.01" value={deliveryFee} onChange={e => setDeliveryFee(e.target.value)} style={field} />
+            </>
+          )}
+        </Card>
+      )}
 
       {err && <div style={{ background: '#fff5f5', color: '#ef4444', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, marginBottom: 10 }}>⚠️ {err}</div>}
       {saved && <div style={{ background: '#f0fdf4', color: '#16a34a', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, marginBottom: 10 }}>✓ {t('Saved ✓')}</div>}

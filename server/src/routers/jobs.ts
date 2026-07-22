@@ -319,6 +319,77 @@ export const jobsRouter = router({
       })
     }),
 
+  // Edit a job advert you posted. Writes the parent Listing and the JobListing
+  // detail together, mirroring create's field mapping so the two stay in step
+  // (listing.title tracks jobTitle, listing.price tracks salaryMin).
+  update: protectedProcedure
+    .input(z.object({
+      listingId: z.string().uuid(),
+      jobTitle: z.string().min(3).max(120).optional(),
+      company: z.string().min(1).max(120).optional(),
+      type: z.enum(['full_time', 'part_time', 'contract', 'temporary', 'volunteer']).optional(),
+      location: z.string().min(1).max(120).optional(),
+      address: z.string().max(200).nullable().optional(),
+      sector: z.string().max(80).nullable().optional(),
+      description: z.string().max(4000).optional(),
+      salaryMin: z.number().min(0).nullable().optional(),
+      salaryMax: z.number().min(0).nullable().optional(),
+      salaryPeriod: z.enum(['month', 'year', 'hour']).optional(),
+      payments: z.number().int().min(0).max(20).nullable().optional(),
+      overtime: z.boolean().optional(),
+      tips: z.boolean().optional(),
+      remote: z.boolean().optional(),
+      hours: z.string().max(120).nullable().optional(),
+      startDate: z.string().nullable().optional(),
+      images: z.array(z.string().url()).max(8).optional(),
+      applicationQuestions: z.array(questionSchema).max(15).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUniqueOrThrow({
+        where: { id: input.listingId },
+        include: { jobListing: true },
+      })
+      if (listing.sellerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the employer can edit this job' })
+      if (!listing.jobListing) throw new TRPCError({ code: 'BAD_REQUEST', message: 'This listing is not a job advert' })
+
+      const set = <T,>(v: T | undefined, fallback: T) => (v === undefined ? fallback : v)
+      const jobTitle = set(input.jobTitle, listing.jobListing.jobTitle)
+
+      await ctx.prisma.$transaction([
+        ctx.prisma.listing.update({
+          where: { id: listing.id },
+          data: {
+            title: jobTitle,
+            ...(input.description !== undefined ? { description: input.description || jobTitle } : {}),
+            ...(input.salaryMin !== undefined ? { price: input.salaryMin ?? 0 } : {}),
+            ...(input.location !== undefined ? { location: input.location } : {}),
+            ...(input.images !== undefined ? { images: input.images } : {}),
+          },
+        }),
+        ctx.prisma.jobListing.update({
+          where: { id: listing.jobListing.id },
+          data: {
+            jobTitle,
+            ...(input.company !== undefined ? { company: input.company } : {}),
+            ...(input.type !== undefined ? { type: input.type } : {}),
+            ...(input.salaryMin !== undefined ? { salaryMin: input.salaryMin } : {}),
+            ...(input.salaryMax !== undefined ? { salaryMax: input.salaryMax } : {}),
+            ...(input.salaryPeriod !== undefined ? { salaryPeriod: input.salaryPeriod } : {}),
+            ...(input.remote !== undefined ? { remote: input.remote } : {}),
+            ...(input.sector !== undefined ? { sector: input.sector } : {}),
+            ...(input.address !== undefined ? { address: input.address } : {}),
+            ...(input.hours !== undefined ? { hours: input.hours } : {}),
+            ...(input.startDate !== undefined ? { startDate: input.startDate ? new Date(input.startDate) : null } : {}),
+            ...(input.payments !== undefined ? { payments: input.payments } : {}),
+            ...(input.overtime !== undefined ? { overtime: input.overtime } : {}),
+            ...(input.tips !== undefined ? { tips: input.tips } : {}),
+            ...(input.applicationQuestions !== undefined ? { applicationQuestions: input.applicationQuestions } : {}),
+          },
+        }),
+      ])
+      return { ok: true, id: listing.id }
+    }),
+
   // Employer's applications board: their job listings with applicants. Powers
   // the Employer Dashboard (stats, listing cards, per-applicant pipeline).
   employerApplications: protectedProcedure.query(async ({ ctx }) => {
