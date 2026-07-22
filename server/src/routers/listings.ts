@@ -403,6 +403,8 @@ export const listingsRouter = router({
       condition: z.string().optional(),
       images: z.array(z.string().url()).min(1).max(8).optional(),
       location: z.string().max(100).optional(),
+      lat: z.number().nullable().optional(),
+      lng: z.number().nullable().optional(),
       stock: z.number().int().min(1).max(999).optional(),
       deliveryFee: z.number().min(0).optional(),
       deliveryMethod: z.enum(['courier', 'in_person']).nullable().optional(),

@@ -342,6 +342,8 @@ export const jobsRouter = router({
       hours: z.string().max(120).nullable().optional(),
       startDate: z.string().nullable().optional(),
       images: z.array(z.string().url()).max(8).optional(),
+      lat: z.number().nullable().optional(),
+      lng: z.number().nullable().optional(),
       applicationQuestions: z.array(questionSchema).max(15).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -364,6 +366,8 @@ export const jobsRouter = router({
             ...(input.salaryMin !== undefined ? { price: input.salaryMin ?? 0 } : {}),
             ...(input.location !== undefined ? { location: input.location } : {}),
             ...(input.images !== undefined ? { images: input.images } : {}),
+            ...(input.lat !== undefined ? { lat: input.lat } : {}),
+            ...(input.lng !== undefined ? { lng: input.lng } : {}),
           },
         }),
         ctx.prisma.jobListing.update({

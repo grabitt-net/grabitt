@@ -6,7 +6,13 @@ import { PanelProvider } from '@/context/PanelContext'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { createTrpcClient } from '@/lib/trpc'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
-import { COND_LABEL } from '@/lib/listingMap'
+import dynamic from 'next/dynamic'
+import { COND_LABEL, DEPT_LABEL } from '@/lib/listingMap'
+import type { JobQuestion, JobQuestionType } from '@/lib/jobQuestions'
+import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
+
+// Leaflet touches window, so it can only load client-side.
+const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
 import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHost'
@@ -43,6 +49,12 @@ function EditInner() {
   // Jobs and property hang extra detail off the listing, so the form has three
   // shapes. Shared fields (photos, title, description, location) are common.
   const [kind, setKind] = useState<'item' | 'job' | 'property'>('item')
+  // Map pin — shared by all three kinds (lives on the parent listing).
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+  // Item-only
+  const [department, setDepartment] = useState('other')
+  const [freeItem, setFreeItem] = useState(false)
+  const [autoAcceptMin, setAutoAcceptMin] = useState('')
   // Job fields
   const [company, setCompany] = useState('')
   const [jobType, setJobType] = useState('full_time')
@@ -53,6 +65,15 @@ function EditInner() {
   const [hours, setHours] = useState('')
   const [remote, setRemote] = useState(false)
   const [address, setAddress] = useState('')
+  const [payments, setPayments] = useState('')
+  const [overtime, setOvertime] = useState(false)
+  const [tips, setTips] = useState(false)
+  const [startDate, setStartDate] = useState('')
+  const [questions, setQuestions] = useState<JobQuestion[]>([])
+
+  const addQ = () => setQuestions(qs => [...qs, { id: crypto.randomUUID().slice(0, 8), label: '', type: 'short', required: false }])
+  const updateQ = (qid: string, patch: Partial<JobQuestion>) => setQuestions(qs => qs.map(q => q.id === qid ? { ...q, ...patch } : q))
+  const removeQ = (qid: string) => setQuestions(qs => qs.filter(q => q.id !== qid))
   // Property fields
   const [propType, setPropType] = useState('sale')
   const [bedrooms, setBedrooms] = useState('')
@@ -86,6 +107,10 @@ function EditInner() {
       setDeliveryFee(String(Number(l.deliveryFee ?? 0)))
       setDeliveryMethod((l.deliveryMethod ?? '') as '' | 'courier' | 'in_person')
       setImages(Array.isArray(l.images) ? l.images : [])
+      setCoords(l.lat != null && l.lng != null ? { lat: l.lat, lng: l.lng } : null)
+      setDepartment(l.department ?? 'other')
+      setFreeItem(Number(l.price ?? 0) === 0)
+      setAutoAcceptMin(l.autoAcceptMin != null ? String(Number(l.autoAcceptMin)) : '')
 
       if (l.jobListing) {
         const j = l.jobListing
@@ -99,6 +124,11 @@ function EditInner() {
         setHours(j.hours ?? '')
         setRemote(!!j.remote)
         setAddress(j.address ?? '')
+        setPayments(j.payments != null ? String(j.payments) : '')
+        setOvertime(!!j.overtime)
+        setTips(!!j.tips)
+        setStartDate(j.startDate ? String(j.startDate).slice(0, 10) : '')
+        setQuestions(Array.isArray(j.applicationQuestions) ? (j.applicationQuestions as JobQuestion[]) : [])
       } else if (l.propertyListing) {
         const p = l.propertyListing
         setKind('property')
@@ -153,7 +183,18 @@ function EditInner() {
           salaryPeriod,
           hours: hours.trim() || null,
           remote,
+          payments: num(payments),
+          overtime,
+          tips,
+          startDate: startDate || null,
           images,
+          lat: coords?.lat ?? null,
+          lng: coords?.lng ?? null,
+          // Send the questions as they now stand — dropping blanks — so removing
+          // one on the form actually removes it.
+          applicationQuestions: questions
+            .filter(q => q.label.trim())
+            .map(q => ({ id: q.id, label: q.label.trim(), type: q.type, required: q.required, ...(q.options ? { options: q.options.filter(Boolean) } : {}) })),
         })
       } else if (kind === 'property') {
         await c.property.update.mutate({
@@ -172,19 +213,26 @@ function EditInner() {
           hasPool,
           hasGarage,
           energyRating: energyRating.trim() || null,
+          lat: coords?.lat ?? null,
+          lng: coords?.lng ?? null,
         })
       } else {
         await c.listings.update.mutate({
           listingId: id,
           title: title.trim(),
           description: description.trim(),
-          price: Number(price) || 0,
+          price: freeItem ? 0 : Number(price) || 0,
+          department,
           condition,
           location: location.trim(),
           stock: Math.max(1, Number(stock) || 1),
-          deliveryFee: Number(deliveryFee) || 0,
+          deliveryFee: deliveryMethod === '' ? 0 : Number(deliveryFee) || 0,
           deliveryMethod: deliveryMethod === '' ? null : deliveryMethod,
+          // A free item can't sensibly auto-accept offers.
+          autoAcceptMin: freeItem ? null : num(autoAcceptMin),
           images,
+          lat: coords?.lat ?? null,
+          lng: coords?.lng ?? null,
         })
       }
       setSaved(true)
@@ -261,6 +309,10 @@ function EditInner() {
         <textarea value={description} onChange={e => setDescription(e.target.value)} rows={5} style={{ ...field, resize: 'vertical' }} />
         {kind === 'item' && (
           <>
+            <label style={lbl}>{t('Department')}</label>
+            <select value={department} onChange={e => setDepartment(e.target.value)} style={field}>
+              {Object.entries(DEPT_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
             <label style={lbl}>{t('Condition')}</label>
             <select value={condition} onChange={e => setCondition(e.target.value)} style={field}>
               {Object.entries(COND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -269,6 +321,12 @@ function EditInner() {
         )}
         <label style={lbl}>{t('Location')}</label>
         <input value={location} onChange={e => setLocation(e.target.value)} style={field} />
+        <label style={lbl}>{t('Map pin')}</label>
+        <MapPicker value={coords} onChange={setCoords} />
+        <div style={hint}>
+          {coords ? `📍 ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : t('Tap the map to drop a pin.')}
+          {coords && <> · <button onClick={() => setCoords(null)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--orange)', fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}>{t('Clear')}</button></>}
+        </div>
       </Card>
 
       {kind === 'job' && (
@@ -305,10 +363,51 @@ function EditInner() {
           <input value={hours} onChange={e => setHours(e.target.value)} placeholder="Mon–Fri 9:00–17:00" style={field} />
           <label style={lbl}>{t('Address')}</label>
           <input value={address} onChange={e => setAddress(e.target.value)} style={field} />
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#444' }}>
-            <input type="checkbox" checked={remote} onChange={e => setRemote(e.target.checked)} style={{ width: 17, height: 17, accentColor: 'var(--orange)' }} />
-            {t('Remote / work from home')}
-          </label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <label style={lbl}>{t('Payments per year')}</label>
+              <input type="number" min={0} max={20} value={payments} onChange={e => setPayments(e.target.value)} placeholder="12" style={field} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={lbl}>{t('Start date')}</label>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={field} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            {([[remote, setRemote, t('Remote / work from home')], [overtime, setOvertime, t('Overtime available')], [tips, setTips, t('Tips')]] as [boolean, (v: boolean) => void, string][]).map(([val, set, label]) => (
+              <label key={label} style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#444' }}>
+                <input type="checkbox" checked={val} onChange={e => set(e.target.checked)} style={{ width: 17, height: 17, accentColor: 'var(--orange)' }} />
+                {label}
+              </label>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {kind === 'job' && (
+        <Card title={t('Screening questions')}>
+          <div style={{ ...hint, marginTop: 0 }}>{t('Optional. Ask candidates specific questions they answer when applying.')}</div>
+          {questions.map(q => (
+            <div key={q.id} style={{ border: '1px solid #e5dccd', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input value={q.label} onChange={e => updateQ(q.id, { label: e.target.value })} placeholder={t('Question, e.g. Do you have a driving licence?')} style={{ ...field, flex: 1, marginBottom: 0 }} />
+                <button type="button" onClick={() => removeQ(q.id)} style={{ background: '#fff', border: '1px solid #e5dccd', borderRadius: 8, padding: '0 12px', color: '#c00', cursor: 'pointer', fontSize: 15 }}>✕</button>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <select value={q.type} onChange={e => updateQ(q.id, { type: e.target.value as JobQuestionType })} style={{ ...field, width: 'auto', marginBottom: 0 }}>
+                  {(Object.keys(QUESTION_TYPE_LABEL) as JobQuestionType[]).map(k => <option key={k} value={k}>{QUESTION_TYPE_LABEL[k]}</option>)}
+                </select>
+                <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#444' }}>
+                  <input type="checkbox" checked={q.required} onChange={e => updateQ(q.id, { required: e.target.checked })} style={{ width: 16, height: 16, accentColor: 'var(--orange)' }} />
+                  {t('Required')}
+                </label>
+              </div>
+              {q.type === 'choice' && (
+                <input value={(q.options ?? []).join(', ')} onChange={e => updateQ(q.id, { options: e.target.value.split(',').map(s => s.trim()) })} placeholder={t('Options, comma separated')} style={{ ...field, marginBottom: 0 }} />
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addQ} style={{ width: '100%', background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ {t('Add a question')}</button>
         </Card>
       )}
 
@@ -364,9 +463,20 @@ function EditInner() {
 
       {kind === 'item' && (
         <Card title={t('Price & options')}>
-          <label style={lbl}>{t('Price (€)')}</label>
-          <input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(e.target.value)} style={field} />
-          <div style={hint}>{t('Lowering the price alerts everyone who saved this item.')}</div>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#444', marginBottom: 10 }}>
+            <input type="checkbox" checked={freeItem} onChange={e => setFreeItem(e.target.checked)} style={{ width: 17, height: 17, accentColor: 'var(--orange)' }} />
+            {t('This item is free / give-away')}
+          </label>
+          {!freeItem && (
+            <>
+              <label style={lbl}>{t('Price (€)')}</label>
+              <input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(e.target.value)} style={field} />
+              <div style={hint}>{t('Lowering the price alerts everyone who saved this item.')}</div>
+              <label style={lbl}>{t('Auto-accept offers at or above (€)')}</label>
+              <input type="number" min={0} step="0.01" value={autoAcceptMin} onChange={e => setAutoAcceptMin(e.target.value)} placeholder={t('Leave blank to review every offer')} style={field} />
+              <div style={hint}>{t('Offers at or above this amount are accepted automatically. Buyers never see your threshold.')}</div>
+            </>
+          )}
           <label style={lbl}>{t('Quantity available')}</label>
           <input type="number" min={1} max={999} value={stock} onChange={e => setStock(e.target.value)} style={field} />
           <label style={lbl}>{t('Delivery')}</label>
