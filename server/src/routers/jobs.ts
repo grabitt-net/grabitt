@@ -345,6 +345,11 @@ export const jobsRouter = router({
       lat: z.number().nullable().optional(),
       lng: z.number().nullable().optional(),
       applicationQuestions: z.array(questionSchema).max(15).optional(),
+      // On the model since the start but never exposed anywhere — no create
+      // form or edit path ever set them.
+      skills: z.array(z.string().max(40)).max(20).optional(),
+      applyUrl: z.string().url().nullable().optional(),
+      expiresAt: z.string().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const listing = await ctx.prisma.listing.findUniqueOrThrow({
@@ -388,6 +393,9 @@ export const jobsRouter = router({
             ...(input.overtime !== undefined ? { overtime: input.overtime } : {}),
             ...(input.tips !== undefined ? { tips: input.tips } : {}),
             ...(input.applicationQuestions !== undefined ? { applicationQuestions: input.applicationQuestions } : {}),
+            ...(input.skills !== undefined ? { skills: input.skills } : {}),
+            ...(input.applyUrl !== undefined ? { applyUrl: input.applyUrl } : {}),
+            ...(input.expiresAt !== undefined ? { expiresAt: input.expiresAt ? new Date(input.expiresAt) : null } : {}),
           },
         }),
       ])

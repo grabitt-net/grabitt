@@ -70,6 +70,9 @@ function EditInner() {
   const [tips, setTips] = useState(false)
   const [startDate, setStartDate] = useState('')
   const [questions, setQuestions] = useState<JobQuestion[]>([])
+  const [skills, setSkills] = useState('')
+  const [applyUrl, setApplyUrl] = useState('')
+  const [expiresAt, setExpiresAt] = useState('')
 
   const addQ = () => setQuestions(qs => [...qs, { id: crypto.randomUUID().slice(0, 8), label: '', type: 'short', required: false }])
   const updateQ = (qid: string, patch: Partial<JobQuestion>) => setQuestions(qs => qs.map(q => q.id === qid ? { ...q, ...patch } : q))
@@ -129,6 +132,9 @@ function EditInner() {
         setTips(!!j.tips)
         setStartDate(j.startDate ? String(j.startDate).slice(0, 10) : '')
         setQuestions(Array.isArray(j.applicationQuestions) ? (j.applicationQuestions as JobQuestion[]) : [])
+        setSkills(Array.isArray(j.skills) ? j.skills.join(', ') : '')
+        setApplyUrl(j.applyUrl ?? '')
+        setExpiresAt(j.expiresAt ? String(j.expiresAt).slice(0, 10) : '')
       } else if (l.propertyListing) {
         const p = l.propertyListing
         setKind('property')
@@ -195,6 +201,9 @@ function EditInner() {
           applicationQuestions: questions
             .filter(q => q.label.trim())
             .map(q => ({ id: q.id, label: q.label.trim(), type: q.type, required: q.required, ...(q.options ? { options: q.options.filter(Boolean) } : {}) })),
+          skills: skills.split(',').map(s => s.trim()).filter(Boolean),
+          applyUrl: applyUrl.trim() || null,
+          expiresAt: expiresAt || null,
         })
       } else if (kind === 'property') {
         await c.property.update.mutate({
@@ -371,6 +380,18 @@ function EditInner() {
             <div style={{ flex: 1 }}>
               <label style={lbl}>{t('Start date')}</label>
               <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={field} />
+            </div>
+          </div>
+          <label style={lbl}>{t('Skills')}</label>
+          <input value={skills} onChange={e => setSkills(e.target.value)} placeholder={t('Comma separated, e.g. English, Excel, Forklift licence')} style={field} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <label style={lbl}>{t('External application link')}</label>
+              <input value={applyUrl} onChange={e => setApplyUrl(e.target.value)} placeholder="https://" style={field} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={lbl}>{t('Advert expires')}</label>
+              <input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} style={field} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>

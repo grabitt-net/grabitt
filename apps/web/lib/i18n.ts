@@ -357,6 +357,10 @@ export const TRANSLATIONS: Record<string, Record<Lang, string>> = {
   'Required': { en: 'Required', es: 'Obligatoria', de: 'Pflicht', da: 'Påkrævet', sv: 'Obligatorisk', nl: 'Verplicht', fr: 'Obligatoire', pt: 'Obrigatória' },
   'Options, comma separated': { en: 'Options, comma separated', es: 'Opciones, separadas por comas', de: 'Optionen, durch Komma getrennt', da: 'Valgmuligheder, adskilt med komma', sv: 'Alternativ, kommaseparerade', nl: 'Opties, gescheiden door komma\'s', fr: 'Options, séparées par des virgules', pt: 'Opções, separadas por vírgulas' },
   'Add a question': { en: 'Add a question', es: 'Añadir una pregunta', de: 'Frage hinzufügen', da: 'Tilføj et spørgsmål', sv: 'Lägg till en fråga', nl: 'Een vraag toevoegen', fr: 'Ajouter une question', pt: 'Adicionar uma pergunta' },
+  'Skills': { en: 'Skills', es: 'Habilidades', de: 'Kenntnisse', da: 'Kompetencer', sv: 'Färdigheter', nl: 'Vaardigheden', fr: 'Compétences', pt: 'Competências' },
+  'Comma separated, e.g. English, Excel, Forklift licence': { en: 'Comma separated, e.g. English, Excel, Forklift licence', es: 'Separadas por comas, p. ej. Inglés, Excel, Carné de carretillero', de: 'Durch Komma getrennt, z. B. Englisch, Excel, Staplerschein', da: 'Adskilt med komma, f.eks. Engelsk, Excel, Truckcertifikat', sv: 'Kommaseparerade, t.ex. Engelska, Excel, Truckkort', nl: 'Gescheiden door komma\'s, bijv. Engels, Excel, Heftruckcertificaat', fr: 'Séparées par des virgules, ex. Anglais, Excel, CACES', pt: 'Separadas por vírgulas, ex. Inglês, Excel, Carta de empilhador' },
+  'External application link': { en: 'External application link', es: 'Enlace externo de solicitud', de: 'Externer Bewerbungslink', da: 'Eksternt ansøgningslink', sv: 'Extern ansökningslänk', nl: 'Externe sollicitatielink', fr: 'Lien de candidature externe', pt: 'Link externo de candidatura' },
+  'Advert expires': { en: 'Advert expires', es: 'El anuncio caduca', de: 'Anzeige läuft ab', da: 'Annoncen udløber', sv: 'Annonsen upphör', nl: 'Advertentie verloopt', fr: 'L\'annonce expire', pt: 'O anúncio expira' },
 }
 
 let _lang: Lang = 'en'
