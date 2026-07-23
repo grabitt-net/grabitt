@@ -1,13 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { trpcAuthed } from '@/lib/authToken'
-import { uploadCv } from '@/lib/storage'
 import { JOB_LANGUAGES, JOB_ATTRIBUTES, EXP_OPTIONS } from './FindStaffPanel'
 import type { JobQuestion } from '@/lib/jobQuestions'
 
 // Robust candidate application: standard recruitment data (prefilled from the
-// applicant's profile / prior application), a CV upload, and the employer's
-// custom screening questions. Collected as owned platform data on consent.
+// applicant's profile / prior application), the employer's screening questions,
+// and the applicant's Grabitt CV — generated from their profile and snapshotted
+// server-side on apply (no file upload). Collected as owned data on consent.
 
 const ORANGE = '#FF4500'
 type AnswerVal = string | boolean | number
@@ -20,17 +20,16 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
   const [jobTitle, setJobTitle] = useState('')
   const [questions, setQuestions] = useState<JobQuestion[]>([])
   const [submitting, setSubmitting] = useState(false)
-  const [cvUploading, setCvUploading] = useState(false)
+  const [hasCv, setHasCv] = useState<boolean | null>(null) // null = still loading
 
   const [f, setF] = useState({
     fullName: '', email: '', phone: '', location: '', rightToWork: '', currentRole: '',
-    expectedSalary: '', availability: '', linkedinUrl: '', coverNote: '', cvUrl: '',
+    expectedSalary: '', availability: '', linkedinUrl: '', coverNote: '',
     experienceMonths: '0',
   })
   const [langs, setLangs] = useState<string[]>([])
   const [answers, setAnswers] = useState<Record<string, AnswerVal>>({})
   const [consent, setConsent] = useState(false)
-  const [cvPreview, setCvPreview] = useState<string | null>(null)
 
   useEffect(() => {
     trpcAuthed().jobs.applyInfo.query({ listingId }).then((info: any) => {
@@ -41,7 +40,7 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
         ...s,
         fullName: p.fullName || '', email: p.email || '', phone: p.phone || '', location: p.location || '',
         rightToWork: p.rightToWork || '', currentRole: p.currentRole || '', availability: p.availability || '',
-        linkedinUrl: p.linkedinUrl || '', coverNote: p.coverNote || '', cvUrl: p.cvUrl || '',
+        linkedinUrl: p.linkedinUrl || '', coverNote: p.coverNote || '',
         expectedSalary: p.expectedSalary != null ? String(p.expectedSalary) : '',
         experienceMonths: String(p.experienceMonths ?? 0),
       }))
@@ -49,19 +48,14 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
       setAnswers((p.answers as Record<string, AnswerVal>) || {})
       setLoaded(true)
     }).catch(() => setLoaded(true))
+    // Does the applicant have enough of a CV to be worth sending?
+    trpcAuthed().seekers.myProfile.query().then((p: any) => {
+      setHasCv(!!(p && (p.summary || (p.workExperience?.length) || (p.skills?.length) || (p.education?.length))))
+    }).catch(() => setHasCv(false))
   }, [listingId])
 
   const set = (k: keyof typeof f, v: string) => setF(s => ({ ...s, [k]: v }))
   const toggleLang = (l: string) => setLangs(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l])
-
-  const pickCv = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setCvUploading(true)
-    try { const { path, previewUrl } = await uploadCv(file, userId); set('cvUrl', path); setCvPreview(previewUrl) }
-    catch (err: any) { alert(err?.message || 'CV upload failed') }
-    finally { setCvUploading(false) }
-  }
 
   const submit = async () => {
     if (!f.fullName.trim()) { alert('Please enter your name.'); return }
@@ -75,7 +69,6 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
       await trpcAuthed().jobs.applyToJob.mutate({
         listingId,
         coverNote: f.coverNote.trim() || undefined,
-        cvUrl: f.cvUrl || undefined,
         fullName: f.fullName.trim(),
         email: f.email.trim() || undefined,
         phone: f.phone.trim() || undefined,
@@ -140,24 +133,23 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
 
               <div style={{ marginBottom: 12 }}><div style={LABEL}>LinkedIn / portfolio (optional)</div><input value={f.linkedinUrl} onChange={e => set('linkedinUrl', e.target.value)} placeholder="https://…" style={FIELD} /></div>
 
-              {/* CV upload */}
+              {/* Grabitt CV — generated from the applicant's profile, snapshotted
+                  server-side on apply. No upload; nudge to build it if empty. */}
               <div style={{ marginBottom: 12 }}>
-                <div style={LABEL}>CV / résumé</div>
-                {f.cvUrl ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '9px 11px' }}>
-                    <span style={{ fontSize: 15 }}>📄</span>
-                    {cvPreview ? (
-                      <a href={cvPreview} target="_blank" rel="noreferrer" style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a', textDecoration: 'none' }}>CV uploaded — view</a>
-                    ) : (
-                      <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>CV on file ✓</span>
-                    )}
-                    <button onClick={() => { set('cvUrl', ''); setCvPreview(null) }} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13 }}>✕</button>
+                <div style={LABEL}>Your Grabitt CV</div>
+                {hasCv === false ? (
+                  <div style={{ background: '#FFF7ED', border: '1px solid #FFD4A0', borderRadius: 10, padding: '11px 12px' }}>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#9a5b1a', lineHeight: 1.5, marginBottom: 8 }}>
+                      You haven&apos;t built your CV yet. Employers receive a formatted Grabitt CV when you apply — add your experience so yours stands out.
+                    </div>
+                    <a href="/cv" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, textDecoration: 'none' }}>📄 Build my CV</a>
                   </div>
                 ) : (
-                  <label style={{ display: 'block', border: '1.5px dashed #e5dccd', borderRadius: 10, padding: '12px', textAlign: 'center', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: cvUploading ? '#bbb' : ORANGE }}>
-                    {cvUploading ? 'Uploading…' : '📎 Upload CV (PDF or Word, max 5 MB)'}
-                    <input type="file" accept=".pdf,.doc,.docx" onChange={pickCv} disabled={cvUploading} style={{ display: 'none' }} />
-                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '9px 11px' }}>
+                    <span style={{ fontSize: 15 }}>📄</span>
+                    <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>Your CV will be sent (anonymous until they shortlist you)</span>
+                    <a href="/cv" target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a', textDecoration: 'none' }}>Edit</a>
+                  </div>
                 )}
               </div>
 
