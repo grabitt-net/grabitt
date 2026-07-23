@@ -5,6 +5,23 @@ import { router, protectedProcedure } from '../trpc'
 // Credits an employer spends to reveal one candidate's contact details.
 const UNLOCK_COST = 10
 
+const workExperienceItem = z.object({
+  title: z.string().max(120).default(''),
+  employer: z.string().max(120).default(''),
+  location: z.string().max(120).optional(),
+  start: z.string().max(20).optional(),
+  end: z.string().max(20).optional(),
+  current: z.boolean().optional(),
+  bullets: z.array(z.string().max(300)).max(10).optional(),
+})
+const educationItem = z.object({
+  qualification: z.string().max(160).default(''),
+  institution: z.string().max(160).default(''),
+  start: z.string().max(20).optional(),
+  end: z.string().max(20).optional(),
+  status: z.string().max(40).optional(),
+})
+
 const profileInput = z.object({
   headline: z.string().max(120).optional(),
   sector: z.string().max(60).optional(),
@@ -16,6 +33,13 @@ const profileInput = z.object({
   rightToWork: z.string().max(40).optional(),
   location: z.string().max(60).optional(),
   active: z.boolean().optional(),
+  // CV content
+  summary: z.string().max(2000).optional(),
+  skills: z.array(z.string().max(60)).max(30).optional(),
+  keyStrengths: z.array(z.string().max(60)).max(12).optional(),
+  certifications: z.array(z.string().max(120)).max(15).optional(),
+  workExperience: z.array(workExperienceItem).max(15).optional(),
+  education: z.array(educationItem).max(10).optional(),
 })
 
 // Job-seeker profiles + the employer-facing Find Staff match/unlock flow.
@@ -42,6 +66,12 @@ export const seekersRouter = router({
           rightToWork: input.rightToWork ?? null,
           location: input.location ?? null,
           active: input.active ?? true,
+          summary: input.summary ?? null,
+          skills: input.skills ?? [],
+          keyStrengths: input.keyStrengths ?? [],
+          certifications: input.certifications ?? [],
+          ...(input.workExperience !== undefined && { workExperience: input.workExperience }),
+          ...(input.education !== undefined && { education: input.education }),
         },
         update: {
           ...(input.headline !== undefined && { headline: input.headline }),
@@ -54,6 +84,12 @@ export const seekersRouter = router({
           ...(input.rightToWork !== undefined && { rightToWork: input.rightToWork }),
           ...(input.location !== undefined && { location: input.location }),
           ...(input.active !== undefined && { active: input.active }),
+          ...(input.summary !== undefined && { summary: input.summary }),
+          ...(input.skills !== undefined && { skills: input.skills }),
+          ...(input.keyStrengths !== undefined && { keyStrengths: input.keyStrengths }),
+          ...(input.certifications !== undefined && { certifications: input.certifications }),
+          ...(input.workExperience !== undefined && { workExperience: input.workExperience }),
+          ...(input.education !== undefined && { education: input.education }),
         },
       })
     ),

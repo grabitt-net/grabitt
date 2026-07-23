@@ -226,6 +226,18 @@ function AccountInner() {
 
         {/* Main content */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+          {/* My CV — build the CV recruiters receive on apply */}
+          <Link href="/cv" style={{ textDecoration: 'none' }}>
+            <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+              <div style={{ fontSize: 26 }}>📄</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{t('My CV')}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6b5d48' }}>{t('Build the CV recruiters get when you apply for jobs.')}</div>
+              </div>
+              <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
+            </div>
+          </Link>
+
           {/* Account email — changing it re-verifies via Supabase Auth */}
           <div style={card}>
             <div style={cardHead}>{t('Account email')}</div>

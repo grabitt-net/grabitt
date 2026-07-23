@@ -283,6 +283,16 @@ model SeekerProfile {
   rightToWork      String?
   location         String?
   active           Boolean  @default(true)
+  // ── CV content — the candidate's real CV, entered structured and rendered to
+  // a formatted PDF on apply. Repeatable sections are JSON arrays:
+  //   workExperience: [{ title, employer, location, start, end, current, bullets[] }]
+  //   education:      [{ qualification, institution, start, end, status }]
+  summary          String?
+  skills           String[] @default([])
+  keyStrengths     String[] @default([])
+  certifications   String[] @default([])
+  workExperience   Json?
+  education        Json?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -919,6 +929,10 @@ model JobApplication {
   linkedinUrl      String?
   answers          Json?             // answers to the employer's screening questions
   dataConsent      Boolean           @default(false)
+  // Full CV data captured at apply time — the recruiter sees what was submitted,
+  // never a version the candidate edited afterwards. Rendered anonymised until
+  // the application is shortlisted/hired or the candidate is unlocked, then full.
+  cvSnapshot       Json?
   status       ApplicationStatus @default(applied)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
