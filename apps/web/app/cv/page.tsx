@@ -197,6 +197,10 @@ function CvInner() {
       <button onClick={save} disabled={saving} style={{ width: '100%', background: saving ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: saving ? 'wait' : 'pointer' }}>
         {saving ? 'Saving…' : 'Save CV'}
       </button>
+      <a href="/api/cv-pdf?preview=me" target="_blank" rel="noreferrer" style={{ display: 'block', textAlign: 'center', marginTop: 10, textDecoration: 'none', background: '#fff', color: '#555', border: '1.5px solid #e5dccd', borderRadius: 14, padding: 13, fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900 }}>
+        📄 Preview my CV
+      </a>
+      <div style={{ ...hint, textAlign: 'center', marginTop: 8 }}>Save first — the preview shows what you last saved.</div>
     </div>
   )
 }

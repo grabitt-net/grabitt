@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
+import type { Prisma } from '@prisma/client'
 import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
+import { buildCvSnapshot } from '../lib/cvSnapshot'
 
 // Employer-defined screening question shape.
 const questionSchema = z.object({
@@ -53,9 +55,18 @@ export const jobsRouter = router({
         }
       }
 
+      // Snapshot the applicant's CV (from their SeekerProfile + account contact)
+      // as it stands right now, so the recruiter sees exactly what was submitted.
+      const [applicant, profile] = await Promise.all([
+        ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { displayName: true, email: true, phone: true } }),
+        ctx.prisma.seekerProfile.findUnique({ where: { userId: ctx.user.id } }),
+      ])
+      const cvSnapshot = buildCvSnapshot(applicant, profile as never) as unknown as Prisma.InputJsonValue
+
       const data = {
         coverNote: input.coverNote,
         cvUrl: input.cvUrl,
+        cvSnapshot,
         fullName: input.fullName,
         email: input.email,
         phone: input.phone,
@@ -416,6 +427,19 @@ export const jobsRouter = router({
         },
       },
     })
+    // Candidates this employer has unlocked (paid credits) — their identity is
+    // revealed even before shortlisting.
+    const unlocks = await ctx.prisma.candidateUnlock.findMany({
+      where: { employerId: ctx.user.id },
+      select: { seekerId: true },
+    })
+    const unlockedIds = new Set(unlocks.map(u => u.seekerId))
+    // A candidate is identified to the employer once shortlisted/hired, or if
+    // separately unlocked. Until then their PII is withheld — the "anonymous
+    // until you shortlist" model.
+    const isRevealed = (status: string, applicantId: string) =>
+      status === 'shortlisted' || status === 'hired' || unlockedIds.has(applicantId)
+
     return jobs.map(j => ({
       id: j.id,
       listingId: j.listingId,
@@ -426,29 +450,35 @@ export const jobsRouter = router({
       postedAt: j.listing.createdAt,
       image: j.listing.images[0] ?? null,
       questions: (j.applicationQuestions ?? []) as { id: string; label: string }[],
-      applications: j.applications.map(a => ({
-        id: a.id,
-        status: a.status,
-        coverNote: a.coverNote,
-        employerNote: a.employerNote,
-        applicantId: a.applicant.id,
-        applicant: a.applicant.displayName,
-        createdAt: a.createdAt,
-        // Full application detail for the employer.
-        fullName: a.fullName,
-        email: a.email,
-        phone: a.phone,
-        location: a.location,
-        rightToWork: a.rightToWork,
-        languages: a.languages,
-        experienceMonths: a.experienceMonths,
-        currentRole: a.currentRole,
-        expectedSalary: a.expectedSalary,
-        availability: a.availability,
-        linkedinUrl: a.linkedinUrl,
-        cvUrl: a.cvUrl,
-        answers: (a.answers ?? {}) as Record<string, string | number | boolean>,
-      })),
+      applications: j.applications.map(a => {
+        const revealed = isRevealed(a.status, a.applicant.id)
+        return {
+          id: a.id,
+          status: a.status,
+          coverNote: a.coverNote,
+          employerNote: a.employerNote,
+          applicantId: a.applicant.id,
+          revealed,
+          // Identity is anonymised until the candidate is revealed.
+          applicant: revealed ? a.applicant.displayName : `Candidate ${a.applicant.id.slice(-4).toUpperCase()}`,
+          createdAt: a.createdAt,
+          // PII — only sent once revealed.
+          fullName: revealed ? a.fullName : null,
+          email: revealed ? a.email : null,
+          phone: revealed ? a.phone : null,
+          linkedinUrl: revealed ? a.linkedinUrl : null,
+          // Non-identifying detail, always shown so the employer can assess fit.
+          location: a.location,
+          rightToWork: a.rightToWork,
+          languages: a.languages,
+          experienceMonths: a.experienceMonths,
+          currentRole: a.currentRole,
+          expectedSalary: a.expectedSalary,
+          availability: a.availability,
+          cvUrl: a.cvUrl,
+          answers: (a.answers ?? {}) as Record<string, string | number | boolean>,
+        }
+      }),
     }))
   }),
 

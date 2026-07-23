@@ -10,6 +10,8 @@ const nextConfig = {
     serverComponentsExternalPackages: [
       '@prisma/client', 'prisma', 'stripe', 'jsonwebtoken', 'bcryptjs',
       'qrcode', 'resend', 'twilio', 'pg-boss', 'cloudinary',
+      // Heavy PDF renderer (fontkit etc.) — require at runtime, don't bundle.
+      '@react-pdf/renderer',
     ],
   },
   // Copies the Prisma query engine binary next to the server bundles — the

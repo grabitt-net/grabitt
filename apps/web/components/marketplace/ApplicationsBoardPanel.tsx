@@ -8,7 +8,7 @@ import { trpcAuthed } from '@/lib/authToken'
 
 const ORANGE = '#FF4500'
 type App = {
-  id: string; status: string; applicant: string; applicantId: string; coverNote: string | null; employerNote: string | null; createdAt: string
+  id: string; status: string; applicant: string; applicantId: string; revealed?: boolean; coverNote: string | null; employerNote: string | null; createdAt: string
   fullName: string | null; email: string | null; phone: string | null; location: string | null; rightToWork: string | null
   languages: string[]; experienceMonths: number | null; currentRole: string | null; expectedSalary: number | null
   availability: string | null; linkedinUrl: string | null; cvUrl: string | null; answers: Record<string, string | number | boolean>
@@ -124,7 +124,11 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
                               {a.availability && <Detail icon="🗓️" label="Availability" value={a.availability} />}
                               {a.expectedSalary != null && <Detail icon="💶" label="Expected salary" value={`€${a.expectedSalary.toLocaleString()}/mo`} />}
                               {a.linkedinUrl && <div style={{ fontSize: 11, fontFamily: 'var(--font-ui)' }}>🔗 <a href={a.linkedinUrl} target="_blank" rel="noreferrer" style={{ color: ORANGE, fontWeight: 800 }}>LinkedIn / portfolio</a></div>}
-                              {a.cvUrl && <a href={`/api/cv?applicationId=${a.id}`} target="_blank" rel="noreferrer" style={{ marginTop: 2, background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>📄 View CV</a>}
+                              {/* Generated Grabitt CV — anonymised until this
+                                  candidate is shortlisted or unlocked. */}
+                              <a href={`/api/cv-pdf?applicationId=${a.id}`} target="_blank" rel="noreferrer" style={{ marginTop: 2, background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>📄 View CV{a.revealed === false ? ' (anonymous)' : ''}</a>
+                              {a.revealed === false && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#9a8b74', textAlign: 'center' }}>🔒 Name & contact appear once you shortlist.</div>}
+                              {a.cvUrl && <a href={`/api/cv?applicationId=${a.id}`} target="_blank" rel="noreferrer" style={{ background: '#fff', color: '#555', border: '1px solid #e5dccd', borderRadius: 8, padding: '7px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, textDecoration: 'none' }}>📎 Attached file</a>}
 
                               {j.questions.length > 0 && Object.keys(a.answers).length > 0 && (
                                 <div style={{ marginTop: 4, paddingTop: 6, borderTop: '1px solid #eee' }}>
