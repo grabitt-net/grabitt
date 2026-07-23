@@ -57,6 +57,7 @@ export const offersRouter = router({
             kind: 'offer_accepted',
             title: '✅ Offer accepted!',
             body: `Your €${input.amount.toFixed(2)} offer on "${listing.title}" was accepted. Complete payment to secure it.`,
+            actionUrl: `/listings/${listing.id}`,
           },
         })
       } else if (autoCounter) {
@@ -66,6 +67,7 @@ export const offersRouter = router({
             kind: 'offer_countered',
             title: '🤝 Seller countered',
             body: `Your €${input.amount.toFixed(2)} offer on "${listing.title}" was countered at €${counterAmount!.toFixed(2)}. Accept it or counter lower.`,
+            actionUrl: `/listings/${listing.id}`,
           },
         })
       } else {
@@ -75,6 +77,8 @@ export const offersRouter = router({
             kind: 'offer_received',
             title: '💰 New offer',
             body: `You received a €${input.amount.toFixed(2)} offer on "${listing.title}".`,
+            // Sellers review and accept/decline offers on their account page.
+            actionUrl: '/account',
           },
         })
       }
@@ -109,6 +113,7 @@ export const offersRouter = router({
             kind: 'offer_accepted',
             title: '🤝 Counter accepted',
             body: `A buyer accepted your €${Number(offer.counterAmount).toFixed(2)} counter on "${offer.listing.title}".`,
+            actionUrl: '/account',
           },
         })
         return updated
@@ -130,6 +135,7 @@ export const offersRouter = router({
             kind: 'offer_received',
             title: '💰 Offer needs your decision',
             body: `A buyer's €${Number(offer.amount).toFixed(2)} offer on "${offer.listing.title}" is below your minimum — review it manually.`,
+            actionUrl: '/account',
           },
         })
         return updated
@@ -145,6 +151,7 @@ export const offersRouter = router({
           kind: 'offer_countered',
           title: nextTier >= 3 ? '🔔 Seller’s final offer' : '🤝 Seller countered',
           body: `${nextTier >= 3 ? 'Final counter' : 'New counter'} on "${offer.listing.title}": €${nextCounter.toFixed(2)}.`,
+          actionUrl: `/listings/${offer.listing.id}`,
         },
       })
       return updated
