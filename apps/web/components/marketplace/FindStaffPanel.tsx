@@ -70,10 +70,17 @@ function FullProfileBlock({ p, seekerId }: { p: FullProfile; seekerId: string })
         </div>
       )}
 
-      {p.skills.length > 0 && <Chips label="Skills" items={p.skills} />}
+      {/* Exactly what the candidate selected when they set up their work
+          profile — sectors, the roles under each, key skills, languages with
+          the level they claimed, and the hours they'll work. */}
+      {p.sectors.length > 0 && <Chips label="Sectors" items={p.sectors} />}
+      {p.roles.length > 0 && <Chips label="Roles" items={p.roles} />}
+      {p.skills.length > 0 && <Chips label="Key skills" items={p.skills} />}
       {p.keyStrengths.length > 0 && <Chips label="Key strengths" items={p.keyStrengths} />}
       {p.certifications.length > 0 && <Chips label="Certifications" items={p.certifications} />}
       {p.languages.length > 0 && <Chips label="Languages" items={p.languages} />}
+      {p.hours.length > 0 && <Chips label="Hours available" items={p.hours} />}
+      <Chips label="Experience" items={[expLabel(p.experienceMonths)]} />
 
       <div style={{ display: 'flex', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', flexWrap: 'wrap' }}>
         {p.location && <span>📍 {p.location}</span>}
@@ -179,11 +186,21 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
   const [viewCost, setViewCost] = useState(1)
   const [profiles, setProfiles] = useState<Record<string, FullProfile>>({})
   const [openingId, setOpeningId] = useState<string | null>(null)
+  // Which profiles are expanded right now. Kept apart from the loaded data so a
+  // profile can be collapsed and reopened without being fetched — or charged —
+  // again.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const toggleExpanded = (id: string) => setExpanded(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
 
   // Opening a profile spends a credit the first time; after that it's free, so
   // the confirmation only appears when there is actually something to pay.
   const openProfile = async (c: Candidate) => {
-    if (profiles[c.seekerId]) { setProfiles(p => ({ ...p })); return }
+    // Already fetched this session — just show it again, free and instant.
+    if (profiles[c.seekerId]) { toggleExpanded(c.seekerId); return }
     if (!c.viewed && !c.unlocked) {
       if (!confirm(`Open this profile for ${viewCost} credit? You can reopen it free afterwards.`)) return
     }
@@ -191,6 +208,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
     try {
       const full = await trpcAuthed().seekers.viewCandidate.mutate({ seekerId: c.seekerId }) as unknown as FullProfile
       setProfiles(p => ({ ...p, [c.seekerId]: full }))
+      setExpanded(prev => new Set(prev).add(c.seekerId))
       setCandidates(list => list.map(x => x.seekerId === c.seekerId ? { ...x, viewed: true } : x))
       if (access) setAccess({ ...access, credits: access.credits - (c.viewed || c.unlocked ? 0 : viewCost) })
     } catch (e) {
@@ -403,12 +421,21 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
 
                           {/* Full profile — history, CV and all. Costs a credit
                               the first time, free to reopen. */}
-                          {profiles[c.seekerId] ? (
-                            <FullProfileBlock p={profiles[c.seekerId]} seekerId={c.seekerId} />
+                          {profiles[c.seekerId] && expanded.has(c.seekerId) ? (
+                            <>
+                              <FullProfileBlock p={profiles[c.seekerId]} seekerId={c.seekerId} />
+                              <button onClick={() => toggleExpanded(c.seekerId)} style={{ width: '100%', marginBottom: 8, background: 'none', border: 'none', color: '#888', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', padding: 6 }}>
+                                ▲ Hide profile
+                              </button>
+                            </>
                           ) : (
                             <button onClick={() => openProfile(c)} disabled={openingId === c.seekerId}
                               style={{ width: '100%', marginBottom: 8, background: '#fff', color: ORANGE, border: `1.5px solid ${ORANGE}`, borderRadius: 10, padding: 9, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
-                              {openingId === c.seekerId ? 'Opening…' : (c.viewed || c.unlocked) ? '📄 View full profile' : `📄 Open full profile · ${viewCost} credit`}
+                              {openingId === c.seekerId
+                                ? 'Opening…'
+                                : (c.viewed || c.unlocked || profiles[c.seekerId])
+                                  ? '📄 View full profile (already paid)'
+                                  : `📄 Open full profile · ${viewCost} credit`}
                             </button>
                           )}
 
