@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
@@ -31,7 +31,7 @@ export default function PropertyPage() {
   const run = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await createTrpcClient().property.list.query({
+      const res = await createLooseTrpcClient().property.list.query({
         ...(query.trim() && { query: query.trim() }),
         ...(type && { type: type as never }),
         ...(minPrice && { minPrice: Number(minPrice) }),

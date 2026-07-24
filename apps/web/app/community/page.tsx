@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import SiteHeader from '@/components/marketplace/SiteHeader'
 import EconomicLiving from '@/components/marketplace/EconomicLiving'
 
@@ -10,7 +10,7 @@ type Post = { id: string; title: string; excerpt: string; category: string; emoj
 export default function CommunityIndexPage() {
   const [posts, setPosts] = useState<Post[]>([])
   useEffect(() => {
-    createTrpcClient().community.list.query({ limit: 30 }).then((p: any[]) => setPosts(p as Post[])).catch(() => {})
+    createLooseTrpcClient().community.list.query({ limit: 30 }).then(p => setPosts(p as Post[])).catch(() => {})
   }, [])
   return (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import { toPanelItem, type DbListing } from '@/lib/listingMap'
 import Icon from './Icon'
 
@@ -11,7 +11,7 @@ export default function FeaturedStrip() {
   const [items, setItems] = useState<DbListing[]>([])
 
   useEffect(() => {
-    createTrpcClient().listings.featured.query()
+    createLooseTrpcClient().listings.featured.query()
       .then(d => setItems(d as unknown as DbListing[]))
       .catch(() => {})
   }, [])

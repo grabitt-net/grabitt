@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PanelProvider } from '@/context/PanelContext'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
 import dynamic from 'next/dynamic'
 import { COND_LABEL, DEPT_LABEL } from '@/lib/listingMap'
@@ -99,7 +99,7 @@ function EditInner() {
     try {
       const [me, l] = await Promise.all([
         (trpcAuthed() as any).users.me.query(),
-        createTrpcClient().listings.byId.query({ id }) as any,
+        createLooseTrpcClient().listings.byId.query({ id }) as any,
       ])
       if (!l) { setState('missing'); return }
       if (l.seller?.id !== me?.id) { setState('denied'); return }

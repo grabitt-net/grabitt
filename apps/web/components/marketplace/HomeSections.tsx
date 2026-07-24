@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import ParallaxHeader from './ParallaxHeader'
 import CategoryGrid from './CategoryGrid'
 import FeaturedStrip from './FeaturedStrip'
@@ -40,7 +40,7 @@ export default function HomeSections() {
   const [keys, setKeys] = useState<string[] | null>(null)
 
   useEffect(() => {
-    createTrpcClient().homepage.layout.query()
+    createLooseTrpcClient().homepage.layout.query()
       .then(rows => {
         const list = rows as { key: string; enabled: boolean }[]
         // No layout configured yet → default order; otherwise honour the

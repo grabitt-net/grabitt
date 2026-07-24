@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import { t } from '@/lib/i18n'
 
 type Post = { id: string; title: string; excerpt: string; category: string; emoji: string; imageUrl: string | null }
@@ -10,8 +10,8 @@ type Post = { id: string; title: string; excerpt: string; category: string; emoj
 export default function CommunityStrip() {
   const [posts, setPosts] = useState<Post[]>([])
   useEffect(() => {
-    createTrpcClient().community.list.query({ limit: 8 })
-      .then((p: any[]) => setPosts(p as Post[]))
+    createLooseTrpcClient().community.list.query({ limit: 8 })
+      .then(p => setPosts(p as Post[]))
       .catch(() => {})
   }, [])
   if (posts.length === 0) return null

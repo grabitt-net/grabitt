@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 
 type Banner = { id: string; title: string; imageUrl: string; linkUrl: string | null }
 type Position = 'home_top' | 'home_mid' | 'category' | 'checkout'
@@ -13,7 +13,7 @@ export default function BannerSlot({ position, aspect = '3.4 / 1', radius = 16 }
   const [idx, setIdx] = useState(0)
 
   useEffect(() => {
-    createTrpcClient().banners.active.query({ position })
+    createLooseTrpcClient().banners.active.query({ position })
       .then(d => setBanners(d as unknown as Banner[]))
       .catch(() => {})
   }, [position])

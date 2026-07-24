@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { DEPT_LABEL, COND_LABEL, deptEmoji } from '@/lib/listingMap'
 import { t } from '@/lib/i18n'
@@ -66,17 +66,17 @@ function ListingInner() {
   const [savingPrice, setSavingPrice] = useState(false)
 
   useEffect(() => {
-    createTrpcClient().listings.byId.query({ id })
+    createLooseTrpcClient().listings.byId.query({ id })
       .then((l: any) => {
         setListing(l); setState('ready')
         pushView({ id: l.id, title: l.title, price: `€${Number(l.price).toLocaleString()}`, image: Array.isArray(l.images) ? l.images[0] : null, emoji: deptEmoji(l.department), location: l.location })
         // "You might also like" — same department, excluding this listing.
-        createTrpcClient().listings.getByDept.query({ department: l.department as never, sort: 'newest' })
+        createLooseTrpcClient().listings.getByDept.query({ department: l.department as never, sort: 'newest' })
           .then((r: any) => setSimilar(((r?.items ?? []) as any[]).filter(x => x.id !== l.id).slice(0, 4)))
           .catch(() => {})
       })
       .catch(() => setState('notfound'))
-    createTrpcClient().listings.comparables.query({ id })
+    createLooseTrpcClient().listings.comparables.query({ id })
       .then((c: any) => { if (c && c.count > 0) setComps(c) })
       .catch(() => {})
   }, [id])
@@ -105,7 +105,7 @@ function ListingInner() {
   useEffect(() => {
     const empId = listing?.jobListing?.employerId
     if (!empId) return
-    createTrpcClient().jobs.byEmployer.query({ employerId: empId, excludeListingId: id })
+    createLooseTrpcClient().jobs.byEmployer.query({ employerId: empId, excludeListingId: id })
       .then((r: any) => setEmpJobs((r ?? []) as any[]))
       .catch(() => {})
   }, [listing, id])

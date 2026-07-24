@@ -7,7 +7,7 @@ import { useToast } from '@/context/ToastContext'
 import { useChat } from '@/hooks/useChat'
 import { useNotifications, kindIcon, kindTab, relativeTime } from '@/hooks/useNotifications'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
-import { createTrpcClient } from '@/lib/trpc'
+import { createTrpcClient, createLooseTrpcClient } from '@/lib/trpc'
 import { createClient } from '@/lib/supabase'
 import { getAuthToken, refreshAuthToken, setAuthToken } from '@/lib/authToken'
 import { compressAndUpload, listingPhotoPath, uploadDisputeEvidence } from '@/lib/storage'
@@ -1015,9 +1015,10 @@ function PanelBody() {
       if (!dept) { setItems([]); setLoading(false); return }
       setLoading(true)
       const srt = (sort === 'price_asc' || sort === 'price_desc') ? sort : 'newest'
-      getTrpcClient()
-        .then(c => c.listings.getByDept.query({ department: dept, sort: srt as 'newest' | 'price_asc' | 'price_desc' }))
-        .then(res => { setItems((res.items ?? []) as unknown as DbListing[]); setLoading(false) })
+      // Bounded client — inferring this off the full router type exceeds
+      // TypeScript's instantiation limit. See createLooseTrpcClient.
+      createLooseTrpcClient().listings.getByDept.query({ department: dept, sort: srt })
+        .then(res => { setItems(((res as { items?: unknown }).items ?? []) as DbListing[]); setLoading(false) })
         .catch(() => setLoading(false))
     }, [name, sort])
 
@@ -1202,8 +1203,7 @@ function PanelBody() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
       let live = true
-      getTrpcClient()
-        .then(c => c.listings.recent.query())
+      createLooseTrpcClient().listings.recent.query()
         .then(d => { if (live) setRecent(d as any[]) })
         .catch(() => { if (live) setRecent([]) })
       return () => { live = false }
@@ -1960,8 +1960,8 @@ function PanelBody() {
       const srt = (sort === 'price_asc' || sort === 'price_desc') ? sort : 'newest'
       const dept = FILTER_ENUM[FILTERS[filterIdx]]
       const run: Promise<unknown> = featured
-        ? getTrpcClient().then(c => c.listings.featured.query()).then(d => ({ items: d }))
-        : getTrpcClient().then(c => c.listings.search.query({ query: q || undefined, department: dept as never, sort: srt as never }))
+        ? createLooseTrpcClient().listings.featured.query().then(d => ({ items: d }))
+        : createLooseTrpcClient().listings.search.query({ query: q || undefined, department: dept, sort: srt })
       run.then(res => { const items = (res as { items?: unknown }).items; setResults((items ?? []) as unknown as DbListing[]); setLoading(false) }).catch(() => setLoading(false))
     }, [q, sort, filterIdx, featured])
 
@@ -2099,7 +2099,7 @@ function PanelBody() {
 
     const load = useCallback(async () => {
       try {
-        const c = await getTrpcClient()
+        const c = await createLooseTrpcClient()
         const [r, s] = await Promise.all([c.offers.received.query(), c.offers.sent.query()])
         setReceived(r as any[]); setSent(s as any[])
       } catch { setReceived([]); setSent([]) }
@@ -3331,7 +3331,7 @@ function PanelBody() {
     const [purchases, setPurchases] = useState<Purchase[]>([])
     const [purchasesLoaded, setPurchasesLoaded] = useState(false)
     useEffect(() => {
-      getTrpcClient().then(c => c.transactions.myPurchases.query()).then(data => {
+      createLooseTrpcClient().transactions.myPurchases.query().then(data => {
         setPurchases(data as unknown as Purchase[])
         setPurchasesLoaded(true)
       }).catch(() => setPurchasesLoaded(true))

@@ -24,6 +24,7 @@ import { communityRouter } from './routers/community'
 import { cartRouter } from './routers/cart'
 import { followRouter } from './routers/follow'
 import { seekersRouter } from './routers/seekers'
+import { businessRouter } from './routers/business'
 import { reportsRouter } from './routers/reports'
 import { execTasksRouter } from './routers/execTasks'
 
@@ -33,6 +34,7 @@ export const appRouter = router({
   cart: cartRouter,
   follow: followRouter,
   seekers: seekersRouter,
+  business: businessRouter,
   transactions: transactionsRouter,
   offers: offersRouter,
   messages: messagesRouter,

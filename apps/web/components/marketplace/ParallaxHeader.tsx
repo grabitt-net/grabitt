@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 
 type Slide = { id: string; heading: string | null; subheading: string | null; imageUrl: string; linkUrl: string | null }
 
@@ -13,7 +13,7 @@ export default function ParallaxHeader() {
   const [idx, setIdx] = useState(0)
 
   useEffect(() => {
-    createTrpcClient().homepage.heroSlides.query()
+    createLooseTrpcClient().homepage.heroSlides.query()
       .then(d => setSlides((d as unknown as Slide[]) ?? []))
       .catch(() => {})
   }, [])

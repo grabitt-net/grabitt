@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import { geocodeGC } from '@/lib/gcGeo'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
@@ -45,7 +45,7 @@ export default function JobsPage() {
   const run = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await createTrpcClient().jobs.list.query({
+      const res = await createLooseTrpcClient().jobs.list.query({
         ...(query.trim() && { query: query.trim() }),
         ...(type && { type: type as never }),
         ...(remote && { remote: true }),
@@ -58,7 +58,7 @@ export default function JobsPage() {
 
   useEffect(() => { run() }, [type, remote, location]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    createTrpcClient().jobs.locations.query().then(d => setLocations(d as any[])).catch(() => {})
+    createLooseTrpcClient().jobs.locations.query().then(d => setLocations(d as any[])).catch(() => {})
   }, [])
 
   // Geocode job locations to pins for the map view.

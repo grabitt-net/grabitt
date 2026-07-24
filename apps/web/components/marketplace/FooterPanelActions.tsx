@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import type { PanelId } from '@/context/PanelContext'
 
 // Real interactive actions for the footer info panels (replacing the prototype's
@@ -25,7 +25,7 @@ function MessageForm({ type, placeholder, buttonText, color, done, withEmail }: 
     if (!message.trim()) return
     setState('sending')
     try {
-      await createTrpcClient().crm.submit.mutate({ type, message: message.trim(), ...(email.trim() && { email: email.trim() }) })
+      await createLooseTrpcClient().crm.submit.mutate({ type, message: message.trim(), ...(email.trim() && { email: email.trim() }) })
       setState('done')
     } catch { setState('idle') }
   }
@@ -51,7 +51,7 @@ function BoostForm() {
     if (!name.trim()) return
     setState('sending')
     try {
-      await createTrpcClient().crm.submit.mutate({
+      await createLooseTrpcClient().crm.submit.mutate({
         type: 'free_listings', name: name.trim(), company: name.trim(),
         message: `${kind === 'charity' ? 'Charity' : 'New business'}${reg.trim() ? ` · Reg ${reg.trim()}` : ''}\n${about.trim()}`,
       })

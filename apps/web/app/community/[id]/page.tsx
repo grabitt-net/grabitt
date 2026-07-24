@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import SiteHeader from '@/components/marketplace/SiteHeader'
 
 export default function CommunityPostPage() {
@@ -11,7 +11,7 @@ export default function CommunityPostPage() {
   const [state, setState] = useState<'loading' | 'ready' | 'notfound'>('loading')
 
   useEffect(() => {
-    createTrpcClient().community.byId.query({ id })
+    createLooseTrpcClient().community.byId.query({ id })
       .then((p: any) => { setPost(p); setState('ready') })
       .catch(() => setState('notfound'))
   }, [id])

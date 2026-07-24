@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
@@ -47,7 +47,7 @@ export default function CategoryPage() {
   useEffect(() => {
     if (!slug) return
     setLoading(true)
-    createTrpcClient().listings.getByDept.query({ department: slug as never, sort })
+    createLooseTrpcClient().listings.getByDept.query({ department: slug, sort })
       .then(res => { setItems(((res as { items?: DbListing[] }).items ?? []) as DbListing[]); setLoading(false) })
       .catch(() => { setItems([]); setLoading(false) })
   }, [slug, sort])

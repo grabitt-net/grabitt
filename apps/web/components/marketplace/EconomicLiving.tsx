@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 
 // Economic Living — money-saving guide shown at the foot of Grabitt Guides,
 // with a community tip submission. Tips land in the CRM pipeline (crm.submit
@@ -28,7 +28,7 @@ export default function EconomicLiving() {
     if (!tip.trim()) { setError('Please write a tip first.'); return }
     setState('sending'); setError('')
     try {
-      await createTrpcClient().crm.submit.mutate({
+      await createLooseTrpcClient().crm.submit.mutate({
         type: 'economic_tip',
         message: tip.trim(),
         ...(name.trim() && { name: name.trim() }),

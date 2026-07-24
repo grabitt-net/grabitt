@@ -55,6 +55,11 @@ export const CreateListingInputSchema = z.object({
   deliveryFee: z.number().min(0).default(0),
   deliveryMethod: z.enum(['courier', 'in_person']).optional(),
   autoAcceptMin: z.number().min(0).optional(),
+  // Buy N, save X% — Business sellers only, enforced server-side.
+  multibuyTiers: z.array(z.object({
+    qty: z.number().int().min(2).max(99),
+    discountPct: z.number().min(1).max(90),
+  })).max(4).optional(),
 })
 export type CreateListingInput = z.infer<typeof CreateListingInputSchema>
 

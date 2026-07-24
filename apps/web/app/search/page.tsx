@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
@@ -46,10 +46,10 @@ function SearchInner() {
   useEffect(() => {
     setLoading(true)
     const dept = FILTER_ENUM[FILTERS[filterIdx]]
-    const client = createTrpcClient()
+    const client = createLooseTrpcClient()
     const run = featured
       ? client.listings.featured.query().then(d => ({ items: d }))
-      : client.listings.search.query({ query: q || undefined, department: dept as never, sort: sort as never })
+      : client.listings.search.query({ query: q || undefined, department: dept, sort })
     Promise.resolve(run)
       .then(res => setItems((((res as { items?: unknown }).items) ?? []) as unknown as DbListing[]))
       .catch(() => setItems([]))

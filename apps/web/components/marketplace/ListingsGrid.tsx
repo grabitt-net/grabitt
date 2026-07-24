@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createTrpcClient } from '@/lib/trpc'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import { toPanelItem, type DbListing } from '@/lib/listingMap'
 import Icon from './Icon'
 
@@ -35,9 +35,9 @@ export default function ListingsGrid() {
     setLoading(true)
     const dept = CATS[cat].dept
     const srt = (sort === 'price_asc' || sort === 'price_desc') ? sort : 'newest'
-    createTrpcClient().listings.search
+    createLooseTrpcClient().listings.search
       .query({ department: dept as never, sort: srt as never, limit: 50 })
-      .then(res => { setItems((res.items ?? []) as unknown as DbListing[]); setLoading(false) })
+      .then(res => { setItems(((res as { items?: unknown }).items ?? []) as DbListing[]); setLoading(false) })
       .catch(() => setLoading(false))
   }, [cat, sort])
 

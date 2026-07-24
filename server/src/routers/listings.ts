@@ -377,6 +377,25 @@ export const listingsRouter = router({
         })
       }
 
+      // Multibuy is a Business feature — a private seller offering bulk pricing
+      // is a trader in all but name, which is the line the badge draws.
+      if (input.multibuyTiers?.length && !user.isBusiness) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Multibuy pricing is a Business account feature. Upgrade to offer bulk discounts.',
+        })
+      }
+
+      // A Grabber lists single items, not stock. Anyone selling several of the
+      // same thing is running a shop, so they either earn Dealer through sales
+      // or take a Business account.
+      if (!user.isBusiness && user.grade === 'grabber' && input.stock > 1) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Grabber accounts can list one of each item. Reach Dealer grade through sales, or open a Business account, to list multiples.',
+        })
+      }
+
       // Enforce monthly listing cap per grade
       const cap = LISTING_CAPS[user.grade as keyof typeof LISTING_CAPS]
       if (cap !== Infinity) {
@@ -454,11 +473,28 @@ export const listingsRouter = router({
       deliveryFee: z.number().min(0).optional(),
       deliveryMethod: z.enum(['courier', 'in_person']).nullable().optional(),
       autoAcceptMin: z.number().min(0).nullable().optional(),
+      multibuyTiers: z.array(z.object({
+        qty: z.number().int().min(2).max(99),
+        discountPct: z.number().min(1).max(90),
+      })).max(4).nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { listingId, ...fields } = input
       const listing = await ctx.prisma.listing.findUniqueOrThrow({ where: { id: listingId } })
       if (listing.sellerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the seller can edit this listing' })
+
+      // The same two rules as create — otherwise publishing a compliant listing
+      // and editing it afterwards would walk straight round them.
+      const seller = await ctx.prisma.user.findUniqueOrThrow({
+        where: { id: ctx.user.id },
+        select: { isBusiness: true, grade: true },
+      })
+      if (input.multibuyTiers?.length && !seller.isBusiness) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Multibuy pricing is a Business account feature.' })
+      }
+      if (input.stock != null && input.stock > 1 && !seller.isBusiness && seller.grade === 'grabber') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Grabber accounts can list one of each item. Reach Dealer grade, or open a Business account, to list multiples.' })
+      }
       if (listing.status === 'sold') throw new TRPCError({ code: 'BAD_REQUEST', message: 'A sold listing can no longer be edited.' })
 
       // Drop keys the client didn't send, so an omitted field is left untouched.
