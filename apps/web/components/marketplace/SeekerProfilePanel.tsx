@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { trpcAuthed } from '@/lib/authToken'
 import { JOB_SECTORS, JOB_LANGUAGES, JOB_ATTRIBUTES, EXP_OPTIONS } from './FindStaffPanel'
+import { skillsForSectors, LANGUAGE_LEVELS, formatLanguage, parseLanguages, type LanguageEntry } from '@/lib/jobSkills'
 
 // "List yourself for work" — a job-seeker's available-for-work profile. Employers
 // find these anonymously via Find Staff and spend credits to unlock contact.
@@ -24,7 +25,9 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
   const [sectors, setSectors] = useState<string[]>([])
   const [roles, setRoles] = useState<string[]>([])
   const [exp, setExp] = useState('0')
-  const [langs, setLangs] = useState<string[]>([])
+  // Each language carries a level — "some Spanish" and "native Spanish" are not
+  // the same hire, and employers filter on it.
+  const [langs, setLangs] = useState<LanguageEntry[]>([])
   const [hours, setHours] = useState<string[]>([])
   const [availability, setAvailability] = useState('')
   const [rightToWork, setRightToWork] = useState('')
@@ -33,6 +36,8 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
   const [areaDetail, setAreaDetail] = useState('')
   const [skills, setSkills] = useState<string[]>([])
   const [profileSkills, setProfileSkills] = useState<string[]>([])
+  const [hasWork, setHasWork] = useState(true)
+  const [hasEducation, setHasEducation] = useState(true)
   const [active, setActive] = useState(true)
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -52,10 +57,14 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
         setHeadline(p.headline || '')
         setSectors(p.sectors?.length ? p.sectors : (p.sector ? [p.sector] : []))
         setRoles(p.roles || [])
-        setExp(String(p.experienceMonths || 0)); setLangs(p.languages || []); setHours(p.hours || [])
+        setExp(String(p.experienceMonths || 0))
+        setLangs(p.languageLevels?.length ? p.languageLevels : parseLanguages(p.languages || []))
+        setHours(p.hours || [])
         setAvailability(p.availability || ''); setRightToWork(p.rightToWork || '')
         setLocation(p.location || ''); setTown(p.town || ''); setAreaDetail(p.areaDetail || '')
         setSkills(p.skills || [])
+        setHasWork(!!(p.workExperience?.length))
+        setHasEducation(!!(p.education?.length))
         setActive(p.active)
       }
       const mine: string[] = u?.skills ?? []
@@ -70,13 +79,29 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
 
   const save = async () => {
     if (!sectors.length) { alert('Pick at least one sector so employers can find you.'); return }
+    // A work profile with no history behind it is not worth an employer's time,
+    // and the generated CV would come out empty. Checked here rather than after
+    // an employer has already seen a thin profile.
+    if (!hasWork) {
+      alert('Please add at least one job to your work experience before listing yourself — employers see this as your CV.')
+      window.open('/cv', '_blank')
+      return
+    }
+    if (!hasEducation) {
+      alert('Please add your education before listing yourself for work.')
+      window.open('/cv', '_blank')
+      return
+    }
     setSaving(true)
     try {
       await trpcAuthed().seekers.upsertProfile.mutate({
         headline: headline.trim() || undefined,
         sectors, roles, skills,
         experienceMonths: Number(exp) || 0,
-        languages: langs, hours,
+        // Stored flat for search and the CV, structured for the form.
+        languages: langs.map(formatLanguage),
+        languageLevels: langs,
+        hours,
         availability: availability || undefined,
         rightToWork: rightToWork || undefined,
         location: location || undefined,
@@ -130,10 +155,23 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
                 </div>
               ))}
 
+              {/* Key skills for the sectors chosen — what an employer actually
+                  filters on, and what suitability scores against. */}
+              {sectors.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={LABEL}>Key skills for your sectors</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {skillsForSectors(sectors).map(sk => (
+                      <span key={sk} onClick={() => toggle(skills, setSkills, sk)} style={{ background: skills.includes(sk) ? ORANGE : '#fff', color: skills.includes(sk) ? '#fff' : '#555', border: '1px solid #e5dccd', borderRadius: 50, padding: '6px 12px', fontSize: 11, fontFamily: 'var(--font-ui)', fontWeight: 700, cursor: 'pointer' }}>{skills.includes(sk) ? '\u2713 ' : ''}{sk}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Skills — prefilled from the member's Attributes so they aren't
                   asked for the same thing twice. */}
               <div style={{ marginBottom: 12 }}>
-                <div style={LABEL}>My skills</div>
+                <div style={LABEL}>Other skills</div>
                 {profileSkills.length > 0 && (
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginBottom: 6 }}>
                     Pulled in from your profile — tap to add or remove.
@@ -161,10 +199,35 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
               <div style={{ marginBottom: 12 }}>
                 <div style={LABEL}>Languages</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {JOB_LANGUAGES.map(l => (
-                    <span key={l} onClick={() => toggle(langs, setLangs, l)} style={{ background: langs.includes(l) ? ORANGE : '#f8f9fa', color: langs.includes(l) ? '#fff' : '#1a1a1a', borderRadius: 50, padding: '6px 12px', fontSize: 11, fontFamily: 'var(--font-ui)', fontWeight: 700, cursor: 'pointer' }}>{l}</span>
-                  ))}
+                  {JOB_LANGUAGES.map(l => {
+                    const on = langs.some(x => x.language === l)
+                    return (
+                      <span key={l}
+                        onClick={() => setLangs(prev => on ? prev.filter(x => x.language !== l) : [...prev, { language: l, level: 'Conversational' }])}
+                        style={{ background: on ? ORANGE : '#f8f9fa', color: on ? '#fff' : '#1a1a1a', borderRadius: 50, padding: '6px 12px', fontSize: 11, fontFamily: 'var(--font-ui)', fontWeight: 700, cursor: 'pointer' }}>
+                        {on ? '\u2713 ' : ''}{l}
+                      </span>
+                    )
+                  })}
                 </div>
+                {langs.length > 0 && (
+                  <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {langs.map(entry => (
+                      <div key={entry.language} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, color: '#1a1a1a' }}>{entry.language}</span>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          {LANGUAGE_LEVELS.map(lvl => (
+                            <span key={lvl}
+                              onClick={() => setLangs(prev => prev.map(x => x.language === entry.language ? { ...x, level: lvl } : x))}
+                              style={{ background: entry.level === lvl ? ORANGE : '#f8f9fa', color: entry.level === lvl ? '#fff' : '#666', border: '1px solid #eee', borderRadius: 50, padding: '4px 10px', fontSize: 10, fontFamily: 'var(--font-ui)', fontWeight: 700, cursor: 'pointer' }}>
+                              {lvl}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={{ marginBottom: 12 }}>
@@ -216,6 +279,18 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
                   {JOB_ATTRIBUTES.rightToWork.map(o => <option key={o}>{o}</option>)}
                 </select>
               </div>
+
+              {/* Told up front, not sprung on them at save. */}
+              {(!hasWork || !hasEducation) && (
+                <div style={{ background: '#FFF7ED', border: '1px solid #FFD4A0', borderRadius: 10, padding: '11px 12px', marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#9a5b1a', marginBottom: 4 }}>Finish your CV first</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#9a5b1a', lineHeight: 1.5, marginBottom: 8 }}>
+                    Employers see your work history and education as your CV, so both are needed before you can be listed.
+                    Still to add: {[!hasWork && 'work experience', !hasEducation && 'education'].filter(Boolean).join(' and ')}.
+                  </div>
+                  <a href="/cv" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, textDecoration: 'none' }}>📄 Open My CV</a>
+                </div>
+              )}
 
               <label style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8f9fa', borderRadius: 10, padding: '10px 12px', marginBottom: 14, cursor: 'pointer' }}>
                 <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} style={{ width: 16, height: 16, accentColor: ORANGE }} />
