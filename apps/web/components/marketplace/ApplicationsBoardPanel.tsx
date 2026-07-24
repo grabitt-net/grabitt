@@ -9,6 +9,8 @@ import { trpcAuthed } from '@/lib/authToken'
 const ORANGE = '#FF4500'
 type App = {
   id: string; status: string; applicant: string; applicantId: string; revealed?: boolean; coverNote: string | null; employerNote: string | null; createdAt: string
+  suitabilityScore?: number | null
+  suitabilityNotes?: { factor: string; points: number; of: number; detail: string }[] | null
   fullName: string | null; email: string | null; phone: string | null; location: string | null; rightToWork: string | null
   languages: string[]; experienceMonths: number | null; currentRole: string | null; expectedSalary: number | null
   availability: string | null; linkedinUrl: string | null; cvUrl: string | null; answers: Record<string, string | number | boolean>
@@ -23,14 +25,23 @@ function expLabel(m: number | null) {
   return `${y}+ yr${y > 1 ? 's' : ''} experience`
 }
 
+// The candidate pipeline from the V20 prototype.
 const STATUS: Record<string, { label: string; color: string }> = {
-  applied: { label: 'New Applicant', color: '#3b82f6' },
-  viewed: { label: 'Viewed', color: '#6b7280' },
-  shortlisted: { label: 'Shortlisted', color: '#8b5cf6' },
-  hired: { label: 'Hired', color: '#22c55e' },
-  rejected: { label: 'Rejected', color: '#ef4444' },
+  applied:       { label: 'New Applicant',             color: '#3b82f6' },
+  viewed:        { label: 'Viewed',                    color: '#6b7280' },
+  invited:       { label: 'Invited to Interview',      color: '#8b5cf6' },
+  arranged:      { label: 'Interview Arranged',        color: '#0ea5e9' },
+  offer:         { label: 'Job Offer Made',            color: '#f59e0b' },
+  accepted:      { label: 'Offer Accepted',            color: '#22c55e' },
+  rejected_pre:  { label: 'Rejected (no interview)',   color: '#ef4444' },
+  rejected_post: { label: 'Rejected (after interview)', color: '#ef4444' },
+  // Retained so applications made under the old pipeline still render.
+  shortlisted:   { label: 'Shortlisted (legacy)',      color: '#8b5cf6' },
+  hired:         { label: 'Hired (legacy)',            color: '#22c55e' },
+  rejected:      { label: 'Rejected (legacy)',         color: '#ef4444' },
 }
-const ORDER = ['applied', 'viewed', 'shortlisted', 'hired', 'rejected']
+const ORDER = ['applied', 'viewed', 'invited', 'arranged', 'offer', 'accepted', 'rejected_pre', 'rejected_post']
+const REJECTING = new Set(['rejected', 'rejected_pre', 'rejected_post'])
 
 export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClose: () => void; focusJobId?: string; openPanel: (id: PanelId, data?: Record<string, unknown>) => void }) {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -46,10 +57,25 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
 
   const shown = focusJobId ? jobs.filter(j => j.id === focusJobId) : jobs
 
+  // The recruiter's private working note on a candidate. Kept separate from the
+  // status change so it can be written at any point, not only on rejection.
+  const [noteDraft, setNoteDraft] = useState<Record<string, string>>({})
+  const [notingId, setNotingId] = useState<string | null>(null)
+  const saveNote = async (app: App) => {
+    const note = noteDraft[app.id] ?? ''
+    setNotingId(app.id)
+    try {
+      await trpcAuthed().jobs.setApplicationNote.mutate({ applicationId: app.id, note })
+      setJobs(prev => prev.map(j => ({ ...j, applications: j.applications.map(a => a.id === app.id ? { ...a, employerNote: note.trim() || null } : a) })))
+      setNoteDraft(d => { const n = { ...d }; delete n[app.id]; return n })
+    } catch (e) { alert(e instanceof Error ? e.message : 'Could not save the note.') }
+    finally { setNotingId(null) }
+  }
+
   const changeStatus = async (app: App, status: string) => {
     if (status === app.status) return
     let note: string | undefined
-    if (status === 'rejected') {
+    if (REJECTING.has(status)) {
       const reason = prompt('A reason note is required when rejecting a candidate:')
       if (reason === null) return
       if (!reason.trim()) { alert('A reason note is required.'); return }
@@ -58,7 +84,7 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
     setSaving(app.id)
     try {
       await trpcAuthed().jobs.setApplicationStatus.mutate({ applicationId: app.id, status: status as any, note })
-      setJobs(prev => prev.map(j => ({ ...j, applications: j.applications.map(a => a.id === app.id ? { ...a, status, employerNote: status === 'rejected' ? note! : null } : a) })))
+      setJobs(prev => prev.map(j => ({ ...j, applications: j.applications.map(a => a.id === app.id ? { ...a, status, employerNote: note ?? a.employerNote } : a) })))
     } catch (e: any) { alert(e?.message || 'Could not update status.') }
     finally { setSaving(null) }
   }
@@ -113,6 +139,31 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
 
                           {openIds.has(a.id) && (
                             <div style={{ marginTop: 8, background: '#f8f9fa', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                              {/* Suitability — employer's eyes only. It ranks
+                                  candidates; it does not decide anything, and
+                                  the applicant is never shown it. */}
+                              {a.suitabilityScore != null && (
+                                <div style={{ background: '#fff', border: '1px solid #e5dccd', borderRadius: 10, padding: '9px 10px', marginBottom: 4 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 20, fontWeight: 900, color: a.suitabilityScore >= 70 ? '#16a34a' : a.suitabilityScore >= 45 ? '#f59e0b' : '#9ca3af' }}>{a.suitabilityScore}</div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: '#1a1a1a' }}>Suitability (out of 100)</div>
+                                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, color: '#888' }}>A guide for ranking — your hiring decision, not ours. Not shown to the candidate.</div>
+                                    </div>
+                                  </div>
+                                  {(a.suitabilityNotes ?? []).length > 0 && (
+                                    <div style={{ marginTop: 7, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                      {(a.suitabilityNotes ?? []).map(n => (
+                                        <div key={n.factor} style={{ display: 'flex', gap: 6, fontFamily: 'var(--font-ui)', fontSize: 10 }}>
+                                          <span style={{ fontWeight: 800, color: '#555', minWidth: 74 }}>{n.factor}</span>
+                                          <span style={{ fontWeight: 900, color: '#1a1a1a', minWidth: 38 }}>{n.points}/{n.of}</span>
+                                          <span style={{ color: '#888', flex: 1, minWidth: 0 }}>{n.detail}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                               {a.fullName && <Detail icon="👤" label="Name" value={a.fullName} />}
                               {a.email && <Detail icon="📧" label="Email" value={a.email} />}
                               {a.phone && <Detail icon="📱" label="Phone" value={a.phone} />}
@@ -127,7 +178,7 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
                               {/* Generated Grabitt CV — anonymised until this
                                   candidate is shortlisted or unlocked. */}
                               <a href={`/api/cv-pdf?applicationId=${a.id}`} target="_blank" rel="noreferrer" style={{ marginTop: 2, background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>📄 View CV{a.revealed === false ? ' (anonymous)' : ''}</a>
-                              {a.revealed === false && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#9a8b74', textAlign: 'center' }}>🔒 Name & contact appear once you shortlist.</div>}
+                              {a.revealed === false && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#9a8b74', textAlign: 'center' }}>🔒 Name & contact appear once you invite them to interview.</div>}
                               {a.cvUrl && <a href={`/api/cv?applicationId=${a.id}`} target="_blank" rel="noreferrer" style={{ background: '#fff', color: '#555', border: '1px solid #e5dccd', borderRadius: 8, padding: '7px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, textDecoration: 'none' }}>📎 Attached file</a>}
 
                               {j.questions.length > 0 && Object.keys(a.answers).length > 0 && (
@@ -142,6 +193,23 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
                               )}
                             </div>
                           )}
+
+                          {/* Recruiter's private note — never shown to the applicant. */}
+                          <div style={{ marginTop: 8 }}>
+                            <div style={{ fontSize: 9, fontWeight: 800, color: '#555', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', marginBottom: 4 }}>Your notes (private)</div>
+                            <textarea
+                              value={noteDraft[a.id] ?? a.employerNote ?? ''}
+                              onChange={e => setNoteDraft(d => ({ ...d, [a.id]: e.target.value }))}
+                              placeholder="Interview notes, follow-ups, why they stood out…"
+                              rows={2}
+                              style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '8px 10px', fontFamily: 'var(--font-ui)', fontSize: 11.5, outline: 'none', resize: 'vertical' }}
+                            />
+                            {noteDraft[a.id] !== undefined && noteDraft[a.id] !== (a.employerNote ?? '') && (
+                              <button onClick={() => saveNote(a)} disabled={notingId === a.id} style={{ marginTop: 5, background: ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>
+                                {notingId === a.id ? 'Saving…' : 'Save note'}
+                              </button>
+                            )}
+                          </div>
 
                           <div style={{ marginTop: 8 }}>
                             <div style={{ fontSize: 9, fontWeight: 800, color: '#555', fontFamily: 'var(--font-ui)', textTransform: 'uppercase', marginBottom: 4 }}>Status</div>

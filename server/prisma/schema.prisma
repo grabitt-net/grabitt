@@ -286,6 +286,8 @@ model SeekerProfile {
   roles            String[] @default([])
   experienceMonths Int      @default(0)
   languages        String[] @default([])
+  // [{ language, level }] — level being Basic / Conversational / Fluent / Native.
+  languageLevels   Json?
   hours            String[] @default([])
   availability     String?
   rightToWork      String?
@@ -893,12 +895,22 @@ enum JobType {
   volunteer
 }
 
+// The prototype's candidate pipeline. applied/viewed/shortlisted/rejected/hired
+// are the original five, kept so historical rows stay valid; everything new uses
+// the seven below. Identity is released to the employer at `invited` — the point
+// they ask to meet the candidate.
 enum ApplicationStatus {
   applied
   viewed
   shortlisted
   rejected
   hired
+  invited          // Invited to interview
+  arranged         // Interview arranged
+  offer            // Job offer made
+  accepted         // Offer accepted
+  rejected_pre     // Rejected without interview
+  rejected_post    // Rejected after interview
 }
 
 model JobListing {
@@ -907,7 +919,11 @@ model JobListing {
   listing      Listing   @relation(fields: [listingId], references: [id])
   employerId   String
   jobTitle     String
+  // The employer's real name. Withheld from the public advert — browsers see
+  // establishmentType instead, and the name is released to a candidate only once
+  // they're invited to interview.
   company      String
+  establishmentType String?  // e.g. "Beach bar", "4-star hotel", "Family restaurant"
   type         JobType
   salaryMin    Decimal?  @db.Decimal(10, 2)
   salaryMax    Decimal?  @db.Decimal(10, 2)
@@ -954,7 +970,12 @@ model JobApplication {
   expectedSalary   Int?
   availability     String?
   linkedinUrl      String?
-  answers          Json?             // answers to the employer's screening questions
+  answers          Json?
+  // Suitability is computed server-side at apply time and shown ONLY to the
+  // employer. The candidate never sees it — a score shown to an applicant
+  // invites challenge over how it was derived.
+  suitabilityScore Int?
+  suitabilityNotes Json?             // answers to the employer's screening questions
   dataConsent      Boolean           @default(false)
   // Full CV data captured at apply time — the recruiter sees what was submitted,
   // never a version the candidate edited afterwards. Rendered anonymised until

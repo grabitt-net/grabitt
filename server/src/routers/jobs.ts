@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server'
 import type { Prisma } from '@prisma/client'
 import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
 import { buildCvSnapshot } from '../lib/cvSnapshot'
+import { scoreSuitability } from '../lib/suitability'
 
 // Employer-defined screening question shape.
 const questionSchema = z.object({
@@ -63,7 +64,25 @@ export const jobsRouter = router({
       ])
       const cvSnapshot = buildCvSnapshot(applicant, profile as never) as unknown as Prisma.InputJsonValue
 
+      // Suitability is scored here, once, against the advert as it stands. It
+      // travels to the employer and is never returned to the applicant.
+      const suitability = scoreSuitability({
+        job: { sector: jl.sector, skills: jl.skills, jobTitle: jl.jobTitle, type: jl.type },
+        candidate: {
+          sectors: profile?.sectors ?? [],
+          sector: profile?.sector ?? null,
+          roles: profile?.roles ?? [],
+          skills: profile?.skills ?? [],
+          languages: input.languages ?? profile?.languages ?? [],
+          experienceMonths: input.experienceMonths ?? profile?.experienceMonths ?? 0,
+          availability: input.availability ?? profile?.availability ?? null,
+          hours: profile?.hours ?? [],
+        },
+      })
+
       const data = {
+        suitabilityScore: suitability.score,
+        suitabilityNotes: suitability.notes as unknown as Prisma.InputJsonValue,
         coverNote: input.coverNote,
         cvUrl: input.cvUrl,
         cvSnapshot,
@@ -205,13 +224,38 @@ export const jobsRouter = router({
     ),
 
   // The candidate's own applications (for a future "My applications" view).
-  myApplications: protectedProcedure.query(({ ctx }) =>
-    ctx.prisma.jobApplication.findMany({
+  myApplications: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.prisma.jobApplication.findMany({
       where: { applicantId: ctx.user.id },
       orderBy: { createdAt: 'desc' },
-      include: { jobListing: { include: { listing: { select: { id: true, location: true } } } } },
+      // Explicit — returning the whole row would hand the applicant their own
+      // suitability score and the employer's private note.
+      select: {
+        id: true, status: true, coverNote: true, createdAt: true, updatedAt: true,
+        jobListing: {
+          select: {
+            id: true, jobTitle: true, company: true, establishmentType: true,
+            type: true, sector: true, salaryMin: true, salaryMax: true, salaryPeriod: true,
+            listing: { select: { id: true, location: true } },
+          },
+        },
+      },
     })
-  ),
+
+    // The employer's name is released to the candidate at the same point it is
+    // released to the employer: an interview invitation.
+    const KNOWS_EMPLOYER = new Set(['invited', 'arranged', 'offer', 'accepted', 'hired', 'rejected_post'])
+    return rows.map(r => ({
+      ...r,
+      jobListing: {
+        ...r.jobListing,
+        company: KNOWS_EMPLOYER.has(r.status)
+          ? r.jobListing.company
+          : (r.jobListing.establishmentType ?? 'Employer'),
+        employerRevealed: KNOWS_EMPLOYER.has(r.status),
+      },
+    }))
+  }),
 
   list: publicProcedure
     .input(z.object({
@@ -437,8 +481,11 @@ export const jobsRouter = router({
     // A candidate is identified to the employer once shortlisted/hired, or if
     // separately unlocked. Until then their PII is withheld — the "anonymous
     // until you shortlist" model.
+    // Identity is released when the employer asks to meet the candidate. Up to
+    // that point they're judged on the profile alone.
+    const REVEALING = new Set(['invited', 'arranged', 'offer', 'accepted', 'hired', 'shortlisted', 'rejected_post'])
     const isRevealed = (status: string, applicantId: string) =>
-      status === 'shortlisted' || status === 'hired' || unlockedIds.has(applicantId)
+      REVEALING.has(status) || unlockedIds.has(applicantId)
 
     return jobs.map(j => ({
       id: j.id,
@@ -459,6 +506,9 @@ export const jobsRouter = router({
           employerNote: a.employerNote,
           applicantId: a.applicant.id,
           revealed,
+          // Employer-only. Never returned on any applicant-facing endpoint.
+          suitabilityScore: a.suitabilityScore,
+          suitabilityNotes: a.suitabilityNotes,
           // Identity is anonymised until the candidate is revealed.
           applicant: revealed ? a.applicant.displayName : `Candidate ${a.applicant.id.slice(-4).toUpperCase()}`,
           createdAt: a.createdAt,
@@ -484,10 +534,32 @@ export const jobsRouter = router({
 
   // Employer moves an applicant along the hiring pipeline. Rejections require a
   // reason note (mirrors the V20 flow). Only the job's owner may change status.
+  // The recruiter's private note on a candidate. Never shown to the applicant.
+  setApplicationNote: protectedProcedure
+    .input(z.object({ applicationId: z.string().uuid(), note: z.string().max(2000) }))
+    .mutation(async ({ ctx, input }) => {
+      const app = await ctx.prisma.jobApplication.findUnique({
+        where: { id: input.applicationId },
+        select: { id: true, jobListing: { select: { employerId: true } } },
+      })
+      if (!app) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (app.jobListing.employerId !== ctx.user.id) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'This is not your job listing' })
+      }
+      await ctx.prisma.jobApplication.update({
+        where: { id: app.id },
+        data: { employerNote: input.note.trim() || null },
+      })
+      return { ok: true }
+    }),
+
   setApplicationStatus: protectedProcedure
     .input(z.object({
       applicationId: z.string().uuid(),
-      status: z.enum(['applied', 'viewed', 'shortlisted', 'rejected', 'hired']),
+      status: z.enum([
+        'applied', 'viewed', 'shortlisted', 'rejected', 'hired',
+        'invited', 'arranged', 'offer', 'accepted', 'rejected_pre', 'rejected_post',
+      ]),
       note: z.string().max(500).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -499,7 +571,8 @@ export const jobsRouter = router({
       if (app.jobListing.employerId !== ctx.user.id) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'This is not your job listing' })
       }
-      if (input.status === 'rejected' && !input.note?.trim()) {
+      const isRejection = input.status === 'rejected' || input.status === 'rejected_pre' || input.status === 'rejected_post'
+      if (isRejection && !input.note?.trim()) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'A reason note is required when rejecting a candidate' })
       }
 
@@ -507,16 +580,24 @@ export const jobsRouter = router({
         where: { id: app.id },
         data: {
           status: input.status,
-          // Keep the rejection reason; clear it when moving back into the pipeline.
-          employerNote: input.status === 'rejected' ? input.note!.trim() : null,
+          // A note given with the move is kept; rejections require one. Moving a
+          // candidate on without a note leaves any existing note alone rather
+          // than wiping the recruiter's own record of the conversation.
+          ...(input.note?.trim() ? { employerNote: input.note.trim() } : {}),
         },
       })
 
       // Let the applicant know their application progressed.
       const MESSAGE: Record<string, string> = {
         shortlisted: `You've been shortlisted for "${app.jobListing.jobTitle}".`,
+        invited: `You've been invited to interview for "${app.jobListing.jobTitle}".`,
+        arranged: `Your interview for "${app.jobListing.jobTitle}" has been arranged.`,
+        offer: `You've been offered the role of "${app.jobListing.jobTitle}".`,
+        accepted: `Your acceptance of "${app.jobListing.jobTitle}" is confirmed.`,
         hired: `Great news — you've been hired for "${app.jobListing.jobTitle}"!`,
         rejected: `Your application for "${app.jobListing.jobTitle}" wasn't successful this time.`,
+        rejected_pre: `Your application for "${app.jobListing.jobTitle}" wasn't successful this time.`,
+        rejected_post: `Thank you for interviewing for "${app.jobListing.jobTitle}" — you weren't successful this time.`,
       }
       if (MESSAGE[input.status]) {
         await ctx.prisma.notification.create({

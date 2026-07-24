@@ -6,6 +6,12 @@ import { sellerName, missingBusinessName } from '../lib/identity'
 import { LISTING_CAPS, GRADE_THRESHOLDS, PRICES } from '@grabitt/design-tokens'
 import { getStripe } from '../lib/stripe'
 
+// Fallback shown on a job advert when the employer hasn't set an establishment
+// type — never their name.
+function genericEstablishment(sector?: string | null): string {
+  return sector?.trim() ? `${sector.trim()} employer` : 'Employer'
+}
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
 // Credit both the referred user and their referrer, once, and mark it done so it
@@ -273,8 +279,21 @@ export const listingsRouter = router({
         take: 4,
         select: { id: true, title: true, price: true, images: true, department: true },
       })
+      // A job advert shows the kind of establishment, not who runs it. The
+      // employer's name is released to a candidate only once they are invited to
+      // interview — so it must not travel on the public listing at all.
+      const jobListing = listing.jobListing
+        ? {
+            ...listing.jobListing,
+            company: listing.jobListing.establishmentType?.trim()
+              || genericEstablishment(listing.jobListing.sector),
+            employerNameWithheld: true,
+          }
+        : listing.jobListing
+
       return {
         ...listing,
+        jobListing,
         // The name this seller trades under — business name for a business.
         seller: { ...listing.seller, tradingName: sellerName(listing.seller) },
         wantedCount,
