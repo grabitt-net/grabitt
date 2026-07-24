@@ -17,6 +17,7 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import ShareSheet from '@/components/marketplace/ShareSheet'
 import PanelHost from '@/components/marketplace/PanelHost'
 import ApplyModal from '@/components/marketplace/ApplyModal'
+import MessageComposer from '@/components/marketplace/MessageComposer'
 
 const gradeEmoji: Record<string, string> = { grabber: '🟠', dealer: '🟡', trader: '🔵', pro: '⭐' }
 const JOB_TYPE: Record<string, string> = { full_time: 'Full Time', part_time: 'Part Time', contract: 'Contract', temporary: 'Temp', volunteer: 'Volunteer' }
@@ -52,6 +53,7 @@ function ListingInner() {
   const [comps, setComps] = useState<any>(null)
   const [similar, setSimilar] = useState<any[]>([])
   const [showShare, setShowShare] = useState(false)
+  const [showMessage, setShowMessage] = useState(false)
   const [saved, setSaved] = useState(false)
   // Job apply flow
   const [applied, setApplied] = useState(false)
@@ -185,8 +187,7 @@ function ListingInner() {
   }
   const startChat = async () => {
     if (!(await requireAuth()) || !seller?.id) return
-    try { const th: any = await trpcAuthed().messages.thread.mutate({ listingId: id, sellerId: seller.id }); if (th?.id) router.push(`/messages/${th.id}`) }
-    catch { router.push(`/auth?next=/listings/${id}`) }
+    setShowMessage(true)
   }
   const promote = async (option: 'grab_it_now' | 'featured') => {
     if (!(await requireAuth())) return
@@ -510,6 +511,10 @@ function ListingInner() {
 
       <Footer />
       <CartFab />
+
+      {showMessage && seller?.id && (
+        <MessageComposer listingId={id} sellerId={seller.id} title={t('💬 Message')} onClose={() => setShowMessage(false)} />
+      )}
 
       {showShare && (
         <ShareSheet title={job?.jobTitle ?? listing.title} price={priceLabel} emoji={emoji} url={shareUrl} onClose={() => setShowShare(false)} />
