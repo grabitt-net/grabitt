@@ -10,7 +10,9 @@ import { pushView } from '@/lib/recentViews'
 import { PRICES } from '@grabitt/design-tokens'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import MessageButton from '@/components/marketplace/MessageButton'
-import SiteHeader from '@/components/marketplace/SiteHeader'
+import Topbar from '@/components/marketplace/Topbar'
+import Footer from '@/components/marketplace/Footer'
+import CartFab from '@/components/marketplace/CartFab'
 import QuickActions from '@/components/marketplace/QuickActions'
 import ShareSheet from '@/components/marketplace/ShareSheet'
 import PanelHost from '@/components/marketplace/PanelHost'
@@ -207,7 +209,7 @@ function ListingInner() {
 
   return (
     <main style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 40 }}>
-      <SiteHeader />
+      <Topbar />
       <header style={{ background: 'var(--sand)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1.5px solid var(--sand2)' }}>
         <button onClick={() => { if (window.history.length > 1) router.back(); else router.push(job ? '/jobs' : prop ? '/property' : '/') }} style={{ fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--dark)', padding: 0, lineHeight: 1 }} aria-label="Back">←</button>
         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', flex: 1 }}>{DEPT_LABEL[listing.department] ?? 'Listing'}</span>
@@ -505,6 +507,9 @@ function ListingInner() {
           </div>
         )}
       </div>
+
+      <Footer />
+      <CartFab />
 
       {showShare && (
         <ShareSheet title={job?.jobTitle ?? listing.title} price={priceLabel} emoji={emoji} url={shareUrl} onClose={() => setShowShare(false)} />
