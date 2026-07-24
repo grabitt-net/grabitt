@@ -181,6 +181,89 @@ export const usersRouter = router({
     return { active, sold, unread, offers, saved }
   }),
 
+  // The seller info centre: current grade and fee, progress to the next grade,
+  // profile completion, and per-listing performance. Everything the prototype's
+  // profile hero and Seller Dashboard showed, from real data.
+  sellerCentre: protectedProcedure.query(async ({ ctx }) => {
+    const uid = ctx.user.id
+    const monthStart = new Date()
+    monthStart.setDate(1)
+    monthStart.setHours(0, 0, 0, 0)
+
+    const [user, listingsThisMonth, reviewCount, listings, offerCounts] = await Promise.all([
+      ctx.prisma.user.findUniqueOrThrow({
+        where: { id: uid },
+        select: {
+          grade: true, salesCount: true, avgRating: true, displayName: true, avatar: true,
+          phone: true, collectionAddress: true, interests: true, isVerified: true,
+          phoneVerified: true, emailVerified: true, isBusiness: true,
+        },
+      }),
+      ctx.prisma.listing.count({ where: { sellerId: uid, createdAt: { gte: monthStart } } }),
+      ctx.prisma.review.count({ where: { subjectId: uid } }),
+      ctx.prisma.listing.findMany({
+        where: { sellerId: uid, status: { in: ['active', 'sold', 'grab_it_now'] } },
+        orderBy: { viewCount: 'desc' },
+        select: { id: true, title: true, status: true, viewCount: true, price: true, images: true },
+      }),
+      ctx.prisma.offer.groupBy({
+        by: ['listingId'],
+        where: { listing: { sellerId: uid } },
+        _count: { _all: true },
+      }),
+    ])
+
+    const offersByListing = new Map(offerCounts.map(o => [o.listingId, o._count._all]))
+    const perListing = listings.map(l => ({
+      id: l.id,
+      title: l.title,
+      status: l.status,
+      price: Number(l.price),
+      image: Array.isArray(l.images) ? l.images[0] ?? null : null,
+      views: l.viewCount,
+      offers: offersByListing.get(l.id) ?? 0,
+    }))
+
+    const totalViews = perListing.reduce((a, l) => a + l.views, 0)
+    const totalOffers = perListing.reduce((a, l) => a + l.offers, 0)
+
+    // Profile completion — the fields that make a member findable and credible.
+    // Reaching 100% is what the prototype rewarded with a badge and credit.
+    const checks: { label: string; done: boolean }[] = [
+      { label: 'Display name', done: !!user.displayName?.trim() },
+      { label: 'Photo', done: !!user.avatar },
+      { label: 'Phone number', done: !!user.phone },
+      { label: 'Phone verified', done: !!user.phoneVerified },
+      { label: 'Collection address', done: !!user.collectionAddress?.trim() },
+      { label: 'Interests', done: (user.interests ?? []).length > 0 },
+      { label: 'ID verified', done: !!user.isVerified },
+    ]
+    const done = checks.filter(c => c.done).length
+    const completion = {
+      pct: Math.round((done / checks.length) * 100),
+      missing: checks.filter(c => !c.done).map(c => c.label),
+    }
+
+    return {
+      grade: user.grade,
+      salesCount: user.salesCount,
+      avgRating: user.avgRating,
+      ratingCount: reviewCount,
+      listingsThisMonth,
+      isBusiness: user.isBusiness,
+      isVerified: user.isVerified,
+      completion,
+      performance: {
+        totalViews,
+        totalOffers,
+        convertPct: totalViews ? Math.round((totalOffers / totalViews) * 100) : 0,
+        live: perListing.filter(l => l.status === 'active' || l.status === 'grab_it_now').length,
+        sold: perListing.filter(l => l.status === 'sold').length,
+        listings: perListing,
+      },
+    }
+  }),
+
   profile: publicProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(({ ctx, input }) =>

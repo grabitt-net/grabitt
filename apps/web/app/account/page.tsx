@@ -5,11 +5,13 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { getAuthToken, refreshAuthToken, setAuthToken, trpcAuthed } from '@/lib/authToken'
 import { createClient } from '@/lib/supabase'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
+import type { PanelId } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
+import SellerCentre from '@/components/marketplace/SellerCentre'
 import { deptEmoji } from '@/lib/listingMap'
 import { t } from '@/lib/i18n'
 
@@ -186,6 +188,9 @@ function AccountInner() {
 
   const grade = me?.grade ?? 'grabber'
   const memberSince = me?.createdAt ? new Date(me.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '—'
+  const verified = !!me?.isVerified
+  // Member reference, the M###### the prototype showed on the profile.
+  const memberRef = me?.id ? `M${String(me.id).replace(/-/g, '').slice(0, 6).toUpperCase()}` : ''
   // Tiles are the dashboard's navigation, so each one has to go somewhere.
   // Filtering the list below without scrolling to it looks like nothing
   // happened, so the list tiles do both.
@@ -213,6 +218,11 @@ function AccountInner() {
                 <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 18, fontWeight: 700, color: 'var(--dark)' }}>{me?.displayName ?? t('Your account')}</div>
                 {me?.email && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#666', wordBreak: 'break-all' }}>{me.email}</div>}
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888' }}>{grade.charAt(0).toUpperCase() + grade.slice(1)} · ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'} · {t('since')} {memberSince}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#aaa', fontWeight: 700 }}>{memberRef}</span>
+                  {verified && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#dcfce7', color: '#16a34a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>🛡️ {t('Verified')}</span>}
+                  {me?.isBusiness && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#4A2E1A', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>🏢 {t('Business')}</span>}
+                </div>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 16 }}>
@@ -229,6 +239,53 @@ function AccountInner() {
                   : <button key={tile.label} onClick={tile.onClick} style={{ border: 'none', background: 'none', padding: 0, width: '100%' }}>{inner}</button>
               })}
             </div>
+            {/* Quick actions — every one of these panels existed but had no way
+                in from the account page. */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 12 }}>
+              {([
+                ['🔒', t('Transactions'), 'transaction'],
+                ['📋', t('Activity'), 'myActivity'],
+                ['⭐', t('My ratings'), 'myRatings'],
+                ['🔔', t('Saved searches'), 'savedSearches'],
+                ['🤞', t('Wish list'), 'wishlist'],
+                ['🛡️', t('Disputes'), 'myDisputes'],
+              ] as [string, string, PanelId][]).map(([icon, label, id]) => (
+                <button key={label} onClick={() => openPanel(id)} style={{
+                  background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '10px 4px',
+                  cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                }}>
+                  <span style={{ fontSize: 17 }}>{icon}</span>
+                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 800, color: 'var(--dark)', lineHeight: 1.1, textAlign: 'center' }}>{label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Verification — the shield buyers look for */}
+            {!verified && (
+              <button onClick={() => openPanel('verifyMe')} style={{ width: '100%', marginTop: 12, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
+                <span style={{ fontSize: 18 }}>🛡️</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: '#16a34a' }}>{t('Get verified')}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#666', marginTop: 2 }}>{t('The shield shows on your profile and listings so buyers know you’re trusted.')}</div>
+                </div>
+                <span style={{ color: '#16a34a', fontWeight: 900, fontSize: 16 }}>›</span>
+              </button>
+            )}
+
+            {/* Business — upgrade, or manage an existing storefront */}
+            <button onClick={() => openPanel(me?.isBusiness ? 'storefrontEdit' : 'business')} style={{ width: '100%', marginTop: 10, background: 'linear-gradient(135deg,#FFF3EE,#FFE4D6)', border: '1px solid #FFD4A0', borderRadius: 12, padding: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
+              <span style={{ fontSize: 18 }}>🏢</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: '#8a5a2a' }}>
+                  {me?.isBusiness ? t('Manage my business') : t('Upgrade to Business')}
+                </div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a5a2a', opacity: 0.85, marginTop: 2 }}>
+                  {me?.isBusiness ? t('Storefront, branding and business tools.') : t('Storefront, more listings and a 🏢 badge — 21 days free.')}
+                </div>
+              </div>
+              <span style={{ color: '#8a5a2a', fontWeight: 900, fontSize: 16 }}>›</span>
+            </button>
+
             {/* Payouts — links to Stripe onboarding (or the Express dashboard once set up) */}
             <button onClick={setupPayouts} disabled={payoutBusy} style={{ width: '100%', textAlign: 'left', marginTop: 14, background: payout?.payoutsEnabled ? '#f0fdf4' : '#FFF3EE', border: `1px solid ${payout?.payoutsEnabled ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 12, padding: 12, cursor: payoutBusy ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ flex: 1 }}>
@@ -325,6 +382,9 @@ function AccountInner() {
               {contactState === 'saving' ? t('Saving…') : contactState === 'saved' ? t('Saved ✓') : t('Save collection details')}
             </button>
           </div>
+
+          {/* Seller info centre — level, progress, profile, dashboard */}
+          <SellerCentre />
 
           {/* My Listings */}
           <div id="my-listings" style={card}>
