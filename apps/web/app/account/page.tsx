@@ -53,6 +53,7 @@ function AccountInner() {
   // the account page to hunt for it.
   const focusOffer = useSearchParams().get('offer')
   const focusRef = useRef<HTMLDivElement | null>(null)
+  const [mainTab, setMainTab] = useState<'selling' | 'inbox' | 'settings'>('selling')
   const [ready, setReady] = useState(false)
   const [me, setMe] = useState<any>(null)
   const [dash, setDash] = useState<any>(null)
@@ -131,7 +132,9 @@ function AccountInner() {
 
   // Scroll the deep-linked offer into view once the offers have loaded.
   useEffect(() => {
-    if (focusOffer && offers?.length) focusRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (!focusOffer || !offers?.length) return
+    setMainTab('selling')
+    setTimeout(() => focusRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60)
   }, [focusOffer, offers])
 
   const logout = async () => {
@@ -194,12 +197,17 @@ function AccountInner() {
   // Tiles are the dashboard's navigation, so each one has to go somewhere.
   // Filtering the list below without scrolling to it looks like nothing
   // happened, so the list tiles do both.
-  const goTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  // Tiles now have to switch tab as well as scroll, or they would point at a
+  // card the current tab isn't showing.
+  const goTo = (tab: 'selling' | 'inbox' | 'settings', id: string) => {
+    setMainTab(tab)
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
+  }
   const tiles = [
-    { label: t('On sale'), value: dash?.active, icon: I.tag, onClick: () => { setSeg('active'); goTo('my-listings') } },
-    { label: t('Sold'), value: dash?.sold, icon: I.check, onClick: () => { setSeg('sold'); goTo('my-listings') } },
+    { label: t('On sale'), value: dash?.active, icon: I.tag, onClick: () => { setSeg('active'); goTo('selling', 'my-listings') } },
+    { label: t('Sold'), value: dash?.sold, icon: I.check, onClick: () => { setSeg('sold'); goTo('selling', 'my-listings') } },
     { label: t('Messages'), value: dash?.unread, icon: I.message, dot: !!dash?.unread, href: '/messages' },
-    { label: t('Offers'), value: dash?.offers, icon: I.offer, dot: !!dash?.offers, onClick: () => goTo('offers') },
+    { label: t('Offers'), value: dash?.offers, icon: I.offer, dot: !!dash?.offers, onClick: () => goTo('selling', 'offers') },
     { label: t('Saved'), value: dash?.saved, icon: I.heart, onClick: () => openPanel('favourites') },
     { label: t('Payouts'), value: payout?.payoutsEnabled ? '✓' : '—', icon: I.wallet, onClick: setupPayouts },
   ]
@@ -305,6 +313,110 @@ function AccountInner() {
 
         {/* Main content */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+          {/* Section tabs — the page was nine cards deep in one scroll. */}
+          <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #ece3d7', borderRadius: 50, padding: 5 }}>
+            {([['selling', `🏷️ ${t('Selling')}`], ['inbox', `💬 ${t('Inbox')}`], ['settings', `⚙️ ${t('Settings')}`]] as const).map(([id, label]) => (
+              <button key={id} onClick={() => setMainTab(id)} style={{
+                flex: 1, border: 'none', borderRadius: 50, padding: '9px 6px', cursor: 'pointer',
+                background: mainTab === id ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : 'transparent',
+                color: mainTab === id ? '#fff' : '#7a6a55',
+                fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900,
+              }}>{label}</button>
+            ))}
+          </div>
+
+
+          {mainTab === 'selling' && (<>
+          {/* Seller info centre — level, progress, profile, dashboard */}
+          <SellerCentre />
+
+          {/* My Listings */}
+          <div id="my-listings" style={card}>
+            <div style={cardHead}>{t('My Listings')}</div>
+            <div style={{ display: 'flex', background: '#f5f0e8', borderRadius: 50, padding: 4, marginBottom: 12 }}>
+              {([['active', t('On sale')], ['sold', t('Sold')], ['draft', t('Drafts')]] as [typeof seg, string][]).map(([id, label]) => (
+                <button key={id} onClick={() => setSeg(id)} style={{ flex: 1, border: 'none', background: seg === id ? '#fff' : 'transparent', color: seg === id ? 'var(--dark)' : '#888', borderRadius: 50, padding: '7px 0', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{label}{counts[id] > 0 ? ` ${counts[id]}` : ''}</button>
+              ))}
+            </div>
+            {listings === null ? <Muted>{t('Loading…')}</Muted> : shown.length === 0 ? <Muted>{seg === 'sold' ? t('No sold items yet.') : t('Nothing here yet.')}</Muted> : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+                {shown.map(c => (
+                  <div key={c.ref} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, overflow: 'hidden' }}>
+                    <Link href={`/listings/${c.ref}`} style={{ textDecoration: 'none' }}>
+                      <div style={{ paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
+                        {c.image ? <img src={c.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{c.emoji}</div>}
+                      </div>
+                      <div style={{ padding: '8px 8px 4px' }}>
+                        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title}</div>
+                        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>{c.price}</div>
+                      </div>
+                    </Link>
+                    {/* Straight to edit — sellers shouldn't have to go via the
+                        public listing page to fix their own item. */}
+                    {seg !== 'sold' && (
+                      <Link href={`/listings/${c.ref}/edit`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', borderTop: '1px solid #f3ede4', padding: '7px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#8a7d68' }}>
+                        ✏️ {t('Edit')}
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Offers received */}
+          <div id="offers" style={card}>
+            <div style={cardHead}>{t('Offers received')}</div>
+            {offers === null ? <Muted>{t('Loading…')}</Muted> : offers.length === 0 ? <Muted>{t('No offers to review.')}</Muted> : offers.map(o => (
+              <div key={o.id} ref={o.id === focusOffer ? focusRef : undefined}
+                style={{ borderBottom: '1px solid #f5f5f5', padding: '10px 8px', margin: '0 -8px', borderRadius: 10, transition: 'background 0.4s', background: o.id === focusOffer ? '#FFF3EE' : 'transparent' }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 10, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{o.listing?.images?.[0] ? <img src={o.listing.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.listing?.title}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>{t('A buyer offered')} · {t(STATUS_LABEL[o.status] ?? o.status)}</div>
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)' }}>€{Number(o.amount).toLocaleString()}</div>
+                </div>
+                {o.status === 'pending' && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <button onClick={() => respond(o.id, 'accept')} disabled={busyId === o.id} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 0', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>{busyId === o.id ? '…' : t('Accept')}</button>
+                    <button onClick={() => respond(o.id, 'decline')} disabled={busyId === o.id} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '8px 0', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>{t('Decline')}</button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          </>)}
+
+          {mainTab === 'inbox' && (<>
+          {/* Messages */}
+          <div style={card}>
+            <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between' }}><span>{t('Recent messages')}</span><Link href="/messages" style={{ color: 'var(--orange)', fontSize: 12, textDecoration: 'none' }}>{t('See all →')}</Link></div>
+            {threads === null ? <Muted>{t('Loading…')}</Muted> : threads.length === 0 ? <Muted>{t('No conversations yet.')}</Muted> : threads.slice(0, 4).map((th: any) => {
+              const other = th.participants?.find((p: any) => p.userId !== me?.id)?.user
+              const last = th.messages?.[0]
+              const unread = !!last && last.senderId !== me?.id && !last.readAt
+              const preview = last ? (last.blocked ? `⚠️ ${t('Message hidden')}` : (last.senderId === me?.id ? t('You: ') : '') + last.body) : t('Start chatting…')
+              return (
+                <Link key={th.id} href={`/messages/${th.id}`} style={{ textDecoration: 'none' }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f5f5' }}>
+                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontFamily: 'var(--font-nunito)' }}>{(other?.displayName ?? '?')[0]?.toUpperCase()}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: unread ? 900 : 700, color: 'var(--dark)' }}>{other?.displayName ?? t('Grabitt user')}</div>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: unread ? 'var(--dark)' : '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preview}</div>
+                    </div>
+                    {unread && <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--orange)' }} />}
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+
+          </>)}
+
+          {mainTab === 'settings' && (<>
           {/* My CV — build the CV recruiters receive on apply */}
           <Link href="/cv" style={{ textDecoration: 'none' }}>
             <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
@@ -383,90 +495,6 @@ function AccountInner() {
             </button>
           </div>
 
-          {/* Seller info centre — level, progress, profile, dashboard */}
-          <SellerCentre />
-
-          {/* My Listings */}
-          <div id="my-listings" style={card}>
-            <div style={cardHead}>{t('My Listings')}</div>
-            <div style={{ display: 'flex', background: '#f5f0e8', borderRadius: 50, padding: 4, marginBottom: 12 }}>
-              {([['active', t('On sale')], ['sold', t('Sold')], ['draft', t('Drafts')]] as [typeof seg, string][]).map(([id, label]) => (
-                <button key={id} onClick={() => setSeg(id)} style={{ flex: 1, border: 'none', background: seg === id ? '#fff' : 'transparent', color: seg === id ? 'var(--dark)' : '#888', borderRadius: 50, padding: '7px 0', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{label}{counts[id] > 0 ? ` ${counts[id]}` : ''}</button>
-              ))}
-            </div>
-            {listings === null ? <Muted>{t('Loading…')}</Muted> : shown.length === 0 ? <Muted>{seg === 'sold' ? t('No sold items yet.') : t('Nothing here yet.')}</Muted> : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
-                {shown.map(c => (
-                  <div key={c.ref} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, overflow: 'hidden' }}>
-                    <Link href={`/listings/${c.ref}`} style={{ textDecoration: 'none' }}>
-                      <div style={{ paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
-                        {c.image ? <img src={c.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{c.emoji}</div>}
-                      </div>
-                      <div style={{ padding: '8px 8px 4px' }}>
-                        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title}</div>
-                        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>{c.price}</div>
-                      </div>
-                    </Link>
-                    {/* Straight to edit — sellers shouldn't have to go via the
-                        public listing page to fix their own item. */}
-                    {seg !== 'sold' && (
-                      <Link href={`/listings/${c.ref}/edit`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', borderTop: '1px solid #f3ede4', padding: '7px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#8a7d68' }}>
-                        ✏️ {t('Edit')}
-                      </Link>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Offers received */}
-          <div id="offers" style={card}>
-            <div style={cardHead}>{t('Offers received')}</div>
-            {offers === null ? <Muted>{t('Loading…')}</Muted> : offers.length === 0 ? <Muted>{t('No offers to review.')}</Muted> : offers.map(o => (
-              <div key={o.id} ref={o.id === focusOffer ? focusRef : undefined}
-                style={{ borderBottom: '1px solid #f5f5f5', padding: '10px 8px', margin: '0 -8px', borderRadius: 10, transition: 'background 0.4s', background: o.id === focusOffer ? '#FFF3EE' : 'transparent' }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 10, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{o.listing?.images?.[0] ? <img src={o.listing.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.listing?.title}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>{t('A buyer offered')} · {t(STATUS_LABEL[o.status] ?? o.status)}</div>
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)' }}>€{Number(o.amount).toLocaleString()}</div>
-                </div>
-                {o.status === 'pending' && (
-                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                    <button onClick={() => respond(o.id, 'accept')} disabled={busyId === o.id} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 0', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>{busyId === o.id ? '…' : t('Accept')}</button>
-                    <button onClick={() => respond(o.id, 'decline')} disabled={busyId === o.id} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '8px 0', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>{t('Decline')}</button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Messages */}
-          <div style={card}>
-            <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between' }}><span>{t('Recent messages')}</span><Link href="/messages" style={{ color: 'var(--orange)', fontSize: 12, textDecoration: 'none' }}>{t('See all →')}</Link></div>
-            {threads === null ? <Muted>{t('Loading…')}</Muted> : threads.length === 0 ? <Muted>{t('No conversations yet.')}</Muted> : threads.slice(0, 4).map((th: any) => {
-              const other = th.participants?.find((p: any) => p.userId !== me?.id)?.user
-              const last = th.messages?.[0]
-              const unread = !!last && last.senderId !== me?.id && !last.readAt
-              const preview = last ? (last.blocked ? `⚠️ ${t('Message hidden')}` : (last.senderId === me?.id ? t('You: ') : '') + last.body) : t('Start chatting…')
-              return (
-                <Link key={th.id} href={`/messages/${th.id}`} style={{ textDecoration: 'none' }}>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f5f5' }}>
-                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontFamily: 'var(--font-nunito)' }}>{(other?.displayName ?? '?')[0]?.toUpperCase()}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: unread ? 900 : 700, color: 'var(--dark)' }}>{other?.displayName ?? t('Grabitt user')}</div>
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: unread ? 'var(--dark)' : '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preview}</div>
-                    </div>
-                    {unread && <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--orange)' }} />}
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-
           {/* GDPR erasure — self-service, no admin step */}
           <div style={{ ...card, border: '1px solid #fecaca' }}>
             <div style={{ ...cardHead, color: '#ef4444' }}>{t('Delete my account & data')}</div>
@@ -493,6 +521,7 @@ function AccountInner() {
               {deleting ? t('Deleting…') : t('Permanently delete my data')}
             </button>
           </div>
+          </>)}
         </section>
       </div>
 
