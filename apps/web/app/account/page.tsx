@@ -1,7 +1,7 @@
 'use client'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getAuthToken, refreshAuthToken, setAuthToken, trpcAuthed } from '@/lib/authToken'
 import { createClient } from '@/lib/supabase'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
@@ -32,12 +32,25 @@ const STATUS_LABEL: Record<string, string> = { pending: 'Pending', accepted: 'Ac
 const bucket = (s: string) => (s === 'sold' ? 'sold' : (s === 'active' || s === 'grab_it_now') ? 'active' : 'draft')
 
 export default function AccountPage() {
-  return <PanelProvider><AccountInner /></PanelProvider>
+  // AccountInner reads ?offer= via useSearchParams, which Next requires to sit
+  // inside a Suspense boundary.
+  return (
+    <PanelProvider>
+      <Suspense fallback={null}>
+        <AccountInner />
+      </Suspense>
+    </PanelProvider>
+  )
 }
 
 function AccountInner() {
   const router = useRouter()
   const { openPanel } = usePanel()
+  // A seller tapping an offer notification lands on ?offer=<id>#offers — bring
+  // that offer into view and mark it, rather than dropping them at the top of
+  // the account page to hunt for it.
+  const focusOffer = useSearchParams().get('offer')
+  const focusRef = useRef<HTMLDivElement | null>(null)
   const [ready, setReady] = useState(false)
   const [me, setMe] = useState<any>(null)
   const [dash, setDash] = useState<any>(null)
@@ -114,6 +127,11 @@ function AccountInner() {
   }, [router])
   useEffect(() => { load() }, [load])
 
+  // Scroll the deep-linked offer into view once the offers have loaded.
+  useEffect(() => {
+    if (focusOffer && offers?.length) focusRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focusOffer, offers])
+
   const logout = async () => {
     try { await createClient().auth.signOut() } catch {}
     setAuthToken(null)
@@ -168,13 +186,17 @@ function AccountInner() {
 
   const grade = me?.grade ?? 'grabber'
   const memberSince = me?.createdAt ? new Date(me.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '—'
+  // Tiles are the dashboard's navigation, so each one has to go somewhere.
+  // Filtering the list below without scrolling to it looks like nothing
+  // happened, so the list tiles do both.
+  const goTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const tiles = [
-    { label: t('On sale'), value: dash?.active, icon: I.tag, onClick: () => setSeg('active') },
-    { label: t('Sold'), value: dash?.sold, icon: I.check, onClick: () => setSeg('sold') },
+    { label: t('On sale'), value: dash?.active, icon: I.tag, onClick: () => { setSeg('active'); goTo('my-listings') } },
+    { label: t('Sold'), value: dash?.sold, icon: I.check, onClick: () => { setSeg('sold'); goTo('my-listings') } },
     { label: t('Messages'), value: dash?.unread, icon: I.message, dot: !!dash?.unread, href: '/messages' },
-    { label: t('Offers'), value: dash?.offers, icon: I.offer, dot: !!dash?.offers },
+    { label: t('Offers'), value: dash?.offers, icon: I.offer, dot: !!dash?.offers, onClick: () => goTo('offers') },
     { label: t('Saved'), value: dash?.saved, icon: I.heart, onClick: () => openPanel('favourites') },
-    { label: t('Payouts'), value: payout?.payoutsEnabled ? '✓' : '—', icon: I.wallet },
+    { label: t('Payouts'), value: payout?.payoutsEnabled ? '✓' : '—', icon: I.wallet, onClick: setupPayouts },
   ]
 
   return (
@@ -305,7 +327,7 @@ function AccountInner() {
           </div>
 
           {/* My Listings */}
-          <div style={card}>
+          <div id="my-listings" style={card}>
             <div style={cardHead}>{t('My Listings')}</div>
             <div style={{ display: 'flex', background: '#f5f0e8', borderRadius: 50, padding: 4, marginBottom: 12 }}>
               {([['active', t('On sale')], ['sold', t('Sold')], ['draft', t('Drafts')]] as [typeof seg, string][]).map(([id, label]) => (
@@ -339,10 +361,11 @@ function AccountInner() {
           </div>
 
           {/* Offers received */}
-          <div style={card}>
+          <div id="offers" style={card}>
             <div style={cardHead}>{t('Offers received')}</div>
             {offers === null ? <Muted>{t('Loading…')}</Muted> : offers.length === 0 ? <Muted>{t('No offers to review.')}</Muted> : offers.map(o => (
-              <div key={o.id} style={{ borderBottom: '1px solid #f5f5f5', padding: '10px 0' }}>
+              <div key={o.id} ref={o.id === focusOffer ? focusRef : undefined}
+                style={{ borderBottom: '1px solid #f5f5f5', padding: '10px 8px', margin: '0 -8px', borderRadius: 10, transition: 'background 0.4s', background: o.id === focusOffer ? '#FFF3EE' : 'transparent' }}>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   <div style={{ width: 44, height: 44, borderRadius: 10, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{o.listing?.images?.[0] ? <img src={o.listing.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>

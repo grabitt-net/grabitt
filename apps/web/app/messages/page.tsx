@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
-import BottomNav from '@/components/marketplace/BottomNav'
+import Footer from '@/components/marketplace/Footer'
 import SiteHeader from '@/components/marketplace/SiteHeader'
 import InboxClient from '@/components/marketplace/InboxClient'
 import { prisma } from 'server/src/db'
@@ -37,7 +37,7 @@ export default async function MessagesPage() {
 
       <InboxClient me={me.id} alertUnread={alertUnread} />
 
-      <BottomNav />
+      <Footer />
     </main>
   )
 }

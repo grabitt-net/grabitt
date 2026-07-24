@@ -77,8 +77,9 @@ export const offersRouter = router({
             kind: 'offer_received',
             title: '💰 New offer',
             body: `You received a €${input.amount.toFixed(2)} offer on "${listing.title}".`,
-            // Sellers review and accept/decline offers on their account page.
-            actionUrl: '/account',
+            // Deep-links to this offer in the Offers received card, which
+            // scrolls to and highlights it.
+            actionUrl: `/account?offer=${offer.id}#offers`,
           },
         })
       }
@@ -90,7 +91,14 @@ export const offersRouter = router({
   // price) or reject to step the ladder down. Rejecting the final tier refers
   // the offer back to the seller for a manual decision.
   respondToCounter: protectedProcedure
-    .input(z.object({ offerId: z.string().uuid(), action: z.enum(['accept', 'reject']) }))
+    .input(z.object({
+      offerId: z.string().uuid(),
+      action: z.enum(['accept', 'reject']),
+      // Rejecting can carry the buyer's own new offer. Without one we just step
+      // the seller's ladder down, but a negotiation where only one side names a
+      // number isn't a negotiation.
+      amount: z.number().min(0.01).optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       const offer = await ctx.prisma.offer.findUniqueOrThrow({
         where: { id: input.offerId },
@@ -113,16 +121,73 @@ export const offersRouter = router({
             kind: 'offer_accepted',
             title: '🤝 Counter accepted',
             body: `A buyer accepted your €${Number(offer.counterAmount).toFixed(2)} counter on "${offer.listing.title}".`,
-            actionUrl: '/account',
+            actionUrl: `/account?offer=${offer.id}#offers`,
           },
         })
         return updated
       }
 
-      // Reject → step down the ladder, or refer to the seller after the final tier.
+      // Reject → the buyer may name a new figure. If they do, it's a fresh offer
+      // and gets the same treatment as the original: at or above the seller's
+      // minimum it's accepted outright, below it the ladder steps down.
       const min = offer.listing.autoAcceptMin != null ? Number(offer.listing.autoAcceptMin) : Number(offer.counterAmount)
       const ask = Number(offer.listing.price)
       const nextTier = offer.counterTier + 1
+
+      if (input.amount != null && input.amount !== Number(offer.amount)) {
+        if (input.amount > ask) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'That is more than the asking price' })
+        }
+        if (offer.listing.autoAcceptMin != null && input.amount >= min) {
+          const accepted = await ctx.prisma.offer.update({
+            where: { id: offer.id },
+            data: { status: 'accepted', amount: input.amount, counterAmount: null },
+          })
+          await ctx.prisma.notification.create({
+            data: {
+              userId: offer.listing.sellerId,
+              kind: 'offer_accepted',
+              title: '✅ Offer accepted automatically',
+              body: `A buyer's €${input.amount.toFixed(2)} offer on "${offer.listing.title}" met your minimum and was accepted.`,
+              actionUrl: `/account?offer=${offer.id}#offers`,
+            },
+          })
+          return accepted
+        }
+        // Still short of the minimum — counter again from the new position.
+        if (offer.counterTier >= 3) {
+          const referred = await ctx.prisma.offer.update({
+            where: { id: offer.id },
+            data: { status: 'pending', amount: input.amount, counterAmount: null },
+          })
+          await ctx.prisma.notification.create({
+            data: {
+              userId: offer.listing.sellerId,
+              kind: 'offer_received',
+              title: '💰 Offer needs your decision',
+              body: `A buyer's €${input.amount.toFixed(2)} offer on "${offer.listing.title}" is below your minimum — review it manually.`,
+              actionUrl: `/account?offer=${offer.id}#offers`,
+            },
+          })
+          return referred
+        }
+        const stepped = counterForTier(ask, min, nextTier)
+        const countered = await ctx.prisma.offer.update({
+          where: { id: offer.id },
+          data: { amount: input.amount, counterAmount: stepped, counterTier: nextTier },
+        })
+        await ctx.prisma.notification.create({
+          data: {
+            userId: offer.buyerId,
+            kind: 'offer_countered',
+            title: nextTier >= 3 ? '🔔 Seller’s final offer' : '🤝 Seller countered',
+            body: `${nextTier >= 3 ? 'Final counter' : 'New counter'} on "${offer.listing.title}": €${stepped.toFixed(2)}.`,
+            actionUrl: `/listings/${offer.listing.id}`,
+          },
+        })
+        return countered
+      }
+
       if (offer.counterTier >= 3) {
         // Final tier already rejected — hand back to the seller to decide.
         const updated = await ctx.prisma.offer.update({
@@ -135,7 +200,7 @@ export const offersRouter = router({
             kind: 'offer_received',
             title: '💰 Offer needs your decision',
             body: `A buyer's €${Number(offer.amount).toFixed(2)} offer on "${offer.listing.title}" is below your minimum — review it manually.`,
-            actionUrl: '/account',
+            actionUrl: `/account?offer=${offer.id}#offers`,
           },
         })
         return updated

@@ -2606,12 +2606,12 @@ function PanelBody() {
     }
 
     // Buyer answers the automatic counter without leaving the panel.
-    const answerCounter = async (action: 'accept' | 'reject') => {
+    const answerCounter = async (action: 'accept' | 'reject', ownAmount?: number) => {
       if (!outcome) return
       setOfferBusy(true); setOfferErr('')
       try {
         const c = await getTrpcClient()
-        const res = await c.offers.respondToCounter.mutate({ offerId: outcome.id, action }) as {
+        const res = await c.offers.respondToCounter.mutate({ offerId: outcome.id, action, ...(ownAmount ? { amount: ownAmount } : {}) }) as {
           status: string; amount: unknown; counterAmount: unknown; counterTier: number
         }
         setOutcome({
@@ -2657,10 +2657,35 @@ function PanelBody() {
             </div>
           </div>
           {offerErr && <div style={{ background: '#fff5f5', color: '#ef4444', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 12 }}>⚠️ {offerErr}</div>}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => answerCounter('accept')} disabled={offerBusy} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 8px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: offerBusy ? 'wait' : 'pointer' }}>{t('Accept')} €{outcome.counterAmount.toFixed(2)}</button>
-            <button onClick={() => answerCounter('reject')} disabled={offerBusy} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: '13px 8px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: offerBusy ? 'wait' : 'pointer' }}>{outcome.counterTier >= 3 ? t('Decline') : t('Counter lower')}</button>
-          </div>
+          <button onClick={() => answerCounter('accept')} disabled={offerBusy} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 8px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: offerBusy ? 'wait' : 'pointer' }}>{t('Accept')} €{outcome.counterAmount.toFixed(2)}</button>
+
+          {outcome.counterTier >= 3 ? (
+            <button onClick={() => answerCounter('reject')} disabled={offerBusy} style={{ width: '100%', marginTop: 8, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: '13px 8px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: offerBusy ? 'wait' : 'pointer' }}>{t('Decline')}</button>
+          ) : (
+            // The buyer names their own figure rather than only being able to
+            // reject and have the ladder step for them.
+            <div style={{ marginTop: 14, borderTop: '1px solid #f0f0f0', paddingTop: 14 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Or offer your own amount')}</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <span style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 16, color: '#888' }}>€</span>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={e => setAmount(e.target.value)}
+                    min="1"
+                    style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px 11px 26px', fontFamily: 'Georgia,serif', fontSize: 17, fontWeight: 700, color: 'var(--orange)', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <button
+                  onClick={() => answerCounter('reject', parseFloat(amount) || undefined)}
+                  disabled={offerBusy || !amount || parseFloat(amount) <= 0}
+                  style={{ flexShrink: 0, background: !offerBusy && parseFloat(amount) > 0 ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 12, padding: '0 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: offerBusy ? 'wait' : 'pointer' }}
+                >{t('Send')}</button>
+              </div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 6 }}>{t('Meet the seller’s minimum and it is accepted straight away.')}</div>
+            </div>
+          )}
         </ActionPanel>
       )
 

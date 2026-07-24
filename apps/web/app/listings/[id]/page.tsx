@@ -209,7 +209,7 @@ function ListingInner() {
   }
 
   return (
-    <main style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 40 }}>
+    <main className="app-shell" style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar />
       <header style={{ background: 'var(--sand)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1.5px solid var(--sand2)' }}>
         <button onClick={() => { if (window.history.length > 1) router.back(); else router.push(job ? '/jobs' : prop ? '/property' : '/') }} style={{ fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--dark)', padding: 0, lineHeight: 1 }} aria-label="Back">←</button>
@@ -218,7 +218,7 @@ function ListingInner() {
       </header>
       <QuickActions />
 
-      <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Hero: image + vertical action rail */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
           <div style={{ flex: 1, minWidth: 0, height: 280, borderRadius: 14, overflow: 'hidden', background: 'var(--sand)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 96, border: '1px solid #ece3d7' }}>
