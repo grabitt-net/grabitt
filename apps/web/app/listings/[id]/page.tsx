@@ -243,10 +243,6 @@ function ListingInner() {
             <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25 }}>{job?.jobTitle ?? listing.title}</h1>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)', marginTop: 2 }}>{priceLabel}</div>
             <div style={{ fontSize: 11, color: '#666', marginTop: 3, fontFamily: 'var(--font-comfortaa)' }}>📍 {job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')} · Ref: {ref}</div>
-            <div onClick={() => openPanel('shield')} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '6px 9px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-              <span style={{ fontSize: 12 }}>🛡️</span>
-              <span style={{ fontSize: 10, color: '#16a34a', fontFamily: 'var(--font-nunito)', fontWeight: 900 }}>Protected by the Grabitt Guarantee ›</span>
-            </div>
           </div>
 
           {/* Buy / Offer / In demand — all on the title's line */}
