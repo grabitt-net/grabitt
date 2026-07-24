@@ -39,6 +39,12 @@ export interface DbListing {
   isFeatured?: boolean
   deliveryFee?: string | number
   deliveryMethod?: 'courier' | 'in_person' | null
+  grabItNowUntil?: string | Date | null
+}
+
+// Grab It Now items are bought instantly and can never be basketed.
+export function isGrabItNow(l: DbListing) {
+  return !!l.grabItNowUntil && new Date(l.grabItNowUntil) > new Date()
 }
 
 // Convert a DB listing into the item passed to openPanel('listing', item).

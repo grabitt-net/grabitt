@@ -2,8 +2,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createTrpcClient } from '@/lib/trpc'
-import { toPanelItem, type DbListing } from '@/lib/listingMap'
+import { toPanelItem, isGrabItNow, type DbListing } from '@/lib/listingMap'
 import Icon from './Icon'
+import AddToCartButton from './AddToCartButton'
 
 // The main browse experience for the homepage: a big responsive grid of real
 // listings with a category filter bar. On desktop this reads like a proper
@@ -86,6 +87,7 @@ export default function ListingsGrid() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 500, color: '#9a8b74', fontFamily: 'var(--font-ui)' }}><Icon name="mapPin" size={11} /> {item.location}</div>
                   </div>
                   {item.condition && <div style={{ display: 'inline-block', marginTop: 8, background: '#f2f7f2', color: 'var(--sage)', fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>{item.condition}</div>}
+                  <AddToCartButton listingId={l.id} department={l.department} sellerId={l.sellerId} isGrabItNow={isGrabItNow(l)} />
                 </div>
               </div>
             )

@@ -2,8 +2,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createTrpcClient } from '@/lib/trpc'
-import { toPanelItem, type DbListing } from '@/lib/listingMap'
+import { toPanelItem, isGrabItNow, type DbListing } from '@/lib/listingMap'
 import Icon from './Icon'
+import AddToCartButton from './AddToCartButton'
 
 export default function FeaturedStrip() {
   const router = useRouter()
@@ -49,6 +50,7 @@ export default function FeaturedStrip() {
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>{item.title}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>{item.price}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 500, color: '#9a8b74', marginTop: 4 }}><Icon name="mapPin" size={11} /> {item.location}</div>
+                <AddToCartButton listingId={l.id} department={l.department} sellerId={l.sellerId} isGrabItNow={isGrabItNow(l)} size="sm" />
               </div>
             </div>
           )
