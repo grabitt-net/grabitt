@@ -3,6 +3,7 @@ import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 import { prisma } from 'server/src/db'
 import { verifyExecJwt } from 'server/src/middleware/auth'
 import { writeAudit } from 'server/src/routers/crm'
+import { serviceKeyProblem } from '@/lib/supabaseServiceKey'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -38,7 +39,8 @@ export async function POST(req: Request) {
     const displayName = String(body.displayName ?? '').trim()
     if (!EMAIL_RE.test(addr)) return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 })
     if (displayName.length < 2) return NextResponse.json({ error: 'Enter a name (2+ characters)' }, { status: 400 })
-    if (!serviceKey) return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not configured' }, { status: 500 })
+    const keyProblem = serviceKeyProblem(url, serviceKey)
+    if (keyProblem || !serviceKey) return NextResponse.json({ error: keyProblem ?? 'SUPABASE_SERVICE_ROLE_KEY is not set' }, { status: 500 })
 
     const existing = await prisma.user.findUnique({ where: { email: addr }, select: { id: true } })
     if (existing) return NextResponse.json({ error: 'A member with that email already exists' }, { status: 400 })
@@ -95,14 +97,21 @@ export async function POST(req: Request) {
   // what /admin actually gates on (the ExecUser table is not used for auth).
   if (action === 'set_admin') {
     const isAdmin = body.isAdmin === true
-    if (!serviceKey) return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not configured' }, { status: 500 })
+    const keyProblem = serviceKeyProblem(url, serviceKey)
+    if (keyProblem || !serviceKey) return NextResponse.json({ error: keyProblem ?? 'SUPABASE_SERVICE_ROLE_KEY is not set' }, { status: 500 })
 
     const admin = createSupabaseAdmin(url, serviceKey)
     // Upsert so members without a profiles row can still be granted access.
     const { error } = await admin
       .from('profiles')
       .upsert({ id: user.supabaseId, email: user.email, is_admin: isAdmin }, { onConflict: 'id' })
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) {
+      // Supabase says only "Invalid API key" here; name the setting at fault.
+      const msg = /invalid api key/i.test(error.message)
+        ? 'Supabase rejected SUPABASE_SERVICE_ROLE_KEY. Check that this deployment has the service role key from the same Supabase project as NEXT_PUBLIC_SUPABASE_URL.'
+        : error.message
+      return NextResponse.json({ error: msg }, { status: 400 })
+    }
     await writeAudit(prisma, actor.id, userId, isAdmin ? 'admin_granted' : 'admin_revoked', { email: user.email })
     return NextResponse.json({ ok: true, isAdmin })
   }
@@ -112,7 +121,8 @@ export async function POST(req: Request) {
     if (!EMAIL_RE.test(next)) {
       return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 })
     }
-    if (!serviceKey) return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not configured' }, { status: 500 })
+    const keyProblem = serviceKeyProblem(url, serviceKey)
+    if (keyProblem || !serviceKey) return NextResponse.json({ error: keyProblem ?? 'SUPABASE_SERVICE_ROLE_KEY is not set' }, { status: 500 })
 
     const admin = createSupabaseAdmin(url, serviceKey)
     // email_confirm: true — an admin-set address is trusted, so no re-confirmation.
