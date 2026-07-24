@@ -5,7 +5,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
-import SiteHeader from '@/components/marketplace/SiteHeader'
+import Topbar from '@/components/marketplace/Topbar'
 import PanelHost from '@/components/marketplace/PanelHost'
 
 const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
@@ -85,7 +85,7 @@ export default function NewPropertyPage() {
   return (
     <PanelProvider>
     <main style={{ background: '#f7f4ee', minHeight: '100dvh', paddingBottom: 40 }}>
-      <SiteHeader />
+      <Topbar />
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <Link href="/property" style={{ textDecoration: 'none', fontSize: 22, color: 'var(--orange)', fontWeight: 700 }}>‹</Link>
         <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>🏠 List a Property</span>
