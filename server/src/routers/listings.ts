@@ -246,7 +246,7 @@ export const listingsRouter = router({
       const listing = await ctx.prisma.listing.findUnique({
         where: { id: input.id },
         include: {
-          seller: { select: { id: true, displayName: true, avatar: true, grade: true, avgRating: true, salesCount: true } },
+          seller: { select: { id: true, displayName: true, avatar: true, grade: true, avgRating: true, salesCount: true, isVerified: true, isBusiness: true, businessName: true, businessVerified: true } },
           jobListing: true,
           propertyListing: true,
           _count: { select: { wishlistItems: true } }, // real "watching" count for the In-Demand box
@@ -265,7 +265,14 @@ export const listingsRouter = router({
           ],
         },
       })
-      return { ...listing, wantedCount }
+      // "More from this seller" — a few other live items, for the Seller panel.
+      const sellerOther = await ctx.prisma.listing.findMany({
+        where: { sellerId: listing.sellerId, status: 'active', id: { not: listing.id }, department: { notIn: ['jobs', 'property'] } },
+        orderBy: { createdAt: 'desc' },
+        take: 4,
+        select: { id: true, title: true, price: true, images: true, department: true },
+      })
+      return { ...listing, wantedCount, sellerOther }
     }),
 
   // Sold-price comparables: recent completed sales for similar items, so a buyer
@@ -401,6 +408,9 @@ export const listingsRouter = router({
       price: z.number().min(0).max(9_999_999).optional(),
       department: z.string().optional(),
       condition: z.string().optional(),
+      brand: z.string().max(60).nullable().optional(),
+      colour: z.string().max(40).nullable().optional(),
+      size: z.string().max(40).nullable().optional(),
       images: z.array(z.string().url()).min(1).max(8).optional(),
       location: z.string().max(100).optional(),
       lat: z.number().nullable().optional(),

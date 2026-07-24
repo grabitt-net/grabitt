@@ -399,6 +399,11 @@ model Listing {
   price            Decimal          @db.Decimal(10, 2)
   department       Department
   condition        ListingCondition
+  // Item facts shown in the listing's Details panel (all optional — blank ones
+  // render as "—", exactly as the template does).
+  brand            String?
+  colour           String?
+  size             String?
   status           ListingStatus    @default(draft)
   images           String[]
   tags             String[]         @default([])  // auto-generated from title/description for search + discovery

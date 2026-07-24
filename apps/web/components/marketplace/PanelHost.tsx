@@ -3248,6 +3248,9 @@ function PanelBody() {
     const [condition, setCondition] = useState('')
     const [desc, setDesc] = useState('')
     const [price, setPrice] = useState('')
+    const [brand, setBrand] = useState('')
+    const [colour, setColour] = useState('')
+    const [size, setSize] = useState('')
     const [stock, setStock] = useState('1')
     const [freeItem, setFreeItem] = useState(false)
     const [autoAcceptMin, setAutoAcceptMin] = useState('')
@@ -3398,6 +3401,17 @@ function PanelBody() {
                       <button key={c} onClick={() => setCondition(c)} style={{ background: condition === c ? 'var(--sage)' : '#f5f0e8', color: condition === c ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{c}</button>
                     ))}
                   </div>
+                </div>
+
+                {/* Item facts — optional, but they fill the buyer's Details panel */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Model / Brand')}, {t('Colour')} &amp; {t('Size')}</div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input value={brand} onChange={e => setBrand(e.target.value)} placeholder={t('Model / Brand')} style={{ flex: 1, minWidth: 0, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                    <input value={colour} onChange={e => setColour(e.target.value)} placeholder={t('Colour')} style={{ flex: 1, minWidth: 0, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                    <input value={size} onChange={e => setSize(e.target.value)} placeholder={t('Size')} style={{ flex: 1, minWidth: 0, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 5 }}>{t('Optional — buyers filter and search on these.')}</div>
                 </div>
 
                 <div style={{ marginBottom: 14 }}>
@@ -3609,6 +3623,9 @@ function PanelBody() {
                       price: freeItem ? 0 : parseFloat(price) || 0,
                       department: (DEPT_MAP[dept] ?? 'other') as Parameters<typeof client.listings.create.mutate>[0]['department'],
                       condition: (COND_MAP[condition] ?? 'good') as Parameters<typeof client.listings.create.mutate>[0]['condition'],
+                      ...(brand.trim() ? { brand: brand.trim() } : {}),
+                      ...(colour.trim() ? { colour: colour.trim() } : {}),
+                      ...(size.trim() ? { size: size.trim() } : {}),
                       images: imageUrls,
                       location: town,
                       ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),

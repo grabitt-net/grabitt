@@ -144,6 +144,15 @@ function ListingInner() {
   const emoji = deptEmoji(listing.department)
   const priceLabel = job ? salaryLabel(job.salaryMin, job.salaryMax, job.salaryPeriod) : `€${Number(listing.price).toLocaleString()}${isRent ? '/mo' : ''}`
   const ref = String(id).replace(/-/g, '').slice(0, 6).toUpperCase()
+  const sellerOther: SellerOther[] = (listing.sellerOther ?? []) as SellerOther[]
+  // Keywords: the listing's own search tags, falling back to the words derived
+  // from its title and category (what the template did).
+  const keywords: string[] = job
+    ? jobKeywords
+    : (Array.isArray(listing.tags) && listing.tags.length > 0
+        ? listing.tags.slice(0, 6)
+        : Array.from(new Set(`${DEPT_LABEL[listing.department] ?? ''} ${listing.title ?? ''}`
+            .toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 3))).slice(0, 5))
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/listings/${id}` : `/listings/${id}`
 
   // In-demand metrics — real data only: view count and number of people who have
@@ -214,6 +223,7 @@ function ListingInner() {
             {listing.isFeatured && <span style={{ position: 'absolute', top: 8, left: 8, background: 'var(--orange)', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '3px 9px', borderRadius: 50 }}>⭐ FEATURED</span>}
           </div>
           <div style={{ width: 56, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <RailBtn icon="🛒" label="Cart" onClick={() => openPanel('cart')} />
             <RailBtn icon={saved ? '❤️' : '🤍'} label="Save" active={saved} onClick={toggleSave} />
             <RailBtn icon="📤" label="Share" onClick={() => setShowShare(true)} />
             {!isOwner && seller?.id && <RailBtn icon="💬" label="Message" onClick={startChat} />}
@@ -236,6 +246,13 @@ function ListingInner() {
               <span style={{ fontSize: 12 }}>🛡️</span>
               <span style={{ fontSize: 10, color: '#16a34a', fontFamily: 'var(--font-nunito)', fontWeight: 900 }}>Protected by the Grabitt Guarantee ›</span>
             </div>
+            {/* Buy / Offer — alongside the In-Demand box, per the template */}
+            {!isOwner && !job && !prop && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <button onClick={() => isGrabItNow ? openPanel('checkout', panelItem) : addToBasket()} disabled={basketBusy} style={{ flex: 1, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 8px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: basketBusy ? 'wait' : 'pointer', lineHeight: 1.25 }}>{isGrabItNow ? <>⚡ {t('Buy Now')}</> : <>🛒 {t('Buy Now')}</>}<br /><span style={{ fontSize: 12 }}>{priceLabel}</span></button>
+                <button onClick={() => openPanel('makeOffer', panelItem)} style={{ flex: 1, background: '#fff', color: '#FF4500', border: '2px solid #FF4500', borderRadius: 12, padding: '13px 8px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>💰 {t('Make')}<br />{t('an Offer')}</button>
+              </div>
+            )}
           </div>
           <div style={{ width: 112, flexShrink: 0, background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '8px 5px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 5 }}>🔥 In demand</div>
@@ -293,36 +310,114 @@ function ListingInner() {
           </div>
         ) : prop ? (
           seller?.id && <MessageButton listingId={id} sellerId={seller.id} label={t('Enquire')} primary flex={1} />
-        ) : (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => isGrabItNow ? openPanel('checkout', panelItem) : addToBasket()} disabled={basketBusy} style={{ flex: 1, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 12, padding: '15px 8px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: basketBusy ? 'wait' : 'pointer', lineHeight: 1.25 }}>{isGrabItNow ? <>⚡ {t('Buy Now')}</> : <>🛒 {t('Buy Now')}</>}<br /><span style={{ fontSize: 12 }}>{priceLabel}</span></button>
-            <button onClick={() => openPanel('makeOffer', panelItem)} style={{ flex: 1, background: '#fff', color: '#FF4500', border: '2px solid #FF4500', borderRadius: 12, padding: '15px 8px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>💰 Make<br />an Offer</button>
-          </div>
-        )}
+        ) : null}
         {basketErr && !job && !prop && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#c0392b', textAlign: 'center', marginTop: -4 }}>{basketErr}</div>}
 
-        {/* Details */}
-        {(job || prop || listing.condition || (typeof listing.stock === 'number')) && (
+        {/* Details + Seller — the two-column panel from the template */}
+        <div className="listing-two-col">
+          {/* LEFT: item facts */}
           <div style={cardBox}>
-            <div style={sectionTitle}>{t('Details')}</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-              {!job && !prop && listing.condition && <Fact label="Condition" value={COND_LABEL[listing.condition] ?? listing.condition} />}
-              {!job && listing.department !== 'property' && typeof listing.stock === 'number' && <Fact label="Availability" value={listing.stock > 0 ? `${listing.stock} in stock${listing.stock > 1 ? ' · multi-buy' : ''}` : 'Out of stock'} />}
-              {job && <><Fact label="Employer" value={job.company} />{job.sector && <Fact label="Category" value={job.sector} />}{job.hours && <Fact label="Hours" value={job.hours} />}{job.startDate && <Fact label="Starts" value={new Date(job.startDate).toLocaleDateString()} />}{job.address && <Fact label="Address" value={job.address} />}{job.skills?.length ? <Fact label="Skills" value={job.skills.join(', ')} /> : null}</>}
-              {prop && <>{prop.bedrooms != null && <Fact label="Bedrooms" value={String(prop.bedrooms)} />}{prop.bathrooms != null && <Fact label="Bathrooms" value={String(prop.bathrooms)} />}{prop.m2 != null && <Fact label="Size" value={`${Number(prop.m2)}m²`} />}{prop.hasPool && <Fact label="Pool" value="Yes" />}{prop.hasGarage && <Fact label="Garage" value="Yes" />}</>}
-            </div>
+            <div style={panelTitle}>{t('Details')}</div>
+            {job ? (
+              <>
+                <DetailRow label={t('Employer')} value={job.company} />
+                <DetailRow label={t('Reference')} value={ref} />
+                <DetailRow label={t('Category')} value={job.sector} />
+                <DetailRow label={t('Hours')} value={job.hours} />
+                <DetailRow label={t('Starts')} value={job.startDate ? new Date(job.startDate).toLocaleDateString() : ''} />
+                <DetailRow label={t('Address')} value={job.address} />
+                <DetailRow label={t('Skills')} value={job.skills?.length ? job.skills.join(', ') : ''} />
+              </>
+            ) : prop ? (
+              <>
+                <DetailRow label={t('Reference')} value={ref} />
+                <DetailRow label={t('Bedrooms')} value={prop.bedrooms != null ? String(prop.bedrooms) : ''} />
+                <DetailRow label={t('Bathrooms')} value={prop.bathrooms != null ? String(prop.bathrooms) : ''} />
+                <DetailRow label={t('Size')} value={prop.m2 != null ? `${Number(prop.m2)}m²` : ''} />
+                <DetailRow label={t('Pool')} value={prop.hasPool ? t('Yes') : ''} />
+                <DetailRow label={t('Garage')} value={prop.hasGarage ? t('Yes') : ''} />
+                <DetailRow label={t('Category')} value={DEPT_LABEL[listing.department] ?? listing.department} />
+              </>
+            ) : (
+              <>
+                <DetailRow label={t('Condition')} value={listing.condition ? (COND_LABEL[listing.condition] ?? listing.condition) : ''} always />
+                <DetailRow label={t('Reference')} value={ref} always />
+                <DetailRow label={t('Model / Brand')} value={listing.brand} always />
+                <DetailRow label={t('Colour')} value={listing.colour} always />
+                <DetailRow label={t('Size')} value={listing.size} always />
+                <DetailRow label={t('Category')} value={DEPT_LABEL[listing.department] ?? listing.department} always />
+                {typeof listing.stock === 'number' && (
+                  <DetailRow label={t('Availability')} value={listing.stock > 0 ? `${listing.stock} ${t('in stock')}` : t('Out of stock')} always />
+                )}
+              </>
+            )}
           </div>
-        )}
 
-        {/* Seller */}
-        <div style={cardBox}>
-          <div style={sectionTitle}>{job ? 'Employer' : 'Seller'}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#fff', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>{(seller?.displayName ?? job?.company ?? '?')[0]?.toUpperCase()}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{job?.company ?? seller?.displayName ?? 'Grabitt User'}{seller?.grade && <span style={{ marginLeft: 6, fontSize: 12 }}>{gradeEmoji[seller.grade]}</span>}</div>
-              <div style={{ fontSize: 11, color: '#888', marginTop: 2, fontFamily: 'var(--font-nunito)' }}>{seller?.avgRating ? `⭐ ${seller.avgRating} · ${seller.salesCount ?? 0} sales` : 'New on Grabitt'}</div>
+          {/* RIGHT: seller, more from them, fulfilment, keywords */}
+          <div style={cardBox}>
+            <div style={panelTitle}>{job ? t('Employer') : t('Seller')}</div>
+            <div
+              onClick={() => seller?.id && openPanel('storefront', { sellerId: seller.id })}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: seller?.id ? 'pointer' : 'default' }}
+            >
+              <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, color: '#fff', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>
+                {(seller?.businessName ?? job?.company ?? seller?.displayName ?? '?')[0]?.toUpperCase()}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {seller?.businessName ?? job?.company ?? seller?.displayName ?? 'Grabitt User'}
+                  </span>
+                  {seller?.grade && <span style={{ fontSize: 11 }}>{gradeEmoji[seller.grade]}</span>}
+                  {(seller?.isVerified || seller?.businessVerified) && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#dcfce7', color: '#16a34a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50, whiteSpace: 'nowrap' }}>🛡️ {t('Verified')}</span>
+                  )}
+                </div>
+                <div style={{ fontSize: 10.5, color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontWeight: 700, marginTop: 1 }}>
+                  {seller?.avgRating ? `★ ${seller.avgRating} ${t('ratings')} ›` : t('New on Grabitt')}
+                </div>
+              </div>
             </div>
+
+            {sellerOther.length > 0 && (
+              <>
+                <div style={subLabel}>{t('More from this seller')}</div>
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 3 }}>
+                  {sellerOther.map((o: SellerOther) => (
+                    <Link key={o.id} href={`/listings/${o.id}`} style={{ flex: '0 0 auto', width: 54, textDecoration: 'none' }}>
+                      <div style={{ height: 46, borderRadius: 8, background: 'linear-gradient(145deg,#FFF3EE,#FFE4D6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, overflow: 'hidden' }}>
+                        {Array.isArray(o.images) && o.images[0]
+                          ? <img src={o.images[0]} alt={o.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : deptEmoji(o.department)}
+                      </div>
+                      <div style={{ fontSize: 9, fontFamily: 'var(--font-nunito)', fontWeight: 900, color: 'var(--orange)', textAlign: 'center', marginTop: 2 }}>€{Number(o.price).toLocaleString()}</div>
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {!job && !prop && (
+              <>
+                <div style={subLabel}>{t('Fulfilment')}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <FulChip on={listing.deliveryMethod === 'courier'} label={t('Post')} />
+                  <FulChip on={listing.deliveryMethod === 'in_person'} label={t('Deliver')} />
+                  <FulChip on={!listing.deliveryMethod} label={t('Collect')} />
+                </div>
+              </>
+            )}
+
+            {keywords.length > 0 && (
+              <>
+                <div style={subLabel}>{t('Keywords')}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {keywords.map((k: string) => (
+                    <Link key={k} href={`/search?q=${encodeURIComponent(k)}`} style={{ background: '#f0f0f0', color: '#666', fontSize: 9.5, fontFamily: 'var(--font-nunito)', fontWeight: 700, padding: '3px 8px', borderRadius: 50, textDecoration: 'none' }}>{k}</Link>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -343,35 +438,11 @@ function ListingInner() {
           </div>
         )}
 
-        {/* Keywords */}
-        {job && jobKeywords.length > 0 && (
-          <div style={cardBox}>
-            <div style={sectionTitle}>{t('Keywords')}</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {jobKeywords.map(k => (
-                <span key={k} style={{ background: '#f0ebe4', color: '#6b5d48', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 700, padding: '4px 11px', borderRadius: 50 }}>{k}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Description */}
         {listing.description && (
           <div style={cardBox}>
             <div style={sectionTitle}>{t('Description')}</div>
             <p style={{ fontSize: 13, color: '#444', lineHeight: 1.6, fontFamily: 'var(--font-comfortaa)', whiteSpace: 'pre-wrap' }}>{listing.description}</p>
-          </div>
-        )}
-
-        {/* Tags */}
-        {Array.isArray(listing.tags) && listing.tags.length > 0 && (
-          <div style={cardBox}>
-            <div style={sectionTitle}>{t('Tags')}</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {listing.tags.map((tg: string) => (
-                <Link key={tg} href={`/listings?q=${encodeURIComponent(tg)}`} style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, fontWeight: 600, color: '#6b5a41', background: '#f5f0e8', border: '1px solid #ece3d7', borderRadius: 999, padding: '5px 12px', textDecoration: 'none' }}>#{tg}</Link>
-              ))}
-            </div>
           </div>
         )}
 
@@ -465,6 +536,28 @@ function Centered({ children }: { children: React.ReactNode }) {
 function Chip({ children, muted }: { children: React.ReactNode; muted?: boolean }) {
   return <span style={{ background: muted ? '#f0f0f0' : 'var(--sand)', color: muted ? '#555' : 'var(--orange)', borderRadius: 50, padding: '3px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800 }}>{children}</span>
 }
+type SellerOther = { id: string; title: string; price: string | number; images: string[]; department: string }
+
+// One stacked label/value line in the Details panel. `always` keeps the row and
+// shows an em dash when the seller left the field blank, as the template does.
+function DetailRow({ label, value, always }: { label: string; value?: string | null; always?: boolean }) {
+  if (!value && !always) return null
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ fontSize: 9, fontWeight: 800, color: '#999', textTransform: 'uppercase', fontFamily: 'var(--font-nunito)' }}>{label}</div>
+      <div style={{ fontSize: 12, color: 'var(--dark)', fontFamily: 'var(--font-comfortaa)', fontWeight: 600 }}>{value || '—'}</div>
+    </div>
+  )
+}
+
+function FulChip({ on, label }: { on: boolean; label: string }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontFamily: 'var(--font-nunito)', fontWeight: 700, color: on ? '#16a34a' : '#bbb' }}>
+      {on ? '\u2611' : '\u2610'} {label}
+    </span>
+  )
+}
+
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ flex: '1 0 40%' }}>
@@ -475,4 +568,6 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 const cardBox: React.CSSProperties = { background: '#fff', borderRadius: 16, padding: '16px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }
+const panelTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', marginBottom: 10 }
+const subLabel: React.CSSProperties = { fontSize: 10, fontWeight: 800, color: '#555', fontFamily: 'var(--font-nunito)', margin: '8px 0 5px' }
 const sectionTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }

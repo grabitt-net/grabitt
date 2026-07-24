@@ -37,6 +37,9 @@ function EditInner() {
   const [price, setPrice] = useState('')
   const [condition, setCondition] = useState('good')
   const [location, setLocation] = useState('')
+  const [brand, setBrand] = useState('')
+  const [colour, setColour] = useState('')
+  const [size, setSize] = useState('')
   const [stock, setStock] = useState('1')
   const [deliveryFee, setDeliveryFee] = useState('0')
   const [deliveryMethod, setDeliveryMethod] = useState<'' | 'courier' | 'in_person'>('')
@@ -106,6 +109,9 @@ function EditInner() {
       setPrice(String(Number(l.price ?? 0)))
       setCondition(l.condition ?? 'good')
       setLocation(l.location ?? '')
+      setBrand(l.brand ?? '')
+      setColour(l.colour ?? '')
+      setSize(l.size ?? '')
       setStock(String(l.stock ?? 1))
       setDeliveryFee(String(Number(l.deliveryFee ?? 0)))
       setDeliveryMethod((l.deliveryMethod ?? '') as '' | 'courier' | 'in_person')
@@ -233,6 +239,9 @@ function EditInner() {
           price: freeItem ? 0 : Number(price) || 0,
           department,
           condition,
+          brand: brand.trim() || null,
+          colour: colour.trim() || null,
+          size: size.trim() || null,
           location: location.trim(),
           stock: Math.max(1, Number(stock) || 1),
           deliveryFee: deliveryMethod === '' ? 0 : Number(deliveryFee) || 0,
@@ -326,6 +335,12 @@ function EditInner() {
             <select value={condition} onChange={e => setCondition(e.target.value)} style={field}>
               {Object.entries(COND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
+            <label style={lbl}>{t('Model / Brand')}</label>
+            <input value={brand} onChange={e => setBrand(e.target.value)} style={field} />
+            <label style={lbl}>{t('Colour')}</label>
+            <input value={colour} onChange={e => setColour(e.target.value)} style={field} />
+            <label style={lbl}>{t('Size')}</label>
+            <input value={size} onChange={e => setSize(e.target.value)} style={field} />
           </>
         )}
         <label style={lbl}>{t('Location')}</label>

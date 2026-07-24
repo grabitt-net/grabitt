@@ -43,6 +43,10 @@ export const CreateListingInputSchema = z.object({
   price: z.number().min(0),
   department: Department,
   condition: ListingCondition,
+  // Item facts for the listing's Details panel — optional, blank shows as "—".
+  brand: z.string().max(60).optional(),
+  colour: z.string().max(40).optional(),
+  size: z.string().max(40).optional(),
   images: z.array(z.string().url()).min(1).max(8),
   location: z.string().max(100),
   lat: z.number().optional(),   // exact map pin (drag-a-pin on create)

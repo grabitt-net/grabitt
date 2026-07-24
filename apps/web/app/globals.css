@@ -37,6 +37,9 @@ body {
 
 /* Responsive listing grid — 2 cols on mobile, fills columns on wider screens */
 .listing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* Listing page: Details | Seller. Stacks on narrow screens. */
+.listing-two-col { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 620px) { .listing-two-col { grid-template-columns: 1fr 1fr; } }
 
 /* Category/jobs/property result grids — 4-up on mobile, more per row as the
    viewport widens so wide screens don't show sparse oversized cards.
