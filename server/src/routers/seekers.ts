@@ -25,13 +25,16 @@ const educationItem = z.object({
 const profileInput = z.object({
   headline: z.string().max(120).optional(),
   sector: z.string().max(60).optional(),
-  roles: z.array(z.string().max(60)).max(10).optional(),
+  sectors: z.array(z.string().max(60)).max(12).optional(),
+  roles: z.array(z.string().max(60)).max(40).optional(),
   experienceMonths: z.number().int().min(0).max(600).optional(),
   languages: z.array(z.string().max(40)).max(15).optional(),
   hours: z.array(z.string().max(40)).max(6).optional(),
   availability: z.string().max(40).optional(),
   rightToWork: z.string().max(40).optional(),
   location: z.string().max(60).optional(),
+  town: z.string().max(80).optional(),
+  areaDetail: z.string().max(120).optional(),
   active: z.boolean().optional(),
   // CV content
   summary: z.string().max(2000).optional(),
@@ -57,7 +60,8 @@ export const seekersRouter = router({
         create: {
           userId: ctx.user.id,
           headline: input.headline ?? null,
-          sector: input.sector ?? null,
+          sector: input.sector ?? input.sectors?.[0] ?? null,
+          sectors: input.sectors ?? (input.sector ? [input.sector] : []),
           roles: input.roles ?? [],
           experienceMonths: input.experienceMonths ?? 0,
           languages: input.languages ?? [],
@@ -65,6 +69,8 @@ export const seekersRouter = router({
           availability: input.availability ?? null,
           rightToWork: input.rightToWork ?? null,
           location: input.location ?? null,
+          town: input.town ?? null,
+          areaDetail: input.areaDetail ?? null,
           active: input.active ?? true,
           summary: input.summary ?? null,
           skills: input.skills ?? [],
@@ -76,6 +82,9 @@ export const seekersRouter = router({
         update: {
           ...(input.headline !== undefined && { headline: input.headline }),
           ...(input.sector !== undefined && { sector: input.sector }),
+          // Keep the legacy single sector in step with the first selection, so
+          // anything still reading it stays correct.
+          ...(input.sectors !== undefined && { sectors: input.sectors, sector: input.sectors[0] ?? null }),
           ...(input.roles !== undefined && { roles: input.roles }),
           ...(input.experienceMonths !== undefined && { experienceMonths: input.experienceMonths }),
           ...(input.languages !== undefined && { languages: input.languages }),
@@ -83,6 +92,8 @@ export const seekersRouter = router({
           ...(input.availability !== undefined && { availability: input.availability }),
           ...(input.rightToWork !== undefined && { rightToWork: input.rightToWork }),
           ...(input.location !== undefined && { location: input.location }),
+          ...(input.town !== undefined && { town: input.town }),
+          ...(input.areaDetail !== undefined && { areaDetail: input.areaDetail }),
           ...(input.active !== undefined && { active: input.active }),
           ...(input.summary !== undefined && { summary: input.summary }),
           ...(input.skills !== undefined && { skills: input.skills }),

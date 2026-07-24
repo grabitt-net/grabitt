@@ -105,9 +105,13 @@ export default function MemberActivity({ userId }: { userId: string }) {
           {d.seekerProfile && (
             <Section title="Work profile">
               <Row k="Headline" v={d.seekerProfile.headline ?? '—'} />
-              <Row k="Sector" v={d.seekerProfile.sector ?? '—'} />
+              <Row k="Sectors" v={(d.seekerProfile.sectors?.length ? d.seekerProfile.sectors : [d.seekerProfile.sector].filter(Boolean)).join(', ') || '—'} />
               <Row k="Roles" v={(d.seekerProfile.roles ?? []).join(', ') || '—'} />
               <Row k="Languages" v={(d.seekerProfile.languages ?? []).join(', ') || '—'} />
+              <Row k="Skills" v={(d.seekerProfile.skills ?? []).join(', ') || '—'} />
+              <Row k="Location" v={[d.seekerProfile.areaDetail, d.seekerProfile.town, d.seekerProfile.location].filter(Boolean).join(', ') || '—'} />
+              <Row k="Availability" v={d.seekerProfile.availability ?? '—'} />
+              <Row k="Right to work" v={d.seekerProfile.rightToWork ?? '—'} />
               <Row k="Visible to employers" v={d.seekerProfile.active ? 'Yes' : 'Paused'} />
             </Section>
           )}

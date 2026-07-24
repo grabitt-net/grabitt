@@ -5,6 +5,7 @@ import FunnelView from './FunnelView'
 import PipelineView from './PipelineView'
 import ContactsView from './ContactsView'
 import MembersView from './MembersView'
+import CandidatesView from './CandidatesView'
 import DisputesView from './DisputesView'
 import ReportsView from './ReportsView'
 import BannersView from './BannersView'
@@ -32,7 +33,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community'
+export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -129,6 +130,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'contacts'   && <ContactsView  contacts={contacts} onUpdate={setContacts} />}
                 {view === 'forecast'   && <ForecastView  contacts={contacts} orders={orders} />}
                 {view === 'members'    && <MembersView   members={members} focusUserId={focusMemberId} />}
+                {view === 'candidates' && <CandidatesView execToken={execToken} onOpenMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'disputes'   && <DisputesView  disputes={disputes} onUpdate={setDisputes} />}
                 {view === 'reports'    && <ReportsView   onCountChange={setReportsOpen} />}
                 {view === 'banners'    && <BannersView initialPosition={bannerPosition} />}

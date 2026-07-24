@@ -10,6 +10,7 @@ const sections = [
       { icon: '🙋', label: 'Contacts', id: 'contacts' as View },
       { icon: '📈', label: 'Forecast', id: 'forecast' as View },
       { icon: '🪪', label: 'Members', id: 'members' as View },
+      { icon: '🙋', label: 'Candidates', id: 'candidates' as View },
       { icon: '⚖️', label: 'Disputes', id: 'disputes' as View, countKey: 'disputes' },
       { icon: '🚨', label: 'Reports', id: 'reports' as View, countKey: 'reports' },
       { icon: '💰', label: 'Financials', id: 'financials' as View },

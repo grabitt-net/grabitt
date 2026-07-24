@@ -279,14 +279,19 @@ model SeekerProfile {
   userId           String   @unique
   user             User     @relation(fields: [userId], references: [id])
   headline         String?
+  // sector kept for existing rows; sectors is the multi-select that replaced it,
+  // so a candidate can offer themselves across more than one line of work.
   sector           String?
+  sectors          String[] @default([])
   roles            String[] @default([])
   experienceMonths Int      @default(0)
   languages        String[] @default([])
   hours            String[] @default([])
   availability     String?
   rightToWork      String?
-  location         String?
+  location         String?  // broad area: Las Palmas / South GC / North GC / Remote
+  town             String?  // specific town
+  areaDetail       String?  // neighbourhood or district within that town
   active           Boolean  @default(true)
   // ── CV content — the candidate's real CV, entered structured and rendered to
   // a formatted PDF on apply. Repeatable sections are JSON arrays:

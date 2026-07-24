@@ -16,6 +16,7 @@ import StripePayment from './StripePayment'
 import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
 import SeekerProfilePanel from './SeekerProfilePanel'
+import SignInFirst from './SignInFirst'
 import ApplicationsBoardPanel from './ApplicationsBoardPanel'
 import dynamic from 'next/dynamic'
 
@@ -1132,6 +1133,9 @@ function PanelBody() {
   }
 
   if (panel.id === 'seekerProfile') {
+    // Listing yourself for work writes to your account, so sign-in comes first —
+    // guarded here rather than at each entry point so no route around it exists.
+    if (!currentUserId) return <SignInFirst onClose={closePanel} onSignIn={() => openPanel('login')} what="list yourself for work" />
     return <SeekerProfilePanel onClose={closePanel} />
   }
 

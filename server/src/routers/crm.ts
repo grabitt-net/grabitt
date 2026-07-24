@@ -551,6 +551,72 @@ export const crmRouter = router({
       }))
     }),
 
+  // ── Candidate register ──────────────────────────────────────────────────────
+  // Everyone who has listed themselves for work. The jobs marketplace only works
+  // if the supply side is visible to the team, not just to employers who pay to
+  // search it.
+  candidates: execProcedure
+    .input(z.object({
+      query: z.string().max(80).optional(),
+      sector: z.string().max(60).optional(),
+      activeOnly: z.boolean().default(false),
+    }))
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.prisma.seekerProfile.findMany({
+        where: {
+          ...(input.activeOnly ? { active: true } : {}),
+          ...(input.sector ? { OR: [{ sector: input.sector }, { sectors: { has: input.sector } }] } : {}),
+          ...(input.query
+            ? {
+                OR: [
+                  { headline: { contains: input.query, mode: 'insensitive' } },
+                  { user: { displayName: { contains: input.query, mode: 'insensitive' } } },
+                  { user: { email: { contains: input.query, mode: 'insensitive' } } },
+                ],
+              }
+            : {}),
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: 500,
+        include: {
+          user: { select: { id: true, displayName: true, email: true, phone: true, avatar: true, isVerified: true, createdAt: true } },
+        },
+      })
+
+      // How many jobs each has applied for — the useful signal alongside the
+      // profile itself.
+      const counts = await ctx.prisma.jobApplication.groupBy({
+        by: ['applicantId'],
+        where: { applicantId: { in: rows.map(r => r.userId) } },
+        _count: { _all: true },
+      })
+      const appsByUser = new Map(counts.map(c => [c.applicantId, c._count._all]))
+
+      return rows.map(r => ({
+        id: r.id,
+        userId: r.userId,
+        name: r.user.displayName,
+        email: r.user.email,
+        phone: r.user.phone,
+        verified: r.user.isVerified,
+        joined: r.user.createdAt,
+        headline: r.headline,
+        sectors: r.sectors.length ? r.sectors : (r.sector ? [r.sector] : []),
+        roles: r.roles,
+        experienceMonths: r.experienceMonths,
+        languages: r.languages,
+        hours: r.hours,
+        availability: r.availability,
+        rightToWork: r.rightToWork,
+        location: [r.areaDetail, r.town, r.location].filter(Boolean).join(', '),
+        skills: r.skills,
+        active: r.active,
+        hasCv: !!(r.summary || (r.workExperience as unknown[] | null)?.length),
+        applications: appsByUser.get(r.userId) ?? 0,
+        updatedAt: r.updatedAt,
+      }))
+    }),
+
   disputes: execProcedure
     .input(z.object({ status: z.enum(['open','under_review','resolved_buyer','resolved_seller','escalated']).optional() }))
     .query(({ ctx, input }) =>

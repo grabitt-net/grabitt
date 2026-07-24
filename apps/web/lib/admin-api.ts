@@ -49,6 +49,10 @@ export function makeCrmApi(execToken: string) {
     members: (grade?: string) =>
       rpc<any[]>('crm.members', 'query', { grade, page: 1 }, execToken),
 
+    // Candidates — everyone who has listed themselves for work
+    candidates: (opts?: { query?: string; sector?: string; activeOnly?: boolean }) =>
+      rpc<any[]>('crm.candidates', 'query', { activeOnly: false, ...opts }, execToken),
+
     // Disputes
     disputes: (status?: string) =>
       rpc<any[]>('crm.disputes', 'query', { status }, execToken),
