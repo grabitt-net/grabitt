@@ -14,6 +14,14 @@ const questionSchema = z.object({
   options: z.array(z.string().min(1).max(100)).max(12).optional(),
 })
 
+// A job advert never carries the employer's name publicly — browsers see the
+// kind of establishment instead. The name is released to a candidate only once
+// they're invited to interview. Applied at every public endpoint, so there is no
+// route to it by listing, search or "more from this employer".
+function publicEmployerName(j: { establishmentType?: string | null; sector?: string | null }): string {
+  return j.establishmentType?.trim() || (j.sector?.trim() ? `${j.sector.trim()} employer` : 'Employer')
+}
+
 export const jobsRouter = router({
   // Candidate applies to a job. Free to apply; the application goes straight to
   // the employer (a JobApplication row) and notifies them. Idempotent per
@@ -220,7 +228,11 @@ export const jobsRouter = router({
         include: { listing: { select: { id: true, images: true, location: true } } },
         orderBy: { createdAt: 'desc' },
         take: 6,
-      })
+      }).then(rows => rows.map(r => ({
+        ...r,
+        company: publicEmployerName(r),
+        employerNameWithheld: true,
+      })))
     ),
 
   // The candidate's own applications (for a future "My applications" view).
@@ -273,10 +285,13 @@ export const jobsRouter = router({
           ...(input.remote !== undefined && { remote: input.remote }),
           // Keep jobs whose top-of-range pay meets the threshold.
           ...(input.minSalary && { salaryMax: { gte: input.minSalary } }),
+          // Searching by company name is deliberately absent: matching on a
+          // hidden field would leak the employer by inference.
           ...(input.query && {
             OR: [
               { jobTitle: { contains: input.query, mode: 'insensitive' } },
-              { company: { contains: input.query, mode: 'insensitive' } },
+              { sector: { contains: input.query, mode: 'insensitive' } },
+              { establishmentType: { contains: input.query, mode: 'insensitive' } },
             ],
           }),
           listing: {
@@ -288,7 +303,11 @@ export const jobsRouter = router({
         orderBy: { createdAt: 'desc' },
         skip: (input.page - 1) * 20,
         take: 20,
-      })
+      }).then(rows => rows.map(r => ({
+        ...r,
+        company: publicEmployerName(r),
+        employerNameWithheld: true,
+      })))
     ),
 
   // Distinct locations of active jobs (+counts) — powers the location filters,
@@ -314,6 +333,8 @@ export const jobsRouter = router({
     .input(z.object({
       jobTitle: z.string().min(3).max(120),
       company: z.string().min(1).max(120),
+      // Shown publicly in place of the employer name.
+      establishmentType: z.string().max(80).optional(),
       type: z.enum(['full_time', 'part_time', 'contract', 'temporary', 'volunteer']),
       location: z.string().min(1).max(120),
       address: z.string().max(200).optional(),
@@ -354,6 +375,7 @@ export const jobsRouter = router({
               employerId: ctx.user.id,
               jobTitle: input.jobTitle,
               company: input.company,
+              establishmentType: input.establishmentType,
               type: input.type,
               salaryMin: input.salaryMin,
               salaryMax: input.salaryMax,
@@ -382,6 +404,7 @@ export const jobsRouter = router({
       listingId: z.string().uuid(),
       jobTitle: z.string().min(3).max(120).optional(),
       company: z.string().min(1).max(120).optional(),
+      establishmentType: z.string().max(80).optional(),
       type: z.enum(['full_time', 'part_time', 'contract', 'temporary', 'volunteer']).optional(),
       location: z.string().min(1).max(120).optional(),
       address: z.string().max(200).nullable().optional(),
@@ -435,6 +458,7 @@ export const jobsRouter = router({
           data: {
             jobTitle,
             ...(input.company !== undefined ? { company: input.company } : {}),
+            ...(input.establishmentType !== undefined ? { establishmentType: input.establishmentType } : {}),
             ...(input.type !== undefined ? { type: input.type } : {}),
             ...(input.salaryMin !== undefined ? { salaryMin: input.salaryMin } : {}),
             ...(input.salaryMax !== undefined ? { salaryMax: input.salaryMax } : {}),

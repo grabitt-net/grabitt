@@ -20,7 +20,7 @@ const SECTORS = ['Hostelería', 'Retail', 'Construcción', 'Administración', 'S
 export default function PostJobPage() {
   const router = useRouter()
   const [f, setF] = useState({
-    jobTitle: '', company: '', sector: '', type: 'full_time', location: '', address: '',
+    jobTitle: '', company: '', establishmentType: '', sector: '', type: 'full_time', location: '', address: '',
     salaryMin: '', salaryMax: '', salaryPeriod: 'month', payments: '', overtime: false, tips: false,
     remote: false, hours: '', startDate: '', description: '',
   })
@@ -51,7 +51,7 @@ export default function PostJobPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!f.jobTitle.trim() || !f.company.trim() || !f.location.trim()) {
+    if (!f.jobTitle.trim() || !f.company.trim() || !f.establishmentType.trim() || !f.location.trim()) {
       setError('Job title, employer and location are required.'); return
     }
     setSaving(true)
@@ -63,6 +63,7 @@ export default function PostJobPage() {
       const listing: any = await trpcAuthed().jobs.create.mutate({
         jobTitle: f.jobTitle.trim(),
         company: f.company.trim(),
+        establishmentType: f.establishmentType.trim() || undefined,
         type: f.type as never,
         location: f.location.trim(),
         ...(f.address.trim() && { address: f.address.trim() }),
@@ -116,6 +117,10 @@ export default function PostJobPage() {
           <Field label="Job title *"><input value={f.jobTitle} onChange={e => set('jobTitle', e.target.value)} placeholder="e.g. Bar Staff" style={inp} /></Field>
           <Row>
             <Field label="Employer name *"><input value={f.company} onChange={e => set('company', e.target.value)} placeholder="e.g. The Irish Rover" style={inp} /></Field>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888', marginTop: -6, marginBottom: 10, lineHeight: 1.5 }}>
+              🔒 Your name is not shown on the advert. Candidates see the establishment type below, and learn who you are only when you invite them to interview.
+            </div>
+            <Field label="Establishment type *"><input value={f.establishmentType} onChange={e => set('establishmentType', e.target.value)} placeholder="e.g. Beach bar, 4-star hotel, Family restaurant" style={inp} /></Field>
             <Field label="Category / sector">
               <select value={f.sector} onChange={e => set('sector', e.target.value)} style={sel}>
                 <option value="">Select…</option>{SECTORS.map(s => <option key={s} value={s}>{s}</option>)}

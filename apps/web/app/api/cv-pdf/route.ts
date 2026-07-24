@@ -28,6 +28,8 @@ export async function GET(req: Request) {
 
   let data: CvData
   let revealed: boolean
+  // Matches the reference shown on the employer's applications board.
+  let reference: string | undefined
 
   if (preview === 'me') {
     // The candidate previewing their own live CV — always full.
@@ -65,6 +67,7 @@ export async function GET(req: Request) {
       employerRevealed = app.status === 'shortlisted' || app.status === 'hired' || !!unlocked
     }
     revealed = isApplicant || isAdmin || employerRevealed
+    reference = 'Candidate ' + app.applicantId.slice(-4).toUpperCase()
     data = app.cvSnapshot as unknown as CvData
   } else {
     return NextResponse.json({ error: 'Missing applicationId' }, { status: 400 })
@@ -72,7 +75,7 @@ export async function GET(req: Request) {
 
   // CvDocument returns a <Document>; renderToBuffer's types want that element
   // directly, so cast the wrapper element (runtime is correct either way).
-  const buffer = await renderToBuffer(createElement(CvDocument, { data, revealed }) as never)
+  const buffer = await renderToBuffer(createElement(CvDocument, { data, revealed, reference }) as never)
   return new NextResponse(buffer as unknown as BodyInit, {
     headers: {
       'Content-Type': 'application/pdf',

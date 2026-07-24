@@ -56,7 +56,7 @@ const dateRange = (a?: string, b?: string, current?: boolean) => {
   return [a || '', to].filter(Boolean).join(' – ')
 }
 
-export default function CvDocument({ data, revealed }: { data: CvData; revealed: boolean }) {
+export default function CvDocument({ data, revealed, reference }: { data: CvData; revealed: boolean; reference?: string }) {
   const work = (data.workExperience || []).filter(w => w.title || w.employer)
   const edu = (data.education || []).filter(e => e.qualification || e.institution)
   const languages = data.languages || []
@@ -91,7 +91,10 @@ export default function CvDocument({ data, revealed }: { data: CvData; revealed:
 
         {/* Main */}
         <View style={s.main}>
-          <Text style={s.name}>{revealed ? (data.name || 'Candidate') : 'Candidate'}</Text>
+          {/* Anonymous CVs carry the same candidate reference the employer sees
+              on their applications board, so the two can be matched up without
+              exposing a name. */}
+          <Text style={s.name}>{revealed ? (data.name || 'Candidate') : (reference || 'Candidate')}</Text>
           {data.headline ? <Text style={s.headline}>{data.headline}</Text> : null}
           {!revealed && <Text style={[s.headline, { color: '#999', fontSize: 8.5 }]}>Identity shared once shortlisted</Text>}
 

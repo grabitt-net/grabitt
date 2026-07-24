@@ -322,7 +322,7 @@ function ListingInner() {
             <div style={panelTitle}>{t('Details')}</div>
             {job ? (
               <>
-                <DetailRow label={t('Employer')} value={job.company} />
+                <DetailRow label={t('Establishment')} value={job.company} />
                 <DetailRow label={t('Reference')} value={ref} />
                 <DetailRow label={t('Category')} value={job.sector} />
                 <DetailRow label={t('Hours')} value={job.hours} />
