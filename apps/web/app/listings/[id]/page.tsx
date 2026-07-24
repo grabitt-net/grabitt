@@ -222,7 +222,7 @@ function ListingInner() {
             {heroImg ? <img src={heroImg} alt={listing.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : emoji}
             {listing.isFeatured && <span style={{ position: 'absolute', top: 8, left: 8, background: 'var(--orange)', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '3px 9px', borderRadius: 50 }}>⭐ FEATURED</span>}
           </div>
-          <div style={{ width: 56, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ width: 56, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8, alignSelf: 'stretch' }}>
             <RailBtn icon="🛒" label="Cart" onClick={() => openPanel('cart')} />
             <RailBtn icon={saved ? '❤️' : '🤍'} label="Save" active={saved} onClick={toggleSave} />
             <RailBtn icon="📤" label="Share" onClick={() => setShowShare(true)} />
@@ -233,12 +233,13 @@ function ListingInner() {
         {/* Title + price, in line with Buy / Offer / In demand */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 240px', minWidth: 0 }}>
-            <div style={{ display: 'flex', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
-              {job && <Chip>{JOB_TYPE[job.type] ?? job.type}</Chip>}
-              {prop && <Chip>{PROP_TYPE[prop.type] ?? prop.type}</Chip>}
-              {listing.condition && !job && !prop && <Chip muted>{COND_LABEL[listing.condition] ?? listing.condition}</Chip>}
-              {job?.remote && <Chip>Remote</Chip>}
-            </div>
+            {(job || prop) && (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
+                {job && <Chip>{JOB_TYPE[job.type] ?? job.type}</Chip>}
+                {prop && <Chip>{PROP_TYPE[prop.type] ?? prop.type}</Chip>}
+                {job?.remote && <Chip>Remote</Chip>}
+              </div>
+            )}
             <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25 }}>{job?.jobTitle ?? listing.title}</h1>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)', marginTop: 2 }}>{priceLabel}</div>
             <div style={{ fontSize: 11, color: '#666', marginTop: 3, fontFamily: 'var(--font-comfortaa)' }}>📍 {job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')} · Ref: {ref}</div>
@@ -527,9 +528,9 @@ function ListingInner() {
 
 function RailBtn({ icon, label, active, onClick }: { icon: string; label: string; active?: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, background: active ? '#FFF3EE' : '#fff', border: `1px solid ${active ? '#FF4500' : '#e8e8e8'}`, borderRadius: 12, padding: '9px 4px', cursor: 'pointer', width: '100%' }}>
-      <span style={{ fontSize: 17 }}>{icon}</span>
-      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 8, fontWeight: 800, color: active ? '#FF4500' : '#666', lineHeight: 1 }}>{t(label)}</span>
+    <button onClick={onClick} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: active ? '#FFF3EE' : '#fff', border: `1px solid ${active ? '#FF4500' : '#e8e8e8'}`, borderRadius: 12, padding: '4px', cursor: 'pointer', width: '100%' }}>
+      <span style={{ fontSize: 22 }}>{icon}</span>
+      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 800, color: active ? '#FF4500' : '#666', lineHeight: 1 }}>{t(label)}</span>
     </button>
   )
 }
@@ -558,15 +559,6 @@ function FulChip({ on, label }: { on: boolean; label: string }) {
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontFamily: 'var(--font-nunito)', fontWeight: 700, color: on ? '#16a34a' : '#bbb' }}>
       {on ? '\u2611' : '\u2610'} {label}
     </span>
-  )
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ flex: '1 0 40%' }}>
-      <div style={{ fontSize: 9, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: 'var(--font-nunito)' }}>{label}</div>
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--dark)', fontFamily: 'var(--font-nunito)', marginTop: 2 }}>{value}</div>
-    </div>
   )
 }
 
