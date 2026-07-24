@@ -20,11 +20,13 @@ export default function IconRail() {
   const { unreadCount } = useNotifications(userId)
   const loggedIn = !!userId
 
-  const items: { icon: IconName; label: string; panel: PanelId; badge?: number; highlight?: boolean }[] = [
+  // A few rail buttons are real pages, not panels — Messages goes to the full
+  // Messages centre (threads, Grabitt Team, Alerts) rather than a cut-down panel.
+  const items: { icon: IconName; label: string; panel: PanelId; href?: string; badge?: number; highlight?: boolean }[] = [
     { icon: 'bell',    label: 'Alerts',   panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
     { icon: 'heart',   label: 'Saved',    panel: 'favourites' },
     { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
-    { icon: 'message', label: 'Messages', panel: 'messages' },
+    { icon: 'message', label: 'Messages', panel: 'messages', href: '/messages' },
     { icon: 'package', label: 'Sell',     panel: 'sell', highlight: true },
     { icon: 'lifebuoy', label: 'Help',    panel: 'help' },
   ]
@@ -35,7 +37,7 @@ export default function IconRail() {
         {items.map(item => (
           <button
             key={item.label}
-            onClick={() => item.panel === 'profile' ? router.push('/account') : openPanel(item.panel)}
+            onClick={() => item.href ? router.push(item.href) : item.panel === 'profile' ? router.push('/account') : openPanel(item.panel)}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '2px 0', position: 'relative' }}
           >
             <span style={item.highlight
