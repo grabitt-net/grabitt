@@ -18,6 +18,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const applicationId = url.searchParams.get('applicationId')
+  const seekerId = url.searchParams.get('seekerId')
   const preview = url.searchParams.get('preview')
 
   const supabase = await createSupabaseServer()
@@ -39,6 +40,23 @@ export async function GET(req: Request) {
     ])
     data = buildCvSnapshot(u, p as never) as unknown as CvData
     revealed = true
+  } else if (seekerId) {
+    // An employer viewing a candidate found through the database search. They
+    // must already have paid to open this profile; contact details appear only
+    // if they've also paid the separate unlock.
+    const [viewed, unlocked, u, prof] = await Promise.all([
+      prisma.candidateView.findUnique({ where: { employerId_seekerId: { employerId: me.id, seekerId } }, select: { id: true } }),
+      prisma.candidateUnlock.findUnique({ where: { employerId_seekerId: { employerId: me.id, seekerId } }, select: { id: true } }),
+      prisma.user.findUnique({ where: { id: seekerId }, select: { displayName: true, email: true, phone: true } }),
+      prisma.seekerProfile.findUnique({ where: { userId: seekerId } }),
+    ])
+    if (!u || !prof) return NextResponse.json({ error: 'Candidate not found' }, { status: 404 })
+    if (!viewed && !unlocked && me.id !== seekerId) {
+      return NextResponse.json({ error: 'Open this profile first' }, { status: 403 })
+    }
+    data = buildCvSnapshot(u, prof as never) as unknown as CvData
+    revealed = !!unlocked || me.id === seekerId
+    reference = 'Candidate ' + seekerId.slice(-4).toUpperCase()
   } else if (applicationId) {
     const app = await prisma.jobApplication.findUnique({
       where: { id: applicationId },
@@ -70,7 +88,7 @@ export async function GET(req: Request) {
     reference = 'Candidate ' + app.applicantId.slice(-4).toUpperCase()
     data = app.cvSnapshot as unknown as CvData
   } else {
-    return NextResponse.json({ error: 'Missing applicationId' }, { status: 400 })
+    return NextResponse.json({ error: 'Missing applicationId or seekerId' }, { status: 400 })
   }
 
   // CvDocument returns a <Document>; renderToBuffer's types want that element

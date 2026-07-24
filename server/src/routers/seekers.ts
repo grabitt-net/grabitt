@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, protectedProcedure } from '../trpc'
+import { scoreSuitability } from '../lib/suitability'
 
 // Credits an employer spends to reveal one candidate's contact details.
 const UNLOCK_COST = 10   // contact details
@@ -206,6 +207,8 @@ export const seekersRouter = router({
     .input(z.object({
       sector: z.string().optional(),
       role: z.string().optional(),
+      // What the employer is looking for — used to rank results by fit.
+      skills: z.array(z.string()).optional(),
       experienceMonths: z.number().int().min(0).optional(),
       languages: z.array(z.string()).optional(),
       hours: z.array(z.string()).optional(),
@@ -248,24 +251,53 @@ export const seekersRouter = router({
         }),
       ])
       const unlockedIds = new Set(unlocks.map(u => u.seekerId))
+      // Profiles already paid for open again free.
+      const views = await ctx.prisma.candidateView.findMany({
+        where: { employerId: ctx.user.id },
+        select: { seekerId: true },
+      })
+      const viewedIds = new Set(views.map(v => v.seekerId))
 
-      // Anonymised cards — no name/email/phone here.
-      const candidates = profiles.map(p => ({
-        seekerId: p.userId,
-        headline: p.headline,
-        sector: p.sector,
-        roles: p.roles,
-        experienceMonths: p.experienceMonths,
-        languages: p.languages,
-        hours: p.hours,
-        availability: p.availability,
-        rightToWork: p.rightToWork,
-        location: p.location,
-        rating: p.user.avgRating,
-        unlocked: unlockedIds.has(p.userId),
-      }))
+      // Fit against what this employer actually asked for. The same scorer used
+      // when someone applies to an advert, with the search criteria standing in
+      // for the advert — so it means "matches your search", not "good person".
+      // It ranks; it never filters anybody out.
+      const candidates = profiles.map(p => {
+        const fit = scoreSuitability({
+          job: { sector: input.sector ?? null, skills: input.skills ?? [], jobTitle: input.role ?? null },
+          candidate: {
+            sectors: p.sectors,
+            sector: p.sector,
+            roles: p.roles,
+            skills: p.skills,
+            languages: p.languages,
+            experienceMonths: p.experienceMonths,
+            availability: p.availability,
+            hours: p.hours,
+          },
+        })
+        return {
+          seekerId: p.userId,
+          headline: p.headline,
+          sector: p.sector,
+          sectors: p.sectors.length ? p.sectors : (p.sector ? [p.sector] : []),
+          roles: p.roles,
+          skills: p.skills.slice(0, 8),
+          experienceMonths: p.experienceMonths,
+          languages: p.languages,
+          hours: p.hours,
+          availability: p.availability,
+          rightToWork: p.rightToWork,
+          location: [p.areaDetail, p.town, p.location].filter(Boolean).join(', '),
+          rating: p.user.avgRating,
+          matchScore: fit.score,
+          matchNotes: fit.notes,
+          unlocked: unlockedIds.has(p.userId),
+          viewed: viewedIds.has(p.userId),
+        }
+      }).sort((a, b) => b.matchScore - a.matchScore)
 
-      return { count: candidates.length, candidates, unlockCost: UNLOCK_COST }
+      return { count: candidates.length, candidates, unlockCost: UNLOCK_COST, viewCost: VIEW_COST }
     }),
 
   // Spend credits to reveal a candidate's contact details. Idempotent: if this

@@ -4,11 +4,111 @@ import type { PanelId } from '@/context/PanelContext'
 import { trpcAuthed } from '@/lib/authToken'
 
 type Candidate = {
-  seekerId: string; headline: string | null; sector: string | null; roles: string[]
+  seekerId: string; headline: string | null; sector: string | null; sectors: string[]; roles: string[]
+  skills: string[]
   experienceMonths: number; languages: string[]; hours: string[]; availability: string | null
   rightToWork: string | null; location: string | null; rating: number | null; unlocked: boolean
+  viewed: boolean
+  // How well they match THIS search — not a grade on the person.
+  matchScore: number
+  matchNotes: { factor: string; points: number; of: number; detail: string }[]
+}
+
+type FullProfile = {
+  seekerId: string; headline: string | null; summary: string | null
+  sectors: string[]; roles: string[]; skills: string[]; keyStrengths: string[]; certifications: string[]
+  languages: string[]; experienceMonths: number; hours: string[]; availability: string | null
+  rightToWork: string | null; location: string
+  workExperience: { title?: string; employer?: string; location?: string; start?: string; end?: string; current?: boolean; bullets?: string[] }[] | null
+  education: { qualification?: string; institution?: string; start?: string; end?: string; status?: string }[] | null
+  rating: number | null; verified: boolean; alreadyCharged: boolean; contactUnlocked: boolean; unlockCost: number
 }
 type Revealed = { name: string; email: string; phone: string | null; avatar: string | null; location: string | null; languages: string[]; availability: string | null }
+
+// Everything the employer paid to see: history, education, skills and the CV.
+// Contact details are deliberately absent — that's the separate unlock.
+function FullProfileBlock({ p, seekerId }: { p: FullProfile; seekerId: string }) {
+  const work = p.workExperience ?? []
+  const edu = p.education ?? []
+  return (
+    <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: 12, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {p.summary && (
+        <div>
+          <SectionLabel>Summary</SectionLabel>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#444', lineHeight: 1.55 }}>{p.summary}</div>
+        </div>
+      )}
+
+      {work.length > 0 && (
+        <div>
+          <SectionLabel>Work history</SectionLabel>
+          {work.map((w, i) => (
+            <div key={i} style={{ marginBottom: 7 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#1a1a1a' }}>
+                {w.title || 'Role'}{w.employer ? ` · ${w.employer}` : ''}
+              </div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888' }}>
+                {[w.start, w.current ? 'Present' : w.end].filter(Boolean).join(' – ')}{w.location ? ` · ${w.location}` : ''}
+              </div>
+              {(w.bullets ?? []).filter(Boolean).map((b, bi) => (
+                <div key={bi} style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#555', marginTop: 2 }}>• {b}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {edu.length > 0 && (
+        <div>
+          <SectionLabel>Education</SectionLabel>
+          {edu.map((e, i) => (
+            <div key={i} style={{ marginBottom: 4 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#1a1a1a' }}>{e.qualification || 'Qualification'}{e.status ? ` (${e.status})` : ''}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888' }}>{[e.institution, [e.start, e.end].filter(Boolean).join(' – ')].filter(Boolean).join(' · ')}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {p.skills.length > 0 && <Chips label="Skills" items={p.skills} />}
+      {p.keyStrengths.length > 0 && <Chips label="Key strengths" items={p.keyStrengths} />}
+      {p.certifications.length > 0 && <Chips label="Certifications" items={p.certifications} />}
+      {p.languages.length > 0 && <Chips label="Languages" items={p.languages} />}
+
+      <div style={{ display: 'flex', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', flexWrap: 'wrap' }}>
+        {p.location && <span>📍 {p.location}</span>}
+        {p.availability && <span>🗓️ {p.availability}</span>}
+        {p.rightToWork && <span>🛂 {p.rightToWork}</span>}
+        {p.verified && <span style={{ color: '#16a34a', fontWeight: 800 }}>🛡️ Verified</span>}
+      </div>
+
+      <a href={`/api/cv-pdf?seekerId=${seekerId}`} target="_blank" rel="noreferrer"
+        style={{ background: ORANGE, color: '#fff', borderRadius: 8, padding: '9px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>
+        📄 Download CV{p.contactUnlocked ? '' : ' (anonymous)'}
+      </a>
+      {!p.contactUnlocked && (
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#9a8b74', textAlign: 'center' }}>
+          🔒 Name and contact appear once you unlock them ({p.unlockCost} credits).
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, color: ORANGE, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{children}</div>
+}
+
+function Chips({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div>
+      <SectionLabel>{label}</SectionLabel>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        {items.map(i => <span key={i} style={{ background: '#f8f9fa', border: '1px solid #eee', borderRadius: 50, padding: '3px 9px', fontSize: 10, fontFamily: 'var(--font-ui)', fontWeight: 700, color: '#555' }}>{i}</span>)}
+      </div>
+    </div>
+  )
+}
 
 function expLabel(m: number) {
   if (!m) return 'Any experience'
@@ -76,6 +176,27 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
   const [loading, setLoading] = useState(false)
   const [revealed, setRevealed] = useState<Record<string, Revealed>>({})
   const [unlockingId, setUnlockingId] = useState<string | null>(null)
+  const [viewCost, setViewCost] = useState(1)
+  const [profiles, setProfiles] = useState<Record<string, FullProfile>>({})
+  const [openingId, setOpeningId] = useState<string | null>(null)
+
+  // Opening a profile spends a credit the first time; after that it's free, so
+  // the confirmation only appears when there is actually something to pay.
+  const openProfile = async (c: Candidate) => {
+    if (profiles[c.seekerId]) { setProfiles(p => ({ ...p })); return }
+    if (!c.viewed && !c.unlocked) {
+      if (!confirm(`Open this profile for ${viewCost} credit? You can reopen it free afterwards.`)) return
+    }
+    setOpeningId(c.seekerId)
+    try {
+      const full = await trpcAuthed().seekers.viewCandidate.mutate({ seekerId: c.seekerId }) as unknown as FullProfile
+      setProfiles(p => ({ ...p, [c.seekerId]: full }))
+      setCandidates(list => list.map(x => x.seekerId === c.seekerId ? { ...x, viewed: true } : x))
+      if (access) setAccess({ ...access, credits: access.credits - (c.viewed || c.unlocked ? 0 : viewCost) })
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Could not open that profile.')
+    } finally { setOpeningId(null) }
+  }
 
   const toggleLang = (l: string) => setLangs(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l])
   const toggleAttr = (key: string, o: string) => setAttrs(p => ({ ...p, [key]: p[key].includes(o) ? p[key].filter(x => x !== o) : [...p[key], o] }))
@@ -93,8 +214,9 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
         availability: attrs.availability.length ? attrs.availability : undefined,
         rightToWork: attrs.rightToWork.length ? attrs.rightToWork : undefined,
         location: attrs.location.length ? attrs.location : undefined,
-      }) as { count: number; candidates: Candidate[]; unlockCost: number }
+      }) as { count: number; candidates: Candidate[]; unlockCost: number; viewCost?: number }
       setCandidates(res.candidates)
+      if (res.viewCost) setViewCost(res.viewCost)
       setUnlockCost(res.unlockCost)
       setMatchCount(res.count)
     } catch { alert('Could not search candidates. Please sign in as an employer and try again.') }
@@ -265,6 +387,12 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: '#1a1a1a' }}>{rev ? rev.name : (c.headline || c.roles[0] || 'Candidate')}</div>
                               <div style={{ fontSize: 11, color: '#666', fontFamily: 'var(--font-ui)' }}>{[c.sector, c.location].filter(Boolean).join(' · ') || 'Gran Canaria'}{c.rating ? ` · ★ ${Number(c.rating).toFixed(1)}` : ''}</div>
                             </div>
+                            {/* Fit against this search, not a grade on the person. */}
+                            <div title={c.matchNotes.map(n => `${n.factor}: ${n.points}/${n.of} — ${n.detail}`).join('\n')}
+                              style={{ flexShrink: 0, textAlign: 'center', background: '#fff', border: `1.5px solid ${c.matchScore >= 70 ? '#16a34a' : c.matchScore >= 45 ? '#f59e0b' : '#d1d5db'}`, borderRadius: 10, padding: '4px 9px' }}>
+                              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: c.matchScore >= 70 ? '#16a34a' : c.matchScore >= 45 ? '#f59e0b' : '#9ca3af' }}>{c.matchScore}</div>
+                              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 8, fontWeight: 800, color: '#888', textTransform: 'uppercase' }}>match</div>
+                            </div>
                           </div>
 
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
@@ -272,6 +400,17 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                               <span key={i} style={{ background: '#fff', border: '1px solid #eee', borderRadius: 50, padding: '3px 9px', fontSize: 10, fontFamily: 'var(--font-ui)', fontWeight: 700, color: '#555' }}>{tg}</span>
                             ))}
                           </div>
+
+                          {/* Full profile — history, CV and all. Costs a credit
+                              the first time, free to reopen. */}
+                          {profiles[c.seekerId] ? (
+                            <FullProfileBlock p={profiles[c.seekerId]} seekerId={c.seekerId} />
+                          ) : (
+                            <button onClick={() => openProfile(c)} disabled={openingId === c.seekerId}
+                              style={{ width: '100%', marginBottom: 8, background: '#fff', color: ORANGE, border: `1.5px solid ${ORANGE}`, borderRadius: 10, padding: 9, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
+                              {openingId === c.seekerId ? 'Opening…' : (c.viewed || c.unlocked) ? '📄 View full profile' : `📄 Open full profile · ${viewCost} credit`}
+                            </button>
+                          )}
 
                           {isUnlocked && rev ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: '#fff', borderRadius: 10, padding: 10 }}>
