@@ -226,8 +226,13 @@ model User {
   marketingConsentAt DateTime?
   unsubscribeToken   String    @unique @default(uuid())
 
-  // Department interests used for personalisation & alerts
-  interests          String[]  @default([])
+  // Attributes & preferences — personalisation, alerts, job matching and the
+  // targeting behind marketing e-shots. Captured at onboarding, editable in the
+  // account.
+  interests          String[]  @default([])   // department names
+  subInterests       String[]  @default([])   // "Department:Sub-category"
+  hobbies            String[]  @default([])
+  skills             String[]  @default([])
 
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt

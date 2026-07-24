@@ -12,6 +12,7 @@ import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import SellerCentre from '@/components/marketplace/SellerCentre'
+import AttributesCard from '@/components/marketplace/AttributesCard'
 import { deptEmoji } from '@/lib/listingMap'
 import { t } from '@/lib/i18n'
 
@@ -255,10 +256,10 @@ function AccountInner() {
                 ['📋', t('Activity'), 'myActivity'],
                 ['⭐', t('My ratings'), 'myRatings'],
                 ['🔔', t('Saved searches'), 'savedSearches'],
-                ['🤞', t('Wish list'), 'wishlist'],
+                ['🎯', t('Attributes'), 'attributes'],
                 ['🛡️', t('Disputes'), 'myDisputes'],
-              ] as [string, string, PanelId][]).map(([icon, label, id]) => (
-                <button key={label} onClick={() => openPanel(id)} style={{
+              ] as [string, string, PanelId | 'attributes'][]).map(([icon, label, id]) => (
+                <button key={label} onClick={() => id === 'attributes' ? goTo('settings', 'attributes') : openPanel(id as PanelId)} style={{
                   background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '10px 4px',
                   cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
                 }}>
@@ -428,6 +429,9 @@ function AccountInner() {
               <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
             </div>
           </Link>
+
+          {/* Attributes & preferences — targeting, alerts and job matching */}
+          <AttributesCard />
 
           {/* Account email — changing it re-verifies via Supabase Auth */}
           <div style={card}>

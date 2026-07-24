@@ -196,6 +196,7 @@ export const usersRouter = router({
         select: {
           grade: true, salesCount: true, avgRating: true, displayName: true, avatar: true,
           phone: true, collectionAddress: true, interests: true, isVerified: true,
+          subInterests: true, hobbies: true, skills: true,
           phoneVerified: true, emailVerified: true, isBusiness: true,
         },
       }),
@@ -236,6 +237,8 @@ export const usersRouter = router({
       { label: 'Phone verified', done: !!user.phoneVerified },
       { label: 'Collection address', done: !!user.collectionAddress?.trim() },
       { label: 'Interests', done: (user.interests ?? []).length > 0 },
+      { label: 'Hobbies', done: (user.hobbies ?? []).length > 0 },
+      { label: 'Skills', done: (user.skills ?? []).length > 0 },
       { label: 'ID verified', done: !!user.isVerified },
     ]
     const done = checks.filter(c => c.done).length
@@ -283,7 +286,12 @@ export const usersRouter = router({
       displayName: z.string().min(2).max(50).optional(),
       avatar: z.string().url().optional(),
       locale: z.enum(['en', 'es', 'de', 'da', 'sv', 'nl', 'fr', 'pt']).optional(),
-      interests: z.array(z.string()).max(20).optional(),
+      // Attributes & preferences — feed personalisation, job matching and
+      // marketing segmentation.
+      interests: z.array(z.string()).max(30).optional(),
+      subInterests: z.array(z.string()).max(200).optional(),
+      hobbies: z.array(z.string()).max(40).optional(),
+      skills: z.array(z.string()).max(40).optional(),
       phone: z.string().max(40).optional(),
       collectionAddress: z.string().max(400).optional(),
       marketingConsent: z.boolean().optional(),
