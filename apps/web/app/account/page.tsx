@@ -52,9 +52,12 @@ function AccountInner() {
   // A seller tapping an offer notification lands on ?offer=<id>#offers — bring
   // that offer into view and mark it, rather than dropping them at the top of
   // the account page to hunt for it.
-  const focusOffer = useSearchParams().get('offer')
+  const params = useSearchParams()
+  const focusOffer = params.get('offer')
+  // ?tab=recruitment — how the Employers entry points land here.
+  const wantTab = params.get('tab')
   const focusRef = useRef<HTMLDivElement | null>(null)
-  const [mainTab, setMainTab] = useState<'selling' | 'inbox' | 'settings'>('selling')
+  const [mainTab, setMainTab] = useState<'selling' | 'inbox' | 'recruitment' | 'settings'>('selling')
   const [ready, setReady] = useState(false)
   const [me, setMe] = useState<any>(null)
   const [dash, setDash] = useState<any>(null)
@@ -130,6 +133,12 @@ function AccountInner() {
     c.messages.myThreads.query().then((d: any) => setThreads(d as any[])).catch(() => setThreads([]))
   }, [router])
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (wantTab === 'recruitment' || wantTab === 'inbox' || wantTab === 'settings' || wantTab === 'selling') {
+      setMainTab(wantTab as typeof mainTab)
+    }
+  }, [wantTab])
 
   // Scroll the deep-linked offer into view once the offers have loaded.
   useEffect(() => {
@@ -316,7 +325,14 @@ function AccountInner() {
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
           {/* Section tabs — the page was nine cards deep in one scroll. */}
           <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #ece3d7', borderRadius: 50, padding: 5 }}>
-            {([['selling', `🏷️ ${t('Selling')}`], ['inbox', `💬 ${t('Inbox')}`], ['settings', `⚙️ ${t('Settings')}`]] as const).map(([id, label]) => (
+            {(([
+              ['selling', `🏷️ ${t('Selling')}`],
+              ['inbox', `💬 ${t('Inbox')}`],
+              // Recruitment is a business tool — hidden for personal accounts
+              // rather than shown and refused.
+              ...(me?.isBusiness ? [['recruitment', `💼 ${t('Recruitment')}`] as const] : []),
+              ['settings', `⚙️ ${t('Settings')}`],
+            ] as const)).map(([id, label]) => (
               <button key={id} onClick={() => setMainTab(id)} style={{
                 flex: 1, border: 'none', borderRadius: 50, padding: '9px 6px', cursor: 'pointer',
                 background: mainTab === id ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : 'transparent',
@@ -390,6 +406,23 @@ function AccountInner() {
           </div>
 
           </>)}
+
+          {mainTab === 'recruitment' && me?.isBusiness && (
+            <div style={card}>
+              <div style={cardHead}>{t('Recruitment')}</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#666', lineHeight: 1.55, marginBottom: 14 }}>
+                {t('Advertise roles, review applicants and search candidates who have listed themselves for work.')}
+              </div>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <RecruitLink icon="📢" title={t('Place a job advert')} sub={t('Free to post — candidates apply to you.')} onClick={() => router.push('/jobs/new')} />
+                <RecruitLink icon="📋" title={t('Applicants')} sub={t('Review, note and move candidates through your pipeline.')} onClick={() => openPanel('applications')} />
+                <RecruitLink icon="🔍" title={t('Search candidates')} sub={t('Searching is free — credits open a profile.')} onClick={() => openPanel('findStaff')} />
+                <RecruitLink icon="🏪" title={t('My storefront')} sub={t('Branding, bio and banner for your business.')} onClick={() => openPanel('storefrontEdit')} />
+                <RecruitLink icon="📖" title={t('Directory listing')} sub={t('List your business in the Grabitt directory.')} onClick={() => openPanel('advertise')} />
+                <RecruitLink icon="💳" title={t('Credits')} sub={t('Top up the credits used for candidate searches.')} onClick={() => openPanel('buyCredits')} />
+              </div>
+            </div>
+          )}
 
           {mainTab === 'inbox' && (<>
           {/* Messages */}
@@ -541,4 +574,17 @@ const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3
 const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }
 const fieldLabel: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 5 }
 const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, outline: 'none', background: '#fff', marginBottom: 12 }
+function RecruitLink({ icon, title, sub, onClick }: { icon: string; title: string; sub: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{ width: '100%', textAlign: 'left', background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '12px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 11 }}>
+      <span style={{ fontSize: 20 }}>{icon}</span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</span>
+        <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888', marginTop: 2 }}>{sub}</span>
+      </span>
+      <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 16 }}>›</span>
+    </button>
+  )
+}
+
 function Muted({ children }: { children: React.ReactNode }) { return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '16px 0', textAlign: 'center' }}>{children}</div> }

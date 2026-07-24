@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { PanelId } from '@/context/PanelContext'
 import { trpcAuthed } from '@/lib/authToken'
 
@@ -47,7 +47,24 @@ const ORANGE = '#FF4500'
 const LABEL: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: ORANGE, textTransform: 'uppercase', marginBottom: 6 }
 const SELECT: React.CSSProperties = { width: '100%', border: '1.5px solid #eee', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' }
 
+type Access = {
+  isBusiness: boolean; businessName: string | null; credits: number
+  viewCost: number; unlockCost: number; canSearch: boolean; profilesViewed: number
+}
+
 export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => void; openPanel: (id: PanelId, data?: Record<string, unknown>) => void }) {
+  // Find Staff is a Business feature, and searching costs credits once you open
+  // a profile. Both are settled before showing the criteria form, rather than
+  // letting someone fill one in and then refusing them.
+  const [access, setAccess] = useState<Access | null>(null)
+  const [mode, setMode] = useState<'choose' | 'search'>('choose')
+
+  useEffect(() => {
+    trpcAuthed().seekers.searchAccess.query()
+      .then(a => setAccess(a as Access))
+      .catch(() => setAccess({ isBusiness: false, businessName: null, credits: 0, viewCost: 1, unlockCost: 10, canSearch: false, profilesViewed: 0 }))
+  }, [])
+
   const [sector, setSector] = useState('')
   const [role, setRole] = useState('')
   const [exp, setExp] = useState('0')
@@ -107,7 +124,63 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
         </div>
 
         <div style={{ overflowY: 'auto', padding: 16, flex: 1 }}>
-          {matchCount === null ? (
+          {!access ? (
+            <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Checking your account…</div>
+          ) : !access.isBusiness ? (
+            /* Hiring is a Business feature — say so plainly rather than showing
+               a form that would be refused on submit. */
+            <div style={{ textAlign: 'center', padding: '20px 6px' }}>
+              <div style={{ fontSize: 42, marginBottom: 10 }}>🏢</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 6 }}>Find Staff is for Business accounts</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#666', lineHeight: 1.6, marginBottom: 18 }}>
+                Upgrade to advertise roles and search our candidate database. 21 days free, then €29/month — pause any time.
+              </div>
+              <button onClick={() => { onClose(); openPanel('business') }} style={{ width: '100%', background: 'linear-gradient(135deg,#4A2E1A,#7a4419)', color: '#fff', border: 'none', borderRadius: 50, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>
+                🏢 Upgrade to Business
+              </button>
+            </div>
+          ) : mode === 'choose' && matchCount === null ? (
+            /* Two ways to hire — post a role and wait, or go looking. */
+            <div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#666', lineHeight: 1.6, marginBottom: 16 }}>
+                Hiring for {access.businessName || 'your business'}? Advertise the role, or search candidates who have already listed themselves for work.
+              </div>
+
+              <button onClick={() => { onClose(); window.location.href = '/jobs/new' }} style={{ width: '100%', textAlign: 'left', background: '#fff', border: '1.5px solid #e5dccd', borderRadius: 14, padding: 15, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 26 }}>📢</span>
+                <span style={{ flex: 1 }}>
+                  <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a' }}>Place a job advert</span>
+                  <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', marginTop: 2 }}>Free to post. Candidates apply to you.</span>
+                </span>
+                <span style={{ color: ORANGE, fontWeight: 900, fontSize: 18 }}>›</span>
+              </button>
+
+              <button onClick={() => setMode('search')} disabled={!access.canSearch} style={{ width: '100%', textAlign: 'left', background: access.canSearch ? '#fff' : '#fafafa', border: '1.5px solid #e5dccd', borderRadius: 14, padding: 15, cursor: access.canSearch ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 12, opacity: access.canSearch ? 1 : 0.7 }}>
+                <span style={{ fontSize: 26 }}>🔍</span>
+                <span style={{ flex: 1 }}>
+                  <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a' }}>Search the candidate database</span>
+                  <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', marginTop: 2 }}>
+                    Searching is free · {access.viewCost} credit to open a profile · {access.unlockCost} to unlock contact
+                  </span>
+                </span>
+                <span style={{ color: ORANGE, fontWeight: 900, fontSize: 18 }}>›</span>
+              </button>
+
+              <div style={{ marginTop: 14, background: access.canSearch ? '#f0fdf4' : '#FFF7ED', border: `1px solid ${access.canSearch ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: access.canSearch ? '#16a34a' : '#9a5b1a' }}>
+                  {access.credits} credits available
+                </div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: access.canSearch ? '#15803d' : '#9a5b1a', marginTop: 2, lineHeight: 1.5 }}>
+                  {access.canSearch
+                    ? `${access.profilesViewed} profiles opened so far. Opening one you've already paid for is free.`
+                    : `You need at least ${access.viewCost} credit to open a candidate profile.`}
+                </div>
+                {!access.canSearch && (
+                  <button onClick={() => { onClose(); openPanel('buyCredits') }} style={{ marginTop: 8, background: ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>Buy credits</button>
+                )}
+              </div>
+            </div>
+          ) : matchCount === null ? (
             <>
               <div style={{ fontSize: 11, color: ORANGE, fontFamily: 'var(--font-ui)', marginBottom: 14, lineHeight: 1.5 }}>
                 Build your job spec below. We&apos;ll match it against anonymous candidate profiles and show you how many qualify. Use credits to unlock full profiles.

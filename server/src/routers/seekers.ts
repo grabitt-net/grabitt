@@ -3,7 +3,8 @@ import { TRPCError } from '@trpc/server'
 import { router, protectedProcedure } from '../trpc'
 
 // Credits an employer spends to reveal one candidate's contact details.
-const UNLOCK_COST = 10
+const UNLOCK_COST = 10   // contact details
+const VIEW_COST = 1      // opening a candidate's full profile
 
 const workExperienceItem = z.object({
   title: z.string().max(120).default(''),
@@ -111,6 +112,96 @@ export const seekersRouter = router({
   // Employer search: returns how many active seekers match the spec plus an
   // anonymised list. Contact details are withheld unless the employer has
   // already unlocked that candidate.
+  // Can this account search the candidate database, and can it afford to? The
+  // search itself is free; opening a profile costs a credit. Checked before the
+  // criteria form is shown so nobody fills one in only to be refused.
+  searchAccess: protectedProcedure.query(async ({ ctx }) => {
+    const me = await ctx.prisma.user.findUniqueOrThrow({
+      where: { id: ctx.user.id },
+      select: { isBusiness: true, businessName: true, credits: true },
+    })
+    const viewed = await ctx.prisma.candidateView.count({ where: { employerId: ctx.user.id } })
+    return {
+      isBusiness: me.isBusiness,
+      businessName: me.businessName,
+      credits: me.credits,
+      viewCost: VIEW_COST,
+      unlockCost: UNLOCK_COST,
+      canSearch: me.isBusiness && me.credits >= VIEW_COST,
+      profilesViewed: viewed,
+    }
+  }),
+
+  // Open a candidate's full profile. Charged once per candidate — revisiting is
+  // free, so an employer isn't billed twice for the same person. Still no
+  // contact details; those are the separate, dearer unlock.
+  viewCandidate: protectedProcedure
+    .input(z.object({ seekerId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      if (input.seekerId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: "That's your own profile" })
+
+      const me = await ctx.prisma.user.findUniqueOrThrow({
+        where: { id: ctx.user.id },
+        select: { isBusiness: true, credits: true },
+      })
+      if (!me.isBusiness) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Searching for staff is a Business account feature' })
+      }
+
+      const profile = await ctx.prisma.seekerProfile.findUnique({
+        where: { userId: input.seekerId },
+        include: { user: { select: { avgRating: true, isVerified: true } } },
+      })
+      if (!profile) throw new TRPCError({ code: 'NOT_FOUND', message: 'Candidate not found' })
+
+      const already = await ctx.prisma.candidateView.findUnique({
+        where: { employerId_seekerId: { employerId: ctx.user.id, seekerId: input.seekerId } },
+      })
+
+      if (!already) {
+        if (me.credits < VIEW_COST) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: `You need ${VIEW_COST} credit to open a profile` })
+        }
+        const balance = me.credits - VIEW_COST
+        await ctx.prisma.$transaction([
+          ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { credits: balance } }),
+          ctx.prisma.creditEvent.create({
+            data: { userId: ctx.user.id, kind: 'admin_adjustment', delta: -VIEW_COST, balance, note: `Viewed candidate ${input.seekerId}` },
+          }),
+          ctx.prisma.candidateView.create({ data: { employerId: ctx.user.id, seekerId: input.seekerId } }),
+        ])
+      }
+
+      const unlocked = await ctx.prisma.candidateUnlock.findUnique({
+        where: { employerId_seekerId: { employerId: ctx.user.id, seekerId: input.seekerId } },
+      })
+
+      // Everything except contact — that stays behind the unlock.
+      return {
+        seekerId: profile.userId,
+        headline: profile.headline,
+        summary: profile.summary,
+        sectors: profile.sectors.length ? profile.sectors : (profile.sector ? [profile.sector] : []),
+        roles: profile.roles,
+        skills: profile.skills,
+        keyStrengths: profile.keyStrengths,
+        certifications: profile.certifications,
+        languages: profile.languages,
+        experienceMonths: profile.experienceMonths,
+        hours: profile.hours,
+        availability: profile.availability,
+        rightToWork: profile.rightToWork,
+        location: [profile.areaDetail, profile.town, profile.location].filter(Boolean).join(', '),
+        workExperience: profile.workExperience,
+        education: profile.education,
+        rating: profile.user.avgRating,
+        verified: profile.user.isVerified,
+        alreadyCharged: !!already,
+        contactUnlocked: !!unlocked,
+        unlockCost: UNLOCK_COST,
+      }
+    }),
+
   matchCandidates: protectedProcedure
     .input(z.object({
       sector: z.string().optional(),
@@ -123,11 +214,19 @@ export const seekersRouter = router({
       location: z.array(z.string()).optional(),
     }))
     .query(async ({ ctx, input }) => {
+      const me = await ctx.prisma.user.findUniqueOrThrow({
+        where: { id: ctx.user.id },
+        select: { isBusiness: true },
+      })
+      if (!me.isBusiness) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Searching for staff is a Business account feature' })
+      }
+
       const where: Record<string, unknown> = {
         active: true,
         userId: { not: ctx.user.id }, // never match yourself
       }
-      if (input.sector) where.sector = input.sector
+      if (input.sector) where.OR = [{ sector: input.sector }, { sectors: { has: input.sector } }]
       if (input.role) where.roles = { has: input.role }
       if (input.experienceMonths) where.experienceMonths = { gte: input.experienceMonths }
       if (input.languages?.length) where.languages = { hasEvery: input.languages }

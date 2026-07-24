@@ -15,6 +15,8 @@ export default function QuickActions() {
     { label: 'Find Work', action: () => router.push('/jobs') },
     { label: 'Find Staff', action: () => openPanel('findStaff') },
     { label: 'Find Home', action: () => router.push('/property') },
+    // Business accounts land straight on their Recruitment tab; /employers
+    // handles the upgrade pitch for everyone else.
     { label: 'Employers', action: () => router.push('/employers') },
     { label: 'Business', action: () => openPanel('business') },
   ]

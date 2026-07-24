@@ -266,6 +266,8 @@ model User {
   seekerProfile      SeekerProfile?
   candidateUnlocks   CandidateUnlock[]  @relation("EmployerUnlocks")
   unlockedBy         CandidateUnlock[]  @relation("SeekerUnlocked")
+  candidateViews     CandidateView[]    @relation("EmployerViews")
+  viewedBy           CandidateView[]    @relation("SeekerViewed")
   eshotRecipients    EshotRecipient[]
 
   @@index([grade])
@@ -314,6 +316,22 @@ model SeekerProfile {
 
 // Records that an employer has paid credits to reveal a seeker — so re-viewing
 // an already-unlocked candidate is free (idempotent unlock).
+// A candidate profile an employer has opened. Charged once per candidate — the
+// first view costs a credit, revisiting the same profile is free, so an employer
+// isn't billed twice for changing their mind. Contact details are a separate,
+// dearer step (CandidateUnlock).
+model CandidateView {
+  id         String   @id @default(uuid())
+  employerId String
+  employer   User     @relation("EmployerViews", fields: [employerId], references: [id])
+  seekerId   String
+  seeker     User     @relation("SeekerViewed", fields: [seekerId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([employerId, seekerId])
+  @@index([employerId])
+}
+
 model CandidateUnlock {
   id         String   @id @default(uuid())
   employerId String
