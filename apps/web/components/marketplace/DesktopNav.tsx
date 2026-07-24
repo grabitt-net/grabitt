@@ -25,10 +25,11 @@ export default function DesktopNav() {
 
   const search = () => { if (query.trim()) router.push(`/search?q=${encodeURIComponent(query.trim())}`) }
 
-  const actions: { icon: IconName; label: string; panel: PanelId; badge?: number }[] = [
+  // Messages is a real page (the Messages centre), not a panel — see IconRail.
+  const actions: { icon: IconName; label: string; panel: PanelId; href?: string; badge?: number }[] = [
     { icon: 'bell', label: 'Alerts', panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
     { icon: 'heart', label: 'Saved', panel: 'favourites' },
-    { icon: 'message', label: 'Messages', panel: 'messages' },
+    { icon: 'message', label: 'Messages', panel: 'messages', href: '/messages' },
     { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
     { icon: 'lifebuoy', label: 'Help', panel: 'help' },
   ]
@@ -70,7 +71,7 @@ export default function DesktopNav() {
       {/* Account actions */}
       <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
         {actions.map(a => (
-          <button key={a.label} onClick={() => a.panel === 'profile' ? router.push('/account') : openPanel(a.panel)} title={a.label}
+          <button key={a.label} onClick={() => a.href ? router.push(a.href) : a.panel === 'profile' ? router.push('/account') : openPanel(a.panel)} title={a.label}
             style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 8px', color: 'var(--dark)' }}>
             <Icon name={a.icon} size={21} />
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#7a6a55' }}>{t(a.label)}</span>

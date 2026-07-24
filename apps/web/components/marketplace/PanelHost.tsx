@@ -2571,7 +2571,11 @@ function PanelBody() {
 
     const [amount, setAmount] = useState(String(Math.round(priceNum * 0.9) || ''))
     const [message, setMessage] = useState('')
-    const [sent, setSent] = useState(false)
+    // The server decides the outcome the moment an offer lands: at or above the
+    // seller's hidden minimum it is accepted outright, below it the auto counter
+    // ladder replies straight away. Keep that result — telling every buyer "the
+    // seller has 48 hours" hides the automatic flow completely.
+    const [outcome, setOutcome] = useState<{ id: string; status: string; amount: number; counterAmount: number | null; counterTier: number } | null>(null)
     const [offerBusy, setOfferBusy] = useState(false)
     const [offerErr, setOfferErr] = useState('')
     const listingId = (item.id as string) || (item.listingId as string) || ''
@@ -2583,8 +2587,16 @@ function PanelBody() {
       setOfferBusy(true); setOfferErr('')
       try {
         const c = await getTrpcClient()
-        await c.offers.make.mutate({ listingId, amount: value, message: message.trim() || undefined })
-        setSent(true)
+        const res = await c.offers.make.mutate({ listingId, amount: value, message: message.trim() || undefined }) as {
+          id: string; status: string; amount: unknown; counterAmount: unknown; counterTier: number
+        }
+        setOutcome({
+          id: res.id,
+          status: res.status,
+          amount: Number(res.amount),
+          counterAmount: res.counterAmount != null ? Number(res.counterAmount) : null,
+          counterTier: res.counterTier ?? 0,
+        })
       } catch (e) {
         const m = e instanceof Error ? e.message : ''
         if (/own listing/i.test(m)) setOfferErr(t('That’s your own listing'))
@@ -2593,16 +2605,77 @@ function PanelBody() {
       } finally { setOfferBusy(false) }
     }
 
-    if (sent) return (
-      <ActionPanel title={`💰 ${t('Offer sent!')}`} onClose={closePanel}>
-        <div style={{ textAlign: 'center', padding: '30px 0' }}>
-          <div style={{ fontSize: 56, marginBottom: 14 }}>💰</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t('Offer sent to seller')}</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>{t('You offered {amount} for “{title}”. The seller has 48 hours to respond.').replace('{amount}', `€${amount}`).replace('{title}', title)}</div>
-          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{t('Done')}</button>
-        </div>
-      </ActionPanel>
-    )
+    // Buyer answers the automatic counter without leaving the panel.
+    const answerCounter = async (action: 'accept' | 'reject') => {
+      if (!outcome) return
+      setOfferBusy(true); setOfferErr('')
+      try {
+        const c = await getTrpcClient()
+        const res = await c.offers.respondToCounter.mutate({ offerId: outcome.id, action }) as {
+          status: string; amount: unknown; counterAmount: unknown; counterTier: number
+        }
+        setOutcome({
+          id: outcome.id,
+          status: res.status,
+          amount: Number(res.amount),
+          counterAmount: res.counterAmount != null ? Number(res.counterAmount) : null,
+          counterTier: res.counterTier ?? outcome.counterTier,
+        })
+      } catch (e) {
+        setOfferErr(e instanceof Error ? e.message : t('Could not respond to the counter-offer.'))
+      } finally { setOfferBusy(false) }
+    }
+
+    if (outcome) {
+      const payNow = () => { closePanel(); openPanel('checkout', { ...item, price: `€${outcome.amount.toFixed(2)}`, offerId: outcome.id, agreedPrice: outcome.amount }) }
+
+      if (outcome.status === 'accepted') return (
+        <ActionPanel title={`✅ ${t('Offer accepted')}`} onClose={closePanel}>
+          <div style={{ textAlign: 'center', padding: '26px 0' }}>
+            <div style={{ fontSize: 56, marginBottom: 14 }}>✅</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 17, fontWeight: 900, color: 'var(--sage)', marginBottom: 8 }}>{t('Accepted instantly')}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>
+              {t('Your offer of {amount} for “{title}” was accepted. Pay now to secure it.').replace('{amount}', `€${outcome.amount.toFixed(2)}`).replace('{title}', title)}
+            </div>
+            <button onClick={payNow} style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 50, padding: '13px 34px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>{t('Pay')} €{outcome.amount.toFixed(2)}</button>
+          </div>
+        </ActionPanel>
+      )
+
+      if (outcome.status === 'countered' && outcome.counterAmount != null) return (
+        <ActionPanel title={`🤝 ${t('Seller countered')}`} onClose={closePanel}>
+          <div style={{ textAlign: 'center', padding: '20px 0 6px' }}>
+            <div style={{ fontSize: 50, marginBottom: 12 }}>🤝</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 6 }}>
+              {t('You offered')} <strong>€{outcome.amount.toFixed(2)}</strong>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 6 }}>
+              {outcome.counterTier >= 3 ? t('Final counter') : t('Countered at')} <span style={{ color: 'var(--orange)' }}>€{outcome.counterAmount.toFixed(2)}</span>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 18 }}>
+              {outcome.counterTier >= 3 ? t('This is the lowest the seller will go.') : t('Accept it, or counter lower and the seller will come back to you.')}
+            </div>
+          </div>
+          {offerErr && <div style={{ background: '#fff5f5', color: '#ef4444', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 12 }}>⚠️ {offerErr}</div>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => answerCounter('accept')} disabled={offerBusy} style={{ flex: 1, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 8px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: offerBusy ? 'wait' : 'pointer' }}>{t('Accept')} €{outcome.counterAmount.toFixed(2)}</button>
+            <button onClick={() => answerCounter('reject')} disabled={offerBusy} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: '13px 8px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: offerBusy ? 'wait' : 'pointer' }}>{outcome.counterTier >= 3 ? t('Decline') : t('Counter lower')}</button>
+          </div>
+        </ActionPanel>
+      )
+
+      // Rejected the final tier — back to the seller to decide by hand.
+      return (
+        <ActionPanel title={`💰 ${t('Offer sent!')}`} onClose={closePanel}>
+          <div style={{ textAlign: 'center', padding: '30px 0' }}>
+            <div style={{ fontSize: 56, marginBottom: 14 }}>💰</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t('Offer sent to seller')}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>{t('You offered {amount} for “{title}”. The seller has 48 hours to respond.').replace('{amount}', `€${outcome.amount.toFixed(2)}`).replace('{title}', title)}</div>
+            <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{t('Done')}</button>
+          </div>
+        </ActionPanel>
+      )
+    }
 
     return (
       <ActionPanel title={`💰 ${t('Make Offer')} — ${title}`} onClose={closePanel}>
