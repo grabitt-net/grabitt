@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback, ReactNode } from 'rea
 export type PanelId =
   | 'alerts' | 'saved' | 'rewards' | 'login' | 'messages' | 'sell' | 'help'
   | 'shield' | 'affiliate' | 'dept' | 'near' | 'grabit' | 'sponsors'
-  | 'business' | 'footer' | 'menu' | 'justlisted'
+  | 'business' | 'businessVerify' | 'footer' | 'menu' | 'justlisted'
   | 'search' | 'savesearch' | 'savedSearches'
   | 'offers' | 'purchases' | 'mylistings' | 'wishlist'
   | 'invite' | 'recentviewed' | 'favourites' | 'soldprices' | 'advertise'

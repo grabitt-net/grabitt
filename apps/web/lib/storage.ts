@@ -94,7 +94,7 @@ export const VERIFICATION_BUCKET = 'verification'
  * users.submitVerificationDoc. Admins review it through /api/verification-doc,
  * which authorises the request and mints a signed URL. Max 8 MB.
  */
-export async function uploadVerificationDoc(file: File, userId: string, kind: 'id' | 'address'): Promise<string> {
+export async function uploadVerificationDoc(file: File, userId: string, kind: 'id' | 'address' | 'registration' | 'modelo036' | 'proof'): Promise<string> {
   const okTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic']
   if (!okTypes.includes(file.type)) throw new Error('Upload a photo (JPG/PNG) or PDF')
   if (file.size > 8 * 1024 * 1024) throw new Error('File must be under 8 MB')

@@ -17,6 +17,8 @@ import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
 import SeekerProfilePanel from './SeekerProfilePanel'
 import SignInFirst from './SignInFirst'
+import BusinessVerifyPanel from './BusinessVerifyPanel'
+import StorefrontEditor from './StorefrontEditor'
 import ApplicationsBoardPanel from './ApplicationsBoardPanel'
 import dynamic from 'next/dynamic'
 
@@ -1867,79 +1869,10 @@ function PanelBody() {
 
   // ── STOREFRONT SETUP (business accounts) ─────────────────────────────────────
   if (panel.id === 'storefrontEdit') {
-    type BizMe = { isBusiness: boolean; businessName: string | null; businessBio: string | null; businessBanner: string | null; displayName: string }
-    const [loaded, setLoaded] = useState(false)
-    const [isBiz, setIsBiz] = useState(false)
-    const [name, setName] = useState('')
-    const [bio, setBio] = useState('')
-    const [banner, setBanner] = useState('')
-    const [saving, setSaving] = useState(false)
-
-    useEffect(() => {
-      getTrpcClient().then(c => c.users.me.query()).then(u => {
-        const m = u as unknown as BizMe
-        setIsBiz(m.isBusiness)
-        setName(m.businessName ?? m.displayName ?? '')
-        setBio(m.businessBio ?? '')
-        setBanner(m.businessBanner ?? '')
-        setLoaded(true)
-      }).catch(() => setLoaded(true))
-    }, [])
-
-    const save = async () => {
-      setSaving(true)
-      try {
-        const client = await getTrpcClient()
-        await client.users.updateBusinessProfile.mutate({
-          businessName: name.trim() || undefined,
-          businessBio: bio.trim() || undefined,
-          businessBanner: banner.trim(),
-        })
-        toast('✓ Storefront saved')
-      } catch (e) { toast(e instanceof Error ? e.message : 'Could not save storefront') }
-      finally { setSaving(false) }
-    }
-
-    const inp: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box', marginBottom: 12 }
-    const lbl: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, display: 'block' }
-
-    return (
-      <ActionPanel title="🏪 My Storefront" onClose={closePanel}>
-        {!loaded ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#aaa', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Loading…</div>
-        ) : !isBiz ? (
-          <div style={{ textAlign: 'center', padding: '30px 10px' }}>
-            <div style={{ fontSize: 40, marginBottom: 10 }}>🏢</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)', marginBottom: 6 }}>Business account required</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 16 }}>Start a Business subscription to get your own storefront.</div>
-            <button onClick={() => openPanel('business')} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Upgrade to Business</button>
-          </div>
-        ) : (
-          <>
-            {/* Live banner preview */}
-            <div style={{ width: '100%', height: 110, borderRadius: 14, overflow: 'hidden', background: banner ? '#f5f0e8' : 'linear-gradient(135deg,var(--ocean),#0ea5e9)', marginBottom: 14, position: 'relative', display: 'flex', alignItems: 'flex-end' }}>
-              {banner && <img src={banner} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />}
-              <div style={{ position: 'relative', padding: 12, color: '#fff', fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>🏢 {name || 'Your business'}</div>
-            </div>
-
-            <label style={lbl}>Business name</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Test Shop GC" style={inp} maxLength={60} />
-
-            <label style={lbl}>About / tagline</label>
-            <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Tell buyers what you sell and where you're based…" rows={3} maxLength={500} style={{ ...inp, resize: 'vertical' }} />
-
-            <label style={lbl}>Banner image URL</label>
-            <input value={banner} onChange={e => setBanner(e.target.value)} placeholder="https://… (a wide landscape image)" style={inp} />
-
-            <button onClick={save} disabled={saving} style={{ width: '100%', background: saving ? '#ccc' : 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>{saving ? 'Saving…' : 'Save storefront ✓'}</button>
-            {currentUserId && <button onClick={() => openPanel('storefront', { sellerId: currentUserId })} style={{ width: '100%', background: '#fff', color: 'var(--ocean)', border: '1.5px solid var(--ocean)', borderRadius: 14, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>👁 Preview my storefront</button>}
-          </>
-        )}
-      </ActionPanel>
-    )
+    if (!currentUserId) return <SignInFirst onClose={closePanel} onSignIn={() => openPanel('login')} what="set up a storefront" />
+    return <StorefrontEditor onClose={closePanel} />
   }
 
-  // ── EMPLOYER APPLICATIONS BOARD ──────────────────────────────────────────────
   if (panel.id === 'applications') {
     return <ApplicationsBoardPanel onClose={closePanel} openPanel={openPanel} focusJobId={panel.data?.jobId as string | undefined} />
   }
@@ -4766,6 +4699,11 @@ function PanelBody() {
   }
 
   // ── BUSINESS ACCOUNT ──────────────────────────────────────────────────────────
+  if (panel.id === 'businessVerify') {
+    if (!currentUserId) return <SignInFirst onClose={closePanel} onSignIn={() => openPanel('login')} what="verify your business" />
+    return <BusinessVerifyPanel onClose={closePanel} />
+  }
+
   if (panel.id === 'business') {
     const [bizStep, setBizStep] = useState<'info'|'type'|'trial'|'done'>('info')
     const [bizName, setBizName] = useState('')

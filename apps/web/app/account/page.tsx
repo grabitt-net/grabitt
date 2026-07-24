@@ -417,7 +417,8 @@ function AccountInner() {
                 <RecruitLink icon="📢" title={t('Place a job advert')} sub={t('Free to post — candidates apply to you.')} onClick={() => router.push('/jobs/new')} />
                 <RecruitLink icon="📋" title={t('Applicants')} sub={t('Review, note and move candidates through your pipeline.')} onClick={() => openPanel('applications')} />
                 <RecruitLink icon="🔍" title={t('Search candidates')} sub={t('Searching is free — credits open a profile.')} onClick={() => openPanel('findStaff')} />
-                <RecruitLink icon="🏪" title={t('My storefront')} sub={t('Branding, bio and banner for your business.')} onClick={() => openPanel('storefrontEdit')} />
+                {!me?.businessVerified && <RecruitLink icon="🛡️" title={t('Verify your business')} sub={t('Required before your shop can go live.')} onClick={() => openPanel('businessVerify')} />}
+                <RecruitLink icon="🏪" title={t('My storefront')} sub={t('Layout, categories, featured items and policies.')} onClick={() => openPanel('storefrontEdit')} />
                 <RecruitLink icon="📖" title={t('Directory listing')} sub={t('List your business in the Grabitt directory.')} onClick={() => openPanel('advertise')} />
                 <RecruitLink icon="💳" title={t('Credits')} sub={t('Top up the credits used for candidate searches.')} onClick={() => openPanel('buyCredits')} />
               </div>
