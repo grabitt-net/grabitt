@@ -105,9 +105,20 @@ export const messagesRouter = router({
         messages: { take: 1, orderBy: { createdAt: 'desc' } },
       },
     })
+    // Thread.listingId is a plain column, not a relation, so the listings the
+    // inbox labels each conversation with are fetched in one extra query.
+    const listings = await ctx.prisma.listing.findMany({
+      where: { id: { in: [...new Set(threads.map(t => t.listingId))] } },
+      select: { id: true, title: true, price: true, images: true },
+    })
+    const listingById = new Map(listings.map(l => [l.id, l]))
     // The inbox preview shows the last message — mask it too, or blocked
     // contact details leak through the preview even though the thread hides them.
-    return threads.map(t => ({ ...t, messages: t.messages.map(m => maskBlocked(m, ctx.user.id)) }))
+    return threads.map(t => ({
+      ...t,
+      messages: t.messages.map(m => maskBlocked(m, ctx.user.id)),
+      listing: listingById.get(t.listingId) ?? null,
+    }))
   }),
 
   // Marks every message in a thread NOT sent by the caller as read.

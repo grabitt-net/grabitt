@@ -85,3 +85,21 @@ body {
 @media (hover: hover) {
   .cat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.22) !important; }
 }
+
+/* Messages centre — email-style two-pane inbox. */
+.inbox { display: grid; grid-template-columns: 1fr; flex: 1; min-height: 0; max-width: 1120px; width: 100%; margin: 0 auto; padding: 12px 12px 90px; box-sizing: border-box; gap: 12px; }
+.inbox__list { background: #fff; border: 1px solid #ece3d7; border-radius: 14px; overflow-y: auto; min-height: 0; }
+.inbox__reader { background: #fff; border: 1px solid #ece3d7; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+
+/* Narrow: one pane at a time — the list, then the conversation. */
+@media (max-width: 859px) {
+  .inbox__reader { display: none; }
+  .inbox--reading .inbox__list { display: none; }
+  .inbox--reading .inbox__reader { display: flex; height: calc(100dvh - 220px); }
+}
+
+/* Wide: list beside the conversation, and the back arrow is redundant. */
+@media (min-width: 860px) {
+  .inbox { grid-template-columns: 340px 1fr; height: calc(100dvh - 190px); }
+  .inbox__back { display: none !important; }
+}
