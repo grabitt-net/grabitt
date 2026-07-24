@@ -471,6 +471,14 @@ enum DeliveryMethod {
   in_person    // seller drops off, confirmed by QR at the door
 }
 
+// Who a purchase is made as. A business account can buy for the business (for
+// its own invoicing/VAT records) or personally — selling is always as the
+// business, but buying is a per-purchase choice.
+enum BuyerType {
+  individual
+  business
+}
+
 model Transaction {
   id                    String            @id @default(uuid())
   listingId             String
@@ -484,6 +492,10 @@ model Transaction {
   sellerNet             Decimal           @db.Decimal(10, 2)
   status                TransactionStatus @default(pending_payment)
   quantity              Int               @default(1)
+  // Captured at checkout; business buyers choose per purchase. buyerBusinessName
+  // is snapshotted so a later rename doesn't rewrite historical receipts.
+  buyerType             BuyerType         @default(individual)
+  buyerBusinessName     String?
   fulfilmentType        FulfilmentType    @default(collection)
   stripePaymentIntentId String?
   stripeTransferId      String?

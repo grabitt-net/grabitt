@@ -363,12 +363,12 @@ function ListingInner() {
               style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: seller?.id ? 'pointer' : 'default' }}
             >
               <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, color: '#fff', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>
-                {(seller?.businessName ?? job?.company ?? seller?.displayName ?? '?')[0]?.toUpperCase()}
+                {(seller?.tradingName ?? job?.company ?? seller?.displayName ?? '?')[0]?.toUpperCase()}
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {seller?.businessName ?? job?.company ?? seller?.displayName ?? 'Grabitt User'}
+                    {job?.company ?? seller?.tradingName ?? seller?.displayName ?? 'Grabitt User'}
                   </span>
                   {seller?.grade && <span style={{ fontSize: 11 }}>{gradeEmoji[seller.grade]}</span>}
                   {(seller?.isVerified || seller?.businessVerified) && (

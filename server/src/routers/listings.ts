@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { CreateListingInputSchema, SearchInputSchema } from '@grabitt/types'
+import { sellerName, missingBusinessName } from '../lib/identity'
 import { LISTING_CAPS, GRADE_THRESHOLDS, PRICES } from '@grabitt/design-tokens'
 import { getStripe } from '../lib/stripe'
 
@@ -272,7 +273,13 @@ export const listingsRouter = router({
         take: 4,
         select: { id: true, title: true, price: true, images: true, department: true },
       })
-      return { ...listing, wantedCount, sellerOther }
+      return {
+        ...listing,
+        // The name this seller trades under — business name for a business.
+        seller: { ...listing.seller, tradingName: sellerName(listing.seller) },
+        wantedCount,
+        sellerOther,
+      }
     }),
 
   // Sold-price comparables: recent completed sales for similar items, so a buyer
@@ -334,13 +341,22 @@ export const listingsRouter = router({
         take: 60,
         select: { id: true, title: true, price: true, images: true, location: true, department: true },
       })
-      return { seller, listings }
+      return { seller: { ...seller, tradingName: sellerName(seller) }, listings }
     }),
 
   create: protectedProcedure
     .input(CreateListingInputSchema)
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
+
+      // A business sells as the business. Without a business name we'd have to
+      // fall back to their personal name, which is what this prevents.
+      if (missingBusinessName(user)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Add your business name in Account → Business before listing. Business accounts sell under the business name.',
+        })
+      }
 
       // Enforce monthly listing cap per grade
       const cap = LISTING_CAPS[user.grade as keyof typeof LISTING_CAPS]

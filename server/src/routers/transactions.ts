@@ -174,6 +174,9 @@ export const transactionsRouter = router({
       // Buyer intent only: collection vs delivery. The concrete fulfilment
       // (courier vs in-person delivery) is resolved server-side from the listing.
       fulfilment: z.enum(['collection', 'delivery']).default('collection'),
+      // Business accounts choose per purchase; personal accounts are always
+      // individual, enforced below rather than trusted from the client.
+      buyerType: z.enum(['individual', 'business']).default('individual'),
     }))
     .mutation(async ({ ctx, input }) => {
       const listing = await ctx.prisma.listing.findUniqueOrThrow({
@@ -212,6 +215,14 @@ export const transactionsRouter = router({
       const platformFee = Math.round(itemSubtotal * feeRate * 100) / 100
       const sellerNet = Math.round((amount - platformFee) * 100) / 100
 
+      // Only a business account may buy as a business, and only under its own
+      // name — both resolved server-side.
+      const buyer = await ctx.prisma.user.findUniqueOrThrow({
+        where: { id: ctx.user.id },
+        select: { isBusiness: true, businessName: true },
+      })
+      const buyingAsBusiness = input.buyerType === 'business' && buyer.isBusiness && !!buyer.businessName?.trim()
+
       const paymentIntent = await getStripe().paymentIntents.create({
         amount: Math.round(amount * 100),
         currency: 'eur',
@@ -228,6 +239,8 @@ export const transactionsRouter = router({
           platformFee,
           sellerNet,
           quantity: input.quantity,
+          buyerType: buyingAsBusiness ? 'business' : 'individual',
+          buyerBusinessName: buyingAsBusiness ? buyer.businessName!.trim() : null,
           fulfilmentType,
           status: 'pending_payment',
           stripePaymentIntentId: paymentIntent.id,

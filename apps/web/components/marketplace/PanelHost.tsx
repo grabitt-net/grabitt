@@ -1755,7 +1755,7 @@ function PanelBody() {
   if (panel.id === 'storefront') {
     const sellerId = (panel.data?.sellerId as string) || ''
     type Store = {
-      seller: { displayName: string; grade: string; avgRating: number | null; salesCount: number; isBusiness: boolean; businessVerified?: boolean; businessName?: string | null; businessBio?: string | null; businessBanner?: string | null }
+      seller: { displayName: string; tradingName?: string; grade: string; avgRating: number | null; salesCount: number; isBusiness: boolean; businessVerified?: boolean; businessName?: string | null; businessBio?: string | null; businessBanner?: string | null }
       listings: { id: string; title: string; price: unknown; images: string[]; location: string }[]
     }
     const [store, setStore] = useState<Store | null>(null)
@@ -1801,7 +1801,7 @@ function PanelBody() {
             <div style={{ textAlign: 'center', padding: '10px 0 18px' }}>
               <div style={{ width: 72, height: 72, background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, margin: '0 auto 10px' }}>{store.seller.isBusiness ? '🏢' : '👤'}</div>
               <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--dark)' }}>
-                {(store.seller.isBusiness && store.seller.businessName) || store.seller.displayName}
+                {store.seller.tradingName || store.seller.displayName}
                 {store.seller.businessVerified && <span title="Verified business" style={{ marginLeft: 6 }}>🛡️</span>}
               </div>
               {store.seller.isBusiness && store.seller.businessBio && (
@@ -2419,6 +2419,10 @@ function PanelBody() {
     const [step, setStep] = useState<'summary' | 'card' | 'processing' | 'success'>('summary')
     const [qty, setQty] = useState(1)
     const [fulfil, setFulfil] = useState<'collection' | 'delivery'>('collection')
+    // A business account may buy for the business or personally. Personal
+    // accounts never see this — the server enforces it either way.
+    const [buyerType, setBuyerType] = useState<'individual' | 'business'>('individual')
+    const [bizBuyer, setBizBuyer] = useState<{ businessName: string } | null>(null)
     const [transactionId, setTransactionId] = useState<string | null>(null)
     const [clientSecret, setClientSecret] = useState<string | null>(null)
     const [payError, setPayError] = useState<string | null>(null)
@@ -2426,6 +2430,16 @@ function PanelBody() {
     const delFee = fulfil === 'delivery' ? deliveryFee : 0
     const total = priceNum * qty + delFee
     const fmt = (n: number) => `€${n % 1 === 0 ? n : n.toFixed(2)}`
+
+    useEffect(() => {
+      getTrpcClient()
+        .then(c => c.users.me.query())
+        .then(u => {
+          const me = u as unknown as { isBusiness: boolean; businessName: string | null }
+          if (me.isBusiness && me.businessName?.trim()) setBizBuyer({ businessName: me.businessName.trim() })
+        })
+        .catch(() => { /* personal account, or signed out */ })
+    }, [])
 
     // Create the escrow PaymentIntent, then reveal Stripe Elements for card entry.
     const startPayment = async () => {
@@ -2435,7 +2449,7 @@ function PanelBody() {
         const listingId = (item.id as string) || (item.listingId as string) || ''
         if (!listingId) throw new Error('This demo listing cannot be purchased.')
         const client = await getTrpcClient()
-        const result = await client.transactions.initiate.mutate({ listingId, quantity: qty, fulfilment: fulfil })
+        const result = await client.transactions.initiate.mutate({ listingId, quantity: qty, fulfilment: fulfil, buyerType })
         setTransactionId(result.transaction.id)
         setClientSecret(result.clientSecret ?? null)
         setStep('card')
@@ -2513,6 +2527,22 @@ function PanelBody() {
                     <button onClick={() => setQty(q => Math.min(99, q + 1))} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: 'var(--orange)', color: '#fff', fontSize: 16, fontWeight: 900, cursor: 'pointer' }}>+</button>
                   </div>
                 </div>
+
+                {/* Buying as — business accounts only */}
+                {bizBuyer && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Buying as')}</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => setBuyerType('individual')} style={{ flex: 1, background: buyerType === 'individual' ? 'var(--orange)' : '#f0f0f0', color: buyerType === 'individual' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>👤 {t('Myself')}</button>
+                      <button onClick={() => setBuyerType('business')} style={{ flex: 1, background: buyerType === 'business' ? 'var(--orange)' : '#f0f0f0', color: buyerType === 'business' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>🏢 {bizBuyer.businessName}</button>
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 6 }}>
+                      {buyerType === 'business'
+                        ? t('This purchase is recorded against your business.')
+                        : t('This purchase is recorded as a personal one.')}
+                    </div>
+                  </div>
+                )}
 
                 {/* Fulfilment choice */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
