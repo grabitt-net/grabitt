@@ -72,7 +72,7 @@ export default function CreateListingForm({ categories, userId }: Props) {
   }
 
   return (
-    <main style={{ background: 'var(--sand)', minHeight: '100vh', paddingBottom: 40 }}>
+    <main className="app-shell" style={{ background: 'var(--sand)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       {/* Header */}
       <header style={{
         background: 'var(--sand)', padding: '12px 16px',

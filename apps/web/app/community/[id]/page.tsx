@@ -17,7 +17,7 @@ export default function CommunityPostPage() {
   }, [id])
 
   return (
-    <main style={{ background: 'var(--cream)', minHeight: '100vh' }}>
+    <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <SiteHeader />
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '20px 16px 60px' }}>
         <Link href="/community" style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--orange)', textDecoration: 'none', fontWeight: 700 }}>‹ Grabitt Guides</Link>

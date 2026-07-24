@@ -27,7 +27,7 @@ export default async function MessagesPage() {
   })
 
   return (
-    <main style={{ background: '#f5f2ec', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <main className="app-shell" style={{ background: '#f5f2ec', minHeight: '100vh', display: 'flex', flexDirection: 'column', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <SiteHeader />
       <header style={{ background: 'var(--sand)', padding: '14px 16px', borderBottom: '1.5px solid var(--sand2)', flexShrink: 0 }}>
         <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>

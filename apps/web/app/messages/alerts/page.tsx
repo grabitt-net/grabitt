@@ -33,7 +33,7 @@ export default async function GrabittAlertsPage() {
   })
 
   return (
-    <main style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: 90 }}>
+    <main className="app-shell" style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: 90, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <SiteHeader />
       <header style={{ background: 'var(--sand)', padding: '12px 16px', borderBottom: '1.5px solid var(--sand2)', display: 'flex', alignItems: 'center', gap: 12 }}>
         <Link href="/messages" style={{ fontSize: 22, textDecoration: 'none', color: 'var(--dark)', lineHeight: 1 }}>←</Link>

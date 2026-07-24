@@ -13,7 +13,7 @@ export default function CommunityIndexPage() {
     createTrpcClient().community.list.query({ limit: 30 }).then((p: any[]) => setPosts(p as Post[])).catch(() => {})
   }, [])
   return (
-    <main style={{ background: 'var(--cream)', minHeight: '100vh' }}>
+    <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <SiteHeader />
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '20px 16px 60px' }}>
         <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 26, fontWeight: 900, color: 'var(--dark)', margin: '0 0 6px' }}>📰 Grabitt Guides</h1>

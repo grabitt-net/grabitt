@@ -42,7 +42,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Pro
   const { data: listings } = await query.limit(48)
 
   return (
-    <main style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: 90 }}>
+    <main className="app-shell" style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: 90, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       {/* Header */}
       <header style={{
         background: 'var(--sand)', padding: '12px 14px',

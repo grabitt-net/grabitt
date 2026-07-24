@@ -46,7 +46,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
   })
 
   return (
-    <main style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#f5f5f5' }}>
+    <main className="app-shell" style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#f5f5f5', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <header style={{
         background: 'var(--sand)', padding: '12px 16px',
         borderBottom: '1.5px solid var(--sand2)',

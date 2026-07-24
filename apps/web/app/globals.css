@@ -87,7 +87,7 @@ body {
 }
 
 /* Messages centre — email-style two-pane inbox. */
-.inbox { display: grid; grid-template-columns: 1fr; flex: 1; min-height: 0; max-width: 1120px; width: 100%; margin: 0 auto; padding: 12px 12px 16px; box-sizing: border-box; gap: 12px; }
+.inbox { display: grid; grid-template-columns: 1fr; flex: 1; min-height: 0; width: 100%; padding: 12px 12px 16px; box-sizing: border-box; gap: 12px; }
 .inbox__list { background: #fff; border: 1px solid #ece3d7; border-radius: 14px; overflow-y: auto; min-height: 0; }
 .inbox__reader { background: #fff; border: 1px solid #ece3d7; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
 

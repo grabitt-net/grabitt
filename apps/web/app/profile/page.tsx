@@ -24,7 +24,7 @@ export default async function ProfilePage() {
   const grade = profile?.grade ?? 'grabber'
 
   return (
-    <main style={{ background: 'var(--sand)', minHeight: '100vh', paddingBottom: 40 }}>
+    <main className="app-shell" style={{ background: 'var(--sand)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       {/* Header */}
       <header style={{
         background: 'var(--sand)', padding: '14px 16px',

@@ -4,7 +4,7 @@ export const metadata = { title: 'Terms of Service — Grabitt' }
 
 export default function TermsPage() {
   return (
-    <main style={wrap}>
+    <main className="app-shell" style={wrap}>
       <div style={card}>
         <Link href="/" style={back}>‹ Back to Grabitt</Link>
         <h1 style={h1}>Terms of Service</h1>
