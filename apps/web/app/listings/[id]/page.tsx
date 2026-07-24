@@ -230,28 +230,31 @@ function ListingInner() {
           </div>
         </div>
 
-        {/* Title + In-Demand */}
+        {/* Title */}
+        <div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
+            {job && <Chip>{JOB_TYPE[job.type] ?? job.type}</Chip>}
+            {prop && <Chip>{PROP_TYPE[prop.type] ?? prop.type}</Chip>}
+            {listing.condition && !job && !prop && <Chip muted>{COND_LABEL[listing.condition] ?? listing.condition}</Chip>}
+            {job?.remote && <Chip>Remote</Chip>}
+          </div>
+          <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25 }}>{job?.jobTitle ?? listing.title}</h1>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)', marginTop: 2 }}>{priceLabel}</div>
+          <div style={{ fontSize: 11, color: '#666', marginTop: 3, fontFamily: 'var(--font-comfortaa)' }}>📍 {job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')} · Ref: {ref}</div>
+          <div onClick={() => openPanel('shield')} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '6px 9px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+            <span style={{ fontSize: 12 }}>🛡️</span>
+            <span style={{ fontSize: 10, color: '#16a34a', fontFamily: 'var(--font-nunito)', fontWeight: 900 }}>Protected by the Grabitt Guarantee ›</span>
+          </div>
+        </div>
+
+        {/* Buy / Offer, side by side with the In-Demand box */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
-              {job && <Chip>{JOB_TYPE[job.type] ?? job.type}</Chip>}
-              {prop && <Chip>{PROP_TYPE[prop.type] ?? prop.type}</Chip>}
-              {listing.condition && !job && !prop && <Chip muted>{COND_LABEL[listing.condition] ?? listing.condition}</Chip>}
-              {job?.remote && <Chip>Remote</Chip>}
-            </div>
-            <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25 }}>{job?.jobTitle ?? listing.title}</h1>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)', marginTop: 2 }}>{priceLabel}</div>
-            <div style={{ fontSize: 11, color: '#666', marginTop: 3, fontFamily: 'var(--font-comfortaa)' }}>📍 {job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')} · Ref: {ref}</div>
-            <div onClick={() => openPanel('shield')} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '6px 9px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-              <span style={{ fontSize: 12 }}>🛡️</span>
-              <span style={{ fontSize: 10, color: '#16a34a', fontFamily: 'var(--font-nunito)', fontWeight: 900 }}>Protected by the Grabitt Guarantee ›</span>
-            </div>
-            {/* Buy / Offer — alongside the In-Demand box, per the template */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: 8 }}>
             {!isOwner && !job && !prop && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <>
                 <button onClick={() => isGrabItNow ? openPanel('checkout', panelItem) : addToBasket()} disabled={basketBusy} style={{ flex: 1, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 8px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: basketBusy ? 'wait' : 'pointer', lineHeight: 1.25 }}>{isGrabItNow ? <>⚡ {t('Buy Now')}</> : <>🛒 {t('Buy Now')}</>}<br /><span style={{ fontSize: 12 }}>{priceLabel}</span></button>
                 <button onClick={() => openPanel('makeOffer', panelItem)} style={{ flex: 1, background: '#fff', color: '#FF4500', border: '2px solid #FF4500', borderRadius: 12, padding: '13px 8px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>💰 {t('Make')}<br />{t('an Offer')}</button>
-              </div>
+              </>
             )}
           </div>
           <div style={{ width: 112, flexShrink: 0, background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '8px 5px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
