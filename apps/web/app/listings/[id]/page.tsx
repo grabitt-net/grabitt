@@ -214,7 +214,6 @@ function ListingInner() {
       <header style={{ background: 'var(--sand)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1.5px solid var(--sand2)' }}>
         <button onClick={() => { if (window.history.length > 1) router.back(); else router.push(job ? '/jobs' : prop ? '/property' : '/') }} style={{ fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--dark)', padding: 0, lineHeight: 1 }} aria-label="Back">←</button>
         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', flex: 1 }}>{DEPT_LABEL[listing.department] ?? 'Listing'}</span>
-        <button onClick={() => setShowShare(true)} aria-label="Share this listing" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--sand2)', borderRadius: 50, padding: '7px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--orange)', cursor: 'pointer' }}>📤 {t('Share')}</button>
       </header>
       <QuickActions />
 
