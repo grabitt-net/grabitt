@@ -19,6 +19,7 @@ import SeekerProfilePanel from './SeekerProfilePanel'
 import SignInFirst from './SignInFirst'
 import BusinessVerifyPanel from './BusinessVerifyPanel'
 import StorefrontEditor from './StorefrontEditor'
+import MultibuyEditor, { type MultibuyTier } from './MultibuyEditor'
 import ApplicationsBoardPanel from './ApplicationsBoardPanel'
 import dynamic from 'next/dynamic'
 
@@ -3319,6 +3320,7 @@ function PanelBody() {
     const [stock, setStock] = useState('1')
     const [freeItem, setFreeItem] = useState(false)
     const [autoAcceptMin, setAutoAcceptMin] = useState('')
+    const [multibuyTiers, setMultibuyTiers] = useState<MultibuyTier[]>([])
     const [offersDelivery, setOffersDelivery] = useState(false)
     const [deliveryMethod, setDeliveryMethod] = useState<'courier' | 'in_person'>('courier')
     const [deliveryFee, setDeliveryFee] = useState('')
@@ -3543,6 +3545,8 @@ function PanelBody() {
                   </div>
                 )}
 
+                {!freeItem && <MultibuyEditor value={multibuyTiers} onChange={setMultibuyTiers} />}
+
                 {/* Delivery option */}
                 <div style={{ background: '#faf7f4', border: `1.5px solid ${offersDelivery ? 'var(--ocean)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
                   <div onClick={() => setOffersDelivery(v => !v)} style={{ display: 'flex', gap: 12, cursor: 'pointer', alignItems: 'center' }}>
@@ -3698,6 +3702,7 @@ function PanelBody() {
                       deliveryFee: offersDelivery ? (parseFloat(deliveryFee) || 0) : 0,
                       deliveryMethod: offersDelivery ? deliveryMethod : undefined,
                       autoAcceptMin: !freeItem && parseFloat(autoAcceptMin) > 0 ? parseFloat(autoAcceptMin) : undefined,
+                      ...(multibuyTiers.length && !freeItem ? { multibuyTiers } : {}),
                     })
                     // Paid promotions: charge before they go live. Redirect to
                     // Stripe Checkout; the webhook applies the option on payment.
@@ -4705,8 +4710,19 @@ function PanelBody() {
   }
 
   if (panel.id === 'business') {
-    const [bizStep, setBizStep] = useState<'info'|'type'|'trial'|'done'>('info')
+    // You can't upgrade an account you don't have — send a signed-out visitor to
+    // sign in or join first, rather than through checkout and back.
+    if (!currentUserId) return <SignInFirst onClose={closePanel} onSignIn={() => openPanel('login')} what="upgrade to Business" />
+    const [bizStep, setBizStep] = useState<'info'|'type'|'verify'|'trial'|'done'>('info')
     const [bizName, setBizName] = useState('')
+    // Verification status for the upgrade flow. Loaded once, unconditionally, so
+    // it never breaks the rules of hooks — the verify step just reads it.
+    const [vStatus, setVStatus] = useState<string | null>(null)
+    useEffect(() => {
+      getTrpcClient().then(c => c.business.verificationStatus.query())
+        .then(v => setVStatus((v as { status: string }).status))
+        .catch(() => setVStatus('not_started'))
+    }, [])
     const [bizType, setBizType] = useState('')
     const [bizBusy, setBizBusy] = useState(false)
     const BIZ_TYPES = [
@@ -4794,9 +4810,34 @@ function PanelBody() {
               </div>
             ))}
             <input value={bizName} onChange={e => setBizName(e.target.value)} placeholder="Business name *" style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' as const, marginTop: 12 }} />
-            <button onClick={() => { if (bizType && bizName.trim()) setBizStep('trial') }} disabled={!bizType || !bizName.trim()} style={{ width: '100%', background: !bizType || !bizName.trim() ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: !bizType ? 'not-allowed' : 'pointer', marginTop: 16 }}>Continue →</button>
+            <button onClick={() => { if (bizType && bizName.trim()) setBizStep('verify') }} disabled={!bizType || !bizName.trim()} style={{ width: '100%', background: !bizType || !bizName.trim() ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: !bizType ? 'not-allowed' : 'pointer', marginTop: 16 }}>Continue →</button>
           </>
         )}
+        {bizStep === 'verify' && (() => {
+          const submitted = vStatus === 'pending' || vStatus === 'approved'
+          return (
+            <>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Verify your business</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#666', lineHeight: 1.6, marginBottom: 14 }}>
+                Before starting your trial we need to confirm you&apos;re a real business — your registration or Modelo 036/037, plus proof of address. It only takes a minute, and you won&apos;t be charged until it&apos;s done.
+              </div>
+              <div style={{ background: submitted ? '#f0fdf4' : '#FFF7ED', border: `1px solid ${submitted ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 12, padding: 12, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 20 }}>{submitted ? '✅' : '📄'}</span>
+                <div style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: submitted ? '#16a34a' : '#9a5b1a' }}>
+                  {vStatus === null ? 'Checking…' : vStatus === 'approved' ? 'Your business is verified.' : submitted ? 'Documents submitted — under review.' : 'Not started yet.'}
+                </div>
+              </div>
+              <button onClick={() => openPanel('businessVerify')} style={{ width: '100%', background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>
+                🛡️ {submitted ? 'Review my documents' : 'Add my business documents'}
+              </button>
+              <button onClick={() => setBizStep('trial')} disabled={!submitted} style={{ width: '100%', background: submitted ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: submitted ? 'pointer' : 'not-allowed' }}>
+                Continue to trial →
+              </button>
+              {!submitted && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 8 }}>Submit your documents to continue.</div>}
+            </>
+          )
+        })()}
+
         {bizStep === 'trial' && (
           <>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>Confirm your 7-day trial</div>

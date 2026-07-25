@@ -17,6 +17,7 @@ import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHost'
 import { t } from '@/lib/i18n'
+import MultibuyEditor, { type MultibuyTier } from '@/components/marketplace/MultibuyEditor'
 
 // Edit a listing you own. Sellers previously had no way to fix a typo, swap a
 // photo or take an item down — only the price could be changed, and only from
@@ -58,6 +59,7 @@ function EditInner() {
   const [department, setDepartment] = useState('other')
   const [freeItem, setFreeItem] = useState(false)
   const [autoAcceptMin, setAutoAcceptMin] = useState('')
+  const [multibuyTiers, setMultibuyTiers] = useState<MultibuyTier[]>([])
   // Job fields
   const [company, setCompany] = useState('')
   const [jobType, setJobType] = useState('full_time')
@@ -120,6 +122,7 @@ function EditInner() {
       setDepartment(l.department ?? 'other')
       setFreeItem(Number(l.price ?? 0) === 0)
       setAutoAcceptMin(l.autoAcceptMin != null ? String(Number(l.autoAcceptMin)) : '')
+      setMultibuyTiers(Array.isArray(l.multibuyTiers) ? l.multibuyTiers : [])
 
       if (l.jobListing) {
         const j = l.jobListing
@@ -248,6 +251,7 @@ function EditInner() {
           deliveryMethod: deliveryMethod === '' ? null : deliveryMethod,
           // A free item can't sensibly auto-accept offers.
           autoAcceptMin: freeItem ? null : num(autoAcceptMin),
+          multibuyTiers: freeItem ? null : (multibuyTiers.length ? multibuyTiers : null),
           images,
           lat: coords?.lat ?? null,
           lng: coords?.lng ?? null,
@@ -511,6 +515,7 @@ function EditInner() {
               <label style={lbl}>{t('Auto-accept offers at or above (€)')}</label>
               <input type="number" min={0} step="0.01" value={autoAcceptMin} onChange={e => setAutoAcceptMin(e.target.value)} placeholder={t('Leave blank to review every offer')} style={field} />
               <div style={hint}>{t('Offers at or above this amount are accepted automatically. Buyers never see your threshold.')}</div>
+              <MultibuyEditor value={multibuyTiers} onChange={setMultibuyTiers} />
             </>
           )}
           <label style={lbl}>{t('Quantity available')}</label>
