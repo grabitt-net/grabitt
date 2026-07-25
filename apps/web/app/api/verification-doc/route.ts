@@ -12,8 +12,9 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const userId = url.searchParams.get('userId')
-  const kind = url.searchParams.get('kind') // 'id' | 'address'
-  if (!userId || (kind !== 'id' && kind !== 'address')) {
+  const kind = url.searchParams.get('kind') // id | address | registration | modelo036 | proof
+  const KINDS = ['id', 'address', 'registration', 'modelo036', 'proof']
+  if (!userId || !KINDS.includes(kind ?? '')) {
     return NextResponse.json({ error: 'Missing userId/kind' }, { status: 400 })
   }
 
@@ -29,11 +30,19 @@ export async function GET(req: Request) {
   // Only the document's owner or an admin reviewer may view it.
   if (me.id !== userId && !isAdmin) return NextResponse.json({ error: 'Not authorised' }, { status: 403 })
 
-  const target = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { idDocPath: true, addressDocPath: true },
-  })
-  const path = kind === 'id' ? target?.idDocPath : target?.addressDocPath
+  // Personal ID/address docs live on the User row; business docs on the
+  // BusinessVerification record — both in the private  bucket.
+  let path: string | null | undefined
+  if (kind === 'id' || kind === 'address') {
+    const target = await prisma.user.findUnique({ where: { id: userId }, select: { idDocPath: true, addressDocPath: true } })
+    path = kind === 'id' ? target?.idDocPath : target?.addressDocPath
+  } else {
+    const v = await prisma.businessVerification.findUnique({
+      where: { userId },
+      select: { registrationDocPath: true, modelo036DocPath: true, proofOfAddressPath: true },
+    })
+    path = kind === 'registration' ? v?.registrationDocPath : kind === 'modelo036' ? v?.modelo036DocPath : v?.proofOfAddressPath
+  }
   if (!path) return NextResponse.json({ error: 'No document on file' }, { status: 404 })
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY

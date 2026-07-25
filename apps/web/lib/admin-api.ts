@@ -53,6 +53,12 @@ export function makeCrmApi(execToken: string) {
     candidates: (opts?: { query?: string; sector?: string; activeOnly?: boolean }) =>
       rpc<any[]>('crm.candidates', 'query', { activeOnly: false, ...opts }, execToken),
 
+    // Business verification review queue
+    businessVerifications: (status?: string) =>
+      rpc<any[]>('business.adminPending', 'query', status ? { status } : {}, execToken),
+    reviewBusiness: (userId: string, decision: 'approved' | 'rejected', reason?: string) =>
+      rpc<any>('business.adminReview', 'mutation', { userId, decision, reason }, execToken),
+
     // Disputes
     disputes: (status?: string) =>
       rpc<any[]>('crm.disputes', 'query', { status }, execToken),
