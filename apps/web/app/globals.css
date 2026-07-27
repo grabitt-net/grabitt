@@ -103,3 +103,17 @@ body {
   .inbox { grid-template-columns: 340px 1fr; height: calc(100dvh - 190px); }
   .inbox__back { display: none !important; }
 }
+
+/* Grab It Now map pin — pulsing ring to draw the eye to time-limited offers.
+   Honours reduced-motion. */
+@keyframes grabitPulse {
+  0%   { transform: rotate(-45deg) scale(0.6); opacity: 0.7; }
+  70%  { transform: rotate(-45deg) scale(1.9); opacity: 0; }
+  100% { transform: rotate(-45deg) scale(1.9); opacity: 0; }
+}
+.grabit-pin__ring {
+  animation: grabitPulse 1.8s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .grabit-pin__ring { animation: none; opacity: 0; }
+}

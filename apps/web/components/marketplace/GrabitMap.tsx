@@ -46,7 +46,8 @@ export default function GrabitMap({ points, centre, radiusKm }: { points: Grabit
       const icon = L.divIcon({
         className: '',
         html: `<div style="position:relative;width:36px;height:46px;transform:translate(-50%,-100%);filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))">
-          <div style="width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:linear-gradient(135deg,#FF4500,#FF8C00);border:2.5px solid #fff;"></div>
+          <div class="grabit-pin__ring" style="position:absolute;top:0;left:0;width:36px;height:36px;border-radius:50% 50% 50% 0;background:#FF4500;"></div>
+          <div style="position:relative;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:linear-gradient(135deg,#FF4500,#FF8C00);border:2.5px solid #fff;"></div>
           <div style="position:absolute;top:6px;left:0;width:36px;height:30px;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1;">⚡</div>
         </div>`,
         iconSize: [36, 46], iconAnchor: [18, 46], popupAnchor: [0, -42],
