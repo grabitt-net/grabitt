@@ -251,6 +251,14 @@ model User {
   businessBio        String?
   businessBanner     String?
 
+  // Property-agent profile — when set, an agent's contact details (WhatsApp,
+  // email, agency) are shown on their property listings so buyers can reach them
+  // directly. Separate from the phone above, which is escrow-gated.
+  isPropertyAgent    Boolean   @default(false)
+  agencyName         String?
+  agentWhatsapp      String?
+  agentEmail         String?
+
   // Compliance (GDPR consent + EU right-to-withdraw waiver + erasure)
   gdprAcceptedAt            DateTime?
   withdrawalWaiverAcceptedAt DateTime?

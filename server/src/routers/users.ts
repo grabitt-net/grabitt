@@ -310,6 +310,24 @@ export const usersRouter = router({
       })
     }),
 
+  // Property-agent profile. When enabled, the agent's WhatsApp/email/agency are
+  // shown on their property listings so buyers can contact them directly.
+  updateAgentProfile: protectedProcedure
+    .input(z.object({
+      isPropertyAgent: z.boolean().optional(),
+      agencyName: z.string().max(120).nullish(),
+      agentWhatsapp: z.string().max(40).nullish(),
+      agentEmail: z.string().email().max(120).nullish().or(z.literal('')),
+    }))
+    .mutation(({ ctx, input }) => {
+      const data: Record<string, unknown> = {}
+      if (input.isPropertyAgent !== undefined) data.isPropertyAgent = input.isPropertyAgent
+      if (input.agencyName !== undefined) data.agencyName = input.agencyName || null
+      if (input.agentWhatsapp !== undefined) data.agentWhatsapp = input.agentWhatsapp || null
+      if (input.agentEmail !== undefined) data.agentEmail = (input.agentEmail as string) || null
+      return ctx.prisma.user.update({ where: { id: ctx.user.id }, data })
+    }),
+
   // Business storefront customisation — only for active Business accounts.
   updateBusinessProfile: protectedProcedure
     .input(z.object({

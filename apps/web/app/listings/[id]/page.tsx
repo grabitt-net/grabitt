@@ -320,7 +320,35 @@ function ListingInner() {
             <div style={{ textAlign: 'center', fontSize: 10.5, color: '#777', fontFamily: 'var(--font-comfortaa)', marginTop: 8 }}>{t('Free to apply · your application goes straight to the employer')}</div>
           </div>
         ) : prop ? (
-          seller?.id && <MessageButton listingId={id} sellerId={seller.id} label={t('Enquire')} primary flex={1} />
+          <>
+            {seller?.id && <MessageButton listingId={id} sellerId={seller.id} label={t('Enquire')} primary flex={1} />}
+            {/* Property-agent direct contact — WhatsApp + email, shown when the
+                seller has set up an agent profile. */}
+            {(seller?.agentWhatsapp || seller?.agentEmail) && (
+              <div style={{ ...cardBox, marginTop: 10 }}>
+                <div style={panelTitle}>{t('Contact the agent')}</div>
+                {(seller?.agencyName || seller?.displayName) && (
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>
+                    🏢 {seller.agencyName || seller.displayName}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {seller?.agentWhatsapp && (
+                    <a href={`https://wa.me/${seller.agentWhatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                      style={{ flex: '1 1 130px', textAlign: 'center', textDecoration: 'none', background: '#25D366', color: '#fff', borderRadius: 12, padding: '11px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900 }}>
+                      💬 {t('WhatsApp')}
+                    </a>
+                  )}
+                  {seller?.agentEmail && (
+                    <a href={`mailto:${seller.agentEmail}?subject=${encodeURIComponent(`Enquiry: ${listing.title}`)}`}
+                      style={{ flex: '1 1 130px', textAlign: 'center', textDecoration: 'none', background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 12, padding: '11px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900 }}>
+                      ✉️ {t('Email')}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         ) : null}
         {basketErr && !job && !prop && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#c0392b', textAlign: 'center', marginTop: -4 }}>{basketErr}</div>}
 

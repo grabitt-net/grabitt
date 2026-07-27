@@ -253,7 +253,7 @@ export const listingsRouter = router({
       const listing = await ctx.prisma.listing.findUnique({
         where: { id: input.id },
         include: {
-          seller: { select: { id: true, displayName: true, avatar: true, grade: true, avgRating: true, salesCount: true, isVerified: true, isBusiness: true, businessName: true, businessVerified: true } },
+          seller: { select: { id: true, displayName: true, avatar: true, grade: true, avgRating: true, salesCount: true, isVerified: true, isBusiness: true, businessName: true, businessVerified: true, isPropertyAgent: true, agencyName: true, agentWhatsapp: true, agentEmail: true } },
           jobListing: true,
           propertyListing: true,
           _count: { select: { wishlistItems: true } }, // real "watching" count for the In-Demand box

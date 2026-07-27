@@ -30,8 +30,12 @@ export default function NewPropertyPage() {
   const [error, setError] = useState('')
   // Only business accounts (agents) may list property.
   const [gate, setGate] = useState<'checking' | 'ok' | 'needbusiness'>('checking')
+  // Agent contact profile — saved to the user and shown on every property they
+  // list, so buyers can reach them by WhatsApp / email directly.
+  const [agent, setAgent] = useState({ agencyName: '', agentWhatsapp: '', agentEmail: '' })
 
   const set = (k: string, v: any) => setF(prev => ({ ...prev, [k]: v }))
+  const setAg = (k: string, v: string) => setAgent(prev => ({ ...prev, [k]: v }))
 
   useEffect(() => {
     (async () => {
@@ -41,6 +45,11 @@ export default function NewPropertyPage() {
       try {
         const me: any = await trpcAuthed().users.me.query()
         setGate(me?.isBusiness ? 'ok' : 'needbusiness')
+        setAgent({
+          agencyName: me?.agencyName ?? me?.businessName ?? '',
+          agentWhatsapp: me?.agentWhatsapp ?? '',
+          agentEmail: me?.agentEmail ?? '',
+        })
       } catch { router.push('/auth?next=/property/new') }
     })()
   }, [router])
@@ -56,6 +65,17 @@ export default function NewPropertyPage() {
       let token = getAuthToken()
       if (!token) token = await refreshAuthToken()
       if (!token) { router.push('/auth?next=/property/new'); return }
+
+      // Save the agent's contact profile so it shows on this (and future)
+      // property listings. Best-effort — never block the listing on it.
+      try {
+        await trpcAuthed().users.updateAgentProfile.mutate({
+          isPropertyAgent: true,
+          agencyName: agent.agencyName.trim() || null,
+          agentWhatsapp: agent.agentWhatsapp.trim() || null,
+          agentEmail: agent.agentEmail.trim() || null,
+        })
+      } catch { /* non-fatal */ }
 
       const listing: any = await trpcAuthed().property.create.mutate({
         title: f.title.trim(),
@@ -132,6 +152,15 @@ export default function NewPropertyPage() {
             </div>
           </Row>
           <Field label="Description"><textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the property, condition, features and what's nearby…" style={{ ...inp, resize: 'vertical' }} /></Field>
+        </Section>
+
+        <Section title="Agent contact (shown on your listings)">
+          <div style={{ fontSize: 12, color: '#777', fontFamily: 'var(--font-ui)', marginTop: -4 }}>Buyers can reach you directly on these. Saved to your agent profile and applied to every property you list.</div>
+          <Field label="Agency name"><input value={agent.agencyName} onChange={e => setAg('agencyName', e.target.value)} placeholder="e.g. Canary Coast Properties" style={inp} /></Field>
+          <Row>
+            <Field label="WhatsApp number"><input value={agent.agentWhatsapp} onChange={e => setAg('agentWhatsapp', e.target.value)} inputMode="tel" placeholder="e.g. +34 600 123 456" style={inp} /></Field>
+            <Field label="Contact email"><input value={agent.agentEmail} onChange={e => setAg('agentEmail', e.target.value)} inputMode="email" placeholder="you@agency.com" style={inp} /></Field>
+          </Row>
         </Section>
 
         <Section title="Location on the map">
