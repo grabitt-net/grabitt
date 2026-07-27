@@ -82,10 +82,6 @@ export default function CategoryPage() {
       <QuickActions />
 
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <Link href="/" style={{ marginLeft: 'auto', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#9a8b74' }}>‹ All departments</Link>
-        </div>
-
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${label}…`} style={inp} />
 
         {/* Wrap onto multiple lines rather than a slidable bar, so every
