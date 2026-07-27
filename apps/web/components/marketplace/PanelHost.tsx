@@ -3614,13 +3614,15 @@ function PanelBody() {
                 {/* Fee explainer */}
                 {price && parseFloat(price) > 0 && (
                   <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 12, marginBottom: 12 }}>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 6 }}>Your estimated payout (Grabber grade)</div>
-                    {[['Listing price', `€${parseFloat(price).toFixed(2)}`],['Platform fee (8%)', `-€${(parseFloat(price) * 0.08).toFixed(2)}`],['You receive', `€${(parseFloat(price) * 0.92).toFixed(2)}`]].map(([l, v], i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
-                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#555' }}>{l}</span>
-                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: i === 2 ? 'var(--sage)' : '#555' }}>{v}</span>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 4 }}>If it sells at this price, you&apos;ll receive</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#999', marginBottom: 8, lineHeight: 1.45 }}>Listing is free — there&apos;s nothing to pay now. We only take our commission from the sale, and only once it sells.</div>
+                    {[['Sale price', `€${parseFloat(price).toFixed(2)}`],['Our commission (8%)', `-€${(parseFloat(price) * 0.08).toFixed(2)}`],['You receive', `€${(parseFloat(price) * 0.92).toFixed(2)}`]].map(([l, v], i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderTop: i === 2 ? '1px solid #ece3d7' : 'none', marginTop: i === 2 ? 4 : 0, paddingTop: i === 2 ? 6 : 3 }}>
+                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: i === 2 ? 800 : 400, color: i === 2 ? 'var(--dark)' : '#555' }}>{l}</span>
+                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: i === 2 ? 13 : 11, fontWeight: 900, color: i === 2 ? 'var(--sage)' : '#555' }}>{v}</span>
                       </div>
                     ))}
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, color: '#aaa', marginTop: 6 }}>Grabber grade · your commission falls as you level up.</div>
                   </div>
                 )}
               </>

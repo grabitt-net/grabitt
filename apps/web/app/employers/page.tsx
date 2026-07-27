@@ -41,14 +41,13 @@ function EmployersInner() {
 
   return (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <Topbar />
+      <Topbar title="🏢 Employers" />
       <QuickActions />
 
       {gate === 'business' ? (
         <>
           <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>🏢 {t('Employer Dashboard')}</span>
               <Link href="/account?tab=recruitment" style={{ marginLeft: 'auto', textDecoration: 'none', background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 50, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>💼 {t('Recruitment')}</Link>
               <Link href="/jobs/new" style={{ textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>+ {t('Post a Job')}</Link>
             </div>

@@ -12,10 +12,10 @@ import PanelHost from './PanelHost'
 // restructuring, and it works from server components too (this file is the
 // client boundary). Pages that already have their own PanelProvider should
 // render <Topbar /> directly instead, so a second context isn't nested.
-export default function SiteHeader() {
+export default function SiteHeader({ title }: { title?: string } = {}) {
   return (
     <PanelProvider>
-      <Topbar />
+      <Topbar title={title} />
       <PanelHost />
     </PanelProvider>
   )

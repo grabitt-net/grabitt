@@ -37,7 +37,7 @@ function nearestTown(lat: number, lng: number) {
   return best.name
 }
 
-export default function Topbar() {
+export default function Topbar({ title }: { title?: string } = {}) {
   const { openPanel } = usePanel()
   const router = useRouter()
   const [query, setQuery] = useState('')
@@ -71,7 +71,7 @@ export default function Topbar() {
       borderBottom: '1.5px solid var(--sand2)',
     }}>
       {/* Desktop (≥820px): persistent horizontal nav bar */}
-      <DesktopNav />
+      <DesktopNav title={title} />
 
       {/* Mobile/tablet (<820px): logo + search + icon rail */}
       <div className="mobile-chrome">
@@ -81,15 +81,15 @@ export default function Topbar() {
           <button onClick={() => openPanel('menu')} aria-label="Grabitt menu"
             style={{ flexShrink: 0, cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}>
             <Logo height={30} />
-            <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: '#7a6a55', fontWeight: 700, marginTop: 2, whiteSpace: 'nowrap' }}>
-              {t('Your local everything')}
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: title ? 14 : 9, fontWeight: title ? 700 : 700, color: title ? 'var(--dark)' : '#7a6a55', marginTop: 2, whiteSpace: 'nowrap' }}>
+              {title || t('Your local everything')}
             </div>
           </button>
         ) : (
           <Link href="/" style={{ flexShrink: 0, cursor: 'pointer', textDecoration: 'none' }}>
             <Logo height={30} />
-            <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: '#7a6a55', fontWeight: 700, marginTop: 2, whiteSpace: 'nowrap' }}>
-              {t('Your local everything')}
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: title ? 14 : 9, fontWeight: 700, color: title ? 'var(--dark)' : '#7a6a55', marginTop: 2, whiteSpace: 'nowrap' }}>
+              {title || t('Your local everything')}
             </div>
           </Link>
         )}

@@ -14,7 +14,7 @@ import { t } from '@/lib/i18n'
 // A persistent horizontal bar — logo, wide search, primary "Sell" CTA, and
 // icon+label account actions — instead of the phone icon-rail. Same panels,
 // same data as mobile; just laid out for wide screens.
-export default function DesktopNav() {
+export default function DesktopNav({ title }: { title?: string } = {}) {
   const { openPanel } = usePanel()
   const router = useRouter()
   const isHome = usePathname() === '/'
@@ -42,10 +42,12 @@ export default function DesktopNav() {
         <button onClick={() => openPanel('menu')} aria-label="Grabitt menu"
           style={{ cursor: 'pointer', textAlign: 'left', flexShrink: 0, padding: 0, background: 'none', border: 'none' }}>
           <Logo height={38} />
+          {title && <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', marginTop: 2, whiteSpace: 'nowrap' }}>{title}</div>}
         </button>
       ) : (
         <Link href="/" style={{ cursor: 'pointer', textAlign: 'left', flexShrink: 0, padding: 0, textDecoration: 'none' }}>
           <Logo height={38} />
+          {title && <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', marginTop: 2, whiteSpace: 'nowrap' }}>{title}</div>}
         </Link>
       )}
 
