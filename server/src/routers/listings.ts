@@ -734,7 +734,7 @@ export const listingsRouter = router({
       ctx.prisma.listing.findMany({
         where: { status: 'active', grabItNowUntil: { gt: new Date() } },
         orderBy: { grabItNowUntil: 'asc' },
-        take: 20,
+        take: 200,
         include: { seller: { select: { id: true, displayName: true, grade: true } } },
       })
     ),

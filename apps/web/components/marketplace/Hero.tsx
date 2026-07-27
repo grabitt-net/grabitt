@@ -1,17 +1,17 @@
 'use client'
-import { usePanel } from '@/context/PanelContext'
+import { useRouter } from 'next/navigation'
 import Icon from './Icon'
 
 // The Grabitt Now promo banner. The quick-actions pills that used to live here
 // are now the persistent <QuickActions/> bar rendered as page chrome.
 export default function Hero() {
-  const { openPanel } = usePanel()
+  const router = useRouter()
 
   return (
     <section style={{ padding: '8px 14px 4px' }} className="hero">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <button
-          onClick={() => openPanel('grabit')}
+          onClick={() => router.push('/grabit')}
           style={{
             width: '100%', background: 'linear-gradient(135deg, #FF4500, #FF8C00)',
             color: '#fff', border: 'none', borderRadius: 14,

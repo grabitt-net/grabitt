@@ -36,7 +36,7 @@ export default function CategoryGrid() {
     // Jobs and Property have dedicated full pages with advanced search.
     if (cat.name === 'Jobs') return void router.push('/jobs')
     if (cat.name === 'Property') return void router.push('/property')
-    if (cat.name === 'Grab It Now') return void openPanel('grabit')
+    if (cat.name === 'Grab It Now') return void router.push('/grabit')
     // Every other department opens its own page (same shell as the rest of the
     // site) rather than the old modal.
     const slug = DEPT_ENUM[cat.name]
