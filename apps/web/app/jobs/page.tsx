@@ -113,12 +113,15 @@ export default function JobsPage() {
             <button type="button" onClick={() => setShowAdvanced(v => !v)} style={{ ...sel, color: 'var(--orange)', borderColor: 'var(--orange)' }}>
               {showAdvanced ? 'Fewer filters ▲' : 'More filters ▼'}
             </button>
-            <select value={sort} onChange={e => setSort(e.target.value)} style={{ ...sel, marginLeft: 'auto' }}>
+            <select value={sort} onChange={e => setSort(e.target.value)} style={sel}>
               <option value="newest">Newest</option>
               <option value="salary_high">Highest paid</option>
               <option value="salary_low">Lowest paid</option>
               <option value="soonest">Starting soonest</option>
             </select>
+            {/* Seeker + employer CTAs sit on the filter line, pushed to the right */}
+            <SeekerCta />
+            <Link href="/jobs/new" style={{ background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 14px', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>+ Post a Job</Link>
           </div>
 
           {showAdvanced && (
@@ -142,12 +145,6 @@ export default function JobsPage() {
             </div>
           )}
         </form>
-
-        {/* Actions sit below the filters, per the layout brief */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <SeekerCta />
-          <Link href="/jobs/new" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '9px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800 }}>+ Post a Job</Link>
-        </div>
 
         {/* Dynamic location filters — update as jobs are posted */}
         {(locations.length > 0 || remoteCount > 0) && (
@@ -230,7 +227,7 @@ export default function JobsPage() {
 function SeekerCta() {
   const { openPanel } = usePanel()
   return (
-    <button onClick={() => openPanel('seekerProfile')} style={{ flex: 1, border: '1.5px solid var(--orange)', background: '#fff', color: 'var(--orange)', borderRadius: 50, padding: '9px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>🙋 List yourself for work</button>
+    <button onClick={() => openPanel('seekerProfile')} style={{ marginLeft: 'auto', border: '1.5px solid var(--orange)', background: '#fff', color: 'var(--orange)', borderRadius: 50, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>🙋 Find me work</button>
   )
 }
 
