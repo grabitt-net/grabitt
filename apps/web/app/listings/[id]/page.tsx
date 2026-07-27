@@ -48,6 +48,7 @@ function ListingInner() {
   const router = useRouter()
   const { openPanel } = usePanel()
   const [listing, setListing] = useState<any>(null)
+  const [activePhoto, setActivePhoto] = useState(0)
   const [state, setState] = useState<'loading' | 'ready' | 'notfound'>('loading')
   const [meId, setMeId] = useState<string | null>(null)
   const [comps, setComps] = useState<any>(null)
@@ -144,7 +145,8 @@ function ListingInner() {
   }
   const isOwner = !!meId && meId === seller?.id
   const isRent = prop?.type === 'rent'
-  const heroImg = Array.isArray(listing.images) ? listing.images[0] : null
+  const photos: string[] = Array.isArray(listing.images) ? listing.images.filter(Boolean) : []
+  const heroImg = photos[activePhoto] ?? photos[0] ?? null
   const emoji = deptEmoji(listing.department)
   const priceLabel = job ? salaryLabel(job.salaryMin, job.salaryMax, job.salaryPeriod) : `€${Number(listing.price).toLocaleString()}${isRent ? '/mo' : ''}`
   const ref = String(id).replace(/-/g, '').slice(0, 6).toUpperCase()
@@ -231,6 +233,18 @@ function ListingInner() {
             {!isOwner && seller?.id && <RailBtn icon="💬" label="Message" onClick={startChat} />}
           </div>
         </div>
+
+        {/* Thumbnail strip — tap to swap the hero image. Only shown when there's
+            more than one photo. */}
+        {photos.length > 1 && (
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2, marginRight: 66 }}>
+            {photos.map((src, i) => (
+              <button key={i} onClick={() => setActivePhoto(i)} style={{ flexShrink: 0, width: 64, height: 64, borderRadius: 10, overflow: 'hidden', border: i === activePhoto ? '2px solid var(--orange)' : '1px solid #ece3d7', background: 'var(--sand)', cursor: 'pointer', padding: 0 }} aria-label={`Photo ${i + 1}`}>
+                <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Title + price, in line with Buy / Offer / In demand */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -347,6 +361,9 @@ function ListingInner() {
                 <DetailRow label={t('Model / Brand')} value={listing.brand} always />
                 <DetailRow label={t('Colour')} value={listing.colour} always />
                 <DetailRow label={t('Size')} value={listing.size} always />
+                {listing.attributes && typeof listing.attributes === 'object' && Object.entries(listing.attributes as Record<string, string>).map(([k, v]) => (
+                  v ? <DetailRow key={k} label={t(k)} value={v} /> : null
+                ))}
                 <DetailRow label={t('Category')} value={DEPT_LABEL[listing.department] ?? listing.department} always />
                 {typeof listing.stock === 'number' && (
                   <DetailRow label={t('Availability')} value={listing.stock > 0 ? `${listing.stock} ${t('in stock')}` : t('Out of stock')} always />

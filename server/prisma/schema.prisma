@@ -527,6 +527,10 @@ model Listing {
   autoAcceptMin    Decimal?         @db.Decimal(10, 2)  // offers >= this are auto-accepted (seller-only, never shown to buyers)
   // Multibuy: [{ qty, discountPct }] — buy N, save X%. Business sellers only.
   multibuyTiers    Json?
+  // Category-specific attributes, e.g. { Type, Style, Material } for fashion or
+  // { Type, Storage } for electronics. Values are chosen from fixed lists so
+  // they stay searchable. See lib/listingAttributes.
+  attributes       Json?
   viewCount        Int              @default(0)
   relistCount      Int              @default(0)  // standard listings auto-relist free 3× every 21 days
   createdAt        DateTime         @default(now())

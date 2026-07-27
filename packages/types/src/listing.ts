@@ -60,6 +60,10 @@ export const CreateListingInputSchema = z.object({
     qty: z.number().int().min(2).max(99),
     discountPct: z.number().min(1).max(90),
   })).max(4).optional(),
+  // Category-specific facts chosen from fixed lists (see lib/listingAttributes),
+  // e.g. { Type: 'Dress', Size: 'M', Material: 'Cotton' }. Kept searchable by
+  // folding the values into the listing's tags.
+  attributes: z.record(z.string(), z.string()).optional(),
 })
 export type CreateListingInput = z.infer<typeof CreateListingInputSchema>
 

@@ -20,6 +20,7 @@ import SignInFirst from './SignInFirst'
 import BusinessVerifyPanel from './BusinessVerifyPanel'
 import StorefrontEditor from './StorefrontEditor'
 import MultibuyEditor, { type MultibuyTier } from './MultibuyEditor'
+import { attributesFor } from '@/lib/listingAttributes'
 import ApplicationsBoardPanel from './ApplicationsBoardPanel'
 import dynamic from 'next/dynamic'
 
@@ -3317,6 +3318,9 @@ function PanelBody() {
     const [brand, setBrand] = useState('')
     const [colour, setColour] = useState('')
     const [size, setSize] = useState('')
+    // Category-specific attributes ({ Type, Size, Material, … }), the fields shown
+    // change with the chosen department. See lib/listingAttributes.
+    const [attrs, setAttrs] = useState<Record<string, string>>({})
     const [stock, setStock] = useState('1')
     const [freeItem, setFreeItem] = useState(false)
     const [autoAcceptMin, setAutoAcceptMin] = useState('')
@@ -3480,6 +3484,34 @@ function PanelBody() {
                   </div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 5 }}>{t('Optional — buyers filter and search on these.')}</div>
                 </div>
+
+                {/* Category-specific fields — the questions change with the department
+                    (a dress asks for size & material, a phone asks for storage). Every
+                    value comes from a fixed list so it stays searchable. */}
+                {(() => {
+                  const DEPT_SLUG: Record<string, string> = {
+                    'Electronics': 'electronics', 'Fashion': 'fashion', 'Home & Garden': 'home_garden',
+                    'Sport & Leisure': 'sport', 'Sport': 'sport', 'Gaming': 'gaming',
+                    'Pet Shop': 'pet_shop', 'Motors': 'motors',
+                  }
+                  const fields = attributesFor(DEPT_SLUG[dept] ?? '')
+                  if (!fields.length) return null
+                  return (
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{dept} details</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                        {fields.map(f => (
+                          <select key={f.key} value={attrs[f.key] ?? ''} onChange={e => setAttrs(prev => { const n = { ...prev }; if (e.target.value) n[f.key] = e.target.value; else delete n[f.key]; return n })}
+                            style={{ minWidth: 0, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: attrs[f.key] ? 'var(--dark)' : '#999', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+                            <option value="">{f.label}{f.optional ? '' : ' *'}</option>
+                            {f.options.map(o => <option key={o} value={o} style={{ color: '#1a1a1a' }}>{o}</option>)}
+                          </select>
+                        ))}
+                      </div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 5 }}>{t('Buyers filter and search on these.')}</div>
+                    </div>
+                  )
+                })()}
 
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Description</div>
@@ -3705,6 +3737,7 @@ function PanelBody() {
                       deliveryMethod: offersDelivery ? deliveryMethod : undefined,
                       autoAcceptMin: !freeItem && parseFloat(autoAcceptMin) > 0 ? parseFloat(autoAcceptMin) : undefined,
                       ...(multibuyTiers.length && !freeItem ? { multibuyTiers } : {}),
+                      ...(Object.keys(attrs).length ? { attributes: attrs } : {}),
                     })
                     // Paid promotions: charge before they go live. Redirect to
                     // Stripe Checkout; the webhook applies the option on payment.

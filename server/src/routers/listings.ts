@@ -421,7 +421,7 @@ export const listingsRouter = router({
           ...input,
           // Keywords are drawn from the whole listing, not just the title, so a
           // sparse title still yields several relevant tags.
-          tags: autoTags(input.title, [input.description, input.brand, input.colour, input.size, input.department, input.condition].filter(Boolean).join(' ')),
+          tags: autoTags(input.title, [input.description, input.brand, input.colour, input.size, input.department, input.condition, ...Object.values(input.attributes ?? {})].filter(Boolean).join(' ')),
           sellerId: user.id,
           status: 'active',
         },
@@ -484,6 +484,7 @@ export const listingsRouter = router({
         qty: z.number().int().min(2).max(99),
         discountPct: z.number().min(1).max(90),
       })).max(4).nullable().optional(),
+      attributes: z.record(z.string(), z.string()).nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { listingId, ...fields } = input
@@ -508,7 +509,8 @@ export const listingsRouter = router({
       const data: Record<string, unknown> = {}
       for (const [k, v] of Object.entries(fields)) if (v !== undefined) data[k] = v
       // Re-derive search tags whenever the words change.
-      if (data.title !== undefined || data.description !== undefined) {
+      if (data.title !== undefined || data.description !== undefined || data.attributes !== undefined) {
+        const attrs = (data.attributes as Record<string, string> | null | undefined) ?? (listing.attributes as Record<string, string> | null) ?? {}
         data.tags = autoTags(
           (data.title as string) ?? listing.title,
           [
@@ -518,6 +520,7 @@ export const listingsRouter = router({
             (data.size as string) ?? listing.size,
             listing.department,
             (data.condition as string) ?? listing.condition,
+            ...Object.values(attrs),
           ].filter(Boolean).join(' '),
         )
       }
