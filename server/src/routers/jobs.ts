@@ -275,16 +275,42 @@ export const jobsRouter = router({
       type: z.enum(['full_time', 'part_time', 'contract', 'temporary', 'volunteer']).optional(),
       remote: z.boolean().optional(),
       minSalary: z.number().optional(),
+      maxSalary: z.number().optional(),
+      salaryPeriod: z.enum(['month', 'year', 'hour']).optional(),
       location: z.string().optional(),
+      sector: z.string().optional(),
+      // A skill the employer asked for, matched against the job's skills[].
+      skill: z.string().optional(),
+      // Only jobs posted within the last N days.
+      postedWithinDays: z.number().optional(),
+      // Only jobs starting on or before this date (ISO).
+      startsBefore: z.string().optional(),
+      sort: z.enum(['newest', 'salary_high', 'salary_low', 'soonest']).default('newest'),
       page: z.number().default(1),
     }))
-    .query(({ ctx, input }) =>
-      ctx.prisma.jobListing.findMany({
+    .query(({ ctx, input }) => {
+      const orderBy =
+        input.sort === 'salary_high' ? [{ salaryMax: 'desc' as const }, { createdAt: 'desc' as const }]
+        : input.sort === 'salary_low' ? [{ salaryMin: 'asc' as const }, { createdAt: 'desc' as const }]
+        : input.sort === 'soonest' ? [{ startDate: 'asc' as const }, { createdAt: 'desc' as const }]
+        : [{ createdAt: 'desc' as const }]
+
+      const postedFrom = input.postedWithinDays
+        ? new Date(Date.now() - input.postedWithinDays * 86400000)
+        : undefined
+
+      return ctx.prisma.jobListing.findMany({
         where: {
           ...(input.type && { type: input.type }),
           ...(input.remote !== undefined && { remote: input.remote }),
-          // Keep jobs whose top-of-range pay meets the threshold.
+          ...(input.sector && { sector: { contains: input.sector, mode: 'insensitive' } }),
+          ...(input.skill && { skills: { has: input.skill } }),
+          ...(input.salaryPeriod && { salaryPeriod: input.salaryPeriod }),
+          // Keep jobs whose top-of-range pay meets the floor, and whose bottom
+          // stays under the ceiling.
           ...(input.minSalary && { salaryMax: { gte: input.minSalary } }),
+          ...(input.maxSalary && { salaryMin: { lte: input.maxSalary } }),
+          ...(input.startsBefore && { startDate: { lte: new Date(input.startsBefore) } }),
           // Searching by company name is deliberately absent: matching on a
           // hidden field would leak the employer by inference.
           ...(input.query && {
@@ -292,15 +318,17 @@ export const jobsRouter = router({
               { jobTitle: { contains: input.query, mode: 'insensitive' } },
               { sector: { contains: input.query, mode: 'insensitive' } },
               { establishmentType: { contains: input.query, mode: 'insensitive' } },
+              { skills: { has: input.query } },
             ],
           }),
           listing: {
             status: 'active',
             ...(input.location && { location: { contains: input.location, mode: 'insensitive' } }),
+            ...(postedFrom && { createdAt: { gte: postedFrom } }),
           },
         },
         include: { listing: true },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip: (input.page - 1) * 20,
         take: 20,
       }).then(rows => rows.map(r => ({
@@ -308,7 +336,23 @@ export const jobsRouter = router({
         company: publicEmployerName(r),
         employerNameWithheld: true,
       })))
-    ),
+    }),
+
+  // Distinct sectors of active jobs (+counts) — powers the sector filter.
+  sectors: publicProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.prisma.jobListing.findMany({
+      where: { listing: { status: 'active' }, sector: { not: null } },
+      select: { sector: true },
+    })
+    const counts = new Map<string, number>()
+    for (const r of rows) {
+      const sec = r.sector?.trim()
+      if (sec) counts.set(sec, (counts.get(sec) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .map(([sector, count]) => ({ sector, count }))
+      .sort((a, b) => b.count - a.count || a.sector.localeCompare(b.sector))
+  }),
 
   // Distinct locations of active jobs (+counts) — powers the location filters,
   // which update automatically as jobs are posted.

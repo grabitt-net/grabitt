@@ -381,7 +381,10 @@ function ListingInner() {
               </div>
             </div>
 
-            {sellerOther.length > 0 && (
+            {/* On a job listing this seller box would show the employer's other
+                *items*, which is confusing — jobs get their own "More jobs from
+                this employer" card below instead. */}
+            {!job && sellerOther.length > 0 && (
               <>
                 <div style={subLabel}>{t('More from this seller')}</div>
                 <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 3 }}>

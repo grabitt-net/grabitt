@@ -52,9 +52,13 @@ function CvInner() {
         (trpcAuthed() as any).seekers.myProfile.query(),
       ])
       setMe(u)
+      // Skills the member picked in Account → Attributes live on the User row,
+      // not the seeker profile. Pull them in so a first-time CV starts from what
+      // they already told us, rather than an empty field.
+      const attrSkills: string[] = (u as any)?.skills ?? []
       if (p) {
         setSummary(p.summary || '')
-        setSkills((p.skills || []).join(', '))
+        setSkills(((p.skills?.length ? p.skills : attrSkills) || []).join(', '))
         setStrengths((p.keyStrengths || []).join(', '))
         setCertifications((p.certifications || []).join(', '))
         setLanguages((p.languages || []).join(', '))
@@ -63,6 +67,9 @@ function CvInner() {
         setLocation(p.location || '')
         setWork(Array.isArray(p.workExperience) && p.workExperience.length ? p.workExperience.map((w: any) => ({ ...newJob(), ...w, bullets: w.bullets?.length ? w.bullets : [''] })) : [])
         setEducation(Array.isArray(p.education) && p.education.length ? p.education.map((e: any) => ({ ...newEdu(), ...e })) : [])
+      } else if (attrSkills.length) {
+        // No seeker profile yet — still seed skills from their attributes.
+        setSkills(attrSkills.join(', '))
       }
     } catch { /* leave blank */ }
     finally { setReady(true) }

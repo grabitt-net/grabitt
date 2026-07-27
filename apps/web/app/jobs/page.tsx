@@ -36,11 +36,18 @@ export default function JobsPage() {
   const [type, setType] = useState('')
   const [remote, setRemote] = useState(false)
   const [minSalary, setMinSalary] = useState('')
+  const [maxSalary, setMaxSalary] = useState('')
+  const [salaryPeriod, setSalaryPeriod] = useState('')
   const [location, setLocation] = useState('')
+  const [sector, setSector] = useState('')
+  const [postedWithin, setPostedWithin] = useState('')
+  const [sort, setSort] = useState('newest')
   const [rows, setRows] = useState<any[]>([])
   const [locations, setLocations] = useState<{ location: string; count: number }[]>([])
+  const [sectors, setSectors] = useState<{ sector: string; count: number }[]>([])
   const [loading, setLoading] = useState(true)
   const [mapView, setMapView] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const run = useCallback(async () => {
     setLoading(true)
@@ -50,15 +57,21 @@ export default function JobsPage() {
         ...(type && { type: type as never }),
         ...(remote && { remote: true }),
         ...(minSalary && { minSalary: Number(minSalary) }),
+        ...(maxSalary && { maxSalary: Number(maxSalary) }),
+        ...(salaryPeriod && { salaryPeriod: salaryPeriod as never }),
         ...(location && { location }),
+        ...(sector && { sector }),
+        ...(postedWithin && { postedWithinDays: Number(postedWithin) }),
+        sort: sort as never,
       })
       setRows(res as any[])
     } catch { setRows([]) } finally { setLoading(false) }
-  }, [query, type, remote, minSalary, location])
+  }, [query, type, remote, minSalary, maxSalary, salaryPeriod, location, sector, postedWithin, sort])
 
-  useEffect(() => { run() }, [type, remote, location]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { run() }, [type, remote, location, sector, salaryPeriod, postedWithin, sort]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     createLooseTrpcClient().jobs.locations.query().then(d => setLocations(d as any[])).catch(() => {})
+    createLooseTrpcClient().jobs.sectors.query().then(d => setSectors(d as any[])).catch(() => {})
   }, [])
 
   // Geocode job locations to pins for the map view.
@@ -83,23 +96,62 @@ export default function JobsPage() {
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>💼 Jobs</span>
-          <SeekerCta />
-          <Link href="/jobs/new" style={{ textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>+ Post a Job</Link>
+          <select value={sort} onChange={e => setSort(e.target.value)} style={{ ...sel, marginLeft: 'auto', fontSize: 12 }}>
+            <option value="newest">Newest</option>
+            <option value="salary_high">Highest paid</option>
+            <option value="salary_low">Lowest paid</option>
+            <option value="soonest">Starting soonest</option>
+          </select>
         </div>
 
         <form onSubmit={e => { e.preventDefault(); run() }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search job title or company…" style={inp} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search title, sector or skill…" style={{ ...inp, flex: 1 }} />
+            <button type="submit" style={btn}>Search</button>
+          </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <select value={type} onChange={e => setType(e.target.value)} style={sel}>
               {TYPES.map(t => <option key={t.label} value={t.value ?? ''}>{t.label}</option>)}
             </select>
-            <input value={minSalary} onChange={e => setMinSalary(e.target.value)} inputMode="numeric" placeholder="Min €/mo" style={{ ...inp, width: 110 }} />
+            <select value={sector} onChange={e => setSector(e.target.value)} style={sel}>
+              <option value="">All sectors</option>
+              {sectors.map(sc => <option key={sc.sector} value={sc.sector}>{sc.sector} ({sc.count})</option>)}
+            </select>
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#555' }}>
               <input type="checkbox" checked={remote} onChange={e => setRemote(e.target.checked)} /> Remote
             </label>
-            <button type="submit" style={btn}>Search</button>
+            <button type="button" onClick={() => setShowAdvanced(v => !v)} style={{ ...sel, color: 'var(--orange)', borderColor: 'var(--orange)' }}>
+              {showAdvanced ? 'Fewer filters ▲' : 'More filters ▼'}
+            </button>
           </div>
+
+          {showAdvanced && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: 10 }}>
+              <input value={minSalary} onChange={e => setMinSalary(e.target.value)} inputMode="numeric" placeholder="Min €" style={{ ...inp, width: 90 }} />
+              <input value={maxSalary} onChange={e => setMaxSalary(e.target.value)} inputMode="numeric" placeholder="Max €" style={{ ...inp, width: 90 }} />
+              <select value={salaryPeriod} onChange={e => setSalaryPeriod(e.target.value)} style={sel}>
+                <option value="">Any period</option>
+                <option value="hour">per hour</option>
+                <option value="month">per month</option>
+                <option value="year">per year</option>
+              </select>
+              <select value={postedWithin} onChange={e => setPostedWithin(e.target.value)} style={sel}>
+                <option value="">Any time</option>
+                <option value="1">Last 24 hours</option>
+                <option value="3">Last 3 days</option>
+                <option value="7">Last week</option>
+                <option value="30">Last month</option>
+              </select>
+              <button type="button" onClick={() => { setMinSalary(''); setMaxSalary(''); setSalaryPeriod(''); setPostedWithin(''); setSector(''); setType(''); setRemote(false); setQuery('') }} style={{ background: 'none', border: 'none', color: '#888', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>Clear all</button>
+            </div>
+          )}
         </form>
+
+        {/* Actions sit below the filters, per the layout brief */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          <SeekerCta />
+          <Link href="/jobs/new" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '9px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800 }}>+ Post a Job</Link>
+        </div>
 
         {/* Dynamic location filters — update as jobs are posted */}
         {locations.length > 0 && (
@@ -179,7 +231,7 @@ export default function JobsPage() {
 function SeekerCta() {
   const { openPanel } = usePanel()
   return (
-    <button onClick={() => openPanel('seekerProfile')} style={{ marginLeft: 'auto', border: '1.5px solid var(--orange)', background: '#fff', color: 'var(--orange)', borderRadius: 50, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>🙋 List yourself for work</button>
+    <button onClick={() => openPanel('seekerProfile')} style={{ flex: 1, border: '1.5px solid var(--orange)', background: '#fff', color: 'var(--orange)', borderRadius: 50, padding: '9px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>🙋 List yourself for work</button>
   )
 }
 
