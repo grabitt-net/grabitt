@@ -88,8 +88,11 @@ export default function CategoryPage() {
 
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${label}…`} style={inp} />
 
+        {/* Wrap onto multiple lines rather than a slidable bar, so every
+            subcategory is visible at once (nothing cut off). Small screens
+            flow to a few rows; wide screens fit on one. */}
         {subcats.length > 1 && (
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', paddingTop: 10 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, paddingTop: 10 }}>
             {subcats.map(sub => <Chip key={sub} active={activeSub === sub} onClick={() => setActiveSub(sub)}>{sub}</Chip>)}
           </div>
         )}
@@ -146,7 +149,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   return (
     <button onClick={onClick} style={{
       flex: '0 0 auto', border: `1.5px solid ${active ? 'var(--orange)' : '#e5dccd'}`, background: active ? 'var(--orange)' : '#fff',
-      color: active ? '#fff' : '#555', borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
+      color: active ? '#fff' : '#555', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
     }}>{children}</button>
   )
 }
