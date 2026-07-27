@@ -21,6 +21,7 @@ export default function EmployersPage() {
 }
 
 function EmployersInner() {
+  const { openPanel } = usePanel()
   const [gate, setGate] = useState<Gate>('loading')
 
   useEffect(() => {
@@ -47,8 +48,9 @@ function EmployersInner() {
       {gate === 'business' ? (
         <>
           <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Link href="/account?tab=recruitment" style={{ marginLeft: 'auto', textDecoration: 'none', background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 50, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>💼 {t('Recruitment')}</Link>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <button onClick={() => openPanel('advertise')} style={{ marginLeft: 'auto', background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 50, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>📣 {t('Sponsorship')}</button>
+              <Link href="/account?tab=recruitment" style={{ textDecoration: 'none', background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 50, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>💼 {t('Recruitment')}</Link>
               <Link href="/jobs/new" style={{ textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>+ {t('Post a Job')}</Link>
             </div>
           </header>
@@ -153,7 +155,8 @@ function BusinessUpsell({ signedOut }: { signedOut: boolean }) {
           )}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
+        <div style={{ textAlign: 'center', marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button onClick={() => openPanel('advertise')} style={{ background: 'none', border: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--orange)', cursor: 'pointer' }}>📣 {t('Sponsorship & advertising')} ›</button>
           <Link href="/jobs" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#9a8b74', textDecoration: 'none' }}>{t('Looking for work instead?')} ›</Link>
         </div>
       </div>

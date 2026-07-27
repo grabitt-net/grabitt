@@ -11,9 +11,9 @@ export default function QuickActions() {
   const router = useRouter()
 
   const actions = [
-    { label: 'Sponsorship', action: () => openPanel('advertise') },
     { label: 'Recruitment', action: () => router.push('/recruitment') },
     { label: 'Property', action: () => router.push('/property') },
+    // Sponsorship now lives inside the For Business page.
     { label: 'For Business', action: () => router.push('/employers') },
   ]
 
