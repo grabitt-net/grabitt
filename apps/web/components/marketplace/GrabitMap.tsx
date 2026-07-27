@@ -41,10 +41,15 @@ export default function GrabitMap({ points, centre, radiusKm }: { points: Grabit
       const n = seen.get(key) ?? 0
       seen.set(key, n + 1)
       const jitter = n === 0 ? [0, 0] : [Math.cos(n) * 0.004 * n, Math.sin(n) * 0.004 * n]
+      // A bold orange teardrop badge with a white lightning bolt — far more
+      // visible on the map than a bare emoji.
       const icon = L.divIcon({
         className: '',
-        html: `<div style="width:26px;height:26px;transform:translate(-50%,-100%);display:flex;align-items:center;justify-content:center;font-size:22px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))">⚡</div>`,
-        iconSize: [26, 26], iconAnchor: [13, 26],
+        html: `<div style="position:relative;width:36px;height:46px;transform:translate(-50%,-100%);filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))">
+          <div style="width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:linear-gradient(135deg,#FF4500,#FF8C00);border:2.5px solid #fff;"></div>
+          <div style="position:absolute;top:6px;left:0;width:36px;height:30px;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1;">⚡</div>
+        </div>`,
+        iconSize: [36, 46], iconAnchor: [18, 46], popupAnchor: [0, -42],
       })
       const m = L.marker([p.lat + jitter[0], p.lng + jitter[1]], { icon }).addTo(layer)
       m.bindPopup(
