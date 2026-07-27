@@ -5,6 +5,7 @@ import HomeSections from '@/components/marketplace/HomeSections'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
+import PanelDeepLink from '@/components/marketplace/PanelDeepLink'
 
 // The homepage body (hero, departments, featured, banners, listings, etc.) is
 // rendered by <HomeSections/> from the admin-controlled layout (Admin → Homepage),
@@ -19,6 +20,7 @@ export default function HomePage() {
         <Footer />
         <CartFab />
         <PanelHost />
+        <PanelDeepLink />
       </main>
     </PanelProvider>
   )

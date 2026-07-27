@@ -27,11 +27,11 @@ export async function GET(req: Request) {
   // 12h expiry — remove and notify.
   const expired = await prisma.cartItem.findMany({
     where: { expiresAt: { lte: now } },
-    include: { listing: { select: { title: true } } },
+    select: { id: true, userId: true, listingId: true, listing: { select: { title: true } } },
   })
   for (const c of expired) {
     await prisma.notification.create({
-      data: { userId: c.userId, kind: 'system', title: '🛒 Removed from your basket', body: `"${c.listing.title}" was removed from your basket after 12 hours. Add it again to buy.` },
+      data: { userId: c.userId, kind: 'system', title: '🛒 Removed from your basket', body: `"${c.listing.title}" was removed from your basket after 12 hours. Add it again to buy.`, actionUrl: `/listings/${c.listingId}` },
     })
   }
   if (expired.length) await prisma.cartItem.deleteMany({ where: { id: { in: expired.map(c => c.id) } } })
@@ -39,11 +39,11 @@ export async function GET(req: Request) {
   // 6h warning.
   const warn6 = await prisma.cartItem.findMany({
     where: { warn6SentAt: null, expiresAt: { gt: now, lte: sixHoursLeft } },
-    include: { listing: { select: { title: true } } },
+    select: { id: true, userId: true, listingId: true, listing: { select: { title: true } } },
   })
   for (const c of warn6) {
     await prisma.notification.create({
-      data: { userId: c.userId, kind: 'system', title: '⏳ Basket reminder', body: `"${c.listing.title}" will be removed from your basket in about 6 hours. Check out to secure it.` },
+      data: { userId: c.userId, kind: 'system', title: '⏳ Basket reminder', body: `"${c.listing.title}" will be removed from your basket in about 6 hours. Check out to secure it.`, actionUrl: `/listings/${c.listingId}` },
     })
   }
   if (warn6.length) await prisma.cartItem.updateMany({ where: { id: { in: warn6.map(c => c.id) } }, data: { warn6SentAt: now } })
@@ -51,11 +51,11 @@ export async function GET(req: Request) {
   // 10h warning (≈2h left).
   const warn10 = await prisma.cartItem.findMany({
     where: { warn10SentAt: null, expiresAt: { gt: now, lte: twoHoursLeft } },
-    include: { listing: { select: { title: true } } },
+    select: { id: true, userId: true, listingId: true, listing: { select: { title: true } } },
   })
   for (const c of warn10) {
     await prisma.notification.create({
-      data: { userId: c.userId, kind: 'system', title: '⚠️ Basket about to clear', body: `"${c.listing.title}" will be removed from your basket in ~2 hours. Complete checkout now.` },
+      data: { userId: c.userId, kind: 'system', title: '⚠️ Basket about to clear', body: `"${c.listing.title}" will be removed from your basket in ~2 hours. Complete checkout now.`, actionUrl: `/listings/${c.listingId}` },
     })
   }
   if (warn10.length) await prisma.cartItem.updateMany({ where: { id: { in: warn10.map(c => c.id) } }, data: { warn10SentAt: now } })

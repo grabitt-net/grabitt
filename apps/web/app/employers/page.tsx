@@ -135,7 +135,7 @@ function BusinessUpsell({ signedOut }: { signedOut: boolean }) {
         {/* Price + call to action */}
         <div style={{ background: '#fff', border: '2px solid var(--orange)', borderRadius: 16, padding: 20, marginTop: 12, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 30, fontWeight: 700, color: 'var(--orange)' }}>€29<span style={{ fontSize: 15, color: '#8a7d68', fontWeight: 400 }}>/{t('month')}</span></div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#6b5d48', marginTop: 4, marginBottom: 16 }}>{t('Free for 21 days — then €29/mo. Pause any time, nothing lost.')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#6b5d48', marginTop: 4, marginBottom: 16 }}>{t('Free for 7 days — then €29/mo. Pause any time, nothing lost.')}</div>
 
           {signedOut ? (
             <>
