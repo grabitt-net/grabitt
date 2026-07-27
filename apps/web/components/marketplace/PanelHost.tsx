@@ -57,7 +57,7 @@ const DEPT_LISTINGS: Record<string, [string, string, string, string][]> = {
   'Retro & Vintage': [['📻','Vintage Radio','€45','Las Palmas'],['🕹️','Atari Console','€120','Maspalomas'],['👔','70s Leather Jacket','€85','Telde'],['🎸','Fender Stratocaster','€340','Las Palmas'],['📷','Film Camera','€65','Playa del Inglés']],
   'Grab It Now': [['🛍️','Flash Deal Bundle','€29','Las Palmas'],['⚡','Today Only: TV','€199','Maspalomas'],['🔥','Clearance Sofa','€95','Telde'],['💥','iPhone Deal','€299','Las Palmas'],['⏰','Last 2: Laptop','€349','Playa del Inglés']],
   'Handy Help': [['🔧','Plumber — Urgent','€35/hr','Las Palmas'],['⚡','Electrician','€40/hr','Maspalomas'],['🪣','Cleaner Available','€12/hr','Telde'],['🏗️','Builder / Painter','€25/hr','Arucas'],['🌿','Gardener','€15/hr','Las Palmas']],
-  'Pet Shop': [['🐾','Golden Retriever Pup','€600','Las Palmas'],['🐱','Bengal Kitten','€450','Maspalomas'],['🦜','African Grey Parrot','€800','Telde'],['🐠','Aquarium Setup','€120','Playa del Inglés'],['🦮','Dog Walker','€10/hr','Las Palmas']],
+  'Pet Supplies': [['🐾','Golden Retriever Pup','€600','Las Palmas'],['🐱','Bengal Kitten','€450','Maspalomas'],['🦜','African Grey Parrot','€800','Telde'],['🐠','Aquarium Setup','€120','Playa del Inglés'],['🦮','Dog Walker','€10/hr','Las Palmas']],
 }
 
 const CARD_GRADS = [
@@ -1002,7 +1002,7 @@ function PanelBody() {
       'Property':       ['All', 'Rent', 'For Sale', 'Rooms', 'Commercial', 'Holiday'],
       'Health & Fitness':['All', 'Gym', 'Supplements', 'Running', 'Yoga', 'Medical'],
       'Kids & Baby':    ['All', 'Toys', 'Clothing', 'Prams', 'Books', 'Nursery'],
-      'Pet Shop':       ['All', 'Dogs', 'Cats', 'Birds', 'Fish', 'Reptiles', 'Services'],
+      'Pet Supplies':       ['All', 'Dogs', 'Cats', 'Birds', 'Fish', 'Reptiles', 'Services'],
       'Handy Help':     ['All', 'Plumbing', 'Electric', 'Cleaning', 'Building', 'Gardening'],
       'Hobbies & Crafts': ['All', 'Wool & Yarn', 'Fabric & Sewing', 'Art Supplies', 'Model Making', 'Scrapbooking', 'Beads & Jewellery', 'Tools'],
       'Food Store':     ['All', 'Bakery', 'Dairy', 'Wine', 'Oils', 'Coffee', 'Organic'],
@@ -3306,7 +3306,7 @@ function PanelBody() {
   if (panel.id === 'createListing') {
     const prefillCat = (panel.data?.category as string) || ''
 
-    const DEPTS = ['Electronics','Fashion','Home & Garden','Sport & Leisure','Retro & Vintage','Gaming','Pet Shop','Motors','Kids & Baby','Handy Help','Hobbies & Crafts','Jobs','Property','Services','Collectables','Other']
+    const DEPTS = ['Electronics','Fashion','Home & Garden','Sport & Leisure','Retro & Vintage','Gaming','Pet Supplies','Motors','Kids & Baby','Handy Help','Hobbies & Crafts','Jobs','Property','Services','Collectables','Other']
     const CONDITIONS = ['New','Like New','Very Good','Good','Fair','For Parts']
     const TOWNS = ['Las Palmas','Maspalomas','Playa del Inglés','Puerto Rico','Arucas','Telde','Santa Lucía','Ingenio','Agüimes','Gáldar','Mogán','San Bartolomé de Tirajana','Vecindario','Tejeda','Other']
 
@@ -3495,7 +3495,7 @@ function PanelBody() {
                   const DEPT_SLUG: Record<string, string> = {
                     'Electronics': 'electronics', 'Fashion': 'fashion', 'Home & Garden': 'home_garden',
                     'Sport & Leisure': 'sport', 'Sport': 'sport', 'Gaming': 'gaming',
-                    'Pet Shop': 'pet_shop', 'Motors': 'motors',
+                    'Pet Supplies': 'pet_shop', 'Motors': 'motors',
                   }
                   const fields = attributesFor(DEPT_SLUG[dept] ?? '')
                   if (!fields.length) return null
@@ -3712,7 +3712,7 @@ function PanelBody() {
                     const DEPT_MAP: Record<string, string> = {
                       'Electronics': 'electronics', 'Fashion': 'fashion', 'Home & Garden': 'home_garden',
                       'Sport & Leisure': 'sport', 'Sport': 'sport', 'Retro & Vintage': 'retro_vintage', 'Gaming': 'gaming',
-                      'Pet Shop': 'pet_shop', 'Motors': 'motors', 'Kids & Baby': 'kids_baby',
+                      'Pet Supplies': 'pet_shop', 'Motors': 'motors', 'Kids & Baby': 'kids_baby',
                       'Handy Help': 'handy_help', 'Jobs': 'jobs', 'Property': 'property',
                       'Services': 'services', 'Collectables': 'collectables', 'Gift Ideas': 'gift_ideas',
                       'Health & Fitness': 'health_fitness', 'Food Store': 'food_store',
@@ -3992,7 +3992,7 @@ function PanelBody() {
   if (panel.id === 'profile') {
     const GRADE_COLORS: Record<string, string> = { grabber: 'var(--orange)', dealer: '#eab308', trader: '#3b82f6', pro: '#8b5cf6' }
     const GRADE_ICONS: Record<string, string> = { grabber: '🟠', dealer: '🟡', trader: '🔵', pro: '⭐' }
-    const INTEREST_DEPTS = ['Electronics', 'Fashion', 'Home & Garden', 'Sport', 'Gaming', 'Motors', 'Kids & Baby', 'Property', 'Pet Shop', 'Retro & Vintage']
+    const INTEREST_DEPTS = ['Electronics', 'Fashion', 'Home & Garden', 'Sport', 'Gaming', 'Motors', 'Kids & Baby', 'Property', 'Pet Supplies', 'Retro & Vintage']
     const isOwnProfile = !panel.data?.userId || panel.data.userId === currentUserId
 
     type Me = { displayName: string; grade: string; salesCount: number; avgRating: number | null; createdAt: string; isVerified: boolean; interests: string[]; locale: string; isBusiness: boolean }

@@ -12,20 +12,16 @@ const IMG = (id: string) => `https://images.unsplash.com/${id}?w=320&h=320&fit=c
 
 const categories = [
   { icon: '🏡', name: 'Home & Garden', grad: 'linear-gradient(135deg,#56ab2f,#a8e063)', img: IMG('photo-1416879595882-3373a0480b5b') },
-  { icon: '💼', name: 'Jobs', grad: 'linear-gradient(135deg,#2193b0,#6dd5ed)', img: IMG('photo-1521737604893-d14cc237f11d') },
   { icon: '👗', name: 'Fashion', grad: 'linear-gradient(135deg,#f7971e,#ffd200)', img: IMG('photo-1445205170230-053b83016050') },
   { icon: '⚽', name: 'Sport', grad: 'linear-gradient(135deg,#11998e,#38ef7d)', img: IMG('photo-1461896836934-ffe607ba8211') },
   { icon: '🎮', name: 'Gaming', grad: 'linear-gradient(135deg,#8E2DE2,#c471f5)', img: IMG('photo-1542751371-adc38448a05e') },
   { icon: '📱', name: 'Electronics', grad: 'linear-gradient(135deg,#4776E6,#8E54E9)', img: IMG('photo-1498049794561-7780e7231661') },
   { icon: '🎁', name: 'Gift Ideas', grad: 'linear-gradient(135deg,#f953c6,#b91d73)', img: IMG('photo-1513885535751-8b9238bd345a') },
   { icon: '🧸', name: 'Kids & Baby', grad: 'linear-gradient(135deg,#f9d423,#ff4e50)', img: IMG('photo-1515488042361-ee00e0ddd4e4') },
-  { icon: '🏠', name: 'Property', grad: 'linear-gradient(135deg,#e96c2a,#f5a623)', img: IMG('photo-1560518883-ce09059eeffa') },
   { icon: '💊', name: 'Health, Fitness & Diet', grad: 'linear-gradient(135deg,#43cea2,#185a9d)', img: IMG('photo-1571019613454-1cb2f99b2d8b') },
-  { icon: '🥖', name: 'Food Store', grad: 'linear-gradient(135deg,#8e44ad,#c0392b)', img: IMG('photo-1542838132-92c53300491e') },
   { icon: '🕺', name: 'Retro & Vintage', grad: 'linear-gradient(135deg,#d35400,#7a4419)', img: IMG('photo-1489599849927-2ee91cede3ba') },
-  { icon: '🛍️', name: 'Grab It Now', grad: 'linear-gradient(135deg,#FF4500,#FF8C00)', img: '' }, // brand tile — no photo
   { icon: '🔧', name: 'Handy Help', grad: 'linear-gradient(135deg,#00b09b,#96c93d)', img: IMG('photo-1581578731548-c64695cc6952') },
-  { icon: '🐾', name: 'Pet Shop', grad: 'linear-gradient(135deg,#f093fb,#f5576c)', img: IMG('photo-1425082661705-1834bfd09dca') },
+  { icon: '🐾', name: 'Pet Supplies', grad: 'linear-gradient(135deg,#f093fb,#f5576c)', img: IMG('photo-1425082661705-1834bfd09dca') },
   { icon: '🧶', name: 'Hobbies & Crafts', grad: 'linear-gradient(135deg,#ff9a9e,#fecfef)', img: IMG('photo-1522145085346-fbc07f16dc46') },
 ]
 

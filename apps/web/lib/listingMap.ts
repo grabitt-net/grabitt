@@ -6,7 +6,7 @@ export const DEPT_LABEL: Record<string, string> = {
   sport: 'Sport', gaming: 'Gaming', gift_ideas: 'Gift Ideas', kids_baby: 'Kids & Baby',
   property: 'Property', health_fitness: 'Health, Fitness & Diet', food_store: 'Food Store',
   retro_vintage: 'Retro & Vintage', grab_it_now: 'Grab It Now', handy_help: 'Handy Help',
-  pet_shop: 'Pet Shop', motors: 'Motors', services: 'Services', collectables: 'Collectables',
+  pet_shop: 'Pet Supplies', motors: 'Motors', services: 'Services', collectables: 'Collectables',
   hobbies_crafts: 'Hobbies & Crafts', jobs: 'Jobs', other: 'Other',
 }
 

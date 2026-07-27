@@ -18,7 +18,7 @@ const CATS: { label: string; dept?: string }[] = [
   { label: 'Gaming', dept: 'gaming' },
   { label: 'Retro & Vintage', dept: 'retro_vintage' },
   { label: 'Motors', dept: 'motors' },
-  { label: 'Pet Shop', dept: 'pet_shop' },
+  { label: 'Pet Supplies', dept: 'pet_shop' },
   { label: 'Kids & Baby', dept: 'kids_baby' },
   { label: 'Collectables', dept: 'collectables' },
   { label: 'Hobbies & Crafts', dept: 'hobbies_crafts' },

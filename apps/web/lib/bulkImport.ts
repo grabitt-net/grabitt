@@ -38,7 +38,7 @@ export const IMPORT_COLUMNS = [
 // label and the raw enum value so either works in the sheet.
 const DEPARTMENTS: Record<string, string> = {
   'electronics': 'electronics', 'fashion': 'fashion', 'home & garden': 'home_garden', 'home_garden': 'home_garden',
-  'sport': 'sport', 'sport & leisure': 'sport', 'gaming': 'gaming', 'pet shop': 'pet_shop', 'pet_shop': 'pet_shop',
+  'sport': 'sport', 'sport & leisure': 'sport', 'gaming': 'gaming', 'pet supplies': 'pet_shop', 'pet shop': 'pet_shop', 'pet_shop': 'pet_shop',
   'motors': 'motors', 'kids & baby': 'kids_baby', 'kids_baby': 'kids_baby', 'health, fitness & diet': 'health_fitness',
   'health_fitness': 'health_fitness', 'food store': 'food_store', 'food_store': 'food_store', 'gift ideas': 'gift_ideas',
   'gift_ideas': 'gift_ideas', 'retro & vintage': 'retro_vintage', 'retro_vintage': 'retro_vintage',
@@ -49,7 +49,7 @@ const CONDITIONS: Record<string, string> = {
   'fair': 'fair', 'for parts': 'spares', 'spares': 'spares',
 }
 
-export const DEPARTMENT_HINT = 'Electronics, Fashion, Home & Garden, Sport, Gaming, Pet Shop, Motors, Kids & Baby, Health Fitness & Diet, Food Store, Gift Ideas, Retro & Vintage, Handy Help, Property'
+export const DEPARTMENT_HINT = 'Electronics, Fashion, Home & Garden, Sport, Gaming, Pet Supplies, Motors, Kids & Baby, Health Fitness & Diet, Food Store, Gift Ideas, Retro & Vintage, Handy Help, Property'
 export const CONDITION_HINT = 'New, Like New, Good, Fair, For Parts'
 
 // A minimal RFC-4180-ish CSV parser: handles quoted fields, escaped quotes
