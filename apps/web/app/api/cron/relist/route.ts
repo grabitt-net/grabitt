@@ -27,7 +27,7 @@ export async function GET(req: Request) {
       department: { notIn: EXCLUDED as unknown as never[] },
       createdAt: { lt: cutoff },
     },
-    select: { id: true, sellerId: true, title: true, relistCount: true },
+    select: { id: true, sellerId: true, title: true, relistCount: true, images: true },
     take: 500,
   })
 
@@ -35,9 +35,15 @@ export async function GET(req: Request) {
   let expired = 0
   for (const l of due) {
     if (l.relistCount < MAX_RELISTS) {
+      // Rotate the main photo on each relist so a refreshed listing looks new
+      // in the feed — the first image moves to the back, promoting the next one.
+      // A listing with only one photo is left as-is.
+      const rotated = Array.isArray(l.images) && l.images.length > 1
+        ? [...l.images.slice(1), l.images[0]]
+        : l.images
       await prisma.listing.update({
         where: { id: l.id },
-        data: { relistCount: { increment: 1 }, createdAt: new Date() },
+        data: { relistCount: { increment: 1 }, createdAt: new Date(), images: rotated },
       })
       await prisma.notification.create({
         data: {
