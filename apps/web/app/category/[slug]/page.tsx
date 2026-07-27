@@ -15,20 +15,26 @@ import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
 // instead of the old modal. Same site shell (Topbar + app-shell + Footer) with
 // the category search inputs on top and the listing grid below.
 const SUBCATS: Record<string, string[]> = {
-  'Electronics':        ['All', 'Phones', 'Laptops', 'Audio', 'Cameras', 'Gaming', 'Wearables'],
-  'Fashion':            ['All', "Women's", "Men's", "Kids'", 'Shoes', 'Accessories', 'Vintage'],
-  'Home & Garden':      ['All', 'Furniture', 'Kitchen', 'Garden', 'Decor', 'DIY', 'Lighting'],
-  'Sport':              ['All', 'Water Sports', 'Cycling', 'Football', 'Tennis', 'Gym', 'Golf'],
-  'Gaming':             ['All', 'Consoles', 'Games', 'Accessories', 'PC Gaming', 'Retro'],
-  'Health, Fitness & Diet': ['All', 'Gym', 'Supplements', 'Running', 'Yoga', 'Medical'],
-  'Kids & Baby':        ['All', 'Toys', 'Clothing', 'Prams', 'Books', 'Nursery'],
-  'Pet Shop':           ['All', 'Dogs', 'Cats', 'Birds', 'Fish', 'Reptiles', 'Services'],
-  'Handy Help':         ['All', 'Plumbing', 'Electric', 'Cleaning', 'Building', 'Gardening'],
-  'Food Store':         ['All', 'Bakery', 'Dairy', 'Wine', 'Oils', 'Coffee', 'Organic'],
-  'Retro & Vintage':    ['All', 'Vinyl', 'Clothing', 'Electronics', 'Instruments', 'Collectables'],
-  'Gift Ideas':         ['All', 'Experiences', 'Hampers', 'Beauty', 'Books', 'Jewellery'],
-  'Grab It Now':        ['All', 'Electronics', 'Furniture', 'Fashion', 'Sport', 'Other'],
-  'Hobbies & Crafts':   ['All', 'Wool & Yarn', 'Fabric & Sewing', 'Art Supplies', 'Model Making', 'Scrapbooking', 'Beads & Jewellery', 'Tools'],
+  // Exact subcategories from the V20 prototype's deptConfig, each with an 'All'
+  // pill prepended. Departments the prototype didn't define keep a sensible set.
+  'Electronics':            ['All', 'Phones', 'Laptops & Mac', 'TVs', 'Cameras', 'Audio', 'Gaming', 'Tablets', 'Accessories'],
+  'Fashion':                ['All', 'Womens Clothing', 'Mens Clothing', 'Shoes', 'Bags', 'Jewellery', 'Kids Fashion', 'Vintage', 'Accessories', 'Sportswear', 'Fancy Dress', 'Uniforms'],
+  'Home & Garden':          ['All', 'Soft Furnishings', 'Furniture', 'Wall Art', 'Ceramics', 'Home Office', 'Lighting', 'Kitchenware', 'Kitchen Electricals', 'Household Electricals', 'Dining Utensils', 'Bathroom', 'Flooring', 'Bedroom', 'Plants', 'Garden Furniture', 'Garden Equipment'],
+  'Sport':                  ['All', 'Cycling', 'Water Sports', 'Football', 'Golf', 'Gym & Fitness', 'Running', 'Tennis', 'Winter Sports', 'Volleyball', 'Sportswear', 'Basketball'],
+  'Gaming':                 ['All', 'PlayStation', 'Xbox', 'Nintendo', 'PC Gaming', 'Board Games', 'Trading Cards', 'Instruments', 'Drones'],
+  'Food Store':             ['All', 'Wine & Spirits', 'International Food', 'Coffee & Tea', 'Organic', 'BBQ', 'Cheese', 'Craft Beer', 'Oils & Sauces'],
+  'Gift Ideas':             ['All', 'Jewellery', 'Watches', 'Art', 'Candles & Scents', 'Gift Boxes', 'Ceramics', 'Handmade', 'Crystals'],
+  'Kids & Baby':            ['All', 'Toys', 'Baby Gear', 'Kids Bikes', 'Clothes 0-3', 'Clothes 4-12', 'Books', 'School Supplies', 'Games'],
+  'Health, Fitness & Diet': ['All', 'Skincare', 'Vitamins', 'Fitness', 'Equipment', 'Massage', 'Yoga', 'Dental', 'Optical', 'Hair Care', 'Beauty', 'Muscle Care'],
+  'Retro & Vintage':        ['All', 'Mid Century', 'Funky Stuff!', 'Vintage Clothing', 'Antiques', 'Furniture', 'Electrical', 'Kitchenware', 'Ceramics', 'Glassware', 'Records', 'Office'],
+  'Handy Help':             ['All', 'Plumbers', 'Carpenter', 'Sewing', 'Metalwork', 'Gardening', 'Cleaning', 'Roofing', 'Electrics', 'Building', 'Windows & Doors', 'Car Repair', 'Removals & Storage', 'Translation Services', 'Personal Assist'],
+  'Pet Shop':               ['All', 'Dog Food', 'Cat Food', 'Toys', 'Bedding', 'Collars', 'Treats', 'Accessories', 'Fish tanks'],
+  // Not defined in the prototype — kept from the earlier build.
+  'Grab It Now':            ['All', 'Electronics', 'Furniture', 'Fashion', 'Sport', 'Other'],
+  'Hobbies & Crafts':       ['All', 'Wool & Yarn', 'Fabric & Sewing', 'Art Supplies', 'Model Making', 'Scrapbooking', 'Beads & Jewellery', 'Tools'],
+  'Motors':                 ['All', 'Cars', 'Motorbikes', 'Scooters', 'Vans', 'Parts', 'Accessories', 'Bicycles'],
+  'Collectables':           ['All', 'Coins', 'Stamps', 'Trading Cards', 'Memorabilia', 'Antiques', 'Art', 'Militaria'],
+  'Services':               ['All', 'Tuition', 'Beauty', 'Events', 'Photography', 'Design', 'Repairs'],
 }
 
 export default function CategoryPage() {

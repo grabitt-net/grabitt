@@ -417,7 +417,14 @@ export const listingsRouter = router({
       await checkGradeUpgrade(ctx.prisma, user)
 
       const listing = await ctx.prisma.listing.create({
-        data: { ...input, tags: autoTags(input.title, input.description), sellerId: user.id, status: 'active' },
+        data: {
+          ...input,
+          // Keywords are drawn from the whole listing, not just the title, so a
+          // sparse title still yields several relevant tags.
+          tags: autoTags(input.title, [input.description, input.brand, input.colour, input.size, input.department, input.condition].filter(Boolean).join(' ')),
+          sellerId: user.id,
+          status: 'active',
+        },
       })
 
       // Wish matching: alert buyers whose active "I'm looking for X" wish this
@@ -504,7 +511,14 @@ export const listingsRouter = router({
       if (data.title !== undefined || data.description !== undefined) {
         data.tags = autoTags(
           (data.title as string) ?? listing.title,
-          (data.description as string) ?? listing.description,
+          [
+            (data.description as string) ?? listing.description,
+            (data.brand as string) ?? listing.brand,
+            (data.colour as string) ?? listing.colour,
+            (data.size as string) ?? listing.size,
+            listing.department,
+            (data.condition as string) ?? listing.condition,
+          ].filter(Boolean).join(' '),
         )
       }
       if (Object.keys(data).length === 0) return { ok: true, id: listing.id }
