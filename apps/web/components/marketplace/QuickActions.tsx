@@ -3,22 +3,18 @@ import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import { t } from '@/lib/i18n'
 
-// Persistent quick-actions bar — Sponsorship / Find Work / Find Home / Employers
-// / Business. Rendered under the header on every main page (home, jobs, property,
-// category) so the "Find Work"/"Find Home" shortcuts are always reachable.
+// Persistent quick-actions bar — Sponsorship / Recruitment / Property / For
+// Business. Rendered under the header on every main page. Find Work + Find Staff
+// are consolidated into the Recruitment page; For Business points at /employers.
 export default function QuickActions() {
   const { openPanel } = usePanel()
   const router = useRouter()
 
   const actions = [
     { label: 'Sponsorship', action: () => openPanel('advertise') },
-    { label: 'Find Work', action: () => router.push('/jobs') },
-    { label: 'Find Staff', action: () => openPanel('findStaff') },
-    { label: 'Find Home', action: () => router.push('/property') },
-    // Business accounts land straight on their Recruitment tab; /employers
-    // handles the upgrade pitch for everyone else.
-    { label: 'Employers', action: () => router.push('/employers') },
-    { label: 'Business', action: () => openPanel('business') },
+    { label: 'Recruitment', action: () => router.push('/recruitment') },
+    { label: 'Property', action: () => router.push('/property') },
+    { label: 'For Business', action: () => router.push('/employers') },
   ]
 
   return (
