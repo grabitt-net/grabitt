@@ -56,19 +56,18 @@ export default function PropertyPage() {
       <Topbar title="Property" />
       <QuickActions />
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <Link href="/property/new" style={{ marginLeft: 'auto', textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>+ List a Property</Link>
-        </div>
-
-        {/* Type tabs */}
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 8 }}>
-          {TYPES.map(t => (
-            <button key={t.label} onClick={() => setType(t.value ?? '')} style={{
-              flex: '0 0 auto', border: `1.5px solid ${type === (t.value ?? '') ? 'var(--orange)' : '#e5dccd'}`,
-              background: type === (t.value ?? '') ? 'var(--orange)' : '#fff', color: type === (t.value ?? '') ? '#fff' : '#555',
-              borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>{t.label}</button>
-          ))}
+        {/* Type tabs + List-a-property on one line — pills scroll, button stays put */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {TYPES.map(t => (
+              <button key={t.label} onClick={() => setType(t.value ?? '')} style={{
+                flex: '0 0 auto', border: `1.5px solid ${type === (t.value ?? '') ? 'var(--orange)' : '#e5dccd'}`,
+                background: type === (t.value ?? '') ? 'var(--orange)' : '#fff', color: type === (t.value ?? '') ? '#fff' : '#555',
+                borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>{t.label}</button>
+            ))}
+          </div>
+          <Link href="/property/new" style={{ flexShrink: 0, textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>+ List a Property</Link>
         </div>
 
         {/* Advanced search */}
