@@ -216,15 +216,6 @@ function ListingInner() {
       <QuickActions />
 
       <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {/* Back to search — centred above the photo, returns to the results the
-            buyer came from (jobs/property search, or the marketplace). */}
-        <button
-          onClick={() => { if (window.history.length > 1) router.back(); else router.push(job ? '/jobs' : prop ? '/property' : '/') }}
-          style={{ alignSelf: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, padding: '2px 8px' }}
-        >
-          ← {t('Back to search')}
-        </button>
-
         {/* Hero: image + vertical action rail */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
           <div style={{ flex: 1, minWidth: 0, height: 280, borderRadius: 14, overflow: 'hidden', background: 'var(--sand)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 96, border: '1px solid #ece3d7' }}>
@@ -239,17 +230,30 @@ function ListingInner() {
           </div>
         </div>
 
-        {/* Thumbnail strip — tap to swap the hero image. Only shown when there's
-            more than one photo. */}
-        {photos.length > 1 && (
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2, marginRight: 66 }}>
-            {photos.map((src, i) => (
-              <button key={i} onClick={() => setActivePhoto(i)} style={{ flexShrink: 0, width: 64, height: 64, borderRadius: 10, overflow: 'hidden', border: i === activePhoto ? '2px solid var(--orange)' : '1px solid #ece3d7', background: 'var(--sand)', cursor: 'pointer', padding: 0 }} aria-label={`Photo ${i + 1}`}>
-                <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              </button>
-            ))}
+        {/* Extra photos + In-demand stats share one row. Thumbnails swap the
+            hero image; the In-demand card is enlarged to fill the row height. */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
+          {photos.length > 1 && (
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+              {photos.map((src, i) => (
+                <button key={i} onClick={() => setActivePhoto(i)} style={{ flexShrink: 0, width: 72, height: 72, borderRadius: 10, overflow: 'hidden', border: i === activePhoto ? '2px solid var(--orange)' : '1px solid #ece3d7', background: 'var(--sand)', cursor: 'pointer', padding: 0 }} aria-label={`Photo ${i + 1}`}>
+                  <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                </button>
+              ))}
+            </div>
+          )}
+          <div style={{ flex: photos.length > 1 ? '0 0 168px' : 1, minWidth: 0, background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '8px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 4 }}>🔥 In demand</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', gap: 6 }}>
+              {[[views, 'views'], [watchers, 'watching'], [wanted, 'wanted']].map(([n, lab], i) => (
+                <div key={i} style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div>
+                  <div style={{ fontSize: 9, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{lab as string}</div>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Title + price, in line with Buy / Offer / In demand */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -262,64 +266,50 @@ function ListingInner() {
               </div>
             )}
             <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25 }}>{job?.jobTitle ?? listing.title}</h1>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)', marginTop: 2 }}>{priceLabel}</div>
-            <div style={{ fontSize: 11, color: '#666', marginTop: 3, fontFamily: 'var(--font-comfortaa)' }}>📍 {job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')} · Ref: {ref}</div>
-          </div>
-
-          {/* Buy / Offer / In demand — all on the title's line */}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'stretch', flex: '0 1 auto' }}>
-            {!isOwner && !job && !prop && (
-              <>
-                <button onClick={() => isGrabItNow ? openPanel('checkout', panelItem) : addToBasket()} disabled={basketBusy} style={{ width: 96, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 6px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: basketBusy ? 'wait' : 'pointer', lineHeight: 1.25 }}>{isGrabItNow ? <>⚡ {t('Buy Now')}</> : <>🛒 {t('Buy Now')}</>}<br /><span style={{ fontSize: 11 }}>{priceLabel}</span></button>
-                <button onClick={() => openPanel('makeOffer', panelItem)} style={{ width: 96, background: '#fff', color: '#FF4500', border: '2px solid #FF4500', borderRadius: 12, padding: '10px 6px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>💰 {t('Make')}<br />{t('an Offer')}</button>
-              </>
-            )}
-            <div style={{ width: 112, flexShrink: 0, background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '8px 5px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 5 }}>🔥 In demand</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', gap: 2 }}>
-                {[[views, 'views'], [watchers, 'watching'], [wanted, 'wanted']].map(([n, lab], i) => (
-                  <div key={i} style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div>
-                    <div style={{ fontSize: 8, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{lab as string}</div>
-                  </div>
-                ))}
-              </div>
+            {/* Price with location + reference alongside it */}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginTop: 3 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)' }}>{priceLabel}</div>
+              <div style={{ fontSize: 11, color: '#666', fontFamily: 'var(--font-comfortaa)' }}>📍 {job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')} · Ref: {ref}</div>
             </div>
           </div>
+
+          {/* Buy / Offer — on the title's line */}
+          {!isOwner && !job && !prop && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'stretch', flex: '0 1 auto' }}>
+              <button onClick={() => isGrabItNow ? openPanel('checkout', panelItem) : addToBasket()} disabled={basketBusy} style={{ width: 96, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 6px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: basketBusy ? 'wait' : 'pointer', lineHeight: 1.25 }}>{isGrabItNow ? <>⚡ {t('Buy Now')}</> : <>🛒 {t('Buy Now')}</>}<br /><span style={{ fontSize: 11 }}>{priceLabel}</span></button>
+              <button onClick={() => openPanel('makeOffer', panelItem)} style={{ width: 96, background: '#fff', color: '#FF4500', border: '2px solid #FF4500', borderRadius: 12, padding: '10px 6px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>💰 {t('Make')}<br />{t('an Offer')}</button>
+            </div>
+          )}
         </div>
 
         {/* Primary actions */}
         {isOwner ? (
           <div style={cardBox}>
-            <div style={{ textAlign: 'center', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 700, color: '#888', marginBottom: (job || prop) ? 0 : 8 }}>
-              Your {job ? 'job posting' : prop ? 'property listing' : 'listing'} — {job ? 'applicants' : 'enquiries'} appear in <Link href="/messages" style={{ color: 'var(--orange)', fontWeight: 800 }}>Messages</Link>.
-            </div>
-            {!job && !prop && (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => promote('grab_it_now')} style={{ flex: 1, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: '11px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>⚡ Grab It Now · €{PRICES.grabItNow}</button>
-                <button onClick={() => promote('featured')} style={{ flex: 1, background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 12, padding: '11px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>👀 Feature · €{PRICES.featuredPerWeek}/wk</button>
-              </div>
-            )}
-            {!job && !prop && (
-              editingPrice ? (
-                <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#555' }}>€</span>
-                  <input type="number" min={0} step="0.01" value={newPrice} onChange={e => setNewPrice(e.target.value)} autoFocus
-                    style={{ flex: 1, border: '1.5px solid var(--sand2)', borderRadius: 10, padding: '9px 10px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 800 }} />
-                  <button onClick={saveNewPrice} disabled={savingPrice} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', opacity: savingPrice ? 0.6 : 1 }}>{savingPrice ? '…' : 'Save'}</button>
-                  <button onClick={() => setEditingPrice(false)} style={{ background: 'transparent', color: '#888', border: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>Cancel</button>
+            {!job && !prop ? (
+              <>
+                {/* Upgrade + edit — all on one line */}
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button onClick={() => promote('grab_it_now')} style={{ flex: 1, minWidth: 0, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: '9px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, cursor: 'pointer', lineHeight: 1.2 }}>⚡ Grab It<br />Now · €{PRICES.grabItNow}</button>
+                  <button onClick={() => promote('featured')} style={{ flex: 1, minWidth: 0, background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 12, padding: '9px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, cursor: 'pointer', lineHeight: 1.2 }}>👀 Feature<br />€{PRICES.featuredPerWeek}/wk</button>
+                  <button onClick={() => { setNewPrice(String(Number(listing.price))); setEditingPrice(v => !v) }} style={{ flex: 1, minWidth: 0, background: '#fff', color: '#555', border: '1.5px solid var(--sand2)', borderRadius: 12, padding: '9px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, cursor: 'pointer', lineHeight: 1.2 }}>✏️ Change<br />price</button>
+                  <Link href={`/listings/${id}/edit`} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', textDecoration: 'none', background: '#fff', color: '#555', border: '1.5px solid var(--sand2)', borderRadius: 12, padding: '9px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, lineHeight: 1.2 }}>✎ Edit<br />listing</Link>
                 </div>
-              ) : (
-                <button onClick={() => { setNewPrice(String(Number(listing.price))); setEditingPrice(true) }}
-                  style={{ width: '100%', marginTop: 8, background: '#fff', color: '#555', border: '1.5px solid var(--sand2)', borderRadius: 12, padding: '10px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>
-                  ✏️ Change price · lowering it alerts everyone who saved it
-                </button>
-              )
+                {editingPrice && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                    <span style={{ fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#555' }}>€</span>
+                    <input type="number" min={0} step="0.01" value={newPrice} onChange={e => setNewPrice(e.target.value)} autoFocus
+                      style={{ flex: 1, border: '1.5px solid var(--sand2)', borderRadius: 10, padding: '9px 10px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 800 }} />
+                    <button onClick={saveNewPrice} disabled={savingPrice} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', opacity: savingPrice ? 0.6 : 1 }}>{savingPrice ? '…' : 'Save'}</button>
+                    <button onClick={() => setEditingPrice(false)} style={{ background: 'transparent', color: '#888', border: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                )}
+                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 10, color: '#999', textAlign: 'center', marginTop: 6 }}>Lowering the price alerts everyone who saved this item.</div>
+              </>
+            ) : (
+              <Link href={`/listings/${id}/edit`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', background: '#fff', color: '#555', border: '1.5px solid var(--sand2)', borderRadius: 12, padding: '11px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900 }}>
+                {t('Edit')} {job ? t('job posting') : t('property listing')}
+              </Link>
             )}
-            {/* Full edit — photos, title, description, stock, delivery, unlist */}
-            <Link href={`/listings/${id}/edit`} style={{ display: 'block', marginTop: 8, textAlign: 'center', textDecoration: 'none', background: '#fff', color: '#555', border: '1.5px solid var(--sand2)', borderRadius: 12, padding: '10px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900 }}>
-              {t('Edit listing')}
-            </Link>
           </div>
         ) : job ? (
           <div style={cardBox}>
@@ -360,7 +350,8 @@ function ListingInner() {
                 <DetailRow label={t('Category')} value={DEPT_LABEL[listing.department] ?? listing.department} />
               </>
             ) : (
-              <>
+              // Two columns so the box stays short — item facts are all brief.
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 14 }}>
                 <DetailRow label={t('Condition')} value={listing.condition ? (COND_LABEL[listing.condition] ?? listing.condition) : ''} always />
                 <DetailRow label={t('Reference')} value={ref} always />
                 <DetailRow label={t('Model / Brand')} value={listing.brand} always />
@@ -373,7 +364,7 @@ function ListingInner() {
                 {typeof listing.stock === 'number' && (
                   <DetailRow label={t('Availability')} value={listing.stock > 0 ? `${listing.stock} ${t('in stock')}` : t('Out of stock')} always />
                 )}
-              </>
+              </div>
             )}
           </div>
 
