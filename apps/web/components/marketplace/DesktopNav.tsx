@@ -42,12 +42,12 @@ export default function DesktopNav({ title }: { title?: string } = {}) {
         <button onClick={() => openPanel('menu')} aria-label="Grabitt menu"
           style={{ cursor: 'pointer', textAlign: 'left', flexShrink: 0, padding: 0, background: 'none', border: 'none' }}>
           <Logo height={38} />
-          {title && <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', marginTop: 2, whiteSpace: 'nowrap' }}>{title}</div>}
+          {title && <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', marginTop: 2, whiteSpace: 'nowrap', textAlign: 'center' }}>{title}</div>}
         </button>
       ) : (
         <Link href="/" style={{ cursor: 'pointer', textAlign: 'left', flexShrink: 0, padding: 0, textDecoration: 'none' }}>
           <Logo height={38} />
-          {title && <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', marginTop: 2, whiteSpace: 'nowrap' }}>{title}</div>}
+          {title && <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', marginTop: 2, whiteSpace: 'nowrap', textAlign: 'center' }}>{title}</div>}
         </Link>
       )}
 

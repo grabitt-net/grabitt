@@ -81,14 +81,14 @@ export default function Topbar({ title }: { title?: string } = {}) {
           <button onClick={() => openPanel('menu')} aria-label="Grabitt menu"
             style={{ flexShrink: 0, cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}>
             <Logo height={30} />
-            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: title ? 14 : 9, fontWeight: title ? 700 : 700, color: title ? 'var(--dark)' : '#7a6a55', marginTop: 2, whiteSpace: 'nowrap' }}>
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: title ? 14 : 9, fontWeight: 700, color: title ? 'var(--dark)' : '#7a6a55', marginTop: 2, whiteSpace: 'nowrap', textAlign: title ? 'center' : 'left' }}>
               {title || t('Your local everything')}
             </div>
           </button>
         ) : (
           <Link href="/" style={{ flexShrink: 0, cursor: 'pointer', textDecoration: 'none' }}>
             <Logo height={30} />
-            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: title ? 14 : 9, fontWeight: 700, color: title ? 'var(--dark)' : '#7a6a55', marginTop: 2, whiteSpace: 'nowrap' }}>
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: title ? 14 : 9, fontWeight: 700, color: title ? 'var(--dark)' : '#7a6a55', marginTop: 2, whiteSpace: 'nowrap', textAlign: title ? 'center' : 'left' }}>
               {title || t('Your local everything')}
             </div>
           </Link>
