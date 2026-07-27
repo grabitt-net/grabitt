@@ -19,7 +19,7 @@ export default function CommunityStrip() {
     <section style={{ padding: '16px 0 0' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '0 14px 12px' }}>
         <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>📰 {t('Grabitt Guides')}</h2>
-        <Link href="/community" style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 700, color: 'var(--orange)', textDecoration: 'none' }}>{t('See all')}</Link>
+        <Link href="/community" style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--orange)', textDecoration: 'none', background: '#FFF3EE', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px' }}>{t('See all')}</Link>
       </div>
       <div style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none', gap: 10, padding: '0 14px 4px' }}>
         {posts.map(p => (

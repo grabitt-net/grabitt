@@ -31,9 +31,9 @@ export default function BottomCarousel() {
           </div>
           <button
             onClick={() => openPanel('justlisted')}
-            style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', color: 'var(--orange)', border: 'none', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#FFF3EE', color: 'var(--orange)', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}
           >
-            See all <Icon name="arrowRight" size={15} />
+            See all <Icon name="arrowRight" size={14} />
           </button>
         </div>
         <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>

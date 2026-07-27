@@ -29,7 +29,7 @@ export default function ListingsRow({ title, seeAllHref }: Props) {
         <span style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>
           {title}
         </span>
-        <Link href={seeAllHref} style={{ fontSize: 12, color: 'var(--orange)', fontWeight: 700, textDecoration: 'none' }}>
+        <Link href={seeAllHref} style={{ fontSize: 12, color: 'var(--orange)', fontWeight: 800, textDecoration: 'none', background: '#FFF3EE', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px' }}>
           See all
         </Link>
       </div>
