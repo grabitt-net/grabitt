@@ -10,6 +10,7 @@ const PARAM_TO_PANEL: Record<string, PanelId> = {
   help: 'help',
   sell: 'sell',
   invite: 'invite',
+  business: 'business',   // /?business=1 → business upgrade (used after a Business signup)
 }
 
 function Inner() {

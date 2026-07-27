@@ -28,6 +28,9 @@ function AuthForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
+  // On Sign Up the member first picks an account type (Individual vs Business),
+  // mirroring the prototype's account-type chooser. null = chooser not yet made.
+  const [acctType, setAcctType] = useState<'personal' | 'business' | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -44,6 +47,13 @@ function AuthForm() {
 
   const supabase = createClient()
 
+  // Where to land after auth. A Business signup goes straight into the business
+  // upgrade panel (/?business=1, opened by PanelDeepLink); everyone else honours
+  // ?next= or falls back home.
+  const nextParam = searchParams.get('next')
+  const safeNext = nextParam && nextParam.startsWith('/') ? nextParam : '/'
+  const destination = acctType === 'business' ? '/?business=1' : safeNext
+
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -56,18 +66,17 @@ function AuthForm() {
         password,
         options: {
           data: { full_name: name },
-          emailRedirectTo: `${location.origin}/auth/callback`,
+          emailRedirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(destination)}`,
         },
       })
       if (error) setError(error.message)
-      else setMessage('Check your email to confirm your account.')
+      else setMessage(acctType === 'business'
+        ? 'Check your email to confirm your account — then we’ll set up your business.'
+        : 'Check your email to confirm your account.')
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setError(error.message)
-      else {
-        const next = searchParams.get('next')
-        router.push(next && next.startsWith('/') ? next : '/')
-      }
+      else router.push(destination)
     }
 
     setLoading(false)
@@ -77,7 +86,7 @@ function AuthForm() {
     setLoading(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(destination)}` },
     })
     if (error) { setError(error.message); setLoading(false) }
   }
@@ -104,7 +113,7 @@ function AuthForm() {
           padding: 4, marginBottom: 24,
         }}>
           {(['login', 'signup'] as const).map(m => (
-            <button key={m} onClick={() => { setMode(m); setError(null); setMessage(null) }} style={{
+            <button key={m} onClick={() => { setMode(m); setAcctType(null); setError(null); setMessage(null) }} style={{
               flex: 1, padding: '8px 0', borderRadius: 50, border: 'none',
               fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, cursor: 'pointer',
               background: mode === m ? 'var(--orange)' : 'transparent',
@@ -114,6 +123,21 @@ function AuthForm() {
             </button>
           ))}
         </div>
+
+        {/* Sign Up starts with the account-type chooser (benefits of each). */}
+        {mode === 'signup' && !acctType ? (
+          <AccountTypeChooser onPick={setAcctType} onLogin={() => { setMode('login'); setError(null) }} />
+        ) : (
+        <>
+        {mode === 'signup' && acctType && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: acctType === 'business' ? 'linear-gradient(135deg,#FFF3EE,#FFE4D6)' : '#FFF6F2', border: '1.5px solid #FFD9C2', borderRadius: 12, padding: '9px 12px', marginBottom: 16 }}>
+            <span style={{ fontSize: 20 }}>{acctType === 'business' ? '🏢' : '🧡'}</span>
+            <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>
+              {acctType === 'business' ? 'Business account' : 'Individual account'}
+            </span>
+            <button onClick={() => { setAcctType(null); setError(null); setMessage(null) }} style={{ background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>Change</button>
+          </div>
+        )}
 
         {/* Google */}
         <button onClick={handleGoogle} disabled={loading} style={{
@@ -200,8 +224,54 @@ function AuthForm() {
           <Link href="/terms" style={{ color: 'var(--orange)' }}>Terms</Link> &amp;{' '}
           <Link href="/privacy" style={{ color: 'var(--orange)' }}>Privacy Policy</Link>
         </p>
+        </>
+        )}
       </div>
     </main>
+  )
+}
+
+// The "How would you like to join?" step — Individual vs Business, each with its
+// benefits, mirroring the prototype's account-type chooser.
+function AccountTypeChooser({ onPick, onLogin }: { onPick: (t: 'personal' | 'business') => void; onLogin: () => void }) {
+  return (
+    <div>
+      <div style={{ textAlign: 'center', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 14 }}>How would you like to join?</div>
+
+      {/* Individual */}
+      <button onClick={() => onPick('personal')} style={{ display: 'block', width: '100%', textAlign: 'left', background: '#fff', border: '2px solid var(--orange)', borderRadius: 14, padding: 16, marginBottom: 12, cursor: 'pointer', boxShadow: '0 2px 10px rgba(255,69,0,0.10)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <span style={{ fontSize: 32 }}>🧡</span>
+          <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>Individual</span>
+          <span style={{ fontSize: 20, color: 'var(--orange)' }}>›</span>
+        </div>
+        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#666', lineHeight: 1.5 }}>Buy and sell as a person.</div>
+        <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#555', lineHeight: 1.7 }}>
+          <li>Free to join · 50 welcome credits</li>
+          <li>First sale is fee-free</li>
+          <li>Buyer protection with Stripe escrow</li>
+        </ul>
+      </button>
+
+      {/* Business */}
+      <button onClick={() => onPick('business')} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'linear-gradient(135deg,#FFF3EE,#FFE4D6)', border: '2px solid #FF8C00', borderRadius: 14, padding: 16, marginBottom: 12, cursor: 'pointer', boxShadow: '0 2px 10px rgba(255,140,0,0.12)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <span style={{ fontSize: 32 }}>🏢</span>
+          <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>Business Seller</span>
+          <span style={{ fontSize: 20, color: 'var(--orange)' }}>›</span>
+        </div>
+        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#8a5a2a', lineHeight: 1.5 }}>Sell under your business name. 7 days free, then €29/mo.</div>
+        <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#7a4419', lineHeight: 1.7 }}>
+          <li>Your own storefront &amp; 🏢 verified badge</li>
+          <li>Instant Dealer status · multibuy pricing</li>
+          <li>Bulk import your whole catalogue</li>
+        </ul>
+      </button>
+
+      <div style={{ textAlign: 'center', fontSize: 11, color: '#999', fontFamily: 'var(--font-comfortaa)', marginTop: 6 }}>
+        Already a member? <span onClick={onLogin} style={{ color: 'var(--orange)', fontWeight: 700, cursor: 'pointer' }}>Log in</span>
+      </div>
+    </div>
   )
 }
 
