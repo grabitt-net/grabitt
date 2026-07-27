@@ -1,42 +1,22 @@
 'use client'
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { PanelProvider } from '@/context/PanelContext'
-import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
+import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHost'
 
 // Recruitment hub — the single entry point that replaces the old Find Work +
-// Find Staff pills. Job seekers browse jobs; employers post a job, but posting
-// is a Business feature, so non-business visitors are sent to /employers (the
-// "For Business" page) to upgrade first.
+// Find Staff pills. Job seekers browse jobs; employers open the Find Staff flow,
+// which offers the two ways to hire (post a job advert / search the candidate
+// database) and gates non-business visitors behind the business upgrade.
 export default function RecruitmentPage() {
   return <PanelProvider><Inner /></PanelProvider>
 }
 
 function Inner() {
   const router = useRouter()
-  const [isBusiness, setIsBusiness] = useState<boolean | null>(null)
-
-  useEffect(() => {
-    let live = true
-    ;(async () => {
-      let token = getAuthToken()
-      if (!token) token = await refreshAuthToken()
-      if (!token) { if (live) setIsBusiness(false); return }
-      try {
-        const me = await (trpcAuthed() as any).users.me.query()
-        if (live) setIsBusiness(!!me?.isBusiness)
-      } catch { if (live) setIsBusiness(false) }
-    })()
-    return () => { live = false }
-  }, [])
-
-  // Business users post directly; everyone else is routed to the For Business
-  // page to open a business account first.
-  const postAJob = () => router.push(isBusiness ? '/jobs/new' : '/employers')
+  const { openPanel } = usePanel()
 
   return (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
@@ -62,19 +42,13 @@ function Inner() {
             <button onClick={() => router.push('/jobs')} style={primaryBtn}>Browse Jobs</button>
           </div>
 
-          {/* Employer */}
+          {/* Employer — opens the Find Staff flow: post a job advert or search
+              the candidate database (non-business users get the upgrade pitch). */}
           <div style={card}>
             <div style={{ fontSize: 34, marginBottom: 8 }}>🏢</div>
             <div style={cardTitle}>I am hiring staff</div>
-            <p style={cardText}>Post a role and reach local candidates. Posting jobs is a Business feature.</p>
-            <button onClick={postAJob} disabled={isBusiness === null} style={{ ...primaryBtn, opacity: isBusiness === null ? 0.6 : 1 }}>
-              Post a Job
-            </button>
-            {isBusiness === false && (
-              <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#9a6a30', marginTop: 8 }}>
-                Business account required — we’ll help you set one up.
-              </div>
-            )}
+            <p style={cardText}>Post a job advert or search our candidate database. Hiring tools are a Business feature.</p>
+            <button onClick={() => openPanel('findStaff')} style={primaryBtn}>Hire Staff</button>
           </div>
         </div>
       </div>
