@@ -21,19 +21,28 @@ export async function GET(req: Request) {
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - RELIST_DAYS)
 
-  const due = await prisma.listing.findMany({
-    where: {
-      status: 'active',
-      department: { notIn: EXCLUDED as unknown as never[] },
-      createdAt: { lt: cutoff },
-    },
-    select: { id: true, sellerId: true, title: true, relistCount: true, images: true },
-    take: 500,
-  })
-
+  // Page through every due listing, not just the first 500 — otherwise a busy
+  // day could leave items sitting expired-but-unswept until a later run. We keep
+  // pulling batches until none remain. Each processed listing either has its
+  // createdAt reset (relist) or its status flipped to 'expired', so it drops out
+  // of this query on the next batch and the loop always terminates.
   let relisted = 0
   let expired = 0
-  for (const l of due) {
+  let scanned = 0
+  const BATCH = 500
+  for (;;) {
+    const due = await prisma.listing.findMany({
+      where: {
+        status: 'active',
+        department: { notIn: EXCLUDED as unknown as never[] },
+        createdAt: { lt: cutoff },
+      },
+      select: { id: true, sellerId: true, title: true, relistCount: true, images: true },
+      take: BATCH,
+    })
+    if (due.length === 0) break
+    scanned += due.length
+    for (const l of due) {
     if (l.relistCount < MAX_RELISTS) {
       // Rotate the main photo on each relist so a refreshed listing looks new
       // in the feed — the first image moves to the back, promoting the next one.
@@ -68,7 +77,9 @@ export async function GET(req: Request) {
       })
       expired++
     }
+    }
+    if (due.length < BATCH) break
   }
 
-  return Response.json({ ok: true, scanned: due.length, relisted, expired })
+  return Response.json({ ok: true, scanned, relisted, expired })
 }
