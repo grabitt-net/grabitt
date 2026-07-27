@@ -4712,9 +4712,6 @@ function PanelBody() {
   }
 
   if (panel.id === 'business') {
-    // You can't upgrade an account you don't have — send a signed-out visitor to
-    // sign in or join first, rather than through checkout and back.
-    if (!currentUserId) return <SignInFirst onClose={closePanel} onSignIn={() => openPanel('login')} what="upgrade to Business" />
     const [bizStep, setBizStep] = useState<'info'|'type'|'verify'|'trial'|'done'>('info')
     const [bizName, setBizName] = useState('')
     // Verification status for the upgrade flow. Loaded once, unconditionally, so
@@ -4727,6 +4724,11 @@ function PanelBody() {
     }, [])
     const [bizType, setBizType] = useState('')
     const [bizBusy, setBizBusy] = useState(false)
+
+    // Guard AFTER the hooks — an early return before them would change the hook
+    // count when auth loads (currentUserId null → value) and crash React.
+    if (!currentUserId) return <SignInFirst onClose={closePanel} onSignIn={() => openPanel('login')} what="upgrade to Business" />
+
     const BIZ_TYPES = [
       { id: 'shop', label: '🏪 Retail Shop', desc: 'Physical shop selling goods' },
       { id: 'trade', label: '🔧 Trade & Services', desc: 'Plumber, electrician, cleaner…' },
