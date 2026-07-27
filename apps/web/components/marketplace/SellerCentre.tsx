@@ -182,6 +182,16 @@ export default function SellerCentre() {
       {/* ── Seller dashboard ──────────────────────────────────────────────── */}
       {tab === 'dashboard' && (
         <div style={{ borderTop: '1px solid #f0ece5', paddingTop: 12 }}>
+          {data.isBusiness && (
+            <Link href="/sell/import" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', background: '#fff8f0', border: '1px solid #ffd4a0', borderRadius: 12, padding: '11px 12px', marginBottom: 12 }}>
+              <span style={{ fontSize: 20 }}>📄</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>{t('Bulk import listings')}</span>
+                <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a6a30' }}>{t('Upload your whole catalogue from a CSV.')}</span>
+              </span>
+              <span style={{ color: 'var(--orange)', fontWeight: 900 }}>›</span>
+            </Link>
+          )}
           <div style={{ display: 'flex', gap: 7, marginBottom: 7 }}>
             <Stat value={String(perf.totalViews)} label={t('VIEWS')} color="#8b5cf6" />
             <Stat value={String(perf.totalOffers)} label={t('OFFERS')} color="var(--orange)" />
