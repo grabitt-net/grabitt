@@ -91,24 +91,29 @@ export default function TermsPage() {
         <p style={p}>You keep ownership of the content you upload (listings, photographs, reviews, messages). You grant Grabitt a non-exclusive, worldwide, royalty-free licence to host, display, reproduce and promote that content for the purpose of operating and marketing the service. You confirm you have the rights to the content you upload. We may remove content that breaches these terms or the law.</p>
 
         {/* 12 */}
-        <h2 style={h2}>12. Suspension &amp; termination</h2>
+        <h2 style={h2}>12. Our intellectual property &amp; proprietary systems</h2>
+        <p style={p}>The Grabitt platform and everything that makes it work — including its software, source code, designs, user interface, features, workflows, algorithms, databases, structure and branding — are proprietary to Grabitt and protected by intellectual-property laws. They remain our exclusive property (or that of our licensors).</p>
+        <p style={p}>By using Grabitt you agree that these systems may not be used, copied, reproduced, replicated, reverse-engineered, decompiled, scraped, data-mined, resold, distributed or adapted, in whole or in part, for any purpose beyond your ordinary personal use of the platform, without our prior written permission. You must not build, or help others build, a product or service that copies or competes by drawing on our proprietary systems. All rights not expressly granted to you are reserved.</p>
+
+        {/* 13 */}
+        <h2 style={h2}>13. Suspension &amp; termination</h2>
         <p style={p}>We may suspend, restrict or close an account, or remove listings, where we reasonably believe there has been a breach of these terms or the law, a risk of harm to users, or fraudulent activity. Where practicable we will tell you why and how to appeal. You may close your account at any time; obligations already incurred (including completing accepted sales) survive.</p>
 
         {/* 13 */}
-        <h2 style={h2}>13. Liability</h2>
+        <h2 style={h2}>14. Liability</h2>
         <p style={p}>As an intermediary, Grabitt is not liable for the quality, safety, legality, description, delivery or performance of items, services, jobs or property listed by users, nor for the conduct of users. We provide the platform &quot;as is&quot; and do not guarantee uninterrupted availability.</p>
         <p style={p}>Nothing in these terms limits our liability for death or personal injury caused by our negligence, for fraud, or for any other liability that cannot be limited by law. Subject to that, our aggregate liability to you in connection with the service is limited to the greater of (a) the fees you paid us in the 12 months before the claim, or (b) €100.</p>
 
         {/* 14 */}
-        <h2 style={h2}>14. Data protection</h2>
+        <h2 style={h2}>15. Data protection</h2>
         <p style={p}>How we handle your personal data is set out in our <Link href="/privacy" style={a}>Privacy Policy</Link>, which forms part of these terms. It explains the legal bases we rely on, how long we keep data, and how to exercise your GDPR rights, including erasure.</p>
 
         {/* 15 */}
-        <h2 style={h2}>15. Changes to these terms</h2>
+        <h2 style={h2}>16. Changes to these terms</h2>
         <p style={p}>We may update these terms to reflect changes to the service or the law. For material changes we will give reasonable notice (for example, by email or in the app) before they take effect. If you do not accept the change, you may close your account.</p>
 
         {/* 16 */}
-        <h2 style={h2}>16. Governing law, complaints &amp; disputes with us</h2>
+        <h2 style={h2}>17. Governing law, complaints &amp; disputes with us</h2>
         <p style={p}>These terms are governed by <strong>Spanish law</strong>. If you are a consumer, you benefit from any mandatory protections of the law of your country of residence, and you may bring proceedings in the courts of your place of residence. Otherwise, the courts of Las Palmas de Gran Canaria have jurisdiction.</p>
         <p style={p}>Complaints: <a href="mailto:support@grabitt.net" style={a}>support@grabitt.net</a>. Consumers may also use the European Commission&apos;s Online Dispute Resolution platform at <a href="https://ec.europa.eu/consumers/odr" style={a} target="_blank" rel="noreferrer">ec.europa.eu/consumers/odr</a>, or contact the consumer authorities of the Canary Islands.</p>
 
