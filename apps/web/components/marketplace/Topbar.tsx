@@ -46,6 +46,10 @@ export default function Topbar({ title, back, backFallback }: { title?: string; 
   // Everywhere else it stays a link home — that's the only way back from a
   // deep page, so it must not be replaced by a menu.
   const isHome = usePathname() === '/'
+  // Persistent back on every page except home (where the logo opens the menu).
+  // A page can still force it off by passing back={false}, or set a smarter
+  // fallback route via backFallback for when there's no history to pop.
+  const showBack = back ?? !isHome
 
   const handleSearch = () => {
     if (query.trim()) router.push(`/search?q=${encodeURIComponent(query.trim())}`)
@@ -72,13 +76,13 @@ export default function Topbar({ title, back, backFallback }: { title?: string; 
       borderBottom: '1.5px solid var(--sand2)',
     }}>
       {/* Desktop (≥820px): persistent horizontal nav bar */}
-      <DesktopNav title={title} back={back} backFallback={backFallback} />
+      <DesktopNav title={title} back={showBack} backFallback={backFallback} />
 
       {/* Mobile/tablet (<820px): logo + search + icon rail */}
       <div className="mobile-chrome">
       {/* Row 1 — logo + search + Near */}
       <div style={{ display: 'flex', alignItems: 'flex-start', padding: '10px 14px 0' }}>
-        {back && <BackButton fallback={backFallback} />}
+        {showBack && <BackButton fallback={backFallback} />}
         {isHome ? (
           <button onClick={() => openPanel('menu')} aria-label="Grabitt menu"
             style={{ flexShrink: 0, cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}>
