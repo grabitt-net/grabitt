@@ -577,9 +577,9 @@ type SellerOther = { id: string; title: string; price: string | number; images: 
 function DetailRow({ label, value, always }: { label: string; value?: string | null; always?: boolean }) {
   if (!value && !always) return null
   return (
-    <div style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: 9, fontWeight: 800, color: '#999', textTransform: 'uppercase', fontFamily: 'var(--font-nunito)' }}>{label}</div>
-      <div style={{ fontSize: 12, color: 'var(--dark)', fontFamily: 'var(--font-comfortaa)', fontWeight: 600 }}>{value || '—'}</div>
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, padding: '5px 0', borderBottom: '1px solid #f4efe8' }}>
+      <div style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 800, color: '#999', textTransform: 'uppercase', fontFamily: 'var(--font-nunito)' }}>{label}</div>
+      <div style={{ marginLeft: 'auto', textAlign: 'right', fontSize: 12, color: 'var(--dark)', fontFamily: 'var(--font-comfortaa)', fontWeight: 600, minWidth: 0, wordBreak: 'break-word' }}>{value || '—'}</div>
     </div>
   )
 }
@@ -592,7 +592,7 @@ function FulChip({ on, label }: { on: boolean; label: string }) {
   )
 }
 
-const cardBox: React.CSSProperties = { background: '#fff', borderRadius: 16, padding: '16px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }
-const panelTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', marginBottom: 10 }
-const subLabel: React.CSSProperties = { fontSize: 10, fontWeight: 800, color: '#555', fontFamily: 'var(--font-nunito)', margin: '8px 0 5px' }
+const cardBox: React.CSSProperties = { background: '#fff', borderRadius: 14, padding: '12px 12px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }
+const panelTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', marginBottom: 6 }
+const subLabel: React.CSSProperties = { fontSize: 10, fontWeight: 800, color: '#555', fontFamily: 'var(--font-nunito)', margin: '10px 0 4px' }
 const sectionTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }
