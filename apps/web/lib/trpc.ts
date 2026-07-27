@@ -15,6 +15,13 @@ type LooseClient = Record<string, Record<string, {
   mutate: (input?: unknown) => Promise<unknown>
 }>>
 
+// One shared public client. Because every caller reuses this instance,
+// httpBatchLink coalesces the queries that fire together on a page load (e.g.
+// the homepage's Featured / Recommended / Just-listed strips) into a SINGLE
+// /api/trpc request — instead of one serverless round-trip per strip. Creating
+// a fresh client per call, as this used to, defeated batching entirely.
+let _looseSingleton: LooseClient | null = null
 export function createLooseTrpcClient(): LooseClient {
-  return _createTrpcClient() as unknown as LooseClient
+  if (!_looseSingleton) _looseSingleton = _createTrpcClient() as unknown as LooseClient
+  return _looseSingleton
 }

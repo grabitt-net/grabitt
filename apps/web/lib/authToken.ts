@@ -28,6 +28,16 @@ export async function refreshAuthToken(): Promise<string | null> {
   return null
 }
 
+// Reuse one authed client per token so concurrent protected queries batch into
+// a single /api/trpc request (via httpBatchLink) instead of one per call. The
+// client is only rebuilt when the token actually changes (login/logout/refresh).
+let _authedClient: ReturnType<typeof createTrpcClient> | null = null
+let _authedToken: string | undefined
 export function trpcAuthed() {
-  return createTrpcClient(getAuthToken() ?? undefined)
+  const token = getAuthToken() ?? undefined
+  if (!_authedClient || token !== _authedToken) {
+    _authedToken = token
+    _authedClient = createTrpcClient(token)
+  }
+  return _authedClient
 }

@@ -161,6 +161,9 @@ function AuthForm() {
           {mode === 'signup' && (
             <input
               type="text"
+              name="name"
+              id="name"
+              autoComplete="name"
               placeholder="Full name"
               value={name}
               onChange={e => setName(e.target.value)}
@@ -170,6 +173,9 @@ function AuthForm() {
           )}
           <input
             type="email"
+            name="email"
+            id="email"
+            autoComplete="email"
             placeholder="Email address"
             value={email}
             onChange={e => setEmail(e.target.value)}
@@ -178,6 +184,9 @@ function AuthForm() {
           />
           <input
             type="password"
+            name="password"
+            id="password"
+            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             placeholder="Password"
             value={password}
             onChange={e => setPassword(e.target.value)}
