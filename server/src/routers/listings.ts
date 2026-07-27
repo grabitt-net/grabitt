@@ -443,6 +443,49 @@ export const listingsRouter = router({
       return listing
     }),
 
+  // Bulk importer for Business accounts — create many listings in one call from
+  // a CSV the seller prepared. Each row is validated with the same schema as a
+  // single create; a bad row is reported back by index rather than failing the
+  // whole batch, so the seller can fix and re-import just the rejects.
+  bulkImport: protectedProcedure
+    .input(z.object({ rows: z.array(CreateListingInputSchema).min(1).max(100) }))
+    .mutation(async ({ ctx, input }): Promise<{ created: number; failed: number; results: { index: number; ok: boolean; id?: string; error?: string }[] }> => {
+      const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
+
+      // Gate: bulk import is a Business feature, and a business must sell under
+      // its business name — the same rule single create enforces.
+      if (!user.isBusiness) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Bulk import is a Business account feature. Upgrade to import listings in bulk.' })
+      }
+      if (missingBusinessName(user)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Add your business name in Account → Business before importing.' })
+      }
+
+      const results: { index: number; ok: boolean; id?: string; error?: string }[] = []
+      let created = 0
+      for (let i = 0; i < input.rows.length; i++) {
+        const row = input.rows[i]
+        try {
+          // Multibuy stays Business-gated even here; every importer is a business
+          // so it's allowed, but keep the field intact rather than silently drop.
+          const listing = await ctx.prisma.listing.create({
+            data: {
+              ...row,
+              tags: autoTags(row.title, [row.description, row.brand, row.colour, row.size, row.department, row.condition, ...Object.values(row.attributes ?? {})].filter(Boolean).join(' ')),
+              sellerId: user.id,
+              status: 'active',
+            },
+          })
+          await notifyWishMatches(ctx.prisma, listing)
+          results.push({ index: i, ok: true, id: listing.id })
+          created++
+        } catch (err) {
+          results.push({ index: i, ok: false, error: err instanceof Error ? err.message : 'Could not create this listing' })
+        }
+      }
+      return { created, failed: input.rows.length - created, results }
+    }),
+
   // Change a listing's price (owner only). A price DROP notifies everyone who has
   // the item in their favourites/wishlist — these land in the Grabitt Alerts feed.
   updatePrice: protectedProcedure

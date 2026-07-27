@@ -933,6 +933,9 @@ function PanelBody() {
         ))}
         <button onClick={() => openPanel('createListing')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>🚀 Start Listing</button>
 
+        {/* Bulk import — Business feature; the page itself gates non-business users */}
+        <button onClick={() => { closePanel(); window.location.href = '/sell/import' }} style={{ width: '100%', background: '#fff', color: '#555', border: '1.5px solid var(--sand2)', borderRadius: 14, padding: '12px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginTop: 10 }}>📄 Bulk import from CSV · Business</button>
+
         {/* Business upsell — routes to the Business subscription signup */}
         <button onClick={() => openPanel('business')} style={{ width: '100%', background: '#fff', border: '2px solid var(--orange)', borderRadius: 14, padding: '14px', marginTop: 10, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🏢</div>
