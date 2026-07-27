@@ -91,18 +91,9 @@ export default function JobsPage() {
   return (
     <PanelProvider>
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <Topbar title="💼 Jobs" />
+      <Topbar title="Jobs" />
       <QuickActions />
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <select value={sort} onChange={e => setSort(e.target.value)} style={{ ...sel, marginLeft: 'auto', fontSize: 12 }}>
-            <option value="newest">Newest</option>
-            <option value="salary_high">Highest paid</option>
-            <option value="salary_low">Lowest paid</option>
-            <option value="soonest">Starting soonest</option>
-          </select>
-        </div>
-
         <form onSubmit={e => { e.preventDefault(); run() }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', gap: 8 }}>
             <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search title, sector or skill…" style={{ ...inp, flex: 1 }} />
@@ -122,6 +113,12 @@ export default function JobsPage() {
             <button type="button" onClick={() => setShowAdvanced(v => !v)} style={{ ...sel, color: 'var(--orange)', borderColor: 'var(--orange)' }}>
               {showAdvanced ? 'Fewer filters ▲' : 'More filters ▼'}
             </button>
+            <select value={sort} onChange={e => setSort(e.target.value)} style={{ ...sel, marginLeft: 'auto' }}>
+              <option value="newest">Newest</option>
+              <option value="salary_high">Highest paid</option>
+              <option value="salary_low">Lowest paid</option>
+              <option value="soonest">Starting soonest</option>
+            </select>
           </div>
 
           {showAdvanced && (

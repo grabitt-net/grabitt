@@ -72,7 +72,7 @@ export default function CategoryPage() {
   return (
     <PanelProvider>
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <Topbar title={`${emoji} ${label}`} />
+      <Topbar title={label} />
       <QuickActions />
 
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>

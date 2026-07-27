@@ -28,7 +28,7 @@ export default async function MessagesPage() {
 
   return (
     <main className="app-shell" style={{ background: '#f5f2ec', minHeight: '100vh', display: 'flex', flexDirection: 'column', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <SiteHeader title="💬 Messages" />
+      <SiteHeader title="Messages" />
 
 
       <InboxClient me={me.id} alertUnread={alertUnread} />

@@ -67,7 +67,7 @@ function SearchInner() {
 
   return (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <Topbar title={`${featured ? '👀' : '🔍'} ${heading}`} />
+      <Topbar title={heading} />
       <QuickActions />
 
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
