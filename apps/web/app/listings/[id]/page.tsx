@@ -212,7 +212,7 @@ function ListingInner() {
 
   return (
     <main className="app-shell" style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <Topbar title={DEPT_LABEL[listing.department] ?? 'Listing'} />
+      <Topbar title={DEPT_LABEL[listing.department] ?? 'Listing'} back backFallback={job ? '/jobs' : prop ? '/property' : '/'} />
       <QuickActions />
 
       <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: 12 }}>

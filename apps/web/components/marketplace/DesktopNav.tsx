@@ -8,13 +8,14 @@ import { useNotifications } from '@/hooks/useNotifications'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
 import Icon, { IconName } from './Icon'
 import Logo from './Logo'
+import BackButton from './BackButton'
 import { t } from '@/lib/i18n'
 
 // Desktop-only top navigation (shown ≥820px via .desktop-nav in globals.css).
 // A persistent horizontal bar — logo, wide search, primary "Sell" CTA, and
 // icon+label account actions — instead of the phone icon-rail. Same panels,
 // same data as mobile; just laid out for wide screens.
-export default function DesktopNav({ title }: { title?: string } = {}) {
+export default function DesktopNav({ title, back, backFallback }: { title?: string; back?: boolean; backFallback?: string } = {}) {
   const { openPanel } = usePanel()
   const router = useRouter()
   const isHome = usePathname() === '/'
@@ -37,6 +38,7 @@ export default function DesktopNav({ title }: { title?: string } = {}) {
 
   return (
     <div className="desktop-nav" style={{ alignItems: 'center', gap: 20, padding: '12px 28px', maxWidth: 1120, margin: '0 auto' }}>
+      {back && <BackButton fallback={backFallback} />}
       {/* Logo — opens the Grabitt menu on the home page, links home elsewhere */}
       {isHome ? (
         <button onClick={() => openPanel('menu')} aria-label="Grabitt menu"

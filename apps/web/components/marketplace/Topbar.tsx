@@ -7,6 +7,7 @@ import IconRail from './IconRail'
 import DesktopNav from './DesktopNav'
 import Icon from './Icon'
 import Logo from './Logo'
+import BackButton from './BackButton'
 import { t } from '@/lib/i18n'
 
 // Mirrors the HTML .topbar: a single sticky header containing row1
@@ -37,7 +38,7 @@ function nearestTown(lat: number, lng: number) {
   return best.name
 }
 
-export default function Topbar({ title }: { title?: string } = {}) {
+export default function Topbar({ title, back, backFallback }: { title?: string; back?: boolean; backFallback?: string } = {}) {
   const { openPanel } = usePanel()
   const router = useRouter()
   const [query, setQuery] = useState('')
@@ -71,12 +72,13 @@ export default function Topbar({ title }: { title?: string } = {}) {
       borderBottom: '1.5px solid var(--sand2)',
     }}>
       {/* Desktop (≥820px): persistent horizontal nav bar */}
-      <DesktopNav title={title} />
+      <DesktopNav title={title} back={back} backFallback={backFallback} />
 
       {/* Mobile/tablet (<820px): logo + search + icon rail */}
       <div className="mobile-chrome">
       {/* Row 1 — logo + search + Near */}
       <div style={{ display: 'flex', alignItems: 'flex-start', padding: '10px 14px 0' }}>
+        {back && <BackButton fallback={backFallback} />}
         {isHome ? (
           <button onClick={() => openPanel('menu')} aria-label="Grabitt menu"
             style={{ flexShrink: 0, cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}>

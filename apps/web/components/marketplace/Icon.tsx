@@ -7,7 +7,7 @@ import type { CSSProperties } from 'react'
 export type IconName =
   | 'search' | 'mapPin' | 'bell' | 'heart' | 'coins' | 'user' | 'login'
   | 'message' | 'package' | 'lifebuoy' | 'menu' | 'cart' | 'plus'
-  | 'shield' | 'check' | 'star' | 'arrowRight' | 'truck' | 'sparkle'
+  | 'shield' | 'check' | 'star' | 'arrowRight' | 'arrowLeft' | 'truck' | 'sparkle'
 
 const PATHS: Record<IconName, string> = {
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
@@ -27,6 +27,7 @@ const PATHS: Record<IconName, string> = {
   check: '<path d="M20 6 9 17l-5-5"/>',
   star: '<path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1Z"/>',
   arrowRight: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  arrowLeft: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
   truck: '<path d="M14 17V5a1 1 0 0 0-1-1H2v13h1"/><path d="M14 8h4l4 4v5h-2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
   sparkle: '<path d="M12 3l1.9 5.6L19.5 10l-5.6 1.4L12 17l-1.9-5.6L4.5 10l5.6-1.4Z"/>',
 }
