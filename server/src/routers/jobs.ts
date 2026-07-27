@@ -344,13 +344,18 @@ export const jobsRouter = router({
       where: { listing: { status: 'active' }, sector: { not: null } },
       select: { sector: true },
     })
-    const counts = new Map<string, number>()
+    // Merge case-insensitively so one sector doesn't split across spellings.
+    const byKey = new Map<string, { label: string; count: number }>()
     for (const r of rows) {
       const sec = r.sector?.trim()
-      if (sec) counts.set(sec, (counts.get(sec) ?? 0) + 1)
+      if (!sec) continue
+      const key = sec.toLowerCase()
+      const ex = byKey.get(key)
+      if (ex) ex.count++
+      else byKey.set(key, { label: sec, count: 1 })
     }
-    return [...counts.entries()]
-      .map(([sector, count]) => ({ sector, count }))
+    return [...byKey.values()]
+      .map(v => ({ sector: v.label, count: v.count }))
       .sort((a, b) => b.count - a.count || a.sector.localeCompare(b.sector))
   }),
 
@@ -359,16 +364,33 @@ export const jobsRouter = router({
   locations: publicProcedure.query(async ({ ctx }) => {
     const rows = await ctx.prisma.jobListing.findMany({
       where: { listing: { status: 'active' } },
-      select: { listing: { select: { location: true } } },
+      select: { remote: true, listing: { select: { location: true } } },
     })
-    const counts = new Map<string, number>()
+    // Merge locations case-insensitively ("maspalomas" and "Maspalomas" are one
+    // place) and keep the best-cased label for each. Remote jobs are counted on
+    // their own, not under whatever town happens to be on the record — a remote
+    // role isn't a Las Palmas role.
+    const byKey = new Map<string, { label: string; count: number }>()
+    let remote = 0
     for (const r of rows) {
+      if (r.remote) { remote++; continue }
       const loc = r.listing?.location?.trim()
-      if (loc) counts.set(loc, (counts.get(loc) ?? 0) + 1)
+      if (!loc) continue
+      const key = loc.toLowerCase()
+      const existing = byKey.get(key)
+      if (existing) {
+        existing.count++
+        // Prefer the more-capitalised spelling as the display label.
+        const caps = (v: string) => v.replace(/[^A-Z]/g, '').length
+        if (caps(loc) > caps(existing.label)) existing.label = loc
+      } else {
+        byKey.set(key, { label: loc, count: 1 })
+      }
     }
-    return [...counts.entries()]
-      .map(([location, count]) => ({ location, count }))
+    const locations = [...byKey.values()]
+      .map(v => ({ location: v.label, count: v.count }))
       .sort((a, b) => b.count - a.count || a.location.localeCompare(b.location))
+    return { locations, remote }
   }),
 
   // Post a Job — creates the base Listing (department=jobs) plus the JobListing

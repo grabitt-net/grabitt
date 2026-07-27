@@ -44,6 +44,7 @@ export default function JobsPage() {
   const [sort, setSort] = useState('newest')
   const [rows, setRows] = useState<any[]>([])
   const [locations, setLocations] = useState<{ location: string; count: number }[]>([])
+  const [remoteCount, setRemoteCount] = useState(0)
   const [sectors, setSectors] = useState<{ sector: string; count: number }[]>([])
   const [loading, setLoading] = useState(true)
   const [mapView, setMapView] = useState(false)
@@ -55,7 +56,9 @@ export default function JobsPage() {
       const res = await createLooseTrpcClient().jobs.list.query({
         ...(query.trim() && { query: query.trim() }),
         ...(type && { type: type as never }),
-        ...(remote && { remote: true }),
+        // Remote is its own filter: the Remote pill shows only remote jobs; a town
+        // pill shows only on-site jobs in that town; the default view shows both.
+        ...(remote ? { remote: true } : location ? { remote: false } : {}),
         ...(minSalary && { minSalary: Number(minSalary) }),
         ...(maxSalary && { maxSalary: Number(maxSalary) }),
         ...(salaryPeriod && { salaryPeriod: salaryPeriod as never }),
@@ -70,7 +73,7 @@ export default function JobsPage() {
 
   useEffect(() => { run() }, [type, remote, location, sector, salaryPeriod, postedWithin, sort]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    createLooseTrpcClient().jobs.locations.query().then(d => setLocations(d as any[])).catch(() => {})
+    createLooseTrpcClient().jobs.locations.query().then((d: any) => { setLocations(d.locations ?? []); setRemoteCount(d.remote ?? 0) }).catch(() => {})
     createLooseTrpcClient().jobs.sectors.query().then(d => setSectors(d as any[])).catch(() => {})
   }, [])
 
@@ -107,9 +110,6 @@ export default function JobsPage() {
               <option value="">All sectors</option>
               {sectors.map(sc => <option key={sc.sector} value={sc.sector}>{sc.sector} ({sc.count})</option>)}
             </select>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#555' }}>
-              <input type="checkbox" checked={remote} onChange={e => setRemote(e.target.checked)} /> Remote
-            </label>
             <button type="button" onClick={() => setShowAdvanced(v => !v)} style={{ ...sel, color: 'var(--orange)', borderColor: 'var(--orange)' }}>
               {showAdvanced ? 'Fewer filters ▲' : 'More filters ▼'}
             </button>
@@ -150,11 +150,14 @@ export default function JobsPage() {
         </div>
 
         {/* Dynamic location filters — update as jobs are posted */}
-        {locations.length > 0 && (
+        {(locations.length > 0 || remoteCount > 0) && (
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', paddingTop: 10 }}>
-            <Chip active={!location} onClick={() => setLocation('')}>All areas</Chip>
+            <Chip active={!location && !remote} onClick={() => { setLocation(''); setRemote(false) }}>All areas</Chip>
+            {remoteCount > 0 && (
+              <Chip active={remote} onClick={() => { setRemote(!remote); setLocation('') }}>Remote ({remoteCount})</Chip>
+            )}
             {locations.map(l => (
-              <Chip key={l.location} active={location === l.location} onClick={() => setLocation(l.location)}>{l.location} ({l.count})</Chip>
+              <Chip key={l.location} active={location === l.location && !remote} onClick={() => { setLocation(l.location); setRemote(false) }}>{l.location} ({l.count})</Chip>
             ))}
           </div>
         )}

@@ -9,6 +9,7 @@ import Topbar from '@/components/marketplace/Topbar'
 import PanelHost from '@/components/marketplace/PanelHost'
 import type { JobQuestion, JobQuestionType } from '@/lib/jobQuestions'
 import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
+import { GC_TOWNS } from '@/lib/gcTowns'
 
 const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
 
@@ -137,7 +138,7 @@ export default function PostJobPage() {
 
         <Section title="Location">
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 4 }}>Give the job&apos;s address — this is where the work is, not your profile address.</div>
-          <Field label="Location (town / area) *"><input value={f.location} onChange={e => set('location', e.target.value)} placeholder="e.g. Playa del Inglés" style={inp} /></Field>
+          <Field label="Location (town / area) *"><select value={f.location} onChange={e => set('location', e.target.value)} style={inp}><option value="">Select a town…</option>{GC_TOWNS.map(t => <option key={t} value={t}>{t}</option>)}</select></Field>
           <Field label="Full address (shown with a map on the listing)"><input value={f.address} onChange={e => set('address', e.target.value)} placeholder="Street, number, postcode, town" style={inp} /></Field>
           <div>
             <label style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: '#999', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>Pin the exact location on the map</label>
