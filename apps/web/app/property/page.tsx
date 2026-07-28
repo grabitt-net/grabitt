@@ -15,6 +15,11 @@ const TYPES: { label: string; value?: string }[] = [
   { label: 'Land', value: 'land' }, { label: 'New Build', value: 'new_build' },
 ]
 
+const PROP_LABEL: Record<string, string> = {
+  sale: 'For Sale', rent: 'To Let', holiday: 'Holiday Let',
+  commercial: 'Commercial', land: 'Land', new_build: 'New Build',
+}
+
 export default function PropertyPage() {
   const [query, setQuery] = useState('')
   const [type, setType] = useState('sale')
@@ -96,36 +101,58 @@ export default function PropertyPage() {
         {loading ? 'Searching…' : `${rows.length} propert${rows.length === 1 ? 'y' : 'ies'}`}
       </div>
 
-      <div className="category-grid">
+      {/* Idealista / Fotocasa-style horizontal snapshot cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '0 14px', maxWidth: 760, margin: '0 auto' }}>
         {rows.map(p => {
           const l = p.listing ?? {}
-          const isRent = p.type === 'rent'
-          const tag = p.hasPool ? 'Pool' : p.hasGarage ? 'Garage' : (p.community || '')
+          const isRent = p.type === 'rent' || p.type === 'holiday'
+          const imgs: string[] = Array.isArray(l.images) ? l.images.filter(Boolean) : []
+          const chips = [p.hasPool && '🏊 Pool', p.hasGarage && '🚗 Garage', p.energyRating && `⚡ ${p.energyRating}`].filter(Boolean) as string[]
           return (
             <Link key={p.id} href={`/listings/${l.id}`} style={{ textDecoration: 'none' }}>
-              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #ece3d7', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                <div style={{ width: '100%', paddingTop: '72%', background: 'var(--sand)', position: 'relative' }}>
-                  {Array.isArray(l.images) && l.images[0]
-                    ? <img src={l.images[0]} alt={l.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>🏠</div>}
-                  {tag && <span style={{ position: 'absolute', top: 8, right: 8, background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50 }}>{tag}</span>}
+              <div style={{ display: 'flex', background: '#fff', borderRadius: 14, border: '1px solid #ece3d7', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                {/* Photo */}
+                <div style={{ position: 'relative', flex: '0 0 42%', maxWidth: 220, minHeight: 150, background: 'var(--sand)' }}>
+                  {imgs[0]
+                    ? <img src={imgs[0]} alt={l.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🏠</div>}
+                  <span style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(26,26,26,0.85)', color: '#fff', fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 900, padding: '3px 9px', borderRadius: 50, textTransform: 'uppercase', letterSpacing: 0.3 }}>{PROP_LABEL[p.type] ?? p.type}</span>
+                  {imgs.length > 1 && <span style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(26,26,26,0.7)', color: '#fff', fontFamily: 'var(--font-nunito)', fontSize: 9.5, fontWeight: 800, padding: '2px 8px', borderRadius: 50 }}>📷 {imgs.length}</span>}
                 </div>
-                <div style={{ padding: '10px 11px 12px' }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>€{Number(l.price ?? 0).toLocaleString()}{isRent ? '/mo' : ''}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a8b74', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>📍 {l.location ?? 'Gran Canaria'}</div>
-                  <div style={{ display: 'flex', gap: 8, fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a8b74', marginTop: 2 }}>
-                    {p.bedrooms > 0 && <span>🛏 {p.bedrooms}</span>}
-                    {p.bathrooms > 0 && <span>🚿 {p.bathrooms}</span>}
-                    {p.m2 && <span>📐 {Number(p.m2)}m²</span>}
+
+                {/* Snapshot */}
+                <div style={{ flex: 1, minWidth: 0, padding: '11px 12px', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)' }}>
+                    €{Number(l.price ?? 0).toLocaleString()}<span style={{ fontSize: 12, fontWeight: 700, color: '#9a8b74' }}>{isRent ? '/mo' : ''}</span>
                   </div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{l.title}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>📍 {l.location ?? 'Gran Canaria'}{p.community ? ` · ${p.community}` : ''}</div>
+
+                  {/* Key facts row */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 700, color: '#4a4034', marginTop: 6 }}>
+                    {p.bedrooms > 0 && <span>🛏 {p.bedrooms} {p.bedrooms === 1 ? 'bed' : 'beds'}</span>}
+                    {p.bathrooms > 0 && <span>🚿 {p.bathrooms} {p.bathrooms === 1 ? 'bath' : 'baths'}</span>}
+                    {p.m2 && <span>📐 {Number(p.m2)} m²</span>}
+                    {p.floor != null && <span>🏢 Floor {p.floor}</span>}
+                  </div>
+
+                  {/* Description snippet */}
+                  {l.description && (
+                    <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#7a6f60', lineHeight: 1.5, marginTop: 6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{l.description}</div>
+                  )}
+
+                  {chips.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 'auto', paddingTop: 8 }}>
+                      {chips.map(c => <span key={c} style={{ background: '#f5efe6', color: '#6b5d48', fontFamily: 'var(--font-nunito)', fontSize: 9.5, fontWeight: 800, padding: '3px 8px', borderRadius: 50 }}>{c}</span>)}
+                    </div>
+                  )}
                 </div>
               </div>
             </Link>
           )
         })}
         {!loading && rows.length === 0 && (
-          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 50, fontFamily: 'var(--font-nunito)', color: '#bbb' }}>
+          <div style={{ textAlign: 'center', padding: 50, fontFamily: 'var(--font-nunito)', color: '#bbb' }}>
             <div style={{ fontSize: 40, marginBottom: 10 }}>🏠</div>
             <div style={{ fontSize: 15, fontWeight: 800 }}>No property matches your search</div>
           </div>
