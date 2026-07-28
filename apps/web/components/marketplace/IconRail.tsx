@@ -28,7 +28,7 @@ export default function IconRail() {
     { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
     { icon: 'message', label: 'Messages', panel: 'messages', href: '/messages' },
     { icon: 'package', label: 'Sell',     panel: 'sell', highlight: true },
-    { icon: 'lifebuoy', label: 'Help',    panel: 'help' },
+    { icon: 'lifebuoy', label: 'Help',    panel: 'help', href: '/help' },
   ]
 
   return (

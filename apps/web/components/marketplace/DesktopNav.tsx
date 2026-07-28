@@ -32,7 +32,7 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
     { icon: 'heart', label: 'Saved', panel: 'favourites' },
     { icon: 'message', label: 'Messages', panel: 'messages', href: '/messages' },
     { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
-    { icon: 'lifebuoy', label: 'Help', panel: 'help' },
+    { icon: 'lifebuoy', label: 'Help', panel: 'help', href: '/help' },
   ]
   // labels above are translation keys; rendered via t() below
 

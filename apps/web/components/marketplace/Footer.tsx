@@ -16,7 +16,7 @@ export default function Footer() {
     // Economic Living lives in Grabitt Guides — link through rather than
     // duplicating the content in a panel.
     { heading: 'Guides', links: [['Grabitt Guides', go('/community')], ['Economic Living', go('/community#economic-living')]] },
-    { heading: 'Help', links: [['Help Centre', () => openPanel('help')], ['Terms', fp('terms')], ['Dos & Don\'ts', fp('policy')], ['Suggest Ideas', fp('suggest')]] },
+    { heading: 'Help', links: [['Help Centre', go('/help')], ['Terms', fp('terms')], ['Dos & Don\'ts', fp('policy')], ['Suggest Ideas', fp('suggest')]] },
   ]
 
   return (
@@ -34,7 +34,7 @@ export default function Footer() {
       <div style={{ borderTop: '1px solid var(--sand2, #e8dcc0)', marginTop: 24, paddingTop: 18, textAlign: 'center' }}>
         <Logo height={30} style={{ margin: '0 auto' }} />
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#8a7d68', marginTop: 4 }}>
-          🛡️ Every payment protected by the Grabitt Guarantee · Made in Gran Canaria
+          🛡️ Every payment protected by the Grabitt Guarantee · Local to the Canaries
         </div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#a89a82', marginTop: 8 }}>
           © {new Date().getFullYear()} Grabitt. All rights reserved. ·{' '}

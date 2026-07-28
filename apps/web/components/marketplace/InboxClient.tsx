@@ -162,7 +162,7 @@ export default function InboxClient({ me, alertUnread }: { me: string; alertUnre
               {TEAM_MESSAGES.map((m, i) => (
                 <div key={i} style={{ maxWidth: '85%', background: '#fff', border: '1px solid #eee', borderRadius: '4px 16px 16px 16px', padding: '11px 14px', fontFamily: 'var(--font-comfortaa)', fontSize: 13, color: '#333', lineHeight: 1.55, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>{m}</div>
               ))}
-              <Link href="/?help=1" style={{ alignSelf: 'flex-start', marginTop: 4, textDecoration: 'none' }}>
+              <Link href="/help" style={{ alignSelf: 'flex-start', marginTop: 4, textDecoration: 'none' }}>
                 <span style={{ display: 'inline-block', background: '#FFF3EE', color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, padding: '9px 16px', borderRadius: 50 }}>🆘 Open the Help Centre</span>
               </Link>
             </div>
