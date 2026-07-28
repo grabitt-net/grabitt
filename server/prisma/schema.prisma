@@ -259,6 +259,16 @@ model User {
   agentWhatsapp      String?
   agentEmail         String?
 
+  // Tenant profile — a renter's details, shared with an agent when they enquire
+  // about a rental so the agent can pre-qualify them.
+  tenantBudget       Int?      // max monthly budget in €
+  tenantMoveIn       String?   // free text, e.g. "ASAP" or "Sept 2026"
+  tenantOccupants    Int?
+  tenantEmployment   String?   // e.g. Employed, Self-employed, Student, Retired
+  tenantHasPets      Boolean   @default(false)
+  tenantSmoker       Boolean   @default(false)
+  tenantAbout        String?   // short intro / references note
+
   // Compliance (GDPR consent + EU right-to-withdraw waiver + erasure)
   gdprAcceptedAt            DateTime?
   withdrawalWaiverAcceptedAt DateTime?

@@ -13,6 +13,8 @@ import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import SellerCentre from '@/components/marketplace/SellerCentre'
 import AttributesCard from '@/components/marketplace/AttributesCard'
+import AgentProfileCard from '@/components/marketplace/AgentProfileCard'
+import TenantProfileCard from '@/components/marketplace/TenantProfileCard'
 import { deptEmoji } from '@/lib/listingMap'
 import { t } from '@/lib/i18n'
 
@@ -466,6 +468,12 @@ function AccountInner() {
 
           {/* Attributes & preferences — targeting, alerts and job matching */}
           <AttributesCard />
+
+          {/* Property-agent contact — only relevant to business/agent accounts */}
+          {me?.isBusiness && <AgentProfileCard />}
+
+          {/* Tenant profile — shared with agents when enquiring on a rental */}
+          <TenantProfileCard />
 
           {/* Account email — changing it re-verifies via Supabase Auth */}
           <div style={card}>

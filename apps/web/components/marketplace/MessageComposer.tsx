@@ -10,15 +10,16 @@ import { t } from '@/lib/i18n'
 // message sent only on submit; every reply after that lives in the Messages
 // centre.
 export default function MessageComposer({
-  listingId, sellerId, title, onClose,
+  listingId, sellerId, title, onClose, initialBody,
 }: {
   listingId: string
   sellerId: string
   title?: string
   onClose: () => void
+  initialBody?: string
 }) {
   const router = useRouter()
-  const [body, setBody] = useState('')
+  const [body, setBody] = useState(initialBody ?? '')
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')

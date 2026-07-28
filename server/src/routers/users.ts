@@ -328,6 +328,24 @@ export const usersRouter = router({
       return ctx.prisma.user.update({ where: { id: ctx.user.id }, data })
     }),
 
+  // Tenant profile — a renter's details, shown to an agent when they enquire on
+  // a rental so the agent can pre-qualify them.
+  updateTenantProfile: protectedProcedure
+    .input(z.object({
+      tenantBudget: z.number().int().min(0).max(100000).nullish(),
+      tenantMoveIn: z.string().max(60).nullish(),
+      tenantOccupants: z.number().int().min(1).max(20).nullish(),
+      tenantEmployment: z.string().max(60).nullish(),
+      tenantHasPets: z.boolean().optional(),
+      tenantSmoker: z.boolean().optional(),
+      tenantAbout: z.string().max(600).nullish(),
+    }))
+    .mutation(({ ctx, input }) => {
+      const data: Record<string, unknown> = {}
+      for (const [k, v] of Object.entries(input)) if (v !== undefined) data[k] = v === '' ? null : v
+      return ctx.prisma.user.update({ where: { id: ctx.user.id }, data })
+    }),
+
   // Business storefront customisation — only for active Business accounts.
   updateBusinessProfile: protectedProcedure
     .input(z.object({

@@ -10,6 +10,7 @@ import { pushView } from '@/lib/recentViews'
 import { PRICES } from '@grabitt/design-tokens'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import MessageButton from '@/components/marketplace/MessageButton'
+import TenantEnquireButton from '@/components/marketplace/TenantEnquireButton'
 import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
@@ -322,6 +323,9 @@ function ListingInner() {
         ) : prop ? (
           <>
             {seller?.id && <MessageButton listingId={id} sellerId={seller.id} label={t('Enquire')} primary flex={1} />}
+            {/* Rentals: enquire with the saved tenant profile so the agent can
+                pre-qualify. */}
+            {seller?.id && !isOwner && isRent && <TenantEnquireButton listingId={id} sellerId={seller.id} />}
             {/* Property-agent direct contact — WhatsApp + email, shown when the
                 seller has set up an agent profile. */}
             {(seller?.agentWhatsapp || seller?.agentEmail) && (
