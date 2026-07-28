@@ -1153,6 +1153,19 @@ model PropertyListing {
   condition    String?      // new | good | needs_reform
   views        String?      // e.g. Sea, Mountain, Pool
 
+  // Full agent-listing detail (thehubproperty-style form).
+  reference    String?      // agent's own property reference
+  address      String?      // full street address (from autocomplete)
+  city         String?      // town/city (from autocomplete)
+  coveredM2    Decimal?     @db.Decimal(8, 2)  // built/covered area
+  landM2       Decimal?     @db.Decimal(10, 2) // plot/land area
+  distShops    Int?         // metres to local shops
+  distSchools  Int?         // metres to local schools
+  distBeach    Int?         // metres to nearest beach
+  distTown     Int?         // metres to nearest town
+  // Features & amenities, e.g. ["garden","terrace","pool","parking","wifi",…]
+  features     String[]
+
   createdAt    DateTime     @default(now())
 }
 

@@ -7,6 +7,8 @@ import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import PanelHost from '@/components/marketplace/PanelHost'
+import AddressAutocomplete from '@/components/marketplace/AddressAutocomplete'
+import { PROPERTY_FEATURES } from '@/lib/propertyFeatures'
 
 const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
 
@@ -28,7 +30,12 @@ export default function NewPropertyPage() {
     rentalTerm: '', touristLicence: '',
     plotM2: '', terraceM2: '', furnished: '', orientation: '',
     yearBuilt: '', communityFees: '', condition: '', views: '',
+    // Full agent-listing detail.
+    reference: '', address: '', coveredM2: '', landM2: '',
+    distShops: '', distSchools: '', distBeach: '', distTown: '',
   })
+  const [features, setFeatures] = useState<string[]>([])
+  const toggleFeature = (slug: string) => setFeatures(p => p.includes(slug) ? p.filter(x => x !== slug) : [...p, slug])
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -112,6 +119,16 @@ export default function NewPropertyPage() {
         ...(f.communityFees && { communityFees: Number(f.communityFees) }),
         ...(f.condition && { condition: f.condition as never }),
         ...(f.views.trim() && { views: f.views.trim() }),
+        ...(f.reference.trim() && { reference: f.reference.trim() }),
+        ...(f.address.trim() && { address: f.address.trim() }),
+        ...(f.location.trim() && { city: f.location.trim() }),
+        ...(f.coveredM2 && { coveredM2: Number(f.coveredM2) }),
+        ...(f.landM2 && { landM2: Number(f.landM2) }),
+        ...(f.distShops && { distShops: Number(f.distShops) }),
+        ...(f.distSchools && { distSchools: Number(f.distSchools) }),
+        ...(f.distBeach && { distBeach: Number(f.distBeach) }),
+        ...(f.distTown && { distTown: Number(f.distTown) }),
+        ...(features.length ? { features } : {}),
       })
       router.push(`/listings/${listing.id}`)
     } catch (err: any) {
@@ -154,16 +171,31 @@ export default function NewPropertyPage() {
             </Field>
           </Row>
           <Row>
-            <Field label="Town / area *"><input value={f.location} onChange={e => set('location', e.target.value)} placeholder="e.g. Las Palmas" style={inp} /></Field>
+            <Field label="Property reference"><input value={f.reference} onChange={e => set('reference', e.target.value)} placeholder="e.g. REF001, HP-2024-001" style={inp} /></Field>
             <Field label="Community / urbanisation"><input value={f.community} onChange={e => set('community', e.target.value)} placeholder="e.g. Playa Honda" style={inp} /></Field>
           </Row>
+          <Field label="Address *">
+            <AddressAutocomplete
+              value={f.address || f.location}
+              onChange={v => setF(prev => ({ ...prev, address: v }))}
+              onSelect={pick => { setF(prev => ({ ...prev, address: pick.address, location: pick.city || prev.location })); if (pick.lat && pick.lng) setCoords({ lat: pick.lat, lng: pick.lng }) }}
+              placeholder="Start typing the address — town & map pin fill automatically"
+            />
+            <div style={{ fontSize: 11, color: '#888', fontFamily: 'var(--font-ui)', marginTop: 4 }}>
+              {f.location ? `📍 Town: ${f.location}${coords ? ' · map pin set' : ''}` : 'Pick an address to set the town and map pin.'}
+            </div>
+          </Field>
         </Section>
 
         <Section title="Details">
           <Row>
             <Field label="Bedrooms"><input value={f.bedrooms} onChange={e => set('bedrooms', e.target.value)} inputMode="numeric" placeholder="2" style={inp} /></Field>
             <Field label="Bathrooms"><input value={f.bathrooms} onChange={e => set('bathrooms', e.target.value)} inputMode="numeric" placeholder="1" style={inp} /></Field>
-            <Field label="Size (m²)"><input value={f.m2} onChange={e => set('m2', e.target.value)} inputMode="numeric" placeholder="85" style={inp} /></Field>
+            <Field label="Total area (m²)"><input value={f.m2} onChange={e => set('m2', e.target.value)} inputMode="numeric" placeholder="85" style={inp} /></Field>
+          </Row>
+          <Row>
+            <Field label="Covered area (m²)"><input value={f.coveredM2} onChange={e => set('coveredM2', e.target.value)} inputMode="numeric" placeholder="e.g. 90" style={inp} /></Field>
+            <Field label="Land / plot area (m²)"><input value={f.landM2} onChange={e => set('landM2', e.target.value)} inputMode="numeric" placeholder="e.g. 350" style={inp} /></Field>
           </Row>
           <Row>
             <Field label="Floor"><input value={f.floor} onChange={e => set('floor', e.target.value)} inputMode="numeric" placeholder="e.g. 3" style={inp} /></Field>
@@ -232,6 +264,27 @@ export default function NewPropertyPage() {
             <Field label="Orientation"><input value={f.orientation} onChange={e => set('orientation', e.target.value)} placeholder="e.g. South-West" style={inp} /></Field>
             <Field label="Views"><input value={f.views} onChange={e => set('views', e.target.value)} placeholder="e.g. Sea, Mountain" style={inp} /></Field>
           </Row>
+        </Section>
+
+        <Section title="Distances (to nearest, in metres)">
+          <Row>
+            <Field label="Local shops"><input value={f.distShops} onChange={e => set('distShops', e.target.value)} inputMode="numeric" placeholder="0" style={inp} /></Field>
+            <Field label="Local schools"><input value={f.distSchools} onChange={e => set('distSchools', e.target.value)} inputMode="numeric" placeholder="0" style={inp} /></Field>
+          </Row>
+          <Row>
+            <Field label="Nearest beach"><input value={f.distBeach} onChange={e => set('distBeach', e.target.value)} inputMode="numeric" placeholder="0" style={inp} /></Field>
+            <Field label="Nearest town"><input value={f.distTown} onChange={e => set('distTown', e.target.value)} inputMode="numeric" placeholder="0" style={inp} /></Field>
+          </Row>
+        </Section>
+
+        <Section title="Features & amenities">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 6 }}>
+            {PROPERTY_FEATURES.map(feat => (
+              <label key={feat.slug} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 700, color: '#555', cursor: 'pointer', padding: '4px 0' }}>
+                <input type="checkbox" checked={features.includes(feat.slug)} onChange={() => toggleFeature(feat.slug)} /> {feat.icon} {feat.label}
+              </label>
+            ))}
+          </div>
         </Section>
 
         <Section title="Agent contact (shown on your listings)">

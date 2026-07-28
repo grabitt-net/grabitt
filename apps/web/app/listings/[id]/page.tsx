@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { DEPT_LABEL, COND_LABEL, deptEmoji } from '@/lib/listingMap'
+import { featureIcon, featureLabel } from '@/lib/propertyFeatures'
 import { t } from '@/lib/i18n'
 import { pushView } from '@/lib/recentViews'
 import { PRICES } from '@grabitt/design-tokens'
@@ -403,9 +404,23 @@ function ListingInner() {
                 <DetailRow label={t('Pool')} value={prop.hasPool ? t('Yes') : ''} />
                 <DetailRow label={t('Garage / parking')} value={prop.hasGarage ? t('Yes') : ''} />
                 {prop.energyRating && <DetailRow label={t('Energy rating')} value={prop.energyRating} />}
+                {prop.coveredM2 != null && <DetailRow label={t('Covered area')} value={`${Number(prop.coveredM2)} m²`} />}
+                {prop.landM2 != null && <DetailRow label={t('Land area')} value={`${Number(prop.landM2)} m²`} />}
+                {prop.address && <DetailRow label={t('Address')} value={prop.address} />}
+                {prop.distBeach != null && <DetailRow label={t('To beach')} value={`${prop.distBeach} m`} />}
+                {prop.distShops != null && <DetailRow label={t('To shops')} value={`${prop.distShops} m`} />}
+                {prop.distSchools != null && <DetailRow label={t('To schools')} value={`${prop.distSchools} m`} />}
+                {prop.distTown != null && <DetailRow label={t('To town centre')} value={`${prop.distTown} m`} />}
                 {prop.communityFees != null && <DetailRow label={t('Community fees')} value={`€${prop.communityFees}/mo`} />}
                 {prop.touristLicence && <DetailRow label={t('Tourist licence')} value={prop.touristLicence} />}
                 <DetailRow label={t('Category')} value={DEPT_LABEL[listing.department] ?? listing.department} />
+                {Array.isArray(prop.features) && prop.features.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                    {prop.features.map((f: string) => (
+                      <span key={f} style={{ background: '#f5efe6', color: '#6b5d48', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 50 }}>{featureIcon(f)} {featureLabel(f)}</span>
+                    ))}
+                  </div>
+                )}
               </>
             ) : (
               // Two columns so the box stays short — item facts are all brief.

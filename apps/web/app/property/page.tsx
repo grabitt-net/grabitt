@@ -10,6 +10,7 @@ import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import { geocodeGC } from '@/lib/gcGeo'
+import { FILTERABLE_FEATURES, featureIcon, featureLabel } from '@/lib/propertyFeatures'
 import type { PropertyPoint } from '@/components/marketplace/PropertyMap'
 
 const PropertyMap = dynamic(() => import('@/components/marketplace/PropertyMap'), {
@@ -37,6 +38,13 @@ const PROP_LABEL: Record<string, string> = {
   commercial: 'Commercial', land: 'Land', new_build: 'New Build',
 }
 
+// Multi-select area pills — the main towns/resorts across Gran Canaria.
+const GC_TOWNS = [
+  'Las Palmas', 'Telde', 'Vecindario', 'Maspalomas', 'Playa del Inglés', 'Meloneras',
+  'San Agustín', 'Puerto Rico', 'Arguineguín', 'Mogán', 'Puerto de Mogán', 'Arucas',
+  'Gáldar', 'Santa Lucía', 'Agüimes', 'Ingenio', 'Firgas', 'Teror',
+]
+
 export default function PropertyPage() {
   const [query, setQuery] = useState('')
   const [type, setType] = useState('sale')
@@ -44,9 +52,8 @@ export default function PropertyPage() {
   const [maxPrice, setMaxPrice] = useState('')
   const [minBedrooms, setMinBedrooms] = useState('')
   const [minBathrooms, setMinBathrooms] = useState('')
-  const [hasPool, setHasPool] = useState(false)
-  const [hasGarage, setHasGarage] = useState(false)
-  const [location, setLocation] = useState('')
+  const [locations, setLocations] = useState<string[]>([])
+  const [features, setFeatures] = useState<string[]>([])
   const [rows, setRows] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   // Locate-me + map/list view.
@@ -76,16 +83,18 @@ export default function PropertyPage() {
         ...(maxPrice && { maxPrice: Number(maxPrice) }),
         ...(minBedrooms && { minBedrooms: Number(minBedrooms) }),
         ...(minBathrooms && { minBathrooms: Number(minBathrooms) }),
-        ...(hasPool && { hasPool: true }),
-        ...(hasGarage && { hasGarage: true }),
-        ...(location.trim() && { location: location.trim() }),
+        ...(locations.length && { locations }),
+        ...(features.length && { features }),
       })
       setRows(res as any[])
     } catch { setRows([]) } finally { setLoading(false) }
-  }, [query, type, minPrice, maxPrice, minBedrooms, minBathrooms, hasPool, hasGarage, location])
+  }, [query, type, minPrice, maxPrice, minBedrooms, minBathrooms, locations, features])
+
+  const toggleLocation = (t: string) => setLocations(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+  const toggleFeature = (f: string) => setFeatures(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])
 
   // Re-run on structured toggles; text/number ranges run on submit.
-  useEffect(() => { run() }, [type, minBedrooms, minBathrooms, hasPool, hasGarage]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { run() }, [type, minBedrooms, minBathrooms, locations, features]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { run() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Resolve coords (exact pin, else town centroid) and apply the "near me"
@@ -125,26 +134,48 @@ export default function PropertyPage() {
           <Link href="/property/new" style={{ flexShrink: 0, textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>+ List a Property</Link>
         </div>
 
-        {/* Advanced search */}
-        <form onSubmit={e => { e.preventDefault(); run() }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search property…" style={inp} />
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={{ ...inp, flex: 1, minWidth: 110 }} />
-            <input value={minPrice} onChange={e => setMinPrice(e.target.value)} inputMode="numeric" placeholder="Min €" style={{ ...inp, width: 90 }} />
-            <input value={maxPrice} onChange={e => setMaxPrice(e.target.value)} inputMode="numeric" placeholder="Max €" style={{ ...inp, width: 90 }} />
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <select value={minBedrooms} onChange={e => setMinBedrooms(e.target.value)} style={sel}>
-              <option value="">Beds: any</option>{[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}+ beds</option>)}
-            </select>
-            <select value={minBathrooms} onChange={e => setMinBathrooms(e.target.value)} style={sel}>
-              <option value="">Baths: any</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ baths</option>)}
-            </select>
-            <label style={chk}><input type="checkbox" checked={hasPool} onChange={e => setHasPool(e.target.checked)} /> Pool</label>
-            <label style={chk}><input type="checkbox" checked={hasGarage} onChange={e => setHasGarage(e.target.checked)} /> Garage</label>
-            <button type="submit" style={btn}>Search</button>
-          </div>
+        {/* Compact search — everything on one wrapping line */}
+        <form onSubmit={e => { e.preventDefault(); run() }} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="🔍 Search property…" style={{ ...inp, flex: 1, minWidth: 150, padding: '7px 11px' }} />
+          <input value={minPrice} onChange={e => setMinPrice(e.target.value)} inputMode="numeric" placeholder="Min €" style={{ ...inp, width: 78, padding: '7px 10px' }} />
+          <input value={maxPrice} onChange={e => setMaxPrice(e.target.value)} inputMode="numeric" placeholder="Max €" style={{ ...inp, width: 78, padding: '7px 10px' }} />
+          <select value={minBedrooms} onChange={e => setMinBedrooms(e.target.value)} style={{ ...sel, padding: '7px 8px' }}>
+            <option value="">Beds</option>{[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}+ beds</option>)}
+          </select>
+          <select value={minBathrooms} onChange={e => setMinBathrooms(e.target.value)} style={{ ...sel, padding: '7px 8px' }}>
+            <option value="">Baths</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ baths</option>)}
+          </select>
+          <button type="submit" style={{ ...btn, padding: '7px 16px' }}>Search</button>
         </form>
+
+        {/* Multi-select area pills */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>
+          {GC_TOWNS.map(t => {
+            const on = locations.includes(t)
+            return (
+              <button key={t} onClick={() => toggleLocation(t)} style={{
+                border: `1px solid ${on ? 'var(--orange)' : '#e5dccd'}`, background: on ? 'var(--orange)' : '#fff',
+                color: on ? '#fff' : '#6b5d48', borderRadius: 50, padding: '4px 11px', fontFamily: 'var(--font-nunito)',
+                fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>{on ? '✓ ' : ''}{t}</button>
+            )
+          })}
+          {locations.length > 0 && <button onClick={() => setLocations([])} style={{ border: 'none', background: 'none', color: '#9a8b74', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Clear areas</button>}
+        </div>
+
+        {/* Feature quick filters */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
+          {FILTERABLE_FEATURES.map(f => {
+            const on = features.includes(f)
+            return (
+              <button key={f} onClick={() => toggleFeature(f)} style={{
+                border: `1px solid ${on ? 'var(--teal, #0f766e)' : '#e5dccd'}`, background: on ? 'var(--teal, #0f766e)' : '#fff',
+                color: on ? '#fff' : '#6b5d48', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)',
+                fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>{featureIcon(f)} {featureLabel(f)}</button>
+            )
+          })}
+        </div>
       </header>
 
       {/* Locate-me + radius + view toggle */}
@@ -185,12 +216,16 @@ export default function PropertyPage() {
           const isRent = p.type === 'rent' || p.type === 'holiday'
           const imgs: string[] = Array.isArray(l.images) ? l.images.filter(Boolean) : []
           const termLabel = ({ short_term: 'Short-term', long_term: 'Long-term', holiday: 'Holiday rental' } as Record<string, string>)[p.rentalTerm as string]
-          const chips = [termLabel && `⏳ ${termLabel}`, p.furnished === 'furnished' && '🛋 Furnished', p.hasPool && '🏊 Pool', p.hasGarage && '🚗 Garage', p.energyRating && `⚡ ${p.energyRating}`].filter(Boolean) as string[]
+          const feats: string[] = (Array.isArray(p.features) && p.features.length)
+            ? p.features
+            : [p.hasPool && 'pool', p.hasGarage && 'garage', p.furnished === 'furnished' && 'furnished'].filter(Boolean) as string[]
+          const chips = [termLabel && `⏳ ${termLabel}`, ...feats.slice(0, 4).map(s => `${featureIcon(s)} ${featureLabel(s)}`), p.energyRating && `⚡ ${p.energyRating}`].filter(Boolean) as string[]
           return (
             <Link key={p.id} href={`/listings/${l.id}`} style={{ textDecoration: 'none' }}>
-              <div style={{ display: 'flex', background: '#fff', borderRadius: 14, border: '1px solid #ece3d7', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              {/* Fixed height keeps every card a uniform snapshot */}
+              <div style={{ display: 'flex', height: 150, background: '#fff', borderRadius: 14, border: '1px solid #ece3d7', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
                 {/* Photo */}
-                <div style={{ position: 'relative', flex: '0 0 42%', maxWidth: 220, minHeight: 150, background: 'var(--sand)' }}>
+                <div style={{ position: 'relative', flex: '0 0 42%', maxWidth: 220, background: 'var(--sand)' }}>
                   {imgs[0]
                     ? <img src={imgs[0]} alt={l.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                     : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🏠</div>}
@@ -213,11 +248,6 @@ export default function PropertyPage() {
                     {p.m2 && <span>📐 {Number(p.m2)} m²</span>}
                     {p.floor != null && <span>🏢 Floor {p.floor}</span>}
                   </div>
-
-                  {/* Description snippet */}
-                  {l.description && (
-                    <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#7a6f60', lineHeight: 1.5, marginTop: 6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{l.description}</div>
-                  )}
 
                   {chips.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 'auto', paddingTop: 8 }}>
@@ -250,4 +280,3 @@ export default function PropertyPage() {
 const inp: React.CSSProperties = { border: '1.5px solid #e5dccd', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, outline: 'none', background: '#fff' }
 const sel: React.CSSProperties = { ...inp, cursor: 'pointer', fontWeight: 700 }
 const btn: React.CSSProperties = { background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }
-const chk: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#555' }

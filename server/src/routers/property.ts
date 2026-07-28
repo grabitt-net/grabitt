@@ -34,6 +34,17 @@ export const propertyRouter = router({
       communityFees: z.number().int().min(0).max(100000).optional(),
       condition: z.enum(['new', 'good', 'needs_reform']).optional(),
       views: z.string().max(60).optional(),
+      // Full agent-listing detail.
+      reference: z.string().max(60).optional(),
+      address: z.string().max(300).optional(),
+      city: z.string().max(120).optional(),
+      coveredM2: z.number().min(0).max(1_000_000).optional(),
+      landM2: z.number().min(0).max(100_000_000).optional(),
+      distShops: z.number().int().min(0).max(1_000_000).optional(),
+      distSchools: z.number().int().min(0).max(1_000_000).optional(),
+      distBeach: z.number().int().min(0).max(1_000_000).optional(),
+      distTown: z.number().int().min(0).max(1_000_000).optional(),
+      features: z.array(z.string().max(40)).max(40).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       // Only Business accounts (agents) may list property.
@@ -88,6 +99,16 @@ export const propertyRouter = router({
               communityFees: input.communityFees,
               condition: input.condition,
               views: input.views,
+              reference: input.reference,
+              address: input.address,
+              city: input.city,
+              coveredM2: input.coveredM2,
+              landM2: input.landM2,
+              distShops: input.distShops,
+              distSchools: input.distSchools,
+              distBeach: input.distBeach,
+              distTown: input.distTown,
+              features: input.features ?? [],
             },
           },
         },
@@ -259,6 +280,8 @@ export const propertyRouter = router({
       hasPool: z.boolean().optional(),
       hasGarage: z.boolean().optional(),
       location: z.string().optional(),
+      locations: z.array(z.string()).optional(),   // multi-select areas
+      features: z.array(z.string()).optional(),     // must have ALL of these
       page: z.number().default(1),
     }))
     .query(({ ctx, input }) =>
@@ -269,6 +292,7 @@ export const propertyRouter = router({
           ...(input.minBathrooms && { bathrooms: { gte: input.minBathrooms } }),
           ...(input.hasPool && { hasPool: true }),
           ...(input.hasGarage && { hasGarage: true }),
+          ...(input.features?.length && { features: { hasEvery: input.features } }),
           listing: {
             status: 'active',
             ...((input.minPrice || input.maxPrice) && {
@@ -277,7 +301,9 @@ export const propertyRouter = router({
                 ...(input.maxPrice && { lte: input.maxPrice }),
               },
             }),
-            ...(input.location && { location: { contains: input.location, mode: 'insensitive' } }),
+            ...(input.locations?.length
+              ? { OR: input.locations.map(loc => ({ location: { contains: loc, mode: 'insensitive' as const } })) }
+              : input.location ? { location: { contains: input.location, mode: 'insensitive' } } : {}),
             ...(input.query && { title: { contains: input.query, mode: 'insensitive' } }),
           },
         },
