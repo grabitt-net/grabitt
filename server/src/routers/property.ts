@@ -37,8 +37,20 @@ export const propertyRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       // Only Business accounts (agents) may list property.
-      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true } })
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, propertyListingAllowance: true } })
       if (!me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A Business account is required to list property' })
+
+      // A property-agent plan (monthly allowance) is required to list property.
+      // Active + pending listings both count toward the allowance.
+      if (me.propertyListingAllowance < 1) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'A property-agent plan is required to list property. Choose a plan to get started.' })
+      }
+      const inUse = await ctx.prisma.listing.count({
+        where: { sellerId: ctx.user.id, department: 'property', status: { in: ['active', 'draft'] } },
+      })
+      if (inUse >= me.propertyListingAllowance) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: `Your plan allows ${me.propertyListingAllowance} active listings. Remove one or upgrade your plan to list more.` })
+      }
 
       return ctx.prisma.listing.create({
         data: {
@@ -186,6 +198,16 @@ export const propertyRouter = router({
           agentIsBusiness: r.listing.seller.isBusiness,
         }))
     }),
+
+  // The signed-in agent's plan allowance and how much of it is in use (active +
+  // pending listings). Drives the "list a property" gate and usage display.
+  myAllowance: protectedProcedure.query(async ({ ctx }) => {
+    const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { propertyListingAllowance: true, isBusiness: true } })
+    const inUse = await ctx.prisma.listing.count({
+      where: { sellerId: ctx.user.id, department: 'property', status: { in: ['active', 'draft'] } },
+    })
+    return { allowance: me.propertyListingAllowance, inUse, isBusiness: me.isBusiness, remaining: Math.max(0, me.propertyListingAllowance - inUse) }
+  }),
 
   // Admin approval — a property goes live only once an admin approves it.
   approve: execProcedure

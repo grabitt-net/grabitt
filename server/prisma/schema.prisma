@@ -30,6 +30,8 @@ enum SubPlan {
   service_ad    // €29/mo — advertise a service (tradespeople)
   page_banner   // €39/mo — banner across Grabitt pages
   directory     // €99/yr — business directory listing
+  agent_15      // €49/mo — property agent, 15 active listings
+  agent_40      // €99/mo — property agent, 40 active listings
 }
 
 enum SubStatus {
@@ -258,6 +260,8 @@ model User {
   agencyName         String?
   agentWhatsapp      String?
   agentEmail         String?
+  // Active-property-listing allowance from the agent's monthly plan (0 = none).
+  propertyListingAllowance Int  @default(0)
 
   // Tenant profile — a renter's details, shared with an agent when they enquire
   // about a rental so the agent can pre-qualify them.

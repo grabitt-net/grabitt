@@ -78,7 +78,20 @@ export const SUBSCRIPTION_PLANS = {
                  blurb: 'Your banner across Grabitt pages, with monthly click stats. €39/mo.' },
   directory:   { label: 'Business directory',  amountCents: 9900, interval: 'year',  trialDays: 0,
                  blurb: 'Year-round directory listing, with click stats. €99/yr.' },
+  // Property-agent plans — a monthly fee that includes an active-listing
+  // allowance. Enforced on property.create; managed by admins via approval.
+  agent_15:    { label: 'Agent — 15 listings',  amountCents: 4900, interval: 'month', trialDays: 0, propertyAllowance: 15,
+                 blurb: 'List up to 15 active properties. €49/mo.' },
+  agent_40:    { label: 'Agent — 40 listings',  amountCents: 9900, interval: 'month', trialDays: 0, propertyAllowance: 40,
+                 blurb: 'List up to 40 active properties. €99/mo.' },
 } as const
+
+// Property-agent plan ids and their active-listing allowance.
+export const AGENT_PLANS = {
+  agent_15: 15,
+  agent_40: 40,
+} as const
+export type AgentPlanId = keyof typeof AGENT_PLANS
 
 export type SubPlanId = keyof typeof SUBSCRIPTION_PLANS
 

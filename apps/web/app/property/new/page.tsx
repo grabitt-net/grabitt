@@ -32,8 +32,10 @@ export default function NewPropertyPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  // Only business accounts (agents) may list property.
-  const [gate, setGate] = useState<'checking' | 'ok' | 'needbusiness'>('checking')
+  // Agents need a Business account AND a property-agent plan with remaining
+  // allowance before they can list.
+  const [gate, setGate] = useState<'checking' | 'ok' | 'needbusiness' | 'needplan'>('checking')
+  const [allowance, setAllowance] = useState<{ allowance: number; inUse: number; remaining: number } | null>(null)
   // Agent contact profile — saved to the user and shown on every property they
   // list, so buyers can reach them by WhatsApp / email directly.
   const [agent, setAgent] = useState({ agencyName: '', agentWhatsapp: '', agentEmail: '' })
@@ -47,8 +49,12 @@ export default function NewPropertyPage() {
       if (!token) token = await refreshAuthToken()
       if (!token) { router.push('/auth?next=/property/new'); return }
       try {
-        const me: any = await trpcAuthed().users.me.query()
-        setGate(me?.isBusiness ? 'ok' : 'needbusiness')
+        const [me, allow]: any = await Promise.all([
+          trpcAuthed().users.me.query(),
+          (trpcAuthed() as any).property.myAllowance.query(),
+        ])
+        setAllowance(allow)
+        setGate(!me?.isBusiness ? 'needbusiness' : allow.remaining < 1 ? 'needplan' : 'ok')
         setAgent({
           agencyName: me?.agencyName ?? me?.businessName ?? '',
           agentWhatsapp: me?.agentWhatsapp ?? '',
@@ -126,9 +132,15 @@ export default function NewPropertyPage() {
 
       {gate === 'checking' && <div style={{ textAlign: 'center', padding: 60, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Checking your account…</div>}
       {gate === 'needbusiness' && <BusinessGate />}
+      {gate === 'needplan' && <PlanGate />}
 
       {gate === 'ok' && (
       <form onSubmit={submit} style={{ maxWidth: 640, margin: '0 auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {allowance && (
+          <div style={{ background: '#f0fdf4', border: '1px solid #c8e6c9', borderRadius: 12, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#2e7d32', fontWeight: 700 }}>
+            🏠 {allowance.remaining} of {allowance.allowance} listings remaining on your plan · new listings go live once approved by our team.
+          </div>
+        )}
         <Section title="The property">
           <Field label="Listing title *"><input value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. 2-bed apartment with sea view" style={inp} /></Field>
           <Row>
@@ -263,6 +275,47 @@ function BusinessGate() {
         <button onClick={() => openPanel('business')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Sign up as a business →</button>
         <Link href="/property" style={{ display: 'inline-block', marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#888', textDecoration: 'none' }}>← Back to property</Link>
       </div>
+    </div>
+  )
+}
+
+// Agent plan chooser — a monthly subscription with an active-listing allowance
+// is required before an agent can list property.
+const AGENT_PLANS: { id: string; name: string; listings: number; price: string; blurb: string }[] = [
+  { id: 'agent_15', name: 'Agent', listings: 15, price: '€49/mo', blurb: 'List up to 15 active properties.' },
+  { id: 'agent_40', name: 'Office', listings: 40, price: '€99/mo', blurb: 'List up to 40 active properties.' },
+]
+function PlanGate() {
+  const [busy, setBusy] = useState('')
+  const choose = async (plan: string) => {
+    setBusy(plan)
+    try {
+      const res: any = await trpcAuthed().subscriptions.createCheckout.mutate({ plan } as never)
+      if (res?.url) window.location.href = res.url
+    } catch { alert('Could not start checkout. Please try again.'); setBusy('') }
+  }
+  return (
+    <div style={{ maxWidth: 560, margin: '0 auto', padding: 16 }}>
+      <div style={{ textAlign: 'center', marginBottom: 16 }}>
+        <div style={{ fontSize: 40, marginBottom: 6 }}>🏠</div>
+        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 18, fontWeight: 700, color: 'var(--dark)' }}>Choose an agent plan</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#666', lineHeight: 1.6, marginTop: 4 }}>Listing property needs a monthly agent plan with an active-listing allowance. Every listing is reviewed by our team before it goes live.</div>
+      </div>
+      <div style={{ display: 'grid', gap: 12 }}>
+        {AGENT_PLANS.map(p => (
+          <div key={p.id} style={{ background: '#fff', border: '1.5px solid #ece3d7', borderRadius: 14, padding: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{p.name} · {p.listings} listings</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--orange)' }}>{p.price}</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', margin: '4px 0 12px' }}>{p.blurb}</div>
+            <button onClick={() => choose(p.id)} disabled={!!busy} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>
+              {busy === p.id ? 'Starting…' : `Choose ${p.name} →`}
+            </button>
+          </div>
+        ))}
+      </div>
+      <Link href="/property" style={{ display: 'block', textAlign: 'center', marginTop: 14, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#888', textDecoration: 'none' }}>← Back to property</Link>
     </div>
   )
 }

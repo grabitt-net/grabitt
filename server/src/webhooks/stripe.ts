@@ -54,6 +54,20 @@ async function applySubscription(sub: Stripe.Subscription) {
       await prisma.user.update({ where: { id: userId }, data: { isBusiness: false } })
     }
   }
+
+  // Property-agent plans include an active-listing allowance. Grant it while the
+  // subscription is active; clear it (to 0) when it lapses/cancels.
+  const planDef = SUBSCRIPTION_PLANS[plan] as { propertyAllowance?: number }
+  if (planDef.propertyAllowance != null) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        propertyListingAllowance: active ? planDef.propertyAllowance : 0,
+        // An agent on a paid plan is a business seller.
+        ...(active ? { isBusiness: true, isPropertyAgent: true } : {}),
+      },
+    })
+  }
 }
 
 
