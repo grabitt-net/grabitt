@@ -6,6 +6,7 @@ import ImageUploadField from './ImageUploadField'
 const POSITIONS: [string, string][] = [
   ['home_mid', 'Home — Mid ad'],
   ['category', 'Department pages'],
+  ['jobs', 'Recruitment page'],
   ['checkout', 'Checkout'],
 ]
 const POS_LABEL = Object.fromEntries(POSITIONS)

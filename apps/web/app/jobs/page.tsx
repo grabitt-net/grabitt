@@ -10,6 +10,7 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
+import BannerSlot from '@/components/marketplace/BannerSlot'
 import type { JobPoint } from '@/components/marketplace/JobsMap'
 
 // Map is client-only (Leaflet needs window) — load without SSR.
@@ -98,11 +99,10 @@ export default function JobsPage() {
       <QuickActions />
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <form onSubmit={e => { e.preventDefault(); run() }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search title, sector or skill…" style={{ ...inp, flex: 1 }} />
-            <button type="submit" style={btn}>Search</button>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {/* Compact search + filters on one line to free up a banner slot */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search jobs…" style={{ ...inp, flex: '1 1 180px', minWidth: 140, padding: '7px 12px' }} />
+            <button type="submit" style={{ ...btn, padding: '7px 14px' }}>Search</button>
             <select value={type} onChange={e => setType(e.target.value)} style={sel}>
               {TYPES.map(t => <option key={t.label} value={t.value ?? ''}>{t.label}</option>)}
             </select>
@@ -159,6 +159,9 @@ export default function JobsPage() {
           </div>
         )}
       </header>
+
+      {/* Sellable recruitment banner — renders only when an active banner exists */}
+      <BannerSlot position="jobs" aspect="5 / 1" />
 
       {/* Count + view toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>
