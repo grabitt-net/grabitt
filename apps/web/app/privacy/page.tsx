@@ -49,6 +49,7 @@ export default function PrivacyPage() {
         {/* 4 */}
         <h2 style={h2}>4. What other people can see</h2>
         <p style={p}>Your display name, profile photo, grade, ratings and listings are <strong>public</strong>. Your email address, phone number and collection address are <strong>not</strong> public: contact details are shared with the other party only when a transaction requires it (for example, a completed collection sale). A candidate&apos;s CV and contact details are released to an employer only when that employer unlocks the profile or the candidate applies to their job.</p>
+        <p style={p}>If you are a <strong>property agent</strong> and choose to display agent contact details (agency name, WhatsApp, email) on your property listings, those details are shown publicly on your listings so that interested renters and buyers can contact you directly. If you are a <strong>renter</strong> and choose to send your <strong>tenant profile</strong> (such as budget, move-in date, number of occupants, employment status and the notes you provide) when enquiring about a rental, that information is shared with the agent or landlord for that listing so they can consider your enquiry. Both are optional and only shared because you choose to provide them.</p>
 
         {/* 5 */}
         <h2 style={h2}>5. Who processes your data for us</h2>
