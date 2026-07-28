@@ -17,6 +17,7 @@ export type BusinessTierStatus =
       usage: { items: number; jobs: number; property: number }
       sales90d: number
       rating: number
+      ratingCount: number
       next: { label: string; feePct: number; needSales: number; needRating: number } | null
       maintaining: boolean
     }
@@ -359,8 +360,9 @@ export const businessRouter = router({
       const since90 = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
-      const [sales90d, itemsUsed, jobsUsed, propertyUsed] = await Promise.all([
+      const [sales90d, ratingCount, itemsUsed, jobsUsed, propertyUsed] = await Promise.all([
         ctx.prisma.transaction.count({ where: { sellerId: user.id, status: { in: ['completed', 'released'] }, createdAt: { gte: since90 } } }),
+        ctx.prisma.review.count({ where: { subjectId: user.id } }),
         // Items = everything the seller listed this month that is NOT a job or property post.
         ctx.prisma.listing.count({ where: { sellerId: user.id, createdAt: { gte: monthStart }, department: { notIn: ['jobs', 'property'] } } }),
         ctx.prisma.jobListing.count({ where: { listing: { sellerId: user.id }, createdAt: { gte: monthStart } } }),
@@ -399,6 +401,7 @@ export const businessRouter = router({
         usage: { items: itemsUsed, jobs: jobsUsed, property: propertyUsed },
         sales90d,
         rating,
+        ratingCount,
         next: next ? { label: next.label, feePct: next.feeRate * 100, needSales: next.criteria.sales90d, needRating: next.criteria.rating } : null,
         // Are they at risk of dropping? True when they hold a tier above the one
         // their current numbers qualify for (only possible transiently before

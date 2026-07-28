@@ -21,6 +21,7 @@ type TierStatus = {
   usage: { items: number; jobs: number; property: number }
   sales90d: number
   rating: number
+  ratingCount: number
   next: { label: string; feePct: number; needSales: number; needRating: number } | null
 } | { isBusiness: false }
 
@@ -59,6 +60,22 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
         </div>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', marginTop: 8, lineHeight: 1.5 }}>
           {t('The item-sale fee. Property and job listings are never charged a sales fee.')}
+        </div>
+
+        {/* Current standing — rating + trailing sales at a glance */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+          <div style={{ flex: 1, background: '#fff', border: '1px solid #efe7db', borderRadius: 12, padding: '11px 12px', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>
+              {s.ratingCount > 0 ? `★ ${s.rating.toFixed(1)}` : '★ —'}
+            </div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+              {t('rating')}{s.ratingCount > 0 ? ` · ${s.ratingCount}` : ''}
+            </div>
+          </div>
+          <div style={{ flex: 1, background: '#fff', border: '1px solid #efe7db', borderRadius: 12, padding: '11px 12px', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{s.sales90d}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('sales · 90 days')}</div>
+          </div>
         </div>
 
         {/* Level ladder */}
