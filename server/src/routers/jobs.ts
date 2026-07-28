@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server'
 import type { Prisma } from '@prisma/client'
 import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
 import { buildCvSnapshot } from '../lib/cvSnapshot'
+import { enforceBusinessListingAllowance } from '../lib/businessLimits'
 import { scoreSuitability } from '../lib/suitability'
 
 // Employer-defined screening question shape.
@@ -424,6 +425,8 @@ export const jobsRouter = router({
       // Only Business accounts may post job adverts.
       const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true } })
       if (!me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A Business account is required to post jobs' })
+      // Enforce the tier's monthly job allowance (credits cover any overflow).
+      await enforceBusinessListingAllowance(ctx.prisma, ctx.user.id, 'jobs')
       return ctx.prisma.listing.create({
         data: {
           sellerId: ctx.user.id,

@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { CreateListingInputSchema, SearchInputSchema } from '@grabitt/types'
 import { sellerName, missingBusinessName } from '../lib/identity'
+import { enforceBusinessListingAllowance } from '../lib/businessLimits'
 import { LISTING_CAPS, GRADE_THRESHOLDS, PRICES } from '@grabitt/design-tokens'
 import { getStripe } from '../lib/stripe'
 
@@ -396,20 +397,26 @@ export const listingsRouter = router({
         })
       }
 
-      // Enforce monthly listing cap per grade
-      const cap = LISTING_CAPS[user.grade as keyof typeof LISTING_CAPS]
-      if (cap !== Infinity) {
-        const monthStart = new Date()
-        monthStart.setDate(1)
-        monthStart.setHours(0, 0, 0, 0)
-        const count = await ctx.prisma.listing.count({
-          where: { sellerId: user.id, createdAt: { gte: monthStart } },
-        })
-        if (count >= cap) {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: `Your ${user.grade} grade allows ${cap} listings per month`,
+      // Enforce the monthly item-listing allowance. Business accounts run on the
+      // Business/Plus/Pro tier allowance (with credit overflow); everyone else on
+      // the personal grade cap.
+      if (user.isBusiness) {
+        await enforceBusinessListingAllowance(ctx.prisma, user.id, 'items')
+      } else {
+        const cap = LISTING_CAPS[user.grade as keyof typeof LISTING_CAPS]
+        if (cap !== Infinity) {
+          const monthStart = new Date()
+          monthStart.setDate(1)
+          monthStart.setHours(0, 0, 0, 0)
+          const count = await ctx.prisma.listing.count({
+            where: { sellerId: user.id, createdAt: { gte: monthStart } },
           })
+          if (count >= cap) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: `Your ${user.grade} grade allows ${cap} listings per month`,
+            })
+          }
         }
       }
 

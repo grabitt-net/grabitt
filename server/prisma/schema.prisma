@@ -714,6 +714,7 @@ enum NotificationKind {
   new_review
   listing_expiring
   grade_upgrade
+  grade_downgrade
   credits_received
   dispute_opened
   dispute_resolved
@@ -856,6 +857,7 @@ enum CreditEventKind {
   grab_it_now
   refund
   admin_adjustment
+  extra_listing
 }
 
 model CreditEvent {

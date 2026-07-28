@@ -95,6 +95,42 @@ export type AgentPlanId = keyof typeof AGENT_PLANS
 
 export type SubPlanId = keyof typeof SUBSCRIPTION_PLANS
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Business tiers — the three levels a Business account climbs. They ride on top
+// of the existing seller `grade` (dealer/trader/pro) so fees, caps and the
+// promote/demote engine stay in one place; this map is the business-facing
+// naming, the reduced item-sale fee, the monthly listing allowances, and the
+// rolling criteria a business must MEET AND MAINTAIN to hold the tier.
+//
+// Fees apply to ITEM SALES ONLY — never to property or job listings.
+// `sales90d` counts completed sales in the trailing 90 days, so a business that
+// stops trading slips back down a level. `dealer` (Business) is the floor for
+// any business account — it has no criteria.
+export const BUSINESS_TIERS = {
+  dealer: { key: 'dealer', label: 'Business',      feeRate: FEE_RATES.dealer, // 6%
+            caps: { items: 30,  jobs: 3,  property: 5  }, criteria: { sales90d: 0,  rating: 0   } },
+  trader: { key: 'trader', label: 'Business Plus', feeRate: FEE_RATES.trader, // 4%
+            caps: { items: 100, jobs: 10, property: 20 }, criteria: { sales90d: 25, rating: 4.3 } },
+  pro:    { key: 'pro',    label: 'Business Pro',  feeRate: FEE_RATES.pro,    // 2.5%
+            caps: { items: 500, jobs: 30, property: 60 }, criteria: { sales90d: 75, rating: 4.6 } },
+} as const
+
+export const BUSINESS_TIER_ORDER = ['dealer', 'trader', 'pro'] as const
+export type BusinessGrade = typeof BUSINESS_TIER_ORDER[number]
+
+/** The business tier for any grade — anything below dealer floors at Business. */
+export function businessTierForGrade(grade: string) {
+  const key: BusinessGrade = grade === 'pro' ? 'pro' : grade === 'trader' ? 'trader' : 'dealer'
+  return BUSINESS_TIERS[key]
+}
+
+/** Highest tier a business qualifies for on trailing sales + rating. */
+export function qualifyingBusinessGrade(sales90d: number, rating: number): BusinessGrade {
+  if (sales90d >= BUSINESS_TIERS.pro.criteria.sales90d && rating >= BUSINESS_TIERS.pro.criteria.rating) return 'pro'
+  if (sales90d >= BUSINESS_TIERS.trader.criteria.sales90d && rating >= BUSINESS_TIERS.trader.criteria.rating) return 'trader'
+  return 'dealer'
+}
+
 export const GRAB_IT_NOW_WINDOWS = [2, 4, 6, 12, 24] as const
 
 export const EXEC_SESSION_TTL_MS = 4 * 60 * 60 * 1000 // 4 hours, NO silent refresh

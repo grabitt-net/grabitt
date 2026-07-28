@@ -2,6 +2,24 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
 import { scoreSeller, type SellerScore } from '../lib/sellerScore'
+import { BUSINESS_TIERS, BUSINESS_TIER_ORDER, qualifyingBusinessGrade, type BusinessGrade } from '@grabitt/design-tokens'
+
+// Shape returned by business.tierStatus. Explicit so the client call site does
+// not trip the deep-instantiation guard.
+export type BusinessTierStatus =
+  | { isBusiness: false }
+  | {
+      isBusiness: true
+      grade: BusinessGrade
+      label: string
+      feePct: number
+      caps: { items: number; jobs: number; property: number }
+      usage: { items: number; jobs: number; property: number }
+      sales90d: number
+      rating: number
+      next: { label: string; feePct: number; needSales: number; needRating: number } | null
+      maintaining: boolean
+    }
 
 // Business accounts: proving you are one, and the shop you get once you have.
 //
@@ -323,6 +341,71 @@ export const businessRouter = router({
   sellerRating: publicProcedure
     .input(z.object({ sellerId: z.string().uuid() }))
     .query(({ ctx, input }): Promise<SellerScore> => sellerScoreFor(ctx.prisma, input.sellerId)),
+
+  // Business tier status: the level held, the fee, this month's listing usage
+  // against the tier allowances, and progress toward the next level. Doubles as
+  // the lazy reconcile point — every time a business opens their account we
+  // re-check the trailing-90-day criteria and promote OR demote accordingly, so
+  // a business that stops maintaining its numbers slips back a level.
+  tierStatus: protectedProcedure
+    .query(async ({ ctx }): Promise<BusinessTierStatus> => {
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: ctx.user.id },
+        select: { id: true, grade: true, avgRating: true, isBusiness: true },
+      })
+      if (!user?.isBusiness) return { isBusiness: false } as BusinessTierStatus
+
+      const now = new Date()
+      const since90 = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+      const [sales90d, itemsUsed, jobsUsed, propertyUsed] = await Promise.all([
+        ctx.prisma.transaction.count({ where: { sellerId: user.id, status: { in: ['completed', 'released'] }, createdAt: { gte: since90 } } }),
+        // Items = everything the seller listed this month that is NOT a job or property post.
+        ctx.prisma.listing.count({ where: { sellerId: user.id, createdAt: { gte: monthStart }, department: { notIn: ['jobs', 'property'] } } }),
+        ctx.prisma.jobListing.count({ where: { listing: { sellerId: user.id }, createdAt: { gte: monthStart } } }),
+        ctx.prisma.propertyListing.count({ where: { listing: { sellerId: user.id }, createdAt: { gte: monthStart } } }),
+      ])
+
+      const rating = Number(user.avgRating ?? 0)
+      const target = qualifyingBusinessGrade(sales90d, rating)
+      // Reconcile the stored grade if the qualifying tier has changed. Never drop
+      // below dealer (Business) while the account is a business.
+      if (target !== user.grade && ['dealer', 'trader', 'pro'].includes(user.grade)) {
+        const up = BUSINESS_TIER_ORDER.indexOf(target) > BUSINESS_TIER_ORDER.indexOf(user.grade as BusinessGrade)
+        await ctx.prisma.user.update({ where: { id: user.id }, data: { grade: target } })
+        await ctx.prisma.notification.create({
+          data: {
+            userId: user.id,
+            kind: up ? 'grade_upgrade' : 'grade_downgrade',
+            title: up ? `Upgraded to ${BUSINESS_TIERS[target].label}!` : `Moved to ${BUSINESS_TIERS[target].label}`,
+            body: up
+              ? `You now pay just ${(BUSINESS_TIERS[target].feeRate * 100).toFixed(1).replace('.0', '')}% on item sales and get a bigger listing allowance.`
+              : `Your trailing 90-day sales no longer meet the criteria for your previous tier. Keep selling to climb back up.`,
+          },
+        }).catch(() => {})
+      }
+      const grade = target as BusinessGrade
+      const tier = BUSINESS_TIERS[grade]
+      const nextGrade = BUSINESS_TIER_ORDER[BUSINESS_TIER_ORDER.indexOf(grade) + 1] as BusinessGrade | undefined
+      const next = nextGrade ? BUSINESS_TIERS[nextGrade] : null
+
+      return {
+        isBusiness: true,
+        grade,
+        label: tier.label,
+        feePct: tier.feeRate * 100,
+        caps: tier.caps,
+        usage: { items: itemsUsed, jobs: jobsUsed, property: propertyUsed },
+        sales90d,
+        rating,
+        next: next ? { label: next.label, feePct: next.feeRate * 100, needSales: next.criteria.sales90d, needRating: next.criteria.rating } : null,
+        // Are they at risk of dropping? True when they hold a tier above the one
+        // their current numbers qualify for (only possible transiently before
+        // this reconcile runs, but also surfaced as "keep it up" guidance).
+        maintaining: true,
+      }
+    }),
 })
 
 // Gathers the real signals behind a shop's rating: reviews, disputes and how

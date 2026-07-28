@@ -12,6 +12,7 @@ import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import SellerCentre from '@/components/marketplace/SellerCentre'
+import BusinessCentre from '@/components/marketplace/BusinessCentre'
 import AttributesCard from '@/components/marketplace/AttributesCard'
 import AgentProfileCard from '@/components/marketplace/AgentProfileCard'
 import TenantProfileCard from '@/components/marketplace/TenantProfileCard'
@@ -59,7 +60,7 @@ function AccountInner() {
   // ?tab=recruitment — how the Employers entry points land here.
   const wantTab = params.get('tab')
   const focusRef = useRef<HTMLDivElement | null>(null)
-  const [mainTab, setMainTab] = useState<'selling' | 'inbox' | 'recruitment' | 'settings'>('selling')
+  const [mainTab, setMainTab] = useState<'business' | 'selling' | 'inbox' | 'recruitment' | 'settings'>('selling')
   const [ready, setReady] = useState(false)
   const [me, setMe] = useState<any>(null)
   const [dash, setDash] = useState<any>(null)
@@ -137,10 +138,12 @@ function AccountInner() {
   useEffect(() => { load() }, [load])
 
   useEffect(() => {
-    if (wantTab === 'recruitment' || wantTab === 'inbox' || wantTab === 'settings' || wantTab === 'selling') {
+    // Recruitment is now folded into the Business hub.
+    if (wantTab === 'recruitment') { setMainTab(me?.isBusiness ? 'business' : 'selling'); return }
+    if (wantTab === 'business' || wantTab === 'inbox' || wantTab === 'settings' || wantTab === 'selling') {
       setMainTab(wantTab as typeof mainTab)
     }
-  }, [wantTab])
+  }, [wantTab, me?.isBusiness])
 
   // Scroll the deep-linked offer into view once the offers have loaded.
   useEffect(() => {
@@ -267,7 +270,8 @@ function AccountInner() {
                 ['📋', t('Activity'), 'myActivity'],
                 ['⭐', t('My ratings'), 'myRatings'],
                 ['🔔', t('Saved searches'), 'savedSearches'],
-                ['🎯', t('Attributes'), 'attributes'],
+                // Attributes are personal targeting/job-matching — hidden for businesses.
+                ...(me?.isBusiness ? [] : [['🎯', t('Attributes'), 'attributes'] as [string, string, PanelId | 'attributes']]),
                 ['🛡️', t('Disputes'), 'myDisputes'],
               ] as [string, string, PanelId | 'attributes'][]).map(([icon, label, id]) => (
                 <button key={label} onClick={() => id === 'attributes' ? goTo('settings', 'attributes') : openPanel(id as PanelId)} style={{
@@ -292,15 +296,15 @@ function AccountInner() {
               </button>
             )}
 
-            {/* Business — upgrade, or manage an existing storefront */}
-            <button onClick={() => openPanel(me?.isBusiness ? 'storefrontEdit' : 'business')} style={{ width: '100%', marginTop: 10, background: 'linear-gradient(135deg,#FFF3EE,#FFE4D6)', border: '1px solid #FFD4A0', borderRadius: 12, padding: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
+            {/* Business — jump to the Business hub, or upgrade to open one */}
+            <button onClick={() => me?.isBusiness ? setMainTab('business') : openPanel('business')} style={{ width: '100%', marginTop: 10, background: 'linear-gradient(135deg,#FFF3EE,#FFE4D6)', border: '1px solid #FFD4A0', borderRadius: 12, padding: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
               <span style={{ fontSize: 18 }}>🏢</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: '#8a5a2a' }}>
-                  {me?.isBusiness ? t('Manage my business') : t('Upgrade to Business')}
+                  {me?.isBusiness ? t('My business hub') : t('Upgrade to Business')}
                 </div>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a5a2a', opacity: 0.85, marginTop: 2 }}>
-                  {me?.isBusiness ? t('Storefront, branding and business tools.') : t('Storefront, more listings and a 🏢 badge — 7 days free.')}
+                  {me?.isBusiness ? t('Level, allowances, storefront and tools.') : t('Storefront, more listings and a 🏢 badge — 7 days free.')}
                 </div>
               </div>
               <span style={{ color: '#8a5a2a', fontWeight: 900, fontSize: 16 }}>›</span>
@@ -328,11 +332,11 @@ function AccountInner() {
           {/* Section tabs — the page was nine cards deep in one scroll. */}
           <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #ece3d7', borderRadius: 50, padding: 5 }}>
             {(([
+              // Business hub — level, allowances and every business tool, in one
+              // place. Personal accounts never see it.
+              ...(me?.isBusiness ? [['business', `🏢 ${t('Business')}`] as const] : []),
               ['selling', `🏷️ ${t('Selling')}`],
               ['inbox', `💬 ${t('Inbox')}`],
-              // Recruitment is a business tool — hidden for personal accounts
-              // rather than shown and refused.
-              ...(me?.isBusiness ? [['recruitment', `💼 ${t('Recruitment')}`] as const] : []),
               ['settings', `⚙️ ${t('Settings')}`],
             ] as const)).map(([id, label]) => (
               <button key={id} onClick={() => setMainTab(id)} style={{
@@ -345,9 +349,14 @@ function AccountInner() {
           </div>
 
 
+          {mainTab === 'business' && me?.isBusiness && (
+            <BusinessCentre businessVerified={me?.businessVerified} />
+          )}
+
           {mainTab === 'selling' && (<>
-          {/* Seller info centre — level, progress, profile, dashboard */}
-          <SellerCentre />
+          {/* Seller info centre — personal seller ladder. Business accounts get
+              their level in the Business hub instead, so don't duplicate it here. */}
+          {!me?.isBusiness && <SellerCentre />}
 
           {/* My Listings */}
           <div id="my-listings" style={card}>
@@ -409,24 +418,6 @@ function AccountInner() {
 
           </>)}
 
-          {mainTab === 'recruitment' && me?.isBusiness && (
-            <div style={card}>
-              <div style={cardHead}>{t('Recruitment')}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#666', lineHeight: 1.55, marginBottom: 14 }}>
-                {t('Advertise roles, review applicants and search candidates who have listed themselves for work.')}
-              </div>
-              <div style={{ display: 'grid', gap: 8 }}>
-                <RecruitLink icon="📢" title={t('Place a job advert')} sub={t('Free to post — candidates apply to you.')} onClick={() => router.push('/jobs/new')} />
-                <RecruitLink icon="📋" title={t('Applicants')} sub={t('Review, note and move candidates through your pipeline.')} onClick={() => openPanel('applications')} />
-                <RecruitLink icon="🔍" title={t('Search candidates')} sub={t('Searching is free — credits open a profile.')} onClick={() => openPanel('findStaff')} />
-                {!me?.businessVerified && <RecruitLink icon="🛡️" title={t('Verify your business')} sub={t('Required before your shop can go live.')} onClick={() => openPanel('businessVerify')} />}
-                <RecruitLink icon="🏪" title={t('My storefront')} sub={t('Layout, categories, featured items and policies.')} onClick={() => openPanel('storefrontEdit')} />
-                <RecruitLink icon="📖" title={t('Directory listing')} sub={t('List your business in the Grabitt directory.')} onClick={() => openPanel('advertise')} />
-                <RecruitLink icon="💳" title={t('Credits')} sub={t('Top up the credits used for candidate searches.')} onClick={() => openPanel('buyCredits')} />
-              </div>
-            </div>
-          )}
-
           {mainTab === 'inbox' && (<>
           {/* Messages */}
           <div style={card}>
@@ -454,6 +445,9 @@ function AccountInner() {
           </>)}
 
           {mainTab === 'settings' && (<>
+          {/* Personal-only tools — My CV, Attributes and the Tenant profile are for
+              individuals looking for work or a rental, never for businesses. */}
+          {!me?.isBusiness && (<>
           {/* My CV — build the CV recruiters receive on apply */}
           <Link href="/cv" style={{ textDecoration: 'none' }}>
             <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
@@ -469,11 +463,12 @@ function AccountInner() {
           {/* Attributes & preferences — targeting, alerts and job matching */}
           <AttributesCard />
 
-          {/* Property-agent contact — only relevant to business/agent accounts */}
-          {me?.isBusiness && <AgentProfileCard />}
-
           {/* Tenant profile — shared with agents when enquiring on a rental */}
           <TenantProfileCard />
+          </>)}
+
+          {/* Property-agent contact — only relevant to business/agent accounts */}
+          {me?.isBusiness && <AgentProfileCard />}
 
           {/* Account email — changing it re-verifies via Supabase Auth */}
           <div style={card}>
@@ -583,17 +578,4 @@ const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3
 const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }
 const fieldLabel: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 5 }
 const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, outline: 'none', background: '#fff', marginBottom: 12 }
-function RecruitLink({ icon, title, sub, onClick }: { icon: string; title: string; sub: string; onClick: () => void }) {
-  return (
-    <button onClick={onClick} style={{ width: '100%', textAlign: 'left', background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '12px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 11 }}>
-      <span style={{ fontSize: 20 }}>{icon}</span>
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</span>
-        <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888', marginTop: 2 }}>{sub}</span>
-      </span>
-      <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 16 }}>›</span>
-    </button>
-  )
-}
-
 function Muted({ children }: { children: React.ReactNode }) { return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '16px 0', textAlign: 'center' }}>{children}</div> }
