@@ -24,6 +24,10 @@ export default function NewPropertyPage() {
     title: '', type: 'sale', price: '', location: '', community: '',
     bedrooms: '', bathrooms: '', m2: '', floor: '', energyRating: '',
     hasPool: false, hasGarage: false, description: '',
+    // Rental terms + extended portal details.
+    rentalTerm: '', touristLicence: '',
+    plotM2: '', terraceM2: '', furnished: '', orientation: '',
+    yearBuilt: '', communityFees: '', condition: '', views: '',
   })
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [saving, setSaving] = useState(false)
@@ -92,6 +96,16 @@ export default function NewPropertyPage() {
         hasPool: f.hasPool,
         hasGarage: f.hasGarage,
         ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
+        ...(f.rentalTerm && { rentalTerm: f.rentalTerm as never }),
+        ...(f.touristLicence.trim() && { touristLicence: f.touristLicence.trim() }),
+        ...(f.plotM2 && { plotM2: Number(f.plotM2) }),
+        ...(f.terraceM2 && { terraceM2: Number(f.terraceM2) }),
+        ...(f.furnished && { furnished: f.furnished as never }),
+        ...(f.orientation.trim() && { orientation: f.orientation.trim() }),
+        ...(f.yearBuilt && { yearBuilt: Number(f.yearBuilt) }),
+        ...(f.communityFees && { communityFees: Number(f.communityFees) }),
+        ...(f.condition && { condition: f.condition as never }),
+        ...(f.views.trim() && { views: f.views.trim() }),
       })
       router.push(`/listings/${listing.id}`)
     } catch (err: any) {
@@ -152,6 +166,60 @@ export default function NewPropertyPage() {
             </div>
           </Row>
           <Field label="Description"><textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the property, condition, features and what's nearby…" style={{ ...inp, resize: 'vertical' }} /></Field>
+        </Section>
+
+        {/* Rental terms — only for lettings. Holiday lets must show a licence. */}
+        {(f.type === 'rent' || f.type === 'holiday') && (
+          <Section title="Rental terms">
+            <Row>
+              <Field label="Duration">
+                <select value={f.rentalTerm} onChange={e => set('rentalTerm', e.target.value)} style={sel}>
+                  <option value="">—</option>
+                  <option value="short_term">Short-term</option>
+                  <option value="long_term">Long-term</option>
+                  <option value="holiday">Holiday rental</option>
+                </select>
+              </Field>
+              {(f.type === 'holiday' || f.rentalTerm === 'holiday') && (
+                <Field label="Tourist licence no. *"><input value={f.touristLicence} onChange={e => set('touristLicence', e.target.value)} placeholder="e.g. VV-35-xxxxx" style={inp} /></Field>
+              )}
+            </Row>
+            {(f.type === 'holiday' || f.rentalTerm === 'holiday') && (
+              <div style={{ fontSize: 11, color: '#9a6a30', fontFamily: 'var(--font-ui)' }}>Holiday rentals in the Canary Islands require a Vivienda Vacacional (VV) licence — its number must be shown on the advert.</div>
+            )}
+          </Section>
+        )}
+
+        {/* Extended portal details */}
+        <Section title="More details">
+          <Row>
+            <Field label="Plot size (m²)"><input value={f.plotM2} onChange={e => set('plotM2', e.target.value)} inputMode="numeric" placeholder="e.g. 350" style={inp} /></Field>
+            <Field label="Terrace (m²)"><input value={f.terraceM2} onChange={e => set('terraceM2', e.target.value)} inputMode="numeric" placeholder="e.g. 20" style={inp} /></Field>
+            <Field label="Year built"><input value={f.yearBuilt} onChange={e => set('yearBuilt', e.target.value)} inputMode="numeric" placeholder="e.g. 2005" style={inp} /></Field>
+          </Row>
+          <Row>
+            <Field label="Furnished">
+              <select value={f.furnished} onChange={e => set('furnished', e.target.value)} style={sel}>
+                <option value="">—</option>
+                <option value="furnished">Furnished</option>
+                <option value="part_furnished">Part-furnished</option>
+                <option value="unfurnished">Unfurnished</option>
+              </select>
+            </Field>
+            <Field label="Condition">
+              <select value={f.condition} onChange={e => set('condition', e.target.value)} style={sel}>
+                <option value="">—</option>
+                <option value="new">New / recently built</option>
+                <option value="good">Good</option>
+                <option value="needs_reform">Needs reform</option>
+              </select>
+            </Field>
+            <Field label="Community fees (€/mo)"><input value={f.communityFees} onChange={e => set('communityFees', e.target.value)} inputMode="numeric" placeholder="e.g. 60" style={inp} /></Field>
+          </Row>
+          <Row>
+            <Field label="Orientation"><input value={f.orientation} onChange={e => set('orientation', e.target.value)} placeholder="e.g. South-West" style={inp} /></Field>
+            <Field label="Views"><input value={f.views} onChange={e => set('views', e.target.value)} placeholder="e.g. Sea, Mountain" style={inp} /></Field>
+          </Row>
         </Section>
 
         <Section title="Agent contact (shown on your listings)">

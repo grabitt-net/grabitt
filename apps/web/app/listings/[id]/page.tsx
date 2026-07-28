@@ -222,6 +222,12 @@ function ListingInner() {
           <div style={{ flex: 1, minWidth: 0, height: 280, borderRadius: 14, overflow: 'hidden', background: 'var(--sand)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 96, border: '1px solid #ece3d7' }}>
             {heroImg ? <img src={heroImg} alt={listing.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : emoji}
             {listing.isFeatured && <span style={{ position: 'absolute', top: 8, left: 8, background: 'var(--orange)', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '3px 9px', borderRadius: 50 }}>⭐ FEATURED</span>}
+            {/* Photo count so buyers know how many images there are (incl. when just 1). */}
+            {photos.length > 0 && (
+              <span style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(26,26,26,0.72)', color: '#fff', fontSize: 10.5, fontWeight: 800, fontFamily: 'var(--font-nunito)', padding: '3px 10px', borderRadius: 50, display: 'flex', alignItems: 'center', gap: 4 }}>
+                📷 {activePhoto + 1}/{photos.length}
+              </span>
+            )}
           </div>
           <div style={{ width: 56, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8, alignSelf: 'stretch' }}>
             <RailBtn icon="🛒" label="Cart" onClick={() => openPanel('cart')} />
@@ -281,6 +287,12 @@ function ListingInner() {
               <button onClick={() => openPanel('makeOffer', panelItem)} style={{ width: 96, background: '#fff', color: '#FF4500', border: '2px solid #FF4500', borderRadius: 12, padding: '10px 6px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>💰 {t('Make')}<br />{t('an Offer')}</button>
             </div>
           )}
+          {/* Property: a normal-sized Enquire button on the title/price line */}
+          {!isOwner && prop && seller?.id && (
+            <div style={{ alignSelf: 'center', flex: '0 0 auto' }}>
+              <MessageButton listingId={id} sellerId={seller.id} label={t('Enquire')} primary compact />
+            </div>
+          )}
         </div>
 
         {/* Primary actions */}
@@ -322,7 +334,8 @@ function ListingInner() {
           </div>
         ) : prop ? (
           <>
-            {seller?.id && <MessageButton listingId={id} sellerId={seller.id} label={t('Enquire')} primary flex={1} />}
+            {/* Enquire now lives on the title line; here we keep the tenant-
+                profile enquiry and the agent's direct contact card. */}
             {/* Rentals: enquire with the saved tenant profile so the agent can
                 pre-qualify. */}
             {seller?.id && !isOwner && isRent && <TenantEnquireButton listingId={id} sellerId={seller.id} />}
@@ -374,11 +387,24 @@ function ListingInner() {
             ) : prop ? (
               <>
                 <DetailRow label={t('Reference')} value={ref} />
+                <DetailRow label={t('Type')} value={PROP_TYPE[prop.type] ?? prop.type} />
+                {prop.rentalTerm && <DetailRow label={t('Rental term')} value={({ short_term: 'Short-term', long_term: 'Long-term', holiday: 'Holiday rental' } as Record<string, string>)[prop.rentalTerm] ?? prop.rentalTerm} />}
                 <DetailRow label={t('Bedrooms')} value={prop.bedrooms != null ? String(prop.bedrooms) : ''} />
                 <DetailRow label={t('Bathrooms')} value={prop.bathrooms != null ? String(prop.bathrooms) : ''} />
-                <DetailRow label={t('Size')} value={prop.m2 != null ? `${Number(prop.m2)}m²` : ''} />
+                <DetailRow label={t('Build size')} value={prop.m2 != null ? `${Number(prop.m2)} m²` : ''} />
+                {prop.plotM2 != null && <DetailRow label={t('Plot size')} value={`${Number(prop.plotM2)} m²`} />}
+                {prop.terraceM2 != null && <DetailRow label={t('Terrace')} value={`${prop.terraceM2} m²`} />}
+                {prop.floor != null && <DetailRow label={t('Floor')} value={String(prop.floor)} />}
+                {prop.furnished && <DetailRow label={t('Furnished')} value={({ furnished: 'Furnished', part_furnished: 'Part-furnished', unfurnished: 'Unfurnished' } as Record<string, string>)[prop.furnished] ?? prop.furnished} />}
+                {prop.condition && <DetailRow label={t('Condition')} value={({ new: 'New / recently built', good: 'Good', needs_reform: 'Needs reform' } as Record<string, string>)[prop.condition] ?? prop.condition} />}
+                {prop.orientation && <DetailRow label={t('Orientation')} value={prop.orientation} />}
+                {prop.views && <DetailRow label={t('Views')} value={prop.views} />}
+                {prop.yearBuilt != null && <DetailRow label={t('Year built')} value={String(prop.yearBuilt)} />}
                 <DetailRow label={t('Pool')} value={prop.hasPool ? t('Yes') : ''} />
-                <DetailRow label={t('Garage')} value={prop.hasGarage ? t('Yes') : ''} />
+                <DetailRow label={t('Garage / parking')} value={prop.hasGarage ? t('Yes') : ''} />
+                {prop.energyRating && <DetailRow label={t('Energy rating')} value={prop.energyRating} />}
+                {prop.communityFees != null && <DetailRow label={t('Community fees')} value={`€${prop.communityFees}/mo`} />}
+                {prop.touristLicence && <DetailRow label={t('Tourist licence')} value={prop.touristLicence} />}
                 <DetailRow label={t('Category')} value={DEPT_LABEL[listing.department] ?? listing.department} />
               </>
             ) : (

@@ -107,7 +107,8 @@ export default function PropertyPage() {
           const l = p.listing ?? {}
           const isRent = p.type === 'rent' || p.type === 'holiday'
           const imgs: string[] = Array.isArray(l.images) ? l.images.filter(Boolean) : []
-          const chips = [p.hasPool && '🏊 Pool', p.hasGarage && '🚗 Garage', p.energyRating && `⚡ ${p.energyRating}`].filter(Boolean) as string[]
+          const termLabel = ({ short_term: 'Short-term', long_term: 'Long-term', holiday: 'Holiday rental' } as Record<string, string>)[p.rentalTerm as string]
+          const chips = [termLabel && `⏳ ${termLabel}`, p.furnished === 'furnished' && '🛋 Furnished', p.hasPool && '🏊 Pool', p.hasGarage && '🚗 Garage', p.energyRating && `⚡ ${p.energyRating}`].filter(Boolean) as string[]
           return (
             <Link key={p.id} href={`/listings/${l.id}`} style={{ textDecoration: 'none' }}>
               <div style={{ display: 'flex', background: '#fff', borderRadius: 14, border: '1px solid #ece3d7', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>

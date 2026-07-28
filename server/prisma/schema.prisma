@@ -1134,6 +1134,21 @@ model PropertyListing {
   energyRating String?
   lat          Float?
   lng          Float?
+
+  // Rental terms + tourist licence (Canary Islands VV licence for holiday lets).
+  rentalTerm   String?      // short_term | long_term | holiday (rentals only)
+  touristLicence String?    // holiday-let / vivienda vacacional licence number
+
+  // Extended portal details (Idealista / thehubproperty style).
+  plotM2       Decimal?     @db.Decimal(8, 2)
+  terraceM2    Int?
+  furnished    String?      // furnished | part_furnished | unfurnished
+  orientation  String?      // e.g. South, South-West
+  yearBuilt    Int?
+  communityFees Int?        // €/month
+  condition    String?      // new | good | needs_reform
+  views        String?      // e.g. Sea, Mountain, Pool
+
   createdAt    DateTime     @default(now())
 }
 
