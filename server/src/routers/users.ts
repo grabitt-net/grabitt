@@ -172,8 +172,10 @@ export const usersRouter = router({
   dashboard: protectedProcedure.query(async ({ ctx }) => {
     const uid = ctx.user.id
     const [active, sold, unread, offers, saved] = await Promise.all([
-      ctx.prisma.listing.count({ where: { sellerId: uid, status: 'active' } }),
-      ctx.prisma.listing.count({ where: { sellerId: uid, status: 'sold' } }),
+      // "On sale" / "Sold" count ITEMS only — job and property listings are Listing
+      // rows too, but they belong in the business hub, not the sell dashboard.
+      ctx.prisma.listing.count({ where: { sellerId: uid, status: 'active', department: { notIn: ['jobs', 'property'] } } }),
+      ctx.prisma.listing.count({ where: { sellerId: uid, status: 'sold', department: { notIn: ['jobs', 'property'] } } }),
       ctx.prisma.message.count({ where: { senderId: { not: uid }, readAt: null, thread: { participants: { some: { userId: uid } } } } }),
       ctx.prisma.offer.count({ where: { status: 'pending', listing: { sellerId: uid } } }),
       ctx.prisma.wishlistItem.count({ where: { userId: uid } }),
