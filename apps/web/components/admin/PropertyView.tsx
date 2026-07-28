@@ -23,7 +23,8 @@ interface AdminProperty {
   agentIsBusiness: boolean
 }
 
-const FILTERS = ['all', 'active', 'sold', 'expired'] as const
+const FILTERS = ['pending', 'all', 'active', 'sold', 'expired'] as const
+const FILTER_LABEL: Record<string, string> = { pending: 'Pending approval', all: 'All', active: 'Active', sold: 'Sold', expired: 'Expired' }
 const TYPE_LABEL: Record<string, string> = {
   sale: 'For Sale', rent: 'To Let', holiday: 'Holiday Let',
   commercial: 'Commercial', land: 'Land', new_build: 'New Build',
@@ -33,9 +34,10 @@ const isRental = (t: string) => t === 'rent' || t === 'holiday'
 export default function PropertyView() {
   const api = useCrmApi()
   const [rows, setRows] = useState<AdminProperty[]>([])
-  const [filter, setFilter] = useState<typeof FILTERS[number]>('all')
+  const [filter, setFilter] = useState<typeof FILTERS[number]>('pending')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -44,6 +46,22 @@ export default function PropertyView() {
     finally { setLoading(false) }
   }, [api, filter])
   useEffect(() => { load() }, [load])
+
+  const approve = useCallback(async (r: AdminProperty) => {
+    setBusy(r.id)
+    try { await api.approveProperty(r.listingId); setRows(prev => prev.filter(x => x.id !== r.id)) }
+    catch { setError('Could not approve. Try again.') }
+    finally { setBusy(null) }
+  }, [api])
+
+  const reject = useCallback(async (r: AdminProperty) => {
+    const reason = window.prompt(`Reject "${r.title}"? Optionally give a reason (sent to the agent):`, '')
+    if (reason === null) return
+    setBusy(r.id)
+    try { await api.rejectProperty(r.listingId, reason.trim() || undefined); setRows(prev => prev.filter(x => x.id !== r.id)) }
+    catch { setError('Could not reject. Try again.') }
+    finally { setBusy(null) }
+  }, [api])
 
   const stats = useMemo(() => {
     const live = rows.filter(r => r.status === 'active')
@@ -66,7 +84,7 @@ export default function PropertyView() {
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
         {FILTERS.map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={chip(filter === f)}>{f[0].toUpperCase() + f.slice(1)}</button>
+          <button key={f} onClick={() => setFilter(f)} style={chip(filter === f)}>{FILTER_LABEL[f] ?? f}</button>
         ))}
         <button onClick={load} style={{ ...chip(false), marginLeft: 'auto' }}>↻ Refresh</button>
       </div>
@@ -104,9 +122,17 @@ export default function PropertyView() {
                     €{r.price.toLocaleString()}{isRental(r.type) ? '/mo' : ''}
                   </td>
                   <td style={td}>{r.views}</td>
-                  <td style={td}><span style={pill(r.status === 'active' ? '#16a34a' : '#888')}>{r.status}</span></td>
+                  <td style={td}><span style={pill(r.status === 'active' ? '#16a34a' : r.status === 'draft' ? '#d97706' : '#888')}>{r.status === 'draft' ? 'pending' : r.status}</span></td>
                   <td style={td}>
-                    <a href={`/listings/${r.listingId}`} target="_blank" rel="noreferrer" style={{ color: '#FF4500', fontWeight: 800, textDecoration: 'none', fontSize: 12 }}>View ↗</a>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
+                      <a href={`/listings/${r.listingId}`} target="_blank" rel="noreferrer" style={{ color: '#FF4500', fontWeight: 800, textDecoration: 'none', fontSize: 12 }}>View ↗</a>
+                      {r.status === 'draft' && (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => approve(r)} disabled={busy === r.id} style={approveBtn}>{busy === r.id ? '…' : '✓ Approve'}</button>
+                          <button onClick={() => reject(r)} disabled={busy === r.id} style={rejectBtn}>✕ Reject</button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -136,6 +162,8 @@ const th: React.CSSProperties = { textAlign: 'left', padding: '10px 12px', fontS
 const td: React.CSSProperties = { padding: '10px 12px', color: '#555', verticalAlign: 'top' }
 const empty: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: 40, textAlign: 'center', color: '#888', fontFamily: 'Nunito, sans-serif', fontSize: 13 }
 const warnPill: React.CSSProperties = { marginLeft: 6, background: '#fef2f2', color: '#b91c1c', borderRadius: 50, padding: '1px 6px', fontSize: 9, fontWeight: 800 }
+const approveBtn: React.CSSProperties = { background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '5px 10px', fontFamily: 'Nunito, sans-serif', fontSize: 11, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }
+const rejectBtn: React.CSSProperties = { background: '#fff', color: '#b91c1c', border: '1.5px solid #f5c6c6', borderRadius: 8, padding: '5px 10px', fontFamily: 'Nunito, sans-serif', fontSize: 11, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }
 const chip = (active: boolean): React.CSSProperties => ({
   background: active ? '#FF4500' : '#fff', color: active ? '#fff' : '#666',
   border: '1px solid #ece3d7', borderRadius: 50, padding: '6px 14px',

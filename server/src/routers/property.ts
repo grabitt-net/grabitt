@@ -48,7 +48,8 @@ export const propertyRouter = router({
           price: input.price,
           department: 'property',
           condition: 'good',
-          status: 'active',
+          // Property listings are held for admin approval before going public.
+          status: 'draft',
           images: input.images ?? [],
           location: input.location,
           ...(input.lat != null && input.lng != null ? { lat: input.lat, lng: input.lng } : {}),
@@ -145,12 +146,15 @@ export const propertyRouter = router({
     }),
 
   adminList: execProcedure
-    .input(z.object({ status: z.enum(['all', 'active', 'sold', 'expired']).default('all') }).optional())
+    .input(z.object({ status: z.enum(['all', 'pending', 'active', 'sold', 'expired']).default('all') }).optional())
     .query(async ({ ctx, input }) => {
       const status = input?.status ?? 'all'
+      // "pending" is the draft state property listings sit in until an admin
+      // approves them.
+      const wantStatus = status === 'pending' ? 'draft' : status
       const rows = await ctx.prisma.propertyListing.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 200,
+        take: 300,
         include: {
           listing: {
             select: {
@@ -161,7 +165,7 @@ export const propertyRouter = router({
         },
       })
       return rows
-        .filter(r => status === 'all' || r.listing.status === status)
+        .filter(r => status === 'all' || r.listing.status === wantStatus)
         .map(r => ({
           id: r.id,
           listingId: r.listingId,
@@ -181,6 +185,45 @@ export const propertyRouter = router({
           agentEmail: r.listing.seller.email,
           agentIsBusiness: r.listing.seller.isBusiness,
         }))
+    }),
+
+  // Admin approval — a property goes live only once an admin approves it.
+  approve: execProcedure
+    .input(z.object({ listingId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.update({
+        where: { id: input.listingId },
+        data: { status: 'active' },
+        select: { id: true, title: true, sellerId: true },
+      })
+      await ctx.prisma.notification.create({
+        data: {
+          userId: listing.sellerId, kind: 'system',
+          title: '✅ Property approved',
+          body: `"${listing.title}" has been approved and is now live on Grabitt.`,
+          actionUrl: `/listings/${listing.id}`,
+        },
+      })
+      return { ok: true }
+    }),
+
+  reject: execProcedure
+    .input(z.object({ listingId: z.string().uuid(), reason: z.string().max(300).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.update({
+        where: { id: input.listingId },
+        data: { status: 'removed' },
+        select: { id: true, title: true, sellerId: true },
+      })
+      await ctx.prisma.notification.create({
+        data: {
+          userId: listing.sellerId, kind: 'system',
+          title: '⚠️ Property not approved',
+          body: `"${listing.title}" was not approved${input.reason ? `: ${input.reason}` : ''}. Please review and re-list.`,
+          actionUrl: `/listings/${listing.id}`,
+        },
+      })
+      return { ok: true }
     }),
 
   list: publicProcedure

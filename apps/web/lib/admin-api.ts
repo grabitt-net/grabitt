@@ -143,6 +143,10 @@ export function makeCrmApi(execToken: string) {
       rpc<any[]>('jobs.adminList', 'query', { status: status ?? 'all' }, execToken),
     adminProperties: (status?: string) =>
       rpc<any[]>('property.adminList', 'query', { status: status ?? 'all' }, execToken),
+    approveProperty: (listingId: string) =>
+      rpc<{ ok: true }>('property.approve', 'mutation', { listingId }, execToken),
+    rejectProperty: (listingId: string, reason?: string) =>
+      rpc<{ ok: true }>('property.reject', 'mutation', { listingId, reason }, execToken),
 
     // Member administration
     updateMember: (data: Record<string, unknown>) =>
