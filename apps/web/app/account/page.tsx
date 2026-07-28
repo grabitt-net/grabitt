@@ -223,7 +223,7 @@ function AccountInner() {
     { label: t('Sold'), value: dash?.sold, icon: I.check, onClick: () => { setSeg('sold'); goTo('selling', 'my-listings') } },
     { label: t('Messages'), value: dash?.unread, icon: I.message, dot: !!dash?.unread, href: '/messages' },
     { label: t('Offers'), value: dash?.offers, icon: I.offer, dot: !!dash?.offers, onClick: () => goTo('selling', 'offers') },
-    { label: t('Saved'), value: dash?.saved, icon: I.heart, onClick: () => openPanel('favourites') },
+    { label: t('Saved'), value: dash?.saved, icon: I.heart, href: '/favourites' },
     { label: t('Payouts'), value: payout?.payoutsEnabled ? '✓' : '—', icon: I.wallet, onClick: setupPayouts },
   ]
 

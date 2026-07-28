@@ -1,10 +1,23 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { trpcAuthed } from '@/lib/authToken'
 import { usePanel } from '@/context/PanelContext'
 import { BUSINESS_TIERS, BUSINESS_TIER_ORDER } from '@grabitt/design-tokens'
 import { t } from '@/lib/i18n'
+
+type Postings = {
+  jobs: { id: string; title: string; location: string; status: string; applications: number }[]
+  properties: { id: string; title: string; location: string; status: string; price: number; image: string | null }[]
+  unlockedCandidates: { seekerId: string; name: string; headline: string | null; sector: string | null }[]
+}
+
+const STATUS_PILL: Record<string, { bg: string; fg: string; label: string }> = {
+  active: { bg: '#dcfce7', fg: '#16a34a', label: 'Live' },
+  draft: { bg: '#fef9c3', fg: '#a16207', label: 'Pending' },
+  sold: { bg: '#f0f0f0', fg: '#888', label: 'Closed' },
+}
 
 // The single, de-duplicated home for a Business account: the level held (and the
 // fee it earns), the rolling criteria to reach AND MAINTAIN the next level, this
@@ -32,10 +45,14 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
   const router = useRouter()
   const { openPanel } = usePanel()
   const [data, setData] = useState<TierStatus | null>(null)
+  const [postings, setPostings] = useState<Postings | null>(null)
 
   useEffect(() => {
     trpcAuthed().business.tierStatus.query()
       .then(d => setData(d as unknown as TierStatus))
+      .catch(() => {})
+    trpcAuthed().business.myPostings.query()
+      .then(d => setPostings(d as unknown as Postings))
       .catch(() => {})
   }, [])
 
@@ -130,6 +147,64 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
         </div>
       </div>
 
+      {/* ── Posted jobs ── */}
+      <div style={card}>
+        <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>💼 {t('Posted jobs')}{postings ? ` · ${postings.jobs.length}` : ''}</span>
+          <button onClick={() => router.push('/jobs/new')} style={miniBtn}>+ {t('Post')}</button>
+        </div>
+        {!postings ? <Muted>{t('Loading…')}</Muted> : postings.jobs.length === 0 ? <Muted>{t('No job adverts yet.')}</Muted> : postings.jobs.map(j => (
+          <Link key={j.id} href={`/listings/${j.id}`} style={{ textDecoration: 'none' }}>
+            <div style={row}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={rowTitle}>{j.title}</div>
+                <div style={rowSub}>📍 {j.location} · {j.applications} {j.applications === 1 ? t('applicant') : t('applicants')}</div>
+              </div>
+              <StatusPill status={j.status} />
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* ── Property listings ── */}
+      <div style={card}>
+        <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>🏠 {t('Property listings')}{postings ? ` · ${postings.properties.length}` : ''}</span>
+          <button onClick={() => router.push('/property/new')} style={miniBtn}>+ {t('List')}</button>
+        </div>
+        {!postings ? <Muted>{t('Loading…')}</Muted> : postings.properties.length === 0 ? <Muted>{t('No property listings yet.')}</Muted> : postings.properties.map(p => (
+          <Link key={p.id} href={`/listings/${p.id}`} style={{ textDecoration: 'none' }}>
+            <div style={row}>
+              <div style={{ width: 40, height: 40, borderRadius: 8, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {p.image ? <img src={p.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏠'}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={rowTitle}>{p.title}</div>
+                <div style={rowSub}>📍 {p.location} · €{p.price.toLocaleString()}</div>
+              </div>
+              <StatusPill status={p.status} />
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* ── Purchased CV views ── */}
+      <div style={card}>
+        <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>🔓 {t('Purchased CV views')}{postings ? ` · ${postings.unlockedCandidates.length}` : ''}</span>
+          <button onClick={() => openPanel('findStaff')} style={miniBtn}>{t('Search')}</button>
+        </div>
+        {!postings ? <Muted>{t('Loading…')}</Muted> : postings.unlockedCandidates.length === 0 ? <Muted>{t('You haven’t unlocked any candidate CVs yet.')}</Muted> : postings.unlockedCandidates.map(c => (
+          <div key={c.seekerId} style={row}>
+            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>{(c.name ?? '?')[0]?.toUpperCase()}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={rowTitle}>{c.name}</div>
+              <div style={rowSub}>{c.headline || c.sector || t('Candidate')}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* ── Business tools ── */}
       <div style={card}>
         <div style={cardHead}>{t('Business tools')}</div>
@@ -193,5 +268,18 @@ function Tool({ icon, title, sub, onClick, highlight }: { icon: string; title: s
   )
 }
 
+function StatusPill({ status }: { status: string }) {
+  const s = STATUS_PILL[status] ?? { bg: '#f0f0f0', fg: '#888', label: status }
+  return <span style={{ background: s.bg, color: s.fg, fontFamily: 'var(--font-nunito)', fontSize: 9.5, fontWeight: 900, padding: '3px 9px', borderRadius: 50, textTransform: 'uppercase', letterSpacing: 0.3, flexShrink: 0 }}>{s.label}</span>
+}
+
+function Muted({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '10px 0', textAlign: 'center' }}>{children}</div>
+}
+
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }
 const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }
+const miniBtn: React.CSSProperties = { background: '#f5efe6', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#8a5a2a', cursor: 'pointer', textTransform: 'none', letterSpacing: 0 }
+const row: React.CSSProperties = { display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f0e8' }
+const rowTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+const rowSub: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }

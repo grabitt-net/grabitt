@@ -4064,10 +4064,10 @@ function PanelBody() {
                 { label: 'Sold', value: dash?.sold, panel: 'mylistings' as PanelId, data: { seg: 'sold' } },
                 { label: 'Messages', value: dash?.unread, panel: 'messages' as PanelId, badge: !!dash?.unread },
                 { label: 'Offers', value: dash?.offers, panel: 'offers' as PanelId, badge: !!dash?.offers },
-                { label: 'Saved', value: dash?.saved, panel: 'favourites' as PanelId },
+                { label: 'Saved', value: dash?.saved, panel: 'favourites' as PanelId, href: '/favourites' },
                 { label: 'Payouts', value: payout?.payoutsEnabled ? '✓' : '—', panel: 'profile' as PanelId },
               ]).map(t => (
-                <button key={t.label} onClick={() => t.panel !== 'profile' && openPanel(t.panel, (t as any).data)} style={{ position: 'relative', background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '12px 6px', textAlign: 'center', cursor: t.panel !== 'profile' ? 'pointer' : 'default' }}>
+                <button key={t.label} onClick={() => (t as any).href ? (closePanel(), router.push((t as any).href)) : t.panel !== 'profile' && openPanel(t.panel, (t as any).data)} style={{ position: 'relative', background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '12px 6px', textAlign: 'center', cursor: t.panel !== 'profile' ? 'pointer' : 'default' }}>
                   <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: 'var(--dark)', fontVariantNumeric: 'tabular-nums' }}>{t.value ?? '—'}</div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.label}</div>
                   {t.badge && <span style={{ position: 'absolute', top: 8, right: 10, width: 8, height: 8, borderRadius: '50%', background: 'var(--orange)' }} />}

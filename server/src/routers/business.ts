@@ -22,6 +22,12 @@ export type BusinessTierStatus =
       maintaining: boolean
     }
 
+export type BusinessPostings = {
+  jobs: { id: string; title: string; location: string; status: string; applications: number; createdAt: Date }[]
+  properties: { id: string; title: string; location: string; status: string; price: number; image: string | null; createdAt: Date }[]
+  unlockedCandidates: { seekerId: string; name: string; headline: string | null; sector: string | null; unlockedAt: Date }[]
+}
+
 // Business accounts: proving you are one, and the shop you get once you have.
 //
 // Verification is deliberately manual. A Business account carries a badge, a
@@ -335,6 +341,34 @@ export const businessRouter = router({
           price: Number(l.price),
           isGrabItNow: !!l.grabItNowUntil && l.grabItNowUntil > new Date(),
         })) as unknown as StorefrontPublic['listings'],
+      }
+    }),
+
+  // Everything a business has posted or paid to reveal: their job adverts, their
+  // property listings, and the candidate CVs they've unlocked with credits.
+  myPostings: protectedProcedure
+    .query(async ({ ctx }): Promise<BusinessPostings> => {
+      const [jobs, properties, unlocks] = await Promise.all([
+        ctx.prisma.listing.findMany({
+          where: { sellerId: ctx.user.id, department: 'jobs' },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true, title: true, location: true, status: true, createdAt: true, jobListing: { select: { _count: { select: { applications: true } } } } },
+        }),
+        ctx.prisma.listing.findMany({
+          where: { sellerId: ctx.user.id, department: 'property' },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true, title: true, location: true, status: true, price: true, images: true, createdAt: true },
+        }),
+        ctx.prisma.candidateUnlock.findMany({
+          where: { employerId: ctx.user.id },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true, seeker: { select: { id: true, displayName: true, seekerProfile: { select: { headline: true, sector: true } } } } },
+        }),
+      ])
+      return {
+        jobs: jobs.map(j => ({ id: j.id, title: j.title, location: j.location, status: j.status, applications: j.jobListing?._count.applications ?? 0, createdAt: j.createdAt })),
+        properties: properties.map(p => ({ id: p.id, title: p.title, location: p.location, status: p.status, price: Number(p.price), image: Array.isArray(p.images) ? (p.images[0] ?? null) : null, createdAt: p.createdAt })),
+        unlockedCandidates: unlocks.map(u => ({ seekerId: u.seeker.id, name: u.seeker.displayName, headline: u.seeker.seekerProfile?.headline ?? null, sector: u.seeker.seekerProfile?.sector ?? null, unlockedAt: u.createdAt })),
       }
     }),
 

@@ -1,25 +1,44 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createLooseTrpcClient } from '@/lib/trpc'
-import SiteHeader from '@/components/marketplace/SiteHeader'
+import { getAuthToken, refreshAuthToken } from '@/lib/authToken'
+import { PanelProvider } from '@/context/PanelContext'
+import Topbar from '@/components/marketplace/Topbar'
+import QuickActions from '@/components/marketplace/QuickActions'
+import Footer from '@/components/marketplace/Footer'
+import CartFab from '@/components/marketplace/CartFab'
+import PanelHost from '@/components/marketplace/PanelHost'
 
 export default function CommunityPostPage() {
   const { id } = useParams<{ id: string }>()
+  const router = useRouter()
+  const [authed, setAuthed] = useState(false)
   const [post, setPost] = useState<any>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'notfound'>('loading')
 
+  // Member-only, like the Guides index.
   useEffect(() => {
-    createLooseTrpcClient().community.byId.query({ id })
-      .then((p: any) => { setPost(p); setState('ready') })
-      .catch(() => setState('notfound'))
-  }, [id])
+    (async () => {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      if (!token) { router.replace(`/auth?next=/community/${id}`); return }
+      setAuthed(true)
+      createLooseTrpcClient().community.byId.query({ id })
+        .then((p: any) => { setPost(p); setState('ready') })
+        .catch(() => setState('notfound'))
+    })()
+  }, [id, router])
+
+  if (!authed) return <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-nunito)', color: '#888' }}>Loading…</main>
 
   return (
-    <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <SiteHeader />
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '20px 16px 60px' }}>
+    <PanelProvider>
+    <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
+      <Topbar title="Grabitt Guides" back />
+      <QuickActions />
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '18px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
         <Link href="/community" style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--orange)', textDecoration: 'none', fontWeight: 700 }}>‹ Grabitt Guides</Link>
         {state === 'loading' && <div style={{ marginTop: 30, color: '#888', fontFamily: 'var(--font-comfortaa)' }}>Loading…</div>}
         {state === 'notfound' && <div style={{ marginTop: 30, color: '#888', fontFamily: 'var(--font-comfortaa)' }}>Article not found.</div>}
@@ -35,6 +54,10 @@ export default function CommunityPostPage() {
           </article>
         )}
       </div>
+      <Footer />
+      <CartFab />
+      <PanelHost />
     </main>
+    </PanelProvider>
   )
 }

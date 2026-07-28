@@ -1,23 +1,49 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createLooseTrpcClient } from '@/lib/trpc'
-import SiteHeader from '@/components/marketplace/SiteHeader'
+import { getAuthToken, refreshAuthToken } from '@/lib/authToken'
+import { PanelProvider } from '@/context/PanelContext'
+import Topbar from '@/components/marketplace/Topbar'
+import QuickActions from '@/components/marketplace/QuickActions'
+import Footer from '@/components/marketplace/Footer'
+import CartFab from '@/components/marketplace/CartFab'
+import PanelHost from '@/components/marketplace/PanelHost'
 import EconomicLiving from '@/components/marketplace/EconomicLiving'
 
 type Post = { id: string; title: string; excerpt: string; category: string; emoji: string; imageUrl: string | null }
 
 export default function CommunityIndexPage() {
+  const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
+  const [authed, setAuthed] = useState(false)
+
+  // Grabitt Guides is member-only — send signed-out visitors to sign in first.
   useEffect(() => {
-    createLooseTrpcClient().community.list.query({ limit: 30 }).then(p => setPosts(p as Post[])).catch(() => {})
-  }, [])
+    (async () => {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      if (!token) { router.replace('/auth?next=/community'); return }
+      setAuthed(true)
+      createLooseTrpcClient().community.list.query({ limit: 30 }).then(p => setPosts(p as Post[])).catch(() => {})
+    })()
+  }, [router])
+
+  if (!authed) return <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-nunito)', color: '#888' }}>Loading…</main>
+
   return (
-    <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <SiteHeader />
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '20px 16px 60px' }}>
-        <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 26, fontWeight: 900, color: 'var(--dark)', margin: '0 0 6px' }}>📰 Grabitt Guides</h1>
-        <p style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 13.5, color: '#7a6c56', margin: '0 0 20px' }}>Island tips, selling advice and the Gran Canaria second-hand economy.</p>
+    <PanelProvider>
+    <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
+      <Topbar title="Grabitt Guides" />
+      <QuickActions />
+
+      <header style={{ background: 'var(--sand)', padding: '14px', borderBottom: '1.5px solid var(--sand2)' }}>
+        <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', margin: '0 0 4px' }}>📰 Grabitt Guides</h1>
+        <p style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 13, color: '#7a6c56', margin: 0 }}>Island tips, selling advice and the Gran Canaria second-hand economy.</p>
+      </header>
+
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '18px 14px 40px', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 14 }}>
           {posts.map(p => (
             <Link key={p.id} href={`/community/${p.id}`} style={{ textDecoration: 'none' }}>
@@ -37,6 +63,11 @@ export default function CommunityIndexPage() {
 
         <EconomicLiving />
       </div>
+
+      <Footer />
+      <CartFab />
+      <PanelHost />
     </main>
+    </PanelProvider>
   )
 }
