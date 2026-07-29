@@ -13,7 +13,7 @@ export const bannersRouter = router({
     .mutation(({ ctx, input }) => ctx.prisma.banner.delete({ where: { id: input.id } })),
 
   active: publicProcedure
-    .input(z.object({ position: z.enum(['home_top','home_mid','category','checkout','jobs']) }))
+    .input(z.object({ position: z.enum(['home_top','home_mid','category','checkout','jobs','sponsor_top','sponsor_footer']) }))
     .query(({ ctx, input }) => {
       const now = new Date()
       return ctx.prisma.banner.findMany({
@@ -38,7 +38,7 @@ export const bannersRouter = router({
       imageUrl: z.string().url(),
       linkUrl: z.string().url().optional(),
       active: z.boolean(),
-      position: z.enum(['home_top','home_mid','category','checkout','jobs']),
+      position: z.enum(['home_top','home_mid','category','checkout','jobs','sponsor_top','sponsor_footer']),
       startsAt: z.string().optional(),
       endsAt: z.string().optional(),
     }))

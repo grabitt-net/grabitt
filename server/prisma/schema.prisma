@@ -1254,6 +1254,8 @@ enum BannerPosition {
   category
   checkout
   jobs
+  sponsor_top
+  sponsor_footer
 }
 
 model Banner {

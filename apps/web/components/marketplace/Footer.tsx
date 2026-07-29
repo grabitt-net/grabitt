@@ -1,6 +1,7 @@
 'use client'
 import { usePanel } from '@/context/PanelContext'
 import Logo from './Logo'
+import BannerSlot from './BannerSlot'
 
 // Site footer — grouped links, brand, and trust line. Links open the existing
 // info panels so content stays consistent with the rest of the app.
@@ -20,6 +21,10 @@ export default function Footer() {
   ]
 
   return (
+    <>
+    {/* Sponsor banner — every page, above the footer. Renders nothing when no
+        sponsor banner is active. */}
+    <BannerSlot position="sponsor_footer" aspect="4.5 / 1" />
     <footer style={{ background: 'var(--sand, #F5ECD7)', borderTop: '1px solid var(--sand2, #e8dcc0)', marginTop: 28, padding: '32px 20px 24px' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 24, maxWidth: 1000, margin: '0 auto' }}>
         {cols.map(col => (
@@ -42,5 +47,6 @@ export default function Footer() {
         </div>
       </div>
     </footer>
+    </>
   )
 }

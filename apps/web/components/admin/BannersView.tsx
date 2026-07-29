@@ -4,6 +4,8 @@ import { useCrmApi } from './AdminApp'
 import ImageUploadField from './ImageUploadField'
 
 const POSITIONS: [string, string][] = [
+  ['sponsor_top', 'Sponsor — top (every page)'],
+  ['sponsor_footer', 'Sponsor — above footer (every page)'],
   ['home_mid', 'Home — Mid ad'],
   ['category', 'Department pages'],
   ['jobs', 'Recruitment page'],

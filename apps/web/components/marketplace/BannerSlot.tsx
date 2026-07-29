@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createLooseTrpcClient } from '@/lib/trpc'
 
 type Banner = { id: string; title: string; imageUrl: string; linkUrl: string | null }
-type Position = 'home_top' | 'home_mid' | 'category' | 'checkout' | 'jobs'
+type Position = 'home_top' | 'home_mid' | 'category' | 'checkout' | 'jobs' | 'sponsor_top' | 'sponsor_footer'
 
 // CMS-driven banner slot. Renders the active banners for a given position
 // (managed from the admin Banners view). Rotates if more than one. Renders

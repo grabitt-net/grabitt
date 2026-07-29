@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import { t } from '@/lib/i18n'
+import BannerSlot from './BannerSlot'
 
 // Persistent quick-actions bar — Sponsorship / Recruitment / Property / For
 // Business. Rendered under the header on every main page. Find Work + Find Staff
@@ -52,6 +53,10 @@ export default function QuickActions() {
         <span>{t('Grabitt Now — limited-time offers')}</span>
         <span style={{ fontSize: 20, lineHeight: 1 }}>⚡</span>
       </button>
+
+      {/* Sponsor banner — every page, below the Grabitt Now promo. Renders
+          nothing when no sponsor banner is active. */}
+      <div style={{ margin: '0 -14px' }}><BannerSlot position="sponsor_top" aspect="4.5 / 1" /></div>
     </section>
   )
 }
