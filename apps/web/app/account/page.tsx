@@ -13,6 +13,7 @@ import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import SellerCentre from '@/components/marketplace/SellerCentre'
 import BusinessCentre from '@/components/marketplace/BusinessCentre'
+import RewardsCard from '@/components/marketplace/RewardsCard'
 import AttributesCard from '@/components/marketplace/AttributesCard'
 import AgentProfileCard from '@/components/marketplace/AgentProfileCard'
 import TenantProfileCard from '@/components/marketplace/TenantProfileCard'
@@ -275,11 +276,12 @@ function AccountInner() {
                 ['📋', t('Activity'), 'myActivity'],
                 ['⭐', t('My ratings'), 'myRatings'],
                 ['🔔', t('Saved searches'), 'savedSearches'],
+                ['🎁', t('Rewards'), 'rewards'],
                 // Attributes are personal targeting/job-matching — hidden for businesses.
-                ...(me?.isBusiness ? [] : [['🎯', t('Attributes'), 'attributes'] as [string, string, PanelId | 'attributes']]),
+                ...(me?.isBusiness ? [] : [['🎯', t('Attributes'), 'attributes'] as [string, string, PanelId | 'attributes' | 'rewards']]),
                 ['🛡️', t('Disputes'), 'myDisputes'],
-              ] as [string, string, PanelId | 'attributes'][]).map(([icon, label, id]) => (
-                <button key={label} onClick={() => id === 'attributes' ? goTo('settings', 'attributes') : openPanel(id as PanelId)} style={{
+              ] as [string, string, PanelId | 'attributes' | 'rewards'][]).map(([icon, label, id]) => (
+                <button key={label} onClick={() => id === 'attributes' ? goTo('settings', 'attributes') : id === 'rewards' ? goTo('selling', 'rewards') : openPanel(id as PanelId)} style={{
                   background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '10px 4px',
                   cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
                 }}>
@@ -359,6 +361,9 @@ function AccountInner() {
           )}
 
           {mainTab === 'selling' && (<>
+          {/* Rewards — earn credits and redeem for upgrades or a fee reduction */}
+          <RewardsCard />
+
           {/* Seller info centre — personal seller ladder. Business accounts get
               their level in the Business hub instead, so don't duplicate it here. */}
           {!me?.isBusiness && <SellerCentre />}

@@ -262,6 +262,11 @@ model User {
   salesCount         Int       @default(0)
   avgRating          Float?
   credits            Int       @default(50)
+  // A redeemed reward can grant a temporary reduction of the item-sale fee:
+  // subtract `feeReductionPct` percentage points from the seller's fee until
+  // `feeReductionUntil`. Null/expired = no reduction.
+  feeReductionPct    Decimal?  @db.Decimal(5, 2)
+  feeReductionUntil  DateTime?
   isBusiness         Boolean   @default(false)
   businessVerified   Boolean   @default(false)
   businessTrialEnds  DateTime?
@@ -881,6 +886,47 @@ enum CreditEventKind {
   refund
   admin_adjustment
   extra_listing
+  reward_earned
+  reward_redeemed
+}
+
+// Ways to earn rewards (credits), shown in the account rewards dashboard and
+// managed from the executive suite. `amount` is the credits granted.
+model RewardRule {
+  id          String   @id @default(uuid())
+  code        String   @unique               // stable key, e.g. "invite_friend"
+  icon        String   @default("🎁")
+  title       String
+  subtitle    String
+  amount      Int                             // credits earned
+  actionLabel String?                         // e.g. "Invite", "Share"
+  actionKey   String?                         // client hint for the CTA (panel/route)
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active])
+  @@index([sortOrder])
+}
+
+// What rewards can be redeemed for. kind = 'listing_upgrade' | 'fee_reduction'.
+// `config` holds the specifics (fee_reduction: { pct, days }; listing_upgrade:
+// { upgrade: 'featured' | 'grab_it_now' | 'bump', weeks, hours }).
+model RewardOption {
+  id          String   @id @default(uuid())
+  kind        String
+  title       String
+  description String
+  costCredits Int
+  config      Json?
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active])
+  @@index([sortOrder])
 }
 
 model CreditEvent {

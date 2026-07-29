@@ -8,6 +8,7 @@ import { Prisma, type PrismaClient } from '@prisma/client'
 import { router, protectedProcedure, publicProcedure } from '../trpc'
 import { RateTransactionInputSchema } from '@grabitt/types'
 import { FEE_RATES, FUND_RELEASE_AUTO_DAYS, COURIER_RELEASE_HOURS, COURIER_DISPUTE_WINDOW_HOURS } from '@grabitt/design-tokens'
+import { effectiveFeeRate } from '../lib/sellerFee'
 import { trackingUrlFor, CARRIERS } from '../lib/tracking'
 import { registerTracking } from '../lib/track17'
 
@@ -210,8 +211,7 @@ export const transactionsRouter = router({
       const itemSubtotal = Math.round(Number(listing.price) * input.quantity * 100) / 100
       // Platform fee applies to the item subtotal, not delivery.
       const amount = Math.round((itemSubtotal + deliveryFee) * 100) / 100
-      const sellerGrade = listing.seller.grade as keyof typeof FEE_RATES
-      const feeRate = FEE_RATES[sellerGrade] ?? FEE_RATES.grabber
+      const feeRate = effectiveFeeRate(listing.seller)
       const platformFee = Math.round(itemSubtotal * feeRate * 100) / 100
       const sellerNet = Math.round((amount - platformFee) * 100) / 100
 
@@ -301,7 +301,7 @@ export const transactionsRouter = router({
 
           const itemSubtotal = Math.round(Number(listing.price) * qty * 100) / 100
           const amount = itemSubtotal // basket items are collection; delivery handled per-item elsewhere
-          const feeRate = FEE_RATES[listing.seller.grade as keyof typeof FEE_RATES] ?? FEE_RATES.grabber
+          const feeRate = effectiveFeeRate(listing.seller)
           const platformFee = Math.round(itemSubtotal * feeRate * 100) / 100
           const sellerNet = Math.round((amount - platformFee) * 100) / 100
 

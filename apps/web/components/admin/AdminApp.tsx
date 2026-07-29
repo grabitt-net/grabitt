@@ -26,6 +26,7 @@ import AuditTrailView from './AuditTrailView'
 import ComplianceView from './ComplianceView'
 import HomepageView from './HomepageView'
 import TodayView from './TodayView'
+import RewardsView from './RewardsView'
 import CommandPalette, { type Command } from './CommandPalette'
 import { makeCrmApi, CrmApi } from '@/lib/admin-api'
 
@@ -49,6 +50,7 @@ const COMMANDS: Command[] = [
   { id: 'banners', label: 'Banners', icon: '🎯', group: 'Content', keywords: 'ads sponsor' },
   { id: 'community', label: 'Guides', icon: '📰', group: 'Content' },
   { id: 'help', label: 'Help', icon: '❓', group: 'Content', keywords: 'faq support' },
+  { id: 'rewards', label: 'Rewards', icon: '🎁', group: 'Content', keywords: 'credits earn redeem upgrade fee' },
   { id: 'emails', label: 'E-shots', icon: '📧', group: 'Content' },
   { id: 'calendar', label: 'Calendar', icon: '📅', group: 'Workspace' },
   { id: 'todo', label: 'To Do', icon: '✅', group: 'Workspace' },
@@ -67,7 +69,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -207,6 +209,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'homepage'   && <HomepageView onEditBanners={(pos) => { setBannerPosition(pos); setView('banners') }} />}
                 {view === 'community'  && <CommunityView />}
                 {view === 'help'       && <HelpView />}
+                {view === 'rewards'    && <RewardsView />}
               </>
             )}
           </main>

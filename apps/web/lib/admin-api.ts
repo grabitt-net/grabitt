@@ -111,6 +111,20 @@ export function makeCrmApi(execToken: string) {
     removeHelpArticle: (id: string) =>
       rpc<any>('help.remove', 'mutation', { id }, execToken),
 
+    // Rewards — ways to earn, redemption options, and manual grants
+    rewardRules: () => rpc<any[]>('rewards.allRules', 'query', undefined, execToken),
+    upsertRewardRule: (data: Record<string, unknown>) =>
+      rpc<any>('rewards.upsertRule', 'mutation', data, execToken),
+    removeRewardRule: (id: string) =>
+      rpc<any>('rewards.removeRule', 'mutation', { id }, execToken),
+    rewardOptions: () => rpc<any[]>('rewards.allOptions', 'query', undefined, execToken),
+    upsertRewardOption: (data: Record<string, unknown>) =>
+      rpc<any>('rewards.upsertOption', 'mutation', data, execToken),
+    removeRewardOption: (id: string) =>
+      rpc<any>('rewards.removeOption', 'mutation', { id }, execToken),
+    grantReward: (data: Record<string, unknown>) =>
+      rpc<{ ok: true }>('rewards.grantManual', 'mutation', data, execToken),
+
     // Reports / moderation queue
     reports: (status?: 'all' | 'open' | 'under_review' | 'actioned' | 'dismissed') =>
       rpc<any[]>('reports.adminList', 'query', { status: status ?? 'open' }, execToken),
