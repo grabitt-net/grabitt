@@ -25,6 +25,7 @@ import PropertyView from './PropertyView'
 import AuditTrailView from './AuditTrailView'
 import ComplianceView from './ComplianceView'
 import HomepageView from './HomepageView'
+import TodayView from './TodayView'
 import { makeCrmApi, CrmApi } from '@/lib/admin-api'
 
 // Context so child components can call the API without prop-drilling
@@ -35,13 +36,13 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
 export default function AdminApp({ execToken, execEmail, execRole }: Props) {
   const api = makeCrmApi(execToken)
-  const [view, setView] = useState<View>('funnel')
+  const [view, setView] = useState<View>('today')
   const mainRef = useRef<HTMLElement>(null)
 
   // Return to the top of the page whenever the active view changes, so lower
@@ -127,6 +128,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
               <div style={{ textAlign: 'center', padding: 60, color: '#bbb', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Loading data…</div>
             ) : (
               <>
+                {view === 'today'       && <TodayView     contacts={contacts} members={members} disputes={disputes} orders={orders} reportsOpen={reportsOpen} onNavigate={setView} />}
                 {view === 'funnel'      && <FunnelView    contacts={contacts} onNavigate={setView} />}
                 {view === 'pipeline'   && <PipelineView  contacts={contacts} onUpdate={setContacts} />}
                 {view === 'contacts'   && <ContactsView  contacts={contacts} onUpdate={setContacts} />}
