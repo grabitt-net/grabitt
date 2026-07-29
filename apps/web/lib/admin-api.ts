@@ -104,6 +104,13 @@ export function makeCrmApi(execToken: string) {
     removeCommunityPost: (id: string) =>
       rpc<any>('community.remove', 'mutation', { id }, execToken),
 
+    // Help Centre articles
+    helpArticles: () => rpc<any[]>('help.all', 'query', undefined, execToken),
+    upsertHelpArticle: (data: Record<string, unknown>) =>
+      rpc<any>('help.upsert', 'mutation', data, execToken),
+    removeHelpArticle: (id: string) =>
+      rpc<any>('help.remove', 'mutation', { id }, execToken),
+
     // Reports / moderation queue
     reports: (status?: 'all' | 'open' | 'under_review' | 'actioned' | 'dismissed') =>
       rpc<any[]>('reports.adminList', 'query', { status: status ?? 'open' }, execToken),

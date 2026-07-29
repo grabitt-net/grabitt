@@ -1,42 +1,55 @@
 'use client'
 import type { View } from './AdminApp'
 
+// Grouped by what the task IS, so each section is short and scannable rather
+// than one long "Executive" list. Order = rough daily-use frequency.
 const sections = [
   {
-    label: 'Executive',
+    label: 'Overview',
     items: [
       { icon: '🚰', label: 'Pipeline', id: 'funnel' as View },
-      { icon: '🤞', label: 'Prospects', id: 'pipeline' as View, countKey: 'pipeline' },
-      { icon: '🙋', label: 'Contacts', id: 'contacts' as View },
       { icon: '📈', label: 'Forecast', id: 'forecast' as View },
-      { icon: '🪪', label: 'Members', id: 'members' as View },
-      { icon: '🙋', label: 'Candidates', id: 'candidates' as View },
-      { icon: '🏢', label: 'Business', id: 'business' as View },
-      { icon: '⚖️', label: 'Disputes', id: 'disputes' as View, countKey: 'disputes' },
-      { icon: '🚨', label: 'Reports', id: 'reports' as View, countKey: 'reports' },
       { icon: '💰', label: 'Financials', id: 'financials' as View },
       { icon: '📊', label: 'Retention', id: 'retention' as View },
-      { icon: '💼', label: 'Jobs', id: 'jobs' as View },
-      { icon: '🏠', label: 'Property', id: 'property' as View },
-      { icon: '📋', label: 'Audit', id: 'audit' as View },
-      { icon: '🛡️', label: 'Compliance', id: 'compliance' as View },
     ],
   },
   {
-    label: 'Activity',
+    label: 'People',
+    items: [
+      { icon: '🪪', label: 'Members', id: 'members' as View },
+      { icon: '🏢', label: 'Business', id: 'business' as View },
+      { icon: '🙋', label: 'Candidates', id: 'candidates' as View },
+      { icon: '📇', label: 'Contacts', id: 'contacts' as View },
+      { icon: '🤞', label: 'Prospects', id: 'pipeline' as View, countKey: 'pipeline' },
+    ],
+  },
+  {
+    label: 'Marketplace',
+    items: [
+      { icon: '💼', label: 'Jobs', id: 'jobs' as View },
+      { icon: '🏠', label: 'Property', id: 'property' as View },
+      { icon: '⚖️', label: 'Disputes', id: 'disputes' as View, countKey: 'disputes' },
+      { icon: '🚨', label: 'Reports', id: 'reports' as View, countKey: 'reports' },
+    ],
+  },
+  {
+    label: 'Content',
+    items: [
+      { icon: '🖼️', label: 'Homepage', id: 'homepage' as View },
+      { icon: '🎯', label: 'Banners', id: 'banners' as View },
+      { icon: '📰', label: 'Guides', id: 'community' as View },
+      { icon: '❓', label: 'Help', id: 'help' as View },
+      { icon: '📧', label: 'E-shots', id: 'emails' as View },
+    ],
+  },
+  {
+    label: 'Workspace',
     items: [
       { icon: '📅', label: 'Calendar', id: 'calendar' as View },
       { icon: '✅', label: 'To Do', id: 'todo' as View },
       { icon: '💬', label: 'Chats', id: 'messages' as View },
-    ],
-  },
-  {
-    label: 'Marketing',
-    items: [
-      { icon: '📧', label: 'E-shots', id: 'emails' as View },
-      { icon: '🏠', label: 'Homepage', id: 'homepage' as View },
-      { icon: '🎯', label: 'Banners', id: 'banners' as View },
-      { icon: '📰', label: 'Guides', id: 'community' as View },
+      { icon: '📋', label: 'Audit', id: 'audit' as View },
+      { icon: '🛡️', label: 'Compliance', id: 'compliance' as View },
     ],
   },
 ]

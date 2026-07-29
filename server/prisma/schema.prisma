@@ -71,6 +71,22 @@ model HeroSlide {
 // ── Community content ─────────────────────────────────────────────────────────
 // Editorial posts (island tips, economy write-ups, how-to guides) surfaced on the
 // homepage. Admin-managed; readers just view them.
+// Help Centre article (Q + A), grouped by category. Admin-managed from the
+// executive suite; read publicly by the /help page and the AI assistant.
+model HelpArticle {
+  id         String   @id @default(uuid())
+  category   String                         // category id, e.g. "getting-started"
+  question   String
+  answer     String
+  sortOrder  Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([category])
+  @@index([active])
+}
+
 model CommunityPost {
   id         String   @id @default(uuid())
   title      String

@@ -82,6 +82,15 @@ export const HELP_TOPICS: HelpTopic[] = [
   },
 ]
 
+// Category metadata (icon / title / blurb), keyed by id. The articles themselves
+// are admin-managed in the database; this supplies the presentation for each
+// category and the picker options in the admin editor. HELP_TOPICS above is the
+// seed/fallback content used when the database has no articles.
+export type HelpCategory = { id: string; icon: string; title: string; blurb: string }
+export const HELP_CATEGORIES: HelpCategory[] = HELP_TOPICS.map(({ id, icon, title, blurb }) => ({ id, icon, title, blurb }))
+export const helpCategory = (id: string): HelpCategory =>
+  HELP_CATEGORIES.find(c => c.id === id) ?? { id, icon: '❓', title: id, blurb: '' }
+
 // A compact plain-text digest of all articles, used as grounding context for the
 // AI assistant so its answers stay accurate to how Grabitt actually works.
 export function helpDigest(): string {

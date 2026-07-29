@@ -1,4 +1,5 @@
-import { helpDigest } from '@/lib/helpContent'
+import { helpDigest, helpCategory } from '@/lib/helpContent'
+import { createLooseTrpcClient } from '@/lib/trpc'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -12,12 +13,31 @@ export const dynamic = 'force-dynamic'
 
 type Turn = { role: 'user' | 'assistant'; content: string }
 
-const SYSTEM = `You are the Grabitt Help Assistant. Grabitt is a local-first marketplace for Gran Canaria (buying/selling items, jobs/recruitment, property, and services).
+// Grounding digest — prefer the live, admin-managed articles so the assistant
+// tracks whatever the Help Centre currently shows; fall back to the built-in
+// content if the database is empty or unreachable.
+async function grounding(): Promise<string> {
+  try {
+    const rows = await createLooseTrpcClient().help.articles.query() as { category: string; question: string; answer: string }[]
+    if (Array.isArray(rows) && rows.length > 0) {
+      const byCat = new Map<string, string[]>()
+      for (const r of rows) {
+        const arr = byCat.get(r.category) ?? []
+        arr.push(`Q: ${r.question}\nA: ${r.answer}`)
+        byCat.set(r.category, arr)
+      }
+      return Array.from(byCat.entries()).map(([cat, qa]) => `## ${helpCategory(cat).title}\n${qa.join('\n')}`).join('\n\n')
+    }
+  } catch { /* fall through to static */ }
+  return helpDigest()
+}
+
+const systemFor = (digest: string) => `You are the Grabitt Help Assistant. Grabitt is a local-first marketplace for Gran Canaria (buying/selling items, jobs/recruitment, property, and services).
 
 Answer the user's question using ONLY the Grabitt help information below. Be concise, friendly and practical — a few short sentences, plain text, no markdown headings. If the answer isn't covered, say you're not sure and suggest they contact support via the app, rather than inventing details. Never ask for or repeat passwords, card numbers or other sensitive data. Do not include internal or system XML tags in your response.
 
 --- GRABITT HELP KNOWLEDGE ---
-${helpDigest()}
+${digest}
 --- END ---`
 
 export async function POST(req: Request) {
@@ -44,6 +64,7 @@ export async function POST(req: Request) {
     { role: 'user' as const, content: question },
   ]
 
+  const system = systemFor(await grounding())
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -57,7 +78,7 @@ export async function POST(req: Request) {
         max_tokens: 700,
         thinking: { type: 'disabled' },
         output_config: { effort: 'low' },
-        system: SYSTEM,
+        system,
         messages,
       }),
     })

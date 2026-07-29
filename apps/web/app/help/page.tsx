@@ -1,11 +1,12 @@
 'use client'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { PanelProvider } from '@/context/PanelContext'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHost'
-import { HELP_TOPICS } from '@/lib/helpContent'
+import { HELP_TOPICS, HELP_CATEGORIES, helpCategory, type HelpTopic } from '@/lib/helpContent'
 
 // Full Help Centre: an AI assistant on top, searchable topic categories below.
 export default function HelpPage() {
@@ -17,15 +18,42 @@ type Msg = { role: 'user' | 'assistant'; content: string }
 function Inner() {
   const [query, setQuery] = useState('')
   const [openId, setOpenId] = useState<string | null>(null)
+  // Admin-managed articles from the database, grouped into topics using the
+  // category metadata. Falls back to the built-in content if the DB is empty
+  // or unreachable, so the Help Centre is never blank.
+  const [allTopics, setAllTopics] = useState<HelpTopic[]>(HELP_TOPICS)
+
+  useEffect(() => {
+    createLooseTrpcClient().help.articles.query()
+      .then((res) => {
+        const rows = res as { category: string; question: string; answer: string }[]
+        if (!Array.isArray(rows) || rows.length === 0) return
+        const byCat = new Map<string, HelpTopic>()
+        // Preserve the category order from HELP_CATEGORIES, then any extras.
+        const order = HELP_CATEGORIES.map(c => c.id)
+        rows.sort((a, b) => order.indexOf(a.category) - order.indexOf(b.category))
+        for (const r of rows) {
+          let topic = byCat.get(r.category)
+          if (!topic) {
+            const meta = helpCategory(r.category)
+            topic = { id: meta.id, icon: meta.icon, title: meta.title, blurb: meta.blurb, articles: [] }
+            byCat.set(r.category, topic)
+          }
+          topic.articles.push({ q: r.question, a: r.answer })
+        }
+        setAllTopics(Array.from(byCat.values()))
+      })
+      .catch(() => {})
+  }, [])
 
   // Filter topics/articles by the search box.
   const topics = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return HELP_TOPICS
-    return HELP_TOPICS
+    if (!q) return allTopics
+    return allTopics
       .map(t => ({ ...t, articles: t.articles.filter(a => (a.q + ' ' + a.a + ' ' + t.title).toLowerCase().includes(q)) }))
       .filter(t => t.articles.length > 0 || t.title.toLowerCase().includes(q))
-  }, [query])
+  }, [query, allTopics])
 
   return (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>

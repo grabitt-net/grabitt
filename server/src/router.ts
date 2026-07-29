@@ -21,6 +21,7 @@ import { subscriptionsRouter } from './routers/subscriptions'
 import { complianceRouter } from './routers/compliance'
 import { homepageRouter } from './routers/homepage'
 import { communityRouter } from './routers/community'
+import { helpRouter } from './routers/help'
 import { cartRouter } from './routers/cart'
 import { followRouter } from './routers/follow'
 import { seekersRouter } from './routers/seekers'
@@ -57,6 +58,7 @@ export const appRouter = router({
   compliance: complianceRouter,
   homepage: homepageRouter,
   community: communityRouter,
+  help: helpRouter,
 })
 
 export type AppRouter = typeof appRouter
