@@ -39,7 +39,7 @@ interface Member {
 
 const GRADES = ['grabber', 'dealer', 'trader', 'pro'] as const
 const gradeColors: Record<string, string> = { grabber: '#FF4500', dealer: '#f59e0b', trader: '#3b82f6', pro: '#7c3aed' }
-const FILTERS = ['All', 'Business', 'Suspended', 'New'] as const
+const FILTERS = ['All', 'Member', 'Business', 'Suspended', 'New'] as const
 
 function statusOf(m: Member): { label: string; color: string } {
   if (m.deletedAt) return { label: 'deleted', color: '#888' }
@@ -76,6 +76,7 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
   const filtered = members.filter(m => {
     const q = search.toLowerCase()
     if (q && ![m.displayName, m.email, m.businessName].some(v => v?.toLowerCase().includes(q))) return false
+    if (filter === 'Member') return !m.isBusiness && statusOf(m).label !== 'suspended'
     if (filter === 'Business') return m.isBusiness
     if (filter === 'Suspended') return statusOf(m).label === 'suspended'
     if (filter === 'New') return new Date(m.createdAt).getTime() > thirtyDaysAgo
