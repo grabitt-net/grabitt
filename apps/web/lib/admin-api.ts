@@ -124,6 +124,8 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('rewards.removeOption', 'mutation', { id }, execToken),
     grantReward: (data: Record<string, unknown>) =>
       rpc<{ ok: true }>('rewards.grantManual', 'mutation', data, execToken),
+    memberRewardSummary: (userId: string) =>
+      rpc<any>('rewards.memberSummary', 'query', { userId }, execToken),
 
     // Reports / moderation queue
     reports: (status?: 'all' | 'open' | 'under_review' | 'actioned' | 'dismissed') =>

@@ -132,20 +132,32 @@ function ManualGrant({ api }: { api: ReturnType<typeof useCrmApi> }) {
   const [pct, setPct] = useState(2); const [days, setDays] = useState(30)
   const [listingId, setListingId] = useState(''); const [upgrade, setUpgrade] = useState('featured'); const [weeks, setWeeks] = useState(1); const [hours, setHours] = useState(24)
   const [note, setNote] = useState(''); const [msg, setMsg] = useState('')
+  const [absolute, setAbsolute] = useState(false)
+  const [summary, setSummary] = useState<any>(null)
   useEffect(() => { api.members().then(m => setMembers((m ?? []) as Member[])).catch(() => {}) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const loadSummary = (id: string) => { setSummary(null); if (id) api.memberRewardSummary(id).then(setSummary).catch(() => {}) }
   const grant = async () => {
     if (!userId) { setMsg('Choose a member'); return }
     setMsg('')
     try {
-      await api.grantReward({ userId, type, note: note || undefined, ...(type === 'credits' ? { credits: Number(credits) } : {}), ...(type === 'fee_reduction' ? { pct: Number(pct), days: Number(days) } : {}), ...(type === 'listing_upgrade' ? { listingId, upgrade, weeks: Number(weeks), hours: Number(hours) } : {}) })
-      setMsg('✓ Granted')
+      await api.grantReward({ userId, type, note: note || undefined, ...(type === 'credits' ? { credits: Number(credits), absolute } : {}), ...(type === 'fee_reduction' ? { pct: Number(pct), days: Number(days) } : {}), ...(type === 'listing_upgrade' ? { listingId, upgrade, weeks: Number(weeks), hours: Number(hours) } : {}) })
+      setMsg('✓ Granted'); loadSummary(userId)
     } catch (e: any) { setMsg(e?.message ? String(e.message) : 'Failed') }
   }
   return (
     <div style={{ maxWidth: 480 }}>
-      <Field label="Member"><select value={userId} onChange={e => setUserId(e.target.value)} style={inp}><option value="">Select a member…</option>{members.map(m => <option key={m.id} value={m.id}>{m.displayName ?? m.email ?? m.id}</option>)}</select></Field>
+      <Field label="Member"><select value={userId} onChange={e => { setUserId(e.target.value); loadSummary(e.target.value) }} style={inp}><option value="">Select a member…</option>{members.map(m => <option key={m.id} value={m.id}>{m.displayName ?? m.email ?? m.id}</option>)}</select></Field>
+      {summary && (
+        <div style={{ background: '#f7f4ee', border: '1px solid #eee', borderRadius: 10, padding: '10px 12px', marginBottom: 12, fontFamily: 'var(--font-ui)' }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>Balance: <span style={{ color: '#FF4500' }}>{summary.credits} credits</span>{summary.feeReduction ? <span style={{ marginLeft: 10, color: '#16a34a', fontSize: 11 }}>−{summary.feeReduction.pct}% fee until {new Date(summary.feeReduction.until).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span> : null}</div>
+          {summary.events?.length > 0 && <div style={{ fontSize: 10.5, color: '#999', marginTop: 5, lineHeight: 1.5 }}>{summary.events.slice(0, 4).map((e: any, i: number) => <div key={i}>{e.delta > 0 ? '+' : ''}{e.delta} · {e.note ?? e.kind}</div>)}</div>}
+        </div>
+      )}
       <Field label="Grant type"><select value={type} onChange={e => setType(e.target.value as any)} style={inp}><option value="credits">Credits</option><option value="fee_reduction">Fee reduction</option><option value="listing_upgrade">Listing upgrade</option></select></Field>
-      {type === 'credits' && <Field label="Credits"><input type="number" value={credits} onChange={e => setCredits(Number(e.target.value))} style={inp} /></Field>}
+      {type === 'credits' && (<>
+        <Field label={absolute ? 'Set balance to' : 'Add credits (negative to deduct)'}><input type="number" value={credits} onChange={e => setCredits(Number(e.target.value))} style={inp} /></Field>
+        <label style={chk}><input type="checkbox" checked={absolute} onChange={e => setAbsolute(e.target.checked)} /> Set exact balance (instead of adding)</label>
+      </>)}
       {type === 'fee_reduction' && <Row><Field label="Fee cut (points)"><input type="number" value={pct} onChange={e => setPct(Number(e.target.value))} style={{ ...inp, width: 100 }} /></Field><Field label="Days"><input type="number" value={days} onChange={e => setDays(Number(e.target.value))} style={{ ...inp, width: 100 }} /></Field></Row>}
       {type === 'listing_upgrade' && (<>
         <Field label="Listing ID"><input value={listingId} onChange={e => setListingId(e.target.value)} placeholder="listing uuid" style={inp} /></Field>

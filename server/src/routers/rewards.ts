@@ -146,12 +146,35 @@ export const rewardsRouter = router({
     }),
   removeOption: execProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => ctx.prisma.rewardOption.delete({ where: { id: input.id } })),
 
+  // Admin: a member's current rewards standing (balance, fee reduction, recent ledger).
+  memberSummary: execProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const u = await ctx.prisma.user.findUniqueOrThrow({
+        where: { id: input.userId },
+        select: { credits: true, feeReductionPct: true, feeReductionUntil: true, displayName: true, email: true },
+      })
+      const events = await ctx.prisma.creditEvent.findMany({
+        where: { userId: input.userId }, orderBy: { createdAt: 'desc' }, take: 10,
+        select: { kind: true, delta: true, note: true, createdAt: true },
+      })
+      const active = u.feeReductionUntil && new Date(u.feeReductionUntil).getTime() > Date.now()
+      return {
+        name: u.displayName ?? u.email,
+        credits: u.credits,
+        feeReduction: active ? { pct: Number(u.feeReductionPct ?? 0), until: u.feeReductionUntil } : null,
+        events,
+      }
+    }),
+
   // Admin: manually grant an upgrade/credits/fee reduction to a member or listing.
   grantManual: execProcedure
     .input(z.object({
       userId: z.string(),
       type: z.enum(['credits', 'fee_reduction', 'listing_upgrade']),
       credits: z.number().int().optional(),
+      // For credits: when true, set the balance to `credits`; otherwise add it.
+      absolute: z.boolean().optional(),
       pct: z.number().optional(),
       days: z.number().int().optional(),
       listingId: z.string().optional(),
@@ -162,12 +185,13 @@ export const rewardsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       if (input.type === 'credits') {
-        const amt = input.credits ?? 0
         const u = await ctx.prisma.user.findUniqueOrThrow({ where: { id: input.userId }, select: { credits: true } })
-        const newBalance = u.credits + amt
+        // absolute: set the balance to `credits`; otherwise add `credits` (may be negative).
+        const newBalance = Math.max(0, input.absolute ? (input.credits ?? 0) : u.credits + (input.credits ?? 0))
+        const delta = newBalance - u.credits
         await ctx.prisma.$transaction([
           ctx.prisma.user.update({ where: { id: input.userId }, data: { credits: newBalance } }),
-          ctx.prisma.creditEvent.create({ data: { userId: input.userId, kind: 'admin_adjustment', delta: amt, balance: newBalance, note: input.note ?? 'Manual credit grant' } }),
+          ctx.prisma.creditEvent.create({ data: { userId: input.userId, kind: 'admin_adjustment', delta, balance: newBalance, note: input.note ?? (input.absolute ? 'Balance set by admin' : 'Manual credit adjustment') } }),
         ])
       } else if (input.type === 'fee_reduction') {
         await applyFeeReduction(ctx.prisma, input.userId, input.pct ?? 0, input.days ?? 30)
