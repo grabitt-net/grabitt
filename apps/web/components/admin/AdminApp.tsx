@@ -26,7 +26,38 @@ import AuditTrailView from './AuditTrailView'
 import ComplianceView from './ComplianceView'
 import HomepageView from './HomepageView'
 import TodayView from './TodayView'
+import CommandPalette, { type Command } from './CommandPalette'
 import { makeCrmApi, CrmApi } from '@/lib/admin-api'
+
+// Every navigable view — powers the ⌘K palette and URL-hash routing.
+const COMMANDS: Command[] = [
+  { id: 'today', label: 'Today', icon: '🧭', group: 'Overview' },
+  { id: 'funnel', label: 'Pipeline', icon: '🚰', group: 'Overview' },
+  { id: 'forecast', label: 'Forecast', icon: '📈', group: 'Overview' },
+  { id: 'financials', label: 'Financials', icon: '💰', group: 'Overview' },
+  { id: 'retention', label: 'Retention', icon: '📊', group: 'Overview' },
+  { id: 'members', label: 'Members', icon: '🪪', group: 'People' },
+  { id: 'business', label: 'Business', icon: '🏢', group: 'People' },
+  { id: 'candidates', label: 'Candidates', icon: '🙋', group: 'People' },
+  { id: 'contacts', label: 'Contacts', icon: '📇', group: 'People' },
+  { id: 'pipeline', label: 'Prospects', icon: '🤞', group: 'People', keywords: 'crm deals' },
+  { id: 'jobs', label: 'Jobs', icon: '💼', group: 'Marketplace' },
+  { id: 'property', label: 'Property', icon: '🏠', group: 'Marketplace', keywords: 'approvals' },
+  { id: 'disputes', label: 'Disputes', icon: '⚖️', group: 'Marketplace' },
+  { id: 'reports', label: 'Reports', icon: '🚨', group: 'Marketplace', keywords: 'moderation' },
+  { id: 'homepage', label: 'Homepage', icon: '🖼️', group: 'Content' },
+  { id: 'banners', label: 'Banners', icon: '🎯', group: 'Content', keywords: 'ads sponsor' },
+  { id: 'community', label: 'Guides', icon: '📰', group: 'Content' },
+  { id: 'help', label: 'Help', icon: '❓', group: 'Content', keywords: 'faq support' },
+  { id: 'emails', label: 'E-shots', icon: '📧', group: 'Content' },
+  { id: 'calendar', label: 'Calendar', icon: '📅', group: 'Workspace' },
+  { id: 'todo', label: 'To Do', icon: '✅', group: 'Workspace' },
+  { id: 'messages', label: 'Chats', icon: '💬', group: 'Workspace' },
+  { id: 'audit', label: 'Audit', icon: '📋', group: 'Workspace' },
+  { id: 'compliance', label: 'Compliance', icon: '🛡️', group: 'Workspace' },
+  { id: 'toolbox', label: 'Toolbox', icon: '🧰', group: 'Workspace' },
+]
+const ALL_VIEWS = new Set<string>(COMMANDS.map(c => c.id))
 
 // Context so child components can call the API without prop-drilling
 export const CrmApiContext = createContext<CrmApi | null>(null)
@@ -42,8 +73,25 @@ interface Props { execToken: string; execEmail?: string; execRole?: string }
 
 export default function AdminApp({ execToken, execEmail, execRole }: Props) {
   const api = makeCrmApi(execToken)
-  const [view, setView] = useState<View>('today')
+  const [view, setViewState] = useState<View>('today')
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const mainRef = useRef<HTMLElement>(null)
+
+  // Views are URL-hash routed (#members, #help, …) so they're deep-linkable and
+  // the browser back button works. setView is the single entry point.
+  const setView = (v: View) => {
+    setViewState(v)
+    if (typeof window !== 'undefined' && window.location.hash.slice(1) !== v) {
+      window.history.pushState(null, '', `#${v}`)
+    }
+  }
+  useEffect(() => {
+    const fromHash = () => { const h = window.location.hash.slice(1); if (ALL_VIEWS.has(h)) setViewState(h as View) }
+    fromHash()
+    window.addEventListener('hashchange', fromHash)
+    window.addEventListener('popstate', fromHash)
+    return () => { window.removeEventListener('hashchange', fromHash); window.removeEventListener('popstate', fromHash) }
+  }, [])
 
   // Return to the top of the page whenever the active view changes, so lower
   // menu items don't leave the user scrolled halfway down the previous view.
@@ -95,6 +143,12 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
             )}
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button
+              onClick={() => setPaletteOpen(true)}
+              title="Search / jump to (⌘K)"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #ddd', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#999', fontWeight: 700, cursor: 'pointer' }}>
+              🔍 Jump to… <span style={{ background: '#f0ece5', borderRadius: 6, padding: '1px 6px', fontSize: 10, fontWeight: 800 }}>⌘K</span>
+            </button>
             {loading ? (
               <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#999' }}>Loading…</span>
             ) : (
@@ -158,6 +212,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
           </main>
         </div>
       </div>
+      <CommandPalette commands={COMMANDS} onRun={setView} open={paletteOpen} setOpen={setPaletteOpen} />
     </CrmApiContext.Provider>
   )
 }
