@@ -252,6 +252,13 @@ model User {
   businessName       String?
   businessBio        String?
   businessBanner     String?
+  // Optional recurring add-ons the business has opted into (ids from
+  // BUSINESS_ADDONS). Canonical source of truth; the Stripe subscription's line
+  // items are reconciled to match this set.
+  businessAddons     String[]  @default([])
+  // Set once the business has completed the first-login business-details step.
+  // Null = still needs to enter their details.
+  businessOnboardedAt DateTime?
 
   // Property-agent profile — when set, an agent's contact details (WhatsApp,
   // email, agency) are shown on their property listings so buyers can reach them

@@ -2,7 +2,8 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { getStripe } from '../lib/stripe'
-import { SUBSCRIPTION_PLANS } from '@grabitt/design-tokens'
+import { SUBSCRIPTION_PLANS, BUSINESS_ADDONS, BUSINESS_ADDON_IDS, isBusinessAddon, businessMonthlyTotalCents } from '@grabitt/design-tokens'
+import { reconcileSubscriptionAddons } from '../lib/businessAddons'
 import type { PrismaClient } from '@prisma/client'
 
 const PLAN_IDS = Object.keys(SUBSCRIPTION_PLANS) as (keyof typeof SUBSCRIPTION_PLANS)[]
@@ -41,10 +42,24 @@ export const subscriptionsRouter = router({
   // Starts a Stripe Checkout session for a recurring plan (inline price_data so
   // no dashboard Price setup is needed). Business includes the 7-day trial.
   createCheckout: protectedProcedure
-    .input(z.object({ plan: z.enum(PLAN_IDS as [string, ...string[]]) }))
+    .input(z.object({
+      plan: z.enum(PLAN_IDS as [string, ...string[]]),
+      // Business plan only: optional recurring add-ons to bill on top of the base.
+      // Stored on the user and attached to the subscription once it exists (webhook).
+      addons: z.array(z.enum(BUSINESS_ADDON_IDS as [string, ...string[]])).optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       const plan = SUBSCRIPTION_PLANS[input.plan as keyof typeof SUBSCRIPTION_PLANS]
       const customer = await getOrCreateCustomer(ctx.prisma, ctx.user.id)
+
+      // Record the chosen add-ons up front. The webhook reconciles the Stripe
+      // subscription items to this set once the base subscription is created.
+      if (input.plan === 'business') {
+        await ctx.prisma.user.update({
+          where: { id: ctx.user.id },
+          data: { businessAddons: (input.addons ?? []).filter(isBusinessAddon) },
+        })
+      }
 
       const session = await getStripe().checkout.sessions.create({
         mode: 'subscription',
@@ -62,11 +77,62 @@ export const subscriptionsRouter = router({
           ...(plan.trialDays ? { trial_period_days: plan.trialDays } : {}),
           metadata: { userId: ctx.user.id, plan: input.plan },
         },
-        success_url: `${appUrl()}/?sub=success`,
+        // Land business signups on the account page so we can prompt for their
+        // business details on first login.
+        success_url: `${appUrl()}/${input.plan === 'business' ? 'account?welcome=business' : '?sub=success'}`,
         cancel_url: `${appUrl()}/?sub=cancelled`,
       })
       if (!session.url) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Could not start checkout' })
       return { url: session.url }
+    }),
+
+  // Current business plan + add-on selection and the resulting monthly total.
+  myBusiness: protectedProcedure.query(async ({ ctx }) => {
+    const user = await ctx.prisma.user.findUniqueOrThrow({
+      where: { id: ctx.user.id },
+      select: { isBusiness: true, businessAddons: true, businessOnboardedAt: true },
+    })
+    const selected = (user.businessAddons ?? []).filter(isBusinessAddon)
+    return {
+      isBusiness: user.isBusiness,
+      onboarded: user.businessOnboardedAt != null,
+      addons: selected,
+      baseCents: SUBSCRIPTION_PLANS.business.amountCents,
+      monthlyTotalCents: businessMonthlyTotalCents(selected),
+    }
+  }),
+
+  // Opt in/out of add-ons from the dashboard. Persists the new set and reconciles
+  // the live Stripe subscription so the monthly charge updates immediately.
+  updateAddons: protectedProcedure
+    .input(z.object({ addons: z.array(z.enum(BUSINESS_ADDON_IDS as [string, ...string[]])) }))
+    .mutation(async ({ ctx, input }) => {
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true } })
+      if (!me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A Business account is required' })
+      const addons = input.addons.filter(isBusinessAddon)
+      await ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { businessAddons: addons } })
+      try {
+        await reconcileSubscriptionAddons(ctx.prisma, ctx.user.id)
+      } catch {
+        // The selection is saved; if Stripe reconcile fails (e.g. no live sub yet)
+        // it will be re-applied on the next subscription webhook.
+      }
+      return { addons, monthlyTotalCents: businessMonthlyTotalCents(addons) }
+    }),
+
+  // Mark the first-login business-details step complete.
+  completeOnboarding: protectedProcedure
+    .input(z.object({ businessName: z.string().min(1).max(120), businessType: z.string().max(60).optional(), businessBio: z.string().max(600).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.prisma.user.update({
+        where: { id: ctx.user.id },
+        data: {
+          businessName: input.businessName.trim(),
+          ...(input.businessBio ? { businessBio: input.businessBio.trim() } : {}),
+          businessOnboardedAt: new Date(),
+        },
+      })
+      return { ok: true }
     }),
 
   // One-off business verification (€19) — unlocks the 🛡️ shield on the storefront.

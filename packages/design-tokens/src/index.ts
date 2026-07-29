@@ -86,6 +86,33 @@ export const SUBSCRIPTION_PLANS = {
                  blurb: 'List up to 40 active properties. €99/mo.' },
 } as const
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Business add-ons — optional recurring extras billed ON TOP of the €29 base
+// business subscription. The business opts in/out at signup or later from the
+// dashboard; the selected set is stored on the user and the Stripe subscription's
+// line items are reconciled to match, so the monthly charge updates automatically.
+// All amounts are per MONTH in cents (EUR). `comingSoon` add-ons are billed but
+// their delivery engine isn't live yet (see docs/whatsapp-blast-spec.md).
+export const BUSINESS_ADDONS = {
+  headline_sponsor:   { label: 'Headline Sponsor',   icon: '🥇', amountCents: 29900, blurb: 'Your brand on the homepage hero + a Featured Partner badge across Grabitt.' },
+  department_sponsor: { label: 'Department Sponsor', icon: '🤝', amountCents: 14900, blurb: 'Own a department page (e.g. Motors, Property) with your banner + badge.' },
+  featured_partner:   { label: 'Featured Partner',   icon: '⭐', amountCents: 7900,  blurb: 'Listed on the Sponsors & Partners page with logo, blurb and link.' },
+  page_banners:       { label: 'Page banners',       icon: '🖼️', amountCents: 4900,  blurb: 'A rotating banner slot across department & search pages, with click stats.' },
+  sponsored_placement:{ label: 'Sponsored placement',icon: '🚀', amountCents: 1900,  blurb: 'Priority placement of your listings in search and category results.' },
+  business_directory: { label: 'Business directory', icon: '📒', amountCents: 900,   blurb: 'Year-round listing in the Grabitt business directory.' },
+  whatsapp_blast:     { label: 'WhatsApp blast',     icon: '💬', amountCents: 2900,  blurb: 'Broadcast promotions to your opted-in customers on WhatsApp.', comingSoon: true },
+} as const
+
+export type BusinessAddonId = keyof typeof BUSINESS_ADDONS
+export const BUSINESS_ADDON_IDS = Object.keys(BUSINESS_ADDONS) as BusinessAddonId[]
+export const isBusinessAddon = (id: string): id is BusinessAddonId => id in BUSINESS_ADDONS
+
+/** Monthly total (cents) for the base business plan + a set of add-ons. */
+export function businessMonthlyTotalCents(addonIds: readonly string[]): number {
+  return SUBSCRIPTION_PLANS.business.amountCents
+    + addonIds.reduce((sum, id) => sum + (isBusinessAddon(id) ? BUSINESS_ADDONS[id].amountCents : 0), 0)
+}
+
 // Property-agent plan ids and their active-listing allowance.
 export const AGENT_PLANS = {
   agent_15: 15,

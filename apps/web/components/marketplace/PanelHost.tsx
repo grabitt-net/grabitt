@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase'
 import { getAuthToken, refreshAuthToken, setAuthToken } from '@/lib/authToken'
 import { compressAndUpload, listingPhotoPath, uploadDisputeEvidence } from '@/lib/storage'
 import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
+import { BUSINESS_ADDONS, BUSINESS_ADDON_IDS, businessMonthlyTotalCents } from '@grabitt/design-tokens'
 import StripePayment from './StripePayment'
 import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
@@ -4711,150 +4712,70 @@ function PanelBody() {
   }
 
   if (panel.id === 'business') {
-    const [bizStep, setBizStep] = useState<'info'|'type'|'verify'|'trial'|'done'>('info')
-    const [bizName, setBizName] = useState('')
-    // Verification status for the upgrade flow. Loaded once, unconditionally, so
-    // it never breaks the rules of hooks — the verify step just reads it.
-    const [vStatus, setVStatus] = useState<string | null>(null)
-    useEffect(() => {
-      getTrpcClient().then(c => c.business.verificationStatus.query())
-        .then(v => setVStatus((v as { status: string }).status))
-        .catch(() => setVStatus('not_started'))
-    }, [])
-    const [bizType, setBizType] = useState('')
+    const [pickedAddons, setPickedAddons] = useState<string[]>([])
     const [bizBusy, setBizBusy] = useState(false)
 
     // Guard AFTER the hooks — an early return before them would change the hook
     // count when auth loads (currentUserId null → value) and crash React.
     if (!currentUserId) return <SignInFirst onClose={closePanel} onSignIn={() => openPanel('login')} what="upgrade to Business" />
 
-    const BIZ_TYPES = [
-      { id: 'shop', label: '🏪 Retail Shop', desc: 'Physical shop selling goods' },
-      { id: 'trade', label: '🔧 Trade & Services', desc: 'Plumber, electrician, cleaner…' },
-      { id: 'restaurant', label: '🍽️ Restaurant / Bar', desc: 'Food & drink establishment' },
-      { id: 'agency', label: '🏠 Estate Agent', desc: 'Property sales or lettings' },
-      { id: 'recruiter', label: '💼 Recruitment / HR', desc: 'Job placement or staffing' },
-      { id: 'other', label: '📋 Other', desc: 'Other type of business' },
-    ]
-    // Recurring add-on plans (mirror the prototype pricing).
-    const ADDONS: { plan: string; icon: string; label: string; price: string }[] = [
-      { plan: 'service_ad',  icon: '🛠️', label: 'Advertise a service', price: '€29/mo' },
-      { plan: 'page_banner', icon: '🖼️', label: 'Page banners',        price: '€39/mo' },
-      { plan: 'directory',   icon: '📒', label: 'Business directory',   price: '€99/yr' },
-    ]
+    const toggleAddon = (id: string) => setPickedAddons(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+    const monthlyTotal = businessMonthlyTotalCents(pickedAddons) / 100
+    const eur = (cents: number) => `€${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`
 
-    const startCheckout = async (plan: string) => {
+    // Start the base business subscription with the chosen add-ons. Business
+    // details are captured on first login, not here.
+    const startCheckout = async () => {
       setBizBusy(true)
       try {
         let token = getAuthToken()
         if (!token) token = await refreshAuthToken()
         if (!token) { toast('Please log in first'); openPanel('login'); return }
         const client = await getTrpcClient()
-        const res = plan === 'verify'
-          ? await client.subscriptions.verifyCheckout.mutate()
-          : await client.subscriptions.createCheckout.mutate({ plan: plan as 'business' | 'service_ad' | 'page_banner' | 'directory' })
+        const res = await client.subscriptions.createCheckout.mutate({ plan: 'business', addons: pickedAddons as never })
         if (res.url) window.location.href = res.url
         else { toast('Could not start checkout'); setBizBusy(false) }
       } catch { toast('Could not start checkout — are you logged in?'); setBizBusy(false) }
     }
 
-    if (bizStep === 'done') return (
-      <ActionPanel title="🎉 Business Account Activated" onClose={closePanel}>
-        <div style={{ textAlign: 'center', padding: '30px 0' }}>
-          <div style={{ fontSize: 56, marginBottom: 14 }}>🏪</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Welcome, {bizName}!</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 8 }}>Your 7-day free trial has started.</div>
-          <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 14, marginBottom: 20 }}>
-            {['Unlimited listings during trial', 'Business storefront page', 'Analytics dashboard', 'Priority support'].map((f, i) => (
-              <div key={i} style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', padding: '4px 0' }}>✅ {f}</div>
-            ))}
-          </div>
-          <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 32px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>Start selling →</button>
-        </div>
-      </ActionPanel>
-    )
     return (
-      <ActionPanel title="🏪 Business Account" onClose={closePanel}>
-        {bizStep === 'info' && (
-          <>
-            <div style={{ background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: 14, padding: 16, marginBottom: 16, textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4 }}>7-day free trial</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>No credit card required</div>
-            </div>
-            {['Your own storefront + 🏢 badge', 'Instant Dealer status (lower fees)', 'Analytics & insights', 'Priority placement'].map((f, i) => (
-              <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid #f5f5f5', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555' }}><span>✅</span><span>{f}</span></div>
-            ))}
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', textAlign: 'center', marginTop: 12 }}>7 days free, then <strong style={{ color: 'var(--dark)' }}>€29/mo</strong> · cancel anytime</div>
-            <button onClick={() => setBizStep('type')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 12 }}>Start free trial →</button>
+      <ActionPanel title="🏢 For Business" onClose={closePanel}>
+        <div style={{ background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: 14, padding: 16, marginBottom: 16, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4 }}>7 days free, then €29/mo</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Storefront, 🏢 badge, lower fees & analytics · cancel anytime</div>
+        </div>
+        {['Your own storefront + 🏢 badge', 'Business level & lower selling fees', 'Analytics & insights', 'Post jobs & list property'].map((f, i) => (
+          <div key={i} style={{ display: 'flex', gap: 10, padding: '7px 0', borderBottom: '1px solid #f5f5f5', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555' }}><span>✅</span><span>{f}</span></div>
+        ))}
 
-            {/* Add-on plans + verification */}
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, margin: '20px 0 8px' }}>More business tools</div>
-            {ADDONS.map(a => (
-              <button key={a.plan} onClick={() => startCheckout(a.plan)} disabled={bizBusy} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', border: '1.5px solid #f0ebe4', borderRadius: 12, padding: '11px 14px', marginBottom: 8, cursor: 'pointer', fontFamily: 'var(--font-ui)' }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{a.icon} {a.label}</span>
-                <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--orange)' }}>{a.price}</span>
-              </button>
-            ))}
-            <button onClick={() => startCheckout('verify')} disabled={bizBusy} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', border: '1.5px solid #f0ebe4', borderRadius: 12, padding: '11px 14px', cursor: 'pointer', fontFamily: 'var(--font-ui)' }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>🛡️ Verify my business</span>
-              <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--orange)' }}>€19 once</span>
-            </button>
-          </>
-        )}
-        {bizStep === 'type' && (
-          <>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>What type of business?</div>
-            {BIZ_TYPES.map(t => (
-              <div key={t.id} onClick={() => setBizType(t.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, border: `2px solid ${bizType === t.id ? 'var(--orange)' : '#f0ebe4'}`, background: bizType === t.id ? '#FFF3EE' : '#fff', marginBottom: 8, cursor: 'pointer' }}>
-                <div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: bizType === t.id ? 'var(--orange)' : 'var(--dark)' }}>{t.label}</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 2 }}>{t.desc}</div>
-                </div>
-              </div>
-            ))}
-            <input value={bizName} onChange={e => setBizName(e.target.value)} placeholder="Business name *" style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' as const, marginTop: 12 }} />
-            <button onClick={() => { if (bizType && bizName.trim()) setBizStep('verify') }} disabled={!bizType || !bizName.trim()} style={{ width: '100%', background: !bizType || !bizName.trim() ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: !bizType ? 'not-allowed' : 'pointer', marginTop: 16 }}>Continue →</button>
-          </>
-        )}
-        {bizStep === 'verify' && (() => {
-          const submitted = vStatus === 'pending' || vStatus === 'approved'
+        {/* Optional extras billed on top — opt in/out, total updates live */}
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, margin: '18px 0 4px' }}>Add extras (optional)</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#999', marginBottom: 10 }}>Toggle any of these on — the monthly total updates as you go. You can also add or remove them later from your Business hub.</div>
+        {BUSINESS_ADDON_IDS.map(id => {
+          const a = BUSINESS_ADDONS[id]
+          const on = pickedAddons.includes(id)
+          const soon = 'comingSoon' in a && a.comingSoon
           return (
-            <>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Verify your business</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#666', lineHeight: 1.6, marginBottom: 14 }}>
-                Before starting your trial we need to confirm you&apos;re a real business — your registration or Modelo 036/037, plus proof of address. It only takes a minute, and you won&apos;t be charged until it&apos;s done.
-              </div>
-              <div style={{ background: submitted ? '#f0fdf4' : '#FFF7ED', border: `1px solid ${submitted ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 12, padding: 12, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 20 }}>{submitted ? '✅' : '📄'}</span>
-                <div style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: submitted ? '#16a34a' : '#9a5b1a' }}>
-                  {vStatus === null ? 'Checking…' : vStatus === 'approved' ? 'Your business is verified.' : submitted ? 'Documents submitted — under review.' : 'Not started yet.'}
-                </div>
-              </div>
-              <button onClick={() => openPanel('businessVerify')} style={{ width: '100%', background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>
-                🛡️ {submitted ? 'Review my documents' : 'Add my business documents'}
-              </button>
-              <button onClick={() => setBizStep('trial')} disabled={!submitted} style={{ width: '100%', background: submitted ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: submitted ? 'pointer' : 'not-allowed' }}>
-                Continue to trial →
-              </button>
-              {!submitted && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 8 }}>Submit your documents to continue.</div>}
-            </>
+            <button key={id} onClick={() => toggleAddon(id)} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 11, background: on ? '#FFF7F0' : '#fff', border: `1.5px solid ${on ? 'var(--orange)' : '#f0ebe4'}`, borderRadius: 12, padding: '11px 13px', marginBottom: 8, cursor: 'pointer' }}>
+              <span style={{ width: 20, height: 20, flexShrink: 0, borderRadius: 6, border: `2px solid ${on ? 'var(--orange)' : '#d8cbb5'}`, background: on ? 'var(--orange)' : '#fff', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900 }}>{on ? '✓' : ''}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>
+                  {a.icon} {a.label}{soon ? <span style={{ marginLeft: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 9, fontWeight: 900, padding: '2px 6px', borderRadius: 50, textTransform: 'uppercase', letterSpacing: 0.3 }}>Coming soon</span> : null}
+                </span>
+                <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 2, lineHeight: 1.4 }}>{a.blurb}</span>
+              </span>
+              <span style={{ flexShrink: 0, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--orange)' }}>{eur(a.amountCents)}/mo</span>
+            </button>
           )
-        })()}
+        })}
 
-        {bizStep === 'trial' && (
-          <>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>Confirm your 7-day trial</div>
-            <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 16 }}>
-              {[['Business name', bizName], ['Business type', BIZ_TYPES.find(t => t.id === bizType)?.label ?? ''], ['Trial period', '7 days free'], ['After trial', '€29/mo · cancel anytime']].map(([l, v]) => (
-                <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', borderBottom: '1px solid #f0ebe4' }}>
-                  <span>{l}</span><span style={{ fontWeight: 800, color: 'var(--dark)' }}>{v}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>You&apos;ll be taken to Stripe to add a card. You won&apos;t be charged until the trial ends.</div>
-            <button onClick={() => startCheckout('business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? 'Opening Stripe…' : '🚀 Start 7-Day Free Trial'}</button>
-          </>
-        )}
+        {/* Live monthly total */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9f6f2', borderRadius: 12, padding: '12px 14px', margin: '10px 0 12px' }}>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555' }}>Monthly total after trial</span>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)' }}>€{monthlyTotal % 1 ? monthlyTotal.toFixed(2) : monthlyTotal}/mo</span>
+        </div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>You&apos;ll add a card on Stripe — nothing is charged until the 7-day trial ends. We&apos;ll ask for your business details when you first sign in.</div>
+        <button onClick={startCheckout} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? 'Opening Stripe…' : '🚀 Start 7-day free trial'}</button>
       </ActionPanel>
     )
   }

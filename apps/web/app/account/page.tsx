@@ -204,6 +204,10 @@ function AccountInner() {
 
   if (!ready) return <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-nunito)', color: '#888' }}>{t('Loading your account…')}</main>
 
+  // First-login business onboarding: a business that hasn't entered its details
+  // yet (e.g. just came back from Stripe) is prompted before anything else.
+  const needsBizOnboarding = !!me?.isBusiness && !me?.businessOnboardedAt
+
   const grade = me?.grade ?? 'grabber'
   const memberSince = me?.createdAt ? new Date(me.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '—'
   const verified = !!me?.isVerified
@@ -231,6 +235,7 @@ function AccountInner() {
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar />
       <QuickActions />
+      {needsBizOnboarding && <BusinessOnboardingModal onDone={() => load()} />}
       <div style={{ padding: '16px 14px', display: 'grid', gap: 18, gridTemplateColumns: '1fr' }} className="account-grid">
         {/* Sidebar / identity */}
         <aside style={{ alignSelf: 'start' }} className="account-side">
@@ -579,3 +584,49 @@ const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSi
 const fieldLabel: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 5 }
 const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, outline: 'none', background: '#fff', marginBottom: 12 }
 function Muted({ children }: { children: React.ReactNode }) { return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '16px 0', textAlign: 'center' }}>{children}</div> }
+
+// First-login business details. Blocks the account until the business tells us
+// who they are — this is the step deferred from the streamlined signup flow.
+const BIZ_TYPES = [
+  { id: 'shop', label: '🏪 Retail Shop' }, { id: 'trade', label: '🔧 Trade & Services' },
+  { id: 'restaurant', label: '🍽️ Restaurant / Bar' }, { id: 'agency', label: '🏠 Estate Agent' },
+  { id: 'recruiter', label: '💼 Recruitment / HR' }, { id: 'other', label: '📋 Other' },
+]
+function BusinessOnboardingModal({ onDone }: { onDone: () => void }) {
+  const [name, setName] = useState('')
+  const [type, setType] = useState('')
+  const [bio, setBio] = useState('')
+  const [busy, setBusy] = useState(false)
+  const save = async () => {
+    if (!name.trim() || !type) return
+    setBusy(true)
+    try {
+      await trpcAuthed().subscriptions.completeOnboarding.mutate({ businessName: name.trim(), businessType: type, businessBio: bio.trim() || undefined })
+      onDone()
+    } catch { setBusy(false) }
+  }
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,20,12,0.55)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div style={{ background: '#fff', borderRadius: 18, padding: 22, width: '100%', maxWidth: 440, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+        <div style={{ fontSize: 40, textAlign: 'center' }}>🏢</div>
+        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 19, fontWeight: 700, color: 'var(--dark)', textAlign: 'center', marginTop: 6 }}>{t('Welcome to Business!')}</div>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#7a6c56', textAlign: 'center', marginTop: 4, marginBottom: 16, lineHeight: 1.5 }}>
+          {t('Tell us about your business so we can set up your storefront. You sell under this name.')}
+        </div>
+        <label style={fieldLabel}>{t('Business name')} *</label>
+        <input value={name} onChange={e => setName(e.target.value)} placeholder={t('e.g. Playa Surf Shop')} style={field} />
+        <label style={fieldLabel}>{t('Business type')} *</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+          {BIZ_TYPES.map(b => (
+            <button key={b.id} onClick={() => setType(b.id)} style={{ border: `1.5px solid ${type === b.id ? 'var(--orange)' : '#e5dccd'}`, background: type === b.id ? '#FFF3EE' : '#fff', color: type === b.id ? 'var(--orange)' : '#6b5d48', borderRadius: 50, padding: '7px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{b.label}</button>
+          ))}
+        </div>
+        <label style={fieldLabel}>{t('Short bio')} ({t('optional')})</label>
+        <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder={t('What you sell or offer, in a sentence.')} style={{ ...field, minHeight: 64, resize: 'vertical' }} />
+        <button onClick={save} disabled={busy || !name.trim() || !type} style={{ width: '100%', marginTop: 6, background: (!name.trim() || !type) ? '#e6ddce' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: (busy || !name.trim() || !type) ? 'default' : 'pointer' }}>
+          {busy ? t('Saving…') : t('Save & continue')}
+        </button>
+      </div>
+    </div>
+  )
+}

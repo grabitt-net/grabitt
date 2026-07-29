@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { getStripe } from '../lib/stripe'
 import { prisma } from '../db'
 import { grantCreditPack } from '../routers/credits'
+import { reconcileSubscriptionAddons } from '../lib/businessAddons'
 import { SUBSCRIPTION_PLANS } from '@grabitt/design-tokens'
 
 // Map Stripe subscription status → our SubStatus enum.
@@ -52,6 +53,11 @@ async function applySubscription(sub: Stripe.Subscription) {
       })
     } else {
       await prisma.user.update({ where: { id: userId }, data: { isBusiness: false } })
+    }
+    // Attach/detach the business's chosen add-on line items to match their stored
+    // selection. Best-effort — a failure here must not fail the webhook.
+    if (active) {
+      try { await reconcileSubscriptionAddons(prisma, userId) } catch { /* retried on next event */ }
     }
   }
 
