@@ -87,6 +87,15 @@ model HelpArticle {
   @@index([active])
 }
 
+// Singleton financial planner model (assumptions, revenue streams, cost lines).
+// Stored as one JSON blob so the shape can evolve without migrations; edited and
+// exported from the executive suite.
+model ForecastModel {
+  id        String   @id @default("default")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
 model CommunityPost {
   id         String   @id @default(uuid())
   title      String

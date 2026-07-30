@@ -10,6 +10,7 @@ const sections = [
       { icon: '🧭', label: 'Today', id: 'today' as View },
       { icon: '🚰', label: 'Pipeline', id: 'funnel' as View },
       { icon: '📈', label: 'Forecast', id: 'forecast' as View },
+      { icon: '🧮', label: 'Planner', id: 'planner' as View },
       { icon: '💰', label: 'Financials', id: 'financials' as View },
       { icon: '📊', label: 'Retention', id: 'retention' as View },
     ],

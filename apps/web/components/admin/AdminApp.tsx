@@ -27,6 +27,7 @@ import ComplianceView from './ComplianceView'
 import HomepageView from './HomepageView'
 import TodayView from './TodayView'
 import RewardsView from './RewardsView'
+import PlannerView from './PlannerView'
 import CommandPalette, { type Command } from './CommandPalette'
 import { makeCrmApi, CrmApi } from '@/lib/admin-api'
 
@@ -35,6 +36,7 @@ const COMMANDS: Command[] = [
   { id: 'today', label: 'Today', icon: '🧭', group: 'Overview' },
   { id: 'funnel', label: 'Pipeline', icon: '🚰', group: 'Overview' },
   { id: 'forecast', label: 'Forecast', icon: '📈', group: 'Overview' },
+  { id: 'planner', label: 'Planner', icon: '🧮', group: 'Overview', keywords: 'forecast p&l pnl costs budget export' },
   { id: 'financials', label: 'Financials', icon: '💰', group: 'Overview' },
   { id: 'retention', label: 'Retention', icon: '📊', group: 'Overview' },
   { id: 'members', label: 'Members', icon: '🪪', group: 'People' },
@@ -69,7 +71,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards' | 'planner'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -210,6 +212,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'community'  && <CommunityView />}
                 {view === 'help'       && <HelpView />}
                 {view === 'rewards'    && <RewardsView />}
+                {view === 'planner'    && <PlannerView />}
               </>
             )}
           </main>

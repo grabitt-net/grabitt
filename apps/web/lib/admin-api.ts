@@ -127,6 +127,10 @@ export function makeCrmApi(execToken: string) {
     memberRewardSummary: (userId: string) =>
       rpc<any>('rewards.memberSummary', 'query', { userId }, execToken),
 
+    // Financial planner (forecast + editable P&L)
+    plannerGet: () => rpc<{ data: any; updatedAt: string } | null>('planner.get', 'query', undefined, execToken),
+    plannerSave: (data: any) => rpc<{ ok: true; updatedAt: string }>('planner.save', 'mutation', { data }, execToken),
+
     // Reports / moderation queue
     reports: (status?: 'all' | 'open' | 'under_review' | 'actioned' | 'dismissed') =>
       rpc<any[]>('reports.adminList', 'query', { status: status ?? 'open' }, execToken),
