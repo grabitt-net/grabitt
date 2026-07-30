@@ -14,6 +14,8 @@ import PanelHost from '@/components/marketplace/PanelHost'
 import SellerCentre from '@/components/marketplace/SellerCentre'
 import BusinessCentre from '@/components/marketplace/BusinessCentre'
 import RewardsCard from '@/components/marketplace/RewardsCard'
+import MemberStatusCard from '@/components/marketplace/MemberStatusCard'
+import { MEMBER_STATUSES } from '@grabitt/design-tokens'
 import AttributesCard from '@/components/marketplace/AttributesCard'
 import AgentProfileCard from '@/components/marketplace/AgentProfileCard'
 import TenantProfileCard from '@/components/marketplace/TenantProfileCard'
@@ -251,6 +253,8 @@ function AccountInner() {
                   <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#aaa', fontWeight: 700 }}>{memberRef}</span>
                   {verified && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#dcfce7', color: '#16a34a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>🛡️ {t('Verified')}</span>}
                   {me?.isBusiness && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#4A2E1A', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>🏢 {t('Business')}</span>}
+                  {me?.memberStatus && (MEMBER_STATUSES as any)[me.memberStatus] && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#eef7f0', color: '#16a34a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>{(MEMBER_STATUSES as any)[me.memberStatus].badge} {(MEMBER_STATUSES as any)[me.memberStatus].label}</span>}
+                  {me?.foundingMember && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#FFF3EE', color: '#8a5a2a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>⭐ {t('Founding')}</span>}
                 </div>
               </div>
             </div>
@@ -476,6 +480,9 @@ function AccountInner() {
           {/* Tenant profile — shared with agents when enquiring on a rental */}
           <TenantProfileCard />
           </>)}
+
+          {/* Discounts & special member status — apply for Student / Blue Light / Charity */}
+          <MemberStatusCard />
 
           {/* Property-agent contact — only relevant to business/agent accounts */}
           {me?.isBusiness && <AgentProfileCard />}

@@ -87,6 +87,25 @@ model HelpArticle {
   @@index([active])
 }
 
+// A member's application for a special status (student / blue_light / charity).
+// Reviewed by an admin; approval grants the status + its benefit on the User.
+model StatusApplication {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  kind        String                          // 'student' | 'blue_light' | 'charity'
+  status      String   @default("pending")    // pending | approved | rejected
+  details     String?                         // institution / service / charity reg no
+  evidenceUrl String?
+  reviewNote  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([userId])
+}
+
 // Singleton financial planner model (assumptions, revenue streams, cost lines).
 // Stored as one JSON blob so the shape can evolve without migrations; edited and
 // exported from the executive suite.
@@ -276,6 +295,12 @@ model User {
   // `feeReductionUntil`. Null/expired = no reduction.
   feeReductionPct    Decimal?  @db.Decimal(5, 2)
   feeReductionUntil  DateTime?
+  // Granted special status (student | blue_light | charity), its ongoing
+  // selling-fee discount in percentage points, and — for Founding cohort —
+  // whether they hold the Founding Member badge.
+  memberStatus       String?
+  statusDiscountPct  Decimal?  @db.Decimal(5, 2)
+  foundingMember     Boolean   @default(false)
   isBusiness         Boolean   @default(false)
   businessVerified   Boolean   @default(false)
   businessTrialEnds  DateTime?
@@ -378,6 +403,7 @@ model User {
   threads            ThreadParticipant[]
   notifications      Notification[]
   creditEvents       CreditEvent[]
+  statusApplications StatusApplication[]
   wishlistItems      WishlistItem[]
   wishItems          WishItem[]
   savedSearches      SavedSearch[]

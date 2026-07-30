@@ -1,18 +1,21 @@
 import { FEE_RATES } from '@grabitt/design-tokens'
 
-// The item-sale fee rate for a seller, after any active reward fee-reduction.
-// A redeemed 'fee_reduction' reward subtracts feeReductionPct percentage points
-// from the grade rate until feeReductionUntil; expired/absent = grade rate.
+// The item-sale fee rate for a seller, after discounts. Two can apply:
+//  • a temporary redeemed reward (feeReductionPct until feeReductionUntil), and
+//  • an ongoing special-status discount (statusDiscountPct — student / blue-light
+//    / charity), held for as long as the status is granted.
+// The larger of the two applies (they don't stack); the result is floored at 0.
 export function effectiveFeeRate(seller: {
   grade: string
   feeReductionPct?: unknown
   feeReductionUntil?: Date | null
+  statusDiscountPct?: unknown
 }): number {
   const base = FEE_RATES[seller.grade as keyof typeof FEE_RATES] ?? FEE_RATES.grabber
+  let discountPts = Number(seller.statusDiscountPct ?? 0) // ongoing, in percentage points
   const until = seller.feeReductionUntil ? new Date(seller.feeReductionUntil) : null
   if (until && until.getTime() > Date.now()) {
-    const pct = Number(seller.feeReductionPct ?? 0)
-    if (pct > 0) return Math.max(0, base - pct / 100)
+    discountPts = Math.max(discountPts, Number(seller.feeReductionPct ?? 0))
   }
-  return base
+  return discountPts > 0 ? Math.max(0, base - discountPts / 100) : base
 }

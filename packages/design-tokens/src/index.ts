@@ -113,6 +113,25 @@ export function businessMonthlyTotalCents(addonIds: readonly string[]): number {
     + addonIds.reduce((sum, id) => sum + (isBusinessAddon(id) ? BUSINESS_ADDONS[id].amountCents : 0), 0)
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Special member statuses — applied for by the member, validated by an admin,
+// then granted. Each carries a badge and a benefit. `feeDiscountPct` is
+// subtracted (in percentage points) from the seller's item-sale fee while the
+// status is held (floored at 0). Charity is a free Business account for
+// registered charities, capped at `listingCap` active listings, at 0% fees.
+export const MEMBER_STATUSES = {
+  student:    { label: 'Student',    badge: '🎓', appliesTo: 'personal', feeDiscountPct: 3,   evidence: 'Student ID, enrolment letter or valid .edu/university email',
+                blurb: 'Reduced selling fees for verified students — 3% off your fee.' },
+  blue_light: { label: 'Blue Light', badge: '🔷', appliesTo: 'personal', feeDiscountPct: 4,   evidence: 'Work ID or payslip for NHS/health, emergency services or armed forces',
+                blurb: 'A thank-you rate for health, emergency-service and armed-forces workers — 4% off your fee.' },
+  charity:    { label: 'Charity',    badge: '❤️', appliesTo: 'business', feeDiscountPct: 100, freeBusiness: true, listingCap: 30,
+                evidence: 'Charity registration number and proof of registration',
+                blurb: 'Free Business account and 0% selling fees for registered charities, up to 30 active listings.' },
+} as const
+export type MemberStatusId = keyof typeof MEMBER_STATUSES
+export const MEMBER_STATUS_IDS = Object.keys(MEMBER_STATUSES) as MemberStatusId[]
+export const isMemberStatus = (id: string): id is MemberStatusId => id in MEMBER_STATUSES
+
 // Property-agent plan ids and their active-listing allowance.
 export const AGENT_PLANS = {
   agent_15: 15,

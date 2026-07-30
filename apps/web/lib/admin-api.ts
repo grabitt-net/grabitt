@@ -131,6 +131,14 @@ export function makeCrmApi(execToken: string) {
     plannerGet: () => rpc<{ data: any; updatedAt: string } | null>('planner.get', 'query', undefined, execToken),
     plannerSave: (data: any) => rpc<{ ok: true; updatedAt: string }>('planner.save', 'mutation', { data }, execToken),
 
+    // Special-status applications (student / blue light / charity)
+    statusApplications: (status?: 'pending' | 'approved' | 'rejected' | 'all') =>
+      rpc<any[]>('status.adminList', 'query', { status: status ?? 'pending' }, execToken),
+    reviewStatusApplication: (id: string, decision: 'approved' | 'rejected', note?: string) =>
+      rpc<{ ok: true }>('status.review', 'mutation', { id, decision, note }, execToken),
+    revokeStatus: (userId: string) =>
+      rpc<{ ok: true }>('status.revoke', 'mutation', { userId }, execToken),
+
     // Reports / moderation queue
     reports: (status?: 'all' | 'open' | 'under_review' | 'actioned' | 'dismissed') =>
       rpc<any[]>('reports.adminList', 'query', { status: status ?? 'open' }, execToken),

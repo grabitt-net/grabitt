@@ -28,6 +28,7 @@ import HomepageView from './HomepageView'
 import TodayView from './TodayView'
 import RewardsView from './RewardsView'
 import PlannerView from './PlannerView'
+import StatusApplicationsView from './StatusApplicationsView'
 import CommandPalette, { type Command } from './CommandPalette'
 import { makeCrmApi, CrmApi } from '@/lib/admin-api'
 
@@ -44,6 +45,7 @@ const COMMANDS: Command[] = [
   { id: 'candidates', label: 'Candidates', icon: '🙋', group: 'People' },
   { id: 'contacts', label: 'Contacts', icon: '📇', group: 'People' },
   { id: 'pipeline', label: 'Prospects', icon: '🤞', group: 'People', keywords: 'crm deals' },
+  { id: 'statusapps', label: 'Status applications', icon: '🎓', group: 'People', keywords: 'student blue light charity discount verify' },
   { id: 'jobs', label: 'Jobs', icon: '💼', group: 'Marketplace' },
   { id: 'property', label: 'Property', icon: '🏠', group: 'Marketplace', keywords: 'approvals' },
   { id: 'disputes', label: 'Disputes', icon: '⚖️', group: 'Marketplace' },
@@ -71,7 +73,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards' | 'planner'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards' | 'planner' | 'statusapps'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -213,6 +215,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'help'       && <HelpView />}
                 {view === 'rewards'    && <RewardsView />}
                 {view === 'planner'    && <PlannerView />}
+                {view === 'statusapps' && <StatusApplicationsView />}
               </>
             )}
           </main>
