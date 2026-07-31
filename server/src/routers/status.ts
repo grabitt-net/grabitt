@@ -18,7 +18,8 @@ export const statusRouter = router({
   }),
 
   // Apply for a status. One open application per kind at a time.
-  apply: protectedProcedure
+  // (Named applyFor, not apply — tRPC reserves `apply`.)
+  applyFor: protectedProcedure
     .input(z.object({
       kind: z.enum(MEMBER_STATUS_IDS as [string, ...string[]]),
       details: z.string().max(300).optional(),

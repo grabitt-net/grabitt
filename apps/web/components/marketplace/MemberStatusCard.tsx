@@ -25,7 +25,7 @@ export default function MemberStatusCard() {
     if (!applyFor) return
     setBusy(true); setMsg('')
     try {
-      await trpcAuthed().status.apply.mutate({ kind: applyFor as never, ...(details.trim() ? { details: details.trim() } : {}), ...(evidence.trim() ? { evidenceUrl: evidence.trim() } : {}) })
+      await trpcAuthed().status.applyFor.mutate({ kind: applyFor as never, ...(details.trim() ? { details: details.trim() } : {}), ...(evidence.trim() ? { evidenceUrl: evidence.trim() } : {}) })
       setMsg('✓ Application submitted — we’ll review it shortly.')
       setApplyFor(null); setDetails(''); setEvidence(''); load()
     } catch (e: any) { setMsg(e?.message ? String(e.message) : 'Could not submit') }
