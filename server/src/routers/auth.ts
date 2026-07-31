@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure } from '../trpc'
 import { prisma } from '../db'
-import { PRICES } from '@grabitt/design-tokens'
+import { PRICES, FOUNDING } from '@grabitt/design-tokens'
 
 // SECURITY (§ auth): Identity is owned by Supabase Auth.
 // - Consumers sign in via Supabase (email/password or OAuth) on the client.
@@ -45,8 +45,22 @@ export const authRouter = router({
       // Resolve the referrer from their code. Self-referral is impossible here
       // (the new user has no code yet), so no guard is needed.
       const referrer = input.ref
-        ? await prisma.user.findUnique({ where: { referralCode: input.ref.trim().toUpperCase() }, select: { id: true } })
+        ? await prisma.user.findUnique({ where: { referralCode: input.ref.trim().toUpperCase() }, select: { id: true, isAffiliate: true, affiliateTier: true } })
         : null
+
+      // Founding Member: the first FOUNDING.cap WEB signups (this endpoint is the
+      // web signup path — admin-created accounts never reach here). They get the
+      // permanent badge, immediate affiliate status, and 50% off fees for the
+      // first FOUNDING.weeks weeks. Grade/limits stay standard Grabber.
+      const foundingCount = await prisma.user.count({ where: { foundingMember: true } })
+      const isFounding = foundingCount < FOUNDING.cap
+      const foundingData = isFounding ? {
+        foundingMember: true,
+        isAffiliate: true,
+        affiliateTier: 'founding',
+        feeReductionPct: FOUNDING.feeDiscountPct,
+        feeReductionUntil: new Date(Date.now() + FOUNDING.weeks * 7 * 86400000),
+      } : {}
 
       const user = await prisma.user.create({
         data: {
@@ -61,6 +75,7 @@ export const authRouter = router({
           emailVerified: true,
           referralCode: makeReferralCode(),
           ...(referrer ? { referredById: referrer.id } : {}),
+          ...foundingData,
         },
       })
 
@@ -73,6 +88,18 @@ export const authRouter = router({
           note: 'Welcome bonus',
         },
       })
+
+      // If the referrer is an affiliate, credit them the per-signup rate for their
+      // tier (founding affiliates earn the higher rate). The affiliate link is
+      // simply their referral link — one ledger row per referred signup.
+      if (referrer?.isAffiliate) {
+        const cfg = await prisma.affiliateConfig.upsert({ where: { id: 'default' }, create: { id: 'default' }, update: {} })
+        const tier = referrer.affiliateTier === 'founding' ? 'founding' : 'standard'
+        const amountCents = tier === 'founding' ? cfg.foundingRateCents : cfg.standardRateCents
+        await prisma.affiliateReferral.create({
+          data: { affiliateId: referrer.id, referredUserId: user.id, amountCents, tier },
+        }).catch(() => { /* unique guard: one credit per referred user */ })
+      }
 
       return { user, created: true }
     }),

@@ -72,6 +72,9 @@ export const SUBSCRIPTION_PLANS = {
   // free period; changing it changes what customers actually get.
   business:    { label: 'Business',            amountCents: 2900, interval: 'month', trialDays: 7, grantsGrade: 'dealer', verifyFeeCents: 1900,
                  blurb: 'Your own storefront, 🏢 badge & instant Dealer status. 7 days free, then €29/mo — pause any time.' },
+  // Founding cohort: a one-off annual lock-in for early businesses.
+  business_founding_annual: { label: 'Founding Business (annual)', amountCents: 24900, interval: 'year', trialDays: 0, grantsGrade: 'dealer',
+                 blurb: 'Founding annual plan — €249/year locked in. Everything in Business, prepaid for a year.' },
   service_ad:  { label: 'Advertise a service', amountCents: 2900, interval: 'month', trialDays: 0,
                  blurb: 'Promote your service to locals. €29/mo.' },
   page_banner: { label: 'Page banners',        amountCents: 3900, interval: 'month', trialDays: 0,
@@ -124,13 +127,38 @@ export const MEMBER_STATUSES = {
                 blurb: 'Reduced selling fees for verified students — 3% off your fee.' },
   blue_light: { label: 'Blue Light', badge: '🔷', appliesTo: 'personal', feeDiscountPct: 4,   evidence: 'Work ID or payslip for NHS/health, emergency services or armed forces',
                 blurb: 'A thank-you rate for health, emergency-service and armed-forces workers — 4% off your fee.' },
-  charity:    { label: 'Charity',    badge: '❤️', appliesTo: 'business', feeDiscountPct: 100, freeBusiness: true, listingCap: 30,
+  charity:    { label: 'Charity',    badge: '❤️', appliesTo: 'business', feeDiscountPct: 100, freeBusiness: true, listingCap: 100,
                 evidence: 'Charity registration number and proof of registration',
-                blurb: 'Free Business account and 0% selling fees for registered charities, up to 30 active listings.' },
+                blurb: 'Free Business account and 0% selling fees for registered charities, up to 100 active listings.' },
 } as const
 export type MemberStatusId = keyof typeof MEMBER_STATUSES
 export const MEMBER_STATUS_IDS = Object.keys(MEMBER_STATUSES) as MemberStatusId[]
 export const isMemberStatus = (id: string): id is MemberStatusId => id in MEMBER_STATUSES
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Founding Member — the first FOUNDING.cap WEB signups (admin-created accounts
+// never auto-qualify) get a permanent ⭐ badge, 50% off the standard selling fee
+// for the first `weeks` weeks from signup, standard Grabber grade & limits, and
+// immediate affiliate status. The discount applies to the sales commission ONLY
+// — listing upgrades (Featured, Grab It Now, etc.) are still charged at normal
+// rates. feeDiscountPct is in percentage points: 4 = 50% of the 8% Grabber fee.
+export const FOUNDING = {
+  cap: 250,
+  feeDiscountPct: 4, // 50% off the 8% Grabber sales fee
+  weeks: 12,
+} as const
+
+// The €249/yr Founding Business annual plan is limited to the first N businesses.
+export const FOUNDING_BUSINESS_CAP = 100
+
+// Affiliate programme — an affiliate earns a fixed cash amount per validated
+// signup made through their referral link. Founding affiliates earn the higher
+// rate. These are the defaults; admins can change them in the executive suite.
+export const AFFILIATE_DEFAULTS = {
+  foundingRateCents: 500, // €5.00 per signup (to be finalised)
+  standardRateCents: 200, // €2.00 per signup
+} as const
+export type AffiliateTier = 'founding' | 'standard'
 
 // Property-agent plan ids and their active-listing allowance.
 export const AGENT_PLANS = {

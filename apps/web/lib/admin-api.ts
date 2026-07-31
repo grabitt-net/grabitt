@@ -139,6 +139,19 @@ export function makeCrmApi(execToken: string) {
     revokeStatus: (userId: string) =>
       rpc<{ ok: true }>('status.revoke', 'mutation', { userId }, execToken),
 
+    // Affiliate programme
+    affiliateConfig: () => rpc<any>('affiliates.config', 'query', undefined, execToken),
+    saveAffiliateConfig: (data: { foundingRateCents: number; standardRateCents: number; foundingCap: number }) =>
+      rpc<any>('affiliates.saveConfig', 'mutation', data, execToken),
+    affiliateFoundingStatus: () => rpc<{ count: number; cap: number; remaining: number }>('affiliates.foundingStatus', 'query', undefined, execToken),
+    affiliates: () => rpc<any[]>('affiliates.list', 'query', undefined, execToken),
+    setAffiliate: (userId: string, isAffiliate: boolean, tier?: 'founding' | 'standard') =>
+      rpc<any>('affiliates.setAffiliate', 'mutation', { userId, isAffiliate, tier }, execToken),
+    grantFounding: (userId: string) => rpc<any>('affiliates.grantFounding', 'mutation', { userId }, execToken),
+    revokeFounding: (userId: string) => rpc<any>('affiliates.revokeFounding', 'mutation', { userId }, execToken),
+    payOutAffiliate: (affiliateId: string, viaStripe: boolean) =>
+      rpc<{ ok: true; amountCents: number }>('affiliates.payOut', 'mutation', { affiliateId, viaStripe }, execToken),
+
     // Reports / moderation queue
     reports: (status?: 'all' | 'open' | 'under_review' | 'actioned' | 'dismissed') =>
       rpc<any[]>('reports.adminList', 'query', { status: status ?? 'open' }, execToken),

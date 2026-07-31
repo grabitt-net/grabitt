@@ -358,6 +358,19 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
             </div>
           </Card>
 
+          <Card title="Founding & affiliate">
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 8 }}>Founding Member is granted automatically to the first web signups. Assign it manually here for admin-created members.</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button onClick={async () => { setBusy('found'); try { await api.grantFounding(member.id); flash('✓ Founding Member granted'); onSaved() } catch (e) { fail(e) } finally { setBusy('') } }} disabled={!!busy} style={secondary}>⭐ Grant Founding</button>
+              <button onClick={async () => { setBusy('unfound'); try { await api.revokeFounding(member.id); flash('✓ Founding removed'); onSaved() } catch (e) { fail(e) } finally { setBusy('') } }} disabled={!!busy} style={secondary}>Remove Founding</button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+              <button onClick={async () => { setBusy('affF'); try { await api.setAffiliate(member.id, true, 'founding'); flash('✓ Founding affiliate'); onSaved() } catch (e) { fail(e) } finally { setBusy('') } }} disabled={!!busy} style={secondary}>Affiliate: Founding</button>
+              <button onClick={async () => { setBusy('affS'); try { await api.setAffiliate(member.id, true, 'standard'); flash('✓ Standard affiliate'); onSaved() } catch (e) { fail(e) } finally { setBusy('') } }} disabled={!!busy} style={secondary}>Affiliate: Standard</button>
+              <button onClick={async () => { setBusy('affN'); try { await api.setAffiliate(member.id, false); flash('✓ Affiliate removed'); onSaved() } catch (e) { fail(e) } finally { setBusy('') } }} disabled={!!busy} style={secondary}>Remove affiliate</button>
+            </div>
+          </Card>
+
           <Card title="Verification">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <Check label="Verified member" checked={f.isVerified} onChange={v => set('isVerified', v)} />

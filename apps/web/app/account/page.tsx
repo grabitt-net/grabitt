@@ -15,6 +15,7 @@ import SellerCentre from '@/components/marketplace/SellerCentre'
 import BusinessCentre from '@/components/marketplace/BusinessCentre'
 import RewardsCard from '@/components/marketplace/RewardsCard'
 import MemberStatusCard from '@/components/marketplace/MemberStatusCard'
+import AffiliateCard from '@/components/marketplace/AffiliateCard'
 import { MEMBER_STATUSES } from '@grabitt/design-tokens'
 import AttributesCard from '@/components/marketplace/AttributesCard'
 import AgentProfileCard from '@/components/marketplace/AgentProfileCard'
@@ -367,6 +368,9 @@ function AccountInner() {
           {mainTab === 'selling' && (<>
           {/* Rewards — earn credits and redeem for upgrades or a fee reduction */}
           <RewardsCard />
+
+          {/* Affiliate programme — only shows for affiliates (founding members auto) */}
+          <AffiliateCard />
 
           {/* Seller info centre — personal seller ladder. Business accounts get
               their level in the Business hub instead, so don't duplicate it here. */}

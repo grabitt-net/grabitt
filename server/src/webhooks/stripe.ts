@@ -40,7 +40,7 @@ async function applySubscription(sub: Stripe.Subscription) {
     update: { status, currentPeriodEnd, trialEnd, cancelAtPeriodEnd: sub.cancel_at_period_end ?? false },
   })
 
-  if (plan === 'business') {
+  if (plan === 'business' || plan === 'business_founding_annual') {
     if (active) {
       const u = await prisma.user.findUnique({ where: { id: userId }, select: { grade: true } })
       await prisma.user.update({

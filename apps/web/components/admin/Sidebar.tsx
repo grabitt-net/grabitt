@@ -24,6 +24,7 @@ const sections = [
       { icon: '📇', label: 'Contacts', id: 'contacts' as View },
       { icon: '🤞', label: 'Prospects', id: 'pipeline' as View, countKey: 'pipeline' },
       { icon: '🎓', label: 'Applications', id: 'statusapps' as View },
+      { icon: '🔗', label: 'Affiliates', id: 'affiliates' as View },
     ],
   },
   {

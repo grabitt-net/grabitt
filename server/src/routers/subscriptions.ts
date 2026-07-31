@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { getStripe } from '../lib/stripe'
-import { SUBSCRIPTION_PLANS, BUSINESS_ADDONS, BUSINESS_ADDON_IDS, isBusinessAddon, businessMonthlyTotalCents } from '@grabitt/design-tokens'
+import { SUBSCRIPTION_PLANS, BUSINESS_ADDONS, BUSINESS_ADDON_IDS, isBusinessAddon, businessMonthlyTotalCents, FOUNDING_BUSINESS_CAP } from '@grabitt/design-tokens'
 import { reconcileSubscriptionAddons } from '../lib/businessAddons'
 import type { PrismaClient } from '@prisma/client'
 
@@ -50,6 +50,15 @@ export const subscriptionsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const plan = SUBSCRIPTION_PLANS[input.plan as keyof typeof SUBSCRIPTION_PLANS]
+
+      // The Founding Business annual plan is limited to the first N businesses.
+      if (input.plan === 'business_founding_annual') {
+        const taken = await ctx.prisma.subscription.count({ where: { plan: 'business_founding_annual' } })
+        if (taken >= FOUNDING_BUSINESS_CAP) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'The Founding Business plan is fully subscribed. Please choose the standard monthly plan.' })
+        }
+      }
+
       const customer = await getOrCreateCustomer(ctx.prisma, ctx.user.id)
 
       // Record the chosen add-ons up front. The webhook reconciles the Stripe
@@ -79,12 +88,18 @@ export const subscriptionsRouter = router({
         },
         // Land business signups on the account page so we can prompt for their
         // business details on first login.
-        success_url: `${appUrl()}/${input.plan === 'business' ? 'account?welcome=business' : '?sub=success'}`,
+        success_url: `${appUrl()}/${input.plan.startsWith('business') ? 'account?welcome=business' : '?sub=success'}`,
         cancel_url: `${appUrl()}/?sub=cancelled`,
       })
       if (!session.url) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Could not start checkout' })
       return { url: session.url }
     }),
+
+  // How many of the founding-business annual slots remain (public — drives the UI).
+  foundingBusinessStatus: publicProcedure.query(async ({ ctx }) => {
+    const taken = await ctx.prisma.subscription.count({ where: { plan: 'business_founding_annual' } })
+    return { taken, cap: FOUNDING_BUSINESS_CAP, remaining: Math.max(0, FOUNDING_BUSINESS_CAP - taken) }
+  }),
 
   // Current business plan + add-on selection and the resulting monthly total.
   myBusiness: protectedProcedure.query(async ({ ctx }) => {

@@ -1,6 +1,6 @@
 import { TRPCError } from '@trpc/server'
 import type { PrismaClient } from '@prisma/client'
-import { BUSINESS_TIERS, businessTierForGrade } from '@grabitt/design-tokens'
+import { BUSINESS_TIERS, businessTierForGrade, MEMBER_STATUSES } from '@grabitt/design-tokens'
 
 // Monthly listing allowances for Business accounts. Each tier includes a set
 // number of item / job / property listings per calendar month; once the tier
@@ -26,11 +26,14 @@ export async function enforceBusinessListingAllowance(
 ) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { isBusiness: true, grade: true, credits: true },
+    select: { isBusiness: true, grade: true, credits: true, memberStatus: true },
   })
   if (!user?.isBusiness) return
 
-  const cap = businessTierForGrade(user.grade).caps[kind]
+  // Charities get a dedicated, larger item-listing allowance (100).
+  const cap = (kind === 'items' && user.memberStatus === 'charity')
+    ? MEMBER_STATUSES.charity.listingCap
+    : businessTierForGrade(user.grade).caps[kind]
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
 
   const used = kind === 'items'

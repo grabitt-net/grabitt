@@ -4714,6 +4714,12 @@ function PanelBody() {
   if (panel.id === 'business') {
     const [pickedAddons, setPickedAddons] = useState<string[]>([])
     const [bizBusy, setBizBusy] = useState(false)
+    // Founding Business annual is capped — how many slots remain.
+    const [foundingBizLeft, setFoundingBizLeft] = useState<number | null>(null)
+    useEffect(() => {
+      getTrpcClient().then(c => c.subscriptions.foundingBusinessStatus.query())
+        .then((s: any) => setFoundingBizLeft(s?.remaining ?? 0)).catch(() => setFoundingBizLeft(0))
+    }, [])
 
     // Guard AFTER the hooks — an early return before them would change the hook
     // count when auth loads (currentUserId null → value) and crash React.
@@ -4733,6 +4739,20 @@ function PanelBody() {
         if (!token) { toast('Please log in first'); openPanel('login'); return }
         const client = await getTrpcClient()
         const res = await client.subscriptions.createCheckout.mutate({ plan: 'business', addons: pickedAddons as never })
+        if (res.url) window.location.href = res.url
+        else { toast('Could not start checkout'); setBizBusy(false) }
+      } catch { toast('Could not start checkout — are you logged in?'); setBizBusy(false) }
+    }
+
+    // Founding cohort: a €249/year annual lock-in instead of the monthly plan.
+    const startFoundingAnnual = async () => {
+      setBizBusy(true)
+      try {
+        let token = getAuthToken()
+        if (!token) token = await refreshAuthToken()
+        if (!token) { toast('Please log in first'); openPanel('login'); return }
+        const client = await getTrpcClient()
+        const res = await client.subscriptions.createCheckout.mutate({ plan: 'business_founding_annual' as never })
         if (res.url) window.location.href = res.url
         else { toast('Could not start checkout'); setBizBusy(false) }
       } catch { toast('Could not start checkout — are you logged in?'); setBizBusy(false) }
@@ -4776,6 +4796,16 @@ function PanelBody() {
         </div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>You&apos;ll add a card on Stripe — nothing is charged until the 7-day trial ends. We&apos;ll ask for your business details when you first sign in.</div>
         <button onClick={startCheckout} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? 'Opening Stripe…' : '🚀 Start 7-day free trial'}</button>
+
+        {/* Founding cohort annual lock-in — only while slots remain (first 100) */}
+        {(foundingBizLeft === null || foundingBizLeft > 0) && (<>
+          <button onClick={startFoundingAnnual} disabled={bizBusy} style={{ width: '100%', marginTop: 10, background: '#fff', border: '1.5px solid #FFD4A0', color: '#8a5a2a', borderRadius: 14, padding: '13px 16px', fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            ⭐ Founding Business — €249/year <span style={{ fontSize: 11, fontWeight: 700, opacity: 0.8 }}>(annual lock-in)</span>
+          </button>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', textAlign: 'center', marginTop: 6 }}>
+            Prepay a year up front and lock the founding rate. Everything in Business.{typeof foundingBizLeft === 'number' && foundingBizLeft > 0 ? ` Only ${foundingBizLeft} of 100 left.` : ''}
+          </div>
+        </>)}
       </ActionPanel>
     )
   }

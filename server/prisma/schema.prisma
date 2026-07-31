@@ -32,6 +32,7 @@ enum SubPlan {
   directory     // €99/yr — business directory listing
   agent_15      // €49/mo — property agent, 15 active listings
   agent_40      // €99/mo — property agent, 40 active listings
+  business_founding_annual // €249/yr — founding-cohort annual business plan
 }
 
 enum SubStatus {
@@ -104,6 +105,32 @@ model StatusApplication {
 
   @@index([status])
   @@index([userId])
+}
+
+// One earning event: an affiliate credited for a validated signup they referred.
+model AffiliateReferral {
+  id             String   @id @default(uuid())
+  affiliateId    String
+  affiliate      User     @relation("AffiliateEarner", fields: [affiliateId], references: [id])
+  referredUserId String   @unique
+  amountCents    Int                             // owed to the affiliate for this signup
+  tier           String                          // 'founding' | 'standard' at time of earning
+  status         String   @default("earned")     // earned | paid
+  paidAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([affiliateId])
+  @@index([status])
+}
+
+// Singleton affiliate-programme configuration (per-signup payout rates + the
+// founding-member signup cap). Admin-editable.
+model AffiliateConfig {
+  id                String   @id @default("default")
+  foundingRateCents Int      @default(500)
+  standardRateCents Int      @default(200)
+  foundingCap       Int      @default(250)
+  updatedAt         DateTime @updatedAt
 }
 
 // Singleton financial planner model (assumptions, revenue streams, cost lines).
@@ -301,6 +328,10 @@ model User {
   memberStatus       String?
   statusDiscountPct  Decimal?  @db.Decimal(5, 2)
   foundingMember     Boolean   @default(false)
+  // Affiliate programme — an affiliate earns cash per validated signup made via
+  // their referral link. `affiliateTier` sets which rate applies.
+  isAffiliate        Boolean   @default(false)
+  affiliateTier      String?   // 'founding' | 'standard'
   isBusiness         Boolean   @default(false)
   businessVerified   Boolean   @default(false)
   businessTrialEnds  DateTime?
@@ -404,6 +435,7 @@ model User {
   notifications      Notification[]
   creditEvents       CreditEvent[]
   statusApplications StatusApplication[]
+  affiliateReferrals AffiliateReferral[] @relation("AffiliateEarner")
   wishlistItems      WishlistItem[]
   wishItems          WishItem[]
   savedSearches      SavedSearch[]
