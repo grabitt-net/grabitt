@@ -10,8 +10,13 @@ export function effectiveFeeRate(seller: {
   feeReductionPct?: unknown
   feeReductionUntil?: Date | null
   statusDiscountPct?: unknown
+  feeOverridePct?: unknown
 }): number {
-  const base = FEE_RATES[seller.grade as keyof typeof FEE_RATES] ?? FEE_RATES.grabber
+  // An admin per-account override replaces the grade rate as the base.
+  const override = seller.feeOverridePct != null ? Number(seller.feeOverridePct) : null
+  const base = override != null && override >= 0
+    ? override / 100
+    : (FEE_RATES[seller.grade as keyof typeof FEE_RATES] ?? FEE_RATES.grabber)
   let discountPts = Number(seller.statusDiscountPct ?? 0) // ongoing, in percentage points
   const until = seller.feeReductionUntil ? new Date(seller.feeReductionUntil) : null
   if (until && until.getTime() > Date.now()) {

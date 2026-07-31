@@ -339,6 +339,9 @@ model User {
   // whether they hold the Founding Member badge.
   memberStatus       String?
   statusDiscountPct  Decimal?  @db.Decimal(5, 2)
+  // Admin per-account fee override (absolute item-sale fee %, e.g. 3.00). When
+  // set it replaces the grade fee as the base; discounts still apply on top.
+  feeOverridePct     Decimal?  @db.Decimal(5, 2)
   foundingMember     Boolean   @default(false)
   // Affiliate programme — an affiliate earns cash per validated signup made via
   // their referral link. `affiliateTier` sets which rate applies.

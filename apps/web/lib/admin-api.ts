@@ -148,6 +148,8 @@ export function makeCrmApi(execToken: string) {
     affiliates: () => rpc<any[]>('affiliates.list', 'query', undefined, execToken),
     setAffiliate: (userId: string, isAffiliate: boolean, tier?: 'founding' | 'standard') =>
       rpc<any>('affiliates.setAffiliate', 'mutation', { userId, isAffiliate, tier }, execToken),
+    setAccountLevel: (data: { userId: string; grade?: string; isBusiness?: boolean; feeOverridePct?: number | null }) =>
+      rpc<any>('business.setAccountLevel', 'mutation', data, execToken),
     grantFounding: (userId: string) => rpc<any>('affiliates.grantFounding', 'mutation', { userId }, execToken),
     revokeFounding: (userId: string) => rpc<any>('affiliates.revokeFounding', 'mutation', { userId }, execToken),
     payOutAffiliate: (affiliateId: string, viaStripe: boolean) =>

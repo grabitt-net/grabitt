@@ -2,6 +2,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
 import MemberActivity from './MemberActivity'
+import { BUSINESS_TIERS } from '@grabitt/design-tokens'
+
+// Business level ↔ grade mapping (Business = Dealer, Plus = Trader, Pro = Pro).
+const LEVEL_OPTS: [string, string][] = [
+  ['grabber', 'Personal (Grabber)'],
+  ['dealer', `${BUSINESS_TIERS.dealer.label} — ${(BUSINESS_TIERS.dealer.feeRate * 100)}%`],
+  ['trader', `${BUSINESS_TIERS.trader.label} — ${(BUSINESS_TIERS.trader.feeRate * 100)}%`],
+  ['pro', `${BUSINESS_TIERS.pro.label} — ${(BUSINESS_TIERS.pro.feeRate * 100)}%`],
+]
 
 // Exec suite — full member administration: profile details, account level,
 // verification, credits, suspension, plus email change & password reset
@@ -243,6 +252,8 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
   const [newEmail, setNewEmail] = useState('')
   const [suspendUntil, setSuspendUntil] = useState('')
   const [suspendReason, setSuspendReason] = useState(member.suspendedReason ?? '')
+  const [level, setLevel] = useState(member.grade)
+  const [feeOverride, setFeeOverride] = useState((member as any).feeOverridePct != null ? String((member as any).feeOverridePct) : '')
 
   const set = (k: string, v: any) => setF(p => ({ ...p, [k]: v }))
   const flash = (m: string) => { setMsg(m); setErr(''); setTimeout(() => setMsg(''), 4000) }
@@ -356,6 +367,25 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
               <Check label="Business account" checked={f.isBusiness} onChange={v => set('isBusiness', v)} />
               <Check label="Business verified (shield)" checked={f.businessVerified} onChange={v => set('businessVerified', v)} />
             </div>
+          </Card>
+
+          <Card title="Business level & fees">
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 8 }}>Set the account's business level, and optionally override the item-sale fee for this account only.</div>
+            <L>Business level</L>
+            <select value={level} onChange={e => setLevel(e.target.value)} style={inp}>
+              {LEVEL_OPTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+            <L>Fee override (%) — leave blank to use the level's standard fee</L>
+            <input value={feeOverride} onChange={e => setFeeOverride(e.target.value)} inputMode="decimal" placeholder="e.g. 3" style={inp} />
+            <button
+              onClick={async () => {
+                setBusy('level')
+                try {
+                  await api.setAccountLevel({ userId: member.id, grade: level, isBusiness: level !== 'grabber', feeOverridePct: feeOverride.trim() === '' ? null : Number(feeOverride) })
+                  flash('✓ Level & fee saved'); onSaved()
+                } catch (e) { fail(e) } finally { setBusy('') }
+              }}
+              disabled={!!busy} style={{ ...secondary, width: '100%', marginTop: 6 }}>{busy === 'level' ? '…' : 'Save level & fee'}</button>
           </Card>
 
           <Card title="Founding & affiliate">

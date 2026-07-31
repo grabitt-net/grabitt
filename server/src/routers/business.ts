@@ -372,6 +372,26 @@ export const businessRouter = router({
       }
     }),
 
+  // Admin: set a member's business level (grade) and/or an absolute per-account
+  // fee override. Pass feeOverridePct: null to clear the override.
+  setAccountLevel: execProcedure
+    .input(z.object({
+      userId: z.string(),
+      grade: z.enum(['grabber', 'dealer', 'trader', 'pro']).optional(),
+      isBusiness: z.boolean().optional(),
+      feeOverridePct: z.number().min(0).max(100).nullable().optional(),
+    }))
+    .mutation(({ ctx, input }) =>
+      ctx.prisma.user.update({
+        where: { id: input.userId },
+        data: {
+          ...(input.grade ? { grade: input.grade } : {}),
+          ...(input.isBusiness != null ? { isBusiness: input.isBusiness } : {}),
+          ...(input.feeOverridePct !== undefined ? { feeOverridePct: input.feeOverridePct } : {}),
+        },
+      })
+    ),
+
   // The shop's rating, and what moved it.
   sellerRating: publicProcedure
     .input(z.object({ sellerId: z.string().uuid() }))

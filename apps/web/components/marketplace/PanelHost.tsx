@@ -4712,7 +4712,10 @@ function PanelBody() {
   }
 
   if (panel.id === 'business') {
-    const [pickedAddons, setPickedAddons] = useState<string[]>([])
+    // Pre-select any add-ons the visitor ticked on the For Business page.
+    const [pickedAddons, setPickedAddons] = useState<string[]>(() => {
+      try { const s = sessionStorage.getItem('grabitt_biz_addons'); sessionStorage.removeItem('grabitt_biz_addons'); const a = s ? JSON.parse(s) : []; return Array.isArray(a) ? a.filter((x: any) => typeof x === 'string') : [] } catch { return [] }
+    })
     const [bizBusy, setBizBusy] = useState(false)
     // Founding Business annual is capped — how many slots remain.
     const [foundingBizLeft, setFoundingBizLeft] = useState<number | null>(null)
