@@ -141,7 +141,8 @@ export function makeCrmApi(execToken: string) {
 
     // Affiliate programme
     affiliateConfig: () => rpc<any>('affiliates.config', 'query', undefined, execToken),
-    saveAffiliateConfig: (data: { foundingRateCents: number; standardRateCents: number; foundingCap: number }) =>
+    affiliateCurrentOffer: () => rpc<any>('affiliates.currentOffer', 'query', undefined, execToken),
+    saveAffiliateConfig: (data: Record<string, unknown>) =>
       rpc<any>('affiliates.saveConfig', 'mutation', data, execToken),
     affiliateFoundingStatus: () => rpc<{ count: number; cap: number; remaining: number }>('affiliates.foundingStatus', 'query', undefined, execToken),
     affiliates: () => rpc<any[]>('affiliates.list', 'query', undefined, execToken),

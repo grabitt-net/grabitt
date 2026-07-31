@@ -6,7 +6,7 @@ import { t } from '@/lib/i18n'
 // Affiliate dashboard: the member's unique referral link, their signups and
 // earnings, and payout setup (Stripe Connect). Founding members are affiliates
 // automatically. Only renders for affiliates.
-type Mine = { isAffiliate: boolean; tier: string | null; code: string | null; hasPayoutAccount: boolean; foundingMember: boolean; signups: number; owedCents: number; paidCents: number }
+type Mine = { isAffiliate: boolean; tier: string | null; code: string | null; hasPayoutAccount: boolean; foundingMember: boolean; signups: number; owedCents: number; paidCents: number; pointsEarned: number }
 const eur = (c: number) => `€${(c / 100).toFixed(2)}`
 
 export default function AffiliateCard() {
@@ -49,6 +49,7 @@ export default function AffiliateCard() {
       {/* Stats */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <Stat label={t('Signups')} value={String(mine.signups)} />
+        {mine.pointsEarned > 0 && <Stat label={t('Points')} value={String(mine.pointsEarned)} color="var(--orange)" />}
         <Stat label={t('Owed')} value={eur(mine.owedCents)} color="#16a34a" />
         <Stat label={t('Paid out')} value={eur(mine.paidCents)} />
       </div>

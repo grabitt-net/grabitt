@@ -3,20 +3,24 @@ import { TRPCError } from '@trpc/server'
 import { router, protectedProcedure, execProcedure } from '../trpc'
 import { getStripe } from '../lib/stripe'
 import { FOUNDING } from '@grabitt/design-tokens'
+import { resolveAffiliateReward } from '../lib/affiliateReward'
 import type { PrismaClient } from '@prisma/client'
 
 const getConfig = (prisma: PrismaClient) =>
   prisma.affiliateConfig.upsert({ where: { id: 'default' }, create: { id: 'default' }, update: {} })
 
 async function earnings(prisma: PrismaClient, affiliateId: string) {
-  const [earned, paid] = await Promise.all([
-    prisma.affiliateReferral.aggregate({ where: { affiliateId, status: 'earned' }, _sum: { amountCents: true }, _count: true }),
-    prisma.affiliateReferral.aggregate({ where: { affiliateId, status: 'paid' }, _sum: { amountCents: true }, _count: true }),
+  const [earned, paid, points, total] = await Promise.all([
+    prisma.affiliateReferral.aggregate({ where: { affiliateId, rewardKind: 'cash', status: 'earned' }, _sum: { amountCents: true } }),
+    prisma.affiliateReferral.aggregate({ where: { affiliateId, rewardKind: 'cash', status: 'paid' }, _sum: { amountCents: true } }),
+    prisma.affiliateReferral.aggregate({ where: { affiliateId, rewardKind: 'points' }, _sum: { points: true } }),
+    prisma.affiliateReferral.count({ where: { affiliateId } }),
   ])
   return {
-    signups: (earned._count ?? 0) + (paid._count ?? 0),
+    signups: total,
     owedCents: earned._sum.amountCents ?? 0,
     paidCents: paid._sum.amountCents ?? 0,
+    pointsEarned: points._sum.points ?? 0,
   }
 }
 
@@ -41,10 +45,34 @@ export const affiliatesRouter = router({
   // ── Admin ───────────────────────────────────────────────────────────────────
   config: execProcedure.query(({ ctx }) => getConfig(ctx.prisma)),
   saveConfig: execProcedure
-    .input(z.object({ foundingRateCents: z.number().int().min(0), standardRateCents: z.number().int().min(0), foundingCap: z.number().int().min(0) }))
+    .input(z.object({
+      foundingKind: z.enum(['cash', 'points']),
+      foundingAmount: z.number().int().min(0),
+      standardKind: z.enum(['cash', 'points']),
+      standardAmount: z.number().int().min(0),
+      foundingCap: z.number().int().min(0),
+      campaigns: z.array(z.object({
+        name: z.string().max(60).optional(),
+        from: z.string().optional(),
+        to: z.string().optional(),
+        tier: z.enum(['all', 'founding', 'standard']).default('all'),
+        kind: z.enum(['cash', 'points']),
+        amount: z.number().int().min(0),
+      })).default([]),
+    }))
     .mutation(({ ctx, input }) =>
       ctx.prisma.affiliateConfig.upsert({ where: { id: 'default' }, create: { id: 'default', ...input }, update: input })
     ),
+
+  // The reward currently in force per tier (base or an active campaign) — lets
+  // the admin see what's being offered right now.
+  currentOffer: execProcedure.query(async ({ ctx }) => {
+    const cfg = await getConfig(ctx.prisma)
+    return {
+      founding: resolveAffiliateReward(cfg, 'founding'),
+      standard: resolveAffiliateReward(cfg, 'standard'),
+    }
+  }),
 
   // Founding-signup counter (so admins can see how many of the cap remain).
   foundingStatus: execProcedure.query(async ({ ctx }) => {

@@ -108,14 +108,18 @@ model StatusApplication {
 }
 
 // One earning event: an affiliate credited for a validated signup they referred.
+// The reward can be cash (amountCents, paid out) or points (credited to the
+// affiliate's balance immediately), decided by the config in force at the time.
 model AffiliateReferral {
   id             String   @id @default(uuid())
   affiliateId    String
   affiliate      User     @relation("AffiliateEarner", fields: [affiliateId], references: [id])
   referredUserId String   @unique
-  amountCents    Int                             // owed to the affiliate for this signup
+  rewardKind     String   @default("cash")       // 'cash' | 'points'
+  amountCents    Int      @default(0)            // cash owed (rewardKind = cash)
+  points         Int      @default(0)            // points granted (rewardKind = points)
   tier           String                          // 'founding' | 'standard' at time of earning
-  status         String   @default("earned")     // earned | paid
+  status         String   @default("earned")     // earned | paid (points are paid on grant)
   paidAt         DateTime?
   createdAt      DateTime @default(now())
 
@@ -123,13 +127,21 @@ model AffiliateReferral {
   @@index([status])
 }
 
-// Singleton affiliate-programme configuration (per-signup payout rates + the
-// founding-member signup cap). Admin-editable.
+// Singleton affiliate-programme configuration. Each tier has a reward KIND
+// (cash or points) and AMOUNT (cents when cash, points when points); admins can
+// switch what's offered at any time. `campaigns` holds date-scoped overrides
+// (e.g. "€1 cash per signup for these dates") that take precedence while active.
 model AffiliateConfig {
   id                String   @id @default("default")
+  foundingKind      String   @default("cash")
+  foundingAmount    Int      @default(500)       // €5.00 in cents, or points
+  standardKind      String   @default("cash")
+  standardAmount    Int      @default(200)       // €2.00 in cents, or points
+  campaigns         Json     @default("[]")      // [{ name, from, to, tier, kind, amount }]
+  foundingCap       Int      @default(250)
+  // Legacy columns (kept for back-compat; no longer used).
   foundingRateCents Int      @default(500)
   standardRateCents Int      @default(200)
-  foundingCap       Int      @default(250)
   updatedAt         DateTime @updatedAt
 }
 

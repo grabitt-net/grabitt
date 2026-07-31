@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server'
 import { router, publicProcedure } from '../trpc'
 import { prisma } from '../db'
 import { PRICES, FOUNDING } from '@grabitt/design-tokens'
+import { resolveAffiliateReward } from '../lib/affiliateReward'
 
 // SECURITY (§ auth): Identity is owned by Supabase Auth.
 // - Consumers sign in via Supabase (email/password or OAuth) on the client.
@@ -89,16 +90,29 @@ export const authRouter = router({
         },
       })
 
-      // If the referrer is an affiliate, credit them the per-signup rate for their
-      // tier (founding affiliates earn the higher rate). The affiliate link is
-      // simply their referral link — one ledger row per referred signup.
+      // If the referrer is an affiliate, reward them for this signup. The reward
+      // is whatever the admin currently offers for their tier (a cash amount, or
+      // points) — resolved from the config, including any active campaign. Cash
+      // goes to the payout ledger; points are credited to their balance now.
       if (referrer?.isAffiliate) {
         const cfg = await prisma.affiliateConfig.upsert({ where: { id: 'default' }, create: { id: 'default' }, update: {} })
         const tier = referrer.affiliateTier === 'founding' ? 'founding' : 'standard'
-        const amountCents = tier === 'founding' ? cfg.foundingRateCents : cfg.standardRateCents
-        await prisma.affiliateReferral.create({
-          data: { affiliateId: referrer.id, referredUserId: user.id, amountCents, tier },
-        }).catch(() => { /* unique guard: one credit per referred user */ })
+        const reward = resolveAffiliateReward(cfg, tier)
+        if (reward.amount > 0) {
+          if (reward.kind === 'points') {
+            const ref = await prisma.user.findUniqueOrThrow({ where: { id: referrer.id }, select: { credits: true } })
+            const newBalance = ref.credits + reward.amount
+            await prisma.$transaction([
+              prisma.user.update({ where: { id: referrer.id }, data: { credits: newBalance } }),
+              prisma.creditEvent.create({ data: { userId: referrer.id, kind: 'reward_earned', delta: reward.amount, balance: newBalance, note: 'Affiliate signup reward' } }),
+              prisma.affiliateReferral.create({ data: { affiliateId: referrer.id, referredUserId: user.id, rewardKind: 'points', points: reward.amount, tier, status: 'paid', paidAt: new Date() } }),
+            ]).catch(() => { /* unique guard: one reward per referred user */ })
+          } else {
+            await prisma.affiliateReferral.create({
+              data: { affiliateId: referrer.id, referredUserId: user.id, rewardKind: 'cash', amountCents: reward.amount, tier, status: 'earned' },
+            }).catch(() => { /* unique guard */ })
+          }
+        }
       }
 
       return { user, created: true }
