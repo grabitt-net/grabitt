@@ -12,7 +12,6 @@ import { createClient } from '@/lib/supabase'
 import { getAuthToken, refreshAuthToken, setAuthToken } from '@/lib/authToken'
 import { compressAndUpload, listingPhotoPath, uploadDisputeEvidence } from '@/lib/storage'
 import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
-import { BUSINESS_ADDONS, BUSINESS_ADDON_IDS, businessMonthlyTotalCents } from '@grabitt/design-tokens'
 import StripePayment from './StripePayment'
 import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
@@ -4715,50 +4714,43 @@ function PanelBody() {
   }
 
   if (panel.id === 'business') {
-    // Pre-select any add-ons the visitor ticked on the For Business page.
-    const [pickedAddons, setPickedAddons] = useState<string[]>(() => {
-      try { const s = sessionStorage.getItem('grabitt_biz_addons'); sessionStorage.removeItem('grabitt_biz_addons'); const a = s ? JSON.parse(s) : []; return Array.isArray(a) ? a.filter((x: any) => typeof x === 'string') : [] } catch { return [] }
+    // Pre-fill the sponsorship basket the visitor built on the For Business page:
+    // { addonId: months }.
+    const [basket, setBasket] = useState<Record<string, number>>(() => {
+      try { const s = sessionStorage.getItem('grabitt_biz_sponsorship'); const a = s ? JSON.parse(s) : {}; return a && typeof a === 'object' ? a : {} } catch { return {} }
     })
+    const [catalog, setCatalog] = useState<any[]>([])
+    const [durations, setDurations] = useState<number[]>([1, 3, 6, 12])
     const [bizBusy, setBizBusy] = useState(false)
-    // Founding Business annual is capped — how many slots remain.
     const [foundingBizLeft, setFoundingBizLeft] = useState<number | null>(null)
     useEffect(() => {
       getTrpcClient().then(c => c.subscriptions.foundingBusinessStatus.query())
         .then((s: any) => setFoundingBizLeft(s?.remaining ?? 0)).catch(() => setFoundingBizLeft(0))
+      getTrpcClient().then(c => c.sponsorship.catalog.query())
+        .then((d: any) => { setCatalog(d.items ?? []); if (Array.isArray(d.durations)) setDurations(d.durations) }).catch(() => {})
     }, [])
 
     // Guard AFTER the hooks — an early return before them would change the hook
     // count when auth loads (currentUserId null → value) and crash React.
     if (!currentUserId) return <SignInFirst onClose={closePanel} onSignIn={() => openPanel('login')} what="upgrade to Business" />
 
-    const toggleAddon = (id: string) => setPickedAddons(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
-    const monthlyTotal = businessMonthlyTotalCents(pickedAddons) / 100
     const eur = (cents: number) => `€${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`
+    const sponsorTotalCents = (monthly: number, months: number) => monthly * (months >= 12 ? 10 : months)
+    const toggleSponsor = (id: string) => setBasket(p => { const n = { ...p }; if (n[id] != null) delete n[id]; else n[id] = durations[0] ?? 1; return n })
+    const setSponsorMonths = (id: string, m: number) => setBasket(p => ({ ...p, [id]: m }))
+    const sponsorItems = Object.entries(basket).map(([addonId, months]) => ({ addonId, months }))
+    const sponsorTotal = Object.entries(basket).reduce((s, [id, m]) => { const c = catalog.find(x => x.id === id); return s + (c ? sponsorTotalCents(c.monthlyCents, m) : 0) }, 0)
 
-    // Start the base business subscription with the chosen add-ons. Business
-    // details are captured on first login, not here.
-    const startCheckout = async () => {
+    // Combined basket: business subscription + one-off sponsorship placements.
+    const startCheckout = async (plan: 'business' | 'business_founding_annual') => {
       setBizBusy(true)
       try {
         let token = getAuthToken()
         if (!token) token = await refreshAuthToken()
         if (!token) { toast('Please log in first'); openPanel('login'); return }
         const client = await getTrpcClient()
-        const res = await client.subscriptions.createCheckout.mutate({ plan: 'business', addons: pickedAddons as never })
-        if (res.url) window.location.href = res.url
-        else { toast('Could not start checkout'); setBizBusy(false) }
-      } catch { toast('Could not start checkout — are you logged in?'); setBizBusy(false) }
-    }
-
-    // Founding cohort: a €249/year annual lock-in instead of the monthly plan.
-    const startFoundingAnnual = async () => {
-      setBizBusy(true)
-      try {
-        let token = getAuthToken()
-        if (!token) token = await refreshAuthToken()
-        if (!token) { toast('Please log in first'); openPanel('login'); return }
-        const client = await getTrpcClient()
-        const res = await client.subscriptions.createCheckout.mutate({ plan: 'business_founding_annual' as never })
+        const res = await client.subscriptions.createCheckout.mutate({ plan: plan as never, ...(sponsorItems.length ? { sponsorship: sponsorItems as never } : {}) })
+        try { sessionStorage.removeItem('grabitt_biz_sponsorship') } catch {}
         if (res.url) window.location.href = res.url
         else { toast('Could not start checkout'); setBizBusy(false) }
       } catch { toast('Could not start checkout — are you logged in?'); setBizBusy(false) }
@@ -4774,38 +4766,40 @@ function PanelBody() {
           <div key={i} style={{ display: 'flex', gap: 10, padding: '7px 0', borderBottom: '1px solid #f5f5f5', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555' }}><span>✅</span><span>{f}</span></div>
         ))}
 
-        {/* Optional extras billed on top — opt in/out, total updates live */}
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, margin: '18px 0 4px' }}>Add extras (optional)</div>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#999', marginBottom: 10 }}>Toggle any of these on — the monthly total updates as you go. You can also add or remove them later from your Business hub.</div>
-        {BUSINESS_ADDON_IDS.map(id => {
-          const a = BUSINESS_ADDONS[id]
-          const on = pickedAddons.includes(id)
-          const soon = 'comingSoon' in a && a.comingSoon
+        {/* Sponsorship & advertising — one-off, timed placements added to the basket */}
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, margin: '18px 0 4px' }}>Add sponsorship (optional)</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#999', marginBottom: 10 }}>One-off placements for the months you choose (12 = 2 months free) — billed on your first invoice.</div>
+        {catalog.map(a => {
+          const on = basket[a.id] != null
+          const months = basket[a.id] ?? durations[0] ?? 1
           return (
-            <button key={id} onClick={() => toggleAddon(id)} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 11, background: on ? '#FFF7F0' : '#fff', border: `1.5px solid ${on ? 'var(--orange)' : '#f0ebe4'}`, borderRadius: 12, padding: '11px 13px', marginBottom: 8, cursor: 'pointer' }}>
-              <span style={{ width: 20, height: 20, flexShrink: 0, borderRadius: 6, border: `2px solid ${on ? 'var(--orange)' : '#d8cbb5'}`, background: on ? 'var(--orange)' : '#fff', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900 }}>{on ? '✓' : ''}</span>
+            <div key={a.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, background: on ? '#FFF7F0' : '#fff', border: `1.5px solid ${on ? 'var(--orange)' : '#f0ebe4'}`, borderRadius: 12, padding: '11px 13px', marginBottom: 8 }}>
+              <button onClick={() => toggleSponsor(a.id)} disabled={a.comingSoon} style={{ width: 20, height: 20, flexShrink: 0, marginTop: 2, borderRadius: 6, border: `2px solid ${on ? 'var(--orange)' : '#d8cbb5'}`, background: on ? 'var(--orange)' : '#fff', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, cursor: a.comingSoon ? 'default' : 'pointer' }}>{on ? '✓' : ''}</button>
               <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>
-                  {a.icon} {a.label}{soon ? <span style={{ marginLeft: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 9, fontWeight: 900, padding: '2px 6px', borderRadius: 50, textTransform: 'uppercase', letterSpacing: 0.3 }}>Coming soon</span> : null}
-                </span>
+                <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{a.icon} {a.label}{a.comingSoon ? <span style={{ marginLeft: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 9, fontWeight: 900, padding: '2px 6px', borderRadius: 50, textTransform: 'uppercase' }}>Coming soon</span> : null}</span>
                 <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 2, lineHeight: 1.4 }}>{a.blurb}</span>
+                {on && (
+                  <select value={months} onChange={e => setSponsorMonths(a.id, Number(e.target.value))} style={{ marginTop: 6, border: '1.5px solid #e5dccd', borderRadius: 8, padding: '4px 8px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 700, background: '#fff' }}>
+                    {durations.map(d => <option key={d} value={d}>{d} {d === 1 ? 'month' : 'months'}</option>)}
+                  </select>
+                )}
               </span>
-              <span style={{ flexShrink: 0, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--orange)' }}>{eur(a.amountCents)}/mo</span>
-            </button>
+              <span style={{ flexShrink: 0, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--orange)' }}>{on ? eur(sponsorTotalCents(a.monthlyCents, months)) : `${eur(a.monthlyCents)}/mo`}</span>
+            </div>
           )
         })}
 
-        {/* Live monthly total */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9f6f2', borderRadius: 12, padding: '12px 14px', margin: '10px 0 12px' }}>
-          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555' }}>Monthly total after trial</span>
-          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)' }}>€{monthlyTotal % 1 ? monthlyTotal.toFixed(2) : monthlyTotal}/mo</span>
+        {/* Totals */}
+        <div style={{ background: '#f9f6f2', borderRadius: 12, padding: '12px 14px', margin: '10px 0 12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555' }}><span>Business account</span><span>€29/mo <span style={{ color: '#16a34a' }}>(7 days free)</span></span></div>
+          {sponsorTotal > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555', marginTop: 6 }}><span>Sponsorship (one-off)</span><span>{eur(sponsorTotal)}</span></div>}
         </div>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>You&apos;ll add a card on Stripe — nothing is charged until the 7-day trial ends. We&apos;ll ask for your business details when you first sign in.</div>
-        <button onClick={startCheckout} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? 'Opening Stripe…' : '🚀 Start 7-day free trial'}</button>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>You&apos;ll add a card on Stripe — the account is free for 7 days. We&apos;ll ask for your business details when you first sign in.</div>
+        <button onClick={() => startCheckout('business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? 'Opening Stripe…' : sponsorTotal > 0 ? '🚀 Start trial & add sponsorship' : '🚀 Start 7-day free trial'}</button>
 
         {/* Founding cohort annual lock-in — only while slots remain (first 100) */}
         {(foundingBizLeft === null || foundingBizLeft > 0) && (<>
-          <button onClick={startFoundingAnnual} disabled={bizBusy} style={{ width: '100%', marginTop: 10, background: '#fff', border: '1.5px solid #FFD4A0', color: '#8a5a2a', borderRadius: 14, padding: '13px 16px', fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <button onClick={() => startCheckout('business_founding_annual')} disabled={bizBusy} style={{ width: '100%', marginTop: 10, background: '#fff', border: '1.5px solid #FFD4A0', color: '#8a5a2a', borderRadius: 14, padding: '13px 16px', fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             ⭐ Founding Business — €249/year <span style={{ fontSize: 11, fontWeight: 700, opacity: 0.8 }}>(annual lock-in)</span>
           </button>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', textAlign: 'center', marginTop: 6 }}>

@@ -64,14 +64,19 @@ function EmployersInner() {
   const basketTotal = Object.entries(basket).reduce((s, [id, m]) => { const c = catalog.find(x => x.id === id); return s + (c ? sponsorTotalCents(c.monthlyCents, m) : 0) }, 0)
   const basketItems = Object.entries(basket).map(([addonId, months]) => ({ addonId, months }))
 
+  // Carry the sponsorship basket into the signup panel so it's paid in one go.
+  const stashBasket = () => { try { sessionStorage.setItem('grabitt_biz_sponsorship', JSON.stringify(basket)) } catch {} }
+
   const startSignup = () => {
+    stashBasket()
     if (gate === 'signed_out') openPanel('login'); else openPanel('business')
   }
 
-  // Pay once for the sponsorship basket (one-off timed placements).
+  // Existing business → buy the sponsorship basket one-off. Everyone else →
+  // combine it with opening the account (paid together at signup).
   const buySponsorship = async () => {
     if (basketItems.length === 0) return
-    if (gate === 'signed_out') { openPanel('login'); return }
+    if (!isBiz) { startSignup(); return }
     setBusy(true)
     try {
       const res = await (trpcAuthed() as any).sponsorship.checkout.mutate({ items: basketItems })
@@ -205,8 +210,9 @@ function EmployersInner() {
             </div>
 
             <button onClick={buySponsorship} disabled={busy || basketItems.length === 0} style={{ ...cta, opacity: basketItems.length === 0 ? 0.5 : 1 }}>
-              {busy ? t('Opening checkout…') : gate === 'signed_out' ? `${t('Log in & pay')} →` : `${t('Pay & activate')} →`}
+              {busy ? t('Opening checkout…') : isBiz ? `${t('Pay & activate')} →` : `${t('Sign up & pay')} →`}
             </button>
+            {!isBiz && basketItems.length > 0 && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a5a2a', textAlign: 'center', marginTop: 6 }}>{t('Your account + these placements are paid together at checkout.')}</div>}
           </div>
         </div>
 

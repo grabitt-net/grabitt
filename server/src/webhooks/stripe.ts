@@ -3,7 +3,6 @@ import Stripe from 'stripe'
 import { getStripe } from '../lib/stripe'
 import { prisma } from '../db'
 import { grantCreditPack } from '../routers/credits'
-import { reconcileSubscriptionAddons } from '../lib/businessAddons'
 import { SUBSCRIPTION_PLANS } from '@grabitt/design-tokens'
 
 // Map Stripe subscription status → our SubStatus enum.
@@ -54,11 +53,6 @@ async function applySubscription(sub: Stripe.Subscription) {
     } else {
       await prisma.user.update({ where: { id: userId }, data: { isBusiness: false } })
     }
-    // Attach/detach the business's chosen add-on line items to match their stored
-    // selection. Best-effort — a failure here must not fail the webhook.
-    if (active) {
-      try { await reconcileSubscriptionAddons(prisma, userId) } catch { /* retried on next event */ }
-    }
   }
 
   // Property-agent plans include an active-listing allowance. Grant it while the
@@ -79,8 +73,30 @@ async function applySubscription(sub: Stripe.Subscription) {
 
 // Processes a verified Stripe event. Shared by the Express server and the
 // Next.js /api/webhooks/stripe route handler.
+// Grant timed sponsorship placements from a "addonId:months:amountCents,…" basket.
+async function grantSponsorships(userId: string, basket: string) {
+  for (const part of basket.split(',')) {
+    const [addonId, monthsStr, amountStr] = part.split(':')
+    const months = Number(monthsStr)
+    if (!addonId || !months) continue
+    const endsAt = new Date(Date.now() + months * 30 * 86400000)
+    await prisma.sponsorshipGrant.create({
+      data: { userId, addonId, months, amountCents: Number(amountStr) || 0, endsAt },
+    }).catch(() => {})
+  }
+}
+
 export async function handleStripeEvent(event: Stripe.Event) {
   switch (event.type) {
+    // Combined business signup basket (subscription + one-off sponsorship items):
+    // the session carries the sponsorship basket in its metadata.
+    case 'checkout.session.completed': {
+      const s = event.data.object as Stripe.Checkout.Session
+      if (s.metadata?.kind === 'sponsorship' && s.metadata.userId && s.metadata.basket) {
+        await grantSponsorships(s.metadata.userId, s.metadata.basket)
+      }
+      break
+    }
     // Escrow purchases use capture_method: 'manual'. When the buyer authorises
     // the card, Stripe fires amount_capturable_updated — funds are now HELD
     // (not yet captured). Capture happens later at handover/tracking release.
@@ -163,15 +179,7 @@ export async function handleStripeEvent(event: Stripe.Event) {
       }
       // One-off sponsorship basket → grant each timed placement.
       if (pi.metadata?.kind === 'sponsorship' && pi.metadata.userId && pi.metadata.basket) {
-        for (const part of pi.metadata.basket.split(',')) {
-          const [addonId, monthsStr, amountStr] = part.split(':')
-          const months = Number(monthsStr)
-          if (!addonId || !months) continue
-          const endsAt = new Date(Date.now() + months * 30 * 86400000)
-          await prisma.sponsorshipGrant.create({
-            data: { userId: pi.metadata.userId, addonId, months, amountCents: Number(amountStr) || 0, endsAt },
-          }).catch(() => {})
-        }
+        await grantSponsorships(pi.metadata.userId, pi.metadata.basket)
       }
       // Paid listing promotion → apply the option now that payment succeeded.
       if (pi.metadata?.kind === 'listing_promo' && pi.metadata.listingId && pi.metadata.userId) {

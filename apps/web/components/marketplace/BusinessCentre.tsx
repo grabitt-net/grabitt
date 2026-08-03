@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { trpcAuthed } from '@/lib/authToken'
 import { usePanel } from '@/context/PanelContext'
-import { BUSINESS_TIERS, BUSINESS_TIER_ORDER, BUSINESS_ADDONS, BUSINESS_ADDON_IDS } from '@grabitt/design-tokens'
+import { BUSINESS_TIERS, BUSINESS_TIER_ORDER, BUSINESS_ADDONS } from '@grabitt/design-tokens'
 import { t } from '@/lib/i18n'
 
 type Postings = {
@@ -46,9 +46,8 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
   const { openPanel } = usePanel()
   const [data, setData] = useState<TierStatus | null>(null)
   const [postings, setPostings] = useState<Postings | null>(null)
-  const [addons, setAddons] = useState<string[] | null>(null)
-  const [addonTotalCents, setAddonTotalCents] = useState(0)
-  const [savingAddon, setSavingAddon] = useState<string | null>(null)
+  // Active one-off sponsorship placements (bought via the basket).
+  const [sponsorships, setSponsorships] = useState<{ id: string; addonId: string; endsAt: string }[] | null>(null)
 
   useEffect(() => {
     trpcAuthed().business.tierStatus.query()
@@ -57,25 +56,10 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
     trpcAuthed().business.myPostings.query()
       .then(d => setPostings(d as unknown as Postings))
       .catch(() => {})
-    trpcAuthed().subscriptions.myBusiness.query()
-      .then((d: any) => { setAddons(d.addons ?? []); setAddonTotalCents(d.monthlyTotalCents ?? 0) })
-      .catch(() => setAddons([]))
+    trpcAuthed().sponsorship.mine.query()
+      .then((d: any) => setSponsorships(d ?? []))
+      .catch(() => setSponsorships([]))
   }, [])
-
-  // Toggle an add-on: persist + reconcile the Stripe subscription immediately.
-  const toggleAddon = async (id: string) => {
-    if (!addons || savingAddon) return
-    const next = addons.includes(id) ? addons.filter(x => x !== id) : [...addons, id]
-    setSavingAddon(id)
-    setAddons(next) // optimistic
-    try {
-      const res: any = await trpcAuthed().subscriptions.updateAddons.mutate({ addons: next as never })
-      setAddons(res.addons)
-      setAddonTotalCents(res.monthlyTotalCents)
-    } catch {
-      setAddons(addons) // revert
-    } finally { setSavingAddon(null) }
-  }
 
   if (!data || !data.isBusiness) return null
   const s = data
@@ -226,33 +210,27 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
         ))}
       </div>
 
-      {/* ── Add-ons & extras ── */}
+      {/* ── Sponsorship & advertising (one-off, timed) ── */}
       <div style={card}>
-        <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>✨ {t('Extras & add-ons')}</span>
-          <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--dark)', textTransform: 'none', letterSpacing: 0 }}>€{(addonTotalCents / 100) % 1 ? (addonTotalCents / 100).toFixed(2) : addonTotalCents / 100}/mo {t('total')}</span>
-        </div>
+        <div style={cardHead}>📣 {t('Sponsorship & advertising')}</div>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', marginBottom: 10, lineHeight: 1.5 }}>
-          {t('Opt in or out any time — your subscription and monthly total update automatically.')}
+          {t('Buy homepage, category and featured banner placements for a set number of months — a one-off payment, not a subscription.')}
         </div>
-        {addons === null ? <Muted>{t('Loading…')}</Muted> : BUSINESS_ADDON_IDS.map(id => {
-          const a = BUSINESS_ADDONS[id]
-          const on = addons.includes(id)
-          const soon = 'comingSoon' in a && a.comingSoon
-          const busy = savingAddon === id
+        {sponsorships === null ? <Muted>{t('Loading…')}</Muted> : sponsorships.length === 0 ? (
+          <Muted>{t('No active placements.')}</Muted>
+        ) : sponsorships.map(g => {
+          const a = (BUSINESS_ADDONS as any)[g.addonId]
           return (
-            <button key={id} onClick={() => toggleAddon(id)} disabled={!!savingAddon} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, background: on ? '#FFF7F0' : '#fff', border: `1.5px solid ${on ? 'var(--orange)' : '#f0ebe4'}`, borderRadius: 12, padding: '10px 12px', marginBottom: 8, cursor: savingAddon ? 'wait' : 'pointer', opacity: busy ? 0.6 : 1 }}>
-              <span style={{ width: 34, height: 20, flexShrink: 0, borderRadius: 50, background: on ? 'var(--orange)' : '#d8cbb5', position: 'relative', transition: 'background 0.2s' }}>
-                <span style={{ position: 'absolute', top: 2, left: on ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
-              </span>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)' }}>{a.icon} {a.label}{soon ? <span style={{ marginLeft: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 8.5, fontWeight: 900, padding: '2px 6px', borderRadius: 50, textTransform: 'uppercase' }}>{t('Coming soon')}</span> : null}</span>
-                <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 10, color: '#9a8b74', marginTop: 1, lineHeight: 1.4 }}>{a.blurb}</span>
-              </span>
-              <span style={{ flexShrink: 0, fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, color: 'var(--orange)' }}>€{(a.amountCents / 100) % 1 ? (a.amountCents / 100).toFixed(2) : a.amountCents / 100}/mo</span>
-            </button>
+            <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid #f4efe8', padding: '9px 2px' }}>
+              <span style={{ fontSize: 16 }}>{a?.icon ?? '📢'}</span>
+              <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)' }}>{a?.label ?? g.addonId}</span>
+              <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#16a34a', fontWeight: 800 }}>{t('until')} {new Date(g.endsAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+            </div>
           )
         })}
+        <Link href="/employers" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 12, background: '#f9f6f2', border: '1px dashed #d8cbb5', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: '#8a5a2a' }}>
+          ➕ {t('Buy a placement')}
+        </Link>
       </div>
 
       {/* ── Business tools ── */}
