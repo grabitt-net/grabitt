@@ -4,8 +4,10 @@ import { useCrmApi } from './AdminApp'
 import ImageUploadField from './ImageUploadField'
 
 const POSITIONS: [string, string][] = [
-  ['sponsor_top', 'Sponsor — top (every page)'],
-  ['sponsor_footer', 'Sponsor — above footer (every page)'],
+  ['sponsor_top', 'Category Sponsor — top banner (1/month, fixed)'],
+  ['sponsor_footer', 'Featured Partner — bottom banner (rotates, up to 7)'],
+  ['messages', 'Message Centre'],
+  ['notifications', 'Notifications popup (Featured Sponsor)'],
   ['home_mid', 'Home — Mid ad'],
   ['category', 'Department pages'],
   ['jobs', 'Recruitment page'],
@@ -13,7 +15,7 @@ const POSITIONS: [string, string][] = [
 ]
 const POS_LABEL = Object.fromEntries(POSITIONS)
 
-interface Banner { id: string; title: string; imageUrl: string; linkUrl: string | null; active: boolean; position: string; startsAt: string | null; endsAt: string | null }
+interface Banner { id: string; title: string; imageUrl: string; linkUrl: string | null; active: boolean; position: string; startsAt: string | null; endsAt: string | null; clickCount?: number; impressions?: number }
 
 const EMPTY = { title: '', imageUrl: '', linkUrl: '', position: 'home_mid', active: true, startsAt: '', endsAt: '' }
 
@@ -103,7 +105,12 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
             <img src={b.imageUrl} alt={b.title} style={{ width: '100%', height: 110, objectFit: 'cover' }} />
             <div style={{ padding: 14 }}>
               <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 10, color: '#FF4500', textTransform: 'uppercase', letterSpacing: 0.5 }}>{POS_LABEL[b.position] ?? b.position}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 13, marginTop: 2, marginBottom: 8 }}>{b.title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 13, marginTop: 2, marginBottom: 6 }}>{b.title}</div>
+              <div style={{ display: 'flex', gap: 12, marginBottom: 8, fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>
+                <span title="Clicks">👆 <b>{b.clickCount ?? 0}</b></span>
+                <span title="Impressions">👁 <b>{b.impressions ?? 0}</b></span>
+                {(b.impressions ?? 0) > 0 && <span title="Click-through rate" style={{ color: '#16a34a' }}>{(((b.clickCount ?? 0) / (b.impressions ?? 1)) * 100).toFixed(1)}% CTR</span>}
+              </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => toggle(b)} style={{ flex: 1, padding: '5px 10px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', background: b.active ? '#f0faf4' : '#f5f5f5', color: b.active ? '#16a34a' : '#aaa' }}>{b.active ? '● Live' : '○ Off'}</button>
                 <button onClick={() => remove(b.id)} style={{ padding: '5px 12px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', background: '#fef2f2', color: '#ef4444' }}>Delete</button>

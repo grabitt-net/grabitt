@@ -1409,6 +1409,8 @@ enum BannerPosition {
   jobs
   sponsor_top
   sponsor_footer
+  messages
+  notifications
 }
 
 model Banner {
@@ -1420,6 +1422,8 @@ model Banner {
   position  BannerPosition
   startsAt  DateTime?
   endsAt    DateTime?
+  clickCount   Int         @default(0)
+  impressions  Int         @default(0)
   createdAt DateTime       @default(now())
 
   @@index([active])

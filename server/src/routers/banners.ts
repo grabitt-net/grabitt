@@ -7,13 +7,27 @@ export const bannersRouter = router({
     ctx.prisma.banner.findMany({ orderBy: [{ position: 'asc' }, { createdAt: 'desc' }] })
   ),
 
+  // Public: record a banner click and return where to send the visitor. All
+  // banners are click-tracked so their performance is quantifiable.
+  trackClick: publicProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const b = await ctx.prisma.banner.update({ where: { id: input.id }, data: { clickCount: { increment: 1 } }, select: { linkUrl: true } }).catch(() => null)
+      return { url: b?.linkUrl ?? null }
+    }),
+
+  // Public: record impressions (fire-and-forget from the client).
+  trackImpression: publicProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(({ ctx, input }) => ctx.prisma.banner.update({ where: { id: input.id }, data: { impressions: { increment: 1 } } }).then(() => ({ ok: true })).catch(() => ({ ok: false }))),
+
   // Admin: remove a banner.
   remove: execProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(({ ctx, input }) => ctx.prisma.banner.delete({ where: { id: input.id } })),
 
   active: publicProcedure
-    .input(z.object({ position: z.enum(['home_top','home_mid','category','checkout','jobs','sponsor_top','sponsor_footer']) }))
+    .input(z.object({ position: z.enum(['home_top','home_mid','category','checkout','jobs','sponsor_top','sponsor_footer','messages','notifications']) }))
     .query(({ ctx, input }) => {
       const now = new Date()
       return ctx.prisma.banner.findMany({
@@ -38,7 +52,7 @@ export const bannersRouter = router({
       imageUrl: z.string().url(),
       linkUrl: z.string().url().optional(),
       active: z.boolean(),
-      position: z.enum(['home_top','home_mid','category','checkout','jobs','sponsor_top','sponsor_footer']),
+      position: z.enum(['home_top','home_mid','category','checkout','jobs','sponsor_top','sponsor_footer','messages','notifications']),
       startsAt: z.string().optional(),
       endsAt: z.string().optional(),
     }))

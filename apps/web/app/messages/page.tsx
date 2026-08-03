@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Footer from '@/components/marketplace/Footer'
 import SiteHeader from '@/components/marketplace/SiteHeader'
+import BannerSlot from '@/components/marketplace/BannerSlot'
 import InboxClient from '@/components/marketplace/InboxClient'
 import { prisma } from 'server/src/db'
 
@@ -30,6 +31,10 @@ export default async function MessagesPage() {
     <main className="app-shell" style={{ background: '#f5f2ec', minHeight: '100vh', display: 'flex', flexDirection: 'column', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <SiteHeader title="Messages" />
 
+      {/* Sponsor banner area — Message Centre slot (click-tracked) */}
+      <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto' }}>
+        <BannerSlot position="messages" aspect="6 / 1" />
+      </div>
 
       <InboxClient me={me.id} alertUnread={alertUnread} />
 

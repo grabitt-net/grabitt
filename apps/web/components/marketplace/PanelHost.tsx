@@ -19,6 +19,7 @@ import FindStaffPanel from './FindStaffPanel'
 import SeekerProfilePanel from './SeekerProfilePanel'
 import SignInFirst from './SignInFirst'
 import BusinessVerifyPanel from './BusinessVerifyPanel'
+import BannerSlot from './BannerSlot'
 import StorefrontEditor from './StorefrontEditor'
 import MultibuyEditor, { type MultibuyTier } from './MultibuyEditor'
 import { attributesFor } from '@/lib/listingAttributes'
@@ -460,6 +461,8 @@ function PanelBody() {
 
     return (
       <ActionPanel title="🔔 Notifications" onClose={closePanel}>
+        {/* Featured Sponsor slot — click-tracked, shows only when a banner is active */}
+        <div style={{ margin: '-4px 0 12px' }}><BannerSlot position="notifications" aspect="5 / 1" padded={false} /></div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
             {TABS.map(t => (
