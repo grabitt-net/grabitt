@@ -1,8 +1,9 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { trpcAuthed } from '@/lib/authToken'
 import { createLooseTrpcClient } from '@/lib/trpc'
+import { usePanel } from '@/context/PanelContext'
 import { t } from '@/lib/i18n'
 
 // Rewards dashboard card: the credits balance, admin-managed ways to earn, and
@@ -14,6 +15,7 @@ type MyListing = { id: string; title: string; status: string }
 
 export default function RewardsCard() {
   const router = useRouter()
+  const { openPanel } = usePanel()
   const [tab, setTab] = useState<'earn' | 'redeem'>('earn')
   const [mine, setMine] = useState<Mine | null>(null)
   const [rules, setRules] = useState<Rule[]>([])
@@ -34,13 +36,24 @@ export default function RewardsCard() {
   const earned = mine?.totalEarned ?? 0
   const balance = mine?.balance ?? 0
 
-  const actionRoute: Record<string, () => void> = useMemo(() => ({
-    invite: () => router.push('/account?invite=1'),
-    share: () => router.push('/'),
-    sell: () => router.push('/sell'),
-    browse: () => router.push('/'),
-    chat: () => router.push('/messages/team'),
-  }), [router])
+  const runAction = useCallback((key: string | null | undefined) => {
+    const k = key?.trim().toLowerCase().replace(/\s+/g, '_') ?? ''
+    const actions: Record<string, () => void> = {
+      invite: () => openPanel('invite'),
+      invite_friend: () => openPanel('invite'),
+      referral: () => openPanel('invite'),
+      share: () => openPanel('invite'),
+      sell: () => openPanel('sell'),
+      list: () => openPanel('sell'),
+      listing: () => openPanel('sell'),
+      browse: () => router.push('/'),
+      shop: () => router.push('/'),
+      chat: () => router.push('/messages/team'),
+      message: () => router.push('/messages/team'),
+      help: () => openPanel('help'),
+    }
+    actions[k]?.()
+  }, [openPanel, router])
 
   const redeem = async (opt: Option, listingId?: string) => {
     setBusy(opt.id); setMsg('')
@@ -97,7 +110,7 @@ export default function RewardsCard() {
               </div>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: '#22c55e', whiteSpace: 'nowrap' }}>+{r.amount}</div>
               {r.actionLabel && (
-                <button onClick={() => { const fn = r.actionKey ? actionRoute[r.actionKey] : undefined; fn?.() }} style={{ background: '#FFF3EE', border: '1px solid #FFD4A0', borderRadius: 50, padding: '5px 11px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#8a5a2a', cursor: 'pointer', whiteSpace: 'nowrap' }}>{r.actionLabel}</button>
+                <button type="button" onClick={() => runAction(r.actionKey)} style={{ background: '#FFF3EE', border: '1px solid #FFD4A0', borderRadius: 50, padding: '5px 11px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#8a5a2a', cursor: 'pointer', whiteSpace: 'nowrap' }}>{r.actionLabel}</button>
               )}
             </div>
           ))}

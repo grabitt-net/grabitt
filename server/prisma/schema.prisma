@@ -154,6 +154,15 @@ model ForecastModel {
   updatedAt DateTime @updatedAt
 }
 
+// Singleton account-level configuration: personal grades, business tiers, and
+// special statuses (student / blue light / charity). Defaults live in code;
+// admins override here from the executive suite.
+model AccountLevelsConfig {
+  id        String   @id @default("default")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
 model CommunityPost {
   id         String   @id @default(uuid())
   title      String

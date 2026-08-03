@@ -155,6 +155,11 @@ export function makeCrmApi(execToken: string) {
     payOutAffiliate: (affiliateId: string, viaStripe: boolean) =>
       rpc<{ ok: true; amountCents: number }>('affiliates.payOut', 'mutation', { affiliateId, viaStripe }, execToken),
 
+    // Account levels & fees (personal grades, business tiers, special statuses)
+    accountLevels: () => rpc<any>('accountLevels.config', 'query', undefined, execToken),
+    accountLevelDefaults: () => rpc<any>('accountLevels.defaults', 'query', undefined, execToken),
+    saveAccountLevels: (data: any) => rpc<any>('accountLevels.saveConfig', 'mutation', data, execToken),
+
     // Reports / moderation queue
     reports: (status?: 'all' | 'open' | 'under_review' | 'actioned' | 'dismissed') =>
       rpc<any[]>('reports.adminList', 'query', { status: status ?? 'open' }, execToken),

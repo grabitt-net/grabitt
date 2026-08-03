@@ -9,6 +9,7 @@ import { router, protectedProcedure, publicProcedure } from '../trpc'
 import { RateTransactionInputSchema } from '@grabitt/types'
 import { FEE_RATES, FUND_RELEASE_AUTO_DAYS, COURIER_RELEASE_HOURS, COURIER_DISPUTE_WINDOW_HOURS } from '@grabitt/design-tokens'
 import { effectiveFeeRate } from '../lib/sellerFee'
+import { getAccountLevels } from '../lib/accountLevels'
 import { trackingUrlFor, CARRIERS } from '../lib/tracking'
 import { registerTracking } from '../lib/track17'
 
@@ -180,10 +181,13 @@ export const transactionsRouter = router({
       buyerType: z.enum(['individual', 'business']).default('individual'),
     }))
     .mutation(async ({ ctx, input }) => {
-      const listing = await ctx.prisma.listing.findUniqueOrThrow({
-        where: { id: input.listingId },
-        include: { seller: true },
-      })
+      const [listing, levels] = await Promise.all([
+        ctx.prisma.listing.findUniqueOrThrow({
+          where: { id: input.listingId },
+          include: { seller: true },
+        }),
+        getAccountLevels(ctx.prisma),
+      ])
 
       if (listing.status !== 'active' && listing.status !== 'grab_it_now') {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Listing not available' })
@@ -211,7 +215,7 @@ export const transactionsRouter = router({
       const itemSubtotal = Math.round(Number(listing.price) * input.quantity * 100) / 100
       // Platform fee applies to the item subtotal, not delivery.
       const amount = Math.round((itemSubtotal + deliveryFee) * 100) / 100
-      const feeRate = effectiveFeeRate(listing.seller)
+      const feeRate = effectiveFeeRate(listing.seller, levels)
       const platformFee = Math.round(itemSubtotal * feeRate * 100) / 100
       const sellerNet = Math.round((amount - platformFee) * 100) / 100
 
@@ -280,6 +284,7 @@ export const transactionsRouter = router({
   finishCartCheckout: protectedProcedure
     .input(z.object({ paymentMethodId: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
+      const levels = await getAccountLevels(ctx.prisma)
       const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
       if (!user.stripeCustomerId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No saved card' })
 
@@ -301,7 +306,7 @@ export const transactionsRouter = router({
 
           const itemSubtotal = Math.round(Number(listing.price) * qty * 100) / 100
           const amount = itemSubtotal // basket items are collection; delivery handled per-item elsewhere
-          const feeRate = effectiveFeeRate(listing.seller)
+          const feeRate = effectiveFeeRate(listing.seller, levels)
           const platformFee = Math.round(itemSubtotal * feeRate * 100) / 100
           const sellerNet = Math.round((amount - platformFee) * 100) / 100
 

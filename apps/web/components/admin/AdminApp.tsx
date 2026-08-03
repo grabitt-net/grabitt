@@ -30,6 +30,7 @@ import RewardsView from './RewardsView'
 import PlannerView from './PlannerView'
 import StatusApplicationsView from './StatusApplicationsView'
 import AffiliatesView from './AffiliatesView'
+import LevelsView from './LevelsView'
 import CommandPalette, { type Command } from './CommandPalette'
 import { makeCrmApi, CrmApi } from '@/lib/admin-api'
 
@@ -40,6 +41,7 @@ const COMMANDS: Command[] = [
   { id: 'forecast', label: 'Forecast', icon: '📈', group: 'Overview' },
   { id: 'planner', label: 'Planner', icon: '🧮', group: 'Overview', keywords: 'forecast p&l pnl costs budget export' },
   { id: 'financials', label: 'Financials', icon: '💰', group: 'Overview' },
+  { id: 'levels', label: 'Levels & Fees', icon: '🏅', group: 'Overview', keywords: 'fee percentage grade tier criteria student charity blue light business allowance' },
   { id: 'retention', label: 'Retention', icon: '📊', group: 'Overview' },
   { id: 'members', label: 'Members', icon: '🪪', group: 'People' },
   { id: 'business', label: 'Business', icon: '🏢', group: 'People' },
@@ -75,7 +77,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards' | 'planner' | 'statusapps' | 'affiliates'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -219,6 +221,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'planner'    && <PlannerView />}
                 {view === 'statusapps' && <StatusApplicationsView />}
                 {view === 'affiliates' && <AffiliatesView />}
+                {view === 'levels'     && <LevelsView />}
               </>
             )}
           </main>
