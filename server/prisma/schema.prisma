@@ -33,6 +33,7 @@ enum SubPlan {
   agent_15      // €49/mo — property agent, 15 active listings
   agent_40      // €99/mo — property agent, 40 active listings
   business_founding_annual // €249/yr — founding-cohort annual business plan
+  business_annual // €290/yr — standard annual business plan
 }
 
 enum SubStatus {

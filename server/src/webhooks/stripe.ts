@@ -39,7 +39,7 @@ async function applySubscription(sub: Stripe.Subscription) {
     update: { status, currentPeriodEnd, trialEnd, cancelAtPeriodEnd: sub.cancel_at_period_end ?? false },
   })
 
-  if (plan === 'business' || plan === 'business_founding_annual') {
+  if (plan.startsWith('business')) {
     if (active) {
       const u = await prisma.user.findUnique({ where: { id: userId }, select: { grade: true } })
       await prisma.user.update({
@@ -193,6 +193,24 @@ export async function handleStripeEvent(event: Stripe.Event) {
             const until = new Date(Date.now() + weeks * 7 * 86400000)
             await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { isFeatured: true, featuredUntil: until } })
           }
+        }
+      }
+      break
+    }
+    // A completed Checkout — used to grant any sponsorship bought in the same
+    // basket as a business subscription (one-off items on the subscription
+    // checkout). Fires once per session, so grants happen exactly once.
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session
+      const m = session.metadata ?? {}
+      if (m.sponsorship && m.userId) {
+        for (const part of m.sponsorship.split(',')) {
+          const [addonId, monthsStr, amountStr] = part.split(':')
+          const months = Number(monthsStr)
+          if (!addonId || !months) continue
+          await prisma.sponsorshipGrant.create({
+            data: { userId: m.userId, addonId, months, amountCents: Number(amountStr) || 0, endsAt: new Date(Date.now() + months * 30 * 86400000) },
+          }).catch(() => {})
         }
       }
       break

@@ -4722,6 +4722,7 @@ function PanelBody() {
     const [catalog, setCatalog] = useState<any[]>([])
     const [durations, setDurations] = useState<number[]>([1, 3, 6, 12])
     const [bizBusy, setBizBusy] = useState(false)
+    const [bizInterval, setBizInterval] = useState<'month' | 'year'>('month')
     const [foundingBizLeft, setFoundingBizLeft] = useState<number | null>(null)
     useEffect(() => {
       getTrpcClient().then(c => c.subscriptions.foundingBusinessStatus.query())
@@ -4742,7 +4743,7 @@ function PanelBody() {
     const sponsorTotal = Object.entries(basket).reduce((s, [id, m]) => { const c = catalog.find(x => x.id === id); return s + (c ? sponsorTotalCents(c.monthlyCents, m) : 0) }, 0)
 
     // Combined basket: business subscription + one-off sponsorship placements.
-    const startCheckout = async (plan: 'business' | 'business_founding_annual') => {
+    const startCheckout = async (plan: 'business' | 'business_annual' | 'business_founding_annual') => {
       setBizBusy(true)
       try {
         let token = getAuthToken()
@@ -4765,6 +4766,17 @@ function PanelBody() {
         {['Your own storefront + 🏢 badge', 'Business level & lower selling fees', 'Analytics & insights', 'Post jobs & list property'].map((f, i) => (
           <div key={i} style={{ display: 'flex', gap: 10, padding: '7px 0', borderBottom: '1px solid #f5f5f5', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555' }}><span>✅</span><span>{f}</span></div>
         ))}
+
+        {/* Monthly / yearly choice for the subscription */}
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, margin: '16px 0 6px' }}>Choose your plan</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {([['month', '€29 / month', '7 days free'], ['year', '€290 / year', '2 months free']] as [('month' | 'year'), string, string][]).map(([iv, price, note]) => (
+            <button key={iv} onClick={() => setBizInterval(iv)} style={{ flex: 1, textAlign: 'left', border: `2px solid ${bizInterval === iv ? 'var(--orange)' : '#f0ebe4'}`, background: bizInterval === iv ? '#FFF7F0' : '#fff', borderRadius: 12, padding: '11px 13px', cursor: 'pointer' }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: bizInterval === iv ? 'var(--orange)' : 'var(--dark)' }}>{price}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 700, color: '#16a34a' }}>{note}</div>
+            </button>
+          ))}
+        </div>
 
         {/* Sponsorship & advertising — one-off, timed placements added to the basket */}
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, margin: '18px 0 4px' }}>Add sponsorship (optional)</div>
@@ -4791,11 +4803,11 @@ function PanelBody() {
 
         {/* Totals */}
         <div style={{ background: '#f9f6f2', borderRadius: 12, padding: '12px 14px', margin: '10px 0 12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555' }}><span>Business account</span><span>€29/mo <span style={{ color: '#16a34a' }}>(7 days free)</span></span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555' }}><span>Business account</span><span>{bizInterval === 'year' ? '€290/yr' : '€29/mo'} <span style={{ color: '#16a34a' }}>(7 days free)</span></span></div>
           {sponsorTotal > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555', marginTop: 6 }}><span>Sponsorship (one-off)</span><span>{eur(sponsorTotal)}</span></div>}
         </div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>You&apos;ll add a card on Stripe — the account is free for 7 days. We&apos;ll ask for your business details when you first sign in.</div>
-        <button onClick={() => startCheckout('business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? 'Opening Stripe…' : sponsorTotal > 0 ? '🚀 Start trial & add sponsorship' : '🚀 Start 7-day free trial'}</button>
+        <button onClick={() => startCheckout(bizInterval === 'year' ? 'business_annual' : 'business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? 'Opening Stripe…' : sponsorTotal > 0 ? '🚀 Start trial & add sponsorship' : '🚀 Start 7-day free trial'}</button>
 
         {/* Founding cohort annual lock-in — only while slots remain (first 100) */}
         {(foundingBizLeft === null || foundingBizLeft > 0) && (<>
