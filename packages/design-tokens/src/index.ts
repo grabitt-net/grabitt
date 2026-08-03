@@ -96,24 +96,34 @@ export const SUBSCRIPTION_PLANS = {
 // line items are reconciled to match, so the monthly charge updates automatically.
 // All amounts are per MONTH in cents (EUR). `comingSoon` add-ons are billed but
 // their delivery engine isn't live yet (see docs/whatsapp-blast-spec.md).
+// Sponsorship & advertising add-ons. Each has a monthly (amountCents) and a
+// discounted yearly (yearlyCents ≈ 10× monthly = 2 months free) price. These are
+// the default prices; admins can override them in the executive suite.
 export const BUSINESS_ADDONS = {
-  headline_sponsor:   { label: 'Headline Sponsor',   icon: '🥇', amountCents: 29900, blurb: 'Your brand on the homepage hero + a Featured Partner badge across Grabitt.' },
-  department_sponsor: { label: 'Department Sponsor', icon: '🤝', amountCents: 14900, blurb: 'Own a department page (e.g. Motors, Property) with your banner + badge.' },
-  featured_partner:   { label: 'Featured Partner',   icon: '⭐', amountCents: 7900,  blurb: 'Listed on the Sponsors & Partners page with logo, blurb and link.' },
-  page_banners:       { label: 'Page banners',       icon: '🖼️', amountCents: 4900,  blurb: 'A rotating banner slot across department & search pages, with click stats.' },
-  sponsored_placement:{ label: 'Sponsored placement',icon: '🚀', amountCents: 1900,  blurb: 'Priority placement of your listings in search and category results.' },
-  business_directory: { label: 'Business directory', icon: '📒', amountCents: 900,   blurb: 'Year-round listing in the Grabitt business directory.' },
-  whatsapp_blast:     { label: 'WhatsApp blast',     icon: '💬', amountCents: 2900,  blurb: 'Broadcast promotions to your opted-in customers on WhatsApp.', comingSoon: true },
+  homepage_sponsor:  { label: 'Homepage Sponsor',  icon: '🥇', amountCents: 29900, yearlyCents: 299000, blurb: 'Your brand on the homepage hero — the single most prominent slot on Grabitt.' },
+  category_sponsor:  { label: 'Category Sponsor',  icon: '🤝', amountCents: 14900, yearlyCents: 149000, blurb: 'Own the fixed top banner of one category page — exclusive, a single advertiser per month, never rotates.' },
+  featured_partner:  { label: 'Featured Partner',  icon: '⭐', amountCents: 7900,  yearlyCents: 79000,  blurb: 'A rotating banner in the bottom slot across pages (shared by up to 7 partners), plus your logo, blurb and link on the Sponsors & Partners page.' },
+  email_blast:       { label: 'Email blast',       icon: '📧', amountCents: 4900,  yearlyCents: 49000,  blurb: 'A promotional email to opted-in members in your area.' },
+  whatsapp_blast:    { label: 'WhatsApp blast',    icon: '💬', amountCents: 2900,  yearlyCents: 29000,  blurb: 'Broadcast promotions to your opted-in customers on WhatsApp.', comingSoon: true },
+  business_directory:{ label: 'Business directory',icon: '📒', amountCents: 900,   yearlyCents: 9000,   blurb: 'Year-round listing in the Grabitt business directory.' },
 } as const
 
 export type BusinessAddonId = keyof typeof BUSINESS_ADDONS
 export const BUSINESS_ADDON_IDS = Object.keys(BUSINESS_ADDONS) as BusinessAddonId[]
 export const isBusinessAddon = (id: string): id is BusinessAddonId => id in BUSINESS_ADDONS
+export type BillingInterval = 'month' | 'year'
+export const addonPriceCents = (id: BusinessAddonId, interval: BillingInterval) =>
+  interval === 'year' ? BUSINESS_ADDONS[id].yearlyCents : BUSINESS_ADDONS[id].amountCents
 
 /** Monthly total (cents) for the base business plan + a set of add-ons. */
 export function businessMonthlyTotalCents(addonIds: readonly string[]): number {
   return SUBSCRIPTION_PLANS.business.amountCents
     + addonIds.reduce((sum, id) => sum + (isBusinessAddon(id) ? BUSINESS_ADDONS[id].amountCents : 0), 0)
+}
+
+/** Combined add-on total (cents) for the chosen billing interval. */
+export function addonsTotalCents(addonIds: readonly string[], interval: BillingInterval): number {
+  return addonIds.reduce((sum, id) => sum + (isBusinessAddon(id) ? addonPriceCents(id, interval) : 0), 0)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -8,12 +8,12 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
-import { BUSINESS_TIERS, BUSINESS_TIER_ORDER, BUSINESS_ADDONS, BUSINESS_ADDON_IDS, businessMonthlyTotalCents } from '@grabitt/design-tokens'
+import { BUSINESS_TIERS, BUSINESS_TIER_ORDER, BUSINESS_ADDONS, BUSINESS_ADDON_IDS, addonPriceCents, addonsTotalCents, type BillingInterval } from '@grabitt/design-tokens'
 import { t } from '@/lib/i18n'
 
-// The For Business page is a marketing / sign-up page and stays the SAME whether
-// or not someone is signed in. A signed-in business just gets a button to their
-// dashboard at the top — the page itself never turns into the dashboard.
+// The For Business page is a marketing / sign-up page. A signed-in business only
+// picks sponsorship & advertising add-ons; a signed-out visitor also opens the
+// account. The sponsorship & advertising details live in the Help Centre.
 type Gate = 'loading' | 'business' | 'not_business' | 'signed_out'
 
 export default function EmployersPage() {
@@ -23,12 +23,13 @@ export default function EmployersPage() {
 const TIER_EMOJI: Record<string, string> = { dealer: '🟡', trader: '🔵', pro: '⭐' }
 const feePct = (r: number) => `${(r * 100).toFixed(r * 100 % 1 ? 1 : 0)}%`
 const eur = (cents: number) => `€${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`
+const HELP = '/help#business-advertising'
 
 function EmployersInner() {
   const { openPanel } = usePanel()
   const [gate, setGate] = useState<Gate>('loading')
-  const [wantBusiness, setWantBusiness] = useState(true)
   const [addons, setAddons] = useState<string[]>([])
+  const [interval, setBilling] = useState<BillingInterval>('month')
 
   useEffect(() => {
     let live = true
@@ -44,10 +45,11 @@ function EmployersInner() {
     return () => { live = false }
   }, [])
 
+  const isBiz = gate === 'business'
   const toggleAddon = (id: string) => setAddons(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
-  const monthlyTotal = businessMonthlyTotalCents(wantBusiness ? addons : []) / 100
+  const addonTotal = addonsTotalCents(addons, interval)
+  const per = interval === 'year' ? t('/yr') : t('/mo')
 
-  // Carry the selection into the business signup panel.
   const startSignup = () => {
     try { sessionStorage.setItem('grabitt_biz_addons', JSON.stringify(addons)) } catch {}
     if (gate === 'signed_out') openPanel('login')
@@ -59,42 +61,32 @@ function EmployersInner() {
       <Topbar title="For Business" />
       <QuickActions />
 
-      {/* Signed-in business: a button to their dashboard. The page below is identical for everyone. */}
-      {gate === 'business' && (
+      {/* Signed-in business: a button to their dashboard. */}
+      {isBiz && (
         <div style={{ background: 'var(--sand)', padding: '10px 14px', borderBottom: '1.5px solid var(--sand2)', display: 'flex', justifyContent: 'flex-end' }}>
           <Link href="/account?tab=business" style={{ textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '9px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800 }}>🏢 {t('My Business Dashboard')} →</Link>
         </div>
       )}
 
-      {/* Hero */}
-      <header style={{ background: 'var(--sand)', padding: '22px 14px', borderBottom: '1.5px solid var(--sand2)', textAlign: 'center' }}>
-        <div style={{ fontSize: 44, marginBottom: 8 }}>🏢</div>
-        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 24, fontWeight: 700, color: 'var(--dark)', marginBottom: 6 }}>{t('Grabitt for Business')}</div>
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#6b5d48', maxWidth: 520, margin: '0 auto', lineHeight: 1.6 }}>
-          {t('A storefront, lower fees, hiring and property — plus optional sponsorship to put your brand in front of the whole island.')}
-        </div>
-      </header>
-
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '18px 14px 0' }}>
-        {/* Perks */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+      <div style={{ maxWidth: 920, margin: '0 auto', padding: '18px 14px 0' }}>
+        {/* Perks — compact, one line on desktop */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }} className="biz-perks">
           {([
-            ['💼', t('Post job adverts'), t('Advertise roles and manage every applicant in one board.')],
-            ['🔍', t('Find staff directly'), t('Search people available for work and unlock their contact details.')],
-            ['🏠', t('List property'), t('Advertise rentals and sales alongside your listings.')],
-            ['🏪', t('Your own storefront'), t('A branded shop page with your logo, banner and followers.')],
-            ['🛡️', t('Verified business badge'), t('The 🏢 shield that tells buyers you are a registered business.')],
-            ['⭐', t('Lower selling fees'), t('Start at Business rates and earn your way to lower fees.')],
-          ] as [string, string, string][]).map(([icon, title, desc]) => (
-            <div key={title} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              <div style={{ fontSize: 26, marginBottom: 8 }}>{icon}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{title}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#6b5d48', lineHeight: 1.55 }}>{desc}</div>
+            ['💼', t('Post jobs')],
+            ['🔍', t('Find staff')],
+            ['🏠', t('List property')],
+            ['🏪', t('Storefront')],
+            ['🛡️', t('Verified badge')],
+            ['⭐', t('Lower fees')],
+          ] as [string, string][]).map(([icon, title]) => (
+            <div key={title} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: '12px 6px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <div style={{ fontSize: 22 }}>{icon}</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', marginTop: 4, lineHeight: 1.25 }}>{title}</div>
             </div>
           ))}
         </div>
 
-        {/* Business levels — names, rates, what you get, criteria */}
+        {/* Business levels */}
         <div style={{ marginTop: 18 }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', textAlign: 'center', marginBottom: 4 }}>{t('Business levels')}</div>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6b5d48', textAlign: 'center', marginBottom: 12 }}>{t('Every business starts at Business. The lower-fee levels are earned — and maintained — through sales and rating.')}</div>
@@ -126,53 +118,74 @@ function EmployersInner() {
               )
             })}
           </div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', textAlign: 'center', marginTop: 8 }}>{t('Levels are held on a rolling 90-day basis — keep your numbers up to hold your level. Fees apply to item sales only, never to property or job listings.')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', textAlign: 'center', marginTop: 8 }}>{t('Levels are held on a rolling 90-day basis. Fees apply to item sales only, never to property or job listings.')}</div>
         </div>
 
-        {/* Sign up + sponsorship extras, together */}
-        <div style={{ background: 'linear-gradient(135deg,#FFF3EE,#FFE4D6)', border: '2px solid #FF8C00', borderRadius: 18, padding: '20px 18px', marginTop: 18 }}>
-          <div style={{ textAlign: 'center', marginBottom: 6 }}>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{t('Start your Business account')}</div>
-            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#8a5a2a', marginTop: 4 }}>{t('7 days free, then €29/mo. Add sponsorship & advertising below — pay for only what you pick.')}</div>
-          </div>
-
-          <label style={chkRow(wantBusiness)}>
-            <input type="checkbox" checked={wantBusiness} onChange={e => setWantBusiness(e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--orange)' }} />
-            <span style={{ flex: 1 }}><b>{t('Open a Business account')}</b> — €29/mo <span style={{ color: '#8a7d68' }}>({t('7-day free trial')})</span></span>
-          </label>
-
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#8a5a2a', textTransform: 'uppercase', letterSpacing: 0.5, margin: '12px 0 6px' }}>{t('Sponsorship & advertising (optional)')}</div>
-          {BUSINESS_ADDON_IDS.map(id => {
-            const a = BUSINESS_ADDONS[id]
-            const on = addons.includes(id)
-            const soon = 'comingSoon' in a && a.comingSoon
-            return (
-              <label key={id} style={chkRow(on)}>
-                <input type="checkbox" checked={on} onChange={() => toggleAddon(id)} style={{ width: 18, height: 18, accentColor: 'var(--orange)' }} />
-                <span style={{ flex: 1 }}>
-                  <b>{a.icon} {a.label}</b>{soon ? <span style={{ marginLeft: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 9, fontWeight: 900, padding: '2px 6px', borderRadius: 50, textTransform: 'uppercase' }}>{t('Coming soon')}</span> : null}
-                  <span style={{ display: 'block', fontSize: 11, color: '#8a7d68', marginTop: 1 }}>{a.blurb}</span>
-                </span>
-                <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }}>{eur(a.amountCents)}/mo</span>
-              </label>
-            )
-          })}
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '12px 14px', margin: '12px 0' }}>
-            <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#555' }}>{t('Monthly total after trial')}</span>
-            <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>€{monthlyTotal % 1 ? monthlyTotal.toFixed(2) : monthlyTotal}/mo</span>
-          </div>
-
-          {gate === 'business' ? (
-            <Link href="/account?tab=business" style={{ ...cta, display: 'block', textDecoration: 'none', textAlign: 'center', boxSizing: 'border-box' }}>{t('Manage your add-ons')} →</Link>
-          ) : (
-            <>
-              <button onClick={startSignup} style={cta}>{t('Sign up')} →</button>
+        {/* Two side-by-side cards: account (signed-out only) + sponsorship */}
+        <div style={{ display: 'grid', gridTemplateColumns: isBiz ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14, marginTop: 18 }}>
+          {/* Account card — hidden for a signed-in business (they already have one) */}
+          {!isBiz && (
+            <div style={card}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>{t('Open a Business account')}</div>
+              <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#8a5a2a', margin: '6px 0 14px' }}>{t('7 days free, then €29/mo. Storefront, badge, hiring, property and lower fees.')}</div>
+              <ul style={{ margin: '0 0 16px', paddingLeft: 18, fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#4a4034', lineHeight: 1.9 }}>
+                <li>{t('Your own branded storefront')}</li>
+                <li>{t('Verified 🏢 business badge')}</li>
+                <li>{t('Post jobs & list property')}</li>
+                <li>{t('Bulk import & multibuy')}</li>
+              </ul>
+              <button onClick={startSignup} style={cta}>{t('Start free trial')} →</button>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#8a5a2a', textAlign: 'center', marginTop: 10 }}>
                 {t('Already have an account?')} <button onClick={() => openPanel('login')} style={linkBtn}>{t('Log in')}</button>
               </div>
-            </>
+            </div>
           )}
+
+          {/* Sponsorship & advertising card */}
+          <div style={card}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>{t('Sponsorship & advertising')}</div>
+              {/* Monthly / yearly toggle */}
+              <div style={{ display: 'flex', background: '#f5f0e8', borderRadius: 50, padding: 3 }}>
+                {(['month', 'year'] as BillingInterval[]).map(iv => (
+                  <button key={iv} onClick={() => setBilling(iv)} style={{ border: 'none', background: interval === iv ? 'var(--orange)' : 'transparent', color: interval === iv ? '#fff' : '#8a7d68', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer' }}>{iv === 'month' ? t('Monthly') : t('Yearly · 2 mths free')}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#8a5a2a', margin: '6px 0 12px' }}>
+              {isBiz ? t('Add these to your subscription — pick what you want.') : t('Optional — add any of these to put your brand across the island.')}
+              {' '}<Link href={HELP} style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>{t('How it works')} ›</Link>
+            </div>
+
+            {BUSINESS_ADDON_IDS.map(id => {
+              const a = BUSINESS_ADDONS[id]
+              const on = addons.includes(id)
+              const soon = 'comingSoon' in a && a.comingSoon
+              return (
+                <label key={id} title={a.blurb} style={chkRow(on)}>
+                  <input type="checkbox" checked={on} onChange={() => toggleAddon(id)} style={{ width: 18, height: 18, accentColor: 'var(--orange)', marginTop: 2, flexShrink: 0 }} />
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontWeight: 800 }}>{a.icon} {a.label}</span>
+                    {soon ? <span style={{ marginLeft: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 9, fontWeight: 900, padding: '2px 6px', borderRadius: 50, textTransform: 'uppercase' }}>{t('Coming soon')}</span> : null}
+                    <Link href={HELP} onClick={e => e.stopPropagation()} title={t('Learn more in the Help Centre')} style={{ marginLeft: 6, color: '#b7a98e', textDecoration: 'none', fontWeight: 900 }}>ⓘ</Link>
+                    <span style={{ display: 'block', fontSize: 11, color: '#8a7d68', marginTop: 1, lineHeight: 1.4 }}>{a.blurb}</span>
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }}>{eur(addonPriceCents(id, interval))}{per}</span>
+                </label>
+              )
+            })}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9f6f2', borderRadius: 12, padding: '11px 13px', margin: '10px 0' }}>
+              <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#555' }}>{t('Add-ons total')}</span>
+              <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 18, fontWeight: 900, color: 'var(--dark)' }}>{eur(addonTotal)}{per}</span>
+            </div>
+
+            {isBiz ? (
+              <Link href="/account?tab=business" style={{ ...cta, display: 'block', textDecoration: 'none', textAlign: 'center', boxSizing: 'border-box' }}>{t('Add to my subscription')} →</Link>
+            ) : (
+              <button onClick={startSignup} style={cta}>{t('Sign up & add these')} →</button>
+            )}
+          </div>
         </div>
 
         <div style={{ textAlign: 'center', margin: '16px 0' }}>
@@ -183,10 +196,12 @@ function EmployersInner() {
       <Footer />
       <CartFab />
       <PanelHost />
+      <style>{`@media (max-width: 620px){ .biz-perks{ grid-template-columns: repeat(3, 1fr) !important; } }`}</style>
     </main>
   )
 }
 
-const chkRow = (on: boolean): React.CSSProperties => ({ display: 'flex', alignItems: 'center', gap: 11, background: on ? '#fff' : 'rgba(255,255,255,0.5)', border: `1.5px solid ${on ? 'var(--orange)' : '#f0d9c4'}`, borderRadius: 12, padding: '11px 13px', marginBottom: 8, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, color: 'var(--dark)' })
+const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 18, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
+const chkRow = (on: boolean): React.CSSProperties => ({ display: 'flex', alignItems: 'flex-start', gap: 11, background: on ? '#FFF7F0' : '#fff', border: `1.5px solid ${on ? 'var(--orange)' : '#f0ebe4'}`, borderRadius: 12, padding: '11px 13px', marginBottom: 8, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, color: 'var(--dark)' })
 const cta: React.CSSProperties = { width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }
 const linkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer', textDecoration: 'underline' }
