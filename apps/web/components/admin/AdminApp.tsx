@@ -31,6 +31,7 @@ import PlannerView from './PlannerView'
 import StatusApplicationsView from './StatusApplicationsView'
 import AffiliatesView from './AffiliatesView'
 import LevelsView from './LevelsView'
+import SponsorshipView from './SponsorshipView'
 import CommandPalette, { type Command } from './CommandPalette'
 import { makeCrmApi, CrmApi } from '@/lib/admin-api'
 
@@ -58,6 +59,7 @@ const COMMANDS: Command[] = [
   { id: 'banners', label: 'Banners', icon: '🎯', group: 'Content', keywords: 'ads sponsor' },
   { id: 'community', label: 'Guides', icon: '📰', group: 'Content' },
   { id: 'help', label: 'Help', icon: '❓', group: 'Content', keywords: 'faq support' },
+  { id: 'sponsorship', label: 'Sponsorship', icon: '📣', group: 'Content', keywords: 'advertising banner price sponsor placement' },
   { id: 'rewards', label: 'Rewards', icon: '🎁', group: 'Content', keywords: 'credits earn redeem upgrade fee' },
   { id: 'emails', label: 'E-shots', icon: '📧', group: 'Content' },
   { id: 'calendar', label: 'Calendar', icon: '📅', group: 'Workspace' },
@@ -77,7 +79,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels' | 'sponsorship'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -222,6 +224,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'statusapps' && <StatusApplicationsView />}
                 {view === 'affiliates' && <AffiliatesView />}
                 {view === 'levels'     && <LevelsView />}
+                {view === 'sponsorship' && <SponsorshipView />}
               </>
             )}
           </main>

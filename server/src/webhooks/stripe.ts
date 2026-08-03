@@ -161,6 +161,18 @@ export async function handleStripeEvent(event: Stripe.Event) {
       if (pi.metadata?.kind === 'business_verify' && pi.metadata.userId) {
         await prisma.user.update({ where: { id: pi.metadata.userId }, data: { businessVerified: true } })
       }
+      // One-off sponsorship basket → grant each timed placement.
+      if (pi.metadata?.kind === 'sponsorship' && pi.metadata.userId && pi.metadata.basket) {
+        for (const part of pi.metadata.basket.split(',')) {
+          const [addonId, monthsStr, amountStr] = part.split(':')
+          const months = Number(monthsStr)
+          if (!addonId || !months) continue
+          const endsAt = new Date(Date.now() + months * 30 * 86400000)
+          await prisma.sponsorshipGrant.create({
+            data: { userId: pi.metadata.userId, addonId, months, amountCents: Number(amountStr) || 0, endsAt },
+          }).catch(() => {})
+        }
+      }
       // Paid listing promotion → apply the option now that payment succeeded.
       if (pi.metadata?.kind === 'listing_promo' && pi.metadata.listingId && pi.metadata.userId) {
         const target = await prisma.listing.findUnique({ where: { id: pi.metadata.listingId }, select: { sellerId: true } })

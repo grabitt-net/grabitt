@@ -44,6 +44,7 @@ const sections = [
       { icon: '🎯', label: 'Banners', id: 'banners' as View },
       { icon: '📰', label: 'Guides', id: 'community' as View },
       { icon: '❓', label: 'Help', id: 'help' as View },
+      { icon: '📣', label: 'Sponsorship', id: 'sponsorship' as View },
       { icon: '🎁', label: 'Rewards', id: 'rewards' as View },
       { icon: '📧', label: 'E-shots', id: 'emails' as View },
     ],

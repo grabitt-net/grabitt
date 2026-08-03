@@ -160,6 +160,13 @@ export function makeCrmApi(execToken: string) {
     accountLevelDefaults: () => rpc<any>('accountLevels.defaults', 'query', undefined, execToken),
     saveAccountLevels: (data: any) => rpc<any>('accountLevels.saveConfig', 'mutation', data, execToken),
 
+    // Sponsorship & advertising (one-off timed purchases)
+    sponsorshipCatalog: () => rpc<any[]>('sponsorship.adminCatalog', 'query', undefined, execToken),
+    saveSponsorship: (addons: Record<string, { monthlyCents: number; active: boolean }>) =>
+      rpc<any>('sponsorship.saveConfig', 'mutation', { addons }, execToken),
+    sponsorshipGrants: () => rpc<any[]>('sponsorship.grants', 'query', undefined, execToken),
+    cancelSponsorship: (id: string) => rpc<any>('sponsorship.cancelGrant', 'mutation', { id }, execToken),
+
     // Reports / moderation queue
     reports: (status?: 'all' | 'open' | 'under_review' | 'actioned' | 'dismissed') =>
       rpc<any[]>('reports.adminList', 'query', { status: status ?? 'open' }, execToken),

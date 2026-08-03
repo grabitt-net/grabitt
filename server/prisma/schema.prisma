@@ -145,6 +145,34 @@ model AffiliateConfig {
   updatedAt         DateTime @updatedAt
 }
 
+// A purchased, timed sponsorship/advertising placement. Bought one-off through
+// the basket (Stripe payment mode) for a chosen number of months; active between
+// startsAt and endsAt. Recurring subscriptions are handled separately.
+model SponsorshipGrant {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  addonId     String                       // BUSINESS_ADDONS id (homepage_sponsor, …)
+  months      Int
+  amountCents Int
+  startsAt    DateTime @default(now())
+  endsAt      DateTime
+  status      String   @default("active")  // active | expired | cancelled
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([addonId])
+  @@index([status])
+}
+
+// Singleton admin-editable sponsorship pricing (per-add-on monthly base price +
+// whether it's on sale). `data` is { addons: { [id]: { monthlyCents, active } } }.
+model SponsorshipConfig {
+  id        String   @id @default("default")
+  data      Json     @default("{}")
+  updatedAt DateTime @updatedAt
+}
+
 // Singleton financial planner model (assumptions, revenue streams, cost lines).
 // Stored as one JSON blob so the shape can evolve without migrations; edited and
 // exported from the executive suite.
@@ -460,6 +488,7 @@ model User {
   creditEvents       CreditEvent[]
   statusApplications StatusApplication[]
   affiliateReferrals AffiliateReferral[] @relation("AffiliateEarner")
+  sponsorshipGrants  SponsorshipGrant[]
   wishlistItems      WishlistItem[]
   wishItems          WishItem[]
   savedSearches      SavedSearch[]
