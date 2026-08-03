@@ -73,15 +73,16 @@ async function applySubscription(sub: Stripe.Subscription) {
 
 // Processes a verified Stripe event. Shared by the Express server and the
 // Next.js /api/webhooks/stripe route handler.
-// Grant timed sponsorship placements from a "addonId:months:amountCents,…" basket.
+// Grant timed sponsorship placements from an "addonId:months:amountCents:page,…"
+// basket (page is the Category Sponsor's target slug; empty otherwise).
 async function grantSponsorships(userId: string, basket: string) {
   for (const part of basket.split(',')) {
-    const [addonId, monthsStr, amountStr] = part.split(':')
+    const [addonId, monthsStr, amountStr, page] = part.split(':')
     const months = Number(monthsStr)
     if (!addonId || !months) continue
     const endsAt = new Date(Date.now() + months * 30 * 86400000)
     await prisma.sponsorshipGrant.create({
-      data: { userId, addonId, months, amountCents: Number(amountStr) || 0, endsAt },
+      data: { userId, addonId, months, amountCents: Number(amountStr) || 0, pageTarget: page || null, endsAt },
     }).catch(() => {})
   }
 }
@@ -193,24 +194,6 @@ export async function handleStripeEvent(event: Stripe.Event) {
             const until = new Date(Date.now() + weeks * 7 * 86400000)
             await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { isFeatured: true, featuredUntil: until } })
           }
-        }
-      }
-      break
-    }
-    // A completed Checkout — used to grant any sponsorship bought in the same
-    // basket as a business subscription (one-off items on the subscription
-    // checkout). Fires once per session, so grants happen exactly once.
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session
-      const m = session.metadata ?? {}
-      if (m.sponsorship && m.userId) {
-        for (const part of m.sponsorship.split(',')) {
-          const [addonId, monthsStr, amountStr] = part.split(':')
-          const months = Number(monthsStr)
-          if (!addonId || !months) continue
-          await prisma.sponsorshipGrant.create({
-            data: { userId: m.userId, addonId, months, amountCents: Number(amountStr) || 0, endsAt: new Date(Date.now() + months * 30 * 86400000) },
-          }).catch(() => {})
         }
       }
       break

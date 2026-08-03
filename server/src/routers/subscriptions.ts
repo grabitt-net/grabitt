@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { getStripe } from '../lib/stripe'
 import { SUBSCRIPTION_PLANS, FOUNDING_BUSINESS_CAP } from '@grabitt/design-tokens'
-import { getSponsorshipCatalog, sponsorMonthlyCents, sponsorshipTotalCents } from '../lib/sponsorshipPricing'
+import { getSponsorshipCatalog, sponsorMonthlyCents, sponsorshipTotalCents, bannerForAddon } from '../lib/sponsorshipPricing'
 import type { PrismaClient } from '@prisma/client'
 
 const PLAN_IDS = Object.keys(SUBSCRIPTION_PLANS) as (keyof typeof SUBSCRIPTION_PLANS)[]
@@ -47,7 +47,7 @@ export const subscriptionsRouter = router({
       // Business plans only: optional one-off sponsorship placements to buy in the
       // SAME basket. These are added as one-time line items on the subscription
       // checkout and granted (as timed SponsorshipGrants) on completion.
-      sponsorship: z.array(z.object({ addonId: z.string(), months: z.number().int() })).optional(),
+      sponsorship: z.array(z.object({ addonId: z.string(), months: z.number().int(), pageTarget: z.string().optional() })).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const plan = SUBSCRIPTION_PLANS[input.plan as keyof typeof SUBSCRIPTION_PLANS]
@@ -78,12 +78,19 @@ export const subscriptionsRouter = router({
       if (isBusinessPlan && input.sponsorship?.length) {
         const catalog = await getSponsorshipCatalog(ctx.prisma)
         for (const item of input.sponsorship) {
+          const b = bannerForAddon(item.addonId)
+          if (b?.needsPage) {
+            if (!item.pageTarget) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Pick which category page to sponsor.' })
+            const clash = await ctx.prisma.sponsorshipGrant.findFirst({ where: { addonId: 'category_sponsor', pageTarget: item.pageTarget, status: 'active', endsAt: { gt: new Date() } } })
+            if (clash) throw new TRPCError({ code: 'CONFLICT', message: 'That category is already sponsored for this period.' })
+          }
           const monthly = await sponsorMonthlyCents(ctx.prisma, item.addonId)
           if (monthly == null) continue
           const total = sponsorshipTotalCents(monthly, item.months)
           const label = catalog.find(c => c.id === item.addonId)?.label ?? item.addonId
-          lineItems.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: total, product_data: { name: `Grabitt — ${label} (${item.months} ${item.months === 1 ? 'month' : 'months'})` } } })
-          basketParts.push(`${item.addonId}:${item.months}:${total}`)
+          const page = b?.needsPage ? (item.pageTarget ?? '') : ''
+          lineItems.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: total, product_data: { name: `Grabitt — ${label} (${item.months} ${item.months === 1 ? 'month' : 'months'})${page ? ` · ${page}` : ''}` } } })
+          basketParts.push(`${item.addonId}:${item.months}:${total}:${page}`)
         }
       }
 

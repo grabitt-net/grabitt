@@ -34,8 +34,10 @@ function EmployersInner() {
   const [gate, setGate] = useState<Gate>('loading')
   // Sponsorship basket: addonId -> chosen months (absent = not in basket).
   const [basket, setBasket] = useState<Record<string, number>>({})
+  const [pageFor, setPageFor] = useState<Record<string, string>>({})
   const [catalog, setCatalog] = useState<SponsorItem[]>([])
   const [durations, setDurations] = useState<number[]>([1, 3, 6, 12])
+  const [pages, setPages] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -52,7 +54,7 @@ function EmployersInner() {
       }
     })()
     createLooseTrpcClient().sponsorship.catalog.query()
-      .then((d: any) => { if (live) { setCatalog(d.items as SponsorItem[]); if (Array.isArray(d.durations)) setDurations(d.durations) } })
+      .then((d: any) => { if (live) { setCatalog(d.items as SponsorItem[]); if (Array.isArray(d.durations)) setDurations(d.durations); if (Array.isArray(d.pages)) setPages(d.pages) } })
       .catch(() => {})
     return () => { live = false }
   }, [])
@@ -62,10 +64,10 @@ function EmployersInner() {
   const toggleAddon = (id: string) => setBasket(p => { const n = { ...p }; if (n[id] != null) delete n[id]; else n[id] = durations[0] ?? 1; return n })
   const setMonths = (id: string, m: number) => setBasket(p => ({ ...p, [id]: m }))
   const basketTotal = Object.entries(basket).reduce((s, [id, m]) => { const c = catalog.find(x => x.id === id); return s + (c ? sponsorTotalCents(c.monthlyCents, m) : 0) }, 0)
-  const basketItems = Object.entries(basket).map(([addonId, months]) => ({ addonId, months }))
+  const basketItems = Object.entries(basket).map(([addonId, months]) => ({ addonId, months, ...(addonId === 'category_sponsor' && pageFor[addonId] ? { pageTarget: pageFor[addonId] } : {}) }))
 
   // Carry the sponsorship basket into the signup panel so it's paid in one go.
-  const stashBasket = () => { try { sessionStorage.setItem('grabitt_biz_sponsorship', JSON.stringify(basket)) } catch {} }
+  const stashBasket = () => { try { sessionStorage.setItem('grabitt_biz_sponsorship', JSON.stringify(basket)); sessionStorage.setItem('grabitt_biz_sponsorship_pages', JSON.stringify(pageFor)) } catch {} }
 
   const startSignup = () => {
     stashBasket()
@@ -190,10 +192,16 @@ function EmployersInner() {
                     <Link href={HELP} onClick={e => e.stopPropagation()} title={t('Learn more in the Help Centre')} style={{ marginLeft: 6, color: '#b7a98e', textDecoration: 'none', fontWeight: 900 }}>ⓘ</Link>
                     <span style={{ display: 'block', fontSize: 11, color: '#8a7d68', marginTop: 1, lineHeight: 1.4 }}>{a.blurb}</span>
                     {on && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
                         <select value={months} onChange={e => setMonths(a.id, Number(e.target.value))} style={{ border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 700, background: '#fff' }}>
                           {durations.map(d => <option key={d} value={d}>{d} {d === 1 ? t('month') : t('months')}</option>)}
                         </select>
+                        {a.id === 'category_sponsor' && (
+                          <select value={pageFor[a.id] ?? ''} onChange={e => setPageFor(p => ({ ...p, [a.id]: e.target.value }))} style={{ border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 700, background: '#fff' }}>
+                            <option value="">{t('Choose a page…')}</option>
+                            {pages.map(pg => <option key={pg} value={pg}>{pg.replace('_', ' ')}</option>)}
+                          </select>
+                        )}
                         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74' }}>{eur(a.monthlyCents)}/mo</span>
                       </span>
                     )}

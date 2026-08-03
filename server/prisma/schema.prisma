@@ -156,6 +156,7 @@ model SponsorshipGrant {
   addonId     String                       // BUSINESS_ADDONS id (homepage_sponsor, …)
   months      Int
   amountCents Int
+  pageTarget  String?                       // category/page slug for Category Sponsor; null = site-wide
   startsAt    DateTime @default(now())
   endsAt      DateTime
   status      String   @default("active")  // active | expired | cancelled
@@ -1450,6 +1451,8 @@ model Banner {
   linkUrl   String?
   active    Boolean        @default(false)
   position  BannerPosition
+  pageTarget   String?                     // category/page slug; null = every page for the position
+  grantId      String?      @unique        // the SponsorshipGrant that paid for a self-serve banner
   startsAt  DateTime?
   endsAt    DateTime?
   clickCount   Int         @default(0)
@@ -1458,6 +1461,7 @@ model Banner {
 
   @@index([active])
   @@index([position])
+  @@index([pageTarget])
 }
 
 enum EshotSegment {

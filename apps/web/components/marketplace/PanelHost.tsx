@@ -4719,6 +4719,9 @@ function PanelBody() {
     const [basket, setBasket] = useState<Record<string, number>>(() => {
       try { const s = sessionStorage.getItem('grabitt_biz_sponsorship'); const a = s ? JSON.parse(s) : {}; return a && typeof a === 'object' ? a : {} } catch { return {} }
     })
+    const [sponsorPages] = useState<Record<string, string>>(() => {
+      try { const s = sessionStorage.getItem('grabitt_biz_sponsorship_pages'); const a = s ? JSON.parse(s) : {}; return a && typeof a === 'object' ? a : {} } catch { return {} }
+    })
     const [catalog, setCatalog] = useState<any[]>([])
     const [durations, setDurations] = useState<number[]>([1, 3, 6, 12])
     const [bizBusy, setBizBusy] = useState(false)
@@ -4739,7 +4742,7 @@ function PanelBody() {
     const sponsorTotalCents = (monthly: number, months: number) => monthly * (months >= 12 ? 10 : months)
     const toggleSponsor = (id: string) => setBasket(p => { const n = { ...p }; if (n[id] != null) delete n[id]; else n[id] = durations[0] ?? 1; return n })
     const setSponsorMonths = (id: string, m: number) => setBasket(p => ({ ...p, [id]: m }))
-    const sponsorItems = Object.entries(basket).map(([addonId, months]) => ({ addonId, months }))
+    const sponsorItems = Object.entries(basket).map(([addonId, months]) => ({ addonId, months, ...(addonId === 'category_sponsor' && sponsorPages[addonId] ? { pageTarget: sponsorPages[addonId] } : {}) }))
     const sponsorTotal = Object.entries(basket).reduce((s, [id, m]) => { const c = catalog.find(x => x.id === id); return s + (c ? sponsorTotalCents(c.monthlyCents, m) : 0) }, 0)
 
     // Combined basket: business subscription + one-off sponsorship placements.

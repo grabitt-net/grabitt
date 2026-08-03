@@ -10,16 +10,16 @@ type Position = 'home_top' | 'home_mid' | 'category' | 'checkout' | 'jobs' | 'sp
 // "Featured Partner" slot cycles up to 7 advertisers. Every view and click is
 // tracked so sponsorship performance is quantifiable. Renders nothing when there
 // are no active banners, so the layout stays clean.
-export default function BannerSlot({ position, aspect = '3.4 / 1', radius = 16, padded = true }: { position: Position; aspect?: string; radius?: number; padded?: boolean }) {
+export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius = 16, padded = true }: { position: Position; page?: string; aspect?: string; radius?: number; padded?: boolean }) {
   const [banners, setBanners] = useState<Banner[]>([])
   const [idx, setIdx] = useState(0)
   const seen = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    createLooseTrpcClient().banners.active.query({ position })
+    createLooseTrpcClient().banners.active.query({ position, ...(page ? { page } : {}) })
       .then(d => setBanners(d as unknown as Banner[]))
       .catch(() => {})
-  }, [position])
+  }, [position, page])
 
   useEffect(() => {
     if (banners.length < 2) return

@@ -47,7 +47,10 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
   const [data, setData] = useState<TierStatus | null>(null)
   const [postings, setPostings] = useState<Postings | null>(null)
   // Active one-off sponsorship placements (bought via the basket).
-  const [sponsorships, setSponsorships] = useState<{ id: string; addonId: string; endsAt: string }[] | null>(null)
+  const [sponsorships, setSponsorships] = useState<{ id: string; addonId: string; endsAt: string; pageTarget: string | null; hasCreative: boolean; needsPageBanner: boolean }[] | null>(null)
+  const [creativeFor, setCreativeFor] = useState<string | null>(null)
+  const [creativeImg, setCreativeImg] = useState(''); const [creativeLink, setCreativeLink] = useState('')
+  const [creativeBusy, setCreativeBusy] = useState(false); const [creativeMsg, setCreativeMsg] = useState('')
 
   useEffect(() => {
     trpcAuthed().business.tierStatus.query()
@@ -220,11 +223,30 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
           <Muted>{t('No active placements.')}</Muted>
         ) : sponsorships.map(g => {
           const a = (BUSINESS_ADDONS as any)[g.addonId]
+          const submit = async () => {
+            setCreativeBusy(true); setCreativeMsg('')
+            try {
+              await trpcAuthed().sponsorship.setCreative.mutate({ grantId: g.id, imageUrl: creativeImg.trim(), linkUrl: creativeLink.trim() })
+              setCreativeMsg('✓ Banner live'); setCreativeFor(null); setCreativeImg(''); setCreativeLink('')
+              trpcAuthed().sponsorship.mine.query().then((d: any) => setSponsorships(d ?? [])).catch(() => {})
+            } catch (e: any) { setCreativeMsg(e?.message ?? 'Could not upload') } finally { setCreativeBusy(false) }
+          }
           return (
-            <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid #f4efe8', padding: '9px 2px' }}>
-              <span style={{ fontSize: 16 }}>{a?.icon ?? '📢'}</span>
-              <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)' }}>{a?.label ?? g.addonId}</span>
-              <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#16a34a', fontWeight: 800 }}>{t('until')} {new Date(g.endsAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+            <div key={g.id} style={{ borderBottom: '1px solid #f4efe8', padding: '9px 2px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 16 }}>{a?.icon ?? '📢'}</span>
+                <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)' }}>{a?.label ?? g.addonId}{g.pageTarget ? ` · ${g.pageTarget}` : ''}</span>
+                <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#16a34a', fontWeight: 800 }}>{t('until')} {new Date(g.endsAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                {g.needsPageBanner && <button onClick={() => { setCreativeFor(creativeFor === g.id ? null : g.id); setCreativeMsg('') }} style={{ background: g.hasCreative ? '#f0fdf4' : '#FFF3EE', border: `1px solid ${g.hasCreative ? '#bbf7d0' : '#FFD4A0'}`, color: g.hasCreative ? '#16a34a' : '#8a5a2a', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{g.hasCreative ? t('Edit banner') : t('Upload banner')}</button>}
+              </div>
+              {creativeFor === g.id && (
+                <div style={{ marginTop: 8, background: '#f9f6f2', borderRadius: 10, padding: 10 }}>
+                  <input value={creativeImg} onChange={e => setCreativeImg(e.target.value)} placeholder={t('Banner image URL (wide)')} style={miniInput} />
+                  <input value={creativeLink} onChange={e => setCreativeLink(e.target.value)} placeholder={t('Link URL (e.g. your storefront)')} style={miniInput} />
+                  {creativeMsg && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: creativeMsg.startsWith('✓') ? '#16a34a' : '#ef4444', marginBottom: 6 }}>{creativeMsg}</div>}
+                  <button onClick={submit} disabled={creativeBusy || !creativeImg.trim() || !creativeLink.trim()} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, cursor: 'pointer' }}>{creativeBusy ? t('Saving…') : t('Go live')}</button>
+                </div>
+              )}
             </div>
           )
         })}
@@ -308,6 +330,7 @@ function Muted({ children }: { children: React.ReactNode }) {
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }
 const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }
 const miniBtn: React.CSSProperties = { background: '#f5efe6', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#8a5a2a', cursor: 'pointer', textTransform: 'none', letterSpacing: 0 }
+const miniInput: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 8, padding: '8px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12, outline: 'none', background: '#fff', marginBottom: 7 }
 const row: React.CSSProperties = { display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f0e8' }
 const rowTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
 const rowSub: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }

@@ -6,6 +6,22 @@ export type SponsorItem = { id: string; label: string; icon: string; blurb: stri
 // Buyable durations. 12 months gets 2 months free (×10 not ×12).
 export const SPONSOR_DURATIONS = [1, 3, 6, 12] as const
 
+// Which add-ons map to a banner slot, the slot position, the per-page cap, and
+// whether the buyer picks a specific page. Category Sponsor is one advertiser per
+// page (fixed top); Featured Partner rotates up to 7 in the bottom slot.
+export const ADDON_BANNER: Record<string, { position: string; cap: number; needsPage: boolean; label: string }> = {
+  homepage_sponsor: { position: 'home_top', cap: 1, needsPage: false, label: 'Homepage hero' },
+  category_sponsor: { position: 'category', cap: 1, needsPage: true, label: 'Category top banner' },
+  featured_partner: { position: 'sponsor_footer', cap: 7, needsPage: false, label: 'Featured Partner (rotating)' },
+}
+export const bannerForAddon = (addonId: string) => ADDON_BANNER[addonId] ?? null
+
+// Pages a Category Sponsor can own (department slugs + home).
+export const SPONSOR_PAGES = [
+  'home', 'motors', 'property', 'fashion', 'electronics', 'home_garden', 'sport',
+  'gaming', 'kids_baby', 'jobs', 'grab_it_now', 'services',
+] as const
+
 /** Total (cents) to buy `months` of an add-on at `monthlyCents`. 12 = ×10. */
 export function sponsorshipTotalCents(monthlyCents: number, months: number): number {
   const multiplier = months >= 12 ? 10 : months

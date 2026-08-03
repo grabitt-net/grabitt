@@ -27,18 +27,21 @@ export const bannersRouter = router({
     .mutation(({ ctx, input }) => ctx.prisma.banner.delete({ where: { id: input.id } })),
 
   active: publicProcedure
-    .input(z.object({ position: z.enum(['home_top','home_mid','category','checkout','jobs','sponsor_top','sponsor_footer','messages','notifications']) }))
+    .input(z.object({
+      position: z.enum(['home_top','home_mid','category','checkout','jobs','sponsor_top','sponsor_footer','messages','notifications']),
+      // Optional page/category slug. When given, returns banners targeting that
+      // page plus site-wide ones (pageTarget null); when omitted, only site-wide.
+      page: z.string().optional(),
+    }))
     .query(({ ctx, input }) => {
       const now = new Date()
       return ctx.prisma.banner.findMany({
         where: {
           position: input.position,
           active: true,
-          OR: [
-            { startsAt: null },
-            { startsAt: { lte: now } },
-          ],
+          ...(input.page ? { OR: [{ pageTarget: input.page }, { pageTarget: null }] } : { pageTarget: null }),
           AND: [
+            { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
             { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
           ],
         },

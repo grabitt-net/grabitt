@@ -9,6 +9,7 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
+import BannerSlot from '@/components/marketplace/BannerSlot'
 import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
 
 // A department/category now opens its own page (matching /jobs and /property)
@@ -80,6 +81,10 @@ export default function CategoryPage() {
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title={label} />
       <QuickActions />
+
+      {/* Category Sponsor — the fixed top banner for this category (1 advertiser) */}
+      <BannerSlot position="category" page={slug} aspect="5 / 1" />
+
 
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${label}…`} style={inp} />
