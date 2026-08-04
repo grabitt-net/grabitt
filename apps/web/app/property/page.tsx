@@ -155,12 +155,12 @@ export default function PropertyPage() {
             return (
               <button key={t} onClick={() => toggleLocation(t)} style={{
                 border: `1px solid ${on ? 'var(--orange)' : '#e5dccd'}`, background: on ? 'var(--orange)' : '#fff',
-                color: on ? '#fff' : '#6b5d48', borderRadius: 50, padding: '4px 11px', fontFamily: 'var(--font-nunito)',
+                color: on ? '#fff' : '#1a1a1a', borderRadius: 50, padding: '4px 11px', fontFamily: 'var(--font-nunito)',
                 fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
               }}>{on ? '✓ ' : ''}{t}</button>
             )
           })}
-          {locations.length > 0 && <button onClick={() => setLocations([])} style={{ border: 'none', background: 'none', color: '#9a8b74', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Clear areas</button>}
+          {locations.length > 0 && <button onClick={() => setLocations([])} style={{ border: 'none', background: 'none', color: '#1a1a1a', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Clear areas</button>}
         </div>
 
         {/* Feature quick filters */}
@@ -170,7 +170,7 @@ export default function PropertyPage() {
             return (
               <button key={f} onClick={() => toggleFeature(f)} style={{
                 border: `1px solid ${on ? 'var(--teal, #0f766e)' : '#e5dccd'}`, background: on ? 'var(--teal, #0f766e)' : '#fff',
-                color: on ? '#fff' : '#6b5d48', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)',
+                color: on ? '#fff' : '#1a1a1a', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)',
                 fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
               }}>{featureIcon(f)} {featureLabel(f)}</button>
             )
@@ -236,13 +236,13 @@ export default function PropertyPage() {
                 {/* Snapshot */}
                 <div style={{ flex: 1, minWidth: 0, padding: '11px 12px', display: 'flex', flexDirection: 'column' }}>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)' }}>
-                    €{Number(l.price ?? 0).toLocaleString()}<span style={{ fontSize: 12, fontWeight: 700, color: '#9a8b74' }}>{isRent ? '/mo' : ''}</span>
+                    €{Number(l.price ?? 0).toLocaleString()}<span style={{ fontSize: 12, fontWeight: 700, color: '#1a1a1a' }}>{isRent ? '/mo' : ''}</span>
                   </div>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{l.title}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>📍 {l.location ?? 'Gran Canaria'}{p.community ? ` · ${p.community}` : ''}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>📍 {l.location ?? 'Gran Canaria'}{p.community ? ` · ${p.community}` : ''}</div>
 
                   {/* Key facts row */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 700, color: '#4a4034', marginTop: 6 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 700, color: '#1a1a1a', marginTop: 6 }}>
                     {p.bedrooms > 0 && <span>🛏 {p.bedrooms} {p.bedrooms === 1 ? 'bed' : 'beds'}</span>}
                     {p.bathrooms > 0 && <span>🚿 {p.bathrooms} {p.bathrooms === 1 ? 'bath' : 'baths'}</span>}
                     {p.m2 && <span>📐 {Number(p.m2)} m²</span>}
@@ -251,7 +251,7 @@ export default function PropertyPage() {
 
                   {chips.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 'auto', paddingTop: 8 }}>
-                      {chips.map(c => <span key={c} style={{ background: '#f5efe6', color: '#6b5d48', fontFamily: 'var(--font-nunito)', fontSize: 9.5, fontWeight: 800, padding: '3px 8px', borderRadius: 50 }}>{c}</span>)}
+                      {chips.map(c => <span key={c} style={{ background: '#f5efe6', color: '#1a1a1a', fontFamily: 'var(--font-nunito)', fontSize: 9.5, fontWeight: 800, padding: '3px 8px', borderRadius: 50 }}>{c}</span>)}
                     </div>
                   )}
                 </div>

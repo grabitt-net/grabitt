@@ -17,7 +17,7 @@ function JoinInner() {
     router.replace('/')
   }, [params, router])
   return (
-    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-ui, sans-serif)', color: '#8a7d68' }}>
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-ui, sans-serif)', color: '#1a1a1a' }}>
       Welcome to Grabitt — taking you in…
     </div>
   )

@@ -201,8 +201,8 @@ export default function JobsPage() {
                   <div style={{ padding: '10px 11px 12px' }}>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.jobTitle}</div>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>{salaryLabel(j.salaryMin, j.salaryMax, j.salaryPeriod)}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a8b74' }}>{j.company}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a8b74' }}>📍 {j.remote ? 'Remote' : (l.location ?? 'Gran Canaria')}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>{j.company}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>📍 {j.remote ? 'Remote' : (l.location ?? 'Gran Canaria')}</div>
                   </div>
                 </div>
               </Link>

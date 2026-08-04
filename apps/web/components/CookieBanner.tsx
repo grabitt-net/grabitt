@@ -43,7 +43,7 @@ export default function CookieBanner() {
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)', marginBottom: 2 }}>
           Cookies on Grabitt
         </div>
-        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#6b5d48', lineHeight: 1.5 }}>
+        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#1a1a1a', lineHeight: 1.5 }}>
           We only use cookies that are strictly necessary to run the site — keeping you signed in and holding your basket.
           We don&apos;t use advertising or tracking cookies. See our{' '}
           <Link href="/privacy" style={{ color: 'var(--orange)', fontWeight: 700 }}>Privacy Policy</Link>.

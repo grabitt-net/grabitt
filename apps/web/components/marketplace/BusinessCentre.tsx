@@ -76,14 +76,14 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
           <div style={{ width: 46, height: 46, borderRadius: 12, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 22 }}>🏢</div>
           <div style={{ flex: 1, minWidth: 140 }}>
             <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 19, fontWeight: 700, color: 'var(--dark)' }}>{s.label}</div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6b5d48' }}>{t('Your business level')}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a' }}>{t('Your business level')}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color }}>{fmtPct(s.feePct)}</div>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('fee on item sales')}</div>
           </div>
         </div>
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', marginTop: 8, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 8, lineHeight: 1.5 }}>
           {t('The item-sale fee. Property and job listings are never charged a sales fee.')}
         </div>
 
@@ -126,14 +126,14 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
             </div>
             <Criterion label={t('Sales (last 90 days)')} have={s.sales90d} need={s.next.needSales} />
             <Criterion label={t('Average rating')} have={s.rating} need={s.next.needRating} decimals />
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a8b74', marginTop: 8, lineHeight: 1.5 }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a', marginTop: 8, lineHeight: 1.5 }}>
               {t('Levels are earned on a rolling 90-day basis — keep your numbers up to hold your level. If they slip, your level drops automatically.')}
             </div>
           </div>
         ) : (
           <div style={{ marginTop: 14, background: '#fff', border: '1px solid #efe7db', borderRadius: 12, padding: 12 }}>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--dark)' }}>{t('Top level reached 🎉')}</div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', marginTop: 4, lineHeight: 1.5 }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 4, lineHeight: 1.5 }}>
               {t('Keep {s} sales in every rolling 90 days and a {r}★ rating to hold Business Pro.')
                 .replace('{s}', String(BUSINESS_TIERS.pro.criteria.sales90d)).replace('{r}', String(BUSINESS_TIERS.pro.criteria.rating))}
             </div>
@@ -150,7 +150,7 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
         <button onClick={() => openPanel('buyCredits')} style={{ width: '100%', marginTop: 12, background: '#f9f6f2', border: '1px dashed #d8cbb5', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: '#8a5a2a', cursor: 'pointer' }}>
           ➕ {t('Buy extra listing credits')}
         </button>
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a8b74', marginTop: 8, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a', marginTop: 8, lineHeight: 1.5 }}>
           {t('Allowances reset on the 1st of each month. Once you hit a cap, top up with credits to keep listing.')}
         </div>
       </div>
@@ -216,7 +216,7 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
       {/* ── Sponsorship & advertising (one-off, timed) ── */}
       <div style={card}>
         <div style={cardHead}>📣 {t('Sponsorship & advertising')}</div>
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', marginBottom: 10, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginBottom: 10, lineHeight: 1.5 }}>
           {t('Buy homepage, category and featured banner placements for a set number of months — a one-off payment, not a subscription.')}
         </div>
         {sponsorships === null ? <Muted>{t('Loading…')}</Muted> : sponsorships.length === 0 ? (
@@ -278,7 +278,7 @@ function Criterion({ label, have, need, decimals }: { label: string; have: numbe
   const fmt = (n: number) => (decimals ? n.toFixed(1) : String(n))
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: met ? 'var(--sage)' : '#6b5d48', marginBottom: 3 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: met ? 'var(--sage)' : '#1a1a1a', marginBottom: 3 }}>
         <span>{met ? '✓ ' : ''}{label}</span>
         <span>{fmt(have)} / {fmt(need)}</span>
       </div>
@@ -296,7 +296,7 @@ function AllowanceBar({ label, icon, used, cap, color }: { label: string; icon: 
     <div style={{ marginBottom: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>
         <span>{icon} {label}</span>
-        <span style={{ color: over ? '#ef4444' : '#6b5d48' }}>{used} / {cap}</span>
+        <span style={{ color: over ? '#ef4444' : '#1a1a1a' }}>{used} / {cap}</span>
       </div>
       <div style={{ height: 8, background: '#f0eae0', borderRadius: 50, overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: over ? '#ef4444' : color, transition: 'width 0.3s' }} />
@@ -333,4 +333,4 @@ const miniBtn: React.CSSProperties = { background: '#f5efe6', border: 'none', bo
 const miniInput: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 8, padding: '8px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12, outline: 'none', background: '#fff', marginBottom: 7 }
 const row: React.CSSProperties = { display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f0e8' }
 const rowTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
-const rowSub: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }
+const rowSub: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }

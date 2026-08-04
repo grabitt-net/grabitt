@@ -48,7 +48,7 @@ export default function FeaturedStrip() {
               <div style={{ padding: '10px 10px 12px' }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>{item.title}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>{item.price}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 500, color: '#9a8b74', marginTop: 4 }}><Icon name="mapPin" size={11} /> {item.location}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 500, color: '#1a1a1a', marginTop: 4 }}><Icon name="mapPin" size={11} /> {item.location}</div>
               </div>
             </div>
           )

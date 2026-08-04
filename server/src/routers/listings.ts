@@ -634,7 +634,7 @@ export const listingsRouter = router({
       subcategory: z.string().optional(),
       sort: z.enum(['newest', 'price_asc', 'price_desc']).default('newest'),
       page: z.number().int().min(1).default(1),
-      limit: z.number().int().min(1).max(50).default(20),
+      limit: z.number().int().min(1).max(50).default(50),
     }))
     .query(async ({ ctx, input }) => {
       const { department, subcategory, sort, page, limit } = input

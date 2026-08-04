@@ -16,7 +16,7 @@ function StripCard({ item, onClick }: { item: any; onClick: () => void }) {
       <div style={{ padding: '10px 10px 12px' }}>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 3 }}>{item.title}</div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>{item.price}</div>
-        {item.location && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#9a8b74', marginTop: 4 }}>📍 {item.location}</div>}
+        {item.location && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 4 }}>📍 {item.location}</div>}
       </div>
     </div>
   )

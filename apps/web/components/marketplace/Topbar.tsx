@@ -102,7 +102,7 @@ export default function Topbar({ title, back, backFallback }: { title?: string; 
 
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginLeft: 8, minWidth: 0, maxWidth: '62%' }}>
           <div style={{ flex: 1, background: '#fff', borderRadius: 50, display: 'flex', alignItems: 'center', padding: '7px 5px 7px 11px', gap: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: 0 }}>
-            <span style={{ flexShrink: 0, color: '#9a8b74', display: 'flex' }}><Icon name="search" size={15} /></span>
+            <span style={{ flexShrink: 0, color: '#1a1a1a', display: 'flex' }}><Icon name="search" size={15} /></span>
             <input
               value={query}
               onChange={e => setQuery(e.target.value)}

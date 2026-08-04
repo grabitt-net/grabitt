@@ -111,15 +111,15 @@ function CvInner() {
       <Topbar />{body}<Footer /><PanelHost />
     </main>
   )
-  if (!ready) return shell(<div style={{ textAlign: 'center', padding: 70, color: '#8a7d68', fontFamily: 'var(--font-nunito)' }}>{t('Loading your CV…')}</div>)
+  if (!ready) return shell(<div style={{ textAlign: 'center', padding: 70, color: '#1a1a1a', fontFamily: 'var(--font-nunito)' }}>{t('Loading your CV…')}</div>)
 
   return shell(
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '16px 14px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
         <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 22, fontWeight: 700, color: 'var(--dark)' }}>📄 {t('My CV')}</span>
-        <Link href="/account" style={{ marginLeft: 'auto', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#9a8b74' }}>‹ {t('Account')}</Link>
+        <Link href="/account" style={{ marginLeft: 'auto', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#1a1a1a' }}>‹ {t('Account')}</Link>
       </div>
-      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#6b5d48', lineHeight: 1.6, marginBottom: 14 }}>
+      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', lineHeight: 1.6, marginBottom: 14 }}>
         {t('This builds the CV recruiters receive when you apply. It stays anonymous — no name, photo or contact — until an employer shortlists you.')}
       </div>
 
@@ -232,7 +232,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, outline: 'none', background: '#fff', marginBottom: 8 }
 const lbl: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 5, marginTop: 4 }
-const hint: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', marginTop: 2, marginBottom: 6, lineHeight: 1.5 }
+const hint: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 2, marginBottom: 6, lineHeight: 1.5 }
 const block: React.CSSProperties = { border: '1px solid #f0ebe4', borderRadius: 12, padding: 12, marginBottom: 10, background: '#fcfaf6' }
 const rm: React.CSSProperties = { background: '#fff', border: '1px solid #e5dccd', borderRadius: 8, padding: '0 12px', color: '#c00', cursor: 'pointer', fontSize: 15, height: 40, flexShrink: 0 }
 const cb: React.CSSProperties = { width: 16, height: 16, accentColor: 'var(--orange)' }

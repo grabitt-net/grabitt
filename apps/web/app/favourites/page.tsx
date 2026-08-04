@@ -86,7 +86,7 @@ export default function FavouritesPage() {
                   <div style={{ padding: '10px 11px 12px' }}>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>€{Number(l.price ?? 0).toLocaleString()}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a8b74' }}>📍 {l.location ?? 'Gran Canaria'}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>📍 {l.location ?? 'Gran Canaria'}</div>
                   </div>
                 </div>
               </Link>

@@ -9,6 +9,7 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
+import Pagination from '@/components/marketplace/Pagination'
 import { deptEmoji, type DbListing } from '@/lib/listingMap'
 import { t } from '@/lib/i18n'
 
@@ -42,19 +43,31 @@ function SearchInner() {
   const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
   const [filterIdx, setFilterIdx] = useState(0)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const PER_PAGE = 50
+
+  // Reset to page 1 whenever the query, sort, filter or feed changes.
+  useEffect(() => { setPage(1) }, [q, sort, filterIdx, featured])
 
   useEffect(() => {
     setLoading(true)
     const dept = FILTER_ENUM[FILTERS[filterIdx]]
     const client = createLooseTrpcClient()
     const run = featured
-      ? client.listings.featured.query().then(d => ({ items: d }))
-      : client.listings.search.query({ query: q || undefined, department: dept, sort })
+      ? client.listings.featured.query().then(d => ({ items: d, total: (d as unknown[]).length }))
+      : client.listings.search.query({ query: q || undefined, department: dept, sort, page, limit: PER_PAGE })
     Promise.resolve(run)
-      .then(res => setItems((((res as { items?: unknown }).items) ?? []) as unknown as DbListing[]))
-      .catch(() => setItems([]))
+      .then(res => {
+        const r = res as { items?: unknown; total?: number }
+        setItems(((r.items) ?? []) as unknown as DbListing[]); setTotal(r.total ?? 0)
+      })
+      .catch(() => { setItems([]); setTotal(0) })
       .finally(() => setLoading(false))
-  }, [q, sort, filterIdx, featured])
+  }, [q, sort, filterIdx, featured, page])
+
+  // Featured is a single fixed feed (no server paging); everything else pages 50 at a time.
+  const totalPages = featured ? 1 : Math.max(1, Math.ceil(total / PER_PAGE))
 
   // The featured feed isn't department-filtered server-side, so apply the chip here.
   const shown = useMemo(() => {
@@ -72,7 +85,7 @@ function SearchInner() {
 
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <Link href="/" style={{ marginLeft: 'auto', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#9a8b74' }}>‹ {t('Home')}</Link>
+          <Link href="/" style={{ marginLeft: 'auto', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#1a1a1a' }}>‹ {t('Home')}</Link>
         </div>
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {FILTERS.map((f, i) => (
@@ -87,7 +100,7 @@ function SearchInner() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px' }}>
         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888', fontWeight: 700 }}>
-          {loading ? t('Loading…') : `${shown.length} ${shown.length === 1 ? t('listing') : t('listings')}`}
+          {loading ? t('Loading…') : `${featured ? shown.length : total} ${(featured ? shown.length : total) === 1 ? t('listing') : t('listings')}${totalPages > 1 ? ` · ${t('page')} ${page}/${totalPages}` : ''}`}
         </span>
         <select value={sort} onChange={e => setSort(e.target.value as typeof sort)} style={{ ...sel, marginLeft: 'auto' }}>
           <option value="newest">{t('Newest first')}</option>
@@ -115,7 +128,7 @@ function SearchInner() {
                 <div style={{ padding: '10px 11px 12px' }}>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>€{Number(l.price ?? 0).toLocaleString()}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a8b74' }}>📍 {l.location ?? 'Gran Canaria'}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>📍 {l.location ?? 'Gran Canaria'}</div>
                 </div>
               </div>
             </Link>
@@ -128,6 +141,10 @@ function SearchInner() {
           </div>
         )}
       </div>
+
+      {!loading && !featured && (
+        <Pagination page={page} totalPages={totalPages} onChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
+      )}
 
       <Footer />
       <CartFab />

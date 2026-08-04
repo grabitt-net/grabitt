@@ -38,7 +38,7 @@ export default function MemberStatusCard() {
   return (
     <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }}>
       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>{t('Discounts & member status')}</div>
-      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#7a6c56', marginBottom: 12, lineHeight: 1.5 }}>
+      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', marginBottom: 12, lineHeight: 1.5 }}>
         {t('Students, Blue Light workers and registered charities can apply for a reduced rate. Approval takes a quick manual check.')}
       </div>
 
@@ -62,7 +62,7 @@ export default function MemberStatusCard() {
                 <span style={{ fontSize: 22 }}>{s.badge}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{s.label}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a7d68', lineHeight: 1.4 }}>{s.blurb}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', lineHeight: 1.4 }}>{s.blurb}</div>
                 </div>
                 {isCurrent ? <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#16a34a' }}>✓ {t('Active')}</span>
                   : isPending ? <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#a16207' }}>{t('In review')}</span>

@@ -387,7 +387,7 @@ function CourierTrackingForm({ transactionId, title, onClose }: { transactionId:
       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>
         Post <strong>{title}</strong> using a <strong>tracked service</strong> and enter the details below — no QR needed.
       </div>
-      <div style={{ background: '#f9f6f2', border: '1px solid #ece3d7', borderRadius: 10, padding: '10px 12px', marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#6b5d48', lineHeight: 1.55 }}>
+      <div style={{ background: '#f9f6f2', border: '1px solid #ece3d7', borderRadius: 10, padding: '10px 12px', marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#1a1a1a', lineHeight: 1.55 }}>
         🔒 You&apos;re paid <strong>48 hours after delivery</strong>, not when you post. Tracking is what proves delivery, so a tracked service is required — an untracked parcel can&apos;t trigger your payment.
       </div>
       <div style={{ marginBottom: 12 }}>
@@ -1605,7 +1605,7 @@ function PanelBody() {
             {/* Postal timeline: delivery starts the buyer's 24h window and the
                 seller's 48h payout clock. */}
             {tx.fulfilmentType === 'courier' && tx.status === 'held' && (
-              <div style={{ background: tx.deliveredAt ? '#fffbeb' : '#f9f6f2', border: `1px solid ${tx.deliveredAt ? '#fde68a' : '#ece3d7'}`, borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11.5, lineHeight: 1.55, color: tx.deliveredAt ? '#92400e' : '#6b5d48' }}>
+              <div style={{ background: tx.deliveredAt ? '#fffbeb' : '#f9f6f2', border: `1px solid ${tx.deliveredAt ? '#fde68a' : '#ece3d7'}`, borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11.5, lineHeight: 1.55, color: tx.deliveredAt ? '#92400e' : '#1a1a1a' }}>
                 {!tx.deliveredAt ? (
                   <>🔒 Your payment is held. It stays held until the parcel is delivered — the seller is paid 48 hours after delivery, not when they post it.</>
                 ) : tx.disputeWindowOpen ? (
@@ -3528,7 +3528,7 @@ function PanelBody() {
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Quantity available')}</div>
                   <input type="number" value={stock} onChange={e => setStock(e.target.value)} min="1" max="999" step="1"
                     style={{ width: 120, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '12px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#9a8b74', marginTop: 4 }}>Buyers can purchase multiple units until stock runs out.</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 4 }}>Buyers can purchase multiple units until stock runs out.</div>
                 </div>
 
                 {/* Auto-accept offers minimum (seller-only; never shown to buyers) */}

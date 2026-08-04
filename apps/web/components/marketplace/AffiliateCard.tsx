@@ -36,7 +36,7 @@ export default function AffiliateCard() {
         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1 }}>🔗 {t('Affiliate — earn per signup')}</span>
         {mine.tier === 'founding' && <span style={{ background: '#FFF3EE', color: '#8a5a2a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>⭐ {t('Founding')}</span>}
       </div>
-      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#7a6c56', marginBottom: 12, lineHeight: 1.5 }}>
+      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', marginBottom: 12, lineHeight: 1.5 }}>
         {t('Share your link with friends & family. You earn a reward for every validated signup that comes through it.')}
       </div>
 
@@ -59,7 +59,7 @@ export default function AffiliateCard() {
         <span style={{ fontSize: 18 }}>💳</span>
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: mine.hasPayoutAccount ? 'var(--sage)' : '#8a5a2a' }}>{payoutBusy ? t('Opening Stripe…') : mine.hasPayoutAccount ? t('Payout account connected — manage') : t('Set up payouts to get paid')}</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a7d68', marginTop: 2 }}>{t('We pay affiliate earnings to your connected Stripe account.')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 2 }}>{t('We pay affiliate earnings to your connected Stripe account.')}</div>
         </div>
         <span style={{ color: mine.hasPayoutAccount ? 'var(--sage)' : '#8a5a2a', fontWeight: 900, fontSize: 16 }}>›</span>
       </button>

@@ -417,7 +417,7 @@ function ListingInner() {
                 {Array.isArray(prop.features) && prop.features.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
                     {prop.features.map((f: string) => (
-                      <span key={f} style={{ background: '#f5efe6', color: '#6b5d48', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 50 }}>{featureIcon(f)} {featureLabel(f)}</span>
+                      <span key={f} style={{ background: '#f5efe6', color: '#1a1a1a', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 50 }}>{featureIcon(f)} {featureLabel(f)}</span>
                     ))}
                   </div>
                 )}
@@ -544,7 +544,7 @@ function ListingInner() {
             <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
               {[{ k: 'Average', v: comps.avg }, { k: 'Lowest', v: comps.min }, { k: 'Highest', v: comps.max }].map(m => (
                 <div key={m.k} style={{ flex: 1, background: '#f5f0e8', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#9a8b74', marginBottom: 3 }}>{m.k}</div>
+                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#1a1a1a', marginBottom: 3 }}>{m.k}</div>
                   <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 16, fontWeight: 800, color: 'var(--dark)' }}>€{Number(m.v).toLocaleString()}</div>
                 </div>
               ))}

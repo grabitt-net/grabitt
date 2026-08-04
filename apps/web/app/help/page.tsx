@@ -82,7 +82,7 @@ function Inner() {
                 <span style={{ fontSize: 24 }}>{t.icon}</span>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{t.title}</span>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#8a7d68' }}>{t.blurb}</span>
+                  <span style={{ display: 'block', fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#1a1a1a' }}>{t.blurb}</span>
                 </span>
                 <span style={{ color: 'var(--orange)', fontWeight: 900, transform: openId === t.id ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }}>›</span>
               </button>
@@ -159,7 +159,7 @@ function AiAssistant() {
           {msgs.map((m, i) => (
             <div key={i} style={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', background: m.role === 'user' ? 'var(--orange)' : '#fff', color: m.role === 'user' ? '#fff' : '#333', borderRadius: m.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px', padding: '9px 12px', fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{m.content}</div>
           ))}
-          {busy && <div style={{ alignSelf: 'flex-start', fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#8a7d68', padding: '4px 6px' }}>Thinking…</div>}
+          {busy && <div style={{ alignSelf: 'flex-start', fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#1a1a1a', padding: '4px 6px' }}>Thinking…</div>}
         </div>
       )}
 

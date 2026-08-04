@@ -119,7 +119,7 @@ function EmployersInner() {
         {/* Business levels */}
         <div style={{ marginTop: 18 }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', textAlign: 'center', marginBottom: 4 }}>{t('Business levels')}</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6b5d48', textAlign: 'center', marginBottom: 12 }}>{t('Every business starts at Business. The lower-fee levels are earned — and maintained — through sales and rating.')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', textAlign: 'center', marginBottom: 12 }}>{t('Every business starts at Business. The lower-fee levels are earned — and maintained — through sales and rating.')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
             {BUSINESS_TIER_ORDER.map((g, i) => {
               const tier = BUSINESS_TIERS[g]
@@ -131,15 +131,15 @@ function EmployersInner() {
                     <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{tier.label}</span>
                     {start && <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-nunito)', fontSize: 8.5, fontWeight: 900, color: '#fff', background: 'var(--orange)', borderRadius: 50, padding: '2px 7px', textTransform: 'uppercase' }}>{t('Start here')}</span>}
                   </div>
-                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 24, fontWeight: 700, color: 'var(--orange)', margin: '8px 0 2px' }}>{feePct(tier.feeRate)}<span style={{ fontSize: 12, color: '#9a8b74', fontWeight: 400 }}> {t('sales fee')}</span></div>
+                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 24, fontWeight: 700, color: 'var(--orange)', margin: '8px 0 2px' }}>{feePct(tier.feeRate)}<span style={{ fontSize: 12, color: '#1a1a1a', fontWeight: 400 }}> {t('sales fee')}</span></div>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 0.4, margin: '10px 0 4px' }}>{t('You get')}</div>
-                  <ul style={{ margin: 0, paddingLeft: 16, fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#4a4034', lineHeight: 1.7 }}>
+                  <ul style={{ margin: 0, paddingLeft: 16, fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', lineHeight: 1.7 }}>
                     <li>{tier.caps.items} {t('item listings / month')}</li>
                     <li>{tier.caps.jobs} {t('job adverts / month')}</li>
                     <li>{tier.caps.property} {t('property listings / month')}</li>
                   </ul>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 0.4, margin: '10px 0 4px' }}>{t('Criteria')}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6b5d48', lineHeight: 1.5 }}>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', lineHeight: 1.5 }}>
                     {tier.criteria.sales90d === 0
                       ? t('Included with any Business account.')
                       : `${tier.criteria.sales90d}+ ${t('sales in 90 days')} · ${tier.criteria.rating}★ ${t('rating')}`}
@@ -148,7 +148,7 @@ function EmployersInner() {
               )
             })}
           </div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', textAlign: 'center', marginTop: 8 }}>{t('Levels are held on a rolling 90-day basis. Fees apply to item sales only, never to property or job listings.')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', textAlign: 'center', marginTop: 8 }}>{t('Levels are held on a rolling 90-day basis. Fees apply to item sales only, never to property or job listings.')}</div>
         </div>
 
         {/* Two side-by-side cards: account (signed-out only) + sponsorship */}
@@ -158,7 +158,7 @@ function EmployersInner() {
             <div style={card}>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>{t('Open a Business account')}</div>
               <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#8a5a2a', margin: '6px 0 14px' }}>{t('7 days free, then €29/mo. Storefront, badge, hiring, property and lower fees.')}</div>
-              <ul style={{ margin: '0 0 16px', paddingLeft: 18, fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#4a4034', lineHeight: 1.9 }}>
+              <ul style={{ margin: '0 0 16px', paddingLeft: 18, fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#1a1a1a', lineHeight: 1.9 }}>
                 <li>{t('Your own branded storefront')}</li>
                 <li>{t('Verified 🏢 business badge')}</li>
                 <li>{t('Post jobs & list property')}</li>
@@ -190,7 +190,7 @@ function EmployersInner() {
                     <span style={{ fontWeight: 800 }}>{a.icon} {a.label}</span>
                     {a.comingSoon ? <span style={{ marginLeft: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 9, fontWeight: 900, padding: '2px 6px', borderRadius: 50, textTransform: 'uppercase' }}>{t('Coming soon')}</span> : null}
                     <Link href={HELP} onClick={e => e.stopPropagation()} title={t('Learn more in the Help Centre')} style={{ marginLeft: 6, color: '#b7a98e', textDecoration: 'none', fontWeight: 900 }}>ⓘ</Link>
-                    <span style={{ display: 'block', fontSize: 11, color: '#8a7d68', marginTop: 1, lineHeight: 1.4 }}>{a.blurb}</span>
+                    <span style={{ display: 'block', fontSize: 11, color: '#1a1a1a', marginTop: 1, lineHeight: 1.4 }}>{a.blurb}</span>
                     {on && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
                         <select value={months} onChange={e => setMonths(a.id, Number(e.target.value))} style={{ border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 700, background: '#fff' }}>
@@ -202,7 +202,7 @@ function EmployersInner() {
                             {pages.map(pg => <option key={pg} value={pg}>{pg.replace('_', ' ')}</option>)}
                           </select>
                         )}
-                        <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74' }}>{eur(a.monthlyCents)}/mo</span>
+                        <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a' }}>{eur(a.monthlyCents)}/mo</span>
                       </span>
                     )}
                   </span>
@@ -225,7 +225,7 @@ function EmployersInner() {
         </div>
 
         <div style={{ textAlign: 'center', margin: '16px 0' }}>
-          <Link href="/jobs" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#9a8b74', textDecoration: 'none' }}>{t('Looking for work instead?')} ›</Link>
+          <Link href="/jobs" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#1a1a1a', textDecoration: 'none' }}>{t('Looking for work instead?')} ›</Link>
         </div>
       </div>
 

@@ -178,7 +178,7 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
                               {/* Generated Grabitt CV — anonymised until this
                                   candidate is shortlisted or unlocked. */}
                               <a href={`/api/cv-pdf?applicationId=${a.id}`} target="_blank" rel="noreferrer" style={{ marginTop: 2, background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>📄 View CV{a.revealed === false ? ' (anonymous)' : ''}</a>
-                              {a.revealed === false && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#9a8b74', textAlign: 'center' }}>🔒 Name & contact appear once you invite them to interview.</div>}
+                              {a.revealed === false && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#1a1a1a', textAlign: 'center' }}>🔒 Name & contact appear once you invite them to interview.</div>}
                               {a.cvUrl && <a href={`/api/cv?applicationId=${a.id}`} target="_blank" rel="noreferrer" style={{ background: '#fff', color: '#555', border: '1px solid #e5dccd', borderRadius: 8, padding: '7px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, textDecoration: 'none' }}>📎 Attached file</a>}
 
                               {j.questions.length > 0 && Object.keys(a.answers).length > 0 && (

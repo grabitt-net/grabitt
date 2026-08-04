@@ -83,7 +83,7 @@ export default function ListingsGrid() {
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 700, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 5 }}>{item.title}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 17, fontWeight: 800, color: 'var(--dark)' }}>{item.price}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 500, color: '#9a8b74', fontFamily: 'var(--font-ui)' }}><Icon name="mapPin" size={11} /> {item.location}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 500, color: '#1a1a1a', fontFamily: 'var(--font-ui)' }}><Icon name="mapPin" size={11} /> {item.location}</div>
                   </div>
                   {item.condition && <div style={{ display: 'inline-block', marginTop: 8, background: '#f2f7f2', color: 'var(--sage)', fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>{item.condition}</div>}
                 </div>

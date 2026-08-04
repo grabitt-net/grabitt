@@ -253,7 +253,7 @@ function Compose({ api, existing, onDone, onCancel }: { api: any; existing: Esho
           </div>
           <div style={{ padding: 14, background: '#fff', fontFamily: 'Nunito, Arial, sans-serif', fontSize: 13, lineHeight: 1.6, color: '#1a1a1a', minHeight: 200 }}
             dangerouslySetInnerHTML={{ __html: body || '<p style="color:#bbb">Your email body will appear here…</p>' }} />
-          <div style={{ padding: '10px 14px', borderTop: '1px solid #f0ece5', fontSize: 10.5, color: '#8a7d68', background: '#fafafa' }}>
+          <div style={{ padding: '10px 14px', borderTop: '1px solid #f0ece5', fontSize: 10.5, color: '#1a1a1a', background: '#fafafa' }}>
             You’re receiving this because you opted in to Grabitt updates. <u>Unsubscribe</u> at any time.
           </div>
         </div>

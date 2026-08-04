@@ -94,7 +94,7 @@ function FullProfileBlock({ p, seekerId }: { p: FullProfile; seekerId: string })
         📄 Download CV{p.contactUnlocked ? '' : ' (anonymous)'}
       </a>
       {!p.contactUnlocked && (
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#9a8b74', textAlign: 'center' }}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#1a1a1a', textAlign: 'center' }}>
           🔒 Name and contact appear once you unlock them ({p.unlockCost} credits).
         </div>
       )}

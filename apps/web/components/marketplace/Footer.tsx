@@ -31,19 +31,19 @@ export default function Footer() {
           <div key={col.heading}>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--dark, #1a1a1a)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>{col.heading}</div>
             {col.links.map(([label, onClick]) => (
-              <button key={label} onClick={onClick} style={{ display: 'block', background: 'none', border: 'none', padding: '5px 0', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#6b5d48', cursor: 'pointer', textAlign: 'left' }}>{label}</button>
+              <button key={label} onClick={onClick} style={{ display: 'block', background: 'none', border: 'none', padding: '5px 0', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#1a1a1a', cursor: 'pointer', textAlign: 'left' }}>{label}</button>
             ))}
           </div>
         ))}
       </div>
       <div style={{ borderTop: '1px solid var(--sand2, #e8dcc0)', marginTop: 24, paddingTop: 18, textAlign: 'center' }}>
         <Logo height={30} style={{ margin: '0 auto' }} />
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#8a7d68', marginTop: 4 }}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#1a1a1a', marginTop: 4 }}>
           🛡️ Every payment protected by the Grabitt Guarantee · Local to the Canaries
         </div>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#a89a82', marginTop: 8 }}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 8 }}>
           © {new Date().getFullYear()} Grabitt. All rights reserved. ·{' '}
-          <a href="/admin" style={{ color: '#a89a82', textDecoration: 'none' }}>Executive Suite</a>
+          <a href="/admin" style={{ color: '#1a1a1a', textDecoration: 'none' }}>Executive Suite</a>
         </div>
       </div>
     </footer>

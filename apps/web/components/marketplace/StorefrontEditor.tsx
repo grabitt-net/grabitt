@@ -181,7 +181,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {f.categories.map(c => (
-                    <span key={c} style={{ background: '#f0ebe4', color: '#6b5d48', borderRadius: 50, padding: '5px 10px 5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>{c}<button onClick={() => set('categories', f.categories.filter(x => x !== c))} style={{ background: 'none', border: 'none', color: '#9a8b74', cursor: 'pointer', fontSize: 13, padding: 0 }}>×</button></span>
+                    <span key={c} style={{ background: '#f0ebe4', color: '#1a1a1a', borderRadius: 50, padding: '5px 10px 5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>{c}<button onClick={() => set('categories', f.categories.filter(x => x !== c))} style={{ background: 'none', border: 'none', color: '#1a1a1a', cursor: 'pointer', fontSize: 13, padding: 0 }}>×</button></span>
                   ))}
                 </div>
               </Section>

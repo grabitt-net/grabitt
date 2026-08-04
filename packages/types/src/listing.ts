@@ -79,6 +79,6 @@ export const SearchInputSchema = z.object({
   radiusKm: z.number().default(25),
   sort: z.enum(['newest', 'price_asc', 'price_desc', 'nearby']).default('newest'),
   page: z.number().int().min(1).default(1),
-  limit: z.number().int().min(1).max(50).default(20),
+  limit: z.number().int().min(1).max(50).default(50),
 })
 export type SearchInput = z.infer<typeof SearchInputSchema>

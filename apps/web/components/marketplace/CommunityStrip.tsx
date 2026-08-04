@@ -31,7 +31,7 @@ export default function CommunityStrip() {
               <div style={{ padding: '10px 12px 12px' }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, fontWeight: 800, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{p.category}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)', lineHeight: 1.3, marginBottom: 5 }}>{p.title}</div>
-                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#7a6c56', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.excerpt}</div>
+                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#1a1a1a', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.excerpt}</div>
               </div>
             </div>
           </Link>

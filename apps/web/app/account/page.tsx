@@ -400,7 +400,7 @@ function AccountInner() {
                     {/* Straight to edit — sellers shouldn't have to go via the
                         public listing page to fix their own item. */}
                     {seg !== 'sold' && (
-                      <Link href={`/listings/${c.ref}/edit`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', borderTop: '1px solid #f3ede4', padding: '7px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#8a7d68' }}>
+                      <Link href={`/listings/${c.ref}/edit`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', borderTop: '1px solid #f3ede4', padding: '7px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#1a1a1a' }}>
                         ✏️ {t('Edit')}
                       </Link>
                     )}
@@ -472,7 +472,7 @@ function AccountInner() {
               <div style={{ fontSize: 26 }}>📄</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{t('My CV')}</div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6b5d48' }}>{t('Build the CV recruiters get when you apply for jobs.')}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a' }}>{t('Build the CV recruiters get when you apply for jobs.')}</div>
               </div>
               <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
             </div>
@@ -626,7 +626,7 @@ function BusinessOnboardingModal({ onDone }: { onDone: () => void }) {
       <div style={{ background: '#fff', borderRadius: 18, padding: 22, width: '100%', maxWidth: 440, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
         <div style={{ fontSize: 40, textAlign: 'center' }}>🏢</div>
         <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 19, fontWeight: 700, color: 'var(--dark)', textAlign: 'center', marginTop: 6 }}>{t('Welcome to Business!')}</div>
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#7a6c56', textAlign: 'center', marginTop: 4, marginBottom: 16, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', textAlign: 'center', marginTop: 4, marginBottom: 16, lineHeight: 1.5 }}>
           {t('Tell us about your business so we can set up your storefront. You sell under this name.')}
         </div>
         <label style={fieldLabel}>{t('Business name')} *</label>
@@ -634,7 +634,7 @@ function BusinessOnboardingModal({ onDone }: { onDone: () => void }) {
         <label style={fieldLabel}>{t('Business type')} *</label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
           {BIZ_TYPES.map(b => (
-            <button key={b.id} onClick={() => setType(b.id)} style={{ border: `1.5px solid ${type === b.id ? 'var(--orange)' : '#e5dccd'}`, background: type === b.id ? '#FFF3EE' : '#fff', color: type === b.id ? 'var(--orange)' : '#6b5d48', borderRadius: 50, padding: '7px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{b.label}</button>
+            <button key={b.id} onClick={() => setType(b.id)} style={{ border: `1.5px solid ${type === b.id ? 'var(--orange)' : '#e5dccd'}`, background: type === b.id ? '#FFF3EE' : '#fff', color: type === b.id ? 'var(--orange)' : '#1a1a1a', borderRadius: 50, padding: '7px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{b.label}</button>
           ))}
         </div>
         <label style={fieldLabel}>{t('Short bio')} ({t('optional')})</label>

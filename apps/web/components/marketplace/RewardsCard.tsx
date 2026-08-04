@@ -106,7 +106,7 @@ export default function RewardsCard() {
               <span style={{ fontSize: 20 }}>{r.icon}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{r.title}</div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a7d68' }}>{r.subtitle}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a' }}>{r.subtitle}</div>
               </div>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: '#22c55e', whiteSpace: 'nowrap' }}>+{r.amount}</div>
               {r.actionLabel && (
@@ -128,7 +128,7 @@ export default function RewardsCard() {
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{o.kind === 'fee_reduction' ? '📉' : '🚀'} {o.title}</div>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }}>{o.costCredits} cr</div>
                 </div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a7d68', marginTop: 3, lineHeight: 1.5 }}>{o.description}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 3, lineHeight: 1.5 }}>{o.description}</div>
                 {pickFor?.id === o.id ? (
                   <div style={{ marginTop: 8 }}>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 5 }}>{t('Choose a listing')}</div>

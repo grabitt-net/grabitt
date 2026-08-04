@@ -295,7 +295,7 @@ function EditInner() {
     <div style={{ maxWidth: 640, margin: '0 auto', padding: '16px 14px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>✏️ {t('Edit listing')}</span>
-        <Link href={`/listings/${id}`} style={{ marginLeft: 'auto', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#9a8b74' }}>‹ {t('Back')}</Link>
+        <Link href={`/listings/${id}`} style={{ marginLeft: 'auto', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#1a1a1a' }}>‹ {t('Back')}</Link>
       </div>
 
       {status === 'removed' && (
@@ -314,7 +314,7 @@ function EditInner() {
             </div>
           ))}
           {images.length < 8 && (
-            <label style={{ width: 82, height: 82, borderRadius: 10, border: '1.5px dashed #d9cdb8', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#9a8b74', fontSize: 22, background: '#fff' }}>
+            <label style={{ width: 82, height: 82, borderRadius: 10, border: '1.5px dashed #d9cdb8', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#1a1a1a', fontSize: 22, background: '#fff' }}>
               {uploading ? '…' : '+'}
               <input type="file" accept="image/*" multiple style={{ display: 'none' }} disabled={uploading}
                 onChange={e => { if (e.target.files?.length) addPhotos(e.target.files) }} />
@@ -563,8 +563,8 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   )
 }
 
-const msg: React.CSSProperties = { textAlign: 'center', padding: 70, fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#8a7d68', lineHeight: 1.8 }
+const msg: React.CSSProperties = { textAlign: 'center', padding: 70, fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#1a1a1a', lineHeight: 1.8 }
 const lbl: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 5 }
 const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, outline: 'none', background: '#fff', marginBottom: 12 }
-const hint: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#9a8b74', marginTop: -4, marginBottom: 8, lineHeight: 1.5 }
+const hint: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: -4, marginBottom: 8, lineHeight: 1.5 }
 const secondary: React.CSSProperties = { width: '100%', background: '#fff', color: '#555', border: '1.5px solid #e5dccd', borderRadius: 12, padding: '12px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }

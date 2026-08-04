@@ -55,7 +55,7 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
 
       {/* Search — grows to fill */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 50, padding: '9px 8px 9px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
-        <span style={{ color: '#9a8b74', display: 'flex' }}><Icon name="search" size={18} /></span>
+        <span style={{ color: '#1a1a1a', display: 'flex' }}><Icon name="search" size={18} /></span>
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}

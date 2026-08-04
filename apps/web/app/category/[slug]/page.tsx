@@ -10,6 +10,7 @@ import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import BannerSlot from '@/components/marketplace/BannerSlot'
+import Pagination from '@/components/marketplace/Pagination'
 import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
 
 // A department/category now opens its own page (matching /jobs and /property)
@@ -50,14 +51,25 @@ export default function CategoryPage() {
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
   const [items, setItems] = useState<DbListing[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const PER_PAGE = 50
+
+  // Reset to the first page whenever the category or sort order changes.
+  useEffect(() => { setPage(1) }, [slug, sort])
 
   useEffect(() => {
     if (!slug) return
     setLoading(true)
-    createLooseTrpcClient().listings.getByDept.query({ department: slug, sort })
-      .then(res => { setItems(((res as { items?: DbListing[] }).items ?? []) as DbListing[]); setLoading(false) })
-      .catch(() => { setItems([]); setLoading(false) })
-  }, [slug, sort])
+    createLooseTrpcClient().listings.getByDept.query({ department: slug, sort, page, limit: PER_PAGE })
+      .then(res => {
+        const r = res as { items?: DbListing[]; total?: number }
+        setItems((r.items ?? []) as DbListing[]); setTotal(r.total ?? 0); setLoading(false)
+      })
+      .catch(() => { setItems([]); setTotal(0); setLoading(false) })
+  }, [slug, sort, page])
+
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
 
   // Free-text + subcategory filtering happens client-side over the fetched set.
   // There is no real "subcategory" column, so a pill matches when any of its
@@ -101,7 +113,7 @@ export default function CategoryPage() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>
         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888', fontWeight: 700 }}>
-          {loading ? 'Loading…' : `${filtered.length} listing${filtered.length === 1 ? '' : 's'}`}
+          {loading ? 'Loading…' : `${total} listing${total === 1 ? '' : 's'}${totalPages > 1 ? ` · page ${page} of ${totalPages}` : ''}`}
         </span>
         <select value={sort} onChange={e => setSort(e.target.value as typeof sort)} style={sel}>
           <option value="newest">Newest first</option>
@@ -124,7 +136,7 @@ export default function CategoryPage() {
                 <div style={{ padding: '10px 11px 12px' }}>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>€{Number(l.price ?? 0).toLocaleString()}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#9a8b74' }}>📍 {l.location ?? 'Gran Canaria'}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>📍 {l.location ?? 'Gran Canaria'}</div>
                 </div>
               </div>
             </Link>
@@ -137,6 +149,10 @@ export default function CategoryPage() {
           </div>
         )}
       </div>
+
+      {!loading && totalPages > 1 && (
+        <Pagination page={page} totalPages={totalPages} onChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
+      )}
 
       <Footer />
       <CartFab />
