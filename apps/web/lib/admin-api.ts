@@ -90,6 +90,12 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('banners.createBooking', 'mutation', data, execToken),
     cancelBannerBooking: (id: string) =>
       rpc<any>('banners.cancelBooking', 'mutation', { id }, execToken),
+    // Business directory moderation
+    directoryListings: () => rpc<any[]>('directory.adminList', 'query', undefined, execToken),
+    updateDirectoryListing: (data: Record<string, unknown>) =>
+      rpc<any>('directory.adminUpdate', 'mutation', data, execToken),
+    removeDirectoryListing: (id: string) =>
+      rpc<any>('directory.adminRemove', 'mutation', { id }, execToken),
 
     // Compliance (GDPR consent log + deletion requests)
     consentLog: (kind?: 'gdpr' | 'withdrawal_waiver') =>

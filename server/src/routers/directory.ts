@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
-import { router, publicProcedure, protectedProcedure } from '../trpc'
+import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
 import type { PrismaClient } from '@prisma/client'
 
 // The set of advertiser userIds whose banner is currently paid & running. A
@@ -96,4 +96,30 @@ export const directoryRouter = router({
         update: data,
       })
     }),
+
+  // ── Admin moderation ─────────────────────────────────────────────────────────
+  // Every directory listing (any status), with owner + whether it's currently
+  // live (a paid banner is running).
+  adminList: execProcedure.query(async ({ ctx }) => {
+    const active = await activeAdvertiserIds(ctx.prisma)
+    const listings = await ctx.prisma.directoryListing.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { email: true, displayName: true } } },
+    })
+    return listings.map(l => ({ ...l, live: active.has(l.userId) }))
+  }),
+
+  // Admin edit — fix or moderate any listing's details.
+  adminUpdate: execProcedure
+    .input(listingInput.partial().extend({ id: z.string() }))
+    .mutation(({ ctx, input }) => {
+      const { id, ...rest } = input
+      const data = Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, v === '' ? null : v]))
+      return ctx.prisma.directoryListing.update({ where: { id }, data })
+    }),
+
+  // Admin remove a listing entirely.
+  adminRemove: execProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(({ ctx, input }) => ctx.prisma.directoryListing.delete({ where: { id: input.id } })),
 })
