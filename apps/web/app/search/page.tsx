@@ -10,6 +10,7 @@ import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import Pagination from '@/components/marketplace/Pagination'
+import BannerSlot from '@/components/marketplace/BannerSlot'
 import { deptEmoji, type DbListing } from '@/lib/listingMap'
 import { t } from '@/lib/i18n'
 
@@ -83,6 +84,8 @@ function SearchInner() {
       <Topbar title={heading} />
       <QuickActions />
 
+      <BannerSlot position="search_top" aspect="5 / 1" label="Search — top" />
+
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <Link href="/" style={{ marginLeft: 'auto', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#1a1a1a' }}>‹ {t('Home')}</Link>
@@ -145,6 +148,9 @@ function SearchInner() {
       {!loading && !featured && (
         <Pagination page={page} totalPages={totalPages} onChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
       )}
+
+      {/* Search — bottom banner (rotating) */}
+      <BannerSlot position="search_footer" aspect="6 / 1" label="Search — bottom" />
 
       <Footer />
       <CartFab />

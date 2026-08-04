@@ -491,6 +491,7 @@ model User {
   statusApplications StatusApplication[]
   affiliateReferrals AffiliateReferral[] @relation("AffiliateEarner")
   sponsorshipGrants  SponsorshipGrant[]
+  bannerBookings     BannerBooking[]
   wishlistItems      WishlistItem[]
   wishItems          WishItem[]
   savedSearches      SavedSearch[]
@@ -1433,9 +1434,19 @@ model CrmContact {
 // ── Banners & E-shots (Exec only) ────────────────────────────────────────────
 
 enum BannerPosition {
-  home_top
+  home_top          // Homepage hero
   home_mid
-  category
+  home_hero         // alias kept for clarity; home_top is the hero
+  category           // category top banner
+  category_top
+  category_infeed
+  category_footer
+  search_top
+  search_footer
+  sticky_bottom
+  similar_items
+  seller_dashboard
+  user_dashboard
   checkout
   jobs
   sponsor_top
@@ -1451,9 +1462,11 @@ model Banner {
   linkUrl   String?
   active    Boolean        @default(false)
   approved     Boolean      @default(false) // admin must approve before a banner shows
+  isTest       Boolean      @default(false) // admin-only test/preview banner (pre-launch)
   position  BannerPosition
   pageTarget   String?                     // category/page slug; null = every page for the position
   grantId      String?      @unique        // the SponsorshipGrant that paid for a self-serve banner
+  bookingId    String?      @unique        // the BannerBooking that paid for this banner
   startsAt  DateTime?
   endsAt    DateTime?
   clickCount   Int         @default(0)
@@ -1463,6 +1476,40 @@ model Banner {
   @@index([active])
   @@index([position])
   @@index([pageTarget])
+}
+
+// A paid (or admin-granted) banner booking for a slot + optional page over a
+// date window. Availability for exclusive slots is enforced by checking for any
+// overlapping active booking on the same position+pageTarget. `amountCents` is
+// the charged total (after proration + auto-discounts). Admins can create
+// bookings directly to override who advertises where.
+model BannerBooking {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  position    BannerPosition
+  pageTarget  String?                       // page slug for per-page slots; null = site-wide
+  months      Int
+  startsAt    DateTime
+  endsAt      DateTime
+  amountCents Int
+  status      String   @default("active")   // active | expired | cancelled | pending
+  createdByAdmin Boolean @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([position])
+  @@index([pageTarget])
+  @@index([status])
+}
+
+// Singleton admin-editable banner config: per-slot price + cap overrides, the
+// in-feed row interval, discount tiers, and the global test-preview toggle.
+// data = { slots?: { [id]: { monthlyCents?, cap?, active? } }, infeedEveryRows?, discounts?, testMode?: boolean }
+model BannerConfig {
+  id        String   @id @default("default")
+  data      Json     @default("{}")
+  updatedAt DateTime @updatedAt
 }
 
 enum EshotSegment {

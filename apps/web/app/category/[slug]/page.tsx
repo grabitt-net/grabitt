@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createLooseTrpcClient } from '@/lib/trpc'
@@ -71,6 +71,13 @@ export default function CategoryPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
 
+  // In-feed banner cadence — an admin-set number of listing rows (~4 cards each).
+  const [infeedEvery, setInfeedEvery] = useState(3)
+  useEffect(() => {
+    createLooseTrpcClient().banners.infeedConfig.query()
+      .then(d => setInfeedEvery((d as { everyRows?: number })?.everyRows ?? 3)).catch(() => {})
+  }, [])
+
   // Free-text + subcategory filtering happens client-side over the fetched set.
   // There is no real "subcategory" column, so a pill matches when any of its
   // meaningful words appears in the listing's title, description or auto-tags.
@@ -123,23 +130,33 @@ export default function CategoryPage() {
       </div>
 
       <div className="category-grid">
-        {filtered.map(l => {
+        {filtered.map((l, i) => {
           const img = Array.isArray(l.images) ? l.images[0] : null
+          // A full-width in-feed sponsor banner after every `infeedEvery` rows
+          // (~4 cards per row), so it breaks the grid at a natural cadence.
+          const rowBreak = infeedEvery > 0 && i > 0 && i % (infeedEvery * 4) === 0
           return (
-            <Link key={l.id} href={`/listings/${l.id}`} style={{ textDecoration: 'none' }}>
-              <div style={card}>
-                <div style={{ width: '100%', paddingTop: '72%', position: 'relative', background: 'var(--sand)' }}>
-                  {img
-                    ? <img src={img} alt={l.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>{emoji}</div>}
+            <Fragment key={l.id}>
+              {rowBreak && (
+                <div style={{ gridColumn: '1/-1' }}>
+                  <BannerSlot position="category_infeed" page={slug} aspect="7 / 1" label="Category — in-feed" padded={false} />
                 </div>
-                <div style={{ padding: '10px 11px 12px' }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>€{Number(l.price ?? 0).toLocaleString()}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>📍 {l.location ?? 'Gran Canaria'}</div>
+              )}
+              <Link href={`/listings/${l.id}`} style={{ textDecoration: 'none' }}>
+                <div style={card}>
+                  <div style={{ width: '100%', paddingTop: '72%', position: 'relative', background: 'var(--sand)' }}>
+                    {img
+                      ? <img src={img} alt={l.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>{emoji}</div>}
+                  </div>
+                  <div style={{ padding: '10px 11px 12px' }}>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>€{Number(l.price ?? 0).toLocaleString()}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>📍 {l.location ?? 'Gran Canaria'}</div>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </Fragment>
           )
         })}
         {!loading && filtered.length === 0 && (
@@ -149,6 +166,9 @@ export default function CategoryPage() {
           </div>
         )}
       </div>
+
+      {/* Category — bottom banner (rotating Featured Partners for this page) */}
+      <BannerSlot position="category_footer" page={slug} aspect="6 / 1" label="Category — bottom" />
 
       {!loading && totalPages > 1 && (
         <Pagination page={page} totalPages={totalPages} onChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />

@@ -18,6 +18,7 @@ import CartFab from '@/components/marketplace/CartFab'
 import QuickActions from '@/components/marketplace/QuickActions'
 import ShareSheet from '@/components/marketplace/ShareSheet'
 import PanelHost from '@/components/marketplace/PanelHost'
+import BannerSlot from '@/components/marketplace/BannerSlot'
 import ApplyModal from '@/components/marketplace/ApplyModal'
 import MessageComposer from '@/components/marketplace/MessageComposer'
 
@@ -574,6 +575,9 @@ function ListingInner() {
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#2e7d32', marginBottom: 4 }}>🛡️ Grabitt Buyer Protection</div>
           <div style={{ fontSize: 11, color: '#555', fontFamily: 'var(--font-nunito)', lineHeight: 1.5 }}>{job ? 'Apply and message safely through Grabitt.' : 'Pay through Grabitt and your money is held in escrow until you confirm handover.'}</div>
         </div>
+
+        {/* Sponsored slot among similar items */}
+        <BannerSlot position="similar_items" aspect="5 / 1" label="Similar-items sponsored" />
 
         {/* You might also like */}
         {similar.length > 0 && (

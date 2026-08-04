@@ -3,22 +3,27 @@ import { useEffect, useRef, useState } from 'react'
 import { createLooseTrpcClient } from '@/lib/trpc'
 
 type Banner = { id: string; title: string; imageUrl: string; linkUrl: string | null }
-type Position = 'home_top' | 'home_mid' | 'category' | 'checkout' | 'jobs' | 'sponsor_top' | 'sponsor_footer' | 'messages' | 'notifications'
+type Position =
+  | 'home_top' | 'home_mid' | 'home_hero' | 'category' | 'category_top' | 'category_infeed' | 'category_footer'
+  | 'search_top' | 'search_footer' | 'sticky_bottom' | 'similar_items' | 'seller_dashboard' | 'user_dashboard'
+  | 'checkout' | 'jobs' | 'sponsor_top' | 'sponsor_footer' | 'messages' | 'notifications'
 
 // CMS-driven banner slot. Renders the active banners for a given position
-// (managed from the admin Banners view). Rotates if more than one — the bottom
-// "Featured Partner" slot cycles up to 7 advertisers. Every view and click is
-// tracked so sponsorship performance is quantifiable. Renders nothing when there
-// are no active banners, so the layout stays clean.
-export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius = 16, padded = true }: { position: Position; page?: string; aspect?: string; radius?: number; padded?: boolean }) {
+// (managed from the admin Banners view). Rotates if more than one. Every view
+// and click is tracked so sponsorship performance is quantifiable. Renders
+// nothing when there are no active banners — UNLESS admin preview/test mode is
+// on, in which case an empty slot shows a labelled placeholder so admins can see
+// where every banner sits before launch.
+export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius = 16, padded = true, label }: { position: Position; page?: string; aspect?: string; radius?: number; padded?: boolean; label?: string }) {
   const [banners, setBanners] = useState<Banner[]>([])
+  const [preview, setPreview] = useState(false)
   const [idx, setIdx] = useState(0)
   const seen = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    createLooseTrpcClient().banners.active.query({ position, ...(page ? { page } : {}) })
-      .then(d => setBanners(d as unknown as Banner[]))
-      .catch(() => {})
+    const c = createLooseTrpcClient()
+    c.banners.active.query({ position, ...(page ? { page } : {}) }).then(d => setBanners(d as unknown as Banner[])).catch(() => {})
+    c.banners.previewMode.query().then(d => setPreview(!!(d as { on?: boolean })?.on)).catch(() => {})
   }, [position, page])
 
   useEffect(() => {
@@ -27,7 +32,19 @@ export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius 
     return () => clearInterval(t)
   }, [banners.length])
 
-  if (banners.length === 0) return null
+  // Empty + preview mode → labelled placeholder marking the slot.
+  if (banners.length === 0) {
+    if (!preview) return null
+    return (
+      <div style={{ padding: padded ? '14px 14px 0' : 0 }}>
+        <div style={{ width: '100%', aspectRatio: aspect, borderRadius: radius, border: '2px dashed #FF7A00', background: 'repeating-linear-gradient(45deg,#fff7ed,#fff7ed 12px,#ffedd5 12px,#ffedd5 24px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: '#c2410c', textTransform: 'uppercase', letterSpacing: 0.6 }}>Banner slot</span>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#9a3412' }}>{label ?? position}{page ? ` · ${page}` : ''}</span>
+        </div>
+      </div>
+    )
+  }
+
   const b = banners[idx % banners.length]
 
   // Count one impression per banner shown (fire-and-forget).

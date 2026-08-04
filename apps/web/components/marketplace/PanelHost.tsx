@@ -1439,6 +1439,8 @@ function PanelBody() {
             <button onClick={startCheckout} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
               Checkout {fmt(subtotal)} →
             </button>
+            {/* Non-intrusive sponsored slot — below the checkout CTA, never blocks the flow */}
+            <BannerSlot position="checkout" aspect="6 / 1" label="Checkout" padded={false} />
           </>
         )}
       </ActionPanel>

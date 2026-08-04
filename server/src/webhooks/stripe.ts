@@ -87,6 +87,23 @@ async function grantSponsorships(userId: string, basket: string) {
   }
 }
 
+// Banner advertising order — the basket encodes `position|page|months|startISO`
+// lines. Each becomes an active BannerBooking; the buyer uploads a creative
+// afterwards (the banner is provisioned unapproved and reviewed by an admin).
+async function provisionBannerOrder(userId: string, basket: string) {
+  for (const part of basket.split(',')) {
+    const [position, page, monthsStr, startIso] = part.split('|')
+    const months = Number(monthsStr)
+    if (!position || !months || !startIso) continue
+    const startsAt = new Date(startIso)
+    const endsAt = new Date(startsAt)
+    endsAt.setMonth(endsAt.getMonth() + months)
+    await prisma.bannerBooking.create({
+      data: { userId, position: position as never, pageTarget: page || null, months, startsAt, endsAt, amountCents: 0, status: 'active' },
+    }).catch(() => {})
+  }
+}
+
 export async function handleStripeEvent(event: Stripe.Event) {
   switch (event.type) {
     // Combined business signup basket (subscription + one-off sponsorship items):
@@ -95,6 +112,9 @@ export async function handleStripeEvent(event: Stripe.Event) {
       const s = event.data.object as Stripe.Checkout.Session
       if (s.metadata?.kind === 'sponsorship' && s.metadata.userId && s.metadata.basket) {
         await grantSponsorships(s.metadata.userId, s.metadata.basket)
+      }
+      if (s.metadata?.kind === 'banner_order' && s.metadata.userId && s.metadata.basket) {
+        await provisionBannerOrder(s.metadata.userId, s.metadata.basket)
       }
       break
     }
@@ -181,6 +201,9 @@ export async function handleStripeEvent(event: Stripe.Event) {
       // One-off sponsorship basket → grant each timed placement.
       if (pi.metadata?.kind === 'sponsorship' && pi.metadata.userId && pi.metadata.basket) {
         await grantSponsorships(pi.metadata.userId, pi.metadata.basket)
+      }
+      if (pi.metadata?.kind === 'banner_order' && pi.metadata.userId && pi.metadata.basket) {
+        await provisionBannerOrder(pi.metadata.userId, pi.metadata.basket)
       }
       // Paid listing promotion → apply the option now that payment succeeded.
       if (pi.metadata?.kind === 'listing_promo' && pi.metadata.listingId && pi.metadata.userId) {

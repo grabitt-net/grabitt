@@ -114,6 +114,56 @@ export const BUSINESS_ADDONS = {
 export type BusinessAddonId = keyof typeof BUSINESS_ADDONS
 export const BUSINESS_ADDON_IDS = Object.keys(BUSINESS_ADDONS) as BusinessAddonId[]
 export const isBusinessAddon = (id: string): id is BusinessAddonId => id in BUSINESS_ADDONS
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Banner advertising slots — the single source of truth for every place a
+// sponsor banner can appear on Grabitt. Each slot maps to a BannerPosition enum
+// value. `monthlyCents` is the default price (admins override in the executive
+// suite). `cap` is how many advertisers can share the slot (1 = exclusive, it
+// rotates otherwise). `exclusive` slots can only be sold to one advertiser for
+// an overlapping period. `perPage` slots are sold per category/page. `scope`
+// documents where it renders. All prices are amendable by admins.
+export const BANNER_SLOTS = {
+  home_top:         { label: 'Homepage hero',            monthlyCents: 29900, cap: 1, exclusive: true,  perPage: false, scope: 'Top of the homepage — the single most prominent slot.' },
+  category:         { label: 'Category — top banner',    monthlyCents: 14900, cap: 1, exclusive: true,  perPage: true,  scope: 'Fixed top banner of one category page (Category Sponsor overrides it).' },
+  category_infeed:  { label: 'Category — in-feed',       monthlyCents: 9900,  cap: 5, exclusive: false, perPage: true,  scope: 'Between listing rows in category views (every N rows).' },
+  category_footer:  { label: 'Category — bottom banner', monthlyCents: 7900,  cap: 7, exclusive: false, perPage: true,  scope: 'Bottom of a category page (rotating).' },
+  search_top:       { label: 'Search — top banner',      monthlyCents: 9900,  cap: 1, exclusive: true,  perPage: false, scope: 'Top of search results.' },
+  search_footer:    { label: 'Search — bottom banner',   monthlyCents: 6900,  cap: 7, exclusive: false, perPage: false, scope: 'Bottom of search results (rotating).' },
+  sticky_bottom:    { label: 'Sticky bottom bar',        monthlyCents: 19900, cap: 1, exclusive: true,  perPage: false, scope: 'A dismissible bar pinned to the bottom of the viewport site-wide.' },
+  similar_items:    { label: 'Similar-items sponsored',  monthlyCents: 8900,  cap: 4, exclusive: false, perPage: false, scope: 'A sponsored slot among “similar items” on listing pages.' },
+  seller_dashboard: { label: 'Seller dashboard',         monthlyCents: 5900,  cap: 3, exclusive: false, perPage: false, scope: 'Top of the seller dashboard, below the nav links.' },
+  user_dashboard:   { label: 'User dashboard',           monthlyCents: 5900,  cap: 3, exclusive: false, perPage: false, scope: 'Top of the user account dashboard, below the nav links.' },
+  checkout:         { label: 'Checkout (non-intrusive)', monthlyCents: 12900, cap: 1, exclusive: true,  perPage: false, scope: 'A relevant, non-blocking banner beside the checkout — never interrupts the flow.' },
+  messages:         { label: 'Message centre',           monthlyCents: 14900, cap: 3, exclusive: false, perPage: false, scope: 'Message centre (premium placement).' },
+  notifications:    { label: 'Notifications popup',      monthlyCents: 9900,  cap: 3, exclusive: false, perPage: false, scope: 'Featured sponsor inside the notifications popup.' },
+  jobs:             { label: 'Recruitment page',         monthlyCents: 7900,  cap: 5, exclusive: false, perPage: false, scope: 'The jobs/recruitment page.' },
+  home_mid:         { label: 'Homepage — mid feed',      monthlyCents: 12900, cap: 3, exclusive: false, perPage: false, scope: 'Between homepage sections.' },
+  sponsor_footer:   { label: 'Featured Partner (footer)',monthlyCents: 7900,  cap: 7, exclusive: false, perPage: false, scope: 'Rotating bottom banner across the site (Featured Partner).' },
+  sponsor_top:      { label: 'Site-wide top strip',      monthlyCents: 12900, cap: 1, exclusive: true,  perPage: false, scope: 'Top strip shown under the search bar across the site.' },
+} as const
+export type BannerSlotId = keyof typeof BANNER_SLOTS
+export const BANNER_SLOT_IDS = Object.keys(BANNER_SLOTS) as BannerSlotId[]
+export const isBannerSlot = (id: string): id is BannerSlotId => id in BANNER_SLOTS
+
+// Banner sponsorship is sold by whole months, capped at 3 initially. Prorated
+// for the current (already-started) month at purchase.
+export const BANNER_MAX_MONTHS = 3
+export const BANNER_DURATIONS = [1, 2, 3] as const
+
+// How many listing rows between each in-feed category banner (admin-editable).
+export const BANNER_INFEED_EVERY_ROWS = 3
+
+// Automatic discounts, applied to the banner order subtotal (whichever tiers
+// qualify stack multiplicatively is avoided — the single best % of each axis is
+// summed then capped). Admin-editable.
+export const BANNER_DISCOUNTS = {
+  // % off by number of DISTINCT slot locations bought in one order.
+  byLocations: { 2: 5, 3: 10, 4: 15 } as Record<number, number>,
+  // % off by number of MONTHS on a single line.
+  byDuration:  { 2: 5, 3: 10 } as Record<number, number>,
+  maxPct: 25,
+}
 export type BillingInterval = 'month' | 'year'
 export const addonPriceCents = (id: BusinessAddonId, interval: BillingInterval) =>
   interval === 'year' ? BUSINESS_ADDONS[id].yearlyCents : BUSINESS_ADDONS[id].amountCents

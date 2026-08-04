@@ -80,6 +80,16 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('banners.remove', 'mutation', { id }, execToken),
     approveBanner: (id: string, approved: boolean) =>
       rpc<any>('banners.setApproved', 'mutation', { id, approved }, execToken),
+    // Banner advertising: slot catalogue, pricing/config, bookings & override
+    bannerCatalog: () => rpc<any[]>('banners.adminCatalog', 'query', undefined, execToken),
+    bannerConfig: () => rpc<any>('banners.config', 'query', undefined, execToken),
+    saveBannerConfig: (data: Record<string, unknown>) =>
+      rpc<any>('banners.saveConfig', 'mutation', data, execToken),
+    bannerBookings: () => rpc<any[]>('banners.bookings', 'query', undefined, execToken),
+    createBannerBooking: (data: Record<string, unknown>) =>
+      rpc<any>('banners.createBooking', 'mutation', data, execToken),
+    cancelBannerBooking: (id: string) =>
+      rpc<any>('banners.cancelBooking', 'mutation', { id }, execToken),
 
     // Compliance (GDPR consent log + deletion requests)
     consentLog: (kind?: 'gdpr' | 'withdrawal_waiver') =>

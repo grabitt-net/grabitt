@@ -9,6 +9,7 @@ import type { PanelId } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
+import BannerSlot from '@/components/marketplace/BannerSlot'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import SellerCentre from '@/components/marketplace/SellerCentre'
@@ -360,6 +361,8 @@ function AccountInner() {
             ))}
           </div>
 
+          {/* Sponsored banner below the dashboard nav links */}
+          <BannerSlot position="user_dashboard" aspect="6 / 1" label="User dashboard" padded={false} />
 
           {mainTab === 'business' && me?.isBusiness && (
             <BusinessCentre businessVerified={me?.businessVerified} />

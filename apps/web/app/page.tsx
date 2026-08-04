@@ -6,6 +6,7 @@ import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import PanelDeepLink from '@/components/marketplace/PanelDeepLink'
+import BannerSlot from '@/components/marketplace/BannerSlot'
 
 // The homepage body (hero, departments, featured, banners, listings, etc.) is
 // rendered by <HomeSections/> from the admin-controlled layout (Admin → Homepage),
@@ -16,6 +17,8 @@ export default function HomePage() {
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
         <Topbar />
         <QuickActions />
+        {/* Homepage hero — the most prominent sponsor slot */}
+        <BannerSlot position="home_top" aspect="5 / 1" label="Homepage hero" />
         <HomeSections />
         <Footer />
         <CartFab />

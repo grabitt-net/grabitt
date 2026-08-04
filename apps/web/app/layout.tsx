@@ -7,6 +7,7 @@ import AuthBootstrap from '@/components/AuthBootstrap'
 import ConsentGate from '@/components/ConsentGate'
 import AttributesOnboarding from '@/components/AttributesOnboarding'
 import CookieBanner from '@/components/CookieBanner'
+import StickyBottomBanner from '@/components/marketplace/StickyBottomBanner'
 import './globals.css'
 
 const nunito = Nunito({
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${nunito.variable} ${comfortaa.variable}`}>
-      <body className="min-h-full"><TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate /><AttributesOnboarding />{children}<CookieBanner /></CartProvider></ToastProvider></TrpcProvider></body>
+      <body className="min-h-full"><TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate /><AttributesOnboarding />{children}<CookieBanner /><StickyBottomBanner /></CartProvider></ToastProvider></TrpcProvider></body>
     </html>
   )
 }

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { trpcAuthed } from '@/lib/authToken'
 import { FEE_RATES, LISTING_CAPS, GRADE_THRESHOLDS } from '@grabitt/design-tokens'
 import { t } from '@/lib/i18n'
+import BannerSlot from './BannerSlot'
 
 // The seller info centre from the prototype's profile hero: which grade you're
 // on and what it costs you, how far off the next one you are, the full ladder so
@@ -62,6 +63,8 @@ export default function SellerCentre() {
 
   return (
     <div id="seller-centre" style={cardBox}>
+      {/* Sponsored banner at the top of the seller dashboard */}
+      <BannerSlot position="seller_dashboard" aspect="6 / 1" label="Seller dashboard" padded={false} />
       {/* Current level */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <div style={{ width: 46, height: 46, borderRadius: '50%', background: `${g.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{g.emoji}</div>
