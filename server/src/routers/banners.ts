@@ -21,6 +21,11 @@ export const bannersRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(({ ctx, input }) => ctx.prisma.banner.update({ where: { id: input.id }, data: { impressions: { increment: 1 } } }).then(() => ({ ok: true })).catch(() => ({ ok: false }))),
 
+  // Admin: approve (or un-approve) a banner so it can go live.
+  setApproved: execProcedure
+    .input(z.object({ id: z.string().uuid(), approved: z.boolean() }))
+    .mutation(({ ctx, input }) => ctx.prisma.banner.update({ where: { id: input.id }, data: { approved: input.approved } })),
+
   // Admin: remove a banner.
   remove: execProcedure
     .input(z.object({ id: z.string().uuid() }))
@@ -39,6 +44,7 @@ export const bannersRouter = router({
         where: {
           position: input.position,
           active: true,
+          approved: true, // never show a banner that an admin hasn't approved
           ...(input.page ? { OR: [{ pageTarget: input.page }, { pageTarget: null }] } : { pageTarget: null }),
           AND: [
             { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
@@ -66,7 +72,8 @@ export const bannersRouter = router({
         startsAt: data.startsAt ? new Date(data.startsAt) : null,
         endsAt: data.endsAt ? new Date(data.endsAt) : null,
       }
+      // Admin-created/edited banners are approved by the act of an admin saving them.
       if (id) return ctx.prisma.banner.update({ where: { id }, data: parsed })
-      return ctx.prisma.banner.create({ data: parsed })
+      return ctx.prisma.banner.create({ data: { ...parsed, approved: true } })
     }),
 })

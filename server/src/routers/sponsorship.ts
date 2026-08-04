@@ -98,8 +98,11 @@ export const sponsorshipRouter = router({
         endsAt: grant.endsAt,
         grantId: grant.id,
       }
+      // Self-serve banners (new or a changed creative) go to the admin approval
+      // queue — they never show until approved. `data` omits `approved`, so a new
+      // banner defaults to unapproved; on edit we reset it for re-review.
       return existing
-        ? ctx.prisma.banner.update({ where: { id: existing.id }, data: { imageUrl: data.imageUrl, linkUrl: data.linkUrl } })
+        ? ctx.prisma.banner.update({ where: { id: existing.id }, data: { imageUrl: data.imageUrl, linkUrl: data.linkUrl, approved: false } })
         : ctx.prisma.banner.create({ data })
     }),
 

@@ -15,7 +15,7 @@ const POSITIONS: [string, string][] = [
 ]
 const POS_LABEL = Object.fromEntries(POSITIONS)
 
-interface Banner { id: string; title: string; imageUrl: string; linkUrl: string | null; active: boolean; position: string; startsAt: string | null; endsAt: string | null; clickCount?: number; impressions?: number }
+interface Banner { id: string; title: string; imageUrl: string; linkUrl: string | null; active: boolean; approved?: boolean; position: string; startsAt: string | null; endsAt: string | null; clickCount?: number; impressions?: number }
 
 const EMPTY = { title: '', imageUrl: '', linkUrl: '', position: 'home_mid', active: true, startsAt: '', endsAt: '' }
 
@@ -26,7 +26,11 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
   const [form, setForm] = useState({ ...EMPTY })
   const [saving, setSaving] = useState(false)
 
-  const load = () => api.banners().then(b => setBanners((b ?? []) as Banner[])).catch(() => {})
+  const load = () => api.banners().then(b => {
+    // Pending-approval banners first so the admin sees the review queue up top.
+    const rows = ((b ?? []) as Banner[]).slice().sort((x, y) => Number(x.approved !== false) - Number(y.approved !== false))
+    setBanners(rows)
+  }).catch(() => {})
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // When arriving from the Homepage builder for a specific slot, open the add
@@ -57,6 +61,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
     load()
   }
   async function remove(id: string) { await api.removeBanner(id); load() }
+  async function setApproved(b: Banner, approved: boolean) { await api.approveBanner(b.id, approved); load() }
 
   return (
     <div>
@@ -101,8 +106,11 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
         {banners.map(b => (
-          <div key={b.id} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', borderTop: `4px solid ${b.active ? '#FF4500' : '#e5e7eb'}` }}>
-            <img src={b.imageUrl} alt={b.title} style={{ width: '100%', height: 110, objectFit: 'cover' }} />
+          <div key={b.id} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', borderTop: `4px solid ${b.approved === false ? '#f59e0b' : b.active ? '#FF4500' : '#e5e7eb'}` }}>
+            <div style={{ position: 'relative' }}>
+              <img src={b.imageUrl} alt={b.title} style={{ width: '100%', height: 110, objectFit: 'cover' }} />
+              {b.approved === false && <span style={{ position: 'absolute', top: 8, left: 8, background: '#f59e0b', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50, textTransform: 'uppercase', letterSpacing: 0.4 }}>Pending approval</span>}
+            </div>
             <div style={{ padding: 14 }}>
               <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 10, color: '#FF4500', textTransform: 'uppercase', letterSpacing: 0.5 }}>{POS_LABEL[b.position] ?? b.position}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 13, marginTop: 2, marginBottom: 6 }}>{b.title}</div>
@@ -111,10 +119,18 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
                 <span title="Impressions">👁 <b>{b.impressions ?? 0}</b></span>
                 {(b.impressions ?? 0) > 0 && <span title="Click-through rate" style={{ color: '#16a34a' }}>{(((b.clickCount ?? 0) / (b.impressions ?? 1)) * 100).toFixed(1)}% CTR</span>}
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => toggle(b)} style={{ flex: 1, padding: '5px 10px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', background: b.active ? '#f0faf4' : '#f5f5f5', color: b.active ? '#16a34a' : '#aaa' }}>{b.active ? '● Live' : '○ Off'}</button>
-                <button onClick={() => remove(b.id)} style={{ padding: '5px 12px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', background: '#fef2f2', color: '#ef4444' }}>Delete</button>
-              </div>
+              {b.approved === false ? (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setApproved(b, true)} style={{ flex: 1, padding: '6px 10px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 900, fontFamily: 'var(--font-ui)', background: '#16a34a', color: '#fff' }}>✓ Approve</button>
+                  <button onClick={() => remove(b.id)} style={{ padding: '6px 12px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', background: '#fef2f2', color: '#ef4444' }}>Reject</button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => toggle(b)} style={{ flex: 1, padding: '5px 10px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', background: b.active ? '#f0faf4' : '#f5f5f5', color: b.active ? '#16a34a' : '#aaa' }}>{b.active ? '● Live' : '○ Off'}</button>
+                  <button onClick={() => setApproved(b, false)} title="Send back for re-approval" style={{ padding: '5px 10px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', background: '#fff7ed', color: '#b45309' }}>Unapprove</button>
+                  <button onClick={() => remove(b.id)} style={{ padding: '5px 12px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', background: '#fef2f2', color: '#ef4444' }}>Delete</button>
+                </div>
+              )}
             </div>
           </div>
         ))}

@@ -1450,6 +1450,7 @@ model Banner {
   imageUrl  String
   linkUrl   String?
   active    Boolean        @default(false)
+  approved     Boolean      @default(false) // admin must approve before a banner shows
   position  BannerPosition
   pageTarget   String?                     // category/page slug; null = every page for the position
   grantId      String?      @unique        // the SponsorshipGrant that paid for a self-serve banner

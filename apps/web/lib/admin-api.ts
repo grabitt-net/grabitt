@@ -78,6 +78,8 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('banners.upsert', 'mutation', data, execToken),
     removeBanner: (id: string) =>
       rpc<any>('banners.remove', 'mutation', { id }, execToken),
+    approveBanner: (id: string, approved: boolean) =>
+      rpc<any>('banners.setApproved', 'mutation', { id, approved }, execToken),
 
     // Compliance (GDPR consent log + deletion requests)
     consentLog: (kind?: 'gdpr' | 'withdrawal_waiver') =>
