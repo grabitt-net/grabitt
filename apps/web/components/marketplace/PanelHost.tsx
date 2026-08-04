@@ -4727,7 +4727,9 @@ function PanelBody() {
     const [catalog, setCatalog] = useState<any[]>([])
     const [durations, setDurations] = useState<number[]>([1, 3, 6, 12])
     const [bizBusy, setBizBusy] = useState(false)
-    const [bizInterval, setBizInterval] = useState<'month' | 'year'>('month')
+    const [bizInterval, setBizInterval] = useState<'month' | 'year'>(() => {
+      try { return sessionStorage.getItem('grabitt_biz_interval') === 'year' ? 'year' : 'month' } catch { return 'month' }
+    })
     const [foundingBizLeft, setFoundingBizLeft] = useState<number | null>(null)
     useEffect(() => {
       getTrpcClient().then(c => c.subscriptions.foundingBusinessStatus.query())
