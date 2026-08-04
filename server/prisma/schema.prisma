@@ -167,6 +167,26 @@ model SponsorshipGrant {
   @@index([status])
 }
 
+// A paid advertiser's business-directory entry. Owned by an advertiser account
+// (User.isAdvertiser). Only shown in the directory while that advertiser has a
+// currently-active BannerBooking — no active banner, no listing. Advertisers are
+// NOT sellers and get no automatic listing.
+model DirectoryListing {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  category    String?
+  description String?
+  phone       String?
+  email       String?
+  website     String?
+  logoUrl     String?
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // Singleton admin-editable sponsorship pricing (per-add-on monthly base price +
 // whether it's on sale). `data` is { addons: { [id]: { monthlyCents, active } } }.
 model SponsorshipConfig {
@@ -492,6 +512,9 @@ model User {
   affiliateReferrals AffiliateReferral[] @relation("AffiliateEarner")
   sponsorshipGrants  SponsorshipGrant[]
   bannerBookings     BannerBooking[]
+  // External advertiser: buys banners + a directory entry only; not a seller.
+  isAdvertiser       Boolean   @default(false)
+  directoryListing   DirectoryListing?
   wishlistItems      WishlistItem[]
   wishItems          WishItem[]
   savedSearches      SavedSearch[]

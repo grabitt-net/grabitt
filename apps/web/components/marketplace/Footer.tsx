@@ -17,6 +17,7 @@ export default function Footer() {
     // Economic Living lives in Grabitt Guides — link through rather than
     // duplicating the content in a panel.
     { heading: 'Guides', links: [['Grabitt Guides', go('/community')], ['Economic Living', go('/community#economic-living')]] },
+    { heading: 'Business', links: [['For Business', go('/employers')], ['Business Directory', go('/directory')], ['Advertise with us', go('/advertiser')]] },
     { heading: 'Help', links: [['Help Centre', go('/help')], ['Terms', fp('terms')], ['Dos & Don\'ts', fp('policy')], ['Suggest Ideas', fp('suggest')]] },
   ]
 

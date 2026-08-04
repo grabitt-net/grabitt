@@ -106,21 +106,32 @@ export const bannersRouter = router({
   // Banner in the booked slot & window (unapproved — admin reviews before it
   // shows). Enforces the shared-slot cap; edits reset approval.
   setBookingCreative: protectedProcedure
-    .input(z.object({ bookingId: z.string(), imageUrl: z.string().url(), linkUrl: z.string().url() }))
+    .input(z.object({ bookingId: z.string(), imageUrl: z.string().url(), linkUrl: z.string().url().optional() }))
     .mutation(async ({ ctx, input }) => {
       const booking = await ctx.prisma.bannerBooking.findFirstOrThrow({ where: { id: input.bookingId, userId: ctx.user.id } })
       const slot = await getSlot(ctx.prisma, booking.position as unknown as string)
       const existing = await ctx.prisma.banner.findUnique({ where: { bookingId: booking.id } })
+
+      // External advertisers may ONLY point their banner at their own directory
+      // listing — never an arbitrary external URL. Override whatever they sent.
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isAdvertiser: true, directoryListing: { select: { id: true } } } })
+      let linkUrl = input.linkUrl ?? ''
+      if (me.isAdvertiser) {
+        if (!me.directoryListing) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Set up your directory listing first.' })
+        linkUrl = `/directory/${me.directoryListing.id}`
+      } else if (!linkUrl) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'A link URL is required.' })
+      }
       if (!existing && slot && slot.cap > 1) {
         const live = await ctx.prisma.banner.count({ where: { position: booking.position, pageTarget: booking.pageTarget ?? null, active: true } })
         if (live >= slot.cap) throw new TRPCError({ code: 'CONFLICT', message: `This slot is full (${slot.cap} advertisers). Please try again when one expires.` })
       }
       if (existing) {
-        return ctx.prisma.banner.update({ where: { id: existing.id }, data: { imageUrl: input.imageUrl, linkUrl: input.linkUrl, approved: false } })
+        return ctx.prisma.banner.update({ where: { id: existing.id }, data: { imageUrl: input.imageUrl, linkUrl, approved: false } })
       }
       return ctx.prisma.banner.create({
         data: {
-          title: slot?.label ?? 'Sponsor', imageUrl: input.imageUrl, linkUrl: input.linkUrl,
+          title: slot?.label ?? 'Sponsor', imageUrl: input.imageUrl, linkUrl,
           position: booking.position, pageTarget: booking.pageTarget ?? null,
           active: true, approved: false, bookingId: booking.id, startsAt: booking.startsAt, endsAt: booking.endsAt,
         },

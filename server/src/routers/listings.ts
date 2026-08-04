@@ -369,6 +369,12 @@ export const listingsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
 
+      // Advertiser accounts are for buying advertising + a directory entry only —
+      // they are not sellers.
+      if (user.isAdvertiser) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Advertiser accounts cannot sell — you can buy advertising and a directory listing only.' })
+      }
+
       // A business sells as the business. Without a business name we'd have to
       // fall back to their personal name, which is what this prevents.
       if (missingBusinessName(user)) {

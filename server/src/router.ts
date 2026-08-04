@@ -16,6 +16,7 @@ import { handyRouter } from './routers/handy'
 import { crmRouter } from './routers/crm'
 import { eshotsRouter } from './routers/eshots'
 import { bannersRouter } from './routers/banners'
+import { directoryRouter } from './routers/directory'
 import { financialsRouter } from './routers/financials'
 import { subscriptionsRouter } from './routers/subscriptions'
 import { complianceRouter } from './routers/compliance'
@@ -59,6 +60,7 @@ export const appRouter = router({
   crm: crmRouter,
   eshots: eshotsRouter,
   banners: bannersRouter,
+  directory: directoryRouter,
   financials: financialsRouter,
   subscriptions: subscriptionsRouter,
   compliance: complianceRouter,
