@@ -221,6 +221,9 @@ function EmployersInner() {
               {busy ? t('Opening checkout…') : isBiz ? `${t('Pay & activate')} →` : `${t('Sign up & pay')} →`}
             </button>
             {!isBiz && basketItems.length > 0 && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a5a2a', textAlign: 'center', marginTop: 6 }}>{t('Your account + these placements are paid together at checkout.')}</div>}
+            <Link href="/advertise" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 12, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--orange)' }}>
+              🎯 {t('Book banner advertising with a date picker')} ›
+            </Link>
           </div>
         </div>
 

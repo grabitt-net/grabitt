@@ -51,6 +51,11 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
   const [creativeFor, setCreativeFor] = useState<string | null>(null)
   const [creativeImg, setCreativeImg] = useState(''); const [creativeLink, setCreativeLink] = useState('')
   const [creativeBusy, setCreativeBusy] = useState(false); const [creativeMsg, setCreativeMsg] = useState('')
+  // Paid banner bookings (bought via /advertise) awaiting / holding a creative.
+  const [bookings, setBookings] = useState<{ id: string; position: string; pageTarget: string | null; startsAt: string; endsAt: string; hasCreative: boolean; approved: boolean }[] | null>(null)
+  const [bkFor, setBkFor] = useState<string | null>(null)
+  const [bkImg, setBkImg] = useState(''); const [bkLink, setBkLink] = useState('')
+  const [bkBusy, setBkBusy] = useState(false); const [bkMsg, setBkMsg] = useState('')
 
   useEffect(() => {
     trpcAuthed().business.tierStatus.query()
@@ -62,6 +67,9 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
     trpcAuthed().sponsorship.mine.query()
       .then((d: any) => setSponsorships(d ?? []))
       .catch(() => setSponsorships([]))
+    trpcAuthed().banners.myBookings.query()
+      .then((d: any) => setBookings(d ?? []))
+      .catch(() => setBookings([]))
   }, [])
 
   if (!data || !data.isBusiness) return null
@@ -250,8 +258,38 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
             </div>
           )
         })}
-        <Link href="/employers" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 12, background: '#f9f6f2', border: '1px dashed #d8cbb5', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: '#8a5a2a' }}>
-          ➕ {t('Buy a placement')}
+        {/* Paid banner bookings (via /advertise) — upload the creative here */}
+        {bookings && bookings.length > 0 && bookings.map(b => {
+          const submit = async () => {
+            setBkBusy(true); setBkMsg('')
+            try {
+              await trpcAuthed().banners.setBookingCreative.mutate({ bookingId: b.id, imageUrl: bkImg.trim(), linkUrl: bkLink.trim() })
+              setBkMsg('✓ Submitted for approval'); setBkFor(null); setBkImg(''); setBkLink('')
+              trpcAuthed().banners.myBookings.query().then((d: any) => setBookings(d ?? [])).catch(() => {})
+            } catch (e: any) { setBkMsg(e?.message ?? 'Could not upload') } finally { setBkBusy(false) }
+          }
+          const status = b.hasCreative ? (b.approved ? '✓ Live' : '⏳ In review') : 'Upload needed'
+          return (
+            <div key={b.id} style={{ borderBottom: '1px solid #f4efe8', padding: '9px 2px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 16 }}>🖼️</span>
+                <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)' }}>{b.position.replace(/_/g, ' ')}{b.pageTarget ? ` · ${b.pageTarget}` : ''}</span>
+                <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: b.approved ? '#16a34a' : '#9a5b1a', fontWeight: 800 }}>{status}</span>
+                <button onClick={() => { setBkFor(bkFor === b.id ? null : b.id); setBkMsg('') }} style={{ background: b.hasCreative ? '#f0fdf4' : '#FFF3EE', border: `1px solid ${b.hasCreative ? '#bbf7d0' : '#FFD4A0'}`, color: b.hasCreative ? '#16a34a' : '#8a5a2a', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{b.hasCreative ? t('Edit banner') : t('Upload banner')}</button>
+              </div>
+              {bkFor === b.id && (
+                <div style={{ marginTop: 8, background: '#f9f6f2', borderRadius: 10, padding: 10 }}>
+                  <input value={bkImg} onChange={e => setBkImg(e.target.value)} placeholder={t('Banner image URL (wide)')} style={miniInput} />
+                  <input value={bkLink} onChange={e => setBkLink(e.target.value)} placeholder={t('Link URL (e.g. your storefront)')} style={miniInput} />
+                  {bkMsg && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: bkMsg.startsWith('✓') ? '#16a34a' : '#ef4444', marginBottom: 6 }}>{bkMsg}</div>}
+                  <button onClick={submit} disabled={bkBusy || !bkImg.trim() || !bkLink.trim()} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, cursor: 'pointer' }}>{bkBusy ? t('Saving…') : t('Submit for approval')}</button>
+                </div>
+              )}
+            </div>
+          )
+        })}
+        <Link href="/advertise" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 12, background: '#f9f6f2', border: '1px dashed #d8cbb5', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: '#8a5a2a' }}>
+          ➕ {t('Buy a banner placement')}
         </Link>
       </div>
 

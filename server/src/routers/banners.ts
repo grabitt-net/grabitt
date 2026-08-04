@@ -8,6 +8,7 @@ import {
   type OrderLine,
 } from '../lib/bannerAdvertising'
 import { BANNER_SLOT_IDS, BANNER_MAX_MONTHS, BANNER_DURATIONS } from '@grabitt/design-tokens'
+import { SPONSOR_PAGES } from '../lib/sponsorshipPricing'
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 const POSITIONS = BANNER_SLOT_IDS as unknown as [string, ...string[]]
@@ -31,6 +32,7 @@ export const bannersRouter = router({
     slots: (await getBannerCatalog(ctx.prisma)).filter(s => s.active),
     durations: BANNER_DURATIONS,
     maxMonths: BANNER_MAX_MONTHS,
+    pages: SPONSOR_PAGES,
   })),
 
   // Public: how many listing rows between in-feed category banners.
@@ -87,6 +89,42 @@ export const bannersRouter = router({
       })
       if (!session.url) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Could not start checkout' })
       return { url: session.url, quote }
+    }),
+
+  // Buyer: my banner bookings + whether each has a creative uploaded yet.
+  myBookings: protectedProcedure.query(async ({ ctx }) => {
+    const bookings = await ctx.prisma.bannerBooking.findMany({
+      where: { userId: ctx.user.id, status: 'active', endsAt: { gt: new Date() } },
+      orderBy: { startsAt: 'desc' },
+    })
+    const banners = await ctx.prisma.banner.findMany({ where: { bookingId: { in: bookings.map(b => b.id) } }, select: { bookingId: true, approved: true } })
+    const byBooking = new Map(banners.map(b => [b.bookingId, b]))
+    return bookings.map(b => ({ ...b, hasCreative: byBooking.has(b.id), approved: byBooking.get(b.id)?.approved ?? false }))
+  }),
+
+  // Buyer: upload / replace the creative for one of my bookings. Provisions the
+  // Banner in the booked slot & window (unapproved — admin reviews before it
+  // shows). Enforces the shared-slot cap; edits reset approval.
+  setBookingCreative: protectedProcedure
+    .input(z.object({ bookingId: z.string(), imageUrl: z.string().url(), linkUrl: z.string().url() }))
+    .mutation(async ({ ctx, input }) => {
+      const booking = await ctx.prisma.bannerBooking.findFirstOrThrow({ where: { id: input.bookingId, userId: ctx.user.id } })
+      const slot = await getSlot(ctx.prisma, booking.position as unknown as string)
+      const existing = await ctx.prisma.banner.findUnique({ where: { bookingId: booking.id } })
+      if (!existing && slot && slot.cap > 1) {
+        const live = await ctx.prisma.banner.count({ where: { position: booking.position, pageTarget: booking.pageTarget ?? null, active: true } })
+        if (live >= slot.cap) throw new TRPCError({ code: 'CONFLICT', message: `This slot is full (${slot.cap} advertisers). Please try again when one expires.` })
+      }
+      if (existing) {
+        return ctx.prisma.banner.update({ where: { id: existing.id }, data: { imageUrl: input.imageUrl, linkUrl: input.linkUrl, approved: false } })
+      }
+      return ctx.prisma.banner.create({
+        data: {
+          title: slot?.label ?? 'Sponsor', imageUrl: input.imageUrl, linkUrl: input.linkUrl,
+          position: booking.position, pageTarget: booking.pageTarget ?? null,
+          active: true, approved: false, bookingId: booking.id, startsAt: booking.startsAt, endsAt: booking.endsAt,
+        },
+      })
     }),
 
   // Public: record a banner click and return where to send the visitor.
