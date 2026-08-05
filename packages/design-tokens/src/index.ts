@@ -108,7 +108,6 @@ export const BUSINESS_ADDONS = {
   featured_partner:  { label: 'Featured Partner',  icon: '⭐', amountCents: 7900,  yearlyCents: 79000,  blurb: 'A rotating banner in the bottom slot across pages (shared by up to 7 partners), plus your logo, blurb and link on the Sponsors & Partners page.' },
   email_blast:       { label: 'Email blast',       icon: '📧', amountCents: 4900,  yearlyCents: 49000,  blurb: 'A promotional email to opted-in members in your area.' },
   whatsapp_blast:    { label: 'WhatsApp blast',    icon: '💬', amountCents: 2900,  yearlyCents: 29000,  blurb: 'Broadcast promotions to your opted-in customers on WhatsApp.', comingSoon: true },
-  business_directory:{ label: 'Business directory',icon: '📒', amountCents: 900,   yearlyCents: 9000,   blurb: 'Year-round listing in the Grabitt business directory.' },
 } as const
 
 export type BusinessAddonId = keyof typeof BUSINESS_ADDONS
