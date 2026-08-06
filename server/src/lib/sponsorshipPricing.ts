@@ -10,9 +10,9 @@ export const SPONSOR_DURATIONS = [1, 3, 6, 12] as const
 // whether the buyer picks a specific page. Category Sponsor is one advertiser per
 // page (fixed top); Featured Partner rotates up to 7 in the bottom slot.
 export const ADDON_BANNER: Record<string, { position: string; cap: number; needsPage: boolean; label: string }> = {
-  homepage_sponsor: { position: 'home_top', cap: 1, needsPage: false, label: 'Homepage hero' },
+  homepage_sponsor: { position: 'home_top', cap: 3, needsPage: false, label: 'Homepage sponsor (3 rotating)' },
   category_sponsor: { position: 'category', cap: 1, needsPage: true, label: 'Category top banner' },
-  featured_partner: { position: 'sponsor_footer', cap: 7, needsPage: false, label: 'Featured Partner (rotating)' },
+  featured_partner: { position: 'sponsor_footer', cap: 5, needsPage: false, label: 'Featured banner (5 rotating slots)' },
 }
 export const bannerForAddon = (addonId: string) => ADDON_BANNER[addonId] ?? null
 

@@ -63,6 +63,58 @@ export const PRICES = {
   referralBonus: 50,
 } as const
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Revenue-model pricing (Steve's draft) — the canonical figures for the paid
+// verticals. These constants are the source of truth for the numbers; where a
+// charging FLOW isn't wired yet (per-job / per-property fees, blast bundles,
+// standalone directory subscription), that is tracked separately — the money
+// isn't collected just because the constant exists.
+
+// Jobs beyond the tier's free allowance: €39/job, 14 days live, with bundles.
+export const JOBS_PRICING = {
+  perJobCents: 3900,
+  daysLive: 14,
+  bundles: { 5: 17500, 10: 35000 } as Record<number, number>, // €175 / €350
+} as const
+
+// Property. Private: 1 free/month, €9 featured boost, €39 per extra listing.
+// Business: €39/listing with the same 5/10 bundles. Advertising only — Grabitt
+// takes no commission or deposit on property.
+export const PROPERTY_PRICING = {
+  privateFreePerMonth: 1,
+  privateFeaturedBoostCents: 900,   // €9
+  privateExtraListingCents: 3900,   // €39
+  businessPerListingCents: 3900,    // €39
+  businessBundles: { 5: 17500, 10: 35000 } as Record<number, number>,
+} as const
+
+// Standalone business-directory subscription (company name, phone, email,
+// website, short description, logo — not a storefront). NOTE: the CURRENT build
+// grants a directory entry only while a paid banner runs; this standalone
+// subscription pricing is Steve's alternative model and is not yet wired.
+export const DIRECTORY_PRICING = {
+  monthlyCents: 1500,     // €15/mo
+  quarterlyCents: 4000,   // €40/quarter
+  yearlyCents: 15000,     // €150/year
+} as const
+
+// Direct-marketing blast bundles (all double opt-in). Single-send prices live on
+// the BUSINESS_ADDONS email_blast / whatsapp_blast entries.
+export const BLAST_BUNDLES = {
+  email:    { 1: 14900, 3: 40000, 10: 90000 } as Record<number, number>,
+  whatsapp: { 1: 19900, 3: 50000, 9: 90000 } as Record<number, number>,
+} as const
+
+// Business Light — the entry business tier: free membership, 8% commission, but
+// €0.99 per listing (no free item allowance). NOTE: not yet a selectable tier in
+// the subscription/grade system — captured here for the model.
+export const BUSINESS_LIGHT = {
+  label: 'Business Light',
+  feeRate: 0.08,
+  freeMembership: true,
+  perListingCents: 99,   // €0.99
+} as const
+
 // Recurring subscription catalogue (from the original prototype). Amounts are
 // in cents (EUR). `trialDays` 0 = no trial. `grantsGrade` = a grade floor while
 // the sub is active. `verifyFeeCents` = one-off business verification.
@@ -82,8 +134,8 @@ export const SUBSCRIPTION_PLANS = {
                  blurb: 'Promote your service to locals. €29/mo.' },
   page_banner: { label: 'Page banners',        amountCents: 3900, interval: 'month', trialDays: 0,
                  blurb: 'Your banner across Grabitt pages, with monthly click stats. €39/mo.' },
-  directory:   { label: 'Business directory',  amountCents: 9900, interval: 'year',  trialDays: 0,
-                 blurb: 'Year-round directory listing, with click stats. €99/yr.' },
+  directory:   { label: 'Business directory',  amountCents: 15000, interval: 'year',  trialDays: 0,
+                 blurb: 'Year-round directory listing (name, phone, email, website, logo — not a storefront). €150/yr (also €15/mo or €40/quarter).' },
   // Property-agent plans — a monthly fee that includes an active-listing
   // allowance. Enforced on property.create; managed by admins via approval.
   agent_15:    { label: 'Agent — 15 listings',  amountCents: 4900, interval: 'month', trialDays: 0, propertyAllowance: 15,
@@ -106,8 +158,8 @@ export const BUSINESS_ADDONS = {
   homepage_sponsor:  { label: 'Homepage Sponsor',  icon: '🥇', amountCents: 29900, yearlyCents: 299000, blurb: 'Your brand on the homepage hero — the single most prominent slot on Grabitt.' },
   category_sponsor:  { label: 'Category Sponsor',  icon: '🤝', amountCents: 14900, yearlyCents: 149000, blurb: 'Own the fixed top banner of one category page — exclusive, a single advertiser per month, never rotates.' },
   featured_partner:  { label: 'Featured Partner',  icon: '⭐', amountCents: 7900,  yearlyCents: 79000,  blurb: 'A rotating banner in the bottom slot across pages (shared by up to 7 partners), plus your logo, blurb and link on the Sponsors & Partners page.' },
-  email_blast:       { label: 'Email blast',       icon: '📧', amountCents: 4900,  yearlyCents: 49000,  blurb: 'A promotional email to opted-in members in your area.' },
-  whatsapp_blast:    { label: 'WhatsApp blast',    icon: '💬', amountCents: 2900,  yearlyCents: 29000,  blurb: 'Broadcast promotions to your opted-in customers on WhatsApp.', comingSoon: true },
+  email_blast:       { label: 'Email blast',       icon: '📧', amountCents: 14900, yearlyCents: 149000, blurb: 'A promotional email to opted-in members (double opt-in). €149 for 1 · bundles: €400 for 3, €900 for 10.' },
+  whatsapp_blast:    { label: 'WhatsApp blast',    icon: '💬', amountCents: 19900, yearlyCents: 199000, blurb: 'Broadcast promotions to opted-in customers on WhatsApp (double opt-in). €199 for 1 · bundles: €500 for 3, €900 for 9.', comingSoon: true },
 } as const
 
 export type BusinessAddonId = keyof typeof BUSINESS_ADDONS
@@ -123,22 +175,22 @@ export const isBusinessAddon = (id: string): id is BusinessAddonId => id in BUSI
 // an overlapping period. `perPage` slots are sold per category/page. `scope`
 // documents where it renders. All prices are amendable by admins.
 export const BANNER_SLOTS = {
-  home_top:         { label: 'Homepage hero',            monthlyCents: 29900, cap: 1, exclusive: true,  perPage: false, scope: 'Top of the homepage — the single most prominent slot.' },
+  home_top:         { label: 'Homepage sponsor',         monthlyCents: 29900, cap: 3, exclusive: false, perPage: false, scope: 'Top of the homepage — 3 rotating sponsors.' },
   category:         { label: 'Category — top banner',    monthlyCents: 14900, cap: 1, exclusive: true,  perPage: true,  scope: 'Fixed top banner of one category page (Category Sponsor overrides it).' },
   category_infeed:  { label: 'Category — in-feed',       monthlyCents: 9900,  cap: 5, exclusive: false, perPage: true,  scope: 'Between listing rows in category views (every N rows).' },
-  category_footer:  { label: 'Category — bottom banner', monthlyCents: 7900,  cap: 7, exclusive: false, perPage: true,  scope: 'Bottom of a category page (rotating).' },
+  category_footer:  { label: 'Category — bottom banner', monthlyCents: 7900,  cap: 5, exclusive: false, perPage: true,  scope: 'Bottom of a category page (Featured banner — 5 rotating slots).' },
   search_top:       { label: 'Search — top banner',      monthlyCents: 9900,  cap: 1, exclusive: true,  perPage: false, scope: 'Top of search results.' },
-  search_footer:    { label: 'Search — bottom banner',   monthlyCents: 6900,  cap: 7, exclusive: false, perPage: false, scope: 'Bottom of search results (rotating).' },
+  search_footer:    { label: 'Search — bottom banner',   monthlyCents: 6900,  cap: 5, exclusive: false, perPage: false, scope: 'Bottom of search results (Featured banner — 5 rotating slots).' },
   sticky_bottom:    { label: 'Sticky bottom bar',        monthlyCents: 19900, cap: 1, exclusive: true,  perPage: false, scope: 'A dismissible bar pinned to the bottom of the viewport site-wide.' },
   similar_items:    { label: 'Similar-items sponsored',  monthlyCents: 8900,  cap: 4, exclusive: false, perPage: false, scope: 'A sponsored slot among “similar items” on listing pages.' },
-  seller_dashboard: { label: 'Seller dashboard',         monthlyCents: 5900,  cap: 3, exclusive: false, perPage: false, scope: 'Top of the seller dashboard, below the nav links.' },
-  user_dashboard:   { label: 'User dashboard',           monthlyCents: 5900,  cap: 3, exclusive: false, perPage: false, scope: 'Top of the user account dashboard, below the nav links.' },
+  seller_dashboard: { label: 'Profile dashboard (business)', monthlyCents: 29900, cap: 3, exclusive: false, perPage: false, scope: 'Top of the business dashboard — 3 rotating sponsors.' },
+  user_dashboard:   { label: 'Profile dashboard (personal)', monthlyCents: 29900, cap: 3, exclusive: false, perPage: false, scope: 'Top of the personal account dashboard — 3 rotating sponsors.' },
   checkout:         { label: 'Checkout (non-intrusive)', monthlyCents: 12900, cap: 1, exclusive: true,  perPage: false, scope: 'A relevant, non-blocking banner beside the checkout — never interrupts the flow.' },
   messages:         { label: 'Message centre',           monthlyCents: 14900, cap: 3, exclusive: false, perPage: false, scope: 'Message centre (premium placement).' },
   notifications:    { label: 'Notifications popup',      monthlyCents: 9900,  cap: 3, exclusive: false, perPage: false, scope: 'Featured sponsor inside the notifications popup.' },
   jobs:             { label: 'Recruitment page',         monthlyCents: 7900,  cap: 5, exclusive: false, perPage: false, scope: 'The jobs/recruitment page.' },
   home_mid:         { label: 'Homepage — mid feed',      monthlyCents: 12900, cap: 3, exclusive: false, perPage: false, scope: 'Between homepage sections.' },
-  sponsor_footer:   { label: 'Featured Partner (footer)',monthlyCents: 7900,  cap: 7, exclusive: false, perPage: false, scope: 'Rotating bottom banner across the site (Featured Partner).' },
+  sponsor_footer:   { label: 'Featured banner (footer)', monthlyCents: 7900,  cap: 5, exclusive: false, perPage: false, scope: 'Bottom banner across Alerts, Saved, Messages & Departments — 5 rotating slots.' },
   sponsor_top:      { label: 'Site-wide top strip',      monthlyCents: 12900, cap: 1, exclusive: true,  perPage: false, scope: 'Top strip shown under the search bar across the site.' },
 } as const
 export type BannerSlotId = keyof typeof BANNER_SLOTS
@@ -244,11 +296,11 @@ export type SubPlanId = keyof typeof SUBSCRIPTION_PLANS
 // any business account — it has no criteria.
 export const BUSINESS_TIERS = {
   dealer: { key: 'dealer', label: 'Business',      feeRate: FEE_RATES.dealer, // 6%
-            caps: { items: 30,  jobs: 3,  property: 5  }, criteria: { sales90d: 0,  rating: 0   } },
+            caps: { items: 30,  jobs: 1, property: 1 }, criteria: { sales90d: 0,  rating: 0   } },
   trader: { key: 'trader', label: 'Business Plus', feeRate: FEE_RATES.trader, // 4%
-            caps: { items: 100, jobs: 10, property: 20 }, criteria: { sales90d: 25, rating: 4.3 } },
+            caps: { items: 100, jobs: 2, property: 2 }, criteria: { sales90d: 25, rating: 4.3 } },
   pro:    { key: 'pro',    label: 'Business Pro',  feeRate: FEE_RATES.pro,    // 2.5%
-            caps: { items: 500, jobs: 30, property: 60 }, criteria: { sales90d: 75, rating: 4.6 } },
+            caps: { items: 500, jobs: 5, property: 5 }, criteria: { sales90d: 75, rating: 4.6 } },
 } as const
 
 export const BUSINESS_TIER_ORDER = ['dealer', 'trader', 'pro'] as const

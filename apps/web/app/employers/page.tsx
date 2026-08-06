@@ -104,16 +104,16 @@ function EmployersInner() {
         {/* Perks — compact, one line on desktop */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }} className="biz-perks">
           {([
-            ['💼', t('Post jobs')],
-            ['🔍', t('Find staff')],
-            ['🏠', t('List property')],
-            ['🏪', t('Storefront')],
-            ['🛡️', t('Verified badge')],
-            ['⭐', t('Lower fees')],
-          ] as [string, string][]).map(([icon, title]) => (
-            <div key={title} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: '12px 6px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            ['💼', t('Post jobs'), t('Advertise vacancies on the recruitment board. Your tier includes free job ads each month; extra ads are €39 for 14 days (bundles available).')],
+            ['🔍', t('Find staff'), t('Search the candidate database and receive applications through the built-in applicant tracker.')],
+            ['🏠', t('List property'), t('Advertise properties for sale or rent. Advertising only — Grabitt takes no commission or deposit on property.')],
+            ['🏪', t('Storefront'), t('Your own branded shop page with your logo, banner and all your listings in one place.')],
+            ['🛡️', t('Verified badge'), t('A verified 🏢 badge on your storefront and listings so buyers know you are a genuine business.')],
+            ['⭐', t('Lower fees'), t('Business selling fees start at 6% and drop to as low as 2.5% as you sell more and keep your rating up.')],
+          ] as [string, string, string][]).map(([icon, title, tip]) => (
+            <div key={title} title={tip} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: '12px 6px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', cursor: 'help' }}>
               <div style={{ fontSize: 22 }}>{icon}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', marginTop: 4, lineHeight: 1.25 }}>{title}</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', marginTop: 4, lineHeight: 1.25 }}>{title} <span style={{ color: '#c9bfa8', fontSize: 9 }}>ⓘ</span></div>
             </div>
           ))}
         </div>
