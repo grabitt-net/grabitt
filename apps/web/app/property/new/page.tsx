@@ -61,7 +61,9 @@ export default function NewPropertyPage() {
           (trpcAuthed() as any).property.myAllowance.query(),
         ])
         setAllowance(allow)
-        setGate(!me?.isBusiness ? 'needbusiness' : allow.remaining < 1 ? 'needplan' : 'ok')
+        // Anyone can advertise property now (private or business). Beyond the
+        // free allowance the listing is €39, taken at submit.
+        setGate('ok')
         setAgent({
           agencyName: me?.agencyName ?? me?.businessName ?? '',
           agentWhatsapp: me?.agentWhatsapp ?? '',
@@ -130,6 +132,9 @@ export default function NewPropertyPage() {
         ...(f.distTown && { distTown: Number(f.distTown) }),
         ...(features.length ? { features } : {}),
       })
+      // Beyond the free allowance a property is €39 — pay, then the webhook
+      // publishes it. Within allowance it's already live.
+      if (listing?.pendingPayment && listing?.checkoutUrl) { window.location.href = listing.checkoutUrl; return }
       router.push(`/listings/${listing.id}`)
     } catch (err: any) {
       const msg = err?.message ?? ''

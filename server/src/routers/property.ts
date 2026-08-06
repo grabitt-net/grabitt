@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
+import { getStripe } from '../lib/stripe'
+import { businessTierForGrade, PROPERTY_PRICING } from '@grabitt/design-tokens'
+
+const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
 export const propertyRouter = router({
   // Agents/business accounts list a property. Creates the Listing + its
@@ -47,23 +51,23 @@ export const propertyRouter = router({
       features: z.array(z.string().max(40)).max(40).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      // Only Business accounts (agents) may list property.
-      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, propertyListingAllowance: true } })
-      if (!me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A Business account is required to list property' })
+      // Anyone can advertise property (advertising only — no commission). The
+      // free allowance depends on the account: private users get 1/month; a
+      // Business account gets its tier allowance (plus any property-agent plan
+      // top-up). Beyond the free allowance each listing is €39.
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, grade: true, propertyListingAllowance: true, email: true, stripeCustomerId: true } })
 
-      // A property-agent plan (monthly allowance) is required to list property.
-      // Active + pending listings both count toward the allowance.
-      if (me.propertyListingAllowance < 1) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'A property-agent plan is required to list property. Choose a plan to get started.' })
-      }
-      const inUse = await ctx.prisma.listing.count({
-        where: { sellerId: ctx.user.id, department: 'property', status: { in: ['active', 'draft'] } },
+      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      // Business allowance = tier cap (+ any agent-plan allowance); private = 1/mo.
+      const freeAllowance = me.isBusiness
+        ? businessTierForGrade(me.grade).caps.property + (me.propertyListingAllowance ?? 0)
+        : PROPERTY_PRICING.privateFreePerMonth
+      const usedThisMonth = await ctx.prisma.listing.count({
+        where: { sellerId: ctx.user.id, department: 'property', createdAt: { gte: monthStart } },
       })
-      if (inUse >= me.propertyListingAllowance) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: `Your plan allows ${me.propertyListingAllowance} active listings. Remove one or upgrade your plan to list more.` })
-      }
+      const fee = usedThisMonth >= freeAllowance ? PROPERTY_PRICING.privateExtraListingCents : 0
 
-      return ctx.prisma.listing.create({
+      const created = await ctx.prisma.listing.create({
         data: {
           sellerId: ctx.user.id,
           title: input.title,
@@ -71,8 +75,9 @@ export const propertyRouter = router({
           price: input.price,
           department: 'property',
           condition: 'good',
-          // Property listings are held for admin approval before going public.
-          status: 'draft',
+          // Within allowance: live straight away. Over allowance: held as a draft
+          // until the €39 fee is paid (webhook publishes it).
+          status: fee > 0 ? 'draft' : 'active',
           images: input.images ?? [],
           location: input.location,
           ...(input.lat != null && input.lng != null ? { lat: input.lat, lng: input.lng } : {}),
@@ -114,6 +119,19 @@ export const propertyRouter = router({
         },
         include: { propertyListing: true },
       })
+
+      if (fee === 0) return created
+
+      // Over the free allowance — €39 to publish. Webhook flips draft→active.
+      const session = await getStripe().checkout.sessions.create({
+        mode: 'payment',
+        ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email }),
+        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name: `Grabitt property advert — ${input.title}` } } }],
+        payment_intent_data: { metadata: { kind: 'listing_publish', listingId: created.id } },
+        success_url: `${appUrl()}/listings/${created.id}?published=1`,
+        cancel_url: `${appUrl()}/property/new?cancelled=1`,
+      })
+      return { ...created, pendingPayment: true, checkoutUrl: session.url }
     }),
 
   // Exec suite: every property listing on the platform, for admin monitoring.
