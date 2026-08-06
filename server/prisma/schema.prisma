@@ -183,6 +183,9 @@ model DirectoryListing {
   website     String?
   logoUrl     String?
   location    String?
+  // Standalone directory subscription: the listing is visible while paidUntil is
+  // in the future. Extended by a directory purchase (monthly/quarterly/yearly).
+  paidUntil   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

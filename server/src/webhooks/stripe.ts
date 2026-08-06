@@ -104,6 +104,16 @@ async function provisionBannerOrder(userId: string, basket: string) {
   }
 }
 
+// Directory subscription purchase — extend the listing's paidUntil by `months`,
+// stacking on any remaining time so a renewal adds rather than resets.
+async function extendDirectory(userId: string, months: number) {
+  const listing = await prisma.directoryListing.findUnique({ where: { userId }, select: { id: true, paidUntil: true } })
+  if (!listing) return
+  const base = listing.paidUntil && listing.paidUntil.getTime() > Date.now() ? new Date(listing.paidUntil) : new Date()
+  base.setMonth(base.getMonth() + months)
+  await prisma.directoryListing.update({ where: { id: listing.id }, data: { paidUntil: base } }).catch(() => {})
+}
+
 export async function handleStripeEvent(event: Stripe.Event) {
   switch (event.type) {
     // Combined business signup basket (subscription + one-off sponsorship items):
@@ -204,6 +214,9 @@ export async function handleStripeEvent(event: Stripe.Event) {
       }
       if (pi.metadata?.kind === 'banner_order' && pi.metadata.userId && pi.metadata.basket) {
         await provisionBannerOrder(pi.metadata.userId, pi.metadata.basket)
+      }
+      if (pi.metadata?.kind === 'directory' && pi.metadata.userId && pi.metadata.months) {
+        await extendDirectory(pi.metadata.userId, Number(pi.metadata.months) || 1)
       }
       // Paid listing promotion → apply the option now that payment succeeded.
       if (pi.metadata?.kind === 'listing_promo' && pi.metadata.listingId && pi.metadata.userId) {

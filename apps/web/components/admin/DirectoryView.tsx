@@ -18,6 +18,8 @@ export default function DirectoryView() {
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const remove = async (id: string) => { await api.removeDirectoryListing(id); load() }
+  const grantYear = async (id: string) => { const d = new Date(); d.setFullYear(d.getFullYear() + 1); await api.setDirectoryPaidUntil(id, d.toISOString()); load() }
+  const clearPaid = async (id: string) => { await api.setDirectoryPaidUntil(id, null); load() }
   const save = async () => {
     if (!editing) return
     setSaving(true)
@@ -56,6 +58,7 @@ export default function DirectoryView() {
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button onClick={() => setEditing(l)} style={{ ...pill, background: '#f0f0f0', color: '#555' }}>Edit</button>
                     <a href={`/directory/${l.id}`} target="_blank" rel="noopener" style={{ ...pill, background: '#fff7ed', color: '#c2410c', textDecoration: 'none', display: 'inline-block' }}>View</a>
+                    {l.live ? <button onClick={() => clearPaid(l.id)} style={{ ...pill, background: '#f5f5f5', color: '#888' }}>Clear paid</button> : <button onClick={() => grantYear(l.id)} style={{ ...pill, background: '#f0faf4', color: '#16a34a' }}>Comp 1yr</button>}
                     <button onClick={() => remove(l.id)} style={{ ...pill, background: '#fef2f2', color: '#ef4444' }}>Delete</button>
                   </div>
                 </td>

@@ -7,9 +7,11 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHost'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
+import { createLooseTrpcClient } from '@/lib/trpc'
 
 type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null }
-type Mine = { isAdvertiser: boolean; isBusiness: boolean; listing: Listing | null; live: boolean }
+type Mine = { isAdvertiser: boolean; isBusiness: boolean; listing: Listing | null; live: boolean; paidUntil: string | null }
+type Term = { term: 'month' | 'quarter' | 'year'; cents: number; months: number; label: string }
 type Booking = { id: string; position: string; pageTarget: string | null; startsAt: string; endsAt: string; hasCreative: boolean; approved: boolean }
 
 const EMPTY: Listing = { id: '', name: '', category: '', description: '', phone: '', email: '', website: '', logoUrl: '', location: '' }
@@ -45,7 +47,7 @@ function Inner() {
       <QuickActions />
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 14px' }}>
         <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.6, marginBottom: 16 }}>
-          Advertise on Grabitt without a seller account. Book a banner, get a <Link href="/directory" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>business directory</Link> entry, and send clicks straight to your listing. Your directory entry is live only while a paid banner is running.
+          Advertise on Grabitt without a seller account. Take out a <Link href="/directory" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>business directory</Link> listing and/or book banners. Your directory entry is live while your directory subscription is paid.
         </p>
 
         {gate === 'loading' && <Muted>Loading…</Muted>}
@@ -104,8 +106,21 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
   const [bookings, setBookings] = useState<Booking[] | null>(null)
   const [bkFor, setBkFor] = useState<string | null>(null)
   const [bkImg, setBkImg] = useState(''); const [bkBusy, setBkBusy] = useState(false); const [bkMsg, setBkMsg] = useState('')
+  const [terms, setTerms] = useState<Term[]>([])
+  const [subBusy, setSubBusy] = useState<string>('')
 
-  useEffect(() => { trpcAuthed().banners.myBookings.query().then((d: any) => setBookings(d ?? [])).catch(() => setBookings([])) }, [])
+  useEffect(() => {
+    trpcAuthed().banners.myBookings.query().then((d: any) => setBookings(d ?? [])).catch(() => setBookings([]))
+    createLooseTrpcClient().directory.terms.query().then((d: any) => setTerms(d ?? [])).catch(() => {})
+  }, [])
+
+  const subscribe = async (term: string) => {
+    setSubBusy(term)
+    try {
+      const res = await trpcAuthed().directory.checkout.mutate({ term: term as Term['term'] }) as { url?: string }
+      if (res?.url) window.location.href = res.url; else setSubBusy('')
+    } catch { setSubBusy('') }
+  }
 
   const save = async () => {
     setBusy(true); setMsg('')
@@ -134,10 +149,26 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: mine.live ? '#f0fdf4' : '#fff7ed', border: `1px solid ${mine.live ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 12, padding: '11px 14px' }}>
         <span style={{ fontSize: 18 }}>{mine.live ? '🟢' : '🟠'}</span>
         <div style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: mine.live ? '#16a34a' : '#9a5b1a' }}>
-          {mine.live ? 'Your listing is live in the directory.' : 'Your listing is hidden — it shows only while a paid banner is running.'}
+          {mine.live
+            ? `Your listing is live in the directory${mine.paidUntil ? ` until ${new Date(mine.paidUntil).toLocaleDateString('en-GB')}` : ''}.`
+            : 'Your listing is hidden — subscribe below to appear in the directory.'}
         </div>
         {mine.listing && mine.live && <Link href={`/directory/${mine.listing.id}`} style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, color: 'var(--orange)', textDecoration: 'none' }}>View ›</Link>}
       </div>
+
+      <Card>
+        <H>Directory subscription</H>
+        <p style={sub}>List your business (name, phone, email, website, logo, short description) in the public directory. Not a storefront.{mine.paidUntil ? ` Paid until ${new Date(mine.paidUntil).toLocaleDateString('en-GB')}.` : ''}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          {terms.map(tm => (
+            <button key={tm.term} onClick={() => subscribe(tm.term)} disabled={!!subBusy || mine.listing?.name === undefined} style={{ border: '1.5px solid #e5dccd', background: '#fff', borderRadius: 12, padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>€{(tm.cents / 100).toFixed(0)}</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, color: '#1a1a1a' }}>{subBusy === tm.term ? 'Opening…' : tm.term === 'month' ? 'per month' : tm.term === 'quarter' ? 'per quarter' : 'per year'}</div>
+            </button>
+          ))}
+        </div>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a', marginTop: 8 }}>Save your listing details below first, then subscribe. Renewing adds to any remaining time.</div>
+      </Card>
 
       <Card>
         <H>Your directory listing</H>

@@ -96,6 +96,8 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('directory.adminUpdate', 'mutation', data, execToken),
     removeDirectoryListing: (id: string) =>
       rpc<any>('directory.adminRemove', 'mutation', { id }, execToken),
+    setDirectoryPaidUntil: (id: string, paidUntil: string | null) =>
+      rpc<any>('directory.adminSetPaidUntil', 'mutation', { id, paidUntil }, execToken),
 
     // Compliance (GDPR consent log + deletion requests)
     consentLog: (kind?: 'gdpr' | 'withdrawal_waiver') =>
