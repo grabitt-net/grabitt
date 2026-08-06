@@ -19,6 +19,15 @@ export const usersRouter = router({
     ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
   ),
 
+  // Business Light — the free entry business tier (8% fee, €0.99 per item
+  // listing, no free allowance). No payment: just flags the account. A full
+  // (€29/mo) Business subscription supersedes it.
+  becomeBusinessLight: protectedProcedure.mutation(async ({ ctx }) => {
+    const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true } })
+    if (me.isBusiness) throw new TRPCError({ code: 'BAD_REQUEST', message: 'You already have a full Business account.' })
+    return ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { businessLight: true }, select: { businessLight: true } })
+  }),
+
   // The user's referral code + link and how it's performing. Backfills a code
   // for accounts created before referrals existed, on first open.
   myReferral: protectedProcedure.query(async ({ ctx }) => {

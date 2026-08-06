@@ -518,6 +518,9 @@ model User {
   // External advertiser: buys banners + a directory entry only; not a seller.
   isAdvertiser       Boolean   @default(false)
   directoryListing   DirectoryListing?
+  // Business Light: free entry business tier (8% fee, €0.99 per item listing, no
+  // free item allowance). Sits below the €29/mo Business subscription.
+  businessLight      Boolean   @default(false)
   wishlistItems      WishlistItem[]
   wishItems          WishItem[]
   savedSearches      SavedSearch[]

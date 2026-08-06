@@ -4,7 +4,7 @@ import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { CreateListingInputSchema, SearchInputSchema } from '@grabitt/types'
 import { sellerName, missingBusinessName } from '../lib/identity'
 import { enforceBusinessListingAllowance } from '../lib/businessLimits'
-import { LISTING_CAPS, GRADE_THRESHOLDS, PRICES } from '@grabitt/design-tokens'
+import { LISTING_CAPS, GRADE_THRESHOLDS, PRICES, BUSINESS_LIGHT } from '@grabitt/design-tokens'
 import { getStripe } from '../lib/stripe'
 
 // Fallback shown on a job advert when the employer hasn't set an establishment
@@ -429,6 +429,10 @@ export const listingsRouter = router({
       // Check grade upgrade eligibility on every submit
       await checkGradeUpgrade(ctx.prisma, user)
 
+      // Business Light: every item listing costs €0.99 (no free allowance). The
+      // listing is held as a draft until paid; the webhook publishes it.
+      const lightFee = user.businessLight ? BUSINESS_LIGHT.perListingCents : 0
+
       const listing = await ctx.prisma.listing.create({
         data: {
           ...input,
@@ -436,9 +440,21 @@ export const listingsRouter = router({
           // sparse title still yields several relevant tags.
           tags: autoTags(input.title, [input.description, input.brand, input.colour, input.size, input.department, input.condition, ...Object.values(input.attributes ?? {})].filter(Boolean).join(' ')),
           sellerId: user.id,
-          status: 'active',
+          status: lightFee > 0 ? 'draft' : 'active',
         },
       })
+
+      if (lightFee > 0) {
+        const session = await getStripe().checkout.sessions.create({
+          mode: 'payment',
+          ...(user.stripeCustomerId ? { customer: user.stripeCustomerId } : { customer_email: user.email }),
+          line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: lightFee, product_data: { name: `Grabitt listing fee — ${input.title}` } } }],
+          payment_intent_data: { metadata: { kind: 'listing_publish', listingId: listing.id } },
+          success_url: `${APP_URL}/listings/${listing.id}?published=1`,
+          cancel_url: `${APP_URL}/sell?cancelled=1`,
+        })
+        return { ...listing, pendingPayment: true, checkoutUrl: session.url }
+      }
 
       // Wish matching: alert buyers whose active "I'm looking for X" wish this
       // new listing satisfies. Fires a wish_matched notification (Grabitt Alerts).

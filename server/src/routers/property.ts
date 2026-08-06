@@ -134,6 +134,28 @@ export const propertyRouter = router({
       return { ...created, pendingPayment: true, checkoutUrl: session.url }
     }),
 
+  // €9 featured boost for one of my property adverts (4 weeks). Reuses the
+  // listing_promo webhook path to set isFeatured / featuredUntil on payment.
+  boost: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUnique({ where: { id: input.listingId }, select: { sellerId: true, department: true, title: true } })
+      if (!listing || listing.sellerId !== ctx.user.id || listing.department !== 'property') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'That is not your property advert.' })
+      }
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { email: true, stripeCustomerId: true } })
+      const session = await getStripe().checkout.sessions.create({
+        mode: 'payment',
+        ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email }),
+        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: PROPERTY_PRICING.privateFeaturedBoostCents, product_data: { name: `Grabitt property featured boost — ${listing.title} (4 weeks)` } } }],
+        payment_intent_data: { metadata: { kind: 'listing_promo', userId: ctx.user.id, listingId: input.listingId, option: 'featured', weeks: '4' } },
+        success_url: `${appUrl()}/listings/${input.listingId}?boosted=1`,
+        cancel_url: `${appUrl()}/listings/${input.listingId}`,
+      })
+      if (!session.url) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Could not start checkout' })
+      return { url: session.url }
+    }),
+
   // Exec suite: every property listing on the platform, for admin monitoring.
   // Edit a property listing you own. Writes the parent Listing and the
   // PropertyListing detail together, mirroring create's mapping.

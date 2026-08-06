@@ -3710,6 +3710,9 @@ function PanelBody() {
                       ...(multibuyTiers.length && !freeItem ? { multibuyTiers } : {}),
                       ...(Object.keys(attrs).length ? { attributes: attrs } : {}),
                     })
+                    // Business Light: the €0.99 per-listing fee is due before the
+                    // item goes live — the create returns a checkout URL.
+                    if ((created as any)?.pendingPayment && (created as any)?.checkoutUrl) { window.location.href = (created as any).checkoutUrl; return }
                     // Paid promotions: charge before they go live. Redirect to
                     // Stripe Checkout; the webhook applies the option on payment.
                     if ((grabItNow || featured) && created?.id) {
@@ -4825,6 +4828,15 @@ function PanelBody() {
             Prepay a year up front and lock the founding rate. Everything in Business.{typeof foundingBizLeft === 'number' && foundingBizLeft > 0 ? ` Only ${foundingBizLeft} of 100 left.` : ''}
           </div>
         </>)}
+
+        {/* Business Light — free entry tier, sits below the €29/mo Business */}
+        <div style={{ marginTop: 14, borderTop: '1px solid #f0ebe4', paddingTop: 14 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Not ready for a subscription?</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', margin: '3px 0 8px', lineHeight: 1.5 }}>Business Light is free — 8% selling fee and just €0.99 per item listing, no monthly fee. Upgrade to full Business any time.</div>
+          <button onClick={async () => { try { await (await getTrpcClient() as any).users.becomeBusinessLight.mutate(); toast('You’re on Business Light'); closePanel() } catch (e) { toast((e as Error).message || 'Could not switch') } }} disabled={bizBusy} style={{ width: '100%', background: '#fff', border: '1.5px solid #e5dccd', color: '#8a5a2a', borderRadius: 14, padding: '12px 16px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>
+            Start free with Business Light
+          </button>
+        </div>
       </ActionPanel>
     )
   }
