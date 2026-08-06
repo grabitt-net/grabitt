@@ -1,10 +1,11 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
-import { PanelProvider } from '@/context/PanelContext'
+import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
+import PanelHost from '@/components/marketplace/PanelHost'
 import { createLooseTrpcClient } from '@/lib/trpc'
-import { trpcAuthed } from '@/lib/authToken'
+import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 
 type Slot = { id: string; label: string; monthlyCents: number; cap: number; exclusive: boolean; perPage: boolean; scope: string }
 type Catalog = { slots: Slot[]; durations: number[]; maxMonths: number; pages: string[] }
@@ -25,18 +26,31 @@ export default function AdvertisePage() {
         <Topbar title="Advertise on Grabitt" />
         <Inner />
         <Footer />
+        <PanelHost />
       </main>
     </PanelProvider>
   )
 }
 
 function Inner() {
+  const { openPanel } = usePanel()
   const [cat, setCat] = useState<Catalog | null>(null)
   const [lines, setLines] = useState<Line[]>([])
   const [quote, setQuote] = useState<Quote | null>(null)
   const [ranges, setRanges] = useState<Record<number, Range[]>>({})
   const [paying, setPaying] = useState(false)
   const [err, setErr] = useState('')
+  const [signedIn, setSignedIn] = useState<boolean | null>(null)
+
+  // Know up front whether the visitor can pay, so we prompt sign-in rather than
+  // failing at the checkout step.
+  useEffect(() => {
+    (async () => {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      setSignedIn(!!token)
+    })()
+  }, [])
 
   useEffect(() => {
     createLooseTrpcClient().banners.catalog.query()
@@ -83,6 +97,7 @@ function Inner() {
   const missingPage = lines.some(l => slotById[l.position]?.perPage && !l.pageTarget)
 
   const pay = async () => {
+    if (!signedIn) { openPanel('login'); return }
     setErr(''); setPaying(true)
     try {
       const payload = { lines: lines.map(l => ({ position: l.position, pageTarget: l.pageTarget || undefined, months: l.months, startsAt: new Date(l.startsAt).toISOString() })) }
@@ -102,6 +117,13 @@ function Inner() {
         The first month is charged pro-rata from your start date, and you save automatically when you book multiple slots or longer runs.
         Every banner is quantifiably click- and impression-tracked.
       </p>
+
+      {signedIn === false && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', background: '#FFF7ED', border: '1.5px solid #FFD4A0', borderRadius: 12, padding: '11px 14px', marginBottom: 16 }}>
+          <span style={{ flex: 1, minWidth: 180, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#9a5b1a' }}>Sign in (or create an advertiser account) to book. You can build your basket first.</span>
+          <button onClick={() => openPanel('login')} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>Sign in / Register</button>
+        </div>
+      )}
 
       {lines.map((l, i) => {
         const slot = slotById[l.position]
@@ -175,7 +197,7 @@ function Inner() {
 
       <button onClick={pay} disabled={paying || anyClash || missingPage || !lines.length}
         style={{ width: '100%', background: anyClash || missingPage ? '#e5e7eb' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: anyClash || missingPage ? '#999' : '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: anyClash || missingPage ? 'default' : 'pointer' }}>
-        {paying ? 'Starting checkout…' : missingPage ? 'Choose a page for each category slot' : anyClash ? 'Fix the date clashes above' : quote ? `Pay ${eur(quote.totalCents)} & book` : 'Continue'}
+        {paying ? 'Starting checkout…' : missingPage ? 'Choose a page for each category slot' : anyClash ? 'Fix the date clashes above' : signedIn === false ? 'Sign in to book' : quote ? `Pay ${eur(quote.totalCents)} & book` : 'Continue'}
       </button>
       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', textAlign: 'center', marginTop: 10 }}>
         After payment you’ll upload your banner image from your business dashboard. Banners go live once approved by our team.
