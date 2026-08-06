@@ -4,7 +4,10 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
+import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
+import CartFab from '@/components/marketplace/CartFab'
+import PanelHost from '@/components/marketplace/PanelHost'
 import { createLooseTrpcClient } from '@/lib/trpc'
 
 type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null }
@@ -26,6 +29,7 @@ export default function DirectoryListingPage() {
     <PanelProvider>
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 60, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
         <Topbar title="Business Directory" />
+        <QuickActions />
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 14px' }}>
           <Link href="/directory" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#1a1a1a', textDecoration: 'none' }}>‹ Directory</Link>
 
@@ -56,6 +60,8 @@ export default function DirectoryListingPage() {
           )}
         </div>
         <Footer />
+        <CartFab />
+        <PanelHost />
       </main>
     </PanelProvider>
   )

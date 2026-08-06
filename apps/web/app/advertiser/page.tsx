@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
+import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHost'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
@@ -41,6 +42,7 @@ function Inner() {
   return (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 60, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title="Advertiser Centre" />
+      <QuickActions />
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 14px' }}>
         <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.6, marginBottom: 16 }}>
           Advertise on Grabitt without a seller account. Book a banner, get a <Link href="/directory" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>business directory</Link> entry, and send clicks straight to your listing. Your directory entry is live only while a paid banner is running.

@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
+import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHost'
 import { createLooseTrpcClient } from '@/lib/trpc'
@@ -24,6 +25,7 @@ export default function AdvertisePage() {
     <PanelProvider>
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 60, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
         <Topbar title="Advertise on Grabitt" />
+        <QuickActions />
         <Inner />
         <Footer />
         <PanelHost />

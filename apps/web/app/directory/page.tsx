@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
+import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
+import CartFab from '@/components/marketplace/CartFab'
+import PanelHost from '@/components/marketplace/PanelHost'
 import { createLooseTrpcClient } from '@/lib/trpc'
 
 type Listing = { id: string; name: string; category: string | null; description: string | null; location: string | null; logoUrl: string | null; website: string | null }
@@ -25,6 +28,7 @@ export default function DirectoryPage() {
     <PanelProvider>
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 60, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
         <Topbar title="Business Directory" />
+        <QuickActions />
         <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 14px' }}>
           <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.6, marginBottom: 16 }}>
             Local businesses advertising on Grabitt. Want to appear here? <Link href="/advertiser" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>List your business ›</Link>
@@ -66,6 +70,8 @@ export default function DirectoryPage() {
           )}
         </div>
         <Footer />
+        <CartFab />
+        <PanelHost />
       </main>
     </PanelProvider>
   )
