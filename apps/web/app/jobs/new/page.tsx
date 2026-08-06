@@ -92,6 +92,9 @@ export default function PostJobPage() {
             })),
         } : {}),
       })
+      // Beyond the free allowance a job is €39 — go pay, then the webhook
+      // publishes it. Within allowance it's already live.
+      if (listing?.pendingPayment && listing?.checkoutUrl) { window.location.href = listing.checkoutUrl; return }
       router.push(`/listings/${listing.id}`)
     } catch (err: any) {
       const msg = err?.message ?? ''

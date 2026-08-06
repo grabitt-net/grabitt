@@ -218,6 +218,10 @@ export async function handleStripeEvent(event: Stripe.Event) {
       if (pi.metadata?.kind === 'directory' && pi.metadata.userId && pi.metadata.months) {
         await extendDirectory(pi.metadata.userId, Number(pi.metadata.months) || 1)
       }
+      // A job/property advert bought beyond the free allowance — publish it.
+      if (pi.metadata?.kind === 'listing_publish' && pi.metadata.listingId) {
+        await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active' } }).catch(() => {})
+      }
       // Paid listing promotion → apply the option now that payment succeeded.
       if (pi.metadata?.kind === 'listing_promo' && pi.metadata.listingId && pi.metadata.userId) {
         const target = await prisma.listing.findUnique({ where: { id: pi.metadata.listingId }, select: { sellerId: true } })

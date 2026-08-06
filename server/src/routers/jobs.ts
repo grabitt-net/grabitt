@@ -3,8 +3,12 @@ import { TRPCError } from '@trpc/server'
 import type { Prisma } from '@prisma/client'
 import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
 import { buildCvSnapshot } from '../lib/cvSnapshot'
-import { enforceBusinessListingAllowance } from '../lib/businessLimits'
+import { overflowFeeCents } from '../lib/businessLimits'
 import { scoreSuitability } from '../lib/suitability'
+import { getStripe } from '../lib/stripe'
+import { JOBS_PRICING } from '@grabitt/design-tokens'
+
+const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
 // Employer-defined screening question shape.
 const questionSchema = z.object({
@@ -423,11 +427,13 @@ export const jobsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       // Only Business accounts may post job adverts.
-      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true } })
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, email: true, stripeCustomerId: true } })
       if (!me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A Business account is required to post jobs' })
-      // Enforce the tier's monthly job allowance (credits cover any overflow).
-      await enforceBusinessListingAllowance(ctx.prisma, ctx.user.id, 'jobs')
-      return ctx.prisma.listing.create({
+      // Beyond the tier's monthly free allowance, a job advert is €39 (14 days).
+      // The listing is created hidden until the fee is paid; the webhook publishes
+      // it. Within allowance, it publishes immediately.
+      const fee = await overflowFeeCents(ctx.prisma, ctx.user.id, 'jobs', JOBS_PRICING.perJobCents)
+      const created = await ctx.prisma.listing.create({
         data: {
           sellerId: ctx.user.id,
           title: input.jobTitle,
@@ -435,7 +441,7 @@ export const jobsRouter = router({
           price: input.salaryMin ?? 0,
           department: 'jobs',
           condition: 'good',
-          status: 'active',
+          status: fee > 0 ? 'draft' : 'active',
           images: input.images ?? [],
           location: input.location,
           ...(input.lat != null && input.lng != null ? { lat: input.lat, lng: input.lng } : {}),
@@ -463,6 +469,21 @@ export const jobsRouter = router({
         },
         include: { jobListing: true },
       })
+
+      // Within the free allowance — published straight away.
+      if (fee === 0) return created
+
+      // Over allowance — take the €39 fee, then the webhook flips the listing to
+      // active (kind: listing_publish).
+      const session = await getStripe().checkout.sessions.create({
+        mode: 'payment',
+        ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email }),
+        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name: `Grabitt job advert — ${input.jobTitle} (14 days)` } } }],
+        payment_intent_data: { metadata: { kind: 'listing_publish', listingId: created.id } },
+        success_url: `${appUrl()}/listings/${created.id}?published=1`,
+        cancel_url: `${appUrl()}/jobs/new?cancelled=1`,
+      })
+      return { ...created, pendingPayment: true, checkoutUrl: session.url }
     }),
 
   // Edit a job advert you posted. Writes the parent Listing and the JobListing

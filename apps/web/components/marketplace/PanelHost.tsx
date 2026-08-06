@@ -2705,8 +2705,8 @@ function PanelBody() {
     const [responded, setResponded] = useState<Record<string, string>>({})
 
     useEffect(() => {
-      getTrpcClient().then(c => c.offers.received.query())
-        .then(d => { setOffers(d as unknown as RecvOffer[]); setLoaded(true) }).catch(() => setLoaded(true))
+      getTrpcClient().then(c => (c as any).offers.received.query())
+        .then((d: unknown) => { setOffers(d as unknown as RecvOffer[]); setLoaded(true) }).catch(() => setLoaded(true))
     }, [])
 
     const respond = async (offerId: string, action: 'accept' | 'decline') => {

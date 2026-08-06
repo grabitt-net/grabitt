@@ -61,5 +61,27 @@ export async function enforceBusinessListingAllowance(
   }).catch(() => {})
 }
 
+/**
+ * Flat overflow fee (in cents) for a jobs/property listing beyond the business's
+ * monthly allowance. Returns 0 within allowance or for non-business accounts.
+ * Callers gate publishing on payment when this is > 0. (Replaces the old
+ * credit-spend model for jobs & property per the revenue model.)
+ */
+export async function overflowFeeCents(
+  prisma: PrismaClient,
+  userId: string,
+  kind: 'jobs' | 'property',
+  feeCents: number,
+): Promise<number> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { isBusiness: true, grade: true } })
+  if (!user?.isBusiness) return 0
+  const cap = businessTierForGrade(user.grade).caps[kind]
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  const used = kind === 'jobs'
+    ? await prisma.jobListing.count({ where: { listing: { sellerId: userId }, createdAt: { gte: monthStart } } })
+    : await prisma.propertyListing.count({ where: { listing: { sellerId: userId }, createdAt: { gte: monthStart } } })
+  return used < cap ? 0 : feeCents
+}
+
 // Re-exported so callers can reference the caps without a second import.
 export { BUSINESS_TIERS }

@@ -194,7 +194,7 @@ function AccountInner() {
 
   const respond = async (offerId: string, action: 'accept' | 'decline') => {
     setBusyId(offerId)
-    try { await trpcAuthed().offers.respond.mutate({ offerId, action }); trpcAuthed().offers.received.query().then(d => setOffers(d as any[])) }
+    try { await (trpcAuthed() as any).offers.respond.mutate({ offerId, action }); (trpcAuthed() as any).offers.received.query().then((d: unknown) => setOffers(d as any[])) }
     finally { setBusyId(null) }
   }
 
