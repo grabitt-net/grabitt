@@ -99,12 +99,13 @@ export const directoryRouter = router({
       })
     }),
 
-  // Advertiser: create/update my directory entry.
+  // Advertiser OR business: create/update my directory entry. (Businesses can
+  // take a directory listing too — it is a separate paid product.)
   upsert: protectedProcedure
     .input(listingInput)
     .mutation(async ({ ctx, input }) => {
-      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isAdvertiser: true } })
-      if (!me.isAdvertiser) throw new TRPCError({ code: 'FORBIDDEN', message: 'Only advertiser accounts have a directory listing.' })
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isAdvertiser: true, isBusiness: true } })
+      if (!me.isAdvertiser && !me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A business or advertiser account is required for a directory listing.' })
       const data = {
         name: input.name,
         category: input.category || null,

@@ -220,9 +220,9 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
     _priceCard('🔓', 'Handy Help lead', '5 credits', "Unlock a customer's help request.", '#00b09b') +
     _head('Advertise your business', '#8b5cf6') +
     _priceCard('🖼️', 'Page banners', '€39/mo', 'Across Grabitt pages, with click stats.', '#8b5cf6') +
-    _priceCard('📧', 'E-shots', '€129', 'Per campaign, with open & click stats.', '#8b5cf6') +
-    _priceCard('💬', 'WhatsApp blasts', '€129', 'Per blast, with interaction data.', '#8b5cf6') +
-    _priceCard('📒', 'Business directory', '€99/yr', 'Year-round listing, with click stats.', '#8b5cf6') +
+    _priceCard('📧', 'Email blast', '€149', 'Per send (bundles from €400/3), with open & click stats.', '#8b5cf6') +
+    _priceCard('💬', 'WhatsApp blasts', '€199', 'Per blast (bundles from €500/3), with interaction data.', '#8b5cf6') +
+    _priceCard('📒', 'Business directory', '€15/mo', 'From €15/mo · €40/quarter · €150/year.', '#8b5cf6') +
     _head('Extras', '#888') +
     _priceCard('🤝', 'Grabitt Assist', '€99–299', 'We photograph & sell on your behalf.') +
     _priceCard('🎁', 'Credits', 'FREE', 'Earn by inviting, selling & sharing. Spend on unlocks.') +

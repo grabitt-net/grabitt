@@ -28,7 +28,9 @@ function Inner() {
   const loadMine = () => trpcAuthed().directory.mine.query()
     .then((d: any) => {
       setMine(d as Mine)
-      setGate(d.isBusiness ? 'business' : d.isAdvertiser ? 'advertiser' : 'need_join')
+      // Businesses and advertisers both manage a directory listing here; everyone
+      // else is offered the advertiser sign-up.
+      setGate(d.isBusiness || d.isAdvertiser ? 'advertiser' : 'need_join')
     })
     .catch(() => setGate('signed_out'))
 

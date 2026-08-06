@@ -302,7 +302,7 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
           <Tool icon="📢" title={t('Place a job advert')} sub={t('Candidates apply straight to you.')} onClick={() => router.push('/jobs/new')} />
           <Tool icon="📋" title={t('Applicants')} sub={t('Review and move candidates through your pipeline.')} onClick={() => openPanel('applications')} />
           <Tool icon="🔍" title={t('Search candidates')} sub={t('Searching is free — credits open a profile.')} onClick={() => openPanel('findStaff')} />
-          <Tool icon="📖" title={t('Directory listing')} sub={t('List your business in the Grabitt directory.')} onClick={() => openPanel('advertise')} />
+          <Tool icon="📖" title={t('Directory listing')} sub={t('List your business in the Grabitt directory — from €15/mo.')} onClick={() => router.push('/advertiser')} />
           <Tool icon="💳" title={t('Credits')} sub={t('Top up credits for searches and extra listings.')} onClick={() => openPanel('buyCredits')} />
         </div>
       </div>
