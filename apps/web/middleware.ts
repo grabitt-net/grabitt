@@ -40,6 +40,34 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
+  // ── Pre-launch lockdown ──────────────────────────────────────────────────────
+  // While MAINTENANCE_MODE is on, the public site is hidden: everyone is sent to
+  // /coming-soon EXCEPT admins (profiles.is_admin), and anyone holding the
+  // preview secret (?preview=SECRET sets a cookie so you/Steve can browse). The
+  // admin suite, auth and API stay reachable so admins can still sign in + work.
+  if (process.env.MAINTENANCE_MODE === '1') {
+    const allow = path === '/coming-soon'
+      || path.startsWith('/admin') || path.startsWith('/auth') || path.startsWith('/api')
+      || path.startsWith('/_next') || path === '/favicon.ico' || path === '/robots.txt' || path === '/manifest.webmanifest'
+    if (!allow) {
+      const secret = process.env.PREVIEW_SECRET
+      const provided = request.nextUrl.searchParams.get('preview')
+      const hasCookie = request.cookies.get('grabitt_preview')?.value === secret
+      let isAdmin = false
+      if (user) {
+        const { data: prof } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+        isAdmin = !!prof?.is_admin
+      }
+      const bypass = isAdmin || (!!secret && (provided === secret || hasCookie))
+      if (!bypass) {
+        const url = request.nextUrl.clone(); url.pathname = '/coming-soon'; url.search = ''
+        return NextResponse.rewrite(url)
+      }
+      // Persist the preview grant so the secret only needs to be used once.
+      if (secret && provided === secret) supabaseResponse.cookies.set('grabitt_preview', secret, { path: '/', maxAge: 60 * 60 * 24 * 30, httpOnly: true, sameSite: 'lax' })
+    }
+  }
+
   // Redirect logged-in users away from the auth page
   if (user && AUTH_ROUTES.some(r => path.startsWith(r))) {
     return NextResponse.redirect(new URL('/', request.url))
