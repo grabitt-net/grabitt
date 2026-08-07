@@ -33,6 +33,7 @@ import AffiliatesView from './AffiliatesView'
 import LevelsView from './LevelsView'
 import SponsorshipView from './SponsorshipView'
 import DirectoryView from './DirectoryView'
+import BlastsView from './BlastsView'
 import CommandPalette, { type Command } from './CommandPalette'
 import { makeCrmApi, CrmApi } from '@/lib/admin-api'
 
@@ -62,6 +63,7 @@ const COMMANDS: Command[] = [
   { id: 'help', label: 'Help', icon: '❓', group: 'Content', keywords: 'faq support' },
   { id: 'sponsorship', label: 'Sponsorship', icon: '📣', group: 'Content', keywords: 'advertising banner price sponsor placement' },
   { id: 'directory', label: 'Directory', icon: '📒', group: 'Content', keywords: 'advertiser business directory listing' },
+  { id: 'blasts', label: 'Blasts', icon: '📣', group: 'Content', keywords: 'email whatsapp direct marketing blast send' },
   { id: 'rewards', label: 'Rewards', icon: '🎁', group: 'Content', keywords: 'credits earn redeem upgrade fee' },
   { id: 'emails', label: 'E-shots', icon: '📧', group: 'Content' },
   { id: 'calendar', label: 'Calendar', icon: '📅', group: 'Workspace' },
@@ -81,7 +83,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels' | 'sponsorship' | 'directory'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -208,6 +210,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'reports'    && <ReportsView   onCountChange={setReportsOpen} />}
                 {view === 'banners'    && <BannersView initialPosition={bannerPosition} />}
                 {view === 'directory'  && <DirectoryView />}
+                {view === 'blasts'     && <BlastsView />}
                 {view === 'financials' && <FinancialsView />}
                 {view === 'retention'  && <RetentionView />}
                 {view === 'calendar'   && <CalendarView />}

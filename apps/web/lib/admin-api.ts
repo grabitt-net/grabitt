@@ -186,6 +186,10 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('sponsorship.saveConfig', 'mutation', { addons }, execToken),
     sponsorshipGrants: () => rpc<any[]>('sponsorship.grants', 'query', undefined, execToken),
     cancelSponsorship: (id: string) => rpc<any>('sponsorship.cancelGrant', 'mutation', { id }, execToken),
+    // Direct-marketing blast send queue
+    blastRequests: (status?: string) => rpc<any[]>('sponsorship.blastRequests', 'query', status ? { status } : undefined, execToken),
+    markBlastSent: (id: string, adminNote?: string) => rpc<any>('sponsorship.markBlastSent', 'mutation', { id, adminNote }, execToken),
+    rejectBlast: (id: string, adminNote?: string) => rpc<any>('sponsorship.rejectBlast', 'mutation', { id, adminNote }, execToken),
 
     // Reports / moderation queue
     reports: (status?: 'all' | 'open' | 'under_review' | 'actioned' | 'dismissed') =>

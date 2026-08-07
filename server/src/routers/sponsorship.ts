@@ -31,8 +31,55 @@ export const sponsorshipRouter = router({
 
   myBlasts: protectedProcedure.query(async ({ ctx }) => {
     const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { emailBlastsLeft: true, whatsappBlastsLeft: true } })
-    return { email: me.emailBlastsLeft, whatsapp: me.whatsappBlastsLeft }
+    const requests = await ctx.prisma.blastRequest.findMany({ where: { userId: ctx.user.id }, orderBy: { createdAt: 'desc' }, take: 20 })
+    return { email: me.emailBlastsLeft, whatsapp: me.whatsappBlastsLeft, requests }
   }),
+
+  // Business composes a blast; it spends one purchased send and queues for an
+  // admin to review and actually send (clients never send directly).
+  submitBlast: protectedProcedure
+    .input(z.object({
+      channel: z.enum(['email', 'whatsapp']),
+      subject: z.string().max(140).optional(),
+      message: z.string().min(5).max(2000),
+      linkUrl: z.string().url().optional().or(z.literal('')),
+      audience: z.string().max(200).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const field = input.channel === 'whatsapp' ? 'whatsappBlastsLeft' : 'emailBlastsLeft'
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { emailBlastsLeft: true, whatsappBlastsLeft: true } })
+      const left = input.channel === 'whatsapp' ? me.whatsappBlastsLeft : me.emailBlastsLeft
+      if (left < 1) throw new TRPCError({ code: 'BAD_REQUEST', message: `You have no ${input.channel} sends left — buy a bundle first.` })
+      await ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { [field]: { decrement: 1 } } })
+      return ctx.prisma.blastRequest.create({
+        data: { userId: ctx.user.id, channel: input.channel, subject: input.subject || null, message: input.message, linkUrl: input.linkUrl || null, audience: input.audience || null },
+      })
+    }),
+
+  // ── Admin: the blast send queue ──────────────────────────────────────────────
+  blastRequests: execProcedure
+    .input(z.object({ status: z.enum(['queued', 'sent', 'rejected', 'all']).default('queued') }).optional())
+    .query(({ ctx, input }) => ctx.prisma.blastRequest.findMany({
+      where: input?.status && input.status !== 'all' ? { status: input.status } : {},
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { displayName: true, email: true, businessName: true } } },
+    })),
+
+  markBlastSent: execProcedure
+    .input(z.object({ id: z.string(), adminNote: z.string().max(300).optional() }))
+    .mutation(({ ctx, input }) => ctx.prisma.blastRequest.update({ where: { id: input.id }, data: { status: 'sent', sentAt: new Date(), adminNote: input.adminNote || null } })),
+
+  // Reject and refund the send to the business.
+  rejectBlast: execProcedure
+    .input(z.object({ id: z.string(), adminNote: z.string().max(300).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const req = await ctx.prisma.blastRequest.findUniqueOrThrow({ where: { id: input.id } })
+      if (req.status === 'queued') {
+        const field = req.channel === 'whatsapp' ? 'whatsappBlastsLeft' : 'emailBlastsLeft'
+        await ctx.prisma.user.update({ where: { id: req.userId }, data: { [field]: { increment: 1 } } }).catch(() => {})
+      }
+      return ctx.prisma.blastRequest.update({ where: { id: input.id }, data: { status: 'rejected', adminNote: input.adminNote || null } })
+    }),
 
   // Buy a blast bundle (all double opt-in). Sends are credited on payment.
   buyBlast: protectedProcedure

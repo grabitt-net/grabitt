@@ -67,6 +67,19 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
       if (res?.url) window.location.href = res.url; else setBlastBusy('')
     } catch { setBlastBusy('') }
   }
+  // Compose a blast (spends a send; queues for an admin to send).
+  const [composeCh, setComposeCh] = useState<'email' | 'whatsapp' | null>(null)
+  const [cMsg, setCMsg] = useState(''); const [cSubj, setCSubj] = useState(''); const [cLink, setCLink] = useState(''); const [cAud, setCAud] = useState('')
+  const [cBusy, setCBusy] = useState(false); const [cNote, setCNote] = useState('')
+  const submitBlast = async () => {
+    if (!composeCh || cMsg.trim().length < 5) return
+    setCBusy(true); setCNote('')
+    try {
+      await (trpcAuthed() as any).sponsorship.submitBlast.mutate({ channel: composeCh, subject: cSubj.trim() || undefined, message: cMsg.trim(), linkUrl: cLink.trim() || undefined, audience: cAud.trim() || undefined })
+      setCNote('✓ Submitted — our team will send it shortly.'); setComposeCh(null); setCMsg(''); setCSubj(''); setCLink(''); setCAud('')
+      ;(trpcAuthed() as any).sponsorship.myBlasts.query().then((d: any) => setBlasts(d)).catch(() => {})
+    } catch (e: any) { setCNote(e?.message ?? 'Could not submit') } finally { setCBusy(false) }
+  }
 
   useEffect(() => {
     trpcAuthed().business.tierStatus.query()
@@ -313,19 +326,36 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
           {t('Send promotions to opted-in members. Buy a bundle of sends; use them any time.')}
           {blasts && <span style={{ display: 'block', marginTop: 4, fontWeight: 800, color: '#16a34a' }}>{t('You have')} {blasts.email} {t('email')} · {blasts.whatsapp} {t('WhatsApp')} {t('sends left')}.</span>}
         </div>
-        {(['email', 'whatsapp'] as const).map(ch => (
-          <div key={ch} style={{ marginBottom: 8 }}>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>{ch === 'email' ? '📧 Email blast' : '💬 WhatsApp blast'}</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {(bundles?.[ch] ?? []).map(b => (
-                <button key={b.qty} onClick={() => buyBlast(ch, b.qty)} disabled={blastBusy !== ''} style={{ flex: 1, minWidth: 90, border: '1.5px solid #e5dccd', background: '#fff', borderRadius: 10, padding: '8px 6px', cursor: 'pointer', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--orange)' }}>€{(b.cents / 100).toFixed(0)}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, color: '#1a1a1a' }}>{blastBusy === `${ch}:${b.qty}` ? 'Opening…' : `${b.qty} send${b.qty > 1 ? 's' : ''}`}</div>
-                </button>
-              ))}
+        {(['email', 'whatsapp'] as const).map(ch => {
+          const left = blasts ? (ch === 'email' ? blasts.email : blasts.whatsapp) : 0
+          return (
+            <div key={ch} style={{ marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <div style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)' }}>{ch === 'email' ? '📧 Email blast' : '💬 WhatsApp blast'}</div>
+                {left > 0 && <button onClick={() => { setComposeCh(composeCh === ch ? null : ch); setCNote('') }} style={{ background: '#FFF3EE', border: '1px solid #FFD4A0', color: '#8a5a2a', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }}>✍️ {t('Compose')} ({left})</button>}
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {(bundles?.[ch] ?? []).map(b => (
+                  <button key={b.qty} onClick={() => buyBlast(ch, b.qty)} disabled={blastBusy !== ''} style={{ flex: 1, minWidth: 90, border: '1.5px solid #e5dccd', background: '#fff', borderRadius: 10, padding: '8px 6px', cursor: 'pointer', textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--orange)' }}>€{(b.cents / 100).toFixed(0)}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, color: '#1a1a1a' }}>{blastBusy === `${ch}:${b.qty}` ? 'Opening…' : `${b.qty} send${b.qty > 1 ? 's' : ''}`}</div>
+                  </button>
+                ))}
+              </div>
+              {composeCh === ch && (
+                <div style={{ marginTop: 8, background: '#f9f6f2', borderRadius: 10, padding: 10 }}>
+                  {ch === 'email' && <input value={cSubj} onChange={e => setCSubj(e.target.value)} placeholder={t('Subject')} style={miniInput} />}
+                  <textarea value={cMsg} onChange={e => setCMsg(e.target.value)} placeholder={t('Your message, offer or news…')} rows={3} style={{ ...miniInput, resize: 'vertical' }} />
+                  <input value={cLink} onChange={e => setCLink(e.target.value)} placeholder={t('Link (optional)')} style={miniInput} />
+                  <input value={cAud} onChange={e => setCAud(e.target.value)} placeholder={t('Who to reach (e.g. Las Palmas, all)')} style={miniInput} />
+                  {cNote && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: cNote.startsWith('✓') ? '#16a34a' : '#ef4444', marginBottom: 6 }}>{cNote}</div>}
+                  <button onClick={submitBlast} disabled={cBusy || cMsg.trim().length < 5} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, cursor: 'pointer' }}>{cBusy ? t('Submitting…') : t('Submit — our team sends it')}</button>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
+        {cNote && composeCh === null && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: cNote.startsWith('✓') ? '#16a34a' : '#ef4444', marginTop: 4 }}>{cNote}</div>}
       </div>
 
       {/* ── Business tools ── */}

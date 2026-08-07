@@ -524,6 +524,7 @@ model User {
   // Direct-marketing blast sends bought (in bundles) and not yet used.
   emailBlastsLeft    Int       @default(0)
   whatsappBlastsLeft Int       @default(0)
+  blastRequests      BlastRequest[]
   wishlistItems      WishlistItem[]
   wishItems          WishItem[]
   savedSearches      SavedSearch[]
@@ -1533,6 +1534,27 @@ model BannerBooking {
   @@index([position])
   @@index([pageTarget])
   @@index([status])
+}
+
+// A business's request to send a direct-marketing blast. The business composes
+// it (spending one purchased send); an ADMIN reviews and actually sends it, then
+// marks it sent. Rejecting refunds the send to the business.
+model BlastRequest {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  channel    String                     // email | whatsapp
+  subject    String?                    // email subject
+  message    String
+  linkUrl    String?
+  audience   String?                    // free-text targeting note (area, etc.)
+  status     String   @default("queued") // queued | sent | rejected
+  adminNote  String?
+  createdAt  DateTime @default(now())
+  sentAt     DateTime?
+
+  @@index([status])
+  @@index([userId])
 }
 
 // Singleton admin-editable banner config: per-slot price + cap overrides, the
