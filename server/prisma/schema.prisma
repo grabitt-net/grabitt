@@ -521,6 +521,9 @@ model User {
   // Business Light: free entry business tier (8% fee, €0.99 per item listing, no
   // free item allowance). Sits below the €29/mo Business subscription.
   businessLight      Boolean   @default(false)
+  // Direct-marketing blast sends bought (in bundles) and not yet used.
+  emailBlastsLeft    Int       @default(0)
+  whatsappBlastsLeft Int       @default(0)
   wishlistItems      WishlistItem[]
   wishItems          WishItem[]
   savedSearches      SavedSearch[]

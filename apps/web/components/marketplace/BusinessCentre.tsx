@@ -56,6 +56,17 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
   const [bkFor, setBkFor] = useState<string | null>(null)
   const [bkImg, setBkImg] = useState(''); const [bkLink, setBkLink] = useState('')
   const [bkBusy, setBkBusy] = useState(false); const [bkMsg, setBkMsg] = useState('')
+  // Direct-marketing blast bundles + remaining sends.
+  const [bundles, setBundles] = useState<{ email: { qty: number; cents: number }[]; whatsapp: { qty: number; cents: number }[] } | null>(null)
+  const [blasts, setBlasts] = useState<{ email: number; whatsapp: number } | null>(null)
+  const [blastBusy, setBlastBusy] = useState('')
+  const buyBlast = async (channel: 'email' | 'whatsapp', qty: number) => {
+    setBlastBusy(`${channel}:${qty}`)
+    try {
+      const res = await (trpcAuthed() as any).sponsorship.buyBlast.mutate({ channel, qty }) as { url?: string }
+      if (res?.url) window.location.href = res.url; else setBlastBusy('')
+    } catch { setBlastBusy('') }
+  }
 
   useEffect(() => {
     trpcAuthed().business.tierStatus.query()
@@ -70,6 +81,8 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
     trpcAuthed().banners.myBookings.query()
       .then((d: any) => setBookings(d ?? []))
       .catch(() => setBookings([]))
+    ;(trpcAuthed() as any).sponsorship.blastBundles.query().then((d: any) => setBundles(d)).catch(() => {})
+    ;(trpcAuthed() as any).sponsorship.myBlasts.query().then((d: any) => setBlasts(d)).catch(() => {})
   }, [])
 
   if (!data || !data.isBusiness) return null
@@ -291,6 +304,28 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
         <Link href="/advertise" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 12, background: '#f9f6f2', border: '1px dashed #d8cbb5', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: '#8a5a2a' }}>
           ➕ {t('Buy a banner placement')}
         </Link>
+      </div>
+
+      {/* ── Direct marketing blasts (double opt-in) ── */}
+      <div style={card}>
+        <div style={cardHead}>📣 {t('Direct marketing')}</div>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginBottom: 10, lineHeight: 1.5 }}>
+          {t('Send promotions to opted-in members. Buy a bundle of sends; use them any time.')}
+          {blasts && <span style={{ display: 'block', marginTop: 4, fontWeight: 800, color: '#16a34a' }}>{t('You have')} {blasts.email} {t('email')} · {blasts.whatsapp} {t('WhatsApp')} {t('sends left')}.</span>}
+        </div>
+        {(['email', 'whatsapp'] as const).map(ch => (
+          <div key={ch} style={{ marginBottom: 8 }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>{ch === 'email' ? '📧 Email blast' : '💬 WhatsApp blast'}</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {(bundles?.[ch] ?? []).map(b => (
+                <button key={b.qty} onClick={() => buyBlast(ch, b.qty)} disabled={blastBusy !== ''} style={{ flex: 1, minWidth: 90, border: '1.5px solid #e5dccd', background: '#fff', borderRadius: 10, padding: '8px 6px', cursor: 'pointer', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--orange)' }}>€{(b.cents / 100).toFixed(0)}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, color: '#1a1a1a' }}>{blastBusy === `${ch}:${b.qty}` ? 'Opening…' : `${b.qty} send${b.qty > 1 ? 's' : ''}`}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* ── Business tools ── */}

@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
 import { getStripe } from '../lib/stripe'
 import { getSponsorshipCatalog, sponsorshipTotalCents, sponsorMonthlyCents, SPONSOR_DURATIONS, SPONSOR_PAGES, bannerForAddon } from '../lib/sponsorshipPricing'
-import { BUSINESS_ADDON_IDS } from '@grabitt/design-tokens'
+import { BUSINESS_ADDON_IDS, BLAST_BUNDLES } from '@grabitt/design-tokens'
 import type { PrismaClient } from '@prisma/client'
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
@@ -22,6 +22,37 @@ export const sponsorshipRouter = router({
     durations: SPONSOR_DURATIONS,
     pages: SPONSOR_PAGES,
   })),
+
+  // Direct-marketing blast bundles (email/whatsapp) + the buyer's remaining sends.
+  blastBundles: publicProcedure.query(() => ({
+    email: Object.entries(BLAST_BUNDLES.email).map(([qty, cents]) => ({ qty: Number(qty), cents })),
+    whatsapp: Object.entries(BLAST_BUNDLES.whatsapp).map(([qty, cents]) => ({ qty: Number(qty), cents })),
+  })),
+
+  myBlasts: protectedProcedure.query(async ({ ctx }) => {
+    const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { emailBlastsLeft: true, whatsappBlastsLeft: true } })
+    return { email: me.emailBlastsLeft, whatsapp: me.whatsappBlastsLeft }
+  }),
+
+  // Buy a blast bundle (all double opt-in). Sends are credited on payment.
+  buyBlast: protectedProcedure
+    .input(z.object({ channel: z.enum(['email', 'whatsapp']), qty: z.number().int().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const table = BLAST_BUNDLES[input.channel] as Record<number, number>
+      const cents = table[input.qty]
+      if (!cents) throw new TRPCError({ code: 'BAD_REQUEST', message: 'That bundle is not available.' })
+      const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { email: true, stripeCustomerId: true } })
+      const session = await getStripe().checkout.sessions.create({
+        mode: 'payment',
+        ...(user.stripeCustomerId ? { customer: user.stripeCustomerId } : { customer_email: user.email }),
+        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: cents, product_data: { name: `Grabitt ${input.channel === 'email' ? 'Email' : 'WhatsApp'} blast — ${input.qty} send${input.qty > 1 ? 's' : ''}` } } }],
+        payment_intent_data: { metadata: { kind: 'blast', userId: ctx.user.id, channel: input.channel, qty: String(input.qty) } },
+        success_url: `${appUrl()}/account?tab=business&blast=success`,
+        cancel_url: `${appUrl()}/account?tab=business&blast=cancelled`,
+      })
+      if (!session.url) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Could not start checkout' })
+      return { url: session.url }
+    }),
 
   // The signed-in business's live sponsorships, with whether a creative is up.
   mine: protectedProcedure.query(async ({ ctx }) => {

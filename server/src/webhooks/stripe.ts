@@ -222,6 +222,12 @@ export async function handleStripeEvent(event: Stripe.Event) {
       if (pi.metadata?.kind === 'listing_publish' && pi.metadata.listingId) {
         await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active' } }).catch(() => {})
       }
+      // A direct-marketing blast bundle — credit the sends.
+      if (pi.metadata?.kind === 'blast' && pi.metadata.userId && pi.metadata.qty) {
+        const n = Number(pi.metadata.qty) || 0
+        const field = pi.metadata.channel === 'whatsapp' ? 'whatsappBlastsLeft' : 'emailBlastsLeft'
+        await prisma.user.update({ where: { id: pi.metadata.userId }, data: { [field]: { increment: n } } }).catch(() => {})
+      }
       // Paid listing promotion → apply the option now that payment succeeded.
       if (pi.metadata?.kind === 'listing_promo' && pi.metadata.listingId && pi.metadata.userId) {
         const target = await prisma.listing.findUnique({ where: { id: pi.metadata.listingId }, select: { sellerId: true } })
