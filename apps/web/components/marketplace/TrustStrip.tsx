@@ -16,13 +16,13 @@ export default function TrustStrip() {
     <section style={{ margin: '28px 14px 8px' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
         {BADGES.map(b => (
-          <div key={b.title} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, padding: '16px 16px' }}>
-            <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 11, background: '#FFF3EE', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div key={b.title} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow-sm)', padding: '16px 16px' }}>
+            <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 11, background: 'var(--sand)', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name={b.icon} size={21} />
             </div>
             <div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)', marginBottom: 3 }}>{b.title}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 500, color: '#7a6d58', lineHeight: 1.45 }}>{b.body}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 500, color: 'var(--ink-2)', lineHeight: 1.45 }}>{b.body}</div>
             </div>
           </div>
         ))}

@@ -70,10 +70,8 @@ export default function ListingsGrid() {
           {items.map(l => {
             const item = toPanelItem(l)
             return (
-              <div key={l.id} onClick={() => router.push(`/listings/${l.id}`)} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'transform 0.15s, box-shadow 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 26px rgba(0,0,0,0.12)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)' }}>
-                <div style={{ width: '100%', paddingTop: '80%', background: '#f5f0e8', position: 'relative' }}>
+              <div key={l.id} className="product-card" onClick={() => router.push(`/listings/${l.id}`)} style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ width: '100%', paddingTop: '80%', background: 'var(--sand)', position: 'relative' }}>
                   {item.image
                     ? <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                     : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>{item.emoji}</div>}
