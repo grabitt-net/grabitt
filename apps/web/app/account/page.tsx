@@ -10,6 +10,7 @@ import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import BannerSlot from '@/components/marketplace/BannerSlot'
+import Icon from '@/components/marketplace/Icon'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import SellerCentre from '@/components/marketplace/SellerCentre'
@@ -253,10 +254,10 @@ function AccountInner() {
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888' }}>{grade.charAt(0).toUpperCase() + grade.slice(1)} · ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'} · {t('since')} {memberSince}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#aaa', fontWeight: 700 }}>{memberRef}</span>
-                  {verified && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#dcfce7', color: '#16a34a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>🛡️ {t('Verified')}</span>}
-                  {me?.isBusiness && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#4A2E1A', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>🏢 {t('Business')}</span>}
+                  {verified && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#dcfce7', color: '#16a34a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 8px', borderRadius: 50 }}><Icon name="shield" size={10} strokeWidth={2.4} /> {t('Verified')}</span>}
+                  {me?.isBusiness && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--dark)', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 8px', borderRadius: 50 }}><Icon name="building" size={10} strokeWidth={2.4} /> {t('Business')}</span>}
                   {me?.memberStatus && (MEMBER_STATUSES as any)[me.memberStatus] && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#eef7f0', color: '#16a34a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>{(MEMBER_STATUSES as any)[me.memberStatus].badge} {(MEMBER_STATUSES as any)[me.memberStatus].label}</span>}
-                  {me?.foundingMember && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#FFF3EE', color: '#8a5a2a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>⭐ {t('Founding')}</span>}
+                  {me?.foundingMember && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#FFF3EE', color: '#B4400C', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 8px', borderRadius: 50 }}><Icon name="star" size={10} strokeWidth={2.4} /> {t('Founding')}</span>}
                 </div>
               </div>
             </div>

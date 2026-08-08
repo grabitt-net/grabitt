@@ -6,6 +6,7 @@ import { trpcAuthed } from '@/lib/authToken'
 import { usePanel } from '@/context/PanelContext'
 import { BUSINESS_TIERS, BUSINESS_TIER_ORDER, BUSINESS_ADDONS } from '@grabitt/design-tokens'
 import { t } from '@/lib/i18n'
+import Icon from './Icon'
 
 type Postings = {
   jobs: { id: string; title: string; location: string; status: string; applications: number }[]
@@ -107,7 +108,7 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
       {/* ── Tier + fee ── */}
       <div style={{ ...card, background: `linear-gradient(135deg, ${color}14, #fff)`, borderColor: `${color}55` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ width: 46, height: 46, borderRadius: 12, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 22 }}>🏢</div>
+          <div style={{ width: 46, height: 46, borderRadius: 12, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Icon name="building" size={24} strokeWidth={2} /></div>
           <div style={{ flex: 1, minWidth: 140 }}>
             <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 19, fontWeight: 700, color: 'var(--dark)' }}>{s.label}</div>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a' }}>{t('Your business level')}</div>
