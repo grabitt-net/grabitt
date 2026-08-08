@@ -19,6 +19,7 @@ import SeekerProfilePanel from './SeekerProfilePanel'
 import SignInFirst from './SignInFirst'
 import BusinessVerifyPanel from './BusinessVerifyPanel'
 import BannerSlot from './BannerSlot'
+import Icon from './Icon'
 import StorefrontEditor from './StorefrontEditor'
 import MultibuyEditor, { type MultibuyTier } from './MultibuyEditor'
 import { attributesFor } from '@/lib/listingAttributes'
@@ -1081,7 +1082,7 @@ function PanelBody() {
                     <div style={{ padding: '8px 10px 10px' }}>
                       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2 }}>{item.title}</div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{item.price}</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{item.price}</div>
                         <div style={{ fontSize: 9, color: '#888', fontFamily: 'var(--font-ui)' }}>📍 {item.location}</div>
                       </div>
                     </div>
@@ -1377,14 +1378,14 @@ function PanelBody() {
                 ))}
               </div>
             )}
-            <button onClick={() => openPanel('purchases')} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>🛒 View My Purchases</button>
+            <button onClick={() => openPanel('purchases')} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><Icon name="cart" size={16} strokeWidth={2} /> View My Purchases</button>
             <button onClick={closePanel} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>Back to browsing</button>
           </div>
         ) : cartStep === 'card' ? (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0 14px', borderBottom: '1px solid #f0f0f0', marginBottom: 14 }}>
               <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555' }}>Authorising {list.length} item{list.length === 1 ? '' : 's'}</span>
-              <span style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>{fmt(subtotal)}</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>{fmt(subtotal)}</span>
             </div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', marginBottom: 12, lineHeight: 1.5 }}>Enter your card once — each item is authorised into its own escrow and only charged/released at that seller&apos;s handover.</div>
             {setupSecret && <StripePayment clientSecret={setupSecret} mode="setup" label={`Pay ${fmt(subtotal)} securely`} onSuccess={onCardSaved} />}
@@ -1414,10 +1415,10 @@ function PanelBody() {
               const ms = new Date(it.expiresAt).getTime() - Date.now()
               return (
                 <div key={it.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
-                  <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0, overflow: 'hidden' }}>{it.image ? <img src={it.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}</div>
+                  <div style={{ width: 48, height: 48, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0, overflow: 'hidden', color: 'var(--ink-3)' }}>{it.image ? <img src={it.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Icon name="package" size={22} strokeWidth={1.8} />}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
-                    <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{fmt(it.price)} <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#999', fontWeight: 700 }}>· {it.sellerName} · clears in {countdown(ms)}</span></div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{fmt(it.price)} <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#999', fontWeight: 700 }}>· {it.sellerName} · clears in {countdown(ms)}</span></div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                       <button disabled={busyId === it.listingId} onClick={() => changeQty(it.listingId, it.qty - 1)} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: '#f0f0f0', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>−</button>
                       <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, minWidth: 16, textAlign: 'center' }}>{it.qty}</span>
@@ -1848,7 +1849,7 @@ function PanelBody() {
                     </div>
                     <div style={{ padding: '6px 8px 8px' }}>
                       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.title}</div>
-                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>€{Number(l.price).toFixed(2)}</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>€{Number(l.price).toFixed(2)}</div>
                     </div>
                   </div>
                 ))}
@@ -1952,7 +1953,7 @@ function PanelBody() {
                     </div>
                     <div style={{ padding: '8px 8px 10px' }}>
                       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{item.title}</div>
-                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{item.price}</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{item.price}</div>
                       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#888', marginTop: 2 }}>📍 {item.location}</div>
                     </div>
                   </div>
@@ -2099,7 +2100,7 @@ function PanelBody() {
                   {tab === 'received' ? 'A buyer offered' : 'Your offer'} · <span style={{ color: tab === 'received' ? '#555' : 'var(--orange)', fontWeight: 800 }}>{STATUS_LABEL[o.status] ?? o.status}</span>
                 </div>
               </div>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)', flexShrink: 0 }}>€{Number(o.amount).toLocaleString()}</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--orange)', flexShrink: 0 }}>€{Number(o.amount).toLocaleString()}</div>
             </div>
             {o.message && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#666', marginTop: 6, background: '#faf7f2', borderRadius: 8, padding: '6px 10px' }}>“{o.message}”</div>}
             {tab === 'received' && o.status === 'pending' && (
@@ -2175,7 +2176,7 @@ function PanelBody() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 2 }}>{l.title}</div>
-                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: 'var(--orange)' }}>€{Number(l.price).toLocaleString()}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: 'var(--orange)' }}>€{Number(l.price).toLocaleString()}</div>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 2 }}>
                     <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>📍 {l.location}</span>
                     {l.status === 'grab_it_now' && <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, color: '#fff', background: 'var(--orange)', padding: '1px 6px', borderRadius: 50 }}>⚡ GRAB IT NOW</span>}
@@ -2298,7 +2299,7 @@ function PanelBody() {
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 2 }}>📍 {s.location} · {s.date}</div>
             </div>
-            <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: 'var(--sage)', flexShrink: 0 }}>SOLD {s.price}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: 'var(--sage)', flexShrink: 0 }}>SOLD {s.price}</div>
           </div>
         ))}
       </ActionPanel>
@@ -2411,7 +2412,7 @@ function PanelBody() {
                 {/* Item recap */}
                 <div style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f0f0f0', marginBottom: 16, alignItems: 'center' }}>
                   <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>{emoji}</div>
-                  <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{title}</div><div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--orange)' }}>{fmt(total)}</div></div>
+                  <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{title}</div><div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--orange)' }}>{fmt(total)}</div></div>
                 </div>
 
                 {clientSecret ? (
@@ -2608,13 +2609,13 @@ function PanelBody() {
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Or offer your own amount')}</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <div style={{ position: 'relative', flex: 1 }}>
-                  <span style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 16, color: '#888' }}>€</span>
+                  <span style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-display)', fontSize: 16, color: '#888' }}>€</span>
                   <input
                     type="number"
                     value={amount}
                     onChange={e => setAmount(e.target.value)}
                     min="1"
-                    style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px 11px 26px', fontFamily: 'Georgia,serif', fontSize: 17, fontWeight: 700, color: 'var(--orange)', outline: 'none', boxSizing: 'border-box' }}
+                    style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px 11px 26px', fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--orange)', outline: 'none', boxSizing: 'border-box' }}
                   />
                 </div>
                 <button
@@ -2648,20 +2649,20 @@ function PanelBody() {
           <div style={{ width: 52, height: 52, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>{emoji}</div>
           <div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{title}</div>
-            <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, color: '#888' }}>{t('Listed at')} {price}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, color: '#888' }}>{t('Listed at')} {price}</div>
           </div>
         </div>
 
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Your offer amount (€)')}</div>
           <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 18, color: '#888' }}>€</span>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-display)', fontSize: 18, color: '#888' }}>€</span>
             <input
               type="number"
               value={amount}
               onChange={e => setAmount(e.target.value)}
               min="1"
-              style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px 11px 28px', fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 700, color: 'var(--orange)', outline: 'none', boxSizing: 'border-box' }}
+              style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px 11px 28px', fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--orange)', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
           {priceNum > 0 && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 4 }}>
@@ -2733,7 +2734,7 @@ function PanelBody() {
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>{t('on')} {offer.listing.title} · {new Date(offer.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
               </div>
               <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                <div style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>€{Number(offer.amount).toFixed(2)}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>€{Number(offer.amount).toFixed(2)}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', textDecoration: 'line-through' }}>€{Number(offer.listing.price).toFixed(2)}</div>
               </div>
             </div>
@@ -3220,7 +3221,7 @@ function PanelBody() {
                   <span style={{ background: ss.bg, color: ss.color, fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '2px 7px', borderRadius: 50, display: 'inline-block', marginTop: 3 }}>{ss.label}</span>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: 'var(--dark)' }}>{sale.amount}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--dark)' }}>{sale.amount}</div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: 'var(--sage)', fontWeight: 800 }}>Net {sale.net}</div>
                 </div>
               </div>
@@ -3259,7 +3260,7 @@ function PanelBody() {
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: p.status === 'held' ? 'var(--orange)' : p.status === 'released' ? 'var(--sage)' : '#888', fontWeight: 800, marginTop: 2 }}>{STATUS_LABEL[p.status] ?? p.status}</div>
             </div>
             <div style={{ flexShrink: 0 }}>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: 'var(--dark)', textAlign: 'right' }}>€{Number(p.amount).toFixed(2)}</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--dark)', textAlign: 'right' }}>€{Number(p.amount).toFixed(2)}</div>
               {p.status === 'held' && (
                 <button onClick={e => { e.stopPropagation(); openPanel('handover', { title: p.listing.title, transactionId: p.id, role: 'buyer' }) }} style={{ marginTop: 4, background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>Confirm ✅</button>
               )}
@@ -3513,9 +3514,9 @@ function PanelBody() {
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Price (€)')} *</div>
                   <div style={{ position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 20, color: freeItem ? '#ccc' : '#888' }}>€</span>
+                    <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-display)', fontSize: 20, color: freeItem ? '#ccc' : '#888' }}>€</span>
                     <input type="number" value={price} onChange={e => setPrice(e.target.value)} disabled={freeItem} placeholder="0.00" min="0" step="0.01"
-                      style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '13px 12px 13px 30px', fontFamily: 'Georgia,serif', fontSize: 22, fontWeight: 700, color: 'var(--orange)', outline: 'none', boxSizing: 'border-box', opacity: freeItem ? 0.4 : 1 }} />
+                      style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '13px 12px 13px 30px', fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--orange)', outline: 'none', boxSizing: 'border-box', opacity: freeItem ? 0.4 : 1 }} />
                   </div>
                   <div onClick={() => { setFreeItem(v => !v); if (!freeItem) setPrice('0') }} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, cursor: 'pointer' }}>
                     <div style={{ width: 20, height: 20, borderRadius: 4, border: `2px solid ${freeItem ? 'var(--sage)' : '#ccc'}`, background: freeItem ? 'var(--sage)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -3538,9 +3539,9 @@ function PanelBody() {
                   <div style={{ marginBottom: 14 }}>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Auto-accept offers over (optional)</div>
                     <div style={{ position: 'relative' }}>
-                      <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 18, color: '#888' }}>€</span>
+                      <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-display)', fontSize: 18, color: '#888' }}>€</span>
                       <input type="number" value={autoAcceptMin} onChange={e => setAutoAcceptMin(e.target.value)} placeholder="Leave blank to review every offer" min="0" step="0.01"
-                        style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px 11px 28px', fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                        style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px 11px 28px', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
                     </div>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 4 }}>
                       Offers at or above this amount are accepted automatically. Buyers never see your threshold.
@@ -3576,9 +3577,9 @@ function PanelBody() {
                       </div>
                       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>Delivery fee (€)</div>
                       <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Georgia,serif', fontSize: 16, color: '#888' }}>€</span>
+                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-display)', fontSize: 16, color: '#888' }}>€</span>
                         <input type="number" value={deliveryFee} onChange={e => setDeliveryFee(e.target.value)} placeholder="0.00" min="0" step="0.01"
-                          style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px 10px 28px', fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                          style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px 10px 28px', fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
                       </div>
                     </div>
                   )}
@@ -3590,7 +3591,7 @@ function PanelBody() {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Grab It Now</div>
-                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>€4.99</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>€4.99</div>
                     </div>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Appears in the Grab It Now strip on the homepage. Expires at midnight — creates buying urgency.</div>
                   </div>
@@ -3605,7 +3606,7 @@ function PanelBody() {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Featured listing</div>
-                      <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: 'var(--sage)' }}>€1.99/wk</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--sage)' }}>€1.99/wk</div>
                     </div>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Shown in the Featured strip on the homepage and at the top of department search results.</div>
                   </div>
@@ -3643,8 +3644,8 @@ function PanelBody() {
                   {featured && <div style={{ position: 'absolute', top: 10, left: 12, background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50 }}>👀 FEATURED</div>}
                 </div>
 
-                <div style={{ fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 700, color: 'var(--dark)', marginBottom: 4 }}>{title || 'Untitled listing'}</div>
-                <div style={{ fontFamily: 'Georgia,serif', fontSize: 26, fontWeight: 700, color: 'var(--orange)', marginBottom: 10 }}>{freeItem ? 'FREE' : price ? `€${parseFloat(price).toFixed(2)}` : 'POA'}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--dark)', marginBottom: 4 }}>{title || 'Untitled listing'}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, color: 'var(--orange)', marginBottom: 10 }}>{freeItem ? 'FREE' : price ? `€${parseFloat(price).toFixed(2)}` : 'POA'}</div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                   {[dept, condition, `📍 ${town}`, '🤝 Collection', ...(offersDelivery ? [`🚚 Delivery${parseFloat(deliveryFee) > 0 ? ` +€${parseFloat(deliveryFee).toFixed(2)}` : ' free'}`] : [])].filter(Boolean).map((tag, i) => (
@@ -3792,7 +3793,7 @@ function PanelBody() {
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 2 }}>{job.title}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginBottom: 4 }}>{job.company} · 📍 {job.location}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: 'var(--orange)' }}>{job.salary}</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--orange)' }}>{job.salary}</span>
                   <span style={{ background: '#f5f0e8', color: '#888', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 50 }}>{job.type.replace('_', ' ').toUpperCase()}</span>
                 </div>
               </div>
@@ -3837,7 +3838,7 @@ function PanelBody() {
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 2 }}>{p.title}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 6 }}>📍 {p.location}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>{p.price}</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--orange)' }}>{p.price}</span>
                 <div style={{ display: 'flex', gap: 10, fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>
                   {p.beds > 0 && <span>🛏 {p.beds}</span>}
                   {p.baths > 0 && <span>🚿 {p.baths}</span>}
@@ -3898,7 +3899,7 @@ function PanelBody() {
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>⭐ {h.rating} · {h.jobs} jobs · 📍 {h.location}</div>
             </div>
             <div style={{ textAlign: 'right' as const }}>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: 'var(--orange)' }}>{h.rate}</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--orange)' }}>{h.rate}</div>
               <button onClick={() => openPanel('chatThread', { name: h.name })} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, cursor: 'pointer', marginTop: 4 }}>Contact</button>
             </div>
           </div>
@@ -3935,7 +3936,7 @@ function PanelBody() {
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{deal.title}</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <span style={{ fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 700, color: 'var(--orange)' }}>€{deal.price}</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--orange)' }}>€{deal.price}</span>
                 <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#bbb', textDecoration: 'line-through', marginLeft: 6 }}>€{deal.original}</span>
               </div>
               <div style={{ textAlign: 'right' as const }}>
@@ -4344,7 +4345,7 @@ function PanelBody() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 2 }}>{f.listing.title}</div>
-                <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: 'var(--orange)' }}>€{f.listing.price}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: 'var(--orange)' }}>€{f.listing.price}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888' }}>📍 {f.listing.location}</div>
               </div>
               {isSold ? (
