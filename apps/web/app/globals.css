@@ -86,6 +86,12 @@ body {
   .cat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.22) !important; }
 }
 
+/* Product/listing card — consistent base + hover-lift (pointer devices only) */
+.product-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+@media (hover: hover) {
+  .product-card:hover { transform: translateY(-3px); box-shadow: var(--shadow) !important; }
+}
+
 /* Messages centre — email-style two-pane inbox. */
 .inbox { display: grid; grid-template-columns: 1fr; flex: 1; min-height: 0; width: 100%; padding: 12px 12px 16px; box-sizing: border-box; gap: 12px; }
 .inbox__list { background: #fff; border: 1px solid #ece3d7; border-radius: 14px; overflow-y: auto; min-height: 0; }
