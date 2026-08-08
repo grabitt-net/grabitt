@@ -26,7 +26,7 @@ export default function ListingsRow({ title, seeAllHref }: Props) {
         display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
         padding: '20px 16px 10px',
       }}>
-        <span style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>
           {title}
         </span>
         <Link href={seeAllHref} style={{ fontSize: 12, color: 'var(--orange)', fontWeight: 800, textDecoration: 'none', background: '#FFF3EE', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px' }}>
@@ -81,7 +81,7 @@ export default function ListingsRow({ title, seeAllHref }: Props) {
                   {listing.title}
                 </div>
                 <div style={{
-                  fontFamily: 'Georgia, "Playfair Display", serif', fontSize: 16,
+                  fontFamily: 'var(--font-display)', fontSize: 16,
                   fontWeight: 700, color: 'var(--orange)', marginBottom: 4,
                 }}>
                   {listing.price}
