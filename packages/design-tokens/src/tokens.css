@@ -5,21 +5,29 @@
    ============================================================ */
 
 :root {
-  /* Brand colours */
-  --orange: #FF4500;
+  /* Brand colours — one confident CTA orange (softened from pure red-orange) */
+  --orange: #F5540A;
   --orange2: #FF7A00;
-  --dark: #1A1A1A;
-  --sand: #F5ECD7;
+  --dark: #0F172A;            /* slate-900 — primary text/ink */
+  --sand: #FFF7F2;            /* warm brand tint (was heavy sand) */
   --topbar-crm: #E8DDD5;
+
+  /* Neutral ink & line ramp (modern slate) */
+  --ink-2: #475569;          /* slate-600 — secondary text */
+  --ink-3: #94A3B8;          /* slate-400 — muted/placeholder */
+  --line: #E7EAF0;           /* hairline borders */
+  --bg: #F7F8FA;             /* neutral app background */
 
   /* Semantic colours */
   --ocean: #1B6CA8;
   --terra: #C1440E;
   --sage: #6B8F71;
+  --success: #16A34A;
+  --danger: #DC2626;
 
   /* Surface colours */
   --cream: #FFFFFF;
-  --sand2: #EDE0C4;
+  --sand2: #F1E7DD;
 
   /* Pipeline stage colours */
   --stage-lead: #E2E8F0;
@@ -30,18 +38,20 @@
   --stage-lost: #FCA5A5;
   --stage-nurture: #E9D5FF;
 
-  /* Spacing & shape */
-  --radius: 18px;
+  /* Spacing & shape — one tighter, modern scale (slate-tinted shadows) */
+  --radius: 14px;
   --radius-sm: 10px;
-  --radius-lg: 24px;
-  --shadow: 0 4px 24px rgba(28,16,8,0.10);
-  --shadow-sm: 0 2px 8px rgba(28,16,8,0.06);
-  --shadow-lg: 0 8px 40px rgba(28,16,8,0.16);
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.06), 0 1px 1px rgba(15,23,42,0.04);
+  --shadow: 0 4px 16px rgba(15,23,42,0.08);
+  --shadow-lg: 0 12px 34px rgba(15,23,42,0.14);
 
-  /* Typography — reference Next.js font variable names */
-  --font-body: var(--font-comfortaa), 'Comfortaa', sans-serif;
-  --font-ui: var(--font-nunito), 'Nunito', sans-serif;
-  --font-display: 'Playfair Display', serif;
+  /* Typography — reference Next.js font variable names. The variables are
+     loaded in layout.tsx: --font-nunito = Inter (UI/body), --font-comfortaa =
+     Sora (display/headings). Names kept so existing components inherit the swap. */
+  --font-body: var(--font-nunito), 'Inter', system-ui, sans-serif;
+  --font-ui: var(--font-nunito), 'Inter', system-ui, sans-serif;
+  --font-display: var(--font-comfortaa), 'Sora', system-ui, sans-serif;
 
   /* Z-index scale */
   --z-topbar: 200;

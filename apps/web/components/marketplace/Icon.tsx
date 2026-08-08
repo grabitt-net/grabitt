@@ -8,6 +8,7 @@ export type IconName =
   | 'search' | 'mapPin' | 'bell' | 'heart' | 'coins' | 'user' | 'login'
   | 'message' | 'package' | 'lifebuoy' | 'menu' | 'cart' | 'plus'
   | 'shield' | 'check' | 'star' | 'arrowRight' | 'arrowLeft' | 'truck' | 'sparkle'
+  | 'briefcase' | 'home' | 'building' | 'zap' | 'tag'
 
 const PATHS: Record<IconName, string> = {
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
@@ -30,6 +31,11 @@ const PATHS: Record<IconName, string> = {
   arrowLeft: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
   truck: '<path d="M14 17V5a1 1 0 0 0-1-1H2v13h1"/><path d="M14 8h4l4 4v5h-2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
   sparkle: '<path d="M12 3l1.9 5.6L19.5 10l-5.6 1.4L12 17l-1.9-5.6L4.5 10l5.6-1.4Z"/>',
+  briefcase: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+  home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/>',
+  building: '<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/>',
+  zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>',
+  tag: '<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.8 8.8a2 2 0 0 0 2.8 0l6.8-6.8a2 2 0 0 0 0-2.8Z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
 }
 
 export default function Icon({ name, size = 20, style, strokeWidth = 1.9 }: {

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Nunito, Comfortaa } from 'next/font/google'
+import { Inter, Sora } from 'next/font/google'
 import { TrpcProvider } from '@/providers/TrpcProvider'
 import { ToastProvider } from '@/context/ToastContext'
 import { CartProvider } from '@/context/CartContext'
@@ -10,16 +10,19 @@ import CookieBanner from '@/components/CookieBanner'
 import StickyBottomBanner from '@/components/marketplace/StickyBottomBanner'
 import './globals.css'
 
-const nunito = Nunito({
+// Inter is the UI/body workhorse; Sora carries headings & display. They're
+// loaded under the original CSS variable names (--font-nunito / --font-comfortaa)
+// so the whole app inherits the new typography without touching each component.
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-nunito',
-  weight: ['400', '600', '700', '800', '900'],
+  weight: ['400', '500', '600', '700', '800', '900'],
 })
 
-const comfortaa = Comfortaa({
+const sora = Sora({
   subsets: ['latin'],
   variable: '--font-comfortaa',
-  weight: ['400', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
 })
 
 export const metadata: Metadata = {
@@ -29,7 +32,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${nunito.variable} ${comfortaa.variable}`}>
+    <html lang="en" className={`${inter.variable} ${sora.variable}`}>
       <body className="min-h-full"><TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate /><AttributesOnboarding />{children}<CookieBanner /><StickyBottomBanner /></CartProvider></ToastProvider></TrpcProvider></body>
     </html>
   )
