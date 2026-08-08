@@ -7,6 +7,7 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
+import Place from '@/components/marketplace/Place'
 import { createLooseTrpcClient } from '@/lib/trpc'
 
 type Listing = { id: string; name: string; category: string | null; description: string | null; location: string | null; logoUrl: string | null; website: string | null }
@@ -60,7 +61,7 @@ export default function DirectoryPage() {
                     <div style={{ padding: '11px 12px 14px' }}>
                       {l.category && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4 }}>{l.category}</div>}
                       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', marginTop: 2 }}>{l.name}</div>
-                      {l.location && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 2 }}>📍 {l.location}</div>}
+                      {l.location && <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>{l.location}</Place>}
                       {l.description && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#1a1a1a', marginTop: 6, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{l.description}</div>}
                     </div>
                   </div>

@@ -11,6 +11,7 @@ import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
 import BannerSlot from '@/components/marketplace/BannerSlot'
 import Pagination from '@/components/marketplace/Pagination'
+import Place from '@/components/marketplace/Place'
 import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
 
 // A department/category now opens its own page (matching /jobs and /property)
@@ -152,7 +153,7 @@ export default function CategoryPage() {
                   <div style={{ padding: '10px 11px 12px' }}>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>€{Number(l.price ?? 0).toLocaleString()}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>📍 {l.location ?? 'Gran Canaria'}</div>
+                    <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: 'var(--ink-2)' }}>{l.location ?? 'Gran Canaria'}</Place>
                   </div>
                 </div>
               </Link>

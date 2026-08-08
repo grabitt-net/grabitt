@@ -8,6 +8,7 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHost'
+import Place from '@/components/marketplace/Place'
 import { createLooseTrpcClient } from '@/lib/trpc'
 
 type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null }
@@ -48,7 +49,7 @@ export default function DirectoryListingPage() {
               <div style={{ padding: 18 }}>
                 {listing.category && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{listing.category}</div>}
                 <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 24, fontWeight: 700, color: 'var(--dark)', margin: '4px 0' }}>{listing.name}</h1>
-                {listing.location && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#1a1a1a', marginBottom: 10 }}>📍 {listing.location}</div>}
+                {listing.location && <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: 'var(--ink-2)', marginBottom: 10 }}>{listing.location}</Place>}
                 {listing.description && <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, color: '#1a1a1a', lineHeight: 1.7, marginBottom: 14 }}>{listing.description}</p>}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {listing.phone && <Contact icon="📞" text={listing.phone} href={`tel:${listing.phone}`} />}

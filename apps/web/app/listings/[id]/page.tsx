@@ -19,6 +19,7 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import ShareSheet from '@/components/marketplace/ShareSheet'
 import PanelHost from '@/components/marketplace/PanelHost'
 import BannerSlot from '@/components/marketplace/BannerSlot'
+import Place from '@/components/marketplace/Place'
 import ApplyModal from '@/components/marketplace/ApplyModal'
 import MessageComposer from '@/components/marketplace/MessageComposer'
 
@@ -278,7 +279,7 @@ function ListingInner() {
             {/* Price with location + reference alongside it */}
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginTop: 3 }}>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)' }}>{priceLabel}</div>
-              <div style={{ fontSize: 11, color: '#666', fontFamily: 'var(--font-comfortaa)' }}>📍 {job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')} · Ref: {ref}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 4 }}><Place>{job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')}</Place> · Ref: {ref}</div>
             </div>
           </div>
 
@@ -562,7 +563,7 @@ function ListingInner() {
           return (
             <div style={cardBox}>
               <div style={sectionTitle}>{t('Location')}</div>
-              {label && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#555', marginBottom: 8 }}>📍 {label}</div>}
+              {label && <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: 'var(--ink-2)', marginBottom: 8 }}>{label}</Place>}
               <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #ece3d7' }}>
                 <iframe title="Location map" src={`https://www.google.com/maps?q=${encodeURIComponent(q)}&z=${hasPin ? 16 : 14}&output=embed`} width="100%" height="220" style={{ border: 0, display: 'block' }} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
               </div>
