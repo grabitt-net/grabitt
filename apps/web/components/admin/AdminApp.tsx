@@ -186,7 +186,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
           </div>
         </header>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', minHeight: 'calc(100vh - 52px)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '212px 1fr', minHeight: 'calc(100vh - 52px)' }}>
           <AdminSidebar
             activeView={view}
             onViewChange={setView}
