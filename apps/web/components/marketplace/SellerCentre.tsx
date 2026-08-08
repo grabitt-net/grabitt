@@ -67,7 +67,7 @@ export default function SellerCentre() {
       <BannerSlot position="seller_dashboard" aspect="6 / 1" label="Seller dashboard" padded={false} />
       {/* Current level */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-        <div style={{ width: 46, height: 46, borderRadius: '50%', background: `${g.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{g.emoji}</div>
+        <div style={{ width: 46, height: 46, borderRadius: '50%', background: g.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, flexShrink: 0 }}>{g.name[0]}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: g.color }}>{g.name} {t('grade')}</div>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#777' }}>
@@ -131,7 +131,7 @@ export default function SellerCentre() {
               const th = GRADE_THRESHOLDS[x.id as keyof typeof GRADE_THRESHOLDS]
               return (
                 <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: isMe ? '#FFF8F0' : '#fff', border: `${isMe ? 2 : 1}px solid ${isMe ? x.color : '#ece3d7'}`, borderRadius: 12, padding: '10px 11px' }}>
-                  <div style={{ fontSize: 20, flexShrink: 0 }}>{x.emoji}</div>
+                  <span style={{ width: 14, height: 14, borderRadius: '50%', background: x.color, flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: x.color }}>
                       {x.name}
@@ -250,4 +250,4 @@ function Stat({ value, label, color }: { value: string; label: string; color?: s
   )
 }
 
-const cardBox: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }
+const cardBox: React.CSSProperties = { background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow-sm)', padding: 16 }
