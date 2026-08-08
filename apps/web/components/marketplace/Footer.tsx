@@ -1,6 +1,7 @@
 'use client'
 import { usePanel } from '@/context/PanelContext'
 import Logo from './Logo'
+import Icon from './Icon'
 import BannerSlot from './BannerSlot'
 
 // Site footer — grouped links, brand, and trust line. Links open the existing
@@ -40,7 +41,7 @@ export default function Footer() {
       <div style={{ borderTop: '1px solid var(--sand2, #e8dcc0)', marginTop: 24, paddingTop: 18, textAlign: 'center' }}>
         <Logo height={30} style={{ margin: '0 auto' }} />
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#1a1a1a', marginTop: 4 }}>
-          🛡️ Every payment protected by the Grabitt Guarantee · Local to the Canaries
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="shield" size={14} strokeWidth={2} style={{ color: 'var(--success)' }} /> Every payment protected by the Grabitt Guarantee · Local to the Canaries</span>
         </div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 8 }}>
           © {new Date().getFullYear()} Grabitt. All rights reserved. ·{' '}
