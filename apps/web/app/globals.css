@@ -92,6 +92,28 @@ body {
   .product-card:hover { transform: translateY(-3px); box-shadow: var(--shadow) !important; }
 }
 
+/* ── Button primitive (used by <Button/>). Token-driven, with real hover +
+   keyboard focus states — the missing polish the review flagged. ── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; border-radius: var(--radius-sm); font-family: var(--font-ui); font-weight: 600;
+  line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap;
+  transition: filter 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease; }
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(245,84,10,0.35); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn--sm { padding: 8px 13px; font-size: 12.5px; }
+.btn--md { padding: 11px 16px; font-size: 14px; }
+.btn--lg { padding: 14px 20px; font-size: 15px; }
+.btn--block { width: 100%; }
+.btn--primary { background: var(--orange); color: #fff; }
+.btn--primary:hover:not(:disabled) { filter: brightness(0.94); }
+.btn--secondary { background: #fff; color: var(--dark); border: 1.5px solid var(--line); }
+.btn--secondary:hover:not(:disabled) { background: var(--bg); }
+.btn--ghost { background: transparent; color: var(--orange); }
+.btn--ghost:hover:not(:disabled) { background: var(--sand); }
+.btn--danger { background: #fef2f2; color: var(--danger); }
+.btn--danger:hover:not(:disabled) { background: #fee2e2; }
+
 /* Messages centre — email-style two-pane inbox. */
 .inbox { display: grid; grid-template-columns: 1fr; flex: 1; min-height: 0; width: 100%; padding: 12px 12px 16px; box-sizing: border-box; gap: 12px; }
 .inbox__list { background: #fff; border: 1px solid #ece3d7; border-radius: 14px; overflow-y: auto; min-height: 0; }

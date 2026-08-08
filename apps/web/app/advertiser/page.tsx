@@ -8,6 +8,7 @@ import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHost'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { createLooseTrpcClient } from '@/lib/trpc'
+import Button from '@/components/ui/Button'
 
 type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null }
 type Mine = { isAdvertiser: boolean; isBusiness: boolean; listing: Listing | null; live: boolean; paidUntil: string | null }
@@ -96,7 +97,7 @@ function JoinCard({ onDone }: { onDone: () => void }) {
       <p style={sub}>Advertiser accounts buy advertising and a directory entry only — no selling. Enter your business name to get started.</p>
       <input value={name} onChange={e => setName(e.target.value)} placeholder="Your business name" style={inp} />
       {err && <div style={errStyle}>{err}</div>}
-      <button onClick={join} disabled={busy || name.trim().length < 2} style={{ ...cta, marginTop: 10, opacity: busy || name.trim().length < 2 ? 0.6 : 1 }}>{busy ? 'Setting up…' : 'Create advertiser account →'}</button>
+      <Button block size="lg" onClick={join} disabled={busy || name.trim().length < 2} iconRight="arrowRight" style={{ marginTop: 10 }}>{busy ? 'Setting up…' : 'Create advertiser account'}</Button>
     </Card>
   )
 }
@@ -185,7 +186,7 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
           <div style={{ gridColumn: '1/-1' }}><F label="Description"><textarea value={f.description ?? ''} onChange={e => set('description', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} /></F></div>
         </div>
         {msg && <div style={{ ...errStyle, color: msg.startsWith('✓') ? '#16a34a' : '#ef4444' }}>{msg}</div>}
-        <button onClick={save} disabled={busy || f.name.trim().length < 2} style={{ ...cta, marginTop: 12, opacity: busy || f.name.trim().length < 2 ? 0.6 : 1 }}>{busy ? 'Saving…' : 'Save listing'}</button>
+        <Button block onClick={save} disabled={busy || f.name.trim().length < 2} icon="check" style={{ marginTop: 12 }}>{busy ? 'Saving…' : 'Save listing'}</Button>
       </Card>
 
       <Card>
