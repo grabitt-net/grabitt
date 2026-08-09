@@ -320,7 +320,7 @@ function ActionPanel({ title, children, onClose }: ActionPanelProps) {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>{title}</span>
-          <button onClick={onClose} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={onClose} aria-label="Close" style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, color: 'var(--ink-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
         <div style={{ overflowY: 'auto', padding: 16, flex: 1 }}>{children}</div>
       </div>
@@ -1421,9 +1421,9 @@ function PanelBody() {
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{fmt(it.price)} <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#999', fontWeight: 700 }}>· {it.sellerName} · clears in {countdown(ms)}</span></div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                      <button disabled={busyId === it.listingId} onClick={() => changeQty(it.listingId, it.qty - 1)} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: '#f0f0f0', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>−</button>
+                      <button aria-label="Decrease quantity" disabled={busyId === it.listingId} onClick={() => changeQty(it.listingId, it.qty - 1)} style={{ width: 32, height: 32, borderRadius: 8, border: 'none', background: '#f0f0f0', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>−</button>
                       <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, minWidth: 16, textAlign: 'center' }}>{it.qty}</span>
-                      <button disabled={busyId === it.listingId || it.qty >= it.stock} onClick={() => changeQty(it.listingId, it.qty + 1)} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: '#f0f0f0', fontSize: 14, fontWeight: 900, cursor: it.qty >= it.stock ? 'not-allowed' : 'pointer' }}>+</button>
+                      <button aria-label="Increase quantity" disabled={busyId === it.listingId || it.qty >= it.stock} onClick={() => changeQty(it.listingId, it.qty + 1)} style={{ width: 32, height: 32, borderRadius: 8, border: 'none', background: '#f0f0f0', fontSize: 15, fontWeight: 900, cursor: it.qty >= it.stock ? 'not-allowed' : 'pointer' }}>+</button>
                       <button disabled={busyId === it.listingId} onClick={() => removeIt(it.listingId)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Remove</button>
                     </div>
                   </div>
