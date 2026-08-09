@@ -8,6 +8,7 @@ import ConsentGate from '@/components/ConsentGate'
 import AttributesOnboarding from '@/components/AttributesOnboarding'
 import CookieBanner from '@/components/CookieBanner'
 import StickyBottomBanner from '@/components/marketplace/StickyBottomBanner'
+import { UiHost } from '@/lib/ui'
 import './globals.css'
 
 // Inter is the UI/body workhorse; Sora carries headings & display. They're
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${sora.variable}`}>
-      <body className="min-h-full"><TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate /><AttributesOnboarding />{children}<CookieBanner /><StickyBottomBanner /></CartProvider></ToastProvider></TrpcProvider></body>
+      <body className="min-h-full"><TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate /><AttributesOnboarding />{children}<CookieBanner /><StickyBottomBanner /><UiHost /></CartProvider></ToastProvider></TrpcProvider></body>
     </html>
   )
 }

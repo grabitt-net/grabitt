@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { toast, confirmDialog } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 
 // Exec suite — e-marketing. Real campaigns against real, consent-filtered
@@ -181,13 +182,13 @@ function Compose({ api, existing, onDone, onCancel }: { api: any; existing: Esho
   }
 
   const send = async () => {
-    if (!confirm(`Send "${subject}" to ${audience ?? '?'} opted-in members?\n\nThis cannot be undone.`)) return
+    if (!(await confirmDialog({ title: 'Send campaign?', message: `Send "${subject}" to ${audience ?? '?'} opted-in members? This cannot be undone.`, confirmLabel: 'Send' }))) return
     setBusy('send'); setErr('')
     try {
       const saved = existing ?? await api.createEshot({ subject, bodyHtml: body, preheader: preheader || undefined, fromName: fromName || undefined, segment })
       if (existing) await api.updateEshot({ id: existing.id, subject, bodyHtml: body, preheader: preheader || null, fromName: fromName || null, segment })
       const res = await api.sendEshot(saved.id)
-      alert(`Sent to ${res.sent} of ${res.recipients} recipients${res.failed ? ` · ${res.failed} failed` : ''}.`)
+      toast(`Sent to ${res.sent} of ${res.recipients} recipients${res.failed ? ` · ${res.failed} failed` : ''}.`)
       onDone()
     } catch (e: any) { setErr(e?.message ?? 'Could not send'); setBusy('') }
   }

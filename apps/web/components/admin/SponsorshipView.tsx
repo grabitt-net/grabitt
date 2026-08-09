@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { confirmDialog } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 
 // Sponsorship & advertising admin: set the monthly base price for each placement
@@ -33,7 +34,7 @@ export default function SponsorshipView() {
     } catch (e: any) { setMsg(e?.message ?? 'Save failed') } finally { setSaving(false) }
   }
 
-  const cancel = async (id: string) => { if (confirm('Cancel this live sponsorship?')) { await api.cancelSponsorship(id); load() } }
+  const cancel = async (id: string) => { if (await confirmDialog({ message: 'Cancel this live sponsorship?', confirmLabel: 'Cancel sponsorship', danger: true })) { await api.cancelSponsorship(id); load() } }
 
   return (
     <div style={{ padding: 20, maxWidth: 900 }}>

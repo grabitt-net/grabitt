@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { toast, confirmDialog } from '@/lib/ui'
 import { trpcAuthed } from '@/lib/authToken'
 import { DEPT_LABEL } from '@/lib/listingMap'
 
@@ -24,7 +25,7 @@ export default function WishManager() {
   useEffect(() => { load() }, [])
 
   const create = async () => {
-    if (title.trim().length < 2) { alert('Give your wish a short title, e.g. "PS5 console".'); return }
+    if (title.trim().length < 2) { toast('Give your wish a short title, e.g. "PS5 console".'); return }
     setBusy(true)
     try {
       await trpcAuthed().wishlist.createWish.mutate({
@@ -35,12 +36,12 @@ export default function WishManager() {
       })
       setTitle(''); setDepartment(''); setMaxPrice(''); setKeywords(''); setOpen(false)
       await load()
-    } catch { alert('Could not save your wish. Please try again.') }
+    } catch { toast('Could not save your wish. Please try again.') }
     finally { setBusy(false) }
   }
 
   const toggle = async (w: Wish) => { await trpcAuthed().wishlist.toggleWishActive.mutate({ id: w.id }); await load() }
-  const remove = async (w: Wish) => { if (!confirm(`Remove wish "${w.title}"?`)) return; await trpcAuthed().wishlist.deleteWish.mutate({ id: w.id }); await load() }
+  const remove = async (w: Wish) => { if (!(await confirmDialog({ message: `Remove wish "${w.title}"?`, confirmLabel: 'Remove', danger: true }))) return; await trpcAuthed().wishlist.deleteWish.mutate({ id: w.id }); await load() }
 
   const inputStyle: React.CSSProperties = { width: '100%', border: '1.5px solid var(--sand2)', borderRadius: 10, padding: '9px 10px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 700, boxSizing: 'border-box' }
 

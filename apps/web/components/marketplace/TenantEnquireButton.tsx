@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
+import { confirmDialog } from '@/lib/ui'
 import MessageComposer from './MessageComposer'
 import { tenantSummary } from './TenantProfileCard'
 import { t } from '@/lib/i18n'
@@ -26,7 +27,7 @@ export default function TenantEnquireButton({ listingId, sellerId }: { listingId
       const summary = tenantSummary(me ?? {})
       const hasProfile = me?.tenantBudget || me?.tenantMoveIn || me?.tenantOccupants || me?.tenantEmployment || me?.tenantAbout
       if (!hasProfile) {
-        if (confirm(t('Set up your tenant profile first so the agent can pre-qualify you. Go to your account now?'))) router.push('/account?tab=settings')
+        if (await confirmDialog({ message: t('Set up your tenant profile first so the agent can pre-qualify you. Go to your account now?'), confirmLabel: t('Go to account') })) router.push('/account?tab=settings')
         return
       }
       setInitial(`Hi, I'm interested in this property. Here are my details:\n\n${summary}\n\nCould you tell me more / arrange a viewing?`)

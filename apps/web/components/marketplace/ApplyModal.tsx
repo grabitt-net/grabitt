@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { toast } from '@/lib/ui'
 import { trpcAuthed } from '@/lib/authToken'
 import { uploadCv } from '@/lib/storage'
 import { LANGUAGE_LEVELS, formatLanguage, parseLanguages, type LanguageEntry } from '@/lib/jobSkills'
@@ -87,18 +88,18 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
       setCvPath(path)
       setCvName(file.name)
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Could not upload that file.')
+      toast(e instanceof Error ? e.message : 'Could not upload that file.')
     } finally { setCvBusy(false) }
   }
 
   const submit = async () => {
-    if (!f.fullName.trim()) { alert('Please enter your name.'); return }
-    if (!consent) { alert('Please agree to share your details with the employer to apply.'); return }
-    if (cvChoice === null) { alert('Please tell us whether you have your own CV to attach.'); return }
-    if (cvChoice === 'own' && !cvPath) { alert('Please upload your CV, or choose to send your Grabitt CV instead.'); return }
+    if (!f.fullName.trim()) { toast('Please enter your name.'); return }
+    if (!consent) { toast('Please agree to share your details with the employer to apply.'); return }
+    if (cvChoice === null) { toast('Please tell us whether you have your own CV to attach.'); return }
+    if (cvChoice === 'own' && !cvPath) { toast('Please upload your CV, or choose to send your Grabitt CV instead.'); return }
     for (const q of questions) {
       const a = answers[q.id]
-      if (q.required && (a === undefined || a === '' )) { alert(`Please answer: ${q.label}`); return }
+      if (q.required && (a === undefined || a === '' )) { toast(`Please answer: ${q.label}`); return }
     }
     setSubmitting(true)
     try {
@@ -130,7 +131,7 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
         }).catch(() => { /* the application is already in — don't fail on this */ })
       }
       onApplied()
-    } catch (e: any) { alert(e?.message || 'Could not send your application.') }
+    } catch (e: any) { toast(e?.message || 'Could not send your application.') }
     finally { setSubmitting(false) }
   }
 

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { toast } from '@/lib/ui'
 import type { PanelId } from '@/context/PanelContext'
 import { trpcAuthed } from '@/lib/authToken'
 
@@ -68,7 +69,7 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
       await trpcAuthed().jobs.setApplicationNote.mutate({ applicationId: app.id, note })
       setJobs(prev => prev.map(j => ({ ...j, applications: j.applications.map(a => a.id === app.id ? { ...a, employerNote: note.trim() || null } : a) })))
       setNoteDraft(d => { const n = { ...d }; delete n[app.id]; return n })
-    } catch (e) { alert(e instanceof Error ? e.message : 'Could not save the note.') }
+    } catch (e) { toast(e instanceof Error ? e.message : 'Could not save the note.') }
     finally { setNotingId(null) }
   }
 
@@ -78,14 +79,14 @@ export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClos
     if (REJECTING.has(status)) {
       const reason = prompt('A reason note is required when rejecting a candidate:')
       if (reason === null) return
-      if (!reason.trim()) { alert('A reason note is required.'); return }
+      if (!reason.trim()) { toast('A reason note is required.'); return }
       note = reason.trim()
     }
     setSaving(app.id)
     try {
       await trpcAuthed().jobs.setApplicationStatus.mutate({ applicationId: app.id, status: status as any, note })
       setJobs(prev => prev.map(j => ({ ...j, applications: j.applications.map(a => a.id === app.id ? { ...a, status, employerNote: note ?? a.employerNote } : a) })))
-    } catch (e: any) { alert(e?.message || 'Could not update status.') }
+    } catch (e: any) { toast(e?.message || 'Could not update status.') }
     finally { setSaving(null) }
   }
 

@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
+import { confirmDialog } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 import MemberActivity from './MemberActivity'
 import { BUSINESS_TIERS } from '@grabitt/design-tokens'
@@ -291,7 +292,7 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
   }
 
   const resetPassword = async () => {
-    if (!confirm(`Send a password-reset email to ${member.email}?`)) return
+    if (!(await confirmDialog({ message: `Send a password-reset email to ${member.email}?`, confirmLabel: 'Send' }))) return
     setBusy('password'); setErr('')
     try {
       await api.memberAuthAction({ action: 'reset_password', userId: member.id })
@@ -303,7 +304,7 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
     const warn = grant
       ? `Grant ADMIN access to ${member.email}?\n\nThey will get the full executive suite: every member's details, listings, financials, and the ability to change accounts.`
       : `Revoke admin access from ${member.email}?`
-    if (!confirm(warn)) return
+    if (!(await confirmDialog({ message: warn, danger: true }))) return
     setBusy('admin'); setErr('')
     try {
       await api.memberAuthAction({ action: 'set_admin', userId: member.id, isAdmin: grant })

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { toast } from '@/lib/ui'
 import { trpcAuthed } from '@/lib/authToken'
 import { JOB_SECTORS, JOB_LANGUAGES, JOB_ATTRIBUTES, EXP_OPTIONS } from './FindStaffPanel'
 import { skillsForSectors, LANGUAGE_LEVELS, formatLanguage, parseLanguages, type LanguageEntry } from '@/lib/jobSkills'
@@ -78,17 +79,17 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
   const toggle = (arr: string[], set: (v: string[]) => void, v: string) => set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v])
 
   const save = async () => {
-    if (!sectors.length) { alert('Pick at least one sector so employers can find you.'); return }
+    if (!sectors.length) { toast('Pick at least one sector so employers can find you.'); return }
     // A work profile with no history behind it is not worth an employer's time,
     // and the generated CV would come out empty. Checked here rather than after
     // an employer has already seen a thin profile.
     if (!hasWork) {
-      alert('Please add at least one job to your work experience before listing yourself — employers see this as your CV.')
+      toast('Please add at least one job to your work experience before listing yourself — employers see this as your CV.')
       window.open('/cv', '_blank')
       return
     }
     if (!hasEducation) {
-      alert('Please add your education before listing yourself for work.')
+      toast('Please add your education before listing yourself for work.')
       window.open('/cv', '_blank')
       return
     }
@@ -109,9 +110,9 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
         areaDetail: areaDetail.trim() || undefined,
         active,
       })
-      alert('Your work profile is live. Employers can now find you. 🙌')
+      toast('Your work profile is live. Employers can now find you. 🙌')
       onClose()
-    } catch { alert('Could not save your profile. Please sign in and try again.') }
+    } catch { toast('Could not save your profile. Please sign in and try again.') }
     finally { setSaving(false) }
   }
 

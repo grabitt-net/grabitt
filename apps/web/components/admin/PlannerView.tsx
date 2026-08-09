@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
+import { confirmDialog } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 
 // Financial planner: an editable 6-month forecast + P&L. Assumptions and revenue
@@ -122,7 +123,7 @@ export default function PlannerView() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={exportCsv} style={btnGhost}>⭳ Export CSV</button>
-          <button onClick={() => { if (confirm('Reset to default assumptions?')) { setModel(JSON.parse(JSON.stringify(DEFAULT_MODEL))); setDirty(true) } }} style={btnGhost}>Reset</button>
+          <button onClick={async () => { if (await confirmDialog({ message: 'Reset to default assumptions?', confirmLabel: 'Reset' })) { setModel(JSON.parse(JSON.stringify(DEFAULT_MODEL))); setDirty(true) } }} style={btnGhost}>Reset</button>
           <button onClick={save} disabled={saving || !dirty} style={{ ...btnPrimary, opacity: !dirty ? 0.5 : 1 }}>{saving ? 'Saving…' : dirty ? 'Save' : 'Saved ✓'}</button>
         </div>
       </div>

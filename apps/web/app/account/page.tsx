@@ -1,5 +1,6 @@
 'use client'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { toast, confirmDialog } from '@/lib/ui'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getAuthToken, refreshAuthToken, setAuthToken, trpcAuthed } from '@/lib/authToken'
@@ -95,18 +96,18 @@ function AccountInner() {
   const [deleting, setDeleting] = useState(false)
   const deleteAccount = async () => {
     if (confirmDelete.trim().toUpperCase() !== 'DELETE') return
-    if (!confirm(t('This permanently anonymises your account and signs you out. It cannot be undone. Continue?'))) return
+    if (!(await confirmDialog({ title: t('Delete account?'), message: t('This permanently anonymises your account and signs you out. It cannot be undone. Continue?'), confirmLabel: t('Delete'), danger: true }))) return
     setDeleting(true)
     try {
       // Erases both our record and the Supabase Auth identity (email + sessions).
       const res = await fetch('/api/account/delete', { method: 'POST' })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(json?.error ?? 'failed')
-      if (json?.warning) alert(json.warning)
+      if (json?.warning) toast(json.warning)
       await createClient().auth.signOut()
       window.location.href = '/?deleted=1'
     } catch {
-      alert(t('Could not complete the deletion. Please contact privacy@grabitt.net.'))
+      toast(t('Could not complete the deletion. Please contact privacy@grabitt.net.'))
       setDeleting(false)
     }
   }

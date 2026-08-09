@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { confirmDialog } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 import ImageUploadField from './ImageUploadField'
 
@@ -52,7 +53,7 @@ export default function CommunityView() {
     load()
   }
   async function remove(id: string) {
-    if (!confirm('Delete this guide? This cannot be undone.')) return
+    if (!(await confirmDialog({ message: 'Delete this guide? This cannot be undone.', confirmLabel: 'Delete', danger: true }))) return
     await api.removeCommunityPost(id); load()
   }
 

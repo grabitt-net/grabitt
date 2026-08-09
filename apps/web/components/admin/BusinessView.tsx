@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
+import { toast, confirmDialog } from '@/lib/ui'
 import { makeCrmApi } from '@/lib/admin-api'
 
 // The business verification review queue. Applications arrive with the seller's
@@ -48,9 +49,9 @@ export default function BusinessView({ execToken, onOpenMember }: {
     if (decision === 'rejected') {
       const r = window.prompt('Reason for rejection (shown to the applicant):')
       if (r === null) return
-      if (!r.trim()) { alert('A reason is required to reject.'); return }
+      if (!r.trim()) { toast('A reason is required to reject.'); return }
       reason = r.trim()
-    } else if (!window.confirm(`Approve ${a.legalName || a.user.displayName}? This grants the business badge, storefront and multibuy.`)) {
+    } else if (!(await confirmDialog({ message: `Approve ${a.legalName || a.user.displayName}? This grants the business badge, storefront and multibuy.`, confirmLabel: 'Approve' }))) {
       return
     }
     setBusy(a.userId)
@@ -58,7 +59,7 @@ export default function BusinessView({ execToken, onOpenMember }: {
       await makeCrmApi(execToken).reviewBusiness(a.userId, decision, reason)
       setRows(rs => (rs ?? []).filter(x => x.userId !== a.userId))
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Could not record the decision.')
+      toast(e instanceof Error ? e.message : 'Could not record the decision.')
     } finally { setBusy(null) }
   }
 

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { confirmDialog } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 
 // Rewards admin: manage the ways to earn credits, the redemption catalogue
@@ -63,7 +64,7 @@ function EarnRules({ api }: { api: ReturnType<typeof useCrmApi> }) {
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{r.subtitle}</div>
             </div>
             <button onClick={() => { setForm({ ...r, actionLabel: r.actionLabel ?? '', actionKey: r.actionKey ?? '' }); setEditing(r.id) }} style={iconBtn}>✏️</button>
-            <button onClick={async () => { if (confirm('Delete this reward rule?')) { await api.removeRewardRule(r.id); load() } }} style={{ ...iconBtn, color: '#ef4444' }}>🗑️</button>
+            <button onClick={async () => { if (await confirmDialog({ message: 'Delete this reward rule?', confirmLabel: 'Delete', danger: true })) { await api.removeRewardRule(r.id); load() } }} style={{ ...iconBtn, color: '#ef4444' }}>🗑️</button>
           </div>
         ))}
       </div>
@@ -116,7 +117,7 @@ function RedeemOptions({ api }: { api: ReturnType<typeof useCrmApi> }) {
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{o.description}</div>
             </div>
             <button onClick={() => { const c = o.config ?? {}; setForm({ kind: o.kind, title: o.title, description: o.description, costCredits: o.costCredits, active: o.active, sortOrder: o.sortOrder, upgrade: c.upgrade ?? 'featured', weeks: c.weeks ?? 1, hours: c.hours ?? 24, pct: c.pct ?? 2, days: c.days ?? 30 }); setEditing(o.id) }} style={iconBtn}>✏️</button>
-            <button onClick={async () => { if (confirm('Delete this redemption option?')) { await api.removeRewardOption(o.id); load() } }} style={{ ...iconBtn, color: '#ef4444' }}>🗑️</button>
+            <button onClick={async () => { if (await confirmDialog({ message: 'Delete this redemption option?', confirmLabel: 'Delete', danger: true })) { await api.removeRewardOption(o.id); load() } }} style={{ ...iconBtn, color: '#ef4444' }}>🗑️</button>
           </div>
         ))}
       </div>

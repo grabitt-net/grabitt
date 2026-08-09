@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { confirmDialog } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 
 // Levels & Fees: one place to amend the percentage fees, monthly listing
@@ -37,7 +38,7 @@ export default function LevelsView() {
     catch (e: any) { setMsg(e?.message ?? 'Save failed') } finally { setSaving(false) }
   }
   const reset = async () => {
-    if (!confirm('Reset all levels to the built-in defaults?')) return
+    if (!(await confirmDialog({ message: 'Reset all levels to the built-in defaults?', confirmLabel: 'Reset' }))) return
     const d = await api.accountLevelDefaults(); setData(d as Data); setDirty(true)
   }
 

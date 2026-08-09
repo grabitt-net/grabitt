@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { toast } from '@/lib/ui'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { createLooseTrpcClient } from '@/lib/trpc'
@@ -68,7 +69,7 @@ export default function PropertyPage() {
     setLocating(true)
     navigator.geolocation.getCurrentPosition(
       pos => { setCentre([pos.coords.latitude, pos.coords.longitude]); setNearActive(true); setLocating(false) },
-      () => { setLocating(false); alert('Could not get your location. Please allow location access.') },
+      () => { setLocating(false); toast('Could not get your location. Please allow location access.') },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
     )
   }, [])

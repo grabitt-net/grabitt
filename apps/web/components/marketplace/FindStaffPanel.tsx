@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { toast, confirmDialog } from '@/lib/ui'
 import type { PanelId } from '@/context/PanelContext'
 import { trpcAuthed } from '@/lib/authToken'
 
@@ -202,7 +203,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
     // Already fetched this session — just show it again, free and instant.
     if (profiles[c.seekerId]) { toggleExpanded(c.seekerId); return }
     if (!c.viewed && !c.unlocked) {
-      if (!confirm(`Open this profile for ${viewCost} credit? You can reopen it free afterwards.`)) return
+      if (!(await confirmDialog({ message: `Open this profile for ${viewCost} credit? You can reopen it free afterwards.`, confirmLabel: 'Open' }))) return
     }
     setOpeningId(c.seekerId)
     try {
@@ -212,7 +213,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
       setCandidates(list => list.map(x => x.seekerId === c.seekerId ? { ...x, viewed: true } : x))
       if (access) setAccess({ ...access, credits: access.credits - (c.viewed || c.unlocked ? 0 : viewCost) })
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Could not open that profile.')
+      toast(e instanceof Error ? e.message : 'Could not open that profile.')
     } finally { setOpeningId(null) }
   }
 
@@ -220,7 +221,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
   const toggleAttr = (key: string, o: string) => setAttrs(p => ({ ...p, [key]: p[key].includes(o) ? p[key].filter(x => x !== o) : [...p[key], o] }))
 
   const runMatch = async () => {
-    if (!sector) { alert('Pick a sector to match against.'); return }
+    if (!sector) { toast('Pick a sector to match against.'); return }
     setLoading(true)
     try {
       const res = await trpcAuthed().seekers.matchCandidates.query({
@@ -237,7 +238,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
       if (res.viewCost) setViewCost(res.viewCost)
       setUnlockCost(res.unlockCost)
       setMatchCount(res.count)
-    } catch { alert('Could not search candidates. Please sign in as an employer and try again.') }
+    } catch { toast('Could not search candidates. Please sign in as an employer and try again.') }
     finally { setLoading(false) }
   }
 
@@ -250,8 +251,8 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
       setCandidates(prev => prev.map(x => x.seekerId === c.seekerId ? { ...x, unlocked: true } : x))
     } catch (e: any) {
       const msg = String(e?.message || '')
-      if (msg.includes('credits')) { if (confirm('Not enough credits to unlock. Buy more now?')) { onClose(); openPanel('buyCredits') } }
-      else alert('Could not unlock this candidate. Please try again.')
+      if (msg.includes('credits')) { if (await confirmDialog({ message: 'Not enough credits to unlock. Buy more now?', confirmLabel: 'Buy credits' })) { onClose(); openPanel('buyCredits') } }
+      else toast('Could not unlock this candidate. Please try again.')
     } finally { setUnlockingId(null) }
   }
 

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { toast } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 
 // Affiliate programme admin: choose what an affiliate earns per signup — cash OR
@@ -44,8 +45,8 @@ export default function AffiliatesView() {
 
   const pay = async (id: string, viaStripe: boolean) => {
     setBusy(id)
-    try { const r = await api.payOutAffiliate(id, viaStripe); alert(`Paid ${eur(r.amountCents)}${viaStripe ? ' via Stripe' : ' (recorded)'}.`); load() }
-    catch (e: any) { alert(e?.message ?? 'Payout failed') }
+    try { const r = await api.payOutAffiliate(id, viaStripe); toast(`Paid ${eur(r.amountCents)}${viaStripe ? ' via Stripe' : ' (recorded)'}.`); load() }
+    catch (e: any) { toast(e?.message ?? 'Payout failed') }
     finally { setBusy(null) }
   }
 

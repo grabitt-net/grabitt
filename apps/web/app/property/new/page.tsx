@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { toast } from '@/lib/ui'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -350,7 +351,7 @@ function PlanGate() {
     try {
       const res: any = await trpcAuthed().subscriptions.createCheckout.mutate({ plan } as never)
       if (res?.url) window.location.href = res.url
-    } catch { alert('Could not start checkout. Please try again.'); setBusy('') }
+    } catch { toast('Could not start checkout. Please try again.'); setBusy('') }
   }
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', padding: 16 }}>

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { toast } from '@/lib/ui'
 import { usePanel } from '@/context/PanelContext'
 import { trpcAuthed } from '@/lib/authToken'
 
@@ -40,7 +41,7 @@ export default function EmployerDashboardContent() {
   const shareJobs = async (url: string, title: string) => {
     try {
       if (navigator.share) await navigator.share({ title, url })
-      else { await navigator.clipboard.writeText(url); alert('Link copied to clipboard') }
+      else { await navigator.clipboard.writeText(url); toast('Link copied to clipboard') }
     } catch { /* user cancelled */ }
   }
   const origin = typeof window !== 'undefined' ? window.location.origin : ''

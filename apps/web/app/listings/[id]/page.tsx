@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { toast } from '@/lib/ui'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createLooseTrpcClient } from '@/lib/trpc'
@@ -198,19 +199,19 @@ function ListingInner() {
   const promote = async (option: 'grab_it_now' | 'featured') => {
     if (!(await requireAuth())) return
     try { const res: any = await trpcAuthed().listings.promote.mutate({ listingId: id, option, weeks: 1 }); if (res?.url) window.location.href = res.url }
-    catch { alert('Could not start the payment. Please try again.') }
+    catch { toast('Could not start the payment. Please try again.') }
   }
 
   const saveNewPrice = async () => {
     const value = Number(newPrice)
-    if (!Number.isFinite(value) || value < 0) { alert('Enter a valid price.'); return }
+    if (!Number.isFinite(value) || value < 0) { toast('Enter a valid price.'); return }
     setSavingPrice(true)
     try {
       const res: any = await trpcAuthed().listings.updatePrice.mutate({ listingId: id, price: value })
       setListing((l: any) => ({ ...l, price: res.price }))
       setEditingPrice(false)
-      if (res.dropped) alert('Price lowered — everyone who saved this item has been alerted. 📉')
-    } catch { alert('Could not update the price. Please try again.') }
+      if (res.dropped) toast('Price lowered — everyone who saved this item has been alerted. 📉')
+    } catch { toast('Could not update the price. Please try again.') }
     finally { setSavingPrice(false) }
   }
 

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
+import { confirmDialog } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 import { HELP_CATEGORIES, helpCategory } from '@/lib/helpContent'
 
@@ -46,7 +47,7 @@ export default function HelpView() {
   }
 
   async function remove(id: string) {
-    if (!confirm('Delete this help article? This cannot be undone.')) return
+    if (!(await confirmDialog({ message: 'Delete this help article? This cannot be undone.', confirmLabel: 'Delete', danger: true }))) return
     await api.removeHelpArticle(id); load()
   }
 

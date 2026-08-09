@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { toast, confirmDialog } from '@/lib/ui'
 import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import type { PanelId } from '@/context/PanelContext'
@@ -1549,7 +1550,7 @@ function PanelBody() {
     useEffect(() => { reload() }, [reload])
 
     const confirmDelivery = async () => {
-      if (!confirm('Confirm you’ve received this item?\n\nYou’ll then have 24 hours to report a problem before it’s treated as accepted.')) return
+      if (!(await confirmDialog({ title: 'Confirm receipt?', message: 'Confirm you’ve received this item? You’ll then have 24 hours to report a problem before it’s treated as accepted.', confirmLabel: 'Confirm receipt' }))) return
       setConfirmingDelivery(true)
       try {
         const c = await getTrpcClient()
@@ -1995,7 +1996,7 @@ function PanelBody() {
           </div>
         </div>
         <button
-          onClick={() => { alert(`Saved "${name}" via ${channel}`); closePanel() }}
+          onClick={() => { toast(`Saved "${name}" via ${channel}`); closePanel() }}
           style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
         >
           🔖 Save Search
@@ -3726,7 +3727,7 @@ function PanelBody() {
                     }
                     setStep('done')
                   } catch (err) {
-                    alert((err as Error).message || 'Failed to publish listing')
+                    toast((err as Error).message || 'Failed to publish listing')
                   } finally {
                     setUploading(false)
                   }
@@ -4202,7 +4203,7 @@ function PanelBody() {
               </div>
               <button
                 onClick={async () => {
-                  const ok = typeof window !== 'undefined' && window.confirm('Permanently delete your account and personal data?\n\nThis cannot be undone. You will be signed out immediately and lose access. Your past sales/purchase records are kept as required by law.')
+                  const ok = await confirmDialog({ title: 'Delete account?', message: 'Permanently delete your account and personal data? This cannot be undone. You will be signed out immediately and lose access. Your past sales/purchase records are kept as required by law.', confirmLabel: 'Delete account', danger: true })
                   if (!ok) return
                   try {
                     const client = await getTrpcClient()
