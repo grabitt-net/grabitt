@@ -261,25 +261,30 @@ export const listingsRouter = router({
         },
       })
       if (!listing) throw new TRPCError({ code: 'NOT_FOUND' })
-      await ctx.prisma.listing.update({ where: { id: input.id }, data: { viewCount: { increment: 1 } } })
-      // Real "wanted" count for the In-Demand box: active wishes whose category
-      // and budget this listing satisfies (people actively looking for it).
-      const wantedCount = await ctx.prisma.wishItem.count({
-        where: {
-          active: true,
-          AND: [
-            { OR: [{ department: null }, { department: listing.department }] },
-            { OR: [{ maxPrice: null }, { maxPrice: { gte: listing.price } }] },
-          ],
-        },
-      })
-      // "More from this seller" — a few other live items, for the Seller panel.
-      const sellerOther = await ctx.prisma.listing.findMany({
-        where: { sellerId: listing.sellerId, status: 'active', id: { not: listing.id }, department: { notIn: ['jobs', 'property'] } },
-        orderBy: { createdAt: 'desc' },
-        take: 4,
-        select: { id: true, title: true, price: true, images: true, department: true },
-      })
+      // The view-count bump doesn't need to block the response — fire and forget.
+      ctx.prisma.listing.update({ where: { id: input.id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
+      // Run the two secondary reads in parallel rather than in series, so the
+      // whole detail payload is one round-trip's worth of latency, not three.
+      const [wantedCount, sellerOther] = await Promise.all([
+        // Real "wanted" count for the In-Demand box: active wishes whose category
+        // and budget this listing satisfies (people actively looking for it).
+        ctx.prisma.wishItem.count({
+          where: {
+            active: true,
+            AND: [
+              { OR: [{ department: null }, { department: listing.department }] },
+              { OR: [{ maxPrice: null }, { maxPrice: { gte: listing.price } }] },
+            ],
+          },
+        }),
+        // "More from this seller" — a few other live items, for the Seller panel.
+        ctx.prisma.listing.findMany({
+          where: { sellerId: listing.sellerId, status: 'active', id: { not: listing.id }, department: { notIn: ['jobs', 'property'] } },
+          orderBy: { createdAt: 'desc' },
+          take: 4,
+          select: { id: true, title: true, price: true, images: true, department: true },
+        }),
+      ])
       // A job advert shows the kind of establishment, not who runs it. The
       // employer's name is released to a candidate only once they are invited to
       // interview — so it must not travel on the public listing at all.
