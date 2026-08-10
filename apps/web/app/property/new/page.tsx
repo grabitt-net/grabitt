@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
-import PanelHost from '@/components/marketplace/PanelHost'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 import AddressAutocomplete from '@/components/marketplace/AddressAutocomplete'
 import { PROPERTY_FEATURES } from '@/lib/propertyFeatures'
 

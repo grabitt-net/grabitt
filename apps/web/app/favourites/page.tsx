@@ -8,7 +8,7 @@ import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
-import PanelHost from '@/components/marketplace/PanelHost'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 
 // Favourites now open as their own page (matching a category page) rather than a
 // slide-in panel: same site shell, a search box, and the saved listings in the

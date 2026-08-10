@@ -4,7 +4,7 @@ import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
-import PanelHost from '@/components/marketplace/PanelHost'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 
 // Recruitment hub — the single entry point that replaces the old Find Work +
 // Find Staff pills. Job seekers browse jobs; employers open the Find Staff flow,

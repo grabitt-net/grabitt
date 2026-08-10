@@ -4,7 +4,7 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import HomeSections from '@/components/marketplace/HomeSections'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
-import PanelHost from '@/components/marketplace/PanelHost'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 import PanelDeepLink from '@/components/marketplace/PanelDeepLink'
 import BannerSlot from '@/components/marketplace/BannerSlot'
 

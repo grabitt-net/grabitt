@@ -15,7 +15,7 @@ import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
 const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
 import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
-import PanelHost from '@/components/marketplace/PanelHost'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 import { t } from '@/lib/i18n'
 import MultibuyEditor, { type MultibuyTier } from '@/components/marketplace/MultibuyEditor'
 

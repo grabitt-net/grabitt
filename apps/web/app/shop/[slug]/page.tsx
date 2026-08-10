@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
-import PanelHost from '@/components/marketplace/PanelHost'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { deptEmoji } from '@/lib/listingMap'
 

@@ -9,7 +9,7 @@ import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
-import PanelHost from '@/components/marketplace/PanelHost'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 import BannerSlot from '@/components/marketplace/BannerSlot'
 import type { JobPoint } from '@/components/marketplace/JobsMap'
 

@@ -6,7 +6,7 @@ import { PanelProvider, usePanel } from '@/context/PanelContext'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
-import PanelHost from '@/components/marketplace/PanelHost'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 import {
   validateRows, templateCsv, IMPORT_COLUMNS, DEPARTMENT_HINT, CONDITION_HINT,
   type ParsedRow,

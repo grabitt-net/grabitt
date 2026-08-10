@@ -5,7 +5,7 @@ import { PanelProvider } from '@/context/PanelContext'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
-import PanelHost from '@/components/marketplace/PanelHost'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 import { HELP_TOPICS, HELP_CATEGORIES, helpCategory, type HelpTopic } from '@/lib/helpContent'
 
 // Full Help Centre: an AI assistant on top, searchable topic categories below.

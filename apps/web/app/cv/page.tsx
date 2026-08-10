@@ -6,7 +6,7 @@ import { PanelProvider } from '@/context/PanelContext'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
-import PanelHost from '@/components/marketplace/PanelHost'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 import { t } from '@/lib/i18n'
 
 // My CV — the candidate's real, structured CV. Rendered to a formatted PDF for
