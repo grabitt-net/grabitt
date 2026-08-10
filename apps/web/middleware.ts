@@ -17,6 +17,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // PERF: getUser() is a network round-trip to Supabase Auth. Running it on every
+  // navigation (incl. RSC prefetches) makes public page switches slow. Only the
+  // routes that actually need the server-side session — protected pages, the
+  // admin suite, the auth page — pay that cost (plus maintenance-mode, which
+  // gates the whole site). Public browse pages skip it entirely and stay fast;
+  // their auth uses the client JWT + supabase-js client-side refresh.
+  const p = request.nextUrl.pathname
+  const needsSession = process.env.MAINTENANCE_MODE === '1'
+    || PROTECTED_ROUTES.some(r => p.startsWith(r))
+    || ADMIN_ROUTES.some(r => p.startsWith(r))
+    || AUTH_ROUTES.some(r => p.startsWith(r))
+  if (!needsSession) return NextResponse.next()
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
