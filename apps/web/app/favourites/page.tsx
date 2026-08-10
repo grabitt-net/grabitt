@@ -79,7 +79,7 @@ export default function FavouritesPage() {
                 <div style={{ ...card, opacity: isSold ? 0.6 : 1 }}>
                   <div style={{ width: '100%', paddingTop: '72%', position: 'relative', background: 'var(--sand)' }}>
                     {img
-                      ? <img src={img} alt={l.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ? <img loading="lazy" decoding="async" src={img} alt={l.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                       : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>🖼️</div>}
                     {isSold && <span style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(26,26,26,0.85)', color: '#fff', fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 900, padding: '3px 9px', borderRadius: 50 }}>SOLD</span>}
                   </div>

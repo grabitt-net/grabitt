@@ -43,7 +43,7 @@ export default function BottomCarousel() {
               <button key={l.id} onClick={() => router.push(`/listings/${l.id}`)} style={{ flexShrink: 0, width: 104, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
                 <div style={{ position: 'relative', width: 104, height: 104, background: '#f3ede4', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
                   {item.image
-                    ? <img src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ? <img loading="lazy" decoding="async" src={item.image} alt={item.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                     : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{item.emoji}</div>}
                 </div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginTop: 6 }}>{item.price}</div>
