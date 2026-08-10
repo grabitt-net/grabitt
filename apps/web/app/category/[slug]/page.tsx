@@ -2,6 +2,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
@@ -147,7 +148,7 @@ export default function CategoryPage() {
                 <div className="product-card" style={card}>
                   <div style={{ width: '100%', paddingTop: '72%', position: 'relative', background: 'var(--sand)' }}>
                     {img
-                      ? <img loading="lazy" decoding="async" src={img} alt={l.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ? <Image src={img} alt={l.title} fill sizes="(max-width: 700px) 25vw, 180px" style={{ objectFit: 'cover' }} />
                       : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>{emoji}</div>}
                   </div>
                   <div style={{ padding: '10px 11px 12px' }}>
