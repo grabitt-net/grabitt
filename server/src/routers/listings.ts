@@ -766,7 +766,10 @@ export const listingsRouter = router({
   getGrabitActive: publicProcedure
     .query(({ ctx }) =>
       ctx.prisma.listing.findMany({
-        where: { status: 'active', grabItNowUntil: { gt: new Date() } },
+        // A Grab It Now offer is live while its window is open, whether it was set
+        // via credits (status stays 'active') or via the paid promote webhook
+        // (status becomes 'grab_it_now'). Match both.
+        where: { status: { in: ['active', 'grab_it_now'] }, grabItNowUntil: { gt: new Date() } },
         orderBy: { grabItNowUntil: 'asc' },
         take: 200,
         include: { seller: { select: { id: true, displayName: true, grade: true } } },
