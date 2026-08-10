@@ -22,9 +22,11 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: '**.supabase.co' },   // real user uploads
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },     // seed/demo images
+      { protocol: 'https', hostname: 'placehold.co' },      // seed/demo images
     ],
   },
 }
