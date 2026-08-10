@@ -8,7 +8,7 @@ export type IconName =
   | 'search' | 'mapPin' | 'bell' | 'heart' | 'coins' | 'user' | 'login'
   | 'message' | 'package' | 'lifebuoy' | 'menu' | 'cart' | 'plus'
   | 'shield' | 'check' | 'star' | 'arrowRight' | 'arrowLeft' | 'truck' | 'sparkle'
-  | 'briefcase' | 'home' | 'building' | 'zap' | 'tag'
+  | 'briefcase' | 'home' | 'building' | 'zap' | 'tag' | 'share'
 
 const PATHS: Record<IconName, string> = {
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
@@ -36,6 +36,7 @@ const PATHS: Record<IconName, string> = {
   building: '<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/>',
   zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>',
   tag: '<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.8 8.8a2 2 0 0 0 2.8 0l6.8-6.8a2 2 0 0 0 0-2.8Z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
 }
 
 export default function Icon({ name, size = 20, style, strokeWidth = 1.9 }: {

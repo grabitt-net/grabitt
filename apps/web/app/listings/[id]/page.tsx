@@ -21,6 +21,7 @@ import ShareSheet from '@/components/marketplace/ShareSheet'
 import PanelHost from '@/components/marketplace/PanelHost'
 import BannerSlot from '@/components/marketplace/BannerSlot'
 import Place from '@/components/marketplace/Place'
+import Icon, { type IconName } from '@/components/marketplace/Icon'
 import ApplyModal from '@/components/marketplace/ApplyModal'
 import MessageComposer from '@/components/marketplace/MessageComposer'
 
@@ -234,10 +235,10 @@ function ListingInner() {
             )}
           </div>
           <div style={{ width: 56, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8, alignSelf: 'stretch' }}>
-            <RailBtn icon="🛒" label="Cart" onClick={() => openPanel('cart')} />
-            <RailBtn icon={saved ? '❤️' : '🤍'} label="Save" active={saved} onClick={toggleSave} />
-            <RailBtn icon="📤" label="Share" onClick={() => setShowShare(true)} />
-            {!isOwner && seller?.id && <RailBtn icon="💬" label="Message" onClick={startChat} />}
+            <RailBtn icon="cart" label="Cart" onClick={() => openPanel('cart')} />
+            <RailBtn icon="heart" label="Save" active={saved} filled={saved} onClick={toggleSave} />
+            <RailBtn icon="share" label="Share" onClick={() => setShowShare(true)} />
+            {!isOwner && seller?.id && <RailBtn icon="message" label="Message" onClick={startChat} />}
           </div>
         </div>
 
@@ -626,11 +627,11 @@ function ListingInner() {
   )
 }
 
-function RailBtn({ icon, label, active, onClick }: { icon: string; label: string; active?: boolean; onClick: () => void }) {
+function RailBtn({ icon, label, active, filled, onClick }: { icon: IconName; label: string; active?: boolean; filled?: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: active ? '#FFF3EE' : '#fff', border: `1px solid ${active ? '#FF4500' : '#e8e8e8'}`, borderRadius: 12, padding: '4px', cursor: 'pointer', width: '100%' }}>
-      <span style={{ fontSize: 22 }}>{icon}</span>
-      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 800, color: active ? '#FF4500' : '#666', lineHeight: 1 }}>{t(label)}</span>
+    <button onClick={onClick} aria-label={t(label)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, minHeight: 48, background: active ? '#FFF3EE' : '#fff', border: `1px solid ${active ? 'var(--orange)' : 'var(--line)'}`, borderRadius: 12, padding: '6px 4px', cursor: 'pointer', width: '100%', color: active ? 'var(--orange)' : 'var(--ink-2)' }}>
+      <Icon name={icon} size={20} strokeWidth={1.9} style={filled ? { fill: 'currentColor' } : undefined} />
+      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 800, lineHeight: 1 }}>{t(label)}</span>
     </button>
   )
 }
