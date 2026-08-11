@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
+import Icon from '@/components/marketplace/Icon'
 import { confirmDialog } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 import { HELP_CATEGORIES, helpCategory } from '@/lib/helpContent'
@@ -109,8 +110,8 @@ export default function HelpView() {
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                   <button onClick={() => toggleActive(a)} title={a.active ? 'Hide' : 'Show'} style={iconBtn}>{a.active ? '🙈' : '👁️'}</button>
-                  <button onClick={() => openEdit(a)} title="Edit" style={iconBtn}>✏️</button>
-                  <button onClick={() => remove(a.id)} title="Delete" style={{ ...iconBtn, color: '#ef4444' }}>🗑️</button>
+                  <button onClick={() => openEdit(a)} title="Edit" style={iconBtn}><Icon name="pencil" size={15} strokeWidth={2} /></button>
+                  <button onClick={() => remove(a.id)} title="Delete" style={{ ...iconBtn, color: '#ef4444' }}><Icon name="trash" size={15} strokeWidth={2} /></button>
                 </div>
               </div>
             ))}
