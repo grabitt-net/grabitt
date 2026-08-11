@@ -263,7 +263,7 @@ function AccountTypeChooser({ onPick, onLogin }: { onPick: (t: 'personal' | 'bus
       </button>
 
       {/* Business */}
-      <button onClick={() => onPick('business')} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'linear-gradient(135deg,#FFF3EE,#FFE4D6)', border: '2px solid #FF8C00', borderRadius: 14, padding: 16, marginBottom: 12, cursor: 'pointer', boxShadow: '0 2px 10px rgba(255,140,0,0.12)' }}>
+      <button onClick={() => onPick('business')} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'linear-gradient(135deg,#FFF3EE,#FFE4D6)', border: '2px solid var(--orange2)', borderRadius: 14, padding: 16, marginBottom: 12, cursor: 'pointer', boxShadow: '0 2px 10px rgba(255,140,0,0.12)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
           <span style={{ fontSize: 32 }}>🏢</span>
           <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>Business Seller</span>

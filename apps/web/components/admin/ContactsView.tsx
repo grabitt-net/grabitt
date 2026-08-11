@@ -4,7 +4,7 @@ import ContactModal from './ContactModal'
 
 const stageColors: Record<string, string> = {
   prospect: '#94a3b8', 'free-trial': '#14b8a6', contacted: '#3b82f6',
-  interested: '#eab308', negotiating: '#f97316', 'highly-likely': '#FF4500', signed: '#22c55e',
+  interested: '#eab308', negotiating: '#f97316', 'highly-likely': 'var(--orange)', signed: '#22c55e',
 }
 
 interface Props { contacts: any[]; onUpdate: (contacts: any[]) => void }
@@ -22,7 +22,7 @@ export default function ContactsView({ contacts, onUpdate }: Props) {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}>
-          All <span style={{ color: '#FF4500' }}>Contacts</span>
+          All <span style={{ color: 'var(--orange)' }}>Contacts</span>
         </h2>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <input
@@ -35,7 +35,7 @@ export default function ContactsView({ contacts, onUpdate }: Props) {
             }}
           />
           <button onClick={() => { setEditingContact(null); setShowModal(true) }} style={{
-            background: '#FF4500', color: '#fff', border: 'none',
+            background: 'var(--orange)', color: '#fff', border: 'none',
             borderRadius: 50, padding: '8px 16px',
             fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer',
           }}>

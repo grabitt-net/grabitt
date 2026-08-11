@@ -150,7 +150,7 @@ export const JOB_ATTRIBUTES: Record<string, string[]> = {
   location: ['Las Palmas', 'South GC', 'North GC', 'Remote', 'All areas'],
 }
 export const EXP_OPTIONS = [['0', 'Any experience'], ['3', '3+ months'], ['6', '6+ months'], ['12', '1+ year'], ['24', '2+ years'], ['36', '3+ years'], ['60', '5+ years']]
-const ORANGE = '#FF4500'
+const ORANGE = 'var(--orange)'
 
 const LABEL: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: ORANGE, textTransform: 'uppercase', marginBottom: 6 }
 const SELECT: React.CSSProperties = { width: '100%', border: '1.5px solid #eee', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' }

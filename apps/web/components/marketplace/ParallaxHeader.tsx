@@ -39,7 +39,7 @@ export default function ParallaxHeader() {
       {/* Background layer (image or gradient) — fixed within the header */}
       <div style={{ position: 'absolute', inset: 0 }}>
         {hasImg && <img src={slide!.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
-        {!hasImg && <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#FF4500 0%,#FF8C00 100%)' }} />}
+        {!hasImg && <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,var(--orange) 0%,var(--orange2) 100%)' }} />}
       </div>
       {/* Legibility scrim — only when there's text to keep readable */}
       {hasText && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.30), rgba(0,0,0,0.55))' }} />}

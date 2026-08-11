@@ -11,7 +11,7 @@ const PLATFORMS: Platform[] = [
   { name: 'WhatsApp',    icon: '📱', color: '#22c55e', bg: '#f0fdf4', href: (_u, t) => `https://wa.me/?text=${t}` },
   { name: 'Twitter / X', icon: '🐦', color: '#1a1a1a', bg: '#f8f9fa', href: (_u, t) => `https://twitter.com/intent/tweet?text=${t}` },
   { name: 'Telegram',    icon: '✈️', color: '#229ED9', bg: '#e7f5fb', href: (u, t) => `https://t.me/share/url?url=${u}&text=${t}` },
-  { name: 'Email',       icon: '📧', color: '#FF4500', bg: '#FFF3EE', href: (_u, t) => `mailto:?subject=${encodeURIComponent('Check this out on Grabitt')}&body=${t}` },
+  { name: 'Email',       icon: '📧', color: 'var(--orange)', bg: '#FFF3EE', href: (_u, t) => `mailto:?subject=${encodeURIComponent('Check this out on Grabitt')}&body=${t}` },
   { name: 'Instagram',   icon: '📸', color: '#e1306c', bg: '#fdf2f8', href: () => 'https://www.instagram.com/' },
   { name: 'TikTok',      icon: '🎵', color: '#1a1a1a', bg: '#f0f0f0', href: () => 'https://www.tiktok.com/' },
 ]
@@ -53,7 +53,7 @@ export default function ShareSheet({ title, price, emoji, url, onClose }: {
         </div>
 
         <div style={{ overflowY: 'auto', padding: '0 16px 20px' }}>
-          <div style={{ background: '#FFF3EE', borderRadius: 12, padding: '10px 12px', marginBottom: 12, fontSize: 12, color: '#FF4500', fontFamily: 'var(--font-comfortaa)' }}>
+          <div style={{ background: '#FFF3EE', borderRadius: 12, padding: '10px 12px', marginBottom: 12, fontSize: 12, color: 'var(--orange)', fontFamily: 'var(--font-comfortaa)' }}>
             Look what I found on Grabitt! {emoji ?? ''} <strong>{title}</strong>{price ? ` for ${price}` : ''}
           </div>
 
@@ -64,7 +64,7 @@ export default function ShareSheet({ title, price, emoji, url, onClose }: {
           </div>
 
           {/* Native device share */}
-          <button onClick={nativeShare} style={{ width: '100%', background: '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: 13, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', marginBottom: 12 }}>📲 Share via…</button>
+          <button onClick={nativeShare} style={{ width: '100%', background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: 13, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', marginBottom: 12 }}>📲 Share via…</button>
 
           {/* Social platforms */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

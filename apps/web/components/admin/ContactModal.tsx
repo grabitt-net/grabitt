@@ -112,7 +112,7 @@ export default function ContactModal({ contact, onClose, onSave }: Props) {
           </button>
           <button onClick={handleSave} disabled={saving} style={{
             padding: '9px 22px', borderRadius: 50, border: 'none',
-            background: '#FF4500', color: '#fff',
+            background: 'var(--orange)', color: '#fff',
             fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 13, cursor: 'pointer',
             opacity: saving ? 0.7 : 1,
           }}>

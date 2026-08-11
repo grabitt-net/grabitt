@@ -62,7 +62,7 @@ export default function StripePayment({ clientSecret, label, mode = 'payment', o
     return <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#b91c1c', background: '#fef2f2', borderRadius: 10, padding: 12 }}>Payments are not configured (missing Stripe key).</div>
   }
   return (
-    <Elements stripe={getStripe()} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#FF4500' } } }}>
+    <Elements stripe={getStripe()} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: 'var(--orange)' } } }}>
       <InnerForm label={label} mode={mode} onSuccess={onSuccess} />
     </Elements>
   )

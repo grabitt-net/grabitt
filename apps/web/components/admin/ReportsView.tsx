@@ -54,14 +54,14 @@ export default function ReportsView({ onCountChange }: Props) {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}>
-          <span style={{ color: '#FF4500' }}>Reports</span> & moderation
+          <span style={{ color: 'var(--orange)' }}>Reports</span> & moderation
         </h2>
         <div style={{ display: 'flex', gap: 6 }}>
           {(['open', 'actioned', 'dismissed', 'all'] as Filter[]).map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{
               padding: '6px 14px', borderRadius: 50, border: 'none', cursor: 'pointer',
               fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 11,
-              background: filter === f ? '#FF4500' : '#fff', color: filter === f ? '#fff' : '#666',
+              background: filter === f ? 'var(--orange)' : '#fff', color: filter === f ? '#fff' : '#666',
               boxShadow: '0 1px 6px rgba(0,0,0,0.07)', textTransform: 'capitalize',
             }}>{f}</button>
           ))}
@@ -93,7 +93,7 @@ export default function ReportsView({ onCountChange }: Props) {
                     {r.notes && <div style={{ fontWeight: 400, fontSize: 11, color: '#888', marginTop: 3, fontStyle: 'italic', maxWidth: 240 }}>&ldquo;{r.notes}&rdquo;</div>}
                   </td>
                   <td style={{ padding: '10px 14px' }}>
-                    <span style={{ background: '#fff3ee', color: '#FF4500', borderRadius: 50, padding: '3px 10px', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', whiteSpace: 'nowrap' }}>
+                    <span style={{ background: '#fff3ee', color: 'var(--orange)', borderRadius: 50, padding: '3px 10px', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', whiteSpace: 'nowrap' }}>
                       {REASON_LABEL[r.reason] ?? r.reason}
                     </span>
                   </td>

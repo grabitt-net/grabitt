@@ -18,7 +18,7 @@ export default function GrabittTeamPage() {
       <SiteHeader />
       <header style={{ background: 'var(--sand)', padding: '12px 16px', borderBottom: '1.5px solid var(--sand2)', display: 'flex', alignItems: 'center', gap: 12 }}>
         <Link href="/messages" style={{ fontSize: 22, textDecoration: 'none', color: 'var(--dark)', lineHeight: 1 }}>←</Link>
-        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>💬</div>
+        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>💬</div>
         <div>
           <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 16, fontWeight: 700, color: 'var(--dark)' }}>Grabitt Team</div>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#16a34a', fontWeight: 800 }}>● Official · here to help</div>

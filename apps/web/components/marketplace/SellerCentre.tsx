@@ -17,7 +17,7 @@ import BannerSlot from './BannerSlot'
 type Grade = 'grabber' | 'dealer' | 'trader' | 'pro'
 
 const GRADES: { id: Grade; name: string; emoji: string; color: string; next: Grade | null }[] = [
-  { id: 'grabber', name: 'Grabber', emoji: '🟠', color: '#FF4500', next: 'dealer' },
+  { id: 'grabber', name: 'Grabber', emoji: '🟠', color: 'var(--orange)', next: 'dealer' },
   { id: 'dealer', name: 'Dealer', emoji: '🟡', color: '#EAB308', next: 'trader' },
   { id: 'trader', name: 'Trader', emoji: '🔵', color: '#3b82f6', next: 'pro' },
   { id: 'pro', name: 'Pro', emoji: '⭐', color: '#a855f7', next: null },
@@ -165,7 +165,7 @@ export default function SellerCentre() {
             <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>{data.completion.pct}%</span>
           </div>
           <div style={{ height: 9, background: '#f0ece5', borderRadius: 50, overflow: 'hidden', marginBottom: 9 }}>
-            <div style={{ height: '100%', width: `${data.completion.pct}%`, background: 'linear-gradient(90deg,#FF4500,#FF8C00)', borderRadius: 50, transition: 'width 0.3s' }} />
+            <div style={{ height: '100%', width: `${data.completion.pct}%`, background: 'linear-gradient(90deg,var(--orange),var(--orange2))', borderRadius: 50, transition: 'width 0.3s' }} />
           </div>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#666', lineHeight: 1.55, marginBottom: 10 }}>
             {data.completion.pct >= 100

@@ -19,7 +19,7 @@ export default function HomeHero() {
 
   return (
     <section style={{ padding: '28px 16px 8px' }}>
-      <div style={{ background: 'linear-gradient(135deg, #FF4500 0%, #FF8C00 100%)', borderRadius: 20, padding: 'clamp(24px, 5vw, 44px) clamp(18px, 4vw, 40px)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: 'linear-gradient(135deg, var(--orange) 0%, var(--orange2) 100%)', borderRadius: 20, padding: 'clamp(24px, 5vw, 44px) clamp(18px, 4vw, 40px)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', right: -40, top: -40, width: 200, height: 200, background: 'rgba(255,255,255,0.08)', borderRadius: '50%' }} />
         <div style={{ position: 'relative', maxWidth: 640 }}>
           <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(24px, 4.2vw, 40px)', fontWeight: 700, lineHeight: 1.1, margin: 0 }}>

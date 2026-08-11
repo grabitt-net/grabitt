@@ -15,7 +15,7 @@ export default async function ProfilePage() {
     .single()
 
   const gradeColors: Record<string, string> = {
-    grabber: '#FF4500',
+    grabber: 'var(--orange)',
     dealer: '#eab308',
     trader: '#3b82f6',
     pro: '#22c55e',

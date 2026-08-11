@@ -85,7 +85,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
     <div>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: '#FF4500' }}>Banner</span> Advertising</h2>
+          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>Banner</span> Advertising</h2>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>Every banner area, its sponsors, pricing, bookings and a pre-launch preview mode.</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -93,7 +93,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
           <button onClick={toggleTestMode} title="Show a labelled placeholder in every empty slot so you can see where all banners sit" style={{ background: testMode ? '#16a34a' : '#f5f5f5', color: testMode ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
             {testMode ? '● Preview mode ON' : '○ Preview mode OFF'}
           </button>
-          <button onClick={() => setShowAdd(!showAdd)} style={{ background: '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>+ New / test banner</button>
+          <button onClick={() => setShowAdd(!showAdd)} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>+ New / test banner</button>
         </div>
       </div>
 
@@ -141,14 +141,14 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
       {tab === 'banners' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
           {banners.map(b => (
-            <div key={b.id} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', borderTop: `4px solid ${b.approved === false ? '#f59e0b' : b.active ? '#FF4500' : '#e5e7eb'}` }}>
+            <div key={b.id} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', borderTop: `4px solid ${b.approved === false ? '#f59e0b' : b.active ? 'var(--orange)' : '#e5e7eb'}` }}>
               <div style={{ position: 'relative' }}>
                 <img src={b.imageUrl} alt={b.title} style={{ width: '100%', height: 110, objectFit: 'cover' }} />
                 {b.isTest && <span style={{ position: 'absolute', top: 8, right: 8, background: '#b45309', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50, textTransform: 'uppercase' }}>Test</span>}
                 {b.approved === false && !b.isTest && <span style={{ position: 'absolute', top: 8, left: 8, background: '#f59e0b', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50, textTransform: 'uppercase', letterSpacing: 0.4 }}>Pending approval</span>}
               </div>
               <div style={{ padding: 14 }}>
-                <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 10, color: '#FF4500', textTransform: 'uppercase', letterSpacing: 0.5 }}>{POS_LABEL[b.position] ?? b.position}{b.pageTarget ? ` · ${b.pageTarget}` : ''}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 10, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{POS_LABEL[b.position] ?? b.position}{b.pageTarget ? ` · ${b.pageTarget}` : ''}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 13, marginTop: 2, marginBottom: 6 }}>{b.title}</div>
                 <div style={{ display: 'flex', gap: 12, marginBottom: 8, fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>
                   <span title="Clicks">👆 <b>{b.clickCount ?? 0}</b></span>
@@ -276,7 +276,7 @@ const th: React.CSSProperties = { padding: '10px 14px', fontFamily: 'var(--font-
 const td: React.CSSProperties = { padding: '10px 14px', verticalAlign: 'top' }
 const pill: React.CSSProperties = { padding: '5px 11px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)' }
 const ghostBtn: React.CSSProperties = { padding: '7px 16px', borderRadius: 50, border: '1.5px solid #e5e7eb', background: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }
-const primaryBtn: React.CSSProperties = { padding: '7px 18px', borderRadius: 50, border: 'none', background: '#FF4500', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 12, cursor: 'pointer' }
+const primaryBtn: React.CSSProperties = { padding: '7px 18px', borderRadius: 50, border: 'none', background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 12, cursor: 'pointer' }
 const emptyBox: React.CSSProperties = { gridColumn: '1/-1', textAlign: 'center', padding: '60px 20px', color: '#ccc', fontFamily: 'var(--font-ui)', fontWeight: 800 }
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

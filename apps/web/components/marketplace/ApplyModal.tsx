@@ -12,7 +12,7 @@ import type { JobQuestion } from '@/lib/jobQuestions'
 // and the applicant's Grabitt CV — generated from their profile and snapshotted
 // server-side on apply (no file upload). Collected as owned data on consent.
 
-const ORANGE = '#FF4500'
+const ORANGE = 'var(--orange)'
 type AnswerVal = string | boolean | number
 
 const LABEL: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, color: '#555', textTransform: 'uppercase', marginBottom: 5 }
@@ -320,7 +320,7 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
         </div>
 
         <div style={{ padding: '12px 18px 18px', borderTop: '1px solid #f0f0f0' }}>
-          <button onClick={submit} disabled={submitting || !loaded} style={{ width: '100%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1 }}>{submitting ? 'Sending…' : 'Send application →'}</button>
+          <button onClick={submit} disabled={submitting || !loaded} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1 }}>{submitting ? 'Sending…' : 'Send application →'}</button>
         </div>
       </div>
     </div>

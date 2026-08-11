@@ -48,7 +48,7 @@ interface Member {
 }
 
 const GRADES = ['grabber', 'dealer', 'trader', 'pro'] as const
-const gradeColors: Record<string, string> = { grabber: '#FF4500', dealer: '#f59e0b', trader: '#3b82f6', pro: '#7c3aed' }
+const gradeColors: Record<string, string> = { grabber: 'var(--orange)', dealer: '#f59e0b', trader: '#3b82f6', pro: '#7c3aed' }
 const FILTERS = ['All', 'Member', 'Business', 'Suspended', 'New'] as const
 
 function statusOf(m: Member): { label: string; color: string } {
@@ -97,13 +97,13 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
     <div style={{ position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <h2 style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 20, fontWeight: 700 }}>
-          <span style={{ color: '#FF4500' }}>Members</span>
+          <span style={{ color: 'var(--orange)' }}>Members</span>
           <span style={{ fontSize: 12, color: '#aaa', fontWeight: 400, marginLeft: 8 }}>{members.length} total</span>
         </h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email, business…"
             style={{ padding: '8px 14px', border: '1.5px solid #e5e7eb', borderRadius: 50, fontFamily: 'Nunito, sans-serif', fontSize: 12, width: 240, outline: 'none' }} />
-          <button onClick={() => setCreating(true)} style={{ background: '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 16px', fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ New member</button>
+          <button onClick={() => setCreating(true)} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 16px', fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ New member</button>
         </div>
       </div>
 
@@ -142,7 +142,7 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
                   <td style={td}>{m.credits}</td>
                   <td style={{ ...td, fontSize: 11, color: '#999' }}>{new Date(m.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                   <td style={td}><span style={pill(st.color)}>{st.label}</span></td>
-                  <td style={{ ...td, color: '#FF4500', fontWeight: 800, fontSize: 11 }}>Edit →</td>
+                  <td style={{ ...td, color: 'var(--orange)', fontWeight: 800, fontSize: 11 }}>Edit →</td>
                 </tr>
               )
             })}
@@ -414,10 +414,10 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
             {((member.idDocStatus === 'pending' && !member.idVerified) || (member.addressDocStatus === 'pending' && !member.addressVerified)) && (
               <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {member.idDocStatus === 'pending' && !member.idVerified && (
-                  <a href={`/api/verification-doc?userId=${member.id}&kind=id`} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#FF4500', background: '#FFF3EE', borderRadius: 8, padding: '6px 10px', textDecoration: 'none' }}>⏳ Review ID document ↗</a>
+                  <a href={`/api/verification-doc?userId=${member.id}&kind=id`} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--orange)', background: '#FFF3EE', borderRadius: 8, padding: '6px 10px', textDecoration: 'none' }}>⏳ Review ID document ↗</a>
                 )}
                 {member.addressDocStatus === 'pending' && !member.addressVerified && (
-                  <a href={`/api/verification-doc?userId=${member.id}&kind=address`} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#FF4500', background: '#FFF3EE', borderRadius: 8, padding: '6px 10px', textDecoration: 'none' }}>⏳ Review address document ↗</a>
+                  <a href={`/api/verification-doc?userId=${member.id}&kind=address`} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: 'var(--orange)', background: '#FFF3EE', borderRadius: 8, padding: '6px 10px', textDecoration: 'none' }}>⏳ Review address document ↗</a>
                 )}
               </div>
             )}
@@ -480,7 +480,7 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ background: '#faf8f5', border: '1px solid #ece3d7', borderRadius: 12, padding: 12 }}>
-      <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 10, fontWeight: 900, color: '#FF4500', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>{title}</div>
+      <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 10, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>{title}</div>
       {children}
     </div>
   )
@@ -494,7 +494,7 @@ function L({ children }: { children: React.ReactNode }) {
 function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Nunito, sans-serif', fontSize: 12.5, fontWeight: 700, color: '#555', cursor: 'pointer' }}>
-      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ width: 15, height: 15, accentColor: '#FF4500' }} />
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ width: 15, height: 15, accentColor: 'var(--orange)' }} />
       {label}
     </label>
   )
@@ -503,13 +503,13 @@ function Check({ label, checked, onChange }: { label: string; checked: boolean; 
 const th: React.CSSProperties = { padding: '10px 14px', textAlign: 'left', fontSize: 9, fontWeight: 800, color: '#aaa', fontFamily: 'Nunito, sans-serif', textTransform: 'uppercase', letterSpacing: 0.5, whiteSpace: 'nowrap' }
 const td: React.CSSProperties = { padding: '10px 14px', fontFamily: 'Nunito, sans-serif', fontSize: 12, color: '#555' }
 const inp: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 8, padding: '8px 10px', fontFamily: 'Nunito, sans-serif', fontSize: 12.5, boxSizing: 'border-box', background: '#fff', outline: 'none' }
-const primary: React.CSSProperties = { background: '#FF4500', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontFamily: 'Nunito, sans-serif', fontSize: 13, fontWeight: 900, cursor: 'pointer' }
+const primary: React.CSSProperties = { background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontFamily: 'Nunito, sans-serif', fontSize: 13, fontWeight: 900, cursor: 'pointer' }
 const secondary: React.CSSProperties = { background: '#fff', color: '#1a1a1a', border: '1.5px solid #1a1a1a', borderRadius: 8, padding: '9px 12px', fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, cursor: 'pointer' }
 const danger: React.CSSProperties = { background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 8, padding: '9px 12px', fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, cursor: 'pointer' }
 const chip = (active: boolean): React.CSSProperties => ({
   padding: '6px 14px', borderRadius: 50, border: 'none', cursor: 'pointer',
   fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 11,
-  background: active ? '#FF4500' : '#fff', color: active ? '#fff' : '#666', boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+  background: active ? 'var(--orange)' : '#fff', color: active ? '#fff' : '#666', boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
 })
 const pill = (color: string): React.CSSProperties => ({
   background: `${color}18`, color, borderRadius: 50, padding: '3px 10px',

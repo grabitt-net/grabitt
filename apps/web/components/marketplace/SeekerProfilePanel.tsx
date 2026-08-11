@@ -8,7 +8,7 @@ import { skillsForSectors, LANGUAGE_LEVELS, formatLanguage, parseLanguages, type
 // "List yourself for work" — a job-seeker's available-for-work profile. Employers
 // find these anonymously via Find Staff and spend credits to unlock contact.
 
-const ORANGE = '#FF4500'
+const ORANGE = 'var(--orange)'
 const GC_TOWNS = ['Las Palmas', 'Maspalomas', 'Playa del Ingl\u00e9s', 'Puerto Rico', 'Arucas', 'Telde',
   'Santa Luc\u00eda', 'Ingenio', 'Ag\u00fcimes', 'G\u00e1ldar', 'Mog\u00e1n', 'San Bartolom\u00e9 de Tirajana',
   'Vecindario', 'Tejeda', 'Puerto de Mog\u00e1n', 'Meloneras', 'Other']

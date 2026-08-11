@@ -30,7 +30,7 @@ export default function PropertyMap({ points, centre, radiusKm }: { points: Prop
 
     if (centre) {
       L.circleMarker(centre, { radius: 7, color: '#1B6CA8', fillColor: '#1B6CA8', fillOpacity: 0.9, weight: 2 }).addTo(layer).bindPopup('You are here')
-      L.circle(centre, { radius: radiusKm * 1000, color: '#FF4500', weight: 1.5, fillColor: '#FF8C00', fillOpacity: 0.06 }).addTo(layer)
+      L.circle(centre, { radius: radiusKm * 1000, color: 'var(--orange)', weight: 1.5, fillColor: 'var(--orange2)', fillOpacity: 0.06 }).addTo(layer)
     }
 
     const seen = new Map<string, number>()
@@ -53,8 +53,8 @@ export default function PropertyMap({ points, centre, radiusKm }: { points: Prop
         `<div style="font-family:system-ui,sans-serif;min-width:150px">
           <div style="font-weight:800;font-size:13px;color:#1a1a1a">${escapeHtml(p.title)}</div>
           <div style="font-size:11px;color:#666;margin:2px 0">${escapeHtml(p.location)}</div>
-          <div style="font-weight:800;font-size:13px;color:#FF4500">${escapeHtml(p.price)}</div>
-          <a href="/listings/${p.id}" style="display:inline-block;margin-top:6px;font-size:11px;font-weight:800;color:#FF4500">View property ›</a>
+          <div style="font-weight:800;font-size:13px;color:var(--orange)">${escapeHtml(p.price)}</div>
+          <a href="/listings/${p.id}" style="display:inline-block;margin-top:6px;font-size:11px;font-weight:800;color:var(--orange)">View property ›</a>
         </div>`,
       )
       markers.push(m)

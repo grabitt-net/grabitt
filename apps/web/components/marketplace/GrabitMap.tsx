@@ -31,7 +31,7 @@ export default function GrabitMap({ points, centre, radiusKm }: { points: Grabit
     // Viewer location + radius circle.
     if (centre) {
       L.circleMarker(centre, { radius: 7, color: '#1B6CA8', fillColor: '#1B6CA8', fillOpacity: 0.9, weight: 2 }).addTo(layer).bindPopup('You are here')
-      L.circle(centre, { radius: radiusKm * 1000, color: '#FF4500', weight: 1.5, fillColor: '#FF8C00', fillOpacity: 0.06 }).addTo(layer)
+      L.circle(centre, { radius: radiusKm * 1000, color: 'var(--orange)', weight: 1.5, fillColor: 'var(--orange2)', fillOpacity: 0.06 }).addTo(layer)
     }
 
     const seen = new Map<string, number>()
@@ -46,8 +46,8 @@ export default function GrabitMap({ points, centre, radiusKm }: { points: Grabit
       const icon = L.divIcon({
         className: '',
         html: `<div style="position:relative;width:36px;height:46px;transform:translate(-50%,-100%);filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))">
-          <div class="grabit-pin__ring" style="position:absolute;top:0;left:0;width:36px;height:36px;border-radius:50% 50% 50% 0;background:#FF4500;"></div>
-          <div style="position:relative;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:linear-gradient(135deg,#FF4500,#FF8C00);border:2.5px solid #fff;"></div>
+          <div class="grabit-pin__ring" style="position:absolute;top:0;left:0;width:36px;height:36px;border-radius:50% 50% 50% 0;background:var(--orange);"></div>
+          <div style="position:relative;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:linear-gradient(135deg,var(--orange),var(--orange2));border:2.5px solid #fff;"></div>
           <div style="position:absolute;top:6px;left:0;width:36px;height:30px;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1;">⚡</div>
         </div>`,
         iconSize: [36, 46], iconAnchor: [18, 46], popupAnchor: [0, -42],
@@ -57,8 +57,8 @@ export default function GrabitMap({ points, centre, radiusKm }: { points: Grabit
         `<div style="font-family:system-ui,sans-serif;min-width:150px">
           <div style="font-weight:800;font-size:13px;color:#1a1a1a">${escapeHtml(p.title)}</div>
           <div style="font-size:11px;color:#666;margin:2px 0">${escapeHtml(p.location)} · ends ${escapeHtml(p.ends)}</div>
-          <div style="font-weight:800;font-size:13px;color:#FF4500">${escapeHtml(p.price)}</div>
-          <a href="/listings/${p.id}" style="display:inline-block;margin-top:6px;font-size:11px;font-weight:800;color:#FF4500">View offer ›</a>
+          <div style="font-weight:800;font-size:13px;color:var(--orange)">${escapeHtml(p.price)}</div>
+          <a href="/listings/${p.id}" style="display:inline-block;margin-top:6px;font-size:11px;font-weight:800;color:var(--orange)">View offer ›</a>
         </div>`,
       )
       markers.push(m)

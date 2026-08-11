@@ -78,7 +78,7 @@ export default function PropertyView() {
       <div style={statRow}>
         <Stat label="Listings" value={String(stats.total)} />
         <Stat label="Live" value={String(stats.live)} color="#16a34a" />
-        <Stat label="Avg sale price" value={stats.avg ? `€${stats.avg.toLocaleString()}` : '—'} color="#FF4500" />
+        <Stat label="Avg sale price" value={stats.avg ? `€${stats.avg.toLocaleString()}` : '—'} color="var(--orange)" />
         <Stat label="Views" value={String(stats.views)} />
       </div>
 
@@ -125,7 +125,7 @@ export default function PropertyView() {
                   <td style={td}><span style={pill(r.status === 'active' ? '#16a34a' : r.status === 'draft' ? '#d97706' : '#888')}>{r.status === 'draft' ? 'pending' : r.status}</span></td>
                   <td style={td}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
-                      <a href={`/listings/${r.listingId}`} target="_blank" rel="noreferrer" style={{ color: '#FF4500', fontWeight: 800, textDecoration: 'none', fontSize: 12 }}>View ↗</a>
+                      <a href={`/listings/${r.listingId}`} target="_blank" rel="noreferrer" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none', fontSize: 12 }}>View ↗</a>
                       {r.status === 'draft' && (
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button onClick={() => approve(r)} disabled={busy === r.id} style={approveBtn}>{busy === r.id ? '…' : '✓ Approve'}</button>
@@ -165,7 +165,7 @@ const warnPill: React.CSSProperties = { marginLeft: 6, background: '#fef2f2', co
 const approveBtn: React.CSSProperties = { background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '5px 10px', fontFamily: 'Nunito, sans-serif', fontSize: 11, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }
 const rejectBtn: React.CSSProperties = { background: '#fff', color: '#b91c1c', border: '1.5px solid #f5c6c6', borderRadius: 8, padding: '5px 10px', fontFamily: 'Nunito, sans-serif', fontSize: 11, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }
 const chip = (active: boolean): React.CSSProperties => ({
-  background: active ? '#FF4500' : '#fff', color: active ? '#fff' : '#666',
+  background: active ? 'var(--orange)' : '#fff', color: active ? '#fff' : '#666',
   border: '1px solid #ece3d7', borderRadius: 50, padding: '6px 14px',
   fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, cursor: 'pointer',
 })

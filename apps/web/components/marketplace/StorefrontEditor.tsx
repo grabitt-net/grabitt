@@ -39,7 +39,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
   const bannerRef = useRef<HTMLInputElement>(null)
 
   const [f, setF] = useState({
-    template: 'classic', tagline: '', about: '', bannerUrl: '', accentColour: '#FF4500',
+    template: 'classic', tagline: '', about: '', bannerUrl: '', accentColour: 'var(--orange)',
     categories: [] as string[], featuredIds: [] as string[],
     shippingPolicy: '', returnsPolicy: '', paymentPolicy: '', published: false, slug: '',
   })
@@ -58,7 +58,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
         setShop(res.shop)
         setF({
           template: res.shop.template, tagline: res.shop.tagline ?? '', about: res.shop.about ?? '',
-          bannerUrl: res.shop.bannerUrl ?? '', accentColour: res.shop.accentColour ?? '#FF4500',
+          bannerUrl: res.shop.bannerUrl ?? '', accentColour: res.shop.accentColour ?? 'var(--orange)',
           categories: res.shop.categories, featuredIds: res.shop.featuredIds,
           shippingPolicy: res.shop.shippingPolicy ?? '', returnsPolicy: res.shop.returnsPolicy ?? '',
           paymentPolicy: res.shop.paymentPolicy ?? '', published: res.shop.published, slug: res.shop.slug,

@@ -24,7 +24,7 @@ export default function BlastsView() {
   return (
     <div>
       <div style={{ marginBottom: 14 }}>
-        <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: '#FF4500' }}>Direct-marketing</span> Blasts</h2>
+        <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>Direct-marketing</span> Blasts</h2>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>Businesses compose and pay; you send. Mark each sent once it goes out — rejecting refunds the send.</div>
       </div>
 

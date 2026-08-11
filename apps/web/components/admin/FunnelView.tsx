@@ -6,7 +6,7 @@ const stages = [
   { id: 'contacted', label: 'Contacted', color: '#3b82f6', weight: 0.2 },
   { id: 'interested', label: 'Interested', color: '#eab308', weight: 0.35 },
   { id: 'negotiating', label: 'Negotiating', color: '#f97316', weight: 0.6 },
-  { id: 'highly-likely', label: 'Highly Likely', color: '#FF4500', weight: 0.85 },
+  { id: 'highly-likely', label: 'Highly Likely', color: 'var(--orange)', weight: 0.85 },
   { id: 'signed', label: 'Signed ✅', color: '#22c55e', weight: 1.0 },
 ]
 
@@ -32,7 +32,7 @@ export default function FunnelView({ contacts, onNavigate }: Props) {
   return (
     <div>
       <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, marginBottom: 20 }}>
-        <span style={{ color: '#FF4500' }}>Affiliate</span> Pipeline
+        <span style={{ color: 'var(--orange)' }}>Affiliate</span> Pipeline
       </h2>
 
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', padding: 20 }}>
@@ -83,7 +83,7 @@ export default function FunnelView({ contacts, onNavigate }: Props) {
             { val: `€${Math.round(weightedPipeline).toLocaleString()}`, lbl: 'Weighted' },
           ].map((s, i) => (
             <div key={i} style={{ textAlign: i === 0 ? 'left' : i === 3 ? 'right' : 'center', flex: 1 }}>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#FF4500' }}>{s.val}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>{s.val}</div>
               <div style={{ fontSize: 9, color: '#aaa' }}>{s.lbl}</div>
             </div>
           ))}

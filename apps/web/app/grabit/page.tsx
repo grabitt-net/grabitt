@@ -163,7 +163,7 @@ function Inner() {
           {filtered.map(o => (
             <Link key={o.id} href={`/listings/${o.id}`} style={{ textDecoration: 'none' }}>
               <div style={card}>
-                <div style={{ width: '100%', paddingTop: '72%', position: 'relative', background: 'linear-gradient(135deg,#FF4500,#FF8C00)' }}>
+                <div style={{ width: '100%', paddingTop: '72%', position: 'relative', background: 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>
                   {o.images?.[0]
                     ? <img src={o.images[0]} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                     : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>{deptEmoji(o.department)}</div>}

@@ -38,7 +38,7 @@ export default function DirectoryView() {
   return (
     <div>
       <div style={{ marginBottom: 14 }}>
-        <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: '#FF4500' }}>Business</span> Directory</h2>
+        <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>Business</span> Directory</h2>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{rows.length} advertiser listing{rows.length === 1 ? '' : 's'} · {liveCount} live now (a listing shows only while a paid banner runs).</div>
       </div>
 
@@ -85,7 +85,7 @@ export default function DirectoryView() {
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 14 }}>
               <button onClick={() => setEditing(null)} style={{ padding: '8px 16px', borderRadius: 50, border: '1.5px solid #e5e7eb', background: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={save} disabled={saving || !editing.name.trim()} style={{ padding: '8px 18px', borderRadius: 50, border: 'none', background: '#FF4500', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 12, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save'}</button>
+              <button onClick={save} disabled={saving || !editing.name.trim()} style={{ padding: '8px 18px', borderRadius: 50, border: 'none', background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 12, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save'}</button>
             </div>
           </div>
         </div>

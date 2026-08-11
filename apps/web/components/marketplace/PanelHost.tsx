@@ -92,20 +92,20 @@ const FAQ_ITEM = (q: string, a: string) =>
 const SHIELD_CONTENT: Record<string, string> = {
   faqs: `<div style="font-family:Nunito,sans-serif;">
     <p style="font-size:12px;color:#888;margin-bottom:12px;">Quick answers to the most common questions. Still stuck? Use the <strong>Report</strong> tab to contact us.</p>
-    <div style="font-size:11px;font-weight:900;color:#FF4500;text-transform:uppercase;letter-spacing:0.5px;margin:6px 0 8px;">Buying</div>
+    <div style="font-size:11px;font-weight:900;color:var(--orange);text-transform:uppercase;letter-spacing:0.5px;margin:6px 0 8px;">Buying</div>
     ${FAQ_ITEM('How do I buy an item?', 'Open a listing and tap <strong>Buy Now</strong>, or <strong>Message</strong> the seller with any questions first. Payment is taken securely by card and held in escrow until you confirm you have received the item.')}
     ${FAQ_ITEM('What is escrow / buyer protection?', 'Your money is held safely by Grabitt (via Stripe) and only released to the seller once you confirm handover. If the item never arrives, you are protected.')}
     ${FAQ_ITEM('How does collection or delivery work?', 'For in-person handovers you confirm with a one-time code or QR when you meet. If the seller offers courier delivery you will see a delivery fee, and funds release once tracking shows delivered.')}
     ${FAQ_ITEM('Can I make an offer?', 'Yes — use <strong>Make Offer</strong> on eligible listings. The seller can accept, decline or counter. Some sellers auto-accept offers above a threshold.')}
-    <div style="font-size:11px;font-weight:900;color:#FF4500;text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">Selling</div>
+    <div style="font-size:11px;font-weight:900;color:var(--orange);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">Selling</div>
     ${FAQ_ITEM('How do I list an item?', 'Tap <strong>Sell</strong>, add photos, a title, price, category, condition and location, then publish. Your listings appear under <strong>Account → My Listings</strong>.')}
     ${FAQ_ITEM('What does it cost to sell?', 'Listing standard items is free. Grabitt charges a small commission only when an item sells, based on your seller grade. Optional promotions (below) carry a set fee.')}
     ${FAQ_ITEM('What are Grab It Now and Featured/Sponsored listings?', 'Paid promotions that boost visibility: <strong>Grab It Now</strong> puts your item in the flash-deal strip, and <strong>Featured/Sponsored</strong> pins it to the top of its category. You will see the exact fee and pay before it goes live.')}
     ${FAQ_ITEM('Where do I see my sales and messages?', 'Under <strong>Account</strong> you will find My Listings, orders and your inbox. Buyers reach you through <strong>Messages</strong>.')}
-    <div style="font-size:11px;font-weight:900;color:#FF4500;text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">Payments &amp; fees</div>
+    <div style="font-size:11px;font-weight:900;color:var(--orange);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">Payments &amp; fees</div>
     ${FAQ_ITEM('How am I paid as a seller?', 'Payouts go to your connected Stripe account after the buyer confirms handover. You can manage payouts from your Account.')}
     ${FAQ_ITEM('Is my card safe?', 'Yes — all payments are processed by Stripe. Grabitt never sees or stores your full card number.')}
-    <div style="font-size:11px;font-weight:900;color:#FF4500;text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">Messaging &amp; safety</div>
+    <div style="font-size:11px;font-weight:900;color:var(--orange);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">Messaging &amp; safety</div>
     ${FAQ_ITEM('Why can’t I share my phone number or email?', 'To keep you protected, contact details are blocked in chat. Keeping the conversation on Grabitt means your buyer protection and dispute support stay valid.')}
     ${FAQ_ITEM('How do I report a problem or a user?', 'Use the <strong>Report</strong> tab in this Help centre, or the report option on a listing/profile. Our team reviews every report.')}
     ${FAQ_ITEM('How do I delete my account / data?', 'Go to <strong>Account</strong> and choose delete your data. This removes your personal data in line with GDPR.')}
@@ -117,7 +117,7 @@ const SHIELD_CONTENT: Record<string, string> = {
     <div style="background:#EEF4FF;border-radius:12px;padding:12px;"><strong>📍 Truly local</strong><br/>Grabitt is built for Gran Canaria — our support team is here, our members are your neighbours.</div>
   </div>`,
   rules: `<div style="font-family:Nunito,sans-serif;font-size:13px;color:#1a1a1a;">
-    ${['Never pay outside Grabitt — Stripe keeps your money safe until handover.','Always meet in a public place for in-person exchanges.','Don\'t share your bank details, personal address, or passwords.','Report suspicious behaviour immediately using the 🚨 Report button.','Rate every transaction honestly so the community stays strong.','If a deal feels wrong, it probably is — trust your instincts.'].map((r, i) => `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0f0f0;"><span style="font-weight:900;color:#FF4500;flex-shrink:0;">${i + 1}.</span><span>${r}</span></div>`).join('')}
+    ${['Never pay outside Grabitt — Stripe keeps your money safe until handover.','Always meet in a public place for in-person exchanges.','Don\'t share your bank details, personal address, or passwords.','Report suspicious behaviour immediately using the 🚨 Report button.','Rate every transaction honestly so the community stays strong.','If a deal feels wrong, it probably is — trust your instincts.'].map((r, i) => `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0f0f0;"><span style="font-weight:900;color:var(--orange);flex-shrink:0;">${i + 1}.</span><span>${r}</span></div>`).join('')}
   </div>`,
   scams: `<div style="font-family:Nunito,sans-serif;">
     ${[
@@ -134,7 +134,7 @@ const SHIELD_CONTENT: Record<string, string> = {
     <p style="margin-bottom:14px;line-height:1.6;">See something suspicious? Use the <strong>🚨 Report</strong> button on any listing or member profile. Our team reviews all reports within 24 hours.</p>
     <div style="background:#FFF3EE;border-radius:12px;padding:14px;text-align:center;">
       <div style="font-size:28px;margin-bottom:8px;">🚨</div>
-      <div style="font-weight:900;font-size:14px;color:#FF4500;margin-bottom:4px;">Emergency Contact</div>
+      <div style="font-weight:900;font-size:14px;color:var(--orange);margin-bottom:4px;">Emergency Contact</div>
       <div style="font-size:12px;color:#666;">If you are in immediate danger, call <strong>112</strong> (Spanish emergency services).</div>
       <div style="font-size:11px;color:#888;margin-top:8px;">For Grabitt disputes: safety@grabitt.net</div>
     </div>
@@ -150,9 +150,9 @@ const _head = (label: string, color: string) =>
   `<div style="display:flex;align-items:center;gap:7px;margin:16px 0 8px;"><div style="width:7px;height:7px;border-radius:50%;background:${color};"></div><div style="font-family:Nunito,sans-serif;font-size:11px;font-weight:900;color:${color};text-transform:uppercase;letter-spacing:0.5px;">${label}</div><div style="flex:1;height:1px;background:${color}22;"></div></div>`
 const _banner = (grad: string, title: string, sub: string) =>
   `<div style="background:${grad};border-radius:14px;padding:14px 16px;margin-bottom:12px;"><div style="font-family:Nunito,sans-serif;font-size:15px;font-weight:900;color:#fff;">${title}</div><div style="font-size:11px;color:rgba(255,255,255,0.9);font-family:Comfortaa,sans-serif;line-height:1.5;margin-top:3px;">${sub}</div></div>`
-const _tick = (text: string, color = '#FF4500', bold = false) =>
+const _tick = (text: string, color = 'var(--orange)', bold = false) =>
   `<div style="display:flex;gap:9px;align-items:${bold ? 'center' : 'flex-start'};margin-bottom:8px;"><span style="color:${color};font-size:16px;font-weight:900;line-height:1;flex-shrink:0;">&#10003;</span><span style="font-family:${bold ? 'Nunito' : 'Comfortaa'},sans-serif;font-size:11px;${bold ? 'font-weight:800;color:#1a1a1a;' : 'color:#333;'}line-height:1.4;">${text}</span></div>`
-const _priceCard = (emoji: string, name: string, price: string, desc: string, accent = '#FF4500') =>
+const _priceCard = (emoji: string, name: string, price: string, desc: string, accent = 'var(--orange)') =>
   `<div style="display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:11px 12px;margin-bottom:7px;box-shadow:0 1px 5px rgba(0,0,0,0.04);"><div style="width:38px;height:38px;border-radius:10px;background:${accent}14;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${emoji}</div><div style="flex:1;min-width:0;"><div style="font-family:Nunito,sans-serif;font-size:13px;font-weight:900;color:#1a1a1a;">${name}</div><div style="font-size:11px;color:#555;font-family:Comfortaa,sans-serif;line-height:1.35;margin-top:1px;">${desc}</div></div><div style="font-family:Nunito,sans-serif;font-size:13px;font-weight:900;color:${accent};text-align:right;white-space:nowrap;flex-shrink:0;">${price}</div></div>`
 const _para = (text: string) => `<p style="font-size:12px;color:#444;font-family:Comfortaa,sans-serif;line-height:1.65;margin:0 0 10px;">${text}</p>`
 
@@ -171,17 +171,17 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
      'Selling more than one? Offer multi-buy deals & discounts.',
      "A wish-list service for when you can't find what you want.",
      'A donate-to-charity portal with a list of charities to contact.'
-    ].map(txt => `<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:#FF4500;font-size:15px;font-weight:900;line-height:1.2;flex-shrink:0;">&#10003;</span><span style="font-family:Comfortaa,sans-serif;font-size:11px;color:#333;line-height:1.5;">${txt}</span></div>`).join('') +
+    ].map(txt => `<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--orange);font-size:15px;font-weight:900;line-height:1.2;flex-shrink:0;">&#10003;</span><span style="font-family:Comfortaa,sans-serif;font-size:11px;color:#333;line-height:1.5;">${txt}</span></div>`).join('') +
     '</div>' },
   why: { title: '⭐ Why Grabitt?', body:
-    [['#16a34a','The Grabitt Guarantee — every purchase protected'],['#FF4500','Major safety shield'],['#FF4500','Find Jobs & Staff'],['#FF4500','Grab bargains & ending-soon deals'],['#FF4500','Convert old items to cash'],['#FF4500','Significant charity assist'],['#FF4500','Earn credits'],['#FF4500','Business services'],['#FF4500','Web & Marketing services'],['#FF4500','Home help for households'],['#FF4500','Rent, sell or find property & accommodation'],['#FF4500','Two-way ratings — buyers & sellers rate each other'],['#FF4500','Price-drop & saved-search alerts'],['#FF4500','See what items really sold for'],['#FF4500','Storage & removals']].map(([c, txt]) => _tick(txt, c, true)).join('') +
+    [['#16a34a','The Grabitt Guarantee — every purchase protected'],['var(--orange)','Major safety shield'],['var(--orange)','Find Jobs & Staff'],['var(--orange)','Grab bargains & ending-soon deals'],['var(--orange)','Convert old items to cash'],['var(--orange)','Significant charity assist'],['var(--orange)','Earn credits'],['var(--orange)','Business services'],['var(--orange)','Web & Marketing services'],['var(--orange)','Home help for households'],['var(--orange)','Rent, sell or find property & accommodation'],['var(--orange)','Two-way ratings — buyers & sellers rate each other'],['var(--orange)','Price-drop & saved-search alerts'],['var(--orange)','See what items really sold for'],['var(--orange)','Storage & removals']].map(([c, txt]) => _tick(txt, c, true)).join('') +
     '<div style="margin-top:12px;font-family:Comfortaa,sans-serif;font-size:10px;color:#777;font-style:italic;">There\'s so much more — always message us with ideas for improvements.</div>' },
   contact: { title: '✉️ Contact Us', body:
     _card('📧', 'Email', 'hello@grabitt.es') +
     _card('💬', 'In-app chat', 'Message our team any time from your dashboard.') +
     _card('📍', 'Based in', 'Gran Canaria, Canary Islands') },
   terms: { title: '📄 Terms of Service', body: (() => {
-    const sec = (t: string, b: string) => `<div style="font-family:Nunito,sans-serif;font-size:12px;font-weight:900;color:#FF4500;margin:12px 0 4px;">${t}</div><p style="font-size:11px;color:#555;font-family:Comfortaa,sans-serif;line-height:1.55;margin:0;">${b}</p>`
+    const sec = (t: string, b: string) => `<div style="font-family:Nunito,sans-serif;font-size:12px;font-weight:900;color:var(--orange);margin:12px 0 4px;">${t}</div><p style="font-size:11px;color:#555;font-family:Comfortaa,sans-serif;line-height:1.55;margin:0;">${b}</p>`
     return '<p style="font-size:11px;color:#555;font-family:Comfortaa,sans-serif;line-height:1.55;margin:0 0 6px;">Last updated: June 2026. By using Grabitt you agree to these Terms.</p>' +
       sec('1. About Grabitt', 'Grabitt is a local-first marketplace connecting buyers and sellers in Gran Canaria and the wider Canary Islands. We provide the technology that lets members list, discover, buy and sell. Except where stated, Grabitt is not the buyer or seller — we act as an intermediary.') +
       sec('2. Accounts', 'You must be 18 or older to transact. Keep your details accurate and your login secure. You are responsible for activity under your account. We may suspend accounts that breach these Terms or appear fraudulent.') +
@@ -212,7 +212,7 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
     '<div style="margin-top:14px;font-family:Comfortaa,sans-serif;font-size:11px;color:#777;line-height:1.5;">Still stuck? Tap <b>Ask Us</b> below and our team will help.</div>' },
   pricing: { title: '💷 Pricing', body:
     _banner('linear-gradient(135deg,#1a1a1a,#3a3a3a)', 'Browsing & buying are free 🎉', 'You only pay when you sell, promote, or advertise. No subscriptions to browse.') +
-    _head('Selling items', '#FF4500') +
+    _head('Selling items', 'var(--orange)') +
     _priceCard('🆓', 'Free to list', 'FREE', 'Adverts auto-refresh weekly to stay fresh.') +
     _priceCard('💳', 'Seller fee', '2.5–8%', 'Only on a sale, by grade: 8% → 2.5% as you rise.') +
     _priceCard('👀', 'Featured listing', '€1.99', '7 days: top of search + homepage + highlighted.') +
@@ -231,15 +231,15 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
     '<div style="background:linear-gradient(135deg,#16a34a,#22c55e);border-radius:14px;padding:14px 16px;margin-top:16px;"><div style="font-family:Nunito,sans-serif;font-size:13px;font-weight:900;color:#fff;margin-bottom:3px;">❤️ Charities & new small businesses</div><div style="font-size:11px;color:rgba(255,255,255,0.9);font-family:Comfortaa,sans-serif;line-height:1.5;">We help good causes & startups find their feet — apply for <strong>free listings, up to 10 items a month, no fees at all</strong>.</div></div>' },
   collection: { title: '🚚 Collection & Delivery', body:
     _para('Grabitt is local-first, so most items are handed over in person across the Canary Islands. You and the other person agree how to swap the item and the cash (or release the held payment) — here are your options and how to stay safe.') +
-    _head('Ways to receive your item', '#FF4500') +
+    _head('Ways to receive your item', 'var(--orange)') +
     _card('🤝', 'Local pickup', 'The most common option. Buyer collects from the seller, or you meet at an agreed spot. Free, fast, and you can inspect the item before confirming.') +
     _card('📍', 'Meet halfway', 'Pick a safe, public mid-point — a busy car park, café, shopping centre or petrol station. Good when buyer and seller are in different towns.') +
     _card('📦', 'Courier or postal', 'For larger islands distances or bulky items, agree a courier (e.g. Correos, MRW, SEUR). Decide who books and who pays before you commit. Keep the tracking number.') +
     _card('🚗', 'Seller delivery', 'Some sellers offer to drop off locally for a small fee or free within a few km. Agree any delivery charge up front in chat.') +
-    _head('How payment protection works', '#FF4500') +
+    _head('How payment protection works', 'var(--orange)') +
     _card('🛡️', 'Funds held until you confirm', "When you pay through Grabitt, the money is held securely. It's only released to the seller once you confirm you've received the item and it's as described — that's the Grabitt Guarantee.") +
     _card('✅', 'Confirm only when happy', "Inspect the item at handover. Don't tap 'confirm received' until you're satisfied. If it's not as described, open a dispute instead of confirming.") +
-    _head('Safe handover tips', '#FF4500') +
+    _head('Safe handover tips', 'var(--orange)') +
     _card('👥', 'Meet in public, daytime', 'Choose busy, well-lit places. Bring a friend for higher-value items. Avoid handing over at your home address where possible.') +
     _card('💬', 'Keep it on Grabitt', 'Arrange everything in the in-app chat so there\'s a record. Be wary of anyone pushing you to pay outside Grabitt or to ship before payment is confirmed.') +
     _card('💶', 'Who pays for delivery?', 'Postage and courier costs are agreed between buyer and seller. Confirm the total (item + any delivery) in chat before you pay so there are no surprises.') +
@@ -266,7 +266,7 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
     _card('🤝', 'Meet safe & public', 'Hand over in a busy public place in daylight. Bring a friend for higher-value items.', '#22c55e', '#f0fdf4') +
     _card('🔍', 'Inspect before you pay', "Check the item in person and only release funds once you're satisfied.", '#22c55e', '#f0fdf4') +
     _card('🔕', 'Never share codes', 'No verification code, password or bank detail — ever — no matter who asks.', '#22c55e', '#f0fdf4') +
-    '<div style="background:#FFF3EE;border-radius:12px;padding:12px;margin-top:14px;text-align:center;"><div style="font-size:11px;color:#FF4500;font-family:Comfortaa,sans-serif;line-height:1.5;">Spotted something dodgy? Report it in the chat or tap the 🛡️ Safety Shield. We investigate every report.</div></div>' },
+    '<div style="background:#FFF3EE;border-radius:12px;padding:12px;margin-top:14px;text-align:center;"><div style="font-size:11px;color:var(--orange);font-family:Comfortaa,sans-serif;line-height:1.5;">Spotted something dodgy? Report it in the chat or tap the 🛡️ Safety Shield. We investigate every report.</div></div>' },
   // NOTE: Economic Living now lives in Grabitt Guides (/community#economic-living)
   // — the footer links there, so there's no panel version to keep in sync.
   policy: { title: "📋 Dos & Don'ts", body: (() => {
@@ -515,7 +515,7 @@ function PanelBody() {
   if (panel.id === 'rewards') {
     return (
       <ActionPanel title="💶 Rewards & Credits" onClose={closePanel}>
-        <div style={{ background: 'linear-gradient(135deg,#FF4500,#FF8C00)', borderRadius: 16, padding: 20, marginBottom: 16, textAlign: 'center' }}>
+        <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 16, padding: 20, marginBottom: 16, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 28, fontWeight: 900, color: '#fff' }}>142</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Grabitt Credits</div>
         </div>
@@ -967,22 +967,22 @@ function PanelBody() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" stroke="#dc2626" strokeWidth="2" strokeLinejoin="round"><path d="M12 2 L20 5 V11 C20 16 16.5 20 12 22 C7.5 20 4 16 4 11 V5 Z"/></svg>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 17, fontWeight: 900 }}>
-                  <span style={{ color: '#FF4500' }}>Grab</span><span style={{ color: '#1a1a1a' }}>itt</span><span style={{ color: '#1a1a1a', fontWeight: 700, fontSize: 14 }}> Safety Shield</span>
+                  <span style={{ color: 'var(--orange)' }}>Grab</span><span style={{ color: '#1a1a1a' }}>itt</span><span style={{ color: '#1a1a1a', fontWeight: 700, fontSize: 14 }}> Safety Shield</span>
                 </div>
               </div>
-              <button onClick={closePanel} style={{ background: 'rgba(255,69,0,0.15)', border: 'none', borderRadius: '50%', width: 32, height: 32, color: '#FF4500', fontSize: 16, cursor: 'pointer' }}>✕</button>
+              <button onClick={closePanel} style={{ background: 'rgba(255,69,0,0.15)', border: 'none', borderRadius: '50%', width: 32, height: 32, color: 'var(--orange)', fontSize: 16, cursor: 'pointer' }}>✕</button>
             </div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
               {[['🔒','Stripe Secured'],['👤','Verified Members'],['📍','Local & Trusted']].map(([icon, label]) => (
                 <div key={label as string} style={{ flex: 1, background: 'rgba(255,255,255,0.5)', borderRadius: 10, padding: '7px 4px', textAlign: 'center' }}>
                   <div style={{ fontSize: 15 }}>{icon}</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#FF4500', marginTop: 1 }}>{label as string}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: 'var(--orange)', marginTop: 1 }}>{label as string}</div>
                 </div>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
               {tabs.map(t => (
-                <button key={t.id} onClick={() => setShieldTab(t.id)} style={{ background: shieldTab === t.id ? '#FF4500' : 'rgba(255,255,255,0.5)', color: shieldTab === t.id ? '#fff' : '#FF4500', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <button key={t.id} onClick={() => setShieldTab(t.id)} style={{ background: shieldTab === t.id ? 'var(--orange)' : 'rgba(255,255,255,0.5)', color: shieldTab === t.id ? '#fff' : 'var(--orange)', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                   {t.label}
                 </button>
               ))}
@@ -1102,15 +1102,15 @@ function PanelBody() {
     const items = DEPT_LISTINGS['Grab It Now'] || []
     return (
       <ActionPanel title="⚡ Grabitt Now! — Flash Deals" onClose={closePanel}>
-        <div style={{ background: 'linear-gradient(135deg,#FF4500,#FF8C00)', borderRadius: 12, padding: 14, textAlign: 'center', marginBottom: 16 }}>
+        <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 12, padding: 14, textAlign: 'center', marginBottom: 16 }}>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: '#fff' }}>⚡ Limited time offers — grab them before they're gone!</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {items.map(([emoji, title, price, location], i) => (
-            <div key={i} style={{ background: '#fff', border: '2px solid #FF4500', borderRadius: 12, padding: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(255,69,0,0.12)' }}>
+            <div key={i} style={{ background: '#fff', border: '2px solid var(--orange)', borderRadius: 12, padding: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(255,69,0,0.12)' }}>
               <div style={{ width: '100%', height: 64, background: CARD_GRADS[i % CARD_GRADS.length], borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, marginBottom: 8 }}>{emoji}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#FF4500', marginTop: 2 }}>{price}</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--orange)', marginTop: 2 }}>{price}</div>
             </div>
           ))}
         </div>
@@ -1244,7 +1244,7 @@ function PanelBody() {
                   <div style={{ padding: '8px 10px 10px' }}>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.title}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#FF4500' }}>{it.price}</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{it.price}</div>
                       <div style={{ fontSize: 9, color: '#666', fontFamily: 'var(--font-ui)' }}>{it.location}</div>
                     </div>
                   </div>
@@ -1268,19 +1268,19 @@ function PanelBody() {
     return (
       <ActionPanel title={`📍 Near ${town}`} onClose={closePanel}>
         <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 14, textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#FF4500' }}>📍 Showing items near {town}</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>📍 Showing items near {town}</div>
           <div style={{ fontSize: 10, color: '#a8460f', fontFamily: 'var(--font-ui)', marginTop: 3 }}>{nearItems.length} nearby · 🔒 your location isn't stored</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {ordered.slice(0, 30).map(([emoji, title, price, location], i) => {
             const isNear = nearItems.some(([, t]) => t === title)
             return (
-              <div key={i} style={{ background: '#fff', border: `1px solid ${isNear ? '#FF4500' : '#1a1a1a'}`, borderRadius: 12, padding: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', position: 'relative' }}>
-                {isNear && <div style={{ position: 'absolute', top: 6, right: 6, background: '#FF4500', color: '#fff', fontSize: 8, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '1px 6px', borderRadius: 50 }}>NEAR</div>}
+              <div key={i} style={{ background: '#fff', border: `1px solid ${isNear ? 'var(--orange)' : '#1a1a1a'}`, borderRadius: 12, padding: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', position: 'relative' }}>
+                {isNear && <div style={{ position: 'absolute', top: 6, right: 6, background: 'var(--orange)', color: '#fff', fontSize: 8, fontWeight: 900, fontFamily: 'var(--font-ui)', padding: '1px 6px', borderRadius: 50 }}>NEAR</div>}
                 <div style={{ width: '100%', height: 64, background: CARD_GRADS[i % CARD_GRADS.length], borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, marginBottom: 8 }}>{emoji}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#FF4500' }}>{price}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{price}</div>
                   <div style={{ fontSize: 9, color: '#666', fontFamily: 'var(--font-ui)' }}>{location}</div>
                 </div>
               </div>
@@ -1819,7 +1819,7 @@ function PanelBody() {
               </div>
             )}
             <div style={{ textAlign: 'center', padding: '10px 0 18px' }}>
-              <div style={{ width: 72, height: 72, background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, margin: '0 auto 10px' }}>{store.seller.isBusiness ? '🏢' : '👤'}</div>
+              <div style={{ width: 72, height: 72, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, margin: '0 auto 10px' }}>{store.seller.isBusiness ? '🏢' : '👤'}</div>
               <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--dark)' }}>
                 {store.seller.tradingName || store.seller.displayName}
                 {store.seller.businessVerified && <span title="Verified business" style={{ marginLeft: 6 }}>🛡️</span>}
@@ -3952,7 +3952,7 @@ function PanelBody() {
     }
     return (
       <ActionPanel title="⚡ Grab It Now" onClose={closePanel}>
-        <div style={{ background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: 14, padding: 14, marginBottom: 16, textAlign: 'center' }}>
+        <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 14, padding: 14, marginBottom: 16, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: 800, marginBottom: 4 }}>⚡ FLASH DEALS — TODAY ONLY</div>
           <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: '#fff', fontWeight: 700 }}>Grab before they're gone!</div>
         </div>
@@ -4047,7 +4047,7 @@ function PanelBody() {
     return (
       <ActionPanel title="👤 Profile" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '16px 0 20px' }}>
-          <div style={{ width: 80, height: 80, background: `linear-gradient(135deg,${gradeColor},#FF8C00)`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, margin: '0 auto 12px' }}>👤</div>
+          <div style={{ width: 80, height: 80, background: `linear-gradient(135deg,${gradeColor},var(--orange2))`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, margin: '0 auto 12px' }}>👤</div>
           <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--dark)', marginBottom: 2 }}>{displayName}</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 8 }}>Member since {memberSince}</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -4435,7 +4435,7 @@ function PanelBody() {
           </div>
         ) : (
           <>
-            <div style={{ background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: 14, padding: 20, marginBottom: 16, textAlign: 'center' }}>
+            <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 14, padding: 20, marginBottom: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-body)', fontSize: 48, fontWeight: 700, color: '#fff' }}>{avg.toFixed(1)}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, color: 'rgba(255,255,255,0.9)' }}>{'⭐'.repeat(Math.round(avg))} · {total} review{total === 1 ? '' : 's'}</div>
             </div>
@@ -4561,7 +4561,7 @@ function PanelBody() {
           </div>
         ) : list.map(s => (
           <div key={s.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
-            <div onClick={() => openPanel('storefront', { sellerId: s.id })} style={{ width: 50, height: 50, background: 'linear-gradient(135deg,var(--orange),#FF8C00)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, fontFamily: 'var(--font-ui)', flexShrink: 0, cursor: 'pointer' }}>{(s.displayName ?? '?')[0]?.toUpperCase()}</div>
+            <div onClick={() => openPanel('storefront', { sellerId: s.id })} style={{ width: 50, height: 50, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, fontFamily: 'var(--font-ui)', flexShrink: 0, cursor: 'pointer' }}>{(s.displayName ?? '?')[0]?.toUpperCase()}</div>
             <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => openPanel('storefront', { sellerId: s.id })}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.displayName}</span>
@@ -4771,7 +4771,7 @@ function PanelBody() {
 
     return (
       <ActionPanel title="🏢 For Business" onClose={closePanel}>
-        <div style={{ background: 'linear-gradient(135deg,var(--orange),#FF8C00)', borderRadius: 14, padding: 16, marginBottom: 16, textAlign: 'center' }}>
+        <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 14, padding: 16, marginBottom: 16, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4 }}>7 days free, then €29/mo</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Storefront, 🏢 badge, lower fees & analytics · cancel anytime</div>
         </div>

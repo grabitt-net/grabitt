@@ -98,7 +98,7 @@ export default function InboxClient({ me, alertUnread }: { me: string; alertUnre
       {/* ── Left: conversations ─────────────────────────────────────────── */}
       <aside className="inbox__list">
         <button onClick={() => setSelected('team')} style={{ ...pinned, ...(selected === 'team' ? pinnedActive : null) }}>
-          <div style={{ ...avatarCircle, background: 'linear-gradient(135deg,#FF4500,#FF8C00)' }}>💬</div>
+          <div style={{ ...avatarCircle, background: 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>💬</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={nameRow}>Grabitt Team</div>
             <div style={preview}>Questions about buying, selling or safety?</div>
@@ -157,7 +157,7 @@ export default function InboxClient({ me, alertUnread }: { me: string; alertUnre
       <section className="inbox__reader">
         {selected === 'team' ? (
           <>
-            <ChannelHeader emoji="💬" bg="linear-gradient(135deg,#FF4500,#FF8C00)" title="Grabitt Team" sub="● Official · here to help" onBack={() => setSelected(null)} />
+            <ChannelHeader emoji="💬" bg="linear-gradient(135deg,var(--orange),var(--orange2))" title="Grabitt Team" sub="● Official · here to help" onBack={() => setSelected(null)} />
             <div style={{ flex: 1, overflowY: 'auto', padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {TEAM_MESSAGES.map((m, i) => (
                 <div key={i} style={{ maxWidth: '85%', background: '#fff', border: '1px solid #eee', borderRadius: '4px 16px 16px 16px', padding: '11px 14px', fontFamily: 'var(--font-comfortaa)', fontSize: 13, color: '#333', lineHeight: 1.55, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>{m}</div>

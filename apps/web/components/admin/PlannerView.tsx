@@ -272,5 +272,5 @@ function Inline({ label, children }: { label: string; children: React.ReactNode 
   return <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 600, color: '#555' }}>{label} {children}</label>
 }
 const labelInput: React.CSSProperties = { border: '1px solid #eee', borderRadius: 6, padding: '4px 8px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 600, color: '#333', outline: 'none', background: '#fafafa' }
-const btnPrimary: React.CSSProperties = { background: '#FF4500', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }
+const btnPrimary: React.CSSProperties = { background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }
 const btnGhost: React.CSSProperties = { background: '#fff', color: '#555', border: '1px solid #ddd', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }

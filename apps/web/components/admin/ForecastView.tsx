@@ -34,7 +34,7 @@ export default function ForecastView({ contacts, orders }: Props) {
 
   const kpis = [
     { label: 'Signed MRR', value: `€${signedMRR.toLocaleString()}`, sub: 'Confirmed affiliate', color: '#22c55e' },
-    { label: 'Weighted Pipeline', value: `€${Math.round(totalMRR).toLocaleString()}`, sub: 'Probability-adjusted', color: '#FF4500' },
+    { label: 'Weighted Pipeline', value: `€${Math.round(totalMRR).toLocaleString()}`, sub: 'Probability-adjusted', color: 'var(--orange)' },
     { label: 'Marketplace GMV', value: `€${Math.round(totalGMV).toLocaleString()}`, sub: 'All-time', color: '#3b82f6' },
     { label: 'Commission Revenue', value: `€${Math.round(commissionRevenue).toLocaleString()}`, sub: '10% of GMV', color: '#f59e0b' },
   ]
@@ -42,7 +42,7 @@ export default function ForecastView({ contacts, orders }: Props) {
   return (
     <div>
       <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, marginBottom: 18 }}>
-        Revenue <span style={{ color: '#FF4500' }}>Forecast</span>
+        Revenue <span style={{ color: 'var(--orange)' }}>Forecast</span>
       </h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
@@ -72,11 +72,11 @@ export default function ForecastView({ contacts, orders }: Props) {
                 )}
                 <div style={{
                   width: '100%', height: barH,
-                  background: isFuture ? '#f0f2f5' : 'linear-gradient(180deg, #FF4500, #FF7A00)',
+                  background: isFuture ? '#f0f2f5' : 'linear-gradient(180deg, var(--orange), var(--orange2))',
                   borderRadius: '4px 4px 0 0',
                   border: isFuture ? '1.5px dashed #d1d5db' : 'none',
                 }} />
-                <div style={{ fontSize: 9, fontFamily: 'var(--font-ui)', color: i === now.getMonth() ? '#FF4500' : '#aaa', fontWeight: i === now.getMonth() ? 900 : 400 }}>
+                <div style={{ fontSize: 9, fontFamily: 'var(--font-ui)', color: i === now.getMonth() ? 'var(--orange)' : '#aaa', fontWeight: i === now.getMonth() ? 900 : 400 }}>
                   {months[i]}
                 </div>
               </div>

@@ -113,7 +113,7 @@ function RedeemOptions({ api }: { api: ReturnType<typeof useCrmApi> }) {
           <div key={o.id} style={rowCard(o.active)}>
             <span style={{ fontSize: 18 }}>{o.kind === 'fee_reduction' ? '📉' : '🚀'}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{o.title} <span style={{ color: '#FF4500' }}>· {o.costCredits} cr</span></div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{o.title} <span style={{ color: 'var(--orange)' }}>· {o.costCredits} cr</span></div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{o.description}</div>
             </div>
             <button onClick={() => { const c = o.config ?? {}; setForm({ kind: o.kind, title: o.title, description: o.description, costCredits: o.costCredits, active: o.active, sortOrder: o.sortOrder, upgrade: c.upgrade ?? 'featured', weeks: c.weeks ?? 1, hours: c.hours ?? 24, pct: c.pct ?? 2, days: c.days ?? 30 }); setEditing(o.id) }} style={iconBtn}>✏️</button>
@@ -150,7 +150,7 @@ function ManualGrant({ api }: { api: ReturnType<typeof useCrmApi> }) {
       <Field label="Member"><select value={userId} onChange={e => { setUserId(e.target.value); loadSummary(e.target.value) }} style={inp}><option value="">Select a member…</option>{members.map(m => <option key={m.id} value={m.id}>{m.displayName ?? m.email ?? m.id}</option>)}</select></Field>
       {summary && (
         <div style={{ background: '#f7f4ee', border: '1px solid #eee', borderRadius: 10, padding: '10px 12px', marginBottom: 12, fontFamily: 'var(--font-ui)' }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>Balance: <span style={{ color: '#FF4500' }}>{summary.credits} credits</span>{summary.feeReduction ? <span style={{ marginLeft: 10, color: '#16a34a', fontSize: 11 }}>−{summary.feeReduction.pct}% fee until {new Date(summary.feeReduction.until).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span> : null}</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>Balance: <span style={{ color: 'var(--orange)' }}>{summary.credits} credits</span>{summary.feeReduction ? <span style={{ marginLeft: 10, color: '#16a34a', fontSize: 11 }}>−{summary.feeReduction.pct}% fee until {new Date(summary.feeReduction.until).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span> : null}</div>
           {summary.events?.length > 0 && <div style={{ fontSize: 10.5, color: '#999', marginTop: 5, lineHeight: 1.5 }}>{summary.events.slice(0, 4).map((e: any, i: number) => <div key={i}>{e.delta > 0 ? '+' : ''}{e.delta} · {e.note ?? e.kind}</div>)}</div>}
         </div>
       )}
@@ -179,7 +179,7 @@ function Row({ children }: { children: React.ReactNode }) { return <div style={{
 const editBox: React.CSSProperties = { background: '#FFF9F5', border: '1.5px solid #FFD9C2', borderRadius: 12, padding: 16, margin: '14px 0' }
 const inp: React.CSSProperties = { boxSizing: 'border-box', border: '1.5px solid #e0d8d0', borderRadius: 8, padding: '8px 10px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none', background: '#fff', width: '100%' }
 const chk: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, color: '#555', marginTop: 8 }
-const btnPrimary: React.CSSProperties = { background: '#FF4500', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }
+const btnPrimary: React.CSSProperties = { background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }
 const btnGhost: React.CSSProperties = { background: '#fff', color: '#555', border: '1px solid #ddd', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }
 const iconBtn: React.CSSProperties = { background: '#f7f4ee', border: '1px solid #eee', borderRadius: 8, padding: '5px 8px', fontSize: 13, cursor: 'pointer' }
 const rowCard = (active: boolean): React.CSSProperties => ({ display: 'flex', gap: 10, alignItems: 'center', background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: '10px 12px', marginBottom: 6, opacity: active ? 1 : 0.5 })

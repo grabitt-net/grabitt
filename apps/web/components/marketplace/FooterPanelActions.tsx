@@ -9,7 +9,7 @@ import type { PanelId } from '@/context/PanelContext'
 type SubmitType = 'suggestion' | 'economic_tip' | 'free_listings' | 'contact'
 
 const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #eee', borderRadius: 12, padding: '11px 12px', fontFamily: 'var(--font-comfortaa)', fontSize: 12, outline: 'none' }
-const primaryBtn = (color = '#FF4500'): React.CSSProperties => ({ width: '100%', background: color, color: '#fff', border: 'none', borderRadius: 50, padding: 13, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', marginTop: 10 })
+const primaryBtn = (color = 'var(--orange)'): React.CSSProperties => ({ width: '100%', background: color, color: '#fff', border: 'none', borderRadius: 50, padding: 13, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', marginTop: 10 })
 
 function Done({ text }: { text: string }) {
   return <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: 14, textAlign: 'center', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#16a34a' }}>{text}</div>
@@ -88,8 +88,8 @@ export default function FooterPanelActions({ panelKey, onOpen }: { panelKey: str
   if (panelKey === 'help') {
     return (
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
-        <button onClick={() => onOpen('footer', { key: 'contact' })} style={{ background: '#FF4500', color: '#fff', border: 'none', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>✉️ Ask Us</button>
-        <button onClick={() => onOpen('myDisputes')} style={{ background: '#fff', color: '#FF4500', border: '1.5px solid #FF4500', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>🛡️ Disputes</button>
+        <button onClick={() => onOpen('footer', { key: 'contact' })} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>✉️ Ask Us</button>
+        <button onClick={() => onOpen('myDisputes')} style={{ background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>🛡️ Disputes</button>
       </div>
     )
   }

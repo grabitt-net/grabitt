@@ -37,7 +37,7 @@ export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius 
     if (!preview) return null
     return (
       <div style={{ padding: padded ? '14px 14px 0' : 0 }}>
-        <div style={{ width: '100%', aspectRatio: aspect, borderRadius: radius, border: '2px dashed #FF7A00', background: 'repeating-linear-gradient(45deg,#fff7ed,#fff7ed 12px,#ffedd5 12px,#ffedd5 24px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+        <div style={{ width: '100%', aspectRatio: aspect, borderRadius: radius, border: '2px dashed var(--orange2)', background: 'repeating-linear-gradient(45deg,#fff7ed,#fff7ed 12px,#ffedd5 12px,#ffedd5 24px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: '#c2410c', textTransform: 'uppercase', letterSpacing: 0.6 }}>Banner slot</span>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#9a3412' }}>{label ?? position}{page ? ` · ${page}` : ''}</span>
         </div>

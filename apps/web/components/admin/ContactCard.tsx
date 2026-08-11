@@ -3,7 +3,7 @@
 const stageOrder = ['prospect','free-trial','contacted','interested','negotiating','highly-likely','signed']
 const stageColors: Record<string, string> = {
   prospect: '#94a3b8', 'free-trial': '#14b8a6', contacted: '#3b82f6',
-  interested: '#eab308', negotiating: '#f97316', 'highly-likely': '#FF4500', signed: '#22c55e',
+  interested: '#eab308', negotiating: '#f97316', 'highly-likely': 'var(--orange)', signed: '#22c55e',
 }
 
 interface Props {

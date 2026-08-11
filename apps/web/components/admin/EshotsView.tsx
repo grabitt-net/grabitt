@@ -90,7 +90,7 @@ export default function EshotsView() {
             <Stat label="Campaigns sent" value={String(stats.campaigns)} />
             <Stat label="Emails delivered" value={String(stats.recipients)} />
             <Stat label="Avg open rate" value={`${stats.openRate}%`} color="#16a34a" />
-            <Stat label="Avg click rate" value={`${stats.clickRate}%`} color="#FF4500" />
+            <Stat label="Avg click rate" value={`${stats.clickRate}%`} color="var(--orange)" />
           </div>
 
           {loading ? <div style={empty}>Loading…</div>
@@ -286,7 +286,7 @@ function Results({ api, eshot, onClose }: { api: any; eshot: Eshot; onClose: () 
             <Stat label="Recipients" value={String(eshot.recipientCount)} />
             <Stat label="Delivered" value={String(eshot.deliveredCount)} />
             <Stat label="Open rate" value={`${eshot.openRate}%`} sub={`${eshot.openCount} opened`} color="#16a34a" />
-            <Stat label="Click rate" value={`${eshot.clickRate}%`} sub={`${eshot.clickCount} clicked`} color="#FF4500" />
+            <Stat label="Click rate" value={`${eshot.clickRate}%`} sub={`${eshot.clickCount} clicked`} color="var(--orange)" />
             <Stat label="Bounces" value={String(eshot.bounceCount)} color={eshot.bounceCount ? '#ef4444' : undefined} />
             <Stat label="Complaints" value={String(eshot.complaintCount)} color={eshot.complaintCount ? '#ef4444' : undefined} />
           </div>
@@ -339,12 +339,12 @@ const table: React.CSSProperties = { width: '100%', borderCollapse: 'collapse', 
 const th: React.CSSProperties = { textAlign: 'left', padding: '9px 11px', fontSize: 9.5, fontWeight: 800, color: '#999', textTransform: 'uppercase', letterSpacing: 0.4, whiteSpace: 'nowrap' }
 const td: React.CSSProperties = { padding: '9px 11px', color: '#555', verticalAlign: 'top' }
 const inp: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 8, padding: '9px 11px', fontFamily: 'Nunito, sans-serif', fontSize: 12.5, boxSizing: 'border-box', background: '#fff', outline: 'none', marginBottom: 4 }
-const primary: React.CSSProperties = { background: '#FF4500', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontFamily: 'Nunito, sans-serif', fontSize: 13, fontWeight: 900, cursor: 'pointer' }
+const primary: React.CSSProperties = { background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontFamily: 'Nunito, sans-serif', fontSize: 13, fontWeight: 900, cursor: 'pointer' }
 const secondary: React.CSSProperties = { background: '#fff', color: '#1a1a1a', border: '1.5px solid #1a1a1a', borderRadius: 10, padding: '10px 14px', fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }
-const linkBtn: React.CSSProperties = { background: 'none', border: 'none', color: '#FF4500', fontFamily: 'Nunito, sans-serif', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', padding: 0 }
+const linkBtn: React.CSSProperties = { background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'Nunito, sans-serif', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', padding: 0 }
 const empty: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: 40, textAlign: 'center', color: '#888', fontFamily: 'Nunito, sans-serif', fontSize: 13 }
 const chip = (active: boolean): React.CSSProperties => ({
-  background: active ? '#FF4500' : '#fff', color: active ? '#fff' : '#666',
+  background: active ? 'var(--orange)' : '#fff', color: active ? '#fff' : '#666',
   border: '1px solid #ece3d7', borderRadius: 50, padding: '6px 14px',
   fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, cursor: 'pointer',
 })

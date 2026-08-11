@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 type ToolboxTab = 'theme' | 'layout' | 'content'
 
 const THEME_PRESETS = [
-  { name: 'Grabitt', primary: '#FF4500', secondary: '#FF8C00', bg: '#F9F5F0', dark: '#1a1a1a' },
+  { name: 'Grabitt', primary: 'var(--orange)', secondary: 'var(--orange2)', bg: '#F9F5F0', dark: '#1a1a1a' },
   { name: 'Ocean', primary: '#0066cc', secondary: '#00a8e8', bg: '#F0F6FF', dark: '#0a1628' },
   { name: 'Midnight', primary: '#7c3aed', secondary: '#a855f7', bg: '#F5F0FF', dark: '#1e1b4b' },
   { name: 'Forest', primary: '#16a34a', secondary: '#22c55e', bg: '#F0FDF4', dark: '#052e16' },
@@ -33,8 +33,8 @@ function calcPaleTint(hex: string, factor = 0.9): string {
 export default function ToolboxView() {
   const [tab, setTab] = useState<ToolboxTab>('theme')
   const [selectedPreset, setSelectedPreset] = useState(0)
-  const [customPrimary, setCustomPrimary] = useState('#FF4500')
-  const [customSecondary, setCustomSecondary] = useState('#FF8C00')
+  const [customPrimary, setCustomPrimary] = useState('var(--orange)')
+  const [customSecondary, setCustomSecondary] = useState('var(--orange2)')
   const [layout, setLayout] = useState(DEFAULT_LAYOUT)
   const [saved, setSaved] = useState(false)
   const [dragOver, setDragOver] = useState<string | null>(null)

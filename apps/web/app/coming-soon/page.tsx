@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function ComingSoon() {
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(160deg,#FF4500,#FF7A00)', padding: 24, fontFamily: 'Nunito, system-ui, sans-serif' }}>
+    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(160deg,var(--orange),var(--orange2))', padding: 24, fontFamily: 'Nunito, system-ui, sans-serif' }}>
       <div style={{ maxWidth: 440, width: '100%', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 24, padding: '40px 28px', textAlign: 'center', backdropFilter: 'blur(6px)' }}>
         <div style={{ fontSize: 52, marginBottom: 8 }}>🛒</div>
         <h1 style={{ fontFamily: 'Comfortaa, system-ui, sans-serif', fontSize: 34, fontWeight: 700, color: '#fff', margin: '0 0 10px' }}>Grabitt</h1>

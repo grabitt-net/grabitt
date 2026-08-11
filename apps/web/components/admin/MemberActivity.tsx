@@ -93,7 +93,7 @@ export default function MemberActivity({ userId }: { userId: string }) {
             <Stat label="Listings" value={String(t.listings)} sub={`${t.liveListings} live`} />
             <Stat label="Sales" value={String(t.sales)} sub={money(t.salesValue)} color="#16a34a" />
             <Stat label="Purchases" value={String(t.purchases)} sub={money(t.purchaseValue)} />
-            <Stat label="Fees paid" value={money(t.feesPaid)} color="#FF4500" />
+            <Stat label="Fees paid" value={money(t.feesPaid)} color="var(--orange)" />
             <Stat label="Jobs posted" value={String(t.jobsPosted)} />
             <Stat label="Applications" value={String(t.applications)} />
             <Stat label="Property" value={String(t.properties)} />
@@ -267,7 +267,7 @@ function TranscriptModal({ data, onClose }: { data: any; onClose: () => void }) 
               {data.messages?.map((m: any) => (
                 <div key={m.id} style={{ display: 'flex', justifyContent: m.side === 'buyer' ? 'flex-start' : 'flex-end', marginBottom: 8 }}>
                   <div style={{ maxWidth: '78%', background: m.side === 'buyer' ? '#f2ede6' : '#FFF3EE', border: `1px solid ${m.side === 'buyer' ? '#e5ddd2' : '#FFD4C0'}`, borderRadius: 12, padding: '8px 11px' }}>
-                    <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 10, fontWeight: 900, color: m.side === 'buyer' ? '#666' : '#FF4500', marginBottom: 2 }}>
+                    <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 10, fontWeight: 900, color: m.side === 'buyer' ? '#666' : 'var(--orange)', marginBottom: 2 }}>
                       {m.sender} · {m.side}
                     </div>
                     <div style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 12.5, color: '#1a1a1a', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.body}</div>
@@ -330,11 +330,11 @@ function Row({ k, v }: { k: string; v: string }) {
 }
 
 const grid: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(110px,1fr))', gap: 8 }
-const h4: React.CSSProperties = { fontFamily: 'Nunito, sans-serif', fontSize: 11, fontWeight: 900, color: '#FF4500', textTransform: 'uppercase', letterSpacing: 0.5, margin: '16px 0 6px' }
+const h4: React.CSSProperties = { fontFamily: 'Nunito, sans-serif', fontSize: 11, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '16px 0 6px' }
 const th: React.CSSProperties = { textAlign: 'left', padding: '7px 8px', fontSize: 9, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.4, whiteSpace: 'nowrap' }
 const td: React.CSSProperties = { padding: '7px 8px', color: '#555', verticalAlign: 'top', lineHeight: 1.4 }
 const dim: React.CSSProperties = { fontFamily: 'Nunito, sans-serif', fontSize: 11, color: '#aaa' }
-const link: React.CSSProperties = { color: '#FF4500', fontWeight: 800, textDecoration: 'none', fontSize: 11, whiteSpace: 'nowrap' }
+const link: React.CSSProperties = { color: 'var(--orange)', fontWeight: 800, textDecoration: 'none', fontSize: 11, whiteSpace: 'nowrap' }
 const empty: React.CSSProperties = { padding: 30, textAlign: 'center', color: '#888', fontFamily: 'Nunito, sans-serif', fontSize: 12.5 }
 const moreBtn: React.CSSProperties = {
   display: 'block', width: '100%', background: '#fff', color: '#666',

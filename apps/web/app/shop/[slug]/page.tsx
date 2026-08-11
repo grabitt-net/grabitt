@@ -70,7 +70,7 @@ function ShopInner() {
   return (
     <Shell>
       {/* Banner */}
-      <div style={{ position: 'relative', height: 130, background: shop.bannerUrl ? `center/cover no-repeat url(${shop.bannerUrl})` : `linear-gradient(135deg,${accent},#FF8C00)` }}>
+      <div style={{ position: 'relative', height: 130, background: shop.bannerUrl ? `center/cover no-repeat url(${shop.bannerUrl})` : `linear-gradient(135deg,${accent},var(--orange2))` }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.35), transparent)' }} />
       </div>
 

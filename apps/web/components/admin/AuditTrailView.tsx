@@ -94,7 +94,7 @@ export default function AuditTrailView({ onViewMember }: Props) {
                     <span style={{ background: '#f0ece5', color: '#888', borderRadius: 50, padding: '1px 6px', fontSize: 9, fontWeight: 800, marginLeft: 5 }}>{e.byRole}</span>
                   </div>
                   {onViewMember && e.targetId && (
-                    <button onClick={() => onViewMember(e.targetId!)} style={{ background: 'none', border: 'none', color: '#FF4500', fontFamily: 'Nunito, sans-serif', fontSize: 10, fontWeight: 800, cursor: 'pointer', marginTop: 4, padding: 0 }}>
+                    <button onClick={() => onViewMember(e.targetId!)} style={{ background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'Nunito, sans-serif', fontSize: 10, fontWeight: 800, cursor: 'pointer', marginTop: 4, padding: 0 }}>
                       View member →
                     </button>
                   )}

@@ -13,7 +13,7 @@ export default function Hero() {
         <button
           onClick={() => router.push('/grabit')}
           style={{
-            width: '100%', background: 'linear-gradient(135deg, #FF4500, #FF8C00)',
+            width: '100%', background: 'linear-gradient(135deg, var(--orange), var(--orange2))',
             color: '#fff', border: 'none', borderRadius: 14,
             padding: '13px 18px', fontFamily: 'var(--font-ui)', fontSize: 14,
             fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 16px rgba(255,69,0,0.25)',

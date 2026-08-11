@@ -65,7 +65,7 @@ export default function JobsView() {
       <div style={statRow}>
         <Stat label="Listings" value={stats.total} />
         <Stat label="Live" value={stats.live} color="#16a34a" />
-        <Stat label="Applicants" value={stats.applicants} color="#FF4500" />
+        <Stat label="Applicants" value={stats.applicants} color="var(--orange)" />
         <Stat label="Views" value={stats.views} />
       </div>
 
@@ -105,7 +105,7 @@ export default function JobsView() {
                     </td>
                     <td style={td}>{j.location}</td>
                     <td style={td}>{salary(j)}</td>
-                    <td style={{ ...td, fontWeight: 800, color: j.applicants ? '#FF4500' : '#bbb' }}>{j.applicants}</td>
+                    <td style={{ ...td, fontWeight: 800, color: j.applicants ? 'var(--orange)' : '#bbb' }}>{j.applicants}</td>
                     <td style={td}>{j.views}</td>
                     <td style={td}>
                       {expired
@@ -113,7 +113,7 @@ export default function JobsView() {
                         : <span style={pill(d <= 3 ? '#f59e0b' : '#16a34a')}>{d}d left</span>}
                     </td>
                     <td style={td}>
-                      <a href={`/listings/${j.listingId}`} target="_blank" rel="noreferrer" style={{ color: '#FF4500', fontWeight: 800, textDecoration: 'none', fontSize: 12 }}>View ↗</a>
+                      <a href={`/listings/${j.listingId}`} target="_blank" rel="noreferrer" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none', fontSize: 12 }}>View ↗</a>
                     </td>
                   </tr>
                 )
@@ -145,7 +145,7 @@ const td: React.CSSProperties = { padding: '10px 12px', color: '#555', verticalA
 const empty: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: 40, textAlign: 'center', color: '#888', fontFamily: 'Nunito, sans-serif', fontSize: 13 }
 const warnPill: React.CSSProperties = { marginLeft: 6, background: '#fef2f2', color: '#b91c1c', borderRadius: 50, padding: '1px 6px', fontSize: 9, fontWeight: 800 }
 const chip = (active: boolean): React.CSSProperties => ({
-  background: active ? '#FF4500' : '#fff', color: active ? '#fff' : '#666',
+  background: active ? 'var(--orange)' : '#fff', color: active ? '#fff' : '#666',
   border: '1px solid #ece3d7', borderRadius: 50, padding: '6px 14px',
   fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, cursor: 'pointer',
 })

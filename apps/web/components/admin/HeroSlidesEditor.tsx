@@ -60,7 +60,7 @@ export default function HeroSlidesEditor() {
     <div style={{ background: '#faf7f3', border: '1px solid #ece3d7', borderRadius: 12, padding: 14, marginTop: 4 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--dark)' }}>Hero slides <span style={{ color: '#aaa', fontWeight: 600 }}>· rotate automatically</span></div>
-        {editing === null && <button onClick={startNew} style={btn('#FF4500', '#fff')}>+ Add slide</button>}
+        {editing === null && <button onClick={startNew} style={btn('var(--orange)', '#fff')}>+ Add slide</button>}
       </div>
 
       {editing !== null ? (
@@ -96,7 +96,7 @@ export default function HeroSlidesEditor() {
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: s.heading ? 'var(--dark)' : '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.heading || 'Image-only slide'}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#aaa' }}>{s.active ? 'Visible' : 'Hidden'}</div>
             </div>
-            <button onClick={() => startEdit(s)} style={btn('#fff', '#FF4500', '#FF4500')}>Edit</button>
+            <button onClick={() => startEdit(s)} style={btn('#fff', 'var(--orange)', 'var(--orange)')}>Edit</button>
             <button onClick={() => remove(s.id)} style={btn('#fef2f2', '#ef4444', '#fecaca')}>Delete</button>
           </div>
         ))
@@ -107,7 +107,7 @@ export default function HeroSlidesEditor() {
 
 const inp: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 8, padding: '8px 10px', fontFamily: 'var(--font-ui)', fontSize: 12.5, boxSizing: 'border-box' }
 const btn = (bg: string, color: string, border?: string): React.CSSProperties => ({ background: bg, color, border: border ? `1.5px solid ${border}` : 'none', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' })
-const arrow = (disabled: boolean): React.CSSProperties => ({ background: 'none', border: 'none', cursor: disabled ? 'default' : 'pointer', color: disabled ? '#ddd' : '#FF4500', fontSize: 10, lineHeight: 1, padding: 1 })
+const arrow = (disabled: boolean): React.CSSProperties => ({ background: 'none', border: 'none', cursor: disabled ? 'default' : 'pointer', color: disabled ? '#ddd' : 'var(--orange)', fontSize: 10, lineHeight: 1, padding: 1 })
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div><label style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#999', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>{label}</label>{children}</div>
 }

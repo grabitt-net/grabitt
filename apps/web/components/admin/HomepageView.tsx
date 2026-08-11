@@ -62,10 +62,10 @@ export default function HomepageView({ onEditBanners }: { onEditBanners: (positi
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: '#FF4500' }}>Homepage</span> layout</h2>
+          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>Homepage</span> layout</h2>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>Show/hide and reorder the sections of the public homepage.</div>
         </div>
-        <button onClick={save} disabled={!dirty || saving} style={{ background: !dirty || saving ? '#e5e7eb' : '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 20px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: !dirty || saving ? 'default' : 'pointer' }}>
+        <button onClick={save} disabled={!dirty || saving} style={{ background: !dirty || saving ? '#e5e7eb' : 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 20px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: !dirty || saving ? 'default' : 'pointer' }}>
           {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save layout'}
         </button>
       </div>
@@ -87,10 +87,10 @@ export default function HomepageView({ onEditBanners }: { onEditBanners: (positi
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999' }}>{META[s.key]?.note ?? s.key}</div>
                 </div>
                 {META[s.key]?.slides && (
-                  <button onClick={() => setOpenSlides(v => !v)} style={{ background: openSlides ? '#FF4500' : '#fff', color: openSlides ? '#fff' : '#FF4500', border: '1.5px solid #FF4500', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>✎ {openSlides ? 'Close slides' : 'Edit slides'}</button>
+                  <button onClick={() => setOpenSlides(v => !v)} style={{ background: openSlides ? 'var(--orange)' : '#fff', color: openSlides ? '#fff' : 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>✎ {openSlides ? 'Close slides' : 'Edit slides'}</button>
                 )}
                 {META[s.key]?.edit && (
-                  <button onClick={() => onEditBanners(META[s.key]!.edit!)} style={{ background: '#fff', color: '#FF4500', border: '1.5px solid #FF4500', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>✎ Edit content</button>
+                  <button onClick={() => onEditBanners(META[s.key]!.edit!)} style={{ background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 50, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>✎ Edit content</button>
                 )}
                 <button onClick={() => toggle(i)} style={{ background: s.enabled ? '#f0faf4' : '#f5f5f5', color: s.enabled ? '#16a34a' : '#aaa', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>
                   {s.enabled ? '● Visible' : '○ Hidden'}
@@ -110,5 +110,5 @@ export default function HomepageView({ onEditBanners }: { onEditBanners: (positi
 
 const arrow = (disabled: boolean): React.CSSProperties => ({
   background: 'none', border: 'none', cursor: disabled ? 'default' : 'pointer',
-  color: disabled ? '#ddd' : '#FF4500', fontSize: 11, lineHeight: 1, padding: 2,
+  color: disabled ? '#ddd' : 'var(--orange)', fontSize: 11, lineHeight: 1, padding: 2,
 })

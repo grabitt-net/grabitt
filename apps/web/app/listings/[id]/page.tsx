@@ -288,8 +288,8 @@ function ListingInner() {
           {/* Buy / Offer — on the title's line */}
           {!isOwner && !job && !prop && (
             <div style={{ display: 'flex', gap: 8, alignItems: 'stretch', flex: '0 1 auto' }}>
-              <button onClick={() => isGrabItNow ? openPanel('checkout', panelItem) : addToBasket()} disabled={basketBusy} style={{ width: 96, background: 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 6px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: basketBusy ? 'wait' : 'pointer', lineHeight: 1.25 }}>{isGrabItNow ? <>⚡ {t('Buy Now')}</> : <>🛒 {t('Buy Now')}</>}<br /><span style={{ fontSize: 11 }}>{priceLabel}</span></button>
-              <button onClick={() => openPanel('makeOffer', panelItem)} style={{ width: 96, background: '#fff', color: '#FF4500', border: '2px solid #FF4500', borderRadius: 12, padding: '10px 6px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>💰 {t('Make')}<br />{t('an Offer')}</button>
+              <button onClick={() => isGrabItNow ? openPanel('checkout', panelItem) : addToBasket()} disabled={basketBusy} style={{ width: 96, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 6px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: basketBusy ? 'wait' : 'pointer', lineHeight: 1.25 }}>{isGrabItNow ? <>⚡ {t('Buy Now')}</> : <>🛒 {t('Buy Now')}</>}<br /><span style={{ fontSize: 11 }}>{priceLabel}</span></button>
+              <button onClick={() => openPanel('makeOffer', panelItem)} style={{ width: 96, background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 12, padding: '10px 6px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>💰 {t('Make')}<br />{t('an Offer')}</button>
             </div>
           )}
           {/* Property: a normal-sized Enquire button on the title/price line */}
@@ -332,7 +332,7 @@ function ListingInner() {
         ) : job ? (
           <div style={cardBox}>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={openApply} disabled={applied} style={{ flex: 1, background: applied ? 'var(--sage)' : 'linear-gradient(135deg,#FF4500,#FF8C00)', color: '#fff', border: 'none', borderRadius: 12, padding: '15px 8px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: applied ? 'default' : 'pointer', lineHeight: 1.25 }}>{applied ? '✓ Applied' : <>✉️ {t('Apply')}<br />{t('Now')}</>}</button>
+              <button onClick={openApply} disabled={applied} style={{ flex: 1, background: applied ? 'var(--sage)' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: '15px 8px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: applied ? 'default' : 'pointer', lineHeight: 1.25 }}>{applied ? '✓ Applied' : <>✉️ {t('Apply')}<br />{t('Now')}</>}</button>
               {seller?.id && <MessageButton listingId={id} sellerId={seller.id} label={t('Message Employer')} flex={1} />}
             </div>
             <div style={{ textAlign: 'center', fontSize: 10.5, color: '#777', fontFamily: 'var(--font-comfortaa)', marginTop: 8 }}>{t('Free to apply · your application goes straight to the employer')}</div>
@@ -452,7 +452,7 @@ function ListingInner() {
               onClick={() => seller?.id && openPanel('storefront', { sellerId: seller.id })}
               style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: seller?.id ? 'pointer' : 'default' }}
             >
-              <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#FF4500,#FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, color: '#fff', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>
+              <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, color: '#fff', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>
                 {(seller?.tradingName ?? job?.company ?? seller?.displayName ?? '?')[0]?.toUpperCase()}
               </div>
               <div style={{ minWidth: 0 }}>

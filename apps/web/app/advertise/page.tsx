@@ -134,7 +134,7 @@ function Inner() {
         return (
           <div key={i} style={{ background: '#fff', border: `1.5px solid ${clash ? '#fecaca' : '#ece3d7'}`, borderRadius: 14, padding: 14, marginBottom: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: '#FF4500', textTransform: 'uppercase', letterSpacing: 0.4 }}>Placement {i + 1}</span>
+              <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Placement {i + 1}</span>
               {lines.length > 1 && <button onClick={() => removeLine(i)} style={{ border: 'none', background: 'none', color: '#ef4444', fontWeight: 800, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 12 }}>Remove</button>}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -176,7 +176,7 @@ function Inner() {
         )
       })}
 
-      <button onClick={addLine} style={{ width: '100%', border: '1.5px dashed #FF7A00', background: '#fff7ed', color: '#c2410c', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 16 }}>+ Add another placement</button>
+      <button onClick={addLine} style={{ width: '100%', border: '1.5px dashed var(--orange2)', background: '#fff7ed', color: '#c2410c', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 16 }}>+ Add another placement</button>
 
       {/* Live quote */}
       {quote && (

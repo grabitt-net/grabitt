@@ -7,7 +7,7 @@ import { trpcAuthed } from '@/lib/authToken'
 // Employer applicants board — replicates the V20 openApplicationsBoard: per-job
 // applicant list with a pipeline status control. Rejections require a reason note.
 
-const ORANGE = '#FF4500'
+const ORANGE = 'var(--orange)'
 type App = {
   id: string; status: string; applicant: string; applicantId: string; revealed?: boolean; coverNote: string | null; employerNote: string | null; createdAt: string
   suitabilityScore?: number | null

@@ -33,13 +33,13 @@ export default function ComplianceView({ onViewMember }: { onViewMember: (userId
   return (
     <div>
       <div style={{ marginBottom: 14 }}>
-        <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: '#FF4500' }}>Compliance</span> & GDPR</h2>
+        <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>Compliance</span> & GDPR</h2>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>Immutable record of consent acceptances and data-erasure requests.</div>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{ background: tab === t.id ? '#FF4500' : '#fff', color: tab === t.id ? '#fff' : '#555', border: `1.5px solid ${tab === t.id ? '#FF4500' : '#e5e7eb'}`, borderRadius: 50, padding: '7px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{t.label}</button>
+          <button key={t.id} onClick={() => setTab(t.id)} style={{ background: tab === t.id ? 'var(--orange)' : '#fff', color: tab === t.id ? '#fff' : '#555', border: `1.5px solid ${tab === t.id ? 'var(--orange)' : '#e5e7eb'}`, borderRadius: 50, padding: '7px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{t.label}</button>
         ))}
       </div>
 
@@ -80,7 +80,7 @@ function Table({ cols, rows, empty, onViewMember }: { cols: string[]; rows: { us
           <tr key={i} style={{ borderTop: '1px solid #f0ebe4' }}>
             {r.cells.map((cell, j) => j === 0 ? (
               <td key={j} style={{ padding: '10px 14px', fontSize: 12.5 }}>
-                <button onClick={() => onViewMember(r.userId)} title="View client details" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#FF4500', fontWeight: 800, fontFamily: 'var(--font-ui)', fontSize: 12.5, textDecoration: 'underline' }}>{cell}</button>
+                <button onClick={() => onViewMember(r.userId)} title="View client details" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--orange)', fontWeight: 800, fontFamily: 'var(--font-ui)', fontSize: 12.5, textDecoration: 'underline' }}>{cell}</button>
               </td>
             ) : (
               <td key={j} style={{ padding: '10px 14px', fontSize: 12.5, color: '#555' }}>{cell}</td>

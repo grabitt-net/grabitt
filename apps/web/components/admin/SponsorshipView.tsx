@@ -90,5 +90,5 @@ export default function SponsorshipView() {
 }
 
 const inp: React.CSSProperties = { border: '1.5px solid #e0d8d0', borderRadius: 8, padding: '6px 8px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none', background: '#fff', width: 90, marginTop: 3 }
-const btnPrimary: React.CSSProperties = { background: '#FF4500', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }
+const btnPrimary: React.CSSProperties = { background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }
 const btnGhost: React.CSSProperties = { background: '#fff', color: '#555', border: '1px solid #ddd', borderRadius: 8, padding: '7px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }

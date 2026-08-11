@@ -9,7 +9,7 @@ import { trpcAuthed } from '@/lib/authToken'
 // against real data. Cross-links (applicants, find staff, verify) open as modals
 // via PanelHost, which the page also mounts.
 
-const ORANGE = '#FF4500'
+const ORANGE = 'var(--orange)'
 const FREE_JOBS = 3          // first 3 job listings are free
 const JOB_LIFE_DAYS = 21     // listings run for 21 days
 
@@ -60,7 +60,7 @@ export default function EmployerDashboardContent() {
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginBottom: 10 }}>Your Job Listings</div>
         <div style={{ display: 'flex', gap: 8 }}>
           {statCard(posted, 'POSTED', '#fff', 'rgba(255,255,255,0.1)')}
-          {statCard(applicants, 'APPLICANTS', '#FF7A00', 'rgba(255,255,255,0.1)')}
+          {statCard(applicants, 'APPLICANTS', 'var(--orange2)', 'rgba(255,255,255,0.1)')}
           {statCard(remaining, 'FREE LEFT', '#22c55e', 'rgba(34,197,94,0.18)')}
         </div>
         <a href="/jobs/new" style={{ textDecoration: 'none' }}>
@@ -94,7 +94,7 @@ export default function EmployerDashboardContent() {
       </div>
 
       {/* Share prompt */}
-      <div style={{ background: 'linear-gradient(135deg,#FF4500,#FF8C00)', borderRadius: 14, padding: 16, marginBottom: 14, textAlign: 'center' }}>
+      <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 14, padding: 16, marginBottom: 14, textAlign: 'center' }}>
         <div style={{ fontSize: 30, marginBottom: 4 }}>📣</div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#fff', marginBottom: 4 }}>Get more applicants — share your jobs!</div>
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.9)', fontFamily: 'var(--font-ui)', marginBottom: 12, lineHeight: 1.5 }}>Listings shared on social reach a wider audience. More eyes means more quality candidates.</div>

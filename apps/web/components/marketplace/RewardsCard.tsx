@@ -72,7 +72,7 @@ export default function RewardsCard() {
   return (
     <div id="rewards" style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }}>
       {/* Balance header */}
-      <div style={{ background: 'linear-gradient(135deg,#FF4500,#FF8C00)', borderRadius: 14, padding: 16, color: '#fff', display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 14, padding: 16, color: '#fff', display: 'flex', alignItems: 'center', gap: 14 }}>
         <div style={{ fontSize: 30 }}>🎁</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900 }}>{balance.toLocaleString()}</div>

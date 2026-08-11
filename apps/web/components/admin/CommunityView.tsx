@@ -61,10 +61,10 @@ export default function CommunityView() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: '#FF4500' }}>Grabitt Guides</span> — community content</h2>
+          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>Grabitt Guides</span> — community content</h2>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>Published guides appear on the homepage and at /community.</div>
         </div>
-        <button onClick={openNew} style={{ background: '#FF4500', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>+ New Guide</button>
+        <button onClick={openNew} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>+ New Guide</button>
       </div>
 
       {editing && (
@@ -100,19 +100,19 @@ export default function CommunityView() {
           </label>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
             <button onClick={() => setEditing(null)} style={{ padding: '7px 16px', borderRadius: 50, border: '1.5px solid #e5e7eb', background: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
-            <button onClick={save} disabled={saving || !form.title || !form.excerpt || !form.body} style={{ padding: '7px 18px', borderRadius: 50, border: 'none', background: '#FF4500', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 12, cursor: 'pointer', opacity: saving || !form.title || !form.excerpt || !form.body ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save guide'}</button>
+            <button onClick={save} disabled={saving || !form.title || !form.excerpt || !form.body} style={{ padding: '7px 18px', borderRadius: 50, border: 'none', background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 12, cursor: 'pointer', opacity: saving || !form.title || !form.excerpt || !form.body ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save guide'}</button>
           </div>
         </div>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
         {posts.map(p => (
-          <div key={p.id} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', borderTop: `4px solid ${p.published ? '#FF4500' : '#e5e7eb'}` }}>
+          <div key={p.id} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', borderTop: `4px solid ${p.published ? 'var(--orange)' : '#e5e7eb'}` }}>
             <div style={{ height: 90, background: p.imageUrl ? undefined : 'linear-gradient(135deg,#e8dfd0,#f5f0e8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {p.imageUrl ? <img src={p.imageUrl} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 40 }}>{p.emoji}</span>}
             </div>
             <div style={{ padding: 14 }}>
-              <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 10, color: '#FF4500', textTransform: 'uppercase', letterSpacing: 0.5 }}>{p.category}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 10, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{p.category}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 13, marginTop: 2, marginBottom: 8 }}>{p.title}</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => openEdit(p)} style={{ padding: '5px 12px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)', background: '#f3f4f6', color: '#555' }}>Edit</button>
