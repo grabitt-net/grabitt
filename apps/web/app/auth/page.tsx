@@ -38,10 +38,15 @@ function AuthForm() {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
-  // Surface errors bounced back from the OAuth / email-confirm callback.
+  // Surface errors bounced back from the OAuth / email-confirm callback, and the
+  // success banner after a new user clicks their email-confirmation link.
   useEffect(() => {
     if (searchParams.get('error')) {
       setError('We could not complete sign-in. Please try again.')
+    }
+    if (searchParams.get('confirmed')) {
+      setMode('login')
+      setMessage('Your email is confirmed — you can now log in.')
     }
   }, [searchParams])
 

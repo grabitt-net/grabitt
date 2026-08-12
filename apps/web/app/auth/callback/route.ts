@@ -55,6 +55,14 @@ export async function GET(request: NextRequest) {
         })
       }
     } catch { /* never block sign-in on a sync failure */ }
+    // A brand-new signup confirmation (type=signup) lands on the login screen
+    // with a clear success banner, so the user knows the click worked and they
+    // can now sign in — rather than being dropped on the homepage with no word
+    // that anything happened. Other link types (email change, recovery, magic
+    // link) keep honouring `next`.
+    if (type === 'signup') {
+      return NextResponse.redirect(`${origin}/auth?confirmed=1`)
+    }
     return NextResponse.redirect(`${origin}${next}`)
   }
 
