@@ -156,6 +156,17 @@ function AccountInner() {
     }
   }, [wantTab, me?.isBusiness])
 
+  // Email-change confirmation lands here as ?emailChanged=1 (set by the auth
+  // callback). Tell the user it worked and drop them on Settings → Account so
+  // they see the new address.
+  useEffect(() => {
+    if (!params.get('emailChanged')) return
+    toast(t('Your email address has been updated.'))
+    setMainTab('settings'); setSettingsTab('account')
+    // Clean the flag out of the URL so a refresh doesn't re-toast.
+    router.replace('/account')
+  }, [params, router])
+
   // Scroll the deep-linked offer into view once the offers have loaded.
   useEffect(() => {
     if (!focusOffer || !offers?.length) return

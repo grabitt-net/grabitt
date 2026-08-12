@@ -63,6 +63,13 @@ export async function GET(request: NextRequest) {
     if (type === 'signup') {
       return NextResponse.redirect(`${origin}/auth?confirmed=1`)
     }
+    // An email-change confirmation lands back on /account (next=/account). Flag
+    // it so the account page can tell the user their address was actually
+    // changed, rather than dropping them there with no word that it worked.
+    if (type === 'email_change' || type === 'email') {
+      const sep = next.includes('?') ? '&' : '?'
+      return NextResponse.redirect(`${origin}${next}${sep}emailChanged=1`)
+    }
     return NextResponse.redirect(`${origin}${next}`)
   }
 
