@@ -11,7 +11,6 @@ import PanelHost from '@/components/marketplace/PanelHostLazy'
 import { BUSINESS_TIERS, BUSINESS_TIER_ORDER } from '@grabitt/design-tokens'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { t } from '@/lib/i18n'
-import { toast } from '@/lib/ui'
 
 // The For Business page is a marketing / sign-up page. A signed-in business only
 // picks sponsorship & advertising add-ons; a signed-out visitor also opens the
@@ -42,7 +41,7 @@ function EmployersInner() {
   const [pages, setPages] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
   // The subscription is the first basket item for a new business: monthly or yearly.
-  const [plan, setPlan] = useState<'month' | 'year'>('month')
+  const [plan, setPlan] = useState<'month' | 'year' | 'light'>('month')
   const SUB_CENTS = { month: 2900, year: 29000 } as const
 
   useEffect(() => {
@@ -78,19 +77,6 @@ function EmployersInner() {
   // One CTA for everyone. A new/prospective business goes to the account step
   // with the basket carried over (subscription + upgrades paid together). An
   // existing business just buys the selected upgrades one-off.
-  // Business Light — the free entry tier. Signed-out visitors sign in first;
-  // a signed-in personal account converts straight away, then lands on their
-  // business dashboard.
-  const [bizLightBusy, setBizLightBusy] = useState(false)
-  const startBusinessLight = async () => {
-    if (gate === 'signed_out') { openPanel('login'); return }
-    setBizLightBusy(true)
-    try {
-      await (trpcAuthed() as any).users.becomeBusinessLight.mutate()
-      window.location.href = '/account?tab=business'
-    } catch (e: any) { toast(e?.message || t('Could not switch to Business Light. Please try again.')); setBizLightBusy(false) }
-  }
-
   const continueToCheckout = async () => {
     stashBasket()
     if (!isBiz) { openPanel(gate === 'signed_out' ? 'login' : 'business'); return }
@@ -101,7 +87,7 @@ function EmployersInner() {
       if (res?.url) window.location.href = res.url
     } catch { setBusy(false) }
   }
-  const subDueLabel = plan === 'year' ? `${eur(SUB_CENTS.year)}/yr` : `${eur(SUB_CENTS.month)}/mo`
+  const subDueLabel = plan === 'light' ? t('Free') : plan === 'year' ? `${eur(SUB_CENTS.year)}/yr` : `${eur(SUB_CENTS.month)}/mo`
 
   return (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
@@ -185,22 +171,7 @@ function EmployersInner() {
               )
             })}
           </div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', textAlign: 'center', marginTop: 8 }}>{t('Levels are held on a rolling 90-day basis. Fees apply to item sales only, never to property or job listings.')}</div>
-
-          {/* Business Light — the free entry tier, always shown so every visitor
-              sees there is a no-subscription option below the paid plans. */}
-          <div style={{ marginTop: 14, background: '#fff', border: '1.5px dashed #E7B98F', borderRadius: 14, padding: 16, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 26, lineHeight: 1 }}>🆓</span>
-            <div style={{ flex: 1, minWidth: 220 }}>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{t('Business Light — free to start')}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6a6a6a', lineHeight: 1.5, marginTop: 3 }}>{t('No monthly fee. An 8% selling fee and just €0.99 per item listing — sell under your business name and upgrade to full Business any time.')}</div>
-            </div>
-            {!isBiz && (
-              <button onClick={startBusinessLight} disabled={bizLightBusy} style={{ background: 'var(--orange)', border: 'none', color: '#fff', borderRadius: 12, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: bizLightBusy ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
-                {bizLightBusy ? t('Please wait…') : t('Start free')}
-              </button>
-            )}
-          </div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', textAlign: 'center', marginTop: 8 }}>{t('Levels are held on a rolling 90-day basis. Fees apply to item sales only, never to property or job listings.')}{' '}{t('Business Light (free) sits below these — an 8% fee and €0.99 per item listing.')}</div>
         </div>
 
         {/* Build-a-basket: subscription (new business) + upgrades, paid together */}
@@ -218,6 +189,15 @@ function EmployersInner() {
                   </button>
                 ))}
               </div>
+              {/* Business Light — the free plan option, chosen right here so a
+                  business can start free yet still add & pay for upgrades below. */}
+              <button onClick={() => setPlan('light')} style={{ width: '100%', marginTop: 10, textAlign: 'left', border: `2px solid ${plan === 'light' ? 'var(--orange)' : '#f0ebe4'}`, background: plan === 'light' ? '#FFF7F0' : '#fff', borderRadius: 12, padding: '11px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 20 }}>🆓</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: plan === 'light' ? 'var(--orange)' : 'var(--dark)' }}>{t('Business Light — Free')}</span>
+                  <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a5a2a', marginTop: 1 }}>{t('No monthly fee · 8% selling fee · €0.99 per item listing')}</span>
+                </span>
+              </button>
               <ul style={{ margin: '14px 0 0', paddingLeft: 18, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', lineHeight: 1.8 }}>
                 <li>{t('Your own branded storefront')} · {t('Verified 🏢 business badge')}</li>
                 <li>{t('Post jobs & list property')} · {t('Bulk import & multibuy')}</li>
@@ -286,8 +266,8 @@ function EmployersInner() {
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)', marginBottom: 10 }}>{t('Your basket')}</div>
             {!isBiz && (
               <div style={basketRow}>
-                <span>🏢 {t('Business account')} · {plan === 'year' ? t('Yearly') : t('Monthly')}</span>
-                <span style={{ fontWeight: 900 }}>{subDueLabel} <span style={{ color: '#16a34a', fontWeight: 800 }}>({t('7 days free')})</span></span>
+                <span>🏢 {t('Business account')} · {plan === 'light' ? t('Business Light') : plan === 'year' ? t('Yearly') : t('Monthly')}</span>
+                <span style={{ fontWeight: 900 }}>{subDueLabel}{plan !== 'light' && <span style={{ color: '#16a34a', fontWeight: 800 }}> ({t('7 days free')})</span>}</span>
               </div>
             )}
             {basketItems.length === 0 && isBiz && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '6px 0' }}>{t('No upgrades selected yet.')}</div>}

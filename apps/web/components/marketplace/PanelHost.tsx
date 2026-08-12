@@ -4732,8 +4732,8 @@ function PanelBody() {
     const [catalog, setCatalog] = useState<any[]>([])
     const [durations, setDurations] = useState<number[]>([1, 3, 6, 12])
     const [bizBusy, setBizBusy] = useState(false)
-    const [bizInterval, setBizInterval] = useState<'month' | 'year'>(() => {
-      try { return sessionStorage.getItem('grabitt_biz_interval') === 'year' ? 'year' : 'month' } catch { return 'month' }
+    const [bizInterval, setBizInterval] = useState<'month' | 'year' | 'light'>(() => {
+      try { const v = sessionStorage.getItem('grabitt_biz_interval'); return v === 'year' ? 'year' : v === 'light' ? 'light' : 'month' } catch { return 'month' }
     })
     const [foundingBizLeft, setFoundingBizLeft] = useState<number | null>(null)
     useEffect(() => {
@@ -4769,6 +4769,24 @@ function PanelBody() {
       } catch { toast('Could not start checkout — are you logged in?'); setBizBusy(false) }
     }
 
+    // Business Light: free tier, no subscription. Flag the account, then — if the
+    // visitor picked any sponsorship upgrades — still send them to Stripe to pay
+    // for those one-off placements.
+    const startLight = async () => {
+      setBizBusy(true)
+      try {
+        const client = await getTrpcClient()
+        await (client as any).users.becomeBusinessLight.mutate()
+        try { sessionStorage.removeItem('grabitt_biz_sponsorship') } catch {}
+        if (sponsorItems.length) {
+          const res = await (client as any).sponsorship.checkout.mutate({ items: sponsorItems })
+          if (res?.url) { window.location.href = res.url; return }
+        }
+        toast('You’re on Business Light')
+        window.location.href = '/account?tab=business'
+      } catch (e) { toast((e as Error).message || 'Could not switch to Business Light'); setBizBusy(false) }
+    }
+
     return (
       <ActionPanel title="🏢 For Business" onClose={closePanel}>
         <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 14, padding: 16, marginBottom: 16, textAlign: 'center' }}>
@@ -4789,6 +4807,15 @@ function PanelBody() {
             </button>
           ))}
         </div>
+        {/* Business Light — the free plan, chosen here so they can still add and
+            pay for sponsorship upgrades below. */}
+        <button onClick={() => setBizInterval('light')} style={{ width: '100%', marginTop: 8, textAlign: 'left', border: `2px solid ${bizInterval === 'light' ? 'var(--orange)' : '#f0ebe4'}`, background: bizInterval === 'light' ? '#FFF7F0' : '#fff', borderRadius: 12, padding: '11px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 19 }}>🆓</span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: bizInterval === 'light' ? 'var(--orange)' : 'var(--dark)' }}>Business Light — Free</span>
+            <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11, color: '#8a5a2a' }}>No monthly fee · 8% selling fee · €0.99 per item listing</span>
+          </span>
+        </button>
 
         {/* Sponsorship & advertising — one-off, timed placements added to the basket */}
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, margin: '18px 0 4px' }}>Add sponsorship (optional)</div>
@@ -4815,11 +4842,11 @@ function PanelBody() {
 
         {/* Totals */}
         <div style={{ background: '#f9f6f2', borderRadius: 12, padding: '12px 14px', margin: '10px 0 12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555' }}><span>Business account</span><span>{bizInterval === 'year' ? '€290/yr' : '€29/mo'} <span style={{ color: '#16a34a' }}>(7 days free)</span></span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555' }}><span>Business account</span><span>{bizInterval === 'light' ? <>Business Light <span style={{ color: '#16a34a' }}>(free)</span></> : <>{bizInterval === 'year' ? '€290/yr' : '€29/mo'} <span style={{ color: '#16a34a' }}>(7 days free)</span></>}</span></div>
           {sponsorTotal > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555', marginTop: 6 }}><span>Sponsorship (one-off)</span><span>{eur(sponsorTotal)}</span></div>}
         </div>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>You&apos;ll add a card on Stripe — the account is free for 7 days. We&apos;ll ask for your business details when you first sign in.</div>
-        <button onClick={() => startCheckout(bizInterval === 'year' ? 'business_annual' : 'business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? 'Opening Stripe…' : sponsorTotal > 0 ? '🚀 Start trial & add sponsorship' : '🚀 Start 7-day free trial'}</button>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>{bizInterval === 'light' ? (sponsorTotal > 0 ? 'Business Light is free — you only pay the sponsorship above. Add your business details when you first sign in.' : 'Business Light is free — no card needed. You only pay €0.99 when you list an item.') : 'You’ll add a card on Stripe — the account is free for 7 days. We’ll ask for your business details when you first sign in.'}</div>
+        <button onClick={() => bizInterval === 'light' ? startLight() : startCheckout(bizInterval === 'year' ? 'business_annual' : 'business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? (bizInterval === 'light' ? 'Setting up…' : 'Opening Stripe…') : bizInterval === 'light' ? (sponsorTotal > 0 ? '🆓 Start free & pay sponsorship' : '🆓 Start free with Business Light') : sponsorTotal > 0 ? '🚀 Start trial & add sponsorship' : '🚀 Start 7-day free trial'}</button>
 
         {/* Founding cohort annual lock-in — only while slots remain (first 100) */}
         {(foundingBizLeft === null || foundingBizLeft > 0) && (<>
@@ -4831,14 +4858,6 @@ function PanelBody() {
           </div>
         </>)}
 
-        {/* Business Light — free entry tier, sits below the €29/mo Business */}
-        <div style={{ marginTop: 14, borderTop: '1px solid #f0ebe4', paddingTop: 14 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Not ready for a subscription?</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', margin: '3px 0 8px', lineHeight: 1.5 }}>Business Light is free — 8% selling fee and just €0.99 per item listing, no monthly fee. Upgrade to full Business any time.</div>
-          <button onClick={async () => { try { await (await getTrpcClient() as any).users.becomeBusinessLight.mutate(); toast('You’re on Business Light'); closePanel() } catch (e) { toast((e as Error).message || 'Could not switch') } }} disabled={bizBusy} style={{ width: '100%', background: '#fff', border: '1.5px solid #e5dccd', color: '#8a5a2a', borderRadius: 14, padding: '12px 16px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>
-            Start free with Business Light
-          </button>
-        </div>
       </ActionPanel>
     )
   }
