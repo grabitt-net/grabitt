@@ -50,7 +50,9 @@ function Inner() {
   const [centre, setCentre] = useState<[number, number] | null>(null)
   const [geoTried, setGeoTried] = useState(false)
 
-  const [view, setView] = useState<'map' | 'list'>('map')
+  // Open on the list by default — most people scan the offers first and switch
+  // to the map only if they want to see where they are.
+  const [view, setView] = useState<'map' | 'list'>('list')
   const [radius, setRadius] = useState(5)
   const [dept, setDept] = useState('')
   const [town, setTown] = useState('')
