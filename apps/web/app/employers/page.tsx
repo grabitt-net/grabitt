@@ -186,6 +186,21 @@ function EmployersInner() {
             })}
           </div>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', textAlign: 'center', marginTop: 8 }}>{t('Levels are held on a rolling 90-day basis. Fees apply to item sales only, never to property or job listings.')}</div>
+
+          {/* Business Light — the free entry tier, always shown so every visitor
+              sees there is a no-subscription option below the paid plans. */}
+          <div style={{ marginTop: 14, background: '#fff', border: '1.5px dashed #E7B98F', borderRadius: 14, padding: 16, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 26, lineHeight: 1 }}>🆓</span>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{t('Business Light — free to start')}</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6a6a6a', lineHeight: 1.5, marginTop: 3 }}>{t('No monthly fee. An 8% selling fee and just €0.99 per item listing — sell under your business name and upgrade to full Business any time.')}</div>
+            </div>
+            {!isBiz && (
+              <button onClick={startBusinessLight} disabled={bizLightBusy} style={{ background: 'var(--orange)', border: 'none', color: '#fff', borderRadius: 12, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: bizLightBusy ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
+                {bizLightBusy ? t('Please wait…') : t('Start free')}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Build-a-basket: subscription (new business) + upgrades, paid together */}
@@ -209,18 +224,6 @@ function EmployersInner() {
               </ul>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#8a5a2a', marginTop: 10 }}>
                 {t('Already have an account?')} <button onClick={() => openPanel('login')} style={linkBtn}>{t('Log in')}</button>
-              </div>
-
-              {/* Free entry tier — Business Light sits below the €29 plans. */}
-              <div style={{ marginTop: 14, borderTop: '1px dashed #ecdcc4', paddingTop: 14, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <span style={{ fontSize: 20, lineHeight: 1 }}>🆓</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{t('Prefer to start free? Business Light')}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6a6a6a', lineHeight: 1.5, marginTop: 3 }}>{t('No monthly fee — an 8% selling fee and just €0.99 per item listing. Sell under your business name and upgrade to full Business any time.')}</div>
-                  <button onClick={startBusinessLight} disabled={bizLightBusy} style={{ marginTop: 10, background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 12, padding: '9px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: bizLightBusy ? 'wait' : 'pointer' }}>
-                    {bizLightBusy ? t('Please wait…') : t('Start free with Business Light')}
-                  </button>
-                </div>
               </div>
             </div>
           )}
