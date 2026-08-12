@@ -22,6 +22,7 @@ export default function EmployersPage() {
 }
 
 const TIER_EMOJI: Record<string, string> = { dealer: '🟡', trader: '🔵', pro: '⭐' }
+const TIER_COLOR: Record<string, string> = { dealer: '#EAB308', trader: '#3b82f6', pro: '#a855f7' }
 const feePct = (r: number) => `${(r * 100).toFixed(r * 100 % 1 ? 1 : 0)}%`
 const eur = (cents: number) => `€${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`
 const HELP = '/help#business-advertising'
@@ -101,19 +102,24 @@ function EmployersInner() {
       )}
 
       <div style={{ maxWidth: 920, margin: '0 auto', padding: '18px 14px 0' }}>
-        {/* Perks — compact, one line on desktop */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }} className="biz-perks">
+        {/* What every Business account includes — icon, title and a visible
+            one-line benefit (no hover-only tooltips, which were dead on mobile). */}
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>{t('Every Business account includes')}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }} className="biz-perks">
           {([
-            ['💼', t('Post jobs'), t('Advertise vacancies on the recruitment board. Your tier includes free job ads each month; extra ads are €39 for 14 days (bundles available).')],
-            ['🔍', t('Find staff'), t('Search the candidate database and receive applications through the built-in applicant tracker.')],
-            ['🏠', t('List property'), t('Advertise properties for sale or rent. Advertising only — Grabitt takes no commission or deposit on property.')],
-            ['🏪', t('Storefront'), t('Your own branded shop page with your logo, banner and all your listings in one place.')],
-            ['🛡️', t('Verified badge'), t('A verified 🏢 badge on your storefront and listings so buyers know you are a genuine business.')],
-            ['⭐', t('Lower fees'), t('Business selling fees start at 6% and drop to as low as 2.5% as you sell more and keep your rating up.')],
-          ] as [string, string, string][]).map(([icon, title, tip]) => (
-            <div key={title} title={tip} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: '12px 6px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', cursor: 'help' }}>
-              <div style={{ fontSize: 22 }}>{icon}</div>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: 'var(--dark)', marginTop: 4, lineHeight: 1.25 }}>{title} <span style={{ color: '#c9bfa8', fontSize: 9 }}>ⓘ</span></div>
+            ['💼', t('Post jobs'), t('Advertise vacancies on the recruitment board — free ads each month.')],
+            ['🔍', t('Find staff'), t('Search the candidate database and track applicants in one place.')],
+            ['🏠', t('List property'), t('Advertise property for sale or rent — commission-free.')],
+            ['🏪', t('Storefront'), t('Your own branded shop page with logo, banner and all your listings.')],
+            ['🛡️', t('Verified badge'), t('A 🏢 badge that shows buyers you’re a genuine business.')],
+            ['⭐', t('Lower fees'), t('Selling fees from 6%, dropping to as low as 2.5%.')],
+          ] as [string, string, string][]).map(([icon, title, desc]) => (
+            <div key={title} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', background: '#fff', border: '1px solid var(--line)', borderRadius: 14, padding: '13px 14px', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 10, background: 'linear-gradient(135deg,#FFF3EE,#FFE4D6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19 }}>{icon}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#6a6a6a', lineHeight: 1.4, marginTop: 2 }}>{desc}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -127,24 +133,39 @@ function EmployersInner() {
               const tier = BUSINESS_TIERS[g]
               const start = i === 0
               return (
-                <div key={g} style={{ background: start ? '#FFF7F0' : '#fff', border: `1.5px solid ${start ? 'var(--orange)' : '#ece3d7'}`, borderRadius: 14, padding: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 20 }}>{TIER_EMOJI[g]}</span>
-                    <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{tier.label}</span>
-                    {start && <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-nunito)', fontSize: 8.5, fontWeight: 900, color: '#fff', background: 'var(--orange)', borderRadius: 50, padding: '2px 7px', textTransform: 'uppercase' }}>{t('Start here')}</span>}
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 24, fontWeight: 700, color: 'var(--orange)', margin: '8px 0 2px' }}>{feePct(tier.feeRate)}<span style={{ fontSize: 12, color: '#1a1a1a', fontWeight: 400 }}> {t('sales fee')}</span></div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 0.4, margin: '10px 0 4px' }}>{t('You get')}</div>
-                  <ul style={{ margin: 0, paddingLeft: 16, fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', lineHeight: 1.7 }}>
-                    <li>{tier.caps.items} {t('item listings / month')}</li>
-                    <li>{tier.caps.jobs} {t('job adverts / month')}</li>
-                    <li>{tier.caps.property} {t('property listings / month')}</li>
-                  </ul>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 0.4, margin: '10px 0 4px' }}>{t('Criteria')}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', lineHeight: 1.5 }}>
-                    {tier.criteria.sales90d === 0
-                      ? t('Included with any Business account.')
-                      : `${tier.criteria.sales90d}+ ${t('sales in 90 days')} · ${tier.criteria.rating}★ ${t('rating')}`}
+                <div key={g} style={{ position: 'relative', display: 'flex', flexDirection: 'column', background: '#fff', border: `1.5px solid ${start ? 'var(--orange)' : 'var(--line)'}`, borderRadius: 16, overflow: 'hidden', boxShadow: start ? '0 8px 24px rgba(245,84,10,0.13)' : 'var(--shadow-sm)' }}>
+                  {/* Tier accent bar */}
+                  <div style={{ height: 4, background: start ? 'linear-gradient(90deg,var(--orange),var(--orange2))' : TIER_COLOR[g] }} />
+                  <div style={{ padding: 16, display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 19 }}>{TIER_EMOJI[g]}</span>
+                      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{tier.label}</span>
+                      {start && <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-nunito)', fontSize: 8.5, fontWeight: 900, color: '#fff', background: 'var(--orange)', borderRadius: 50, padding: '3px 9px', textTransform: 'uppercase', letterSpacing: 0.3 }}>{t('Start here')}</span>}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 12 }}>
+                      <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 30, fontWeight: 700, color: 'var(--orange)', lineHeight: 1 }}>{feePct(tier.feeRate)}</span>
+                      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6a6a6a', fontWeight: 700 }}>{t('sales fee')}</span>
+                    </div>
+                    <div style={{ height: 1, background: 'var(--line)', margin: '14px 0' }} />
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>{t('Included each month')}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                      {[`${tier.caps.items} ${t('item listings')}`, `${tier.caps.jobs} ${t('job adverts')}`, `${tier.caps.property} ${t('property listings')}`].map(line => (
+                        <div key={line} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a' }}>
+                          <span style={{ width: 16, height: 16, flexShrink: 0, borderRadius: '50%', background: '#eaf7ee', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900 }}>✓</span>
+                          {line}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ marginTop: 'auto', paddingTop: 14 }}>
+                      <div style={{ background: start ? '#FFF7F0' : '#f8f6f2', border: `1px solid ${start ? '#FFE0C7' : 'var(--line)'}`, borderRadius: 10, padding: '9px 11px' }}>
+                        <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#9a9a9a', textTransform: 'uppercase', fontSize: 9.5, letterSpacing: 0.4, marginBottom: 3 }}>{t('How to reach it')}</span>
+                        <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#555', lineHeight: 1.45 }}>
+                          {tier.criteria.sales90d === 0
+                            ? t('Included with any Business account.')
+                            : `${tier.criteria.sales90d}+ ${t('sales in 90 days')} · ${tier.criteria.rating}★ ${t('rating')}`}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )
@@ -273,7 +294,11 @@ function EmployersInner() {
       <Footer />
       <CartFab />
       <PanelHost />
-      <style>{`@media (max-width: 620px){ .biz-perks{ grid-template-columns: repeat(3, 1fr) !important; } .biz-upgrades{ grid-template-columns: 1fr !important; } }`}</style>
+      <style>{`
+        @media (max-width: 760px){ .biz-perks{ grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 620px){ .biz-upgrades{ grid-template-columns: 1fr !important; } }
+        @media (max-width: 480px){ .biz-perks{ grid-template-columns: 1fr !important; } }
+      `}</style>
     </main>
   )
 }
