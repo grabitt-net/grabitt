@@ -125,25 +125,21 @@ export default function SellerCentre() {
           )}
 
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>{t('All grades')}</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          {/* Four compact grade cards in a single row — the ladder at a glance
+              rather than four full-width rows. */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7 }}>
             {GRADES.map(x => {
               const isMe = x.id === g.id
               const th = GRADE_THRESHOLDS[x.id as keyof typeof GRADE_THRESHOLDS]
               return (
-                <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: isMe ? '#FFF8F0' : '#fff', border: `${isMe ? 2 : 1}px solid ${isMe ? x.color : '#ece3d7'}`, borderRadius: 12, padding: '10px 11px' }}>
-                  <span style={{ width: 14, height: 14, borderRadius: '50%', background: x.color, flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: x.color }}>
-                      {x.name}
-                      {isMe && <span style={{ marginLeft: 6, fontSize: 8.5, background: x.color, color: '#fff', padding: '2px 7px', borderRadius: 50, verticalAlign: 'middle' }}>{t('YOU')}</span>}
-                    </div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#777' }}>
-                      {th ? `${th.sales}+ ${t('sales')} · ${th.rating}★+` : t('Everyone starts here')} · {t('up to')} {cap(x.id)} {t('listings/mo')}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{feePct(x.id)}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 8.5, color: '#888' }}>{t('fee')}</div>
+                <div key={x.id} style={{ position: 'relative', background: isMe ? '#FFF8F0' : '#fff', border: `${isMe ? 2 : 1}px solid ${isMe ? x.color : '#ece3d7'}`, borderRadius: 12, padding: '11px 5px 9px', textAlign: 'center' }}>
+                  {isMe && <span style={{ position: 'absolute', top: -7, left: '50%', transform: 'translateX(-50%)', fontSize: 8, background: x.color, color: '#fff', padding: '2px 8px', borderRadius: 50, fontFamily: 'var(--font-nunito)', fontWeight: 900, letterSpacing: 0.3 }}>{t('YOU')}</span>}
+                  <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: x.color, marginBottom: 5 }} />
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: x.color, lineHeight: 1 }}>{x.name}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginTop: 4 }}>{feePct(x.id)}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 8, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.3 }}>{t('fee')}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9.5, color: '#777', marginTop: 5, lineHeight: 1.35 }}>
+                    {th ? `${th.sales}+ ${t('sales')}` : t('Start here')}<br />{th ? `${th.rating}★+ · ${cap(x.id)}/mo` : `${cap(x.id)}/mo`}
                   </div>
                 </div>
               )

@@ -371,17 +371,7 @@ function AccountInner() {
           )}
 
           {mainTab === 'selling' && (<>
-          {/* Rewards — earn credits and redeem for upgrades or a fee reduction */}
-          <RewardsCard />
-
-          {/* Affiliate programme — only shows for affiliates (founding members auto) */}
-          <AffiliateCard />
-
-          {/* Seller info centre — personal seller ladder. Business accounts get
-              their level in the Business hub instead, so don't duplicate it here. */}
-          {!me?.isBusiness && <SellerCentre />}
-
-          {/* My Listings */}
+          {/* My Listings — a seller's main reason to be here, so it leads. */}
           <div id="my-listings" style={card}>
             <div style={cardHead}>{t('My Listings')}</div>
             <div style={{ display: 'flex', background: '#f5f0e8', borderRadius: 50, padding: 4, marginBottom: 12 }}>
@@ -415,6 +405,10 @@ function AccountInner() {
             )}
           </div>
 
+          {/* Grabber grade — personal seller ladder, right after My Listings.
+              Business accounts get their level in the Business hub instead. */}
+          {!me?.isBusiness && <SellerCentre />}
+
           {/* Offers received */}
           <div id="offers" style={card}>
             <div style={cardHead}>{t('Offers received')}</div>
@@ -438,6 +432,11 @@ function AccountInner() {
               </div>
             ))}
           </div>
+
+          {/* Rewards & Affiliate — secondary tools, below the core selling area
+              so they no longer push My Listings down the page. */}
+          <RewardsCard />
+          <AffiliateCard />
 
           </>)}
 
