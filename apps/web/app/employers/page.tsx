@@ -222,19 +222,13 @@ function EmployersInner() {
             </div>
             {catalog.length === 0 && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '10px 0', textAlign: 'center' }}>{t('Loading…')}</div>}
 
-            {/* Business Directory — a separate product with its own details and
-                term (monthly/quarterly/yearly), so it opens the directory manager
-                rather than joining the timed-placement basket above. */}
-            <Link href="/advertiser" style={{ textDecoration: 'none' }}>
-              <div style={{ ...upgradeCard(false), marginTop: 10, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                <span style={{ fontSize: 18, lineHeight: 1 }}>📖</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{t('Business Directory')}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 2, lineHeight: 1.4 }}>{t('A year-round listing — your name, phone, email, website & logo (not a storefront). €15/mo · €40/quarter · €150/year.')}</div>
-                </div>
-                <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }}>{t('Set up')} ›</span>
+            {/* Directory is bought in the basket like any add-on; its details
+                (phone, website, logo…) are completed afterwards. */}
+            {inBasket('directory') && (
+              <div style={{ marginTop: 10, background: '#FFF7F0', border: '1px dashed #f0c9a5', borderRadius: 10, padding: '9px 11px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#8a5a2a', lineHeight: 1.45 }}>
+                📖 {t('After checkout, add your directory details (phone, website, logo) from Business → Directory listing.')}
               </div>
-            </Link>
+            )}
           </div>
 
           {/* 3) Unified basket + single CTA */}

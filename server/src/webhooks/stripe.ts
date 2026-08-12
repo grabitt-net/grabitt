@@ -80,6 +80,9 @@ async function grantSponsorships(userId: string, basket: string) {
     const [addonId, monthsStr, amountStr, page] = part.split(':')
     const months = Number(monthsStr)
     if (!addonId || !months) continue
+    // The Business Directory isn't a timed banner placement — it extends the
+    // advertiser's directory subscription instead of creating a grant.
+    if (addonId === 'directory') { await extendDirectory(userId, months); continue }
     const endsAt = new Date(Date.now() + months * 30 * 86400000)
     await prisma.sponsorshipGrant.create({
       data: { userId, addonId, months, amountCents: Number(amountStr) || 0, pageTarget: page || null, endsAt },
@@ -107,8 +110,16 @@ async function provisionBannerOrder(userId: string, basket: string) {
 // Directory subscription purchase — extend the listing's paidUntil by `months`,
 // stacking on any remaining time so a renewal adds rather than resets.
 async function extendDirectory(userId: string, months: number) {
-  const listing = await prisma.directoryListing.findUnique({ where: { userId }, select: { id: true, paidUntil: true } })
-  if (!listing) return
+  let listing = await prisma.directoryListing.findUnique({ where: { userId }, select: { id: true, paidUntil: true } })
+  // Bought via the sponsorship basket without a listing yet — seed one from the
+  // business profile so the paid entry exists; the business fills in the rest
+  // (phone, website, logo…) afterwards in the directory manager.
+  if (!listing) {
+    const u = await prisma.user.findUnique({ where: { id: userId }, select: { businessName: true, displayName: true } })
+    const name = u?.businessName || u?.displayName || 'Business'
+    listing = await prisma.directoryListing.create({ data: { userId, name }, select: { id: true, paidUntil: true } }).catch(() => null)
+    if (!listing) return
+  }
   const base = listing.paidUntil && listing.paidUntil.getTime() > Date.now() ? new Date(listing.paidUntil) : new Date()
   base.setMonth(base.getMonth() + months)
   await prisma.directoryListing.update({ where: { id: listing.id }, data: { paidUntil: base } }).catch(() => {})

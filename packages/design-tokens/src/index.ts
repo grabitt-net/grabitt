@@ -158,6 +158,7 @@ export const BUSINESS_ADDONS = {
   homepage_sponsor:  { label: 'Homepage Sponsor',  icon: '🥇', amountCents: 29900, yearlyCents: 299000, blurb: 'Your brand on the homepage hero — the single most prominent slot on Grabitt.' },
   category_sponsor:  { label: 'Category Sponsor',  icon: '🤝', amountCents: 14900, yearlyCents: 149000, blurb: 'Own the fixed top banner of one category page — exclusive, a single advertiser per month, never rotates.' },
   featured_partner:  { label: 'Featured Partner',  icon: '⭐', amountCents: 7900,  yearlyCents: 79000,  blurb: 'A rotating banner in the bottom slot across pages (shared by up to 7 partners), plus your logo, blurb and link on the Sponsors & Partners page.' },
+  directory:         { label: 'Business Directory', icon: '📖', amountCents: 1500,  yearlyCents: 15000,  blurb: 'A year-round directory listing — name, phone, email, website & logo (not a storefront). €15/mo, or 12 months for €150 (2 months free). Add your details after checkout.' },
   email_blast:       { label: 'Email blast',       icon: '📧', amountCents: 14900, yearlyCents: 149000, blurb: 'A promotional email to opted-in members (double opt-in). €149 for 1 · bundles: €400 for 3, €900 for 10.' },
   whatsapp_blast:    { label: 'WhatsApp blast',    icon: '💬', amountCents: 19900, yearlyCents: 199000, blurb: 'Broadcast promotions to opted-in customers on WhatsApp (double opt-in). €199 for 1 · bundles: €500 for 3, €900 for 9.', comingSoon: true },
 } as const
