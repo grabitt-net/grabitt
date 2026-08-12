@@ -68,6 +68,10 @@ function AccountInner() {
   const wantTab = params.get('tab')
   const focusRef = useRef<HTMLDivElement | null>(null)
   const [mainTab, setMainTab] = useState<'business' | 'selling' | 'inbox' | 'recruitment' | 'settings'>('selling')
+  // Long sections are split into sub-tabs so the right panel only ever shows one
+  // thing at a time, rather than a deep single scroll.
+  const [sellingTab, setSellingTab] = useState<'listings' | 'grade' | 'offers' | 'rewards'>('listings')
+  const [settingsTab, setSettingsTab] = useState<'account' | 'profile' | 'collection' | 'danger'>('account')
   const [ready, setReady] = useState(false)
   const [me, setMe] = useState<any>(null)
   const [dash, setDash] = useState<any>(null)
@@ -155,7 +159,7 @@ function AccountInner() {
   // Scroll the deep-linked offer into view once the offers have loaded.
   useEffect(() => {
     if (!focusOffer || !offers?.length) return
-    setMainTab('selling')
+    setMainTab('selling'); setSellingTab('offers')
     setTimeout(() => focusRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60)
   }, [focusOffer, offers])
 
@@ -227,6 +231,10 @@ function AccountInner() {
   // card the current tab isn't showing.
   const goTo = (tab: 'selling' | 'inbox' | 'settings', id: string) => {
     setMainTab(tab)
+    // Open the sub-tab that actually contains the target card, or it would stay
+    // hidden and the scroll would land on nothing.
+    if (tab === 'selling') setSellingTab(id === 'offers' ? 'offers' : id === 'rewards' ? 'rewards' : 'listings')
+    if (tab === 'settings') setSettingsTab(id === 'attributes' ? 'profile' : 'account')
     setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
   }
   const tiles = [
@@ -246,6 +254,25 @@ function AccountInner() {
       <div style={{ padding: '16px 14px', display: 'grid', gap: 18, gridTemplateColumns: '1fr' }} className="account-grid">
         {/* Sidebar / identity */}
         <aside style={{ alignSelf: 'start' }} className="account-side">
+          {/* Section menu — the left-hand nav that swaps the right-hand panel. */}
+          <nav style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 8, marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {(([
+              ...(me?.isBusiness ? [['business', t('Business'), '🏢'] as const] : []),
+              ['selling', t('Selling'), '🏷️'],
+              ['inbox', t('Inbox'), '💬'],
+              ['settings', t('Settings'), '⚙️'],
+            ] as const)).map(([id, label, emoji]) => (
+              <button key={id} onClick={() => setMainTab(id)} style={{
+                display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+                border: 'none', borderRadius: 12, padding: '11px 12px', cursor: 'pointer',
+                background: mainTab === id ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : 'transparent',
+                color: mainTab === id ? '#fff' : 'var(--dark)',
+                fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900,
+              }}>
+                <span style={{ fontSize: 16 }}>{emoji}</span>{label}
+              </button>
+            ))}
+          </nav>
           <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 18 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: 22, fontFamily: 'var(--font-nunito)' }}>{(me?.displayName ?? '?')[0]?.toUpperCase()}</div>
@@ -344,25 +371,6 @@ function AccountInner() {
 
         {/* Main content */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
-          {/* Section tabs — the page was nine cards deep in one scroll. */}
-          <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #ece3d7', borderRadius: 50, padding: 5 }}>
-            {(([
-              // Business hub — level, allowances and every business tool, in one
-              // place. Personal accounts never see it.
-              ...(me?.isBusiness ? [['business', `🏢 ${t('Business')}`] as const] : []),
-              ['selling', `🏷️ ${t('Selling')}`],
-              ['inbox', `💬 ${t('Inbox')}`],
-              ['settings', `⚙️ ${t('Settings')}`],
-            ] as const)).map(([id, label]) => (
-              <button key={id} onClick={() => setMainTab(id)} style={{
-                flex: 1, border: 'none', borderRadius: 50, padding: '9px 6px', cursor: 'pointer',
-                background: mainTab === id ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : 'transparent',
-                color: mainTab === id ? '#fff' : '#7a6a55',
-                fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900,
-              }}>{label}</button>
-            ))}
-          </div>
-
           {/* Sponsored banner below the dashboard nav links */}
           <BannerSlot position="user_dashboard" aspect="6 / 1" label="User dashboard" padded={false} />
 
@@ -371,7 +379,13 @@ function AccountInner() {
           )}
 
           {mainTab === 'selling' && (<>
+          <SubTabs
+            tabs={[['listings', `🏷️ ${t('My Listings')}`], ...(!me?.isBusiness ? [['grade', `🟠 ${t('Grade')}`] as [string, string]] : []), ['offers', `💸 ${t('Offers')}`], ['rewards', `🎁 ${t('Rewards')}`]]}
+            active={sellingTab}
+            onPick={id => setSellingTab(id as typeof sellingTab)}
+          />
           {/* My Listings — a seller's main reason to be here, so it leads. */}
+          {sellingTab === 'listings' && (
           <div id="my-listings" style={card}>
             <div style={cardHead}>{t('My Listings')}</div>
             <div style={{ display: 'flex', background: '#f5f0e8', borderRadius: 50, padding: 4, marginBottom: 12 }}>
@@ -404,12 +418,14 @@ function AccountInner() {
               </div>
             )}
           </div>
+          )}
 
-          {/* Grabber grade — personal seller ladder, right after My Listings.
-              Business accounts get their level in the Business hub instead. */}
-          {!me?.isBusiness && <SellerCentre />}
+          {/* Grabber grade — personal seller ladder. Business accounts get their
+              level in the Business hub instead. */}
+          {sellingTab === 'grade' && !me?.isBusiness && <SellerCentre />}
 
           {/* Offers received */}
+          {sellingTab === 'offers' && (
           <div id="offers" style={card}>
             <div style={cardHead}>{t('Offers received')}</div>
             {offers === null ? <Muted>{t('Loading…')}</Muted> : offers.length === 0 ? <Muted>{t('No offers to review.')}</Muted> : offers.map(o => (
@@ -432,11 +448,13 @@ function AccountInner() {
               </div>
             ))}
           </div>
+          )}
 
-          {/* Rewards & Affiliate — secondary tools, below the core selling area
-              so they no longer push My Listings down the page. */}
+          {/* Rewards & Affiliate — their own sub-tab, off the main scroll. */}
+          {sellingTab === 'rewards' && (<>
           <RewardsCard />
           <AffiliateCard />
+          </>)}
 
           </>)}
 
@@ -467,6 +485,13 @@ function AccountInner() {
           </>)}
 
           {mainTab === 'settings' && (<>
+          <SubTabs
+            tabs={[['account', `⚙️ ${t('Account')}`], ['profile', `🙍 ${t('Profile')}`], ['collection', `📦 ${t('Collection')}`], ['danger', `⚠️ ${t('Delete')}`]]}
+            active={settingsTab}
+            onPick={id => setSettingsTab(id as typeof settingsTab)}
+          />
+
+          {settingsTab === 'profile' && (<>
           {/* Personal-only tools — My CV, Attributes and the Tenant profile are for
               individuals looking for work or a rental, never for businesses. */}
           {!me?.isBusiness && (<>
@@ -494,7 +519,9 @@ function AccountInner() {
 
           {/* Property-agent contact — only relevant to business/agent accounts */}
           {me?.isBusiness && <AgentProfileCard />}
+          </>)}
 
+          {settingsTab === 'account' && (<>
           {/* Account email — changing it re-verifies via Supabase Auth */}
           <div style={card}>
             <div style={cardHead}>{t('Account email')}</div>
@@ -545,8 +572,10 @@ function AccountInner() {
               {t('This doesn’t affect essential emails about your orders, offers and account.')}
             </div>
           </div>
+          </>)}
 
           {/* Collection details — auto-shared with a buyer only after a completed collection sale */}
+          {settingsTab === 'collection' && (
           <div style={card}>
             <div style={cardHead}>{t('Collection details')}</div>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', lineHeight: 1.5, marginBottom: 12 }}>
@@ -560,8 +589,10 @@ function AccountInner() {
               {contactState === 'saving' ? t('Saving…') : contactState === 'saved' ? t('Saved ✓') : t('Save collection details')}
             </button>
           </div>
+          )}
 
           {/* GDPR erasure — self-service, no admin step */}
+          {settingsTab === 'danger' && (
           <div style={{ ...card, border: '1px solid #fecaca' }}>
             <div style={{ ...cardHead, color: '#ef4444' }}>{t('Delete my account & data')}</div>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', lineHeight: 1.6, marginBottom: 10 }}>
@@ -587,6 +618,7 @@ function AccountInner() {
               {deleting ? t('Deleting…') : t('Permanently delete my data')}
             </button>
           </div>
+          )}
           </>)}
         </section>
       </div>
@@ -594,8 +626,24 @@ function AccountInner() {
       <Footer />
       <CartFab />
       <PanelHost />
-      <style>{`@media (min-width: 900px){ .account-grid{ grid-template-columns: 320px 1fr !important; } .account-side > div{ position: sticky; top: 70px; } }`}</style>
+      <style>{`@media (min-width: 900px){ .account-grid{ grid-template-columns: 320px 1fr !important; } .account-side{ position: sticky; top: 70px; } }`}</style>
     </main>
+  )
+}
+
+// Sub-navigation within a section (My Listings / Grade / Offers …). Scrolls
+// horizontally on narrow screens rather than wrapping.
+function SubTabs({ tabs, active, onPick }: { tabs: [string, string][]; active: string; onPick: (id: string) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #ece3d7', borderRadius: 50, padding: 5, overflowX: 'auto' }}>
+      {tabs.map(([id, label]) => (
+        <button key={id} onClick={() => onPick(id)} style={{
+          flex: '1 0 auto', border: 'none', borderRadius: 50, padding: '9px 14px', cursor: 'pointer', whiteSpace: 'nowrap',
+          background: active === id ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : 'transparent',
+          color: active === id ? '#fff' : '#7a6a55', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900,
+        }}>{label}</button>
+      ))}
+    </div>
   )
 }
 
