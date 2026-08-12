@@ -274,7 +274,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
               <div style={{ fontSize: 42, marginBottom: 10 }}>🏢</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 6 }}>Find Staff is for Business accounts</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#666', lineHeight: 1.6, marginBottom: 18 }}>
-                Upgrade to advertise roles and search our candidate database. 7 days free, then €29/month — pause any time.
+                Upgrade to advertise roles and search our candidate database. 14 days free, then €29/month — pause any time.
               </div>
               <button onClick={() => { onClose(); openPanel('business') }} style={{ width: '100%', background: 'linear-gradient(135deg,#4A2E1A,#7a4419)', color: '#fff', border: 'none', borderRadius: 50, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>
                 🏢 Upgrade to Business

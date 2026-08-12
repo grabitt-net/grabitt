@@ -357,7 +357,7 @@ function AccountInner() {
                   {me?.isBusiness ? t('My business hub') : t('Upgrade to Business')}
                 </div>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a5a2a', opacity: 0.85, marginTop: 2 }}>
-                  {me?.isBusiness ? t('Level, allowances, storefront and tools.') : t('Storefront, more listings and a 🏢 badge — 7 days free.')}
+                  {me?.isBusiness ? t('Level, allowances, storefront and tools.') : t('Storefront, more listings and a 🏢 badge — 14 days free.')}
                 </div>
               </div>
               <span style={{ color: '#8a5a2a', fontWeight: 900, fontSize: 16 }}>›</span>

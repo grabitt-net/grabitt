@@ -948,7 +948,7 @@ function PanelBody() {
           <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🏢</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Sign up as a Business</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>Storefront, 🏢 badge & Dealer status · 7 days free, then €29/mo</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>Storefront, 🏢 badge & Dealer status · 14 days free, then €29/mo</div>
           </div>
           <span style={{ color: 'var(--orange)', fontWeight: 900 }}>›</span>
         </button>
@@ -4167,7 +4167,7 @@ function PanelBody() {
                 <button onClick={openBillingPortal} disabled={portalBusy} style={{ width: '100%', background: '#fff', color: '#1d4ed8', border: '1.5px solid #1d4ed8', borderRadius: 12, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer', marginTop: 10 }}>{portalBusy ? 'Opening…' : 'Manage subscription ↗'}</button>
               </div>
             ) : (
-              <button onClick={() => openPanel('business')} style={{ width: '100%', background: '#fff', border: '2px solid var(--orange)', borderRadius: 12, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--orange)', cursor: 'pointer', marginBottom: 16 }}>🏢 Upgrade to Business — 7 days free</button>
+              <button onClick={() => openPanel('business')} style={{ width: '100%', background: '#fff', border: '2px solid var(--orange)', borderRadius: 12, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--orange)', cursor: 'pointer', marginBottom: 16 }}>🏢 Upgrade to Business — 14 days free</button>
             )}
 
             {/* Business storefront — only for active Business accounts */}
@@ -4790,7 +4790,7 @@ function PanelBody() {
     return (
       <ActionPanel title="🏢 For Business" onClose={closePanel}>
         <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 14, padding: 16, marginBottom: 16, textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4 }}>7 days free, then €29/mo</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4 }}>14 days free, then €29/mo</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Storefront, 🏢 badge, lower fees & analytics · cancel anytime</div>
         </div>
         {['Your own storefront + 🏢 badge', 'Business level & lower selling fees', 'Analytics & insights', 'Post jobs & list property'].map((f, i) => (
@@ -4800,7 +4800,7 @@ function PanelBody() {
         {/* Monthly / yearly choice for the subscription */}
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, margin: '16px 0 6px' }}>Choose your plan</div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {([['month', '€29 / month', '7 days free'], ['year', '€290 / year', 'Save 2 months fees']] as [('month' | 'year'), string, string][]).map(([iv, price, note]) => (
+          {([['month', '€29 / month', '14 days free'], ['year', '€290 / year', 'Save 2 months fees']] as [('month' | 'year'), string, string][]).map(([iv, price, note]) => (
             <button key={iv} onClick={() => setBizInterval(iv)} style={{ flex: 1, textAlign: 'left', border: `2px solid ${bizInterval === iv ? 'var(--orange)' : '#f0ebe4'}`, background: bizInterval === iv ? '#FFF7F0' : '#fff', borderRadius: 12, padding: '11px 13px', cursor: 'pointer' }}>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: bizInterval === iv ? 'var(--orange)' : 'var(--dark)' }}>{price}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 700, color: '#16a34a' }}>{note}</div>
@@ -4842,11 +4842,11 @@ function PanelBody() {
 
         {/* Totals */}
         <div style={{ background: '#f9f6f2', borderRadius: 12, padding: '12px 14px', margin: '10px 0 12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555' }}><span>Business account</span><span>{bizInterval === 'light' ? <>Business Light <span style={{ color: '#16a34a' }}>(free)</span></> : <>{bizInterval === 'year' ? '€290/yr' : '€29/mo'} <span style={{ color: '#16a34a' }}>(7 days free)</span></>}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555' }}><span>Business account</span><span>{bizInterval === 'light' ? <>Business Light <span style={{ color: '#16a34a' }}>(free)</span></> : <>{bizInterval === 'year' ? '€290/yr' : '€29/mo'} <span style={{ color: '#16a34a' }}>(14 days free)</span></>}</span></div>
           {sponsorTotal > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555', marginTop: 6 }}><span>Sponsorship (one-off)</span><span>{eur(sponsorTotal)}</span></div>}
         </div>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>{bizInterval === 'light' ? (sponsorTotal > 0 ? 'Business Light is free — you only pay the sponsorship above. Add your business details when you first sign in.' : 'Business Light is free — no card needed. You only pay €0.99 when you list an item.') : 'You’ll add a card on Stripe — the account is free for 7 days. We’ll ask for your business details when you first sign in.'}</div>
-        <button onClick={() => bizInterval === 'light' ? startLight() : startCheckout(bizInterval === 'year' ? 'business_annual' : 'business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? (bizInterval === 'light' ? 'Setting up…' : 'Opening Stripe…') : bizInterval === 'light' ? (sponsorTotal > 0 ? '🆓 Start free & pay sponsorship' : '🆓 Start free with Business Light') : sponsorTotal > 0 ? '🚀 Start trial & add sponsorship' : '🚀 Start 7-day free trial'}</button>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>{bizInterval === 'light' ? (sponsorTotal > 0 ? 'Business Light is free — you only pay the sponsorship above. Add your business details when you first sign in.' : 'Business Light is free — no card needed. You only pay €0.99 when you list an item.') : 'You’ll add a card on Stripe — the account is free for 14 days. We’ll ask for your business details when you first sign in.'}</div>
+        <button onClick={() => bizInterval === 'light' ? startLight() : startCheckout(bizInterval === 'year' ? 'business_annual' : 'business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? (bizInterval === 'light' ? 'Setting up…' : 'Opening Stripe…') : bizInterval === 'light' ? (sponsorTotal > 0 ? '🆓 Start free & pay sponsorship' : '🆓 Start free with Business Light') : sponsorTotal > 0 ? '🚀 Start trial & add sponsorship' : '🚀 Start 14-day free trial'}</button>
 
         {/* Founding cohort annual lock-in — only while slots remain (first 100) */}
         {(foundingBizLeft === null || foundingBizLeft > 0) && (<>

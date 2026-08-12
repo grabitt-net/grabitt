@@ -180,24 +180,21 @@ function EmployersInner() {
           {!isBiz && (
             <div style={card}>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>{t('1. Your Business account')}</div>
-              <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#8a5a2a', margin: '6px 0 12px' }}>{t('7 days free, then choose monthly or yearly. Storefront, badge, hiring, property and lower fees.')}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {([['month', '€29 / month', t('7 days free')], ['year', '€290 / year', t('Save 2 months fees')]] as [('month' | 'year'), string, string][]).map(([iv, price, note]) => (
-                  <button key={iv} onClick={() => setPlan(iv)} style={{ textAlign: 'left', border: `2px solid ${plan === iv ? 'var(--orange)' : '#f0ebe4'}`, background: plan === iv ? '#FFF7F0' : '#fff', borderRadius: 12, padding: '12px 14px', cursor: 'pointer' }}>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: plan === iv ? 'var(--orange)' : 'var(--dark)' }}>{price}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#16a34a', marginTop: 2 }}>{note}</div>
+              <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#8a5a2a', margin: '6px 0 12px' }}>{t('14 days free, then choose monthly or yearly. Storefront, badge, hiring, property and lower fees.')}</div>
+              {/* All three plans on one line — Monthly, Yearly, Business Light
+                  (free). Light can still add & pay for upgrades below. */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                {([
+                  ['month', '€29/mo', t('14 days free')],
+                  ['year', '€290/yr', t('Save 2 months')],
+                  ['light', t('Free'), t('Business Light')],
+                ] as [('month' | 'year' | 'light'), string, string][]).map(([iv, price, note]) => (
+                  <button key={iv} onClick={() => setPlan(iv)} style={{ textAlign: 'left', border: `2px solid ${plan === iv ? 'var(--orange)' : '#f0ebe4'}`, background: plan === iv ? '#FFF7F0' : '#fff', borderRadius: 12, padding: '11px 11px', cursor: 'pointer' }}>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: plan === iv ? 'var(--orange)' : 'var(--dark)' }}>{price}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: iv === 'light' ? '#8a5a2a' : '#16a34a', marginTop: 3, lineHeight: 1.2 }}>{note}</div>
                   </button>
                 ))}
               </div>
-              {/* Business Light — the free plan option, chosen right here so a
-                  business can start free yet still add & pay for upgrades below. */}
-              <button onClick={() => setPlan('light')} style={{ width: '100%', marginTop: 10, textAlign: 'left', border: `2px solid ${plan === 'light' ? 'var(--orange)' : '#f0ebe4'}`, background: plan === 'light' ? '#FFF7F0' : '#fff', borderRadius: 12, padding: '11px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 20 }}>🆓</span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: plan === 'light' ? 'var(--orange)' : 'var(--dark)' }}>{t('Business Light — Free')}</span>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a5a2a', marginTop: 1 }}>{t('No monthly fee · 8% selling fee · €0.99 per item listing')}</span>
-                </span>
-              </button>
               <ul style={{ margin: '14px 0 0', paddingLeft: 18, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', lineHeight: 1.8 }}>
                 <li>{t('Your own branded storefront')} · {t('Verified 🏢 business badge')}</li>
                 <li>{t('Post jobs & list property')} · {t('Bulk import & multibuy')}</li>
@@ -267,7 +264,7 @@ function EmployersInner() {
             {!isBiz && (
               <div style={basketRow}>
                 <span>🏢 {t('Business account')} · {plan === 'light' ? t('Business Light') : plan === 'year' ? t('Yearly') : t('Monthly')}</span>
-                <span style={{ fontWeight: 900 }}>{subDueLabel}{plan !== 'light' && <span style={{ color: '#16a34a', fontWeight: 800 }}> ({t('7 days free')})</span>}</span>
+                <span style={{ fontWeight: 900 }}>{subDueLabel}{plan !== 'light' && <span style={{ color: '#16a34a', fontWeight: 800 }}> ({t('14 days free')})</span>}</span>
               </div>
             )}
             {basketItems.length === 0 && isBiz && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '6px 0' }}>{t('No upgrades selected yet.')}</div>}

@@ -274,7 +274,7 @@ function AccountTypeChooser({ onPick, onLogin }: { onPick: (t: 'personal' | 'bus
           <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>Business Seller</span>
           <span style={{ fontSize: 20, color: 'var(--orange)' }}>›</span>
         </div>
-        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#8a5a2a', lineHeight: 1.5 }}>Sell under your business name. 7 days free, then €29/mo.</div>
+        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#8a5a2a', lineHeight: 1.5 }}>Sell under your business name. 14 days free, then €29/mo.</div>
         <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#7a4419', lineHeight: 1.7 }}>
           <li>Your own storefront &amp; 🏢 verified badge</li>
           <li>Instant Dealer status · multibuy pricing</li>

@@ -1,6 +1,14 @@
 import { TRPCError } from '@trpc/server'
 import type { PrismaClient } from '@prisma/client'
-import { BUSINESS_TIERS, businessTierForGrade, MEMBER_STATUSES } from '@grabitt/design-tokens'
+import { BUSINESS_TIERS, businessTierForGrade, MEMBER_STATUSES, BUSINESS_LIGHT } from '@grabitt/design-tokens'
+
+// A business is "on trial" while its subscription is still trialing. During the
+// trial the account is capped at the free (Business Light) allowance; the full
+// tier caps only unlock once the trial ends and billing begins.
+async function isOnBusinessTrial(prisma: PrismaClient, userId: string): Promise<boolean> {
+  const sub = await prisma.subscription.findFirst({ where: { userId, status: 'trialing' }, select: { id: true } })
+  return !!sub
+}
 
 // Monthly listing allowances for Business accounts. Each tier includes a set
 // number of item / job / property listings per calendar month; once the tier
@@ -30,10 +38,16 @@ export async function enforceBusinessListingAllowance(
   })
   if (!user?.isBusiness) return
 
-  // Charities get a dedicated, larger item-listing allowance (100).
-  const cap = (kind === 'items' && user.memberStatus === 'charity')
-    ? MEMBER_STATUSES.charity.listingCap
-    : businessTierForGrade(user.grade).caps[kind]
+  // During the free trial, cap at the free (Business Light) allowance — the full
+  // tier caps only apply once billing starts. Otherwise use the tier caps (with
+  // the larger charity item allowance where applicable).
+  const onTrial = await isOnBusinessTrial(prisma, userId)
+  const planLabel = onTrial ? `${BUSINESS_LIGHT.label} (free trial)` : businessTierForGrade(user.grade).label
+  const cap = onTrial
+    ? BUSINESS_LIGHT.caps[kind]
+    : (kind === 'items' && user.memberStatus === 'charity')
+      ? MEMBER_STATUSES.charity.listingCap
+      : businessTierForGrade(user.grade).caps[kind]
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
 
   const used = kind === 'items'
@@ -48,7 +62,9 @@ export async function enforceBusinessListingAllowance(
   if ((user.credits ?? 0) < CREDIT_PER_EXTRA_LISTING) {
     throw new TRPCError({
       code: 'FORBIDDEN',
-      message: `You’ve used all ${cap} ${KIND_LABEL[kind]} listings included with your ${businessTierForGrade(user.grade).label} plan this month. Buy listing credits to add more, or upgrade your level.`,
+      message: onTrial
+        ? `Your free trial includes ${cap} ${KIND_LABEL[kind]} listing${cap === 1 ? '' : 's'} a month — the full allowance unlocks when your trial ends. Buy listing credits to add more now.`
+        : `You’ve used all ${cap} ${KIND_LABEL[kind]} listings included with your ${planLabel} plan this month. Buy listing credits to add more, or upgrade your level.`,
     })
   }
   const newBalance = (user.credits ?? 0) - CREDIT_PER_EXTRA_LISTING
@@ -56,7 +72,7 @@ export async function enforceBusinessListingAllowance(
   await prisma.creditEvent.create({
     data: {
       userId, kind: 'extra_listing', delta: -CREDIT_PER_EXTRA_LISTING, balance: newBalance,
-      note: `Extra ${KIND_LABEL[kind]} listing beyond ${businessTierForGrade(user.grade).label} monthly allowance`,
+      note: `Extra ${KIND_LABEL[kind]} listing beyond ${planLabel} monthly allowance`,
     },
   }).catch(() => {})
 }
@@ -75,7 +91,9 @@ export async function overflowFeeCents(
 ): Promise<number> {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { isBusiness: true, grade: true } })
   if (!user?.isBusiness) return 0
-  const cap = businessTierForGrade(user.grade).caps[kind]
+  // On trial the free-tier cap applies (0 for jobs/property), so overflow is due
+  // from the first one; the included allowance unlocks after the trial.
+  const cap = (await isOnBusinessTrial(prisma, userId)) ? BUSINESS_LIGHT.caps[kind] : businessTierForGrade(user.grade).caps[kind]
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   const used = kind === 'jobs'
     ? await prisma.jobListing.count({ where: { listing: { sellerId: userId }, createdAt: { gte: monthStart } } })

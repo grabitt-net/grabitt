@@ -135,7 +135,7 @@ export async function initJobs() {
           userId: u.id,
           kind: 'system',
           title: 'Business trial ended',
-          body: 'Your 7-day trial has ended. Subscribe to continue enjoying Business features.',
+          body: 'Your 14-day trial has ended. Subscribe to continue enjoying Business features.',
           actionUrl: '/account/billing',
         },
       })

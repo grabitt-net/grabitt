@@ -113,6 +113,10 @@ export const BUSINESS_LIGHT = {
   feeRate: 0.08,
   freeMembership: true,
   perListingCents: 99,   // €0.99
+  // Free-tier monthly allowance. Also used as the CEILING during a paid
+  // Business trial: a trialing business can't exceed the free account until the
+  // trial ends and billing begins, at which point the full tier caps apply.
+  caps: { items: 10, jobs: 0, property: 0 },
 } as const
 
 // Recurring subscription catalogue (from the original prototype). Amounts are
@@ -122,11 +126,11 @@ export const SUBSCRIPTION_PLANS = {
   // 7 days free — sign up as a business at no cost, then
   // billing starts. Feeds Stripe's trial_period_days, so this constant IS the
   // free period; changing it changes what customers actually get.
-  business:    { label: 'Business',            amountCents: 2900, interval: 'month', trialDays: 7, grantsGrade: 'dealer', verifyFeeCents: 1900,
-                 blurb: 'Your own storefront, 🏢 badge & instant Dealer status. 7 days free, then €29/mo — pause any time.' },
+  business:    { label: 'Business',            amountCents: 2900, interval: 'month', trialDays: 14, grantsGrade: 'dealer', verifyFeeCents: 1900,
+                 blurb: 'Your own storefront, 🏢 badge & instant Dealer status. 14 days free, then €29/mo — pause any time.' },
   // Standard annual business plan — 2 months free vs paying monthly.
-  business_annual: { label: 'Business (annual)', amountCents: 29000, interval: 'year', trialDays: 7, grantsGrade: 'dealer',
-                 blurb: 'Everything in Business, billed yearly — €290/year (2 months free). 7 days free.' },
+  business_annual: { label: 'Business (annual)', amountCents: 29000, interval: 'year', trialDays: 14, grantsGrade: 'dealer',
+                 blurb: 'Everything in Business, billed yearly — €290/year (2 months free). 14 days free.' },
   // Founding cohort: a one-off annual lock-in for early businesses.
   business_founding_annual: { label: 'Founding Business (annual)', amountCents: 24900, interval: 'year', trialDays: 0, grantsGrade: 'dealer',
                  blurb: 'Founding annual plan — €249/year locked in. Everything in Business, prepaid for a year.' },
