@@ -11,6 +11,7 @@ import PanelHost from '@/components/marketplace/PanelHostLazy'
 import { BUSINESS_TIERS, BUSINESS_TIER_ORDER } from '@grabitt/design-tokens'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { t } from '@/lib/i18n'
+import { toast } from '@/lib/ui'
 
 // The For Business page is a marketing / sign-up page. A signed-in business only
 // picks sponsorship & advertising add-ons; a signed-out visitor also opens the
@@ -77,6 +78,19 @@ function EmployersInner() {
   // One CTA for everyone. A new/prospective business goes to the account step
   // with the basket carried over (subscription + upgrades paid together). An
   // existing business just buys the selected upgrades one-off.
+  // Business Light — the free entry tier. Signed-out visitors sign in first;
+  // a signed-in personal account converts straight away, then lands on their
+  // business dashboard.
+  const [bizLightBusy, setBizLightBusy] = useState(false)
+  const startBusinessLight = async () => {
+    if (gate === 'signed_out') { openPanel('login'); return }
+    setBizLightBusy(true)
+    try {
+      await (trpcAuthed() as any).users.becomeBusinessLight.mutate()
+      window.location.href = '/account?tab=business'
+    } catch (e: any) { toast(e?.message || t('Could not switch to Business Light. Please try again.')); setBizLightBusy(false) }
+  }
+
   const continueToCheckout = async () => {
     stashBasket()
     if (!isBiz) { openPanel(gate === 'signed_out' ? 'login' : 'business'); return }
@@ -195,6 +209,18 @@ function EmployersInner() {
               </ul>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#8a5a2a', marginTop: 10 }}>
                 {t('Already have an account?')} <button onClick={() => openPanel('login')} style={linkBtn}>{t('Log in')}</button>
+              </div>
+
+              {/* Free entry tier — Business Light sits below the €29 plans. */}
+              <div style={{ marginTop: 14, borderTop: '1px dashed #ecdcc4', paddingTop: 14, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <span style={{ fontSize: 20, lineHeight: 1 }}>🆓</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{t('Prefer to start free? Business Light')}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6a6a6a', lineHeight: 1.5, marginTop: 3 }}>{t('No monthly fee — an 8% selling fee and just €0.99 per item listing. Sell under your business name and upgrade to full Business any time.')}</div>
+                  <button onClick={startBusinessLight} disabled={bizLightBusy} style={{ marginTop: 10, background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 12, padding: '9px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: bizLightBusy ? 'wait' : 'pointer' }}>
+                    {bizLightBusy ? t('Please wait…') : t('Start free with Business Light')}
+                  </button>
+                </div>
               </div>
             </div>
           )}
