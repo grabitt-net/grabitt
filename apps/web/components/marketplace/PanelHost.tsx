@@ -4782,7 +4782,7 @@ function PanelBody() {
         {/* Monthly / yearly choice for the subscription */}
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, margin: '16px 0 6px' }}>Choose your plan</div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {([['month', '€29 / month', '7 days free'], ['year', '€290 / year', '2 months free']] as [('month' | 'year'), string, string][]).map(([iv, price, note]) => (
+          {([['month', '€29 / month', '7 days free'], ['year', '€290 / year', 'Save 2 months fees']] as [('month' | 'year'), string, string][]).map(([iv, price, note]) => (
             <button key={iv} onClick={() => setBizInterval(iv)} style={{ flex: 1, textAlign: 'left', border: `2px solid ${bizInterval === iv ? 'var(--orange)' : '#f0ebe4'}`, background: bizInterval === iv ? '#FFF7F0' : '#fff', borderRadius: 12, padding: '11px 13px', cursor: 'pointer' }}>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: bizInterval === iv ? 'var(--orange)' : 'var(--dark)' }}>{price}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 700, color: '#16a34a' }}>{note}</div>

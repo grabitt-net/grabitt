@@ -182,7 +182,7 @@ function EmployersInner() {
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>{t('1. Your Business account')}</div>
               <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#8a5a2a', margin: '6px 0 12px' }}>{t('7 days free, then choose monthly or yearly. Storefront, badge, hiring, property and lower fees.')}</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {([['month', '€29 / month', t('7 days free')], ['year', '€290 / year', t('2 months free')]] as [('month' | 'year'), string, string][]).map(([iv, price, note]) => (
+                {([['month', '€29 / month', t('7 days free')], ['year', '€290 / year', t('Save 2 months fees')]] as [('month' | 'year'), string, string][]).map(([iv, price, note]) => (
                   <button key={iv} onClick={() => setPlan(iv)} style={{ textAlign: 'left', border: `2px solid ${plan === iv ? 'var(--orange)' : '#f0ebe4'}`, background: plan === iv ? '#FFF7F0' : '#fff', borderRadius: 12, padding: '12px 14px', cursor: 'pointer' }}>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: plan === iv ? 'var(--orange)' : 'var(--dark)' }}>{price}</div>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#16a34a', marginTop: 2 }}>{note}</div>
