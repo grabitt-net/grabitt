@@ -104,28 +104,6 @@ function EmployersInner() {
       )}
 
       <div style={{ maxWidth: 920, margin: '0 auto', padding: '18px 14px 0' }}>
-        {/* What every Business account includes — icon, title and a visible
-            one-line benefit (no hover-only tooltips, which were dead on mobile). */}
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>{t('Every Business account includes')}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }} className="biz-perks">
-          {([
-            ['💼', t('Post jobs'), t('Advertise vacancies on the recruitment board — free ads each month.')],
-            ['🔍', t('Find staff'), t('Search the candidate database and track applicants in one place.')],
-            ['🏠', t('List property'), t('Advertise property for sale or rent — commission-free.')],
-            ['🏪', t('Storefront'), t('Your own branded shop page with logo, banner and all your listings.')],
-            ['🛡️', t('Verified badge'), t('A 🏢 badge that shows buyers you’re a genuine business.')],
-            ['⭐', t('Lower fees'), t('Selling fees from 6%, dropping to as low as 2.5%.')],
-          ] as [string, string, string][]).map(([icon, title, desc]) => (
-            <div key={title} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', background: '#fff', border: '1px solid var(--line)', borderRadius: 14, padding: '13px 14px', boxShadow: 'var(--shadow-sm)' }}>
-              <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 10, background: 'linear-gradient(135deg,#FFF3EE,#FFE4D6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19 }}>{icon}</div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#6a6a6a', lineHeight: 1.4, marginTop: 2 }}>{desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
         {/* Business levels */}
         <div style={{ marginTop: 18 }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', textAlign: 'center', marginBottom: 4 }}>{t('Business levels')}</div>
@@ -205,6 +183,29 @@ function EmployersInner() {
             })}
           </div>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', textAlign: 'center', marginTop: 8 }}>{t('Levels are held on a rolling 90-day basis. Fees apply to item sales only, never to property or job listings.')}</div>
+        </div>
+
+        {/* Features that come with a paid Business subscription (levels 2–4:
+            Business, Business Plus, Business Pro). Business Light is selling-only. */}
+        <div style={{ marginTop: 22, fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', textAlign: 'center' }}>{t('Features for Business levels 2, 3 & 4')}</div>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6a6a6a', textAlign: 'center', margin: '4px 0 12px' }}>{t('Business Light covers selling only — these come with a paid Business subscription.')}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }} className="biz-perks">
+          {([
+            ['🏪', t('Storefront'), t('Your own branded shop page with logo, banner and all your listings.')],
+            ['🔍', t('Recruitment'), t('Post jobs, search the candidate database and track applicants.')],
+            ['🏠', t('List property'), t('Advertise property for sale or rent — commission-free.')],
+            ['🛡️', t('Verified badge'), t('A 🏢 badge that shows buyers you’re a genuine business.')],
+            ['⭐', t('Lower fees'), t('Selling fees from 6%, dropping to as low as 2.5%.')],
+            ['📊', t('Analytics'), t('Views, offers and conversion for every listing.')],
+          ] as [string, string, string][]).map(([icon, title, desc]) => (
+            <div key={title} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', background: '#fff', border: '1px solid var(--line)', borderRadius: 14, padding: '13px 14px', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 10, background: 'linear-gradient(135deg,#FFF3EE,#FFE4D6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19 }}>{icon}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#6a6a6a', lineHeight: 1.4, marginTop: 2 }}>{desc}</div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Build-a-basket: subscription (new business) + upgrades, paid together */}
