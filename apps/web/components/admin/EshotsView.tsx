@@ -14,6 +14,9 @@ interface Eshot {
   fromName: string | null
   segment: string
   status: string
+  scheduledAt: string | null
+  repeat: string
+  repeatUntil: string | null
   sentAt: string | null
   createdAt: string
   recipientCount: number
@@ -42,6 +45,16 @@ const TEMPLATES: { name: string; subject: string; body: string }[] = [
 ]
 
 const date = (d: string | null) => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+const dateTime = (d: string | null) => d ? new Date(d).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
+const REPEAT_LABEL: Record<string, string> = { none: '', daily: 'daily', weekly: 'weekly', monthly: 'monthly' }
+// Convert an ISO string to the value a <input type="datetime-local"> expects
+// (local time, no seconds/zone).
+const toLocalInput = (iso: string | null) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
 
 export default function EshotsView() {
   const api = useCrmApi()
@@ -105,18 +118,28 @@ export default function EshotsView() {
                     <tr key={e.id} style={{ borderTop: '1px solid #f0ece5' }}>
                       <td style={td}>
                         <div style={{ fontWeight: 800, color: '#1a1a1a' }}>{e.subject}</div>
-                        <div style={{ fontSize: 11, color: '#999' }}>{e.sentAt ? `Sent ${date(e.sentAt)}` : `Draft · ${date(e.createdAt)}`}</div>
+                        <div style={{ fontSize: 11, color: e.status === 'scheduled' ? '#2563eb' : '#999' }}>
+                          {e.sentAt ? `Sent ${date(e.sentAt)}`
+                            : e.status === 'scheduled' ? `⏰ ${dateTime(e.scheduledAt)}${e.repeat && e.repeat !== 'none' ? ` · repeats ${REPEAT_LABEL[e.repeat]}` : ''}`
+                            : e.status === 'done' ? `Recurring finished`
+                            : `Draft · ${date(e.createdAt)}`}
+                        </div>
                       </td>
                       <td style={td}>{SEGMENT_LABEL[e.segment] ?? e.segment}</td>
                       <td style={td}>{e.recipientCount || '—'}</td>
                       <td style={td}>{e.sentAt ? <><strong>{e.openRate}%</strong> <span style={{ color: '#aaa' }}>({e.openCount})</span></> : '—'}</td>
                       <td style={td}>{e.sentAt ? <><strong>{e.clickRate}%</strong> <span style={{ color: '#aaa' }}>({e.clickCount})</span></> : '—'}</td>
                       <td style={{ ...td, color: e.bounceCount ? '#ef4444' : '#aaa' }}>{e.sentAt ? e.bounceCount : '—'}</td>
-                      <td style={td}><span style={pill(e.status === 'sent' ? '#16a34a' : e.status === 'sending' ? '#f59e0b' : e.status === 'failed' ? '#ef4444' : '#888')}>{e.status}</span></td>
+                      <td style={td}><span style={pill(e.status === 'sent' ? '#16a34a' : e.status === 'sending' ? '#f59e0b' : e.status === 'failed' ? '#ef4444' : e.status === 'scheduled' ? '#2563eb' : '#888')}>{e.status}</span></td>
                       <td style={td}>
                         {e.sentAt
                           ? <button onClick={() => setDetail(e)} style={linkBtn}>Results →</button>
-                          : <button onClick={() => { setEditing(e); setTab('compose') }} style={linkBtn}>Edit →</button>}
+                          : e.status === 'scheduled'
+                            ? <div style={{ display: 'flex', gap: 10 }}>
+                                <button onClick={() => { setEditing(e); setTab('compose') }} style={linkBtn}>Edit →</button>
+                                <button onClick={async () => { if (await confirmDialog({ title: 'Cancel schedule?', message: `"${e.subject}" will go back to draft and won’t send automatically.`, confirmLabel: 'Unschedule' })) { await api.unscheduleEshot(e.id); load() } }} style={{ ...linkBtn, color: '#ef4444' }}>Unschedule</button>
+                              </div>
+                            : <button onClick={() => { setEditing(e); setTab('compose') }} style={linkBtn}>Edit →</button>}
                       </td>
                     </tr>
                   ))}
@@ -152,6 +175,10 @@ function Compose({ api, existing, onDone, onCancel }: { api: any; existing: Esho
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
   const [testTo, setTestTo] = useState('')
+  // Scheduling (send later, optionally repeating).
+  const [schedAt, setSchedAt] = useState(existing?.scheduledAt ? toLocalInput(existing.scheduledAt) : '')
+  const [repeat, setRepeat] = useState(existing?.repeat ?? 'none')
+  const [repeatUntil, setRepeatUntil] = useState(existing?.repeatUntil ? toLocalInput(existing.repeatUntil) : '')
 
   useEffect(() => {
     api.eshotAudienceSize(segment).then(setAudience).catch(() => setAudience(null))
@@ -193,6 +220,24 @@ function Compose({ api, existing, onDone, onCancel }: { api: any; existing: Esho
     } catch (e: any) { setErr(e?.message ?? 'Could not send'); setBusy('') }
   }
 
+  const schedule = async () => {
+    if (!schedAt) { setErr('Pick a date and time to schedule.'); return }
+    if (new Date(schedAt).getTime() <= Date.now()) { setErr('Pick a time in the future.'); return }
+    setBusy('schedule'); setErr('')
+    try {
+      const saved = existing ?? await api.createEshot({ subject, bodyHtml: body, preheader: preheader || undefined, fromName: fromName || undefined, segment })
+      if (existing) await api.updateEshot({ id: existing.id, subject, bodyHtml: body, preheader: preheader || null, fromName: fromName || null, segment })
+      await api.scheduleEshot({
+        id: saved.id,
+        scheduledAt: new Date(schedAt).toISOString(),
+        repeat,
+        repeatUntil: repeat !== 'none' && repeatUntil ? new Date(repeatUntil).toISOString() : null,
+      })
+      toast(`Scheduled for ${new Date(schedAt).toLocaleString('en-GB')}${repeat !== 'none' ? `, repeating ${repeat}` : ''}.`)
+      onDone()
+    } catch (e: any) { setErr(e?.message ?? 'Could not schedule'); setBusy('') }
+  }
+
   const canSend = subject.trim() && body.trim() && (audience ?? 0) > 0
 
   return (
@@ -232,6 +277,29 @@ function Compose({ api, existing, onDone, onCancel }: { api: any; existing: Esho
         <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
           <input value={testTo} onChange={e => setTestTo(e.target.value)} placeholder="you@example.com" style={{ ...inp, flex: 1, marginBottom: 0 }} />
           <button onClick={sendTest} disabled={!!busy} style={secondary}>{busy === 'test' ? 'Sending…' : 'Send test'}</button>
+        </div>
+
+        {/* Schedule for later — one-off or recurring. Sent by the hourly cron. */}
+        <div style={{ border: '1px dashed #e0d8d0', borderRadius: 10, padding: 12, marginBottom: 10 }}>
+          <L>Schedule for later (optional)</L>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <input type="datetime-local" value={schedAt} onChange={e => setSchedAt(e.target.value)} style={{ ...inp, flex: 1, minWidth: 170, marginBottom: 0 }} />
+            <select value={repeat} onChange={e => setRepeat(e.target.value)} style={{ ...inp, width: 150, marginBottom: 0 }}>
+              <option value="none">One-off</option>
+              <option value="daily">Repeat daily</option>
+              <option value="weekly">Repeat weekly</option>
+              <option value="monthly">Repeat monthly</option>
+            </select>
+          </div>
+          {repeat !== 'none' && (
+            <div style={{ marginTop: 6 }}>
+              <span style={{ fontFamily: 'Nunito, sans-serif', fontSize: 10.5, color: '#999' }}>Repeat until (optional — leave blank to run indefinitely)</span>
+              <input type="datetime-local" value={repeatUntil} onChange={e => setRepeatUntil(e.target.value)} style={{ ...inp, marginTop: 3, marginBottom: 0 }} />
+            </div>
+          )}
+          <button onClick={schedule} disabled={!!busy || !canSend || !schedAt} style={{ ...secondary, width: '100%', marginTop: 8, borderColor: 'var(--orange)', color: 'var(--orange)', opacity: (canSend && schedAt) ? 1 : 0.5 }}>
+            {busy === 'schedule' ? 'Scheduling…' : existing?.status === 'scheduled' ? 'Update schedule' : 'Schedule send'}
+          </button>
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>

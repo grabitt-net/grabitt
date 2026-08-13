@@ -147,3 +147,55 @@ export async function sendEshot(prisma: PrismaClient, eshotId: string) {
 
   return { sent, failed, recipients: audience.length }
 }
+
+// The next send time for a recurring campaign after `from`.
+function nextOccurrence(from: Date, repeat: string): Date {
+  const d = new Date(from)
+  if (repeat === 'daily') d.setDate(d.getDate() + 1)
+  else if (repeat === 'weekly') d.setDate(d.getDate() + 7)
+  else if (repeat === 'monthly') d.setMonth(d.getMonth() + 1)
+  else d.setFullYear(d.getFullYear() + 100) // unknown cadence: park it far out
+  return d
+}
+
+// Send every scheduled campaign whose time has arrived. Called by the hourly
+// cron (/api/cron/eshots). One-off campaigns send and are done; recurring ones
+// spawn a dated copy (so each send keeps its own stats) and the template rolls
+// forward to its next occurrence, stopping once past repeatUntil.
+export async function runDueEshots(prisma: PrismaClient) {
+  const now = new Date()
+  const due = await prisma.eshot.findMany({
+    where: { status: 'scheduled', scheduledAt: { lte: now } },
+    take: 50,
+  })
+  let sent = 0
+  for (const e of due) {
+    try {
+      if (!e.repeat || e.repeat === 'none') {
+        await sendEshot(prisma, e.id) // flips status → sending → sent
+        sent++
+        continue
+      }
+      // Recurring: clone the content into a fresh campaign and send that, so the
+      // template's own counters stay clean and each occurrence has its own stats.
+      const copy = await prisma.eshot.create({
+        data: {
+          subject: e.subject, bodyHtml: e.bodyHtml, preheader: e.preheader,
+          fromName: e.fromName, segment: e.segment, status: 'draft',
+        },
+      })
+      await sendEshot(prisma, copy.id)
+      sent++
+      // Advance the template to the next future occurrence (catch up if a run
+      // was missed), or finish it once past its end date.
+      let next = nextOccurrence(e.scheduledAt ?? now, e.repeat)
+      while (next <= now) next = nextOccurrence(next, e.repeat)
+      if (e.repeatUntil && next > e.repeatUntil) {
+        await prisma.eshot.update({ where: { id: e.id }, data: { status: 'done', scheduledAt: null } })
+      } else {
+        await prisma.eshot.update({ where: { id: e.id }, data: { scheduledAt: next } })
+      }
+    } catch { /* leave this one scheduled; the next run retries it */ }
+  }
+  return { due: due.length, sent }
+}

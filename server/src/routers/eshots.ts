@@ -33,6 +33,34 @@ export const eshotsRouter = router({
     }))
     .mutation(({ ctx, input }) => ctx.prisma.eshot.create({ data: input })),
 
+  // Schedule (or reschedule) a campaign for a future send, optionally repeating.
+  // The hourly cron (/api/cron/eshots) sends it when the time arrives.
+  schedule: execProcedure
+    .input(z.object({
+      id: z.string().uuid(),
+      scheduledAt: z.string().datetime(),
+      repeat: z.enum(['none', 'daily', 'weekly', 'monthly']).default('none'),
+      repeatUntil: z.string().datetime().nullable().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const when = new Date(input.scheduledAt)
+      if (when.getTime() <= Date.now()) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Pick a time in the future.' })
+      const e = await ctx.prisma.eshot.findUniqueOrThrow({ where: { id: input.id }, select: { sentAt: true } })
+      if (e.sentAt) throw new TRPCError({ code: 'BAD_REQUEST', message: 'A sent campaign cannot be scheduled again.' })
+      return ctx.prisma.eshot.update({
+        where: { id: input.id },
+        data: { status: 'scheduled', scheduledAt: when, repeat: input.repeat, repeatUntil: input.repeatUntil ? new Date(input.repeatUntil) : null },
+      })
+    }),
+
+  // Cancel a schedule — the campaign returns to draft.
+  unschedule: execProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(({ ctx, input }) => ctx.prisma.eshot.update({
+      where: { id: input.id },
+      data: { status: 'draft', scheduledAt: null, repeat: 'none', repeatUntil: null },
+    })),
+
   update: execProcedure
     .input(z.object({
       id: z.string().uuid(),

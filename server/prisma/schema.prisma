@@ -1585,8 +1585,13 @@ model Eshot {
   preheader   String?      // inbox preview line
   fromName    String?      // overrides the default sender name
   segment     EshotSegment
-  status      String       @default("draft") // draft | sending | sent | failed
-  scheduledAt DateTime?
+  status      String       @default("draft") // draft | scheduled | sending | sent | failed | done
+  scheduledAt DateTime?                       // when a scheduled campaign should send
+  // Recurring campaigns: cadence + optional end date. A recurring row acts as a
+  // template — each due send spawns a dated copy and the template advances to
+  // its next occurrence. 'none' = one-off.
+  repeat      String       @default("none")   // none | daily | weekly | monthly
+  repeatUntil DateTime?
   sentAt      DateTime?
   // Rolled up from EshotRecipient by the Resend webhook.
   recipientCount Int       @default(0)
@@ -1600,6 +1605,7 @@ model Eshot {
   recipients  EshotRecipient[]
 
   @@index([sentAt])
+  @@index([status, scheduledAt])
 }
 
 // One row per person per campaign — the unit of delivery and engagement.

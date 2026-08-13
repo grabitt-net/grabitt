@@ -257,6 +257,10 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('eshots.sendTest', 'mutation', { id, to }, execToken),
     sendEshot: (id: string) =>
       rpc<{ sent: number; failed: number; recipients: number }>('eshots.send', 'mutation', { id }, execToken),
+    scheduleEshot: (data: { id: string; scheduledAt: string; repeat: string; repeatUntil?: string | null }) =>
+      rpc<any>('eshots.schedule', 'mutation', data, execToken),
+    unscheduleEshot: (id: string) =>
+      rpc<any>('eshots.unschedule', 'mutation', { id }, execToken),
     eshotRecipients: (id: string, page = 1) =>
       rpc<{ rows: any[]; page: number; hasMore: boolean }>('eshots.recipients', 'query', { id, page }, execToken),
 
