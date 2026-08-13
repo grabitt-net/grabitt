@@ -5,7 +5,8 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 // Sends scheduled e-shots whose time has arrived (one-off and recurring).
-// Triggered hourly by Vercel Cron (see vercel.json); protected by CRON_SECRET.
+// Call this hourly from the external scheduler (same as the other /api/cron/*
+// endpoints); protected by CRON_SECRET.
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET
   if (secret) {
