@@ -154,9 +154,13 @@ function EmployersInner() {
               const tier = BUSINESS_TIERS[g]
               const start = i === 0
               return (
-                <div key={g} style={{ position: 'relative', display: 'flex', flexDirection: 'column', background: '#fff', border: `1.5px solid ${start ? 'var(--orange)' : 'var(--line)'}`, borderRadius: 16, overflow: 'hidden', boxShadow: start ? '0 8px 24px rgba(245,84,10,0.13)' : 'var(--shadow-sm)' }}>
+                <div key={g} style={{ position: 'relative', display: 'flex', flexDirection: 'column', background: '#fff', border: `1.5px solid ${start ? 'var(--orange)' : 'var(--line)'}`, borderRadius: 16, overflow: 'visible', boxShadow: start ? '0 8px 24px rgba(245,84,10,0.13)' : 'var(--shadow-sm)' }}>
+                  {/* Promotion arrow to the next paid tier (shown in the 4-up row). */}
+                  {i < BUSINESS_TIER_ORDER.length - 1 && (
+                    <span className="tier-arrow" style={{ position: 'absolute', right: -13, top: '50%', transform: 'translateY(-50%)', zIndex: 2, width: 22, height: 22, borderRadius: '50%', background: '#fff', border: '1.5px solid #f0d9c4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange)', fontSize: 13, fontWeight: 900, boxShadow: 'var(--shadow-sm)' }} aria-hidden>→</span>
+                  )}
                   {/* Tier accent bar */}
-                  <div style={{ height: 4, background: start ? 'linear-gradient(90deg,var(--orange),var(--orange2))' : TIER_COLOR[g] }} />
+                  <div style={{ height: 4, borderRadius: '15px 15px 0 0', background: start ? 'linear-gradient(90deg,var(--orange),var(--orange2))' : TIER_COLOR[g] }} />
                   <div style={{ padding: 16, display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 19 }}>{TIER_EMOJI[g]}</span>
@@ -170,7 +174,7 @@ function EmployersInner() {
                     <div style={{ height: 1, background: 'var(--line)', margin: '14px 0' }} />
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>{t('Included each month')}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                      {[`${tier.caps.items} ${t('item listings')}`, `${tier.caps.jobs} ${t('job adverts')}`, `${tier.caps.property} ${t('property listings')}`].map(line => (
+                      {[`${tier.caps.items} ${t('item listings')}`, `${tier.caps.jobs} ${t('job adverts')}`, `${tier.caps.property} ${t('property listings')}`, t('Free directory listing')].map(line => (
                         <div key={line} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a' }}>
                           <span style={{ width: 16, height: 16, flexShrink: 0, borderRadius: '50%', background: '#eaf7ee', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900 }}>✓</span>
                           {line}
@@ -358,7 +362,7 @@ function EmployersInner() {
         @media (max-width: 760px){ .biz-perks{ grid-template-columns: repeat(2, 1fr) !important; } }
         @media (max-width: 620px){ .biz-upgrades{ grid-template-columns: 1fr !important; } }
         @media (max-width: 480px){ .biz-perks{ grid-template-columns: 1fr !important; } }
-        @media (max-width: 880px){ .biz-levels{ grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 880px){ .biz-levels{ grid-template-columns: repeat(2, 1fr) !important; } .tier-arrow{ display: none !important; } }
         @media (max-width: 480px){ .biz-levels{ grid-template-columns: 1fr !important; } }
       `}</style>
     </main>
