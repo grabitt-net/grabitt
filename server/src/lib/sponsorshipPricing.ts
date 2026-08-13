@@ -1,5 +1,21 @@
-import { BUSINESS_ADDONS, BUSINESS_ADDON_IDS, isBusinessAddon } from '@grabitt/design-tokens'
+import { BUSINESS_ADDONS, BUSINESS_ADDON_IDS, isBusinessAddon, BLAST_BUNDLES } from '@grabitt/design-tokens'
 import type { PrismaClient } from '@prisma/client'
+
+// Email / WhatsApp blasts are priced by SEND-QUANTITY bundles (not months), per
+// the revenue model: email €149 / €400 / €900 for 1 / 3 / 10 sends; WhatsApp
+// €199 / €500 / €900 for 1 / 3 / 9 sends. These helpers keep the basket, the
+// checkout and the client in step.
+export function blastKind(addonId: string): 'email' | 'whatsapp' | null {
+  return addonId === 'email_blast' ? 'email' : addonId === 'whatsapp_blast' ? 'whatsapp' : null
+}
+export function blastQuantities(addonId: string): number[] {
+  const k = blastKind(addonId)
+  return k ? Object.keys(BLAST_BUNDLES[k]).map(Number).sort((a, b) => a - b) : []
+}
+export function blastPriceCents(addonId: string, qty: number): number | null {
+  const k = blastKind(addonId)
+  return k ? (BLAST_BUNDLES[k][qty] ?? null) : null
+}
 
 export type SponsorItem = { id: string; label: string; icon: string; blurb: string; comingSoon: boolean; monthlyCents: number; active: boolean }
 

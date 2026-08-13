@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { toast, confirmDialog } from '@/lib/ui'
+import { BLAST_BUNDLES } from '@grabitt/design-tokens'
 import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import type { PanelId } from '@/context/PanelContext'
@@ -4749,10 +4750,15 @@ function PanelBody() {
 
     const eur = (cents: number) => `€${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`
     const sponsorTotalCents = (monthly: number, months: number) => monthly * (months >= 12 ? 10 : months)
+    // Blasts are priced by send-quantity bundle, not months.
+    const blastKind = (id: string): 'email' | 'whatsapp' | null => id === 'email_blast' ? 'email' : id === 'whatsapp_blast' ? 'whatsapp' : null
+    const blastQtys = (id: string): number[] => { const k = blastKind(id); return k ? Object.keys(BLAST_BUNDLES[k]).map(Number).sort((a, b) => a - b) : [] }
+    const blastPrice = (id: string, qty: number): number => { const k = blastKind(id); return k ? (BLAST_BUNDLES[k][qty] ?? 0) : 0 }
+    const lineCents = (id: string, monthly: number, n: number): number => blastKind(id) ? blastPrice(id, n) : sponsorTotalCents(monthly, n)
     const toggleSponsor = (id: string) => setBasket(p => { const n = { ...p }; if (n[id] != null) delete n[id]; else n[id] = durations[0] ?? 1; return n })
     const setSponsorMonths = (id: string, m: number) => setBasket(p => ({ ...p, [id]: m }))
     const sponsorItems = Object.entries(basket).map(([addonId, months]) => ({ addonId, months, ...(addonId === 'category_sponsor' && sponsorPages[addonId] ? { pageTarget: sponsorPages[addonId] } : {}) }))
-    const sponsorTotal = Object.entries(basket).reduce((s, [id, m]) => { const c = catalog.find(x => x.id === id); return s + (c ? sponsorTotalCents(c.monthlyCents, m) : 0) }, 0)
+    const sponsorTotal = Object.entries(basket).reduce((s, [id, m]) => { const c = catalog.find(x => x.id === id); return s + (c ? lineCents(id, c.monthlyCents, m) : 0) }, 0)
 
     // Combined basket: business subscription + one-off sponsorship placements.
     const startCheckout = async (plan: 'business' | 'business_annual' | 'business_founding_annual') => {
@@ -4831,11 +4837,11 @@ function PanelBody() {
                 <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 2, lineHeight: 1.4 }}>{a.blurb}</span>
                 {on && (
                   <select value={months} onChange={e => setSponsorMonths(a.id, Number(e.target.value))} style={{ marginTop: 6, border: '1.5px solid #e5dccd', borderRadius: 8, padding: '4px 8px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 700, background: '#fff' }}>
-                    {durations.map(d => <option key={d} value={d}>{d} {d === 1 ? 'month' : 'months'}</option>)}
+                    {(blastKind(a.id) ? blastQtys(a.id) : durations).map(d => <option key={d} value={d}>{blastKind(a.id) ? `${d} ${d === 1 ? 'send' : 'sends'} · ${eur(blastPrice(a.id, d))}` : `${d} ${d === 1 ? 'month' : 'months'}`}</option>)}
                   </select>
                 )}
               </span>
-              <span style={{ flexShrink: 0, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--orange)' }}>{on ? eur(sponsorTotalCents(a.monthlyCents, months)) : `${eur(a.monthlyCents)}/mo`}</span>
+              <span style={{ flexShrink: 0, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--orange)' }}>{on ? eur(lineCents(a.id, a.monthlyCents, months)) : blastKind(a.id) ? `${eur(blastPrice(a.id, 1))}/send` : `${eur(a.monthlyCents)}/mo`}</span>
             </div>
           )
         })}

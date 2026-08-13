@@ -8,7 +8,7 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
-import { BUSINESS_TIERS, BUSINESS_TIER_ORDER } from '@grabitt/design-tokens'
+import { BUSINESS_TIERS, BUSINESS_TIER_ORDER, BLAST_BUNDLES } from '@grabitt/design-tokens'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { t } from '@/lib/i18n'
 
@@ -25,10 +25,20 @@ const TIER_EMOJI: Record<string, string> = { dealer: '🟡', trader: '🔵', pro
 const TIER_COLOR: Record<string, string> = { dealer: '#EAB308', trader: '#3b82f6', pro: '#a855f7' }
 const feePct = (r: number) => `${(r * 100).toFixed(r * 100 % 1 ? 1 : 0)}%`
 const eur = (cents: number) => `€${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`
+// Human-friendly page name for the Category Sponsor picker: sentence case, with
+// the Grab It Now slug shown as the brand name "Grabitt Now".
+const pageLabel = (pg: string) => pg === 'grab_it_now' ? 'Grabitt Now' : pg === 'home' ? 'Homepage' : pg.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase())
 const HELP = '/help#business-advertising'
 
 type SponsorItem = { id: string; label: string; icon: string; blurb: string; comingSoon: boolean; monthlyCents: number }
 const sponsorTotalCents = (monthly: number, months: number) => monthly * (months >= 12 ? 10 : months)
+
+// Blasts are priced by send-quantity bundles, not months (see BLAST_BUNDLES).
+const blastKind = (id: string): 'email' | 'whatsapp' | null => id === 'email_blast' ? 'email' : id === 'whatsapp_blast' ? 'whatsapp' : null
+const blastQtys = (id: string): number[] => { const k = blastKind(id); return k ? Object.keys(BLAST_BUNDLES[k]).map(Number).sort((a, b) => a - b) : [] }
+const blastPrice = (id: string, qty: number): number => { const k = blastKind(id); return k ? (BLAST_BUNDLES[k][qty] ?? 0) : 0 }
+// Line total for an add-on: bundle price for blasts, months × monthly otherwise.
+const lineCents = (id: string, monthlyCents: number, n: number): number => blastKind(id) ? blastPrice(id, n) : sponsorTotalCents(monthlyCents, n)
 
 function EmployersInner() {
   const { openPanel } = usePanel()
@@ -69,7 +79,7 @@ function EmployersInner() {
   const inBasket = (id: string) => basket[id] != null
   const toggleAddon = (id: string) => setBasket(p => { const n = { ...p }; if (n[id] != null) delete n[id]; else n[id] = durations[0] ?? 1; return n })
   const setMonths = (id: string, m: number) => setBasket(p => ({ ...p, [id]: m }))
-  const basketTotal = Object.entries(basket).reduce((s, [id, m]) => { const c = catalog.find(x => x.id === id); return s + (c ? sponsorTotalCents(c.monthlyCents, m) : 0) }, 0)
+  const basketTotal = Object.entries(basket).reduce((s, [id, m]) => { const c = catalog.find(x => x.id === id); return s + (c ? lineCents(id, c.monthlyCents, m) : 0) }, 0)
   const basketItems = Object.entries(basket).map(([addonId, months]) => ({ addonId, months, ...(addonId === 'category_sponsor' && pageFor[addonId] ? { pageTarget: pageFor[addonId] } : {}) }))
 
   // Carry the whole basket (subscription plan + sponsorship placements) into the
@@ -215,13 +225,15 @@ function EmployersInner() {
             <div style={card}>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>{t('1. Your Business account')}</div>
               <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#8a5a2a', margin: '6px 0 12px' }}>{t('14 days free, then choose monthly or yearly. Storefront, badge, hiring, property and lower fees.')}</div>
-              {/* Monthly / yearly toggle — drives the paid card's price below. */}
-              <div style={{ display: 'inline-flex', background: '#f5f0e8', borderRadius: 50, padding: 3, marginBottom: 12 }}>
-                {(['month', 'year'] as const).map(b => (
-                  <button key={b} onClick={() => { setBilling(b); setPlan(p => (p === 'light' ? 'light' : b)) }} style={{ border: 'none', borderRadius: 50, padding: '5px 16px', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, background: billing === b ? '#fff' : 'transparent', color: billing === b ? 'var(--dark)' : '#888', boxShadow: billing === b ? '0 1px 3px rgba(0,0,0,0.08)' : 'none' }}>
-                    {b === 'month' ? t('Monthly') : t('Yearly')}
-                  </button>
-                ))}
+              {/* Monthly / yearly toggle — centered; drives the paid card's price. */}
+              <div style={{ textAlign: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'inline-flex', background: '#f5f0e8', borderRadius: 50, padding: 3 }}>
+                  {(['month', 'year'] as const).map(b => (
+                    <button key={b} onClick={() => { setBilling(b); setPlan(p => (p === 'light' ? 'light' : b)) }} style={{ border: 'none', borderRadius: 50, padding: '5px 16px', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, background: billing === b ? '#fff' : 'transparent', color: billing === b ? 'var(--dark)' : '#888', boxShadow: billing === b ? '0 1px 3px rgba(0,0,0,0.08)' : 'none' }}>
+                      {b === 'month' ? t('Monthly') : t('Yearly')}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Free account first, paid second — the paid card updates with the toggle. */}
@@ -259,7 +271,7 @@ function EmployersInner() {
               {catalog.map(a => {
                 const on = inBasket(a.id)
                 const months = basket[a.id] ?? durations[0] ?? 1
-                const lineTotal = sponsorTotalCents(a.monthlyCents, months)
+                const lineTotal = lineCents(a.id, a.monthlyCents, months)
                 return (
                   <div key={a.id} onClick={() => !a.comingSoon && toggleAddon(a.id)} style={{ ...upgradeCard(on), opacity: a.comingSoon ? 0.6 : 1, cursor: a.comingSoon ? 'default' : 'pointer' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
@@ -270,17 +282,17 @@ function EmployersInner() {
                         </div>
                         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 2, lineHeight: 1.4 }}>{a.blurb}</div>
                       </div>
-                      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }}>{on ? eur(lineTotal) : `${eur(a.monthlyCents)}/mo`}</span>
+                      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }}>{on ? eur(lineTotal) : blastKind(a.id) ? `${eur(blastPrice(a.id, 1))}/send` : `${eur(a.monthlyCents)}/mo`}</span>
                     </div>
                     {on && (
                       <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10, paddingTop: 10, borderTop: '1px dashed #eaddc9' }}>
                         <select value={months} onChange={e => setMonths(a.id, Number(e.target.value))} style={miniSel}>
-                          {durations.map(d => <option key={d} value={d}>{d} {d === 1 ? t('month') : t('months')}</option>)}
+                          {(blastKind(a.id) ? blastQtys(a.id) : durations).map(d => <option key={d} value={d}>{blastKind(a.id) ? `${d} ${d === 1 ? t('send') : t('sends')} · ${eur(blastPrice(a.id, d))}` : `${d} ${d === 1 ? t('month') : t('months')}`}</option>)}
                         </select>
                         {a.id === 'category_sponsor' && (
                           <select value={pageFor[a.id] ?? ''} onChange={e => setPageFor(p => ({ ...p, [a.id]: e.target.value }))} style={miniSel}>
                             <option value="">{t('Choose a page…')}</option>
-                            {pages.map(pg => <option key={pg} value={pg}>{pg.replace('_', ' ')}</option>)}
+                            {pages.map(pg => <option key={pg} value={pg}>{pageLabel(pg)}</option>)}
                           </select>
                         )}
                       </div>
@@ -314,8 +326,8 @@ function EmployersInner() {
               const c = catalog.find(x => x.id === id); if (!c) return null
               return (
                 <div key={id} style={basketRow}>
-                  <span>{c.icon} {c.label}{id === 'category_sponsor' && pageFor[id] ? ` · ${pageFor[id].replace('_', ' ')}` : ''} · {m} {m === 1 ? t('month') : t('months')}</span>
-                  <span style={{ fontWeight: 900 }}>{eur(sponsorTotalCents(c.monthlyCents, m))}</span>
+                  <span>{c.icon} {c.label}{id === 'category_sponsor' && pageFor[id] ? ` · ${pageLabel(pageFor[id])}` : ''} · {m} {blastKind(id) ? (m === 1 ? t('send') : t('sends')) : (m === 1 ? t('month') : t('months'))}</span>
+                  <span style={{ fontWeight: 900 }}>{eur(lineCents(id, c.monthlyCents, m))}</span>
                 </div>
               )
             })}
