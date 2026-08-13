@@ -187,7 +187,7 @@ function EmployersInner() {
 
         {/* Features that come with a paid Business subscription (levels 2–4:
             Business, Business Plus, Business Pro). Business Light is selling-only. */}
-        <div style={{ marginTop: 22, fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', textAlign: 'center' }}>{t('Features for Business levels 2, 3 & 4')}</div>
+        <div style={{ marginTop: 22, fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', textAlign: 'center' }}>{t('Features for Business, Business Plus & Business Pro')}</div>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6a6a6a', textAlign: 'center', margin: '4px 0 12px' }}>{t('Business Light covers selling only — these come with a paid Business subscription.')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }} className="biz-perks">
           {([
@@ -216,10 +216,10 @@ function EmployersInner() {
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>{t('1. Your Business account')}</div>
               <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#8a5a2a', margin: '6px 0 12px' }}>{t('14 days free, then choose monthly or yearly. Storefront, badge, hiring, property and lower fees.')}</div>
               {/* Monthly / yearly toggle — drives the paid card's price below. */}
-              <div style={{ display: 'flex', background: '#f5f0e8', borderRadius: 50, padding: 4, marginBottom: 12, maxWidth: 300 }}>
+              <div style={{ display: 'inline-flex', background: '#f5f0e8', borderRadius: 50, padding: 3, marginBottom: 12 }}>
                 {(['month', 'year'] as const).map(b => (
-                  <button key={b} onClick={() => { setBilling(b); setPlan(p => (p === 'light' ? 'light' : b)) }} style={{ flex: 1, border: 'none', borderRadius: 50, padding: '8px 6px', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, background: billing === b ? '#fff' : 'transparent', color: billing === b ? 'var(--dark)' : '#888', boxShadow: billing === b ? '0 1px 3px rgba(0,0,0,0.08)' : 'none' }}>
-                    {b === 'month' ? t('Monthly') : t('Yearly')}{b === 'year' ? <span style={{ color: '#16a34a', fontWeight: 900 }}> · {t('2 months free')}</span> : null}
+                  <button key={b} onClick={() => { setBilling(b); setPlan(p => (p === 'light' ? 'light' : b)) }} style={{ border: 'none', borderRadius: 50, padding: '5px 16px', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, background: billing === b ? '#fff' : 'transparent', color: billing === b ? 'var(--dark)' : '#888', boxShadow: billing === b ? '0 1px 3px rgba(0,0,0,0.08)' : 'none' }}>
+                    {b === 'month' ? t('Monthly') : t('Yearly')}
                   </button>
                 ))}
               </div>
