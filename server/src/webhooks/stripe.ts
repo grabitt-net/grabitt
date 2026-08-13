@@ -14,6 +14,23 @@ function mapSubStatus(s: string): 'trialing' | 'active' | 'past_due' | 'canceled
   return 'past_due' // past_due, unpaid, incomplete
 }
 
+// A paid Business subscription includes a directory listing. Keep it live
+// through `until`, seeding the entry from the business profile if there isn't
+// one yet. Extend only — never shorten a longer window the business may have
+// bought separately via the sponsorship basket.
+async function grantDirectoryForBusiness(userId: string, until: Date) {
+  const existing = await prisma.directoryListing.findUnique({ where: { userId }, select: { id: true, paidUntil: true } })
+  if (existing) {
+    if (!existing.paidUntil || existing.paidUntil < until) {
+      await prisma.directoryListing.update({ where: { id: existing.id }, data: { paidUntil: until } }).catch(() => {})
+    }
+    return
+  }
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { businessName: true, displayName: true } })
+  const name = u?.businessName || u?.displayName || 'Business'
+  await prisma.directoryListing.create({ data: { userId, name, paidUntil: until } }).catch(() => {})
+}
+
 // Upsert the Subscription row from a Stripe subscription and apply entitlements
 // (the Business plan flips isBusiness + a Dealer grade floor while active).
 async function applySubscription(sub: Stripe.Subscription) {
@@ -50,6 +67,10 @@ async function applySubscription(sub: Stripe.Subscription) {
           ...(u?.grade === 'grabber' ? { grade: 'dealer' } : {}),
         },
       })
+      // Paid Business includes a directory listing — keep it live through the
+      // current period. The next renewal webhook extends it again.
+      const until = currentPeriodEnd ?? trialEnd ?? new Date(Date.now() + 30 * 86400000)
+      await grantDirectoryForBusiness(userId, until)
     } else {
       await prisma.user.update({ where: { id: userId }, data: { isBusiness: false } })
     }
