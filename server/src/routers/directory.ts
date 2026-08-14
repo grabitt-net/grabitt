@@ -105,7 +105,12 @@ export const directoryRouter = router({
     .input(listingInput)
     .mutation(async ({ ctx, input }) => {
       const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isAdvertiser: true, isBusiness: true } })
-      if (!me.isAdvertiser && !me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A business or advertiser account is required for a directory listing.' })
+      // Businesses and advertisers can manage a listing; so can anyone who has
+      // one already — e.g. a Business Light account that PAID for a directory via
+      // the basket (a listing was seeded on payment). Business Light gets no
+      // listing until they pay, but once paid they can fill in its details.
+      const owned = await ctx.prisma.directoryListing.findUnique({ where: { userId: ctx.user.id }, select: { id: true } })
+      if (!me.isAdvertiser && !me.isBusiness && !owned) throw new TRPCError({ code: 'FORBIDDEN', message: 'Buy a directory listing first, then you can edit its details.' })
       const data = {
         name: input.name,
         category: input.category || null,
