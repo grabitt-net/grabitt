@@ -4,6 +4,7 @@ import { getStripe } from '../lib/stripe'
 import { prisma } from '../db'
 import { grantCreditPack } from '../routers/credits'
 import { SUBSCRIPTION_PLANS } from '@grabitt/design-tokens'
+import { bannerForAddon } from '../lib/sponsorshipPricing'
 
 // Map Stripe subscription status → our SubStatus enum.
 function mapSubStatus(s: string): 'trialing' | 'active' | 'past_due' | 'canceled' | 'paused' {
@@ -108,6 +109,9 @@ async function grantSponsorships(userId: string, basket: string) {
     await prisma.sponsorshipGrant.create({
       data: { userId, addonId, months, amountCents: Number(amountStr) || 0, pageTarget: page || null, endsAt },
     }).catch(() => {})
+    // A banner sponsorship (Homepage / Category / Featured) includes a directory
+    // listing live for the duration of the banner — extend it to the grant end.
+    if (bannerForAddon(addonId)) await grantDirectoryForBusiness(userId, endsAt)
   }
 }
 

@@ -122,14 +122,28 @@ export const sponsorshipRouter = router({
       pageTarget: z.enum(SPONSOR_PAGES as unknown as [string, ...string[]]).optional(),
     })).min(1).max(12) }))
     .mutation(async ({ ctx, input }) => {
-      const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { email: true, stripeCustomerId: true } })
+      const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { email: true, stripeCustomerId: true, isBusiness: true, businessLight: true } })
       const catalog = await getSponsorshipCatalog(ctx.prisma)
+      const quarterAgo = new Date(Date.now() - 90 * 86400000)
 
       const lineItems: any[] = []
       const basketParts: string[] = []
       for (const item of input.items) {
         const label = catalog.find(c => c.id === item.addonId)?.label ?? item.addonId
         if (!isValidAddonQty(item.addonId, item.months)) throw new TRPCError({ code: 'BAD_REQUEST', message: `Invalid amount for ${label}` })
+
+        // Minimum account level per Steve's terms.
+        if (item.addonId === 'homepage_sponsor' && !user.isBusiness && !user.businessLight) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Homepage Sponsor needs at least a Business Light account.' })
+        }
+        if (blastKind(item.addonId) && !user.isBusiness) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: `${label} needs a Business account.` })
+        }
+        // Blasts are limited to once per quarter (per blast type).
+        if (blastKind(item.addonId)) {
+          const recent = await ctx.prisma.sponsorshipGrant.findFirst({ where: { userId: ctx.user.id, addonId: item.addonId, createdAt: { gte: quarterAgo } }, select: { id: true } })
+          if (recent) throw new TRPCError({ code: 'CONFLICT', message: `${label} is limited to once per quarter — you've already sent one in the last 90 days.` })
+        }
         const b = bannerForAddon(item.addonId)
         if (b?.needsPage) await assertCategoryFree(ctx.prisma, item.pageTarget)
         const monthly = await sponsorMonthlyCents(ctx.prisma, item.addonId)
