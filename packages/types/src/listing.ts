@@ -47,7 +47,10 @@ export const CreateListingInputSchema = z.object({
   brand: z.string().max(60).optional(),
   colour: z.string().max(40).optional(),
   size: z.string().max(40).optional(),
-  images: z.array(z.string().url()).min(1).max(8),
+  // At least 3 clear photos are required — enough for auto-relighting and to
+  // discourage low-effort / AI-generated "slop" listings. (True AI-image
+  // detection is a separate future service; this is the baseline gate.)
+  images: z.array(z.string().url()).min(3, 'Add at least 3 clear photos of the item').max(8),
   location: z.string().max(100),
   lat: z.number().optional(),   // exact map pin (drag-a-pin on create)
   lng: z.number().optional(),
