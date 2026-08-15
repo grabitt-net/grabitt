@@ -434,9 +434,16 @@ export const listingsRouter = router({
       // Check grade upgrade eligibility on every submit
       await checkGradeUpgrade(ctx.prisma, user)
 
-      // Business Light: every item listing costs €0.99 (no free allowance). The
-      // listing is held as a draft until paid; the webhook publishes it.
-      const lightFee = user.businessLight ? BUSINESS_LIGHT.perListingCents : 0
+      // Business Light: 3 free item listings a month; each one beyond that costs
+      // €0.99 (held as a draft until paid, then published by the webhook).
+      let lightFee = 0
+      if (user.businessLight) {
+        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+        const usedThisMonth = await ctx.prisma.listing.count({
+          where: { sellerId: user.id, createdAt: { gte: monthStart }, department: { notIn: ['jobs', 'property'] } },
+        })
+        lightFee = usedThisMonth < BUSINESS_LIGHT.caps.items ? 0 : BUSINESS_LIGHT.perListingCents
+      }
 
       const listing = await ctx.prisma.listing.create({
         data: {

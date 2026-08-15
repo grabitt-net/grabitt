@@ -113,10 +113,10 @@ export const BUSINESS_LIGHT = {
   feeRate: 0.08,
   freeMembership: true,
   perListingCents: 99,   // €0.99
-  // Free-tier monthly allowance. Also used as the CEILING during a paid
-  // Business trial: a trialing business can't exceed the free account until the
-  // trial ends and billing begins, at which point the full tier caps apply.
-  caps: { items: 10, jobs: 0, property: 0 },
+  // Free-tier monthly allowance: 3 free item listings a month. Also used as the
+  // CEILING during a paid Business trial — a trialing business can't exceed the
+  // free account until the trial ends and billing begins.
+  caps: { items: 3, jobs: 0, property: 0 },
 } as const
 
 // Recurring subscription catalogue (from the original prototype). Amounts are
@@ -303,9 +303,9 @@ export const BUSINESS_TIERS = {
   dealer: { key: 'dealer', label: 'Business',      feeRate: FEE_RATES.dealer, // 6%
             caps: { items: 30,  jobs: 1, property: 1 }, criteria: { sales90d: 0,  rating: 0   } },
   trader: { key: 'trader', label: 'Business Plus', feeRate: FEE_RATES.trader, // 4%
-            caps: { items: 100, jobs: 2, property: 2 }, criteria: { sales90d: 25, rating: 4.3 } },
+            caps: { items: 100, jobs: 2, property: 2 }, criteria: { sales90d: 25, rating: 4.7 } },
   pro:    { key: 'pro',    label: 'Business Pro',  feeRate: FEE_RATES.pro,    // 2.5%
-            caps: { items: 500, jobs: 5, property: 5 }, criteria: { sales90d: 75, rating: 4.6 } },
+            caps: { items: 500, jobs: 5, property: 5 }, criteria: { sales90d: 75, rating: 4.9 } },
 } as const
 
 export const BUSINESS_TIER_ORDER = ['dealer', 'trader', 'pro'] as const
