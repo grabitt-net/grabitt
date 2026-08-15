@@ -51,7 +51,8 @@ export default function QuickActions() {
         }}
       >
         <Icon name="zap" size={19} strokeWidth={2} />
-        <span>{t('Grabitt Now — limited-time offers')}</span>
+        <span>{t('Grabitt NOW! Limited Time Offers')}</span>
+        <Icon name="zap" size={19} strokeWidth={2} />
       </button>
 
       {/* Sponsor banner — every page, below the Grabitt Now promo. Renders

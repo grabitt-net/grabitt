@@ -28,7 +28,8 @@ export default function Footer() {
         sponsor banner is active. */}
     <BannerSlot position="sponsor_footer" aspect="4.5 / 1" />
     <footer style={{ background: 'var(--sand, #F5ECD7)', borderTop: '1px solid var(--sand2, #e8dcc0)', marginTop: 28, padding: '32px 20px 24px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 24, maxWidth: 1000, margin: '0 auto' }}>
+      {/* All 5 heading columns stay on one row (never 4 + 1). */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 16, maxWidth: 1000, margin: '0 auto' }}>
         {cols.map(col => (
           <div key={col.heading}>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--dark, #1a1a1a)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>{col.heading}</div>

@@ -102,6 +102,13 @@ function EmployersInner() {
     return () => { live = false }
   }, [])
 
+  // Blasts are paid-Business only — clear them from the basket if the visitor
+  // switches to Business Light.
+  useEffect(() => {
+    if (plan !== 'light') return
+    setBasket(p => (p.email_blast == null && p.whatsapp_blast == null) ? p : (() => { const n = { ...p }; delete n.email_blast; delete n.whatsapp_blast; return n })())
+  }, [plan])
+
   const isBiz = gate === 'business'
   const inBasket = (id: string) => basket[id] != null
   const toggleAddon = (id: string) => setBasket(p => { const n = { ...p }; if (n[id] != null) delete n[id]; else n[id] = durations[0] ?? 1; return n })
@@ -159,7 +166,7 @@ function EmployersInner() {
                 <div style={{ height: 1, background: 'var(--line)', margin: '14px 0' }} />
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#000', letterSpacing: 0.3, marginBottom: 8 }}>{t('What you get')}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  {[t('No monthly fee'), t('3 free listings per month')].map(line => (
+                  {[t('No monthly fee'), t('3 free listings per month'), t('No directory listing')].map(line => (
                     <div key={line} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a' }}>
                       <span style={{ width: 16, height: 16, flexShrink: 0, borderRadius: '50%', background: '#eaf7ee', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900 }}>✓</span>
                       {line}
@@ -168,8 +175,10 @@ function EmployersInner() {
                 </div>
                 <div style={{ marginTop: 'auto', paddingTop: 14 }}>
                   <div style={{ background: '#f8f6f2', border: '1px solid var(--line)', borderRadius: 10, padding: '9px 11px' }}>
-                    <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#000', fontSize: 11, marginBottom: 4 }}>{t('Have a free test')}</span>
-                    <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#000', lineHeight: 1.45 }}>{t('Recruitment and property ads not included')}</span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#000', fontSize: 11, marginBottom: 6 }}>{t('Have a free test')}</span>
+                    <div style={{ minHeight: 40 }}>
+                      <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#000', lineHeight: 1.45 }}>{t('Recruitment and property ads not included')}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -213,8 +222,10 @@ function EmployersInner() {
                     </div>
                     <div style={{ marginTop: 'auto', paddingTop: 14 }}>
                       <div style={{ background: start ? '#FFF7F0' : '#f8f6f2', border: `1px solid ${start ? '#FFE0C7' : 'var(--line)'}`, borderRadius: 10, padding: '9px 11px' }}>
-                        <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#000', fontSize: 11, marginBottom: 4 }}>{promo.label}</span>
-                        {promo.lines.map(l => <span key={l} style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#000', lineHeight: 1.45, marginBottom: 2 }}>{l}</span>)}
+                        <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#000', fontSize: 11, marginBottom: 6 }}>{promo.label}</span>
+                        <div style={{ minHeight: 40 }}>
+                          {promo.lines.map(l => <span key={l} style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#000', lineHeight: 1.45, marginBottom: 2 }}>{(g === 'trader' || g === 'pro') ? `• ${l}` : l}</span>)}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -222,7 +233,7 @@ function EmployersInner() {
               )
             })}
           </div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', textAlign: 'center', marginTop: 8 }}>{t('Levels are held on a rolling 90-day basis. Fees apply to item sales only, never to property or job listings.')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#1a1a1a', textAlign: 'center', marginTop: 8 }}>{t('Levels are held on a rolling 90-day basis. Fees apply to item sales only, never to property or job listings.')}</div>
         </div>
 
         {/* Key features for paid business accounts — each led by a large green
@@ -240,26 +251,22 @@ function EmployersInner() {
             <div key={title} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', background: '#fff', border: '1px solid var(--line)', borderRadius: 14, padding: '13px 14px', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 10, background: '#eaf7ee', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900 }}>✓</div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#6a6a6a', lineHeight: 1.4, marginTop: 2 }}>{desc}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)', marginBottom: 5 }}>{title}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#6a6a6a', lineHeight: 1.4 }}>{desc}</div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Service menu — one unified list of selectable services feeding the cart. */}
-        <div style={{ marginTop: 18, display: 'grid', gap: 14 }}>
+        {/* Service menu — one unified list of selectable services feeding the cart.
+            (3 line spaces after Key Features, per amend.) */}
+        <div style={{ marginTop: 48, display: 'grid', gap: 14 }}>
           <div style={card}>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{isBiz ? t('Add services') : t('Choose your services')}</div>
-            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#8a5a2a', marginBottom: 14 }}>
-              {isBiz ? t('Everything you tick adds to the basket below.') : t('Pick your plan and any marketing add-ons — everything you tick adds to the basket below.')}
-              {' '}<Link href={HELP} style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>{t('How it works')} ›</Link>
-            </div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)', marginBottom: 16 }}>{isBiz ? t('Add services') : t('Pick your customised plan')}</div>
 
             {/* Options 1 & 2 — the plan (new / non-business visitors only). */}
             {!isBiz && (<>
               <div onClick={() => setPlan(billing)} style={menuRow(plan !== 'light')}>
-                <span style={checkbox(plan !== 'light')}>{plan !== 'light' ? '✓' : ''}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={menuHead}>🏢 {t('Business')}</div>
                   <div style={menuBody}>{t('Major entry point — your storefront, 🏢 badge, hiring, property, lower fees and a free directory listing. 14 days free.')}</div>
@@ -273,15 +280,20 @@ function EmployersInner() {
                     </div>
                   )}
                 </div>
-                <span style={menuPrice}>{billing === 'year' ? '€290/yr' : '€29/mo'}</span>
+                <div style={priceCol}>
+                  <span style={menuPrice}>{billing === 'year' ? '€290/yr' : '€29/mo'}</span>
+                  <span style={checkbox(plan !== 'light')}>{plan !== 'light' ? '✓' : ''}</span>
+                </div>
               </div>
               <div onClick={() => setPlan('light')} style={menuRow(plan === 'light')}>
-                <span style={checkbox(plan === 'light')}>{plan === 'light' ? '✓' : ''}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={menuHead}>🆓 {t('Business Light')}</div>
+                  <div style={menuHead}>{t('Business Light')}</div>
                   <div style={menuBody}>{t('Free — 8% selling fee, 3 free listings a month, no monthly fee. Upgrade any time.')}</div>
                 </div>
-                <span style={menuPrice}>{t('Free')}</span>
+                <div style={priceCol}>
+                  <span style={menuPrice}>{t('Free')}</span>
+                  <span style={checkbox(plan === 'light')}>{plan === 'light' ? '✓' : ''}</span>
+                </div>
               </div>
             </>)}
 
@@ -290,29 +302,36 @@ function EmployersInner() {
               const on = inBasket(a.id)
               const qtys = addonQtys(a.id)
               const n = basket[a.id] ?? qtys[0] ?? 1
+              // Blasts require a paid Business account — greyed out on Light.
+              const lightBlocked = plan === 'light' && !!blastKind(a.id)
+              const disabled = a.comingSoon || lightBlocked
               return (
-                <div key={a.id} onClick={() => !a.comingSoon && toggleAddon(a.id)} style={{ ...menuRow(on), opacity: a.comingSoon ? 0.6 : 1, cursor: a.comingSoon ? 'default' : 'pointer' }}>
-                  <span style={checkbox(on)}>{on ? '✓' : ''}</span>
+                <div key={a.id} onClick={() => !disabled && toggleAddon(a.id)} style={{ ...menuRow(on), opacity: disabled ? 0.55 : 1, cursor: disabled ? 'default' : 'pointer' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={menuHead}>{a.label}
                       {a.comingSoon && <span style={{ marginLeft: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 8.5, fontWeight: 900, padding: '2px 6px', borderRadius: 50, textTransform: 'uppercase' }}>{t('Soon')}</span>}
                     </div>
                     <div style={menuBody}>{ADDON_COPY[a.id] ?? a.blurb}</div>
-                    {on && (
-                      <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-                        <select value={n} onChange={e => setMonths(a.id, Number(e.target.value))} style={miniSel}>
-                          {qtys.map(d => <option key={d} value={d}>{qtyLabel(a.id, a.monthlyCents, d)}</option>)}
-                        </select>
-                        {a.id === 'category_sponsor' && (
-                          <select value={pageFor[a.id] ?? ''} onChange={e => setPageFor(p => ({ ...p, [a.id]: e.target.value }))} style={miniSel}>
-                            <option value="">{t('Choose a page…')}</option>
-                            {pages.map(pg => <option key={pg} value={pg}>{pageLabel(pg)}</option>)}
+                    {lightBlocked
+                      ? <div style={{ marginTop: 6, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#b45309' }}>{t('Only available to paid business accounts.')}</div>
+                      : (
+                        <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                          <select value={n} onChange={e => setMonths(a.id, Number(e.target.value))} style={miniSel}>
+                            {qtys.map(d => <option key={d} value={d}>{qtyLabel(a.id, a.monthlyCents, d)}</option>)}
                           </select>
-                        )}
-                      </div>
-                    )}
+                          {a.id === 'category_sponsor' && (
+                            <select value={pageFor[a.id] ?? ''} onChange={e => setPageFor(p => ({ ...p, [a.id]: e.target.value }))} style={miniSel}>
+                              <option value="">{t('Choose a page…')}</option>
+                              {pages.map(pg => <option key={pg} value={pg}>{pageLabel(pg)}</option>)}
+                            </select>
+                          )}
+                        </div>
+                      )}
                   </div>
-                  <span style={menuPrice}>{on ? eur(lineCents(a.id, a.monthlyCents, n)) : blastKind(a.id) ? `${eur(blastPrice(a.id, 1))}` : `${eur(a.monthlyCents)}/mo`}</span>
+                  <div style={priceCol}>
+                    <span style={menuPrice}>{on ? eur(lineCents(a.id, a.monthlyCents, n)) : blastKind(a.id) ? `${eur(blastPrice(a.id, 1))}` : `${eur(a.monthlyCents)}/mo`}</span>
+                    <span style={checkbox(on)}>{on ? '✓' : ''}</span>
+                  </div>
                 </div>
               )
             })}
@@ -350,17 +369,14 @@ function EmployersInner() {
               )
             })}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f0ebe4', marginTop: 8, paddingTop: 10 }}>
-              <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: '#555' }}>{t('Add-ons total (one-off)')}</span>
+              <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: '#555' }}>{t('Upgrades')}</span>
               <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 18, fontWeight: 900, color: 'var(--orange)' }}>{eur(basketTotal)}</span>
             </div>
 
             <button onClick={continueToCheckout} disabled={busy || (isBiz && basketItems.length === 0)} style={{ ...cta, marginTop: 14, opacity: (isBiz && basketItems.length === 0) ? 0.5 : 1 }}>
-              {busy ? t('Opening checkout…') : isBiz ? `${t('Pay & activate')} →` : `${t('Continue to checkout')} →`}
+              {busy ? t('Opening checkout…') : isBiz ? t('Pay & activate') : t('Continue to checkout')}
             </button>
-            {!isBiz && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a5a2a', textAlign: 'center', marginTop: 8 }}>{t('Next: create your account, then your subscription and any upgrades are paid together.')}</div>}
-            <Link href="/advertise" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 12, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--orange)' }}>
-              🎯 {t('Or book banner advertising with a date picker')} ›
-            </Link>
+            {!isBiz && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)', textAlign: 'center', marginTop: 12, lineHeight: 1.5 }}>{t('Once paid, you will be automatically transferred into the business account creator area to set up your storefront and business information.')}</div>}
           </div>
         </div>
 
@@ -388,9 +404,11 @@ const upgradeCard = (on: boolean): React.CSSProperties => ({ background: on ? '#
 // Service-menu row (a tickable service in the unified list).
 const menuRow = (on: boolean): React.CSSProperties => ({ display: 'flex', gap: 11, alignItems: 'flex-start', border: `1.5px solid ${on ? 'var(--orange)' : '#f0ebe4'}`, background: on ? '#FFF7F0' : '#fff', borderRadius: 12, padding: '12px 13px', marginBottom: 10, cursor: 'pointer' })
 const checkbox = (on: boolean): React.CSSProperties => ({ width: 20, height: 20, flexShrink: 0, marginTop: 1, borderRadius: 6, border: `2px solid ${on ? 'var(--orange)' : '#d8cbb5'}`, background: on ? 'var(--orange)' : '#fff', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900 })
-const menuHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }
-const menuBody: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#1a1a1a', marginTop: 3, lineHeight: 1.45 }
+const menuHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 5 }
+const menuBody: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#1a1a1a', lineHeight: 1.45 }
 const menuPrice: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }
+// Right-hand column of a service row — price above its tick box.
+const priceCol: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }
 const miniSel: React.CSSProperties = { border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 700, background: '#fff' }
 const basketRow: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 10, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', padding: '5px 0' }
 const cta: React.CSSProperties = { width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }

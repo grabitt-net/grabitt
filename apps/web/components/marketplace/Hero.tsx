@@ -20,8 +20,9 @@ export default function Hero() {
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
           }}
         >
-          <Icon name="sparkle" size={18} strokeWidth={0} style={{ fill: '#fff' }} />
-          <span>Grabitt Now — limited-time offers</span>
+          <Icon name="zap" size={18} strokeWidth={2} />
+          <span>Grabitt NOW! Limited Time Offers</span>
+          <Icon name="zap" size={18} strokeWidth={2} />
         </button>
       </div>
     </section>
