@@ -116,8 +116,6 @@ function EmployersInner() {
       <div style={{ maxWidth: 920, margin: '0 auto', padding: '18px 14px 0' }}>
         {/* Business levels */}
         <div style={{ marginTop: 18 }}>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', textAlign: 'center', marginBottom: 4 }}>{t('Business levels')}</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', textAlign: 'center', marginBottom: 12 }}>{t('Start free on Business Light or subscribe to Business. The lower-fee levels are earned — and maintained — through sales and rating.')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }} className="biz-levels">
             {/* Business Light — the free entry account, shown first in the row. */}
             <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', background: '#fff', border: '1.5px solid var(--line)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
@@ -126,16 +124,15 @@ function EmployersInner() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 19 }}>🆓</span>
                   <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{t('Business Light')}</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-nunito)', fontSize: 8.5, fontWeight: 900, color: '#fff', background: '#94a3b8', borderRadius: 50, padding: '3px 9px', textTransform: 'uppercase', letterSpacing: 0.3 }}>{t('Free')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 12 }}>
                   <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 30, fontWeight: 700, color: 'var(--orange)', lineHeight: 1 }}>8%</span>
                   <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6a6a6a', fontWeight: 700 }}>{t('sales fee')}</span>
                 </div>
                 <div style={{ height: 1, background: 'var(--line)', margin: '14px 0' }} />
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>{t('What you get')}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#000', letterSpacing: 0.3, marginBottom: 8 }}>{t('What you get')}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  {[t('Sell under your business name'), t('€0.99 per item listing'), t('No monthly fee')].map(line => (
+                  {[t('No monthly fee'), t('3 free listings per month')].map(line => (
                     <div key={line} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a' }}>
                       <span style={{ width: 16, height: 16, flexShrink: 0, borderRadius: '50%', background: '#eaf7ee', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900 }}>✓</span>
                       {line}
@@ -144,8 +141,8 @@ function EmployersInner() {
                 </div>
                 <div style={{ marginTop: 'auto', paddingTop: 14 }}>
                   <div style={{ background: '#f8f6f2', border: '1px solid var(--line)', borderRadius: 10, padding: '9px 11px' }}>
-                    <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#9a9a9a', textTransform: 'uppercase', fontSize: 9.5, letterSpacing: 0.4, marginBottom: 3 }}>{t('How to get it')}</span>
-                    <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#555', lineHeight: 1.45 }}>{t('Free for everyone — start instantly, upgrade any time.')}</span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#000', fontSize: 11, marginBottom: 4 }}>{t('Have a free test')}</span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#000', lineHeight: 1.45 }}>{t('Recruitment and property ads not included')}</span>
                   </div>
                 </div>
               </div>
@@ -153,6 +150,12 @@ function EmployersInner() {
             {BUSINESS_TIER_ORDER.map((g, i) => {
               const tier = BUSINESS_TIERS[g]
               const start = i === 0
+              // Per-tier footer copy, exactly as specified on the lander.
+              const promo = g === 'pro'
+                ? { label: t('Hold onto it'), lines: [t('75 minimum sales with no refunds in 90 days'), t('Maintain 4.9 rating consistently')] }
+                : g === 'trader'
+                ? { label: t('How to get promoted'), lines: [t('25 min sales with no refunds in 90 days'), t('Maintain 4.7 or above rating in 90 days')] }
+                : { label: t('How to get promoted'), lines: [t('Start growing your online business here.')] }
               return (
                 <div key={g} style={{ position: 'relative', display: 'flex', flexDirection: 'column', background: '#fff', border: `1.5px solid ${start ? 'var(--orange)' : 'var(--line)'}`, borderRadius: 16, overflow: 'visible', boxShadow: start ? '0 8px 24px rgba(245,84,10,0.13)' : 'var(--shadow-sm)' }}>
                   {/* Promotion arrow to the next paid tier (shown in the 4-up row). */}
@@ -172,9 +175,9 @@ function EmployersInner() {
                       <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6a6a6a', fontWeight: 700 }}>{t('sales fee')}</span>
                     </div>
                     <div style={{ height: 1, background: 'var(--line)', margin: '14px 0' }} />
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>{t('Included each month')}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#000', letterSpacing: 0.3, marginBottom: 8 }}>{t('Included each month')}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                      {[`${tier.caps.items} ${t('item listings')}`, `${tier.caps.jobs} ${t('job adverts')}`, `${tier.caps.property} ${t('property listings')}`, t('Free directory listing')].map(line => (
+                      {[`${tier.caps.items} ${t('item listings')}`, `${tier.caps.jobs} ${t('job adverts')}`, `${tier.caps.property} ${t('property listings')}`, t('Storefront'), t('Free directory listing')].map(line => (
                         <div key={line} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a' }}>
                           <span style={{ width: 16, height: 16, flexShrink: 0, borderRadius: '50%', background: '#eaf7ee', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900 }}>✓</span>
                           {line}
@@ -183,12 +186,8 @@ function EmployersInner() {
                     </div>
                     <div style={{ marginTop: 'auto', paddingTop: 14 }}>
                       <div style={{ background: start ? '#FFF7F0' : '#f8f6f2', border: `1px solid ${start ? '#FFE0C7' : 'var(--line)'}`, borderRadius: 10, padding: '9px 11px' }}>
-                        <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#9a9a9a', textTransform: 'uppercase', fontSize: 9.5, letterSpacing: 0.4, marginBottom: 3 }}>{t('How to reach it')}</span>
-                        <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#555', lineHeight: 1.45 }}>
-                          {tier.criteria.sales90d === 0
-                            ? t('Included with any Business account.')
-                            : `${tier.criteria.sales90d}+ ${t('sales in 90 days')} · ${tier.criteria.rating}★ ${t('rating')}`}
-                        </span>
+                        <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#000', fontSize: 11, marginBottom: 4 }}>{promo.label}</span>
+                        {promo.lines.map(l => <span key={l} style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#000', lineHeight: 1.45, marginBottom: 2 }}>{l}</span>)}
                       </div>
                     </div>
                   </div>
@@ -199,21 +198,20 @@ function EmployersInner() {
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', textAlign: 'center', marginTop: 8 }}>{t('Levels are held on a rolling 90-day basis. Fees apply to item sales only, never to property or job listings.')}</div>
         </div>
 
-        {/* Features that come with a paid Business subscription (levels 2–4:
-            Business, Business Plus, Business Pro). Business Light is selling-only. */}
-        <div style={{ marginTop: 22, fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', textAlign: 'center' }}>{t('Features for Business, Business Plus & Business Pro')}</div>
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6a6a6a', textAlign: 'center', margin: '4px 0 12px' }}>{t('Business Light covers selling only — these come with a paid Business subscription.')}</div>
+        {/* Key features for paid business accounts — each led by a large green
+            tick to draw the eye. */}
+        <div style={{ marginTop: 22, fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', textAlign: 'center', marginBottom: 12 }}>{t('Key Features for Paid Business Accounts')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }} className="biz-perks">
           {([
-            ['🏪', t('Storefront'), t('Your own branded shop page with logo, banner and all your listings.')],
-            ['🔍', t('Recruitment'), t('Post jobs, search the candidate database and track applicants.')],
-            ['🏠', t('List property'), t('Advertise property for sale or rent — commission-free.')],
-            ['🛡️', t('Verified badge'), t('A 🏢 badge that shows buyers you’re a genuine business.')],
-            ['⭐', t('Lower fees'), t('Selling fees from 6%, dropping to as low as 2.5%.')],
-            ['📊', t('Analytics'), t('Views, offers and conversion for every listing.')],
-          ] as [string, string, string][]).map(([icon, title, desc]) => (
+            [t('Storefront'), t('Your own branded shop page with logo, banner and all your listings.')],
+            [t('Recruitment'), t('Post jobs, search the candidate database and track applicants.')],
+            [t('List property'), t('Advertise property for sale or rent — commission-free.')],
+            [t('Verified badge'), t('A 🏢 badge that shows buyers you’re a genuine business.')],
+            [t('Lower fees'), t('Selling fees from 6%, dropping to as low as 2.5%.')],
+            [t('Stats & Analytics'), t('Views, offers and conversion for every listing.')],
+          ] as [string, string][]).map(([title, desc]) => (
             <div key={title} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', background: '#fff', border: '1px solid var(--line)', borderRadius: 14, padding: '13px 14px', boxShadow: 'var(--shadow-sm)' }}>
-              <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 10, background: 'linear-gradient(135deg,#FFF3EE,#FFE4D6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19 }}>{icon}</div>
+              <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 10, background: '#eaf7ee', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900 }}>✓</div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</div>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#6a6a6a', lineHeight: 1.4, marginTop: 2 }}>{desc}</div>
