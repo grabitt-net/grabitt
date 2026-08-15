@@ -4754,8 +4754,13 @@ function PanelBody() {
     const blastKind = (id: string): 'email' | 'whatsapp' | null => id === 'email_blast' ? 'email' : id === 'whatsapp_blast' ? 'whatsapp' : null
     const blastQtys = (id: string): number[] => { const k = blastKind(id); return k ? Object.keys(BLAST_BUNDLES[k]).map(Number).sort((a, b) => a - b) : [] }
     const blastPrice = (id: string, qty: number): number => { const k = blastKind(id); return k ? (BLAST_BUNDLES[k][qty] ?? 0) : 0 }
-    const lineCents = (id: string, monthly: number, n: number): number => blastKind(id) ? blastPrice(id, n) : sponsorTotalCents(monthly, n)
-    const toggleSponsor = (id: string) => setBasket(p => { const n = { ...p }; if (n[id] != null) delete n[id]; else n[id] = durations[0] ?? 1; return n })
+    // Banner sponsors: 1–3 months, 20% off 2mo, 30% off 3mo (mirrors the server).
+    const isBannerAddon = (id: string) => ['homepage_sponsor', 'category_sponsor', 'featured_partner'].includes(id)
+    const bannerTotal = (monthly: number, n: number) => Math.round(monthly * (n >= 3 ? 3 * 0.7 : n >= 2 ? 2 * 0.8 : 1))
+    const addonQtys = (id: string): number[] => blastKind(id) ? blastQtys(id) : isBannerAddon(id) ? [1, 2, 3] : [1, 12]
+    const lineCents = (id: string, monthly: number, n: number): number => blastKind(id) ? blastPrice(id, n) : isBannerAddon(id) ? bannerTotal(monthly, n) : sponsorTotalCents(monthly, n)
+    const qtyLabel = (id: string, monthly: number, d: number): string => blastKind(id) ? `${d} ${d === 1 ? 'send' : 'sends'} · ${eur(blastPrice(id, d))}` : `${d >= 12 ? '1 year' : `${d} ${d === 1 ? 'month' : 'months'}`} · ${eur(lineCents(id, monthly, d))}`
+    const toggleSponsor = (id: string) => setBasket(p => { const n = { ...p }; if (n[id] != null) delete n[id]; else n[id] = addonQtys(id)[0] ?? 1; return n })
     const setSponsorMonths = (id: string, m: number) => setBasket(p => ({ ...p, [id]: m }))
     const sponsorItems = Object.entries(basket).map(([addonId, months]) => ({ addonId, months, ...(addonId === 'category_sponsor' && sponsorPages[addonId] ? { pageTarget: sponsorPages[addonId] } : {}) }))
     const sponsorTotal = Object.entries(basket).reduce((s, [id, m]) => { const c = catalog.find(x => x.id === id); return s + (c ? lineCents(id, c.monthlyCents, m) : 0) }, 0)
@@ -4828,7 +4833,7 @@ function PanelBody() {
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#999', marginBottom: 10 }}>One-off placements for the months you choose (12 = 2 months free) — billed on your first invoice.</div>
         {catalog.map(a => {
           const on = basket[a.id] != null
-          const months = basket[a.id] ?? durations[0] ?? 1
+          const months = basket[a.id] ?? addonQtys(a.id)[0] ?? 1
           return (
             <div key={a.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, background: on ? '#FFF7F0' : '#fff', border: `1.5px solid ${on ? 'var(--orange)' : '#f0ebe4'}`, borderRadius: 12, padding: '11px 13px', marginBottom: 8 }}>
               <button onClick={() => toggleSponsor(a.id)} disabled={a.comingSoon} style={{ width: 20, height: 20, flexShrink: 0, marginTop: 2, borderRadius: 6, border: `2px solid ${on ? 'var(--orange)' : '#d8cbb5'}`, background: on ? 'var(--orange)' : '#fff', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, cursor: a.comingSoon ? 'default' : 'pointer' }}>{on ? '✓' : ''}</button>
@@ -4837,7 +4842,7 @@ function PanelBody() {
                 <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 2, lineHeight: 1.4 }}>{a.blurb}</span>
                 {on && (
                   <select value={months} onChange={e => setSponsorMonths(a.id, Number(e.target.value))} style={{ marginTop: 6, border: '1.5px solid #e5dccd', borderRadius: 8, padding: '4px 8px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 700, background: '#fff' }}>
-                    {(blastKind(a.id) ? blastQtys(a.id) : durations).map(d => <option key={d} value={d}>{blastKind(a.id) ? `${d} ${d === 1 ? 'send' : 'sends'} · ${eur(blastPrice(a.id, d))}` : `${d} ${d === 1 ? 'month' : 'months'}`}</option>)}
+                    {addonQtys(a.id).map(d => <option key={d} value={d}>{qtyLabel(a.id, a.monthlyCents, d)}</option>)}
                   </select>
                 )}
               </span>

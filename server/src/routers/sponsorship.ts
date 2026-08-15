@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
 import { getStripe } from '../lib/stripe'
-import { getSponsorshipCatalog, sponsorshipTotalCents, sponsorMonthlyCents, SPONSOR_DURATIONS, SPONSOR_PAGES, bannerForAddon, blastKind, blastPriceCents } from '../lib/sponsorshipPricing'
+import { getSponsorshipCatalog, sponsorMonthlyCents, SPONSOR_DURATIONS, SPONSOR_PAGES, bannerForAddon, blastKind, addonLineCents, isValidAddonQty } from '../lib/sponsorshipPricing'
 import { BUSINESS_ADDON_IDS, BLAST_BUNDLES } from '@grabitt/design-tokens'
 import type { PrismaClient } from '@prisma/client'
 
@@ -129,27 +129,15 @@ export const sponsorshipRouter = router({
       const basketParts: string[] = []
       for (const item of input.items) {
         const label = catalog.find(c => c.id === item.addonId)?.label ?? item.addonId
-        const blast = blastKind(item.addonId)
-        let total: number
-        let unitWord: string
-        if (blast) {
-          // Blasts: fixed bundle price for the chosen number of sends.
-          const price = blastPriceCents(item.addonId, item.months)
-          if (price == null) throw new TRPCError({ code: 'BAD_REQUEST', message: `Invalid ${label} bundle` })
-          total = price
-          unitWord = item.months === 1 ? 'send' : 'sends'
-          lineItems.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: total, product_data: { name: `Grabitt — ${label} (${item.months} ${unitWord})` } } })
-          basketParts.push(`${item.addonId}:${item.months}:${total}:`)
-          continue
-        }
-        if (!(SPONSOR_DURATIONS as readonly number[]).includes(item.months)) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid duration' })
+        if (!isValidAddonQty(item.addonId, item.months)) throw new TRPCError({ code: 'BAD_REQUEST', message: `Invalid amount for ${label}` })
         const b = bannerForAddon(item.addonId)
         if (b?.needsPage) await assertCategoryFree(ctx.prisma, item.pageTarget)
         const monthly = await sponsorMonthlyCents(ctx.prisma, item.addonId)
         if (monthly == null) throw new TRPCError({ code: 'BAD_REQUEST', message: `${item.addonId} is not available` })
-        total = sponsorshipTotalCents(monthly, item.months)
+        const total = addonLineCents(item.addonId, monthly, item.months)
+        const unitWord = blastKind(item.addonId) ? (item.months === 1 ? 'send' : 'sends') : (item.months === 1 ? 'month' : 'months')
         const page = b?.needsPage ? (item.pageTarget ?? '') : ''
-        lineItems.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: total, product_data: { name: `Grabitt — ${label} (${item.months} ${item.months === 1 ? 'month' : 'months'})${page ? ` · ${page}` : ''}` } } })
+        lineItems.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: total, product_data: { name: `Grabitt — ${label} (${item.months} ${unitWord})${page ? ` · ${page}` : ''}` } } })
         basketParts.push(`${item.addonId}:${item.months}:${total}:${page}`)
       }
 

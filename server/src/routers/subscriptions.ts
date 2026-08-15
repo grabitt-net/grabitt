@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { getStripe } from '../lib/stripe'
 import { SUBSCRIPTION_PLANS, FOUNDING_BUSINESS_CAP } from '@grabitt/design-tokens'
-import { getSponsorshipCatalog, sponsorMonthlyCents, sponsorshipTotalCents, bannerForAddon, blastKind, blastPriceCents } from '../lib/sponsorshipPricing'
+import { getSponsorshipCatalog, sponsorMonthlyCents, bannerForAddon, blastKind, addonLineCents, isValidAddonQty } from '../lib/sponsorshipPricing'
 import type { PrismaClient } from '@prisma/client'
 
 const PLAN_IDS = Object.keys(SUBSCRIPTION_PLANS) as (keyof typeof SUBSCRIPTION_PLANS)[]
@@ -79,15 +79,7 @@ export const subscriptionsRouter = router({
         const catalog = await getSponsorshipCatalog(ctx.prisma)
         for (const item of input.sponsorship) {
           const label = catalog.find(c => c.id === item.addonId)?.label ?? item.addonId
-          // Blasts: send-quantity bundle price, not months × monthly.
-          const blast = blastKind(item.addonId)
-          if (blast) {
-            const price = blastPriceCents(item.addonId, item.months)
-            if (price == null) continue
-            lineItems.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: price, product_data: { name: `Grabitt — ${label} (${item.months} ${item.months === 1 ? 'send' : 'sends'})` } } })
-            basketParts.push(`${item.addonId}:${item.months}:${price}:`)
-            continue
-          }
+          if (!isValidAddonQty(item.addonId, item.months)) continue
           const b = bannerForAddon(item.addonId)
           if (b?.needsPage) {
             if (!item.pageTarget) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Pick which category page to sponsor.' })
@@ -96,9 +88,10 @@ export const subscriptionsRouter = router({
           }
           const monthly = await sponsorMonthlyCents(ctx.prisma, item.addonId)
           if (monthly == null) continue
-          const total = sponsorshipTotalCents(monthly, item.months)
+          const total = addonLineCents(item.addonId, monthly, item.months)
+          const unitWord = blastKind(item.addonId) ? (item.months === 1 ? 'send' : 'sends') : (item.months === 1 ? 'month' : 'months')
           const page = b?.needsPage ? (item.pageTarget ?? '') : ''
-          lineItems.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: total, product_data: { name: `Grabitt — ${label} (${item.months} ${item.months === 1 ? 'month' : 'months'})${page ? ` · ${page}` : ''}` } } })
+          lineItems.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: total, product_data: { name: `Grabitt — ${label} (${item.months} ${unitWord})${page ? ` · ${page}` : ''}` } } })
           basketParts.push(`${item.addonId}:${item.months}:${total}:${page}`)
         }
       }

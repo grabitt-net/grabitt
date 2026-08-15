@@ -37,8 +37,35 @@ const sponsorTotalCents = (monthly: number, months: number) => monthly * (months
 const blastKind = (id: string): 'email' | 'whatsapp' | null => id === 'email_blast' ? 'email' : id === 'whatsapp_blast' ? 'whatsapp' : null
 const blastQtys = (id: string): number[] => { const k = blastKind(id); return k ? Object.keys(BLAST_BUNDLES[k]).map(Number).sort((a, b) => a - b) : [] }
 const blastPrice = (id: string, qty: number): number => { const k = blastKind(id); return k ? (BLAST_BUNDLES[k][qty] ?? 0) : 0 }
-// Line total for an add-on: bundle price for blasts, months × monthly otherwise.
-const lineCents = (id: string, monthlyCents: number, n: number): number => blastKind(id) ? blastPrice(id, n) : sponsorTotalCents(monthlyCents, n)
+
+// Banner sponsor placements (Homepage / Category / Featured): booked 1–3 months,
+// 20% off 2 months, 30% off 3 months (mirrors the server).
+const BANNER_ADDONS = ['homepage_sponsor', 'category_sponsor', 'featured_partner']
+const isBannerAddon = (id: string) => BANNER_ADDONS.includes(id)
+const bannerTotal = (monthly: number, n: number) => Math.round(monthly * (n >= 3 ? 3 * 0.7 : n >= 2 ? 2 * 0.8 : 1))
+// Selectable quantities per add-on: banners 1/2/3 months, directory monthly or
+// yearly, blasts by send bundle.
+const addonQtys = (id: string): number[] => blastKind(id) ? blastQtys(id) : isBannerAddon(id) ? [1, 2, 3] : [1, 12]
+// Line total for an add-on by its pricing model.
+const lineCents = (id: string, monthlyCents: number, n: number): number =>
+  blastKind(id) ? blastPrice(id, n) : isBannerAddon(id) ? bannerTotal(monthlyCents, n) : sponsorTotalCents(monthlyCents, n)
+// A dropdown option's label (with its price) for a given add-on + quantity.
+const qtyLabel = (id: string, monthly: number, d: number): string => {
+  const price = `€${(lineCents(id, monthly, d) / 100).toFixed(0)}`
+  if (blastKind(id)) return `${d} ${d === 1 ? 'send' : 'sends'} · ${price}`
+  const term = d >= 12 ? '1 year' : `${d} ${d === 1 ? 'month' : 'months'}`
+  return `${term} · ${price}`
+}
+
+// Steve's exact marketing copy for the service-menu options (icons removed).
+const ADDON_COPY: Record<string, string> = {
+  homepage_sponsor: 'Grab prime position! THE most prominent banner on the entire site. Visible to everyone who visits the page, clickable to your listing and you get a business directory listing for the duration of your banner sponsorship where you can put your information, offers and contact details. You must be a minimum Business Light account for this type of sponsorship but WOW its a zinger!',
+  category_sponsor: 'Industry domination! Grab this banner to be in front of buyers looking for a certain item in a certain department, they get to see you right at the top of their page! It clicks through to your business directory listing that is live during your banner sponsorship.',
+  featured_partner: 'This is a fantastic way to be everywhere, your banner and message appears across all pages on a rotation with 7 featured partners! Including message box, alerts, saved and all landing pages. It clicks through to your business directory listing that is live during your banner sponsorship.',
+  directory: 'What we have been missing is a nice clean business directory here on the canary islands. Split into industry, you can come up when people search for a plumber, dentist, doctor, lawyer, you name it. You get your logo, contact details and a brief description of what you do and where you are with a map pin.',
+  email_blast: 'One of our most POWERFUL marketing tools at your disposal. Write your email copy - Create a great offer, - Tell them about your business and how to get in touch and away we go! We offer delivery and open statistics report including any that bounce, who we contact to check if they received it or if their email address changed. You must be at least a Business client to use this service and it is strictly limited to once per quarter.',
+  whatsapp_blast: 'THE most powerful communication method we have, direct to the members whatsapp providing a great opportunity to grab their attention real time! Delivery stats and successful send report provided. You must be a standard business user to be able to use this service and its limited to once per quarter.',
+}
 
 function EmployersInner() {
   const { openPanel } = usePanel()
@@ -220,76 +247,61 @@ function EmployersInner() {
           ))}
         </div>
 
-        {/* Build-a-basket: subscription (new business) + upgrades, paid together */}
+        {/* Service menu — one unified list of selectable services feeding the cart. */}
         <div style={{ marginTop: 18, display: 'grid', gap: 14 }}>
-          {/* 1) Business subscription — choose monthly or yearly (new businesses only) */}
-          {!isBiz && (
-            <div style={card}>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>{t('1. Your Business account')}</div>
-              <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#8a5a2a', margin: '6px 0 12px' }}>{t('14 days free, then choose monthly or yearly. Storefront, badge, hiring, property and lower fees.')}</div>
-              {/* Monthly / yearly toggle — centered; drives the paid card's price. */}
-              <div style={{ textAlign: 'center', marginBottom: 12 }}>
-                <div style={{ display: 'inline-flex', background: '#f5f0e8', borderRadius: 50, padding: 3 }}>
-                  {(['month', 'year'] as const).map(b => (
-                    <button key={b} onClick={() => { setBilling(b); setPlan(p => (p === 'light' ? 'light' : b)) }} style={{ border: 'none', borderRadius: 50, padding: '5px 16px', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, background: billing === b ? '#fff' : 'transparent', color: billing === b ? 'var(--dark)' : '#888', boxShadow: billing === b ? '0 1px 3px rgba(0,0,0,0.08)' : 'none' }}>
-                      {b === 'month' ? t('Monthly') : t('Yearly')}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Free account first, paid second — the paid card updates with the toggle. */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <button onClick={() => setPlan('light')} style={{ textAlign: 'left', border: `2px solid ${plan === 'light' ? 'var(--orange)' : '#f0ebe4'}`, background: plan === 'light' ? '#FFF7F0' : '#fff', borderRadius: 14, padding: 14, cursor: 'pointer' }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>🆓 {t('Business Light')}</div>
-                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 22, fontWeight: 700, color: plan === 'light' ? 'var(--orange)' : 'var(--dark)', margin: '6px 0 2px' }}>{t('Free')}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#8a5a2a', lineHeight: 1.4 }}>{t('No monthly fee · 8% fee · €0.99 per item listing')}</div>
-                </button>
-                <button onClick={() => setPlan(billing)} style={{ textAlign: 'left', border: `2px solid ${plan !== 'light' ? 'var(--orange)' : '#f0ebe4'}`, background: plan !== 'light' ? '#FFF7F0' : '#fff', borderRadius: 14, padding: 14, cursor: 'pointer' }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>🏢 {t('Business')}</div>
-                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 22, fontWeight: 700, color: plan !== 'light' ? 'var(--orange)' : 'var(--dark)', margin: '6px 0 2px' }}>{billing === 'year' ? '€290' : '€29'}<span style={{ fontSize: 12, color: '#6a6a6a', fontWeight: 400 }}>{billing === 'year' ? `/${t('year')}` : `/${t('month')}`}</span></div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#16a34a', fontWeight: 800, lineHeight: 1.4 }}>{t('14 days free')}{billing === 'year' ? ` · ${t('2 months free')}` : ''}</div>
-                </button>
-              </div>
-              <ul style={{ margin: '14px 0 0', paddingLeft: 18, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', lineHeight: 1.8 }}>
-                <li>{t('Your own branded storefront')} · {t('Verified 🏢 business badge')}</li>
-                <li>{t('Post jobs & list property')} · {t('Bulk import & multibuy')}</li>
-              </ul>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#8a5a2a', marginTop: 10 }}>
-                {t('Already have an account?')} <button onClick={() => openPanel('login')} style={linkBtn}>{t('Log in')}</button>
-              </div>
-            </div>
-          )}
-
-          {/* 2) Upgrades — 2 per line, as cards */}
           <div style={card}>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>{isBiz ? t('Sponsorship & advertising') : t('2. Add upgrades (optional)')}</div>
-            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#8a5a2a', margin: '6px 0 12px' }}>
-              {t('One-off, timed placements — pick the months you want (12 = 2 months free).')}
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{isBiz ? t('Add services') : t('Choose your services')}</div>
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#8a5a2a', marginBottom: 14 }}>
+              {isBiz ? t('Everything you tick adds to the basket below.') : t('Pick your plan and any marketing add-ons — everything you tick adds to the basket below.')}
               {' '}<Link href={HELP} style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>{t('How it works')} ›</Link>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }} className="biz-upgrades">
-              {catalog.map(a => {
-                const on = inBasket(a.id)
-                const months = basket[a.id] ?? durations[0] ?? 1
-                const lineTotal = lineCents(a.id, a.monthlyCents, months)
-                return (
-                  <div key={a.id} onClick={() => !a.comingSoon && toggleAddon(a.id)} style={{ ...upgradeCard(on), opacity: a.comingSoon ? 0.6 : 1, cursor: a.comingSoon ? 'default' : 'pointer' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                      <span style={{ width: 20, height: 20, flexShrink: 0, borderRadius: 6, border: `2px solid ${on ? 'var(--orange)' : '#d8cbb5'}`, background: on ? 'var(--orange)' : '#fff', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900 }}>{on ? '✓' : ''}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{a.icon} {a.label}
-                          {a.comingSoon && <span style={{ marginLeft: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 8.5, fontWeight: 900, padding: '2px 6px', borderRadius: 50, textTransform: 'uppercase' }}>{t('Soon')}</span>}
-                        </div>
-                        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 2, lineHeight: 1.4 }}>{a.blurb}</div>
-                      </div>
-                      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }}>{on ? eur(lineTotal) : blastKind(a.id) ? `${eur(blastPrice(a.id, 1))}/send` : `${eur(a.monthlyCents)}/mo`}</span>
+            {/* Options 1 & 2 — the plan (new / non-business visitors only). */}
+            {!isBiz && (<>
+              <div onClick={() => setPlan(billing)} style={menuRow(plan !== 'light')}>
+                <span style={checkbox(plan !== 'light')}>{plan !== 'light' ? '✓' : ''}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={menuHead}>🏢 {t('Business')}</div>
+                  <div style={menuBody}>{t('Major entry point — your storefront, 🏢 badge, hiring, property, lower fees and a free directory listing. 14 days free.')}</div>
+                  {plan !== 'light' && (
+                    <div onClick={e => e.stopPropagation()} style={{ display: 'inline-flex', background: '#f5f0e8', borderRadius: 50, padding: 3, marginTop: 8 }}>
+                      {(['month', 'year'] as const).map(b => (
+                        <button key={b} onClick={() => { setBilling(b); setPlan(b) }} style={{ border: 'none', borderRadius: 50, padding: '5px 14px', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, background: billing === b ? '#fff' : 'transparent', color: billing === b ? 'var(--dark)' : '#888' }}>
+                          {b === 'month' ? `${t('Monthly')} · €29` : `${t('Yearly')} · €290`}
+                        </button>
+                      ))}
                     </div>
+                  )}
+                </div>
+                <span style={menuPrice}>{billing === 'year' ? '€290/yr' : '€29/mo'}</span>
+              </div>
+              <div onClick={() => setPlan('light')} style={menuRow(plan === 'light')}>
+                <span style={checkbox(plan === 'light')}>{plan === 'light' ? '✓' : ''}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={menuHead}>🆓 {t('Business Light')}</div>
+                  <div style={menuBody}>{t('Free — 8% selling fee, 3 free listings a month, no monthly fee. Upgrade any time.')}</div>
+                </div>
+                <span style={menuPrice}>{t('Free')}</span>
+              </div>
+            </>)}
+
+            {/* Options 3–8 — marketing add-ons (icons removed, Steve's copy). */}
+            {catalog.map(a => {
+              const on = inBasket(a.id)
+              const qtys = addonQtys(a.id)
+              const n = basket[a.id] ?? qtys[0] ?? 1
+              return (
+                <div key={a.id} onClick={() => !a.comingSoon && toggleAddon(a.id)} style={{ ...menuRow(on), opacity: a.comingSoon ? 0.6 : 1, cursor: a.comingSoon ? 'default' : 'pointer' }}>
+                  <span style={checkbox(on)}>{on ? '✓' : ''}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={menuHead}>{a.label}
+                      {a.comingSoon && <span style={{ marginLeft: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 8.5, fontWeight: 900, padding: '2px 6px', borderRadius: 50, textTransform: 'uppercase' }}>{t('Soon')}</span>}
+                    </div>
+                    <div style={menuBody}>{ADDON_COPY[a.id] ?? a.blurb}</div>
                     {on && (
-                      <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10, paddingTop: 10, borderTop: '1px dashed #eaddc9' }}>
-                        <select value={months} onChange={e => setMonths(a.id, Number(e.target.value))} style={miniSel}>
-                          {(blastKind(a.id) ? blastQtys(a.id) : durations).map(d => <option key={d} value={d}>{blastKind(a.id) ? `${d} ${d === 1 ? t('send') : t('sends')} · ${eur(blastPrice(a.id, d))}` : `${d} ${d === 1 ? t('month') : t('months')}`}</option>)}
+                      <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                        <select value={n} onChange={e => setMonths(a.id, Number(e.target.value))} style={miniSel}>
+                          {qtys.map(d => <option key={d} value={d}>{qtyLabel(a.id, a.monthlyCents, d)}</option>)}
                         </select>
                         {a.id === 'category_sponsor' && (
                           <select value={pageFor[a.id] ?? ''} onChange={e => setPageFor(p => ({ ...p, [a.id]: e.target.value }))} style={miniSel}>
@@ -300,16 +312,19 @@ function EmployersInner() {
                       </div>
                     )}
                   </div>
-                )
-              })}
-            </div>
+                  <span style={menuPrice}>{on ? eur(lineCents(a.id, a.monthlyCents, n)) : blastKind(a.id) ? `${eur(blastPrice(a.id, 1))}` : `${eur(a.monthlyCents)}/mo`}</span>
+                </div>
+              )
+            })}
             {catalog.length === 0 && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '10px 0', textAlign: 'center' }}>{t('Loading…')}</div>}
-
-            {/* Directory is bought in the basket like any add-on; its details
-                (phone, website, logo…) are completed afterwards. */}
             {inBasket('directory') && (
-              <div style={{ marginTop: 10, background: '#FFF7F0', border: '1px dashed #f0c9a5', borderRadius: 10, padding: '9px 11px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#8a5a2a', lineHeight: 1.45 }}>
+              <div style={{ marginTop: 4, background: '#FFF7F0', border: '1px dashed #f0c9a5', borderRadius: 10, padding: '9px 11px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#8a5a2a', lineHeight: 1.45 }}>
                 📖 {t('After checkout, add your directory details (phone, website, logo) from Business → Directory listing.')}
+              </div>
+            )}
+            {!isBiz && (
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#8a5a2a', marginTop: 12 }}>
+                {t('Already have an account?')} <button onClick={() => openPanel('login')} style={linkBtn}>{t('Log in')}</button>
               </div>
             )}
           </div>
@@ -323,18 +338,19 @@ function EmployersInner() {
                 <span style={{ fontWeight: 900 }}>{subDueLabel}{plan !== 'light' && <span style={{ color: '#16a34a', fontWeight: 800 }}> ({t('14 days free')})</span>}</span>
               </div>
             )}
-            {basketItems.length === 0 && isBiz && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '6px 0' }}>{t('No upgrades selected yet.')}</div>}
+            {basketItems.length === 0 && isBiz && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '6px 0' }}>{t('No services selected yet.')}</div>}
             {Object.entries(basket).map(([id, m]) => {
               const c = catalog.find(x => x.id === id); if (!c) return null
+              const term = blastKind(id) ? `${m} ${m === 1 ? t('send') : t('sends')}` : m >= 12 ? t('1 year') : `${m} ${m === 1 ? t('month') : t('months')}`
               return (
                 <div key={id} style={basketRow}>
-                  <span>{c.icon} {c.label}{id === 'category_sponsor' && pageFor[id] ? ` · ${pageLabel(pageFor[id])}` : ''} · {m} {blastKind(id) ? (m === 1 ? t('send') : t('sends')) : (m === 1 ? t('month') : t('months'))}</span>
+                  <span>{c.label}{id === 'category_sponsor' && pageFor[id] ? ` · ${pageLabel(pageFor[id])}` : ''} · {term}</span>
                   <span style={{ fontWeight: 900 }}>{eur(lineCents(id, c.monthlyCents, m))}</span>
                 </div>
               )
             })}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f0ebe4', marginTop: 8, paddingTop: 10 }}>
-              <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: '#555' }}>{isBiz ? t('Upgrades total (one-off)') : t('Upgrades (one-off, on first invoice)')}</span>
+              <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: '#555' }}>{t('Add-ons total (one-off)')}</span>
               <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 18, fontWeight: 900, color: 'var(--orange)' }}>{eur(basketTotal)}</span>
             </div>
 
@@ -369,6 +385,12 @@ function EmployersInner() {
 
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 18, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
 const upgradeCard = (on: boolean): React.CSSProperties => ({ background: on ? '#FFF7F0' : '#fff', border: `1.5px solid ${on ? 'var(--orange)' : '#f0ebe4'}`, borderRadius: 12, padding: '12px 13px' })
+// Service-menu row (a tickable service in the unified list).
+const menuRow = (on: boolean): React.CSSProperties => ({ display: 'flex', gap: 11, alignItems: 'flex-start', border: `1.5px solid ${on ? 'var(--orange)' : '#f0ebe4'}`, background: on ? '#FFF7F0' : '#fff', borderRadius: 12, padding: '12px 13px', marginBottom: 10, cursor: 'pointer' })
+const checkbox = (on: boolean): React.CSSProperties => ({ width: 20, height: 20, flexShrink: 0, marginTop: 1, borderRadius: 6, border: `2px solid ${on ? 'var(--orange)' : '#d8cbb5'}`, background: on ? 'var(--orange)' : '#fff', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900 })
+const menuHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }
+const menuBody: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#1a1a1a', marginTop: 3, lineHeight: 1.45 }
+const menuPrice: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }
 const miniSel: React.CSSProperties = { border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 700, background: '#fff' }
 const basketRow: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 10, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', padding: '5px 0' }
 const cta: React.CSSProperties = { width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }
