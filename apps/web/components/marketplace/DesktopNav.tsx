@@ -26,6 +26,14 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
 
   const search = () => { if (query.trim()) router.push(`/search?q=${encodeURIComponent(query.trim())}`) }
 
+  // Home-page logo scrolls to the footer menu (replaces the old pop-up menu).
+  const scrollToFooter = () => {
+    if (typeof document === 'undefined') return
+    const f = document.querySelector('footer')
+    if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    else window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+  }
+
   // Messages is a real page (the Messages centre), not a panel — see IconRail.
   const actions: { icon: IconName; label: string; panel: PanelId; href?: string; badge?: number }[] = [
     { icon: 'bell', label: 'Alerts', panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
@@ -41,7 +49,7 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
       {back && <BackButton fallback={backFallback} />}
       {/* Logo — opens the Grabitt menu on the home page, links home elsewhere */}
       {isHome ? (
-        <button onClick={() => openPanel('menu')} aria-label="Grabitt menu"
+        <button onClick={scrollToFooter} aria-label="Go to menu"
           style={{ cursor: 'pointer', textAlign: 'left', flexShrink: 0, padding: 0, background: 'none', border: 'none' }}>
           <Logo height={38} />
           {title && <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', marginTop: 2, whiteSpace: 'nowrap', textAlign: 'center' }}>{title}</div>}

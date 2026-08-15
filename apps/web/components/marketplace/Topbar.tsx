@@ -55,6 +55,15 @@ export default function Topbar({ title, back, backFallback }: { title?: string; 
     if (query.trim()) router.push(`/search?q=${encodeURIComponent(query.trim())}`)
   }
 
+  // On the home page the logo now scrolls down to the footer menu (replacing the
+  // old pop-up menu panel).
+  const scrollToFooter = () => {
+    if (typeof document === 'undefined') return
+    const f = document.querySelector('footer')
+    if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    else window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+  }
+
   const handleNearMe = () => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       openPanel('near', { town: 'Gran Canaria' })
@@ -84,7 +93,7 @@ export default function Topbar({ title, back, backFallback }: { title?: string; 
       <div style={{ display: 'flex', alignItems: 'flex-start', padding: '10px 14px 0' }}>
         {showBack && <BackButton fallback={backFallback} />}
         {isHome ? (
-          <button onClick={() => openPanel('menu')} aria-label="Grabitt menu"
+          <button onClick={scrollToFooter} aria-label="Go to menu"
             style={{ flexShrink: 0, cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}>
             <Logo height={30} />
             <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: title ? 14 : 9, fontWeight: 700, color: title ? 'var(--dark)' : '#7a6a55', marginTop: 2, whiteSpace: 'nowrap', textAlign: title ? 'center' : 'left' }}>
