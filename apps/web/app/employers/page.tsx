@@ -342,7 +342,7 @@ function EmployersInner() {
               </div>
             )}
             {!isBiz && (
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#8a5a2a', marginTop: 12 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, color: '#8a5a2a', marginTop: 12 }}>
                 {t('Already have an account?')} <button onClick={() => openPanel('login')} style={linkBtn}>{t('Log in')}</button>
               </div>
             )}
@@ -376,7 +376,7 @@ function EmployersInner() {
             <button onClick={continueToCheckout} disabled={busy || (isBiz && basketItems.length === 0)} style={{ ...cta, marginTop: 14, opacity: (isBiz && basketItems.length === 0) ? 0.5 : 1 }}>
               {busy ? t('Opening checkout…') : isBiz ? t('Pay & activate') : t('Continue to checkout')}
             </button>
-            {!isBiz && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)', textAlign: 'center', marginTop: 12, lineHeight: 1.5 }}>{t('Once paid, you will be automatically transferred into the business account creator area to set up your storefront and business information.')}</div>}
+            {!isBiz && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: '#dc2626', textAlign: 'center', marginTop: 12, lineHeight: 1.5 }}>{t('You will be automatically transferred into the business account creator area to set up your storefront and business information.')}</div>}
           </div>
         </div>
 
@@ -412,4 +412,4 @@ const priceCol: React.CSSProperties = { display: 'flex', flexDirection: 'column'
 const miniSel: React.CSSProperties = { border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 700, background: '#fff' }
 const basketRow: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 10, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', padding: '5px 0' }
 const cta: React.CSSProperties = { width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 20px', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }
-const linkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer', textDecoration: 'underline' }
+const linkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer', textDecoration: 'underline' }
