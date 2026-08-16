@@ -5,6 +5,12 @@
 /* (deploy: cart checkout live) */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* ── Heading breathing room (site-wide) ──────────────────────────────────────
+   Every semantic heading gets a small space beneath it so body text never
+   starts hard against the heading. Inline div-based headings on key surfaces
+   (the For Business lander, etc.) carry their own margin. */
+h1, h2, h3, h4, h5, h6 { margin-bottom: 0.4em; line-height: 1.25; }
+
 /* ── Global keyboard focus ring ──────────────────────────────────────────────
    Every interactive element shows a visible focus indicator when reached by
    keyboard (never on mouse click). `!important` beats the many inline
