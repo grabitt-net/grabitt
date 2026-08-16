@@ -27,10 +27,10 @@ export default function QuickActions() {
             key={a.label}
             onClick={a.action}
             style={{
-              flex: '1 1 auto', background: '#fff', color: 'var(--ink-2)',
+              flex: '1 1 auto', background: '#fff', color: '#000',
               border: '1px solid var(--line)', borderRadius: 50,
               padding: '9px 14px', fontFamily: 'var(--font-ui)', fontSize: 13,
-              fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
             }}
           >
