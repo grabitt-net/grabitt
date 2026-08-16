@@ -312,25 +312,25 @@ function EmployersInner() {
                       {a.comingSoon && <span style={{ marginLeft: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 8.5, fontWeight: 900, padding: '2px 6px', borderRadius: 50, textTransform: 'uppercase' }}>{t('Soon')}</span>}
                     </div>
                     <div style={menuBody}>{ADDON_COPY[a.id] ?? a.blurb}</div>
-                    {lightBlocked
-                      ? <div style={{ marginTop: 6, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#b45309' }}>{t('Only available to paid business accounts.')}</div>
-                      : (
-                        <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-                          <select value={n} onChange={e => setMonths(a.id, Number(e.target.value))} style={miniSel}>
-                            {qtys.map(d => <option key={d} value={d}>{qtyLabel(a.id, a.monthlyCents, d)}</option>)}
-                          </select>
-                          {a.id === 'category_sponsor' && (
-                            <select value={pageFor[a.id] ?? ''} onChange={e => setPageFor(p => ({ ...p, [a.id]: e.target.value }))} style={miniSel}>
-                              <option value="">{t('Choose a page…')}</option>
-                              {pages.map(pg => <option key={pg} value={pg}>{pageLabel(pg)}</option>)}
-                            </select>
-                          )}
-                        </div>
-                      )}
+                    {lightBlocked && <div style={{ marginTop: 6, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#b45309' }}>{t('Only available to paid business accounts.')}</div>}
                   </div>
                   <div style={priceCol}>
                     <span style={menuPrice}>{on ? eur(lineCents(a.id, a.monthlyCents, n)) : blastKind(a.id) ? `${eur(blastPrice(a.id, 1))}` : `${eur(a.monthlyCents)}/mo`}</span>
                     <span style={checkbox(on)}>{on ? '✓' : ''}</span>
+                    {/* Duration / page dropdowns sit under the price + tick box. */}
+                    {!lightBlocked && (
+                      <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+                        <select value={n} onChange={e => setMonths(a.id, Number(e.target.value))} style={miniSel}>
+                          {qtys.map(d => <option key={d} value={d}>{qtyLabel(a.id, a.monthlyCents, d)}</option>)}
+                        </select>
+                        {a.id === 'category_sponsor' && (
+                          <select value={pageFor[a.id] ?? ''} onChange={e => setPageFor(p => ({ ...p, [a.id]: e.target.value }))} style={miniSel}>
+                            <option value="">{t('Choose a page…')}</option>
+                            {pages.map(pg => <option key={pg} value={pg}>{pageLabel(pg)}</option>)}
+                          </select>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )
@@ -380,9 +380,6 @@ function EmployersInner() {
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', margin: '16px 0' }}>
-          <Link href="/jobs" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#1a1a1a', textDecoration: 'none' }}>{t('Looking for work instead?')} ›</Link>
-        </div>
       </div>
 
       <Footer />
