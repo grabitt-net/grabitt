@@ -176,7 +176,7 @@ function EmployersInner() {
                 <div style={{ marginTop: 'auto', paddingTop: 14 }}>
                   <div style={{ background: '#f8f6f2', border: '1px solid var(--line)', borderRadius: 10, padding: '9px 11px' }}>
                     <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#000', fontSize: 11, marginBottom: 6 }}>{t('Have a free test')}</span>
-                    <div style={{ minHeight: 40 }}>
+                    <div style={{ minHeight: 90 }}>
                       <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#000', lineHeight: 1.45 }}>{t('Recruitment and property ads not included')}</span>
                     </div>
                   </div>
@@ -223,8 +223,8 @@ function EmployersInner() {
                     <div style={{ marginTop: 'auto', paddingTop: 14 }}>
                       <div style={{ background: start ? '#FFF7F0' : '#f8f6f2', border: `1px solid ${start ? '#FFE0C7' : 'var(--line)'}`, borderRadius: 10, padding: '9px 11px' }}>
                         <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#000', fontSize: 11, marginBottom: 6 }}>{promo.label}</span>
-                        <div style={{ minHeight: 40 }}>
-                          {promo.lines.map(l => <span key={l} style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#000', lineHeight: 1.45, marginBottom: 2 }}>{(g === 'trader' || g === 'pro') ? `• ${l}` : l}</span>)}
+                        <div style={{ minHeight: 90 }}>
+                          {promo.lines.map(l => <span key={l} style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#000', lineHeight: 1.45, marginBottom: (g === 'trader' || g === 'pro') ? 8 : 2 }}>{(g === 'trader' || g === 'pro') ? `• ${l}` : l}</span>)}
                         </div>
                       </div>
                     </div>
