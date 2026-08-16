@@ -376,7 +376,7 @@ function EmployersInner() {
             <button onClick={continueToCheckout} disabled={busy || (isBiz && basketItems.length === 0)} style={{ ...cta, marginTop: 14, opacity: (isBiz && basketItems.length === 0) ? 0.5 : 1 }}>
               {busy ? t('Opening checkout…') : isBiz ? t('Pay & activate') : t('Continue to checkout')}
             </button>
-            {!isBiz && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: '#dc2626', textAlign: 'center', marginTop: 12, lineHeight: 1.5 }}>{t('You’ll be taken straight to the business account creator to set up your storefront and details.')}</div>}
+            {!isBiz && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: '#dc2626', textAlign: 'center', marginTop: 12, lineHeight: 1.5 }}>{t('You will be automatically transferred to the business account area to set up your store and business information')}</div>}
           </div>
         </div>
 
