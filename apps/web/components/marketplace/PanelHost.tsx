@@ -2837,7 +2837,7 @@ function PanelBody() {
                   <Logo height={40} style={{ margin: '0 auto 14px' }} />
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#ef4444', marginBottom: 8 }}>QR Code Expired</div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', marginBottom: 16 }}>Generate a new one to continue.</div>
-                  <button onClick={generate} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 24px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>🔄 Regenerate QR</button>
+                  <button onClick={generate} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 24px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>Regenerate QR</button>
                 </div>
               ) : (
                 <>
