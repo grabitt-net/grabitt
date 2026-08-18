@@ -380,7 +380,7 @@ function CourierTrackingForm({ transactionId, title, onClose }: { transactionId:
   if (done) return (
     <ActionPanel title="📦 Tracking added" onClose={onClose}>
       <div style={{ textAlign: 'center', padding: '30px 0' }}>
-        <div style={{ fontSize: 56, marginBottom: 14 }}>📦</div>
+        <Logo height={40} style={{ margin: '0 auto 14px' }} />
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Tracking submitted</div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>
           The buyer has been notified that &ldquo;{title}&rdquo; is on its way. Your payment is released <strong>48 hours after the parcel is delivered</strong>, once the buyer&apos;s 24-hour window to report a problem has passed.
@@ -509,7 +509,7 @@ function PanelBody() {
     return (
       <ActionPanel title="❤️ Saved Listings" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>❤️</div>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>No saved listings yet</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Tap the 🤍 on any listing to save it here.</div>
         </div>
@@ -937,7 +937,7 @@ function PanelBody() {
     return (
       <ActionPanel title="📦 Sell on Grabitt" onClose={closePanel}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>📦</div>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 4 }}>List an item in 60 seconds</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Fees from 2.5% · Secure Stripe payments</div>
         </div>
@@ -1403,14 +1403,14 @@ function PanelBody() {
           </>
         ) : cartStep === 'processing' ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>Placing your order…</div>
           </div>
         ) : items === null ? (
           <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
         ) : list.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🛒</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Your basket is empty</div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Tap Buy Now on any item to add it here.</div>
           </div>
@@ -1496,7 +1496,7 @@ function PanelBody() {
     if (paid) return (
       <ActionPanel title="🪙 Payment received" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
-          <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Payment received!</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>Your {pack.credits} credits will appear in your balance in a moment.</div>
           <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
@@ -1710,7 +1710,7 @@ function PanelBody() {
           // Reassurance-first empty state, matching the prototype: no disputes
           // is good news, and it explains how to raise one if needed.
           <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 14, padding: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>🛡️</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: '#16a34a' }}>You&apos;re protected on every purchase</div>
             <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#15803d', lineHeight: 1.5, marginTop: 6 }}>
               No disputes — here&apos;s hoping it stays that way! If anything goes wrong, your funds stay held in escrow until it&apos;s resolved.
@@ -2095,7 +2095,7 @@ function PanelBody() {
           <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
         ) : list.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>💰</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{tab === 'received' ? 'No offers to review' : "You haven't made any offers"}</div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>{tab === 'received' ? 'Offers buyers make on your listings appear here.' : 'Offers you make on listings appear here.'}</div>
           </div>
@@ -2173,7 +2173,7 @@ function PanelBody() {
           <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
         ) : shown.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{seg === 'active' ? 'Nothing on sale yet' : seg === 'sold' ? 'No sold items yet' : 'No drafts'}</div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', marginBottom: 16 }}>{seg === 'sold' ? 'Items you sell will appear here.' : 'Items you list for sale appear here.'}</div>
             {seg !== 'sold' && <button onClick={() => openPanel('sell')} style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ New Listing</button>}
@@ -2235,7 +2235,7 @@ function PanelBody() {
     return (
       <ActionPanel title="➕ Invite Friends" onClose={closePanel}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ fontSize: 44, marginBottom: 8 }}>🎁</div>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Earn 50 credits per referral!</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5 }}>Invite friends to Grabitt. When they list their first item, you both earn 50 credits.</div>
         </div>
@@ -2283,7 +2283,7 @@ function PanelBody() {
     return (
       <ActionPanel title="👁 Recently Viewed" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>👁</div>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Nothing yet</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Listings you view appear here for easy access.</div>
         </div>
@@ -2394,7 +2394,7 @@ function PanelBody() {
           <div style={{ overflowY: 'auto', flex: 1, padding: 16 }}>
             {step === 'success' ? (
               <div style={{ textAlign: 'center', padding: '30px 0' }}>
-                <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
+                <Logo height={40} style={{ margin: '0 auto 14px' }} />
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t('Payment held in escrow!')}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>
                   {t('Your {amount} is safely held by Grabitt. Arrange collection with the seller, then confirm handover to release payment.').replace('{amount}', price)}
@@ -2414,7 +2414,7 @@ function PanelBody() {
               </div>
             ) : step === 'processing' ? (
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+                <Logo height={40} style={{ margin: '0 auto 14px' }} />
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>{t('Processing payment…')}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginTop: 8 }}>{t('Please don\'t close this window')}</div>
               </div>
@@ -2584,7 +2584,7 @@ function PanelBody() {
       if (outcome.status === 'accepted') return (
         <ActionPanel title={`✅ ${t('Offer accepted')}`} onClose={closePanel}>
           <div style={{ textAlign: 'center', padding: '26px 0' }}>
-            <div style={{ fontSize: 56, marginBottom: 14 }}>✅</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 17, fontWeight: 900, color: 'var(--sage)', marginBottom: 8 }}>{t('Accepted instantly')}</div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>
               {t('Your offer of {amount} for “{title}” was accepted. Pay now to secure it.').replace('{amount}', `€${outcome.amount.toFixed(2)}`).replace('{title}', title)}
@@ -2597,7 +2597,7 @@ function PanelBody() {
       if (outcome.status === 'countered' && outcome.counterAmount != null) return (
         <ActionPanel title={`🤝 ${t('Seller countered')}`} onClose={closePanel}>
           <div style={{ textAlign: 'center', padding: '20px 0 6px' }}>
-            <div style={{ fontSize: 50, marginBottom: 12 }}>🤝</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 6 }}>
               {t('You offered')} <strong>€{outcome.amount.toFixed(2)}</strong>
             </div>
@@ -2645,7 +2645,7 @@ function PanelBody() {
       return (
         <ActionPanel title={`💰 ${t('Offer sent!')}`} onClose={closePanel}>
           <div style={{ textAlign: 'center', padding: '30px 0' }}>
-            <div style={{ fontSize: 56, marginBottom: 14 }}>💰</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t('Offer sent to seller')}</div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>{t('You offered {amount} for “{title}”. The seller has 48 hours to respond.').replace('{amount}', `€${outcome.amount.toFixed(2)}`).replace('{title}', title)}</div>
             <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{t('Done')}</button>
@@ -2834,7 +2834,7 @@ function PanelBody() {
             <div style={{ textAlign: 'center' }}>
               {isExpired ? (
                 <div style={{ padding: 24 }}>
-                  <div style={{ fontSize: 48, marginBottom: 12 }}>⏰</div>
+                  <Logo height={40} style={{ margin: '0 auto 14px' }} />
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#ef4444', marginBottom: 8 }}>QR Code Expired</div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', marginBottom: 16 }}>Generate a new one to continue.</div>
                   <button onClick={generate} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 24px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>🔄 Regenerate QR</button>
@@ -2876,7 +2876,7 @@ function PanelBody() {
     if (done) return (
       <ActionPanel title="✅ Handover confirmed" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
-          <div style={{ fontSize: 56, marginBottom: 14 }}>✅</div>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Payment released!</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>Funds have been released to the seller. Why not leave them a review?</div>
           <button onClick={() => openPanel('reviewTx', item)} style={{ width: '100%', background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>⭐ Leave a Review</button>
@@ -2988,7 +2988,7 @@ function PanelBody() {
     if (submitted) return (
       <ActionPanel title="⭐ Review submitted" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
-          <div style={{ fontSize: 56, marginBottom: 14 }}>⭐</div>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Thanks for your review!</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>Your feedback helps keep the Grabitt community great.</div>
           <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
@@ -3336,7 +3336,7 @@ function PanelBody() {
     if (step === 'done') return (
       <ActionPanel title="🎉 Listing live!" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
-          <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Your listing is live!</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>"{title}" is now visible to thousands of buyers on Gran Canaria.</div>
           {grabItNow && <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--orange)', fontWeight: 800 }}>⚡ Grab It Now active — expires tonight at midnight!</div>}
@@ -3405,7 +3405,7 @@ function PanelBody() {
               <>
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed #e0d8d0', borderRadius: 16, padding: 24, cursor: 'pointer', background: '#faf7f4' }}>
-                    <div style={{ fontSize: 36, marginBottom: 8 }}>📷</div>
+                    <Logo height={40} style={{ margin: '0 auto 14px' }} />
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>Add up to 8 photos</div>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Tap to choose from your device</div>
                     <input type="file" accept="image/*" multiple onChange={handleFileChange} style={{ display: 'none' }} />
@@ -4252,7 +4252,7 @@ function PanelBody() {
     if (featDone) return (
       <ActionPanel title="👀 Featured!" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
-          <div style={{ fontSize: 60, marginBottom: 14 }}>🚀</div>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Listing is now featured!</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>"{listingTitle}" appears at the top of search for {featWeeks} week{featWeeks > 1 ? 's' : ''}.</div>
           <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 32px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>Done</button>
@@ -4262,7 +4262,7 @@ function PanelBody() {
     return (
       <ActionPanel title="👀 Feature Listing" onClose={closePanel}>
         <div style={{ background: '#FFF3EE', borderRadius: 14, padding: 16, marginBottom: 16, textAlign: 'center' }}>
-          <div style={{ fontSize: 36, marginBottom: 8 }}>👀</div>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>"{listingTitle}"</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Featured listings appear at the top of search and get 3× more views</div>
         </div>
@@ -4343,7 +4343,7 @@ function PanelBody() {
           <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
         ) : !favItems || favItems.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🤍</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a', marginBottom: 6 }}>No favourites yet</div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Tap ❤️ on any listing to save it here.</div>
           </div>
@@ -4394,7 +4394,7 @@ function PanelBody() {
           </div>
         )) : (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🔐</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>Log in to see your activity</div>
             <button onClick={() => openPanel('login')} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 24px', fontFamily: 'var(--font-ui)', fontWeight: 900, cursor: 'pointer' }}>Log in</button>
           </div>
@@ -4439,7 +4439,7 @@ function PanelBody() {
           <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
         ) : total === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>⭐</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>No reviews yet</div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Once you complete a trade, the other party can review you — and their feedback shows here.</div>
           </div>
@@ -4502,7 +4502,7 @@ function PanelBody() {
     if (reportDone) return (
       <ActionPanel title="✅ Report submitted" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
-          <div style={{ fontSize: 56, marginBottom: 14 }}>🛡️</div>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Thanks for keeping Grabitt safe</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>Our team reviews all reports within 24 hours.</div>
           <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 24px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>Done</button>
@@ -4565,7 +4565,7 @@ function PanelBody() {
           <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
         ) : list.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>👥</div>
+            <Logo height={40} style={{ margin: '0 auto 14px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>Not following anyone yet</div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Follow sellers from their storefront to see their new listings.</div>
           </div>
