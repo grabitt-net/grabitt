@@ -5,9 +5,12 @@ import InfoPage from '@/components/marketplace/InfoPage'
 import Icon from '@/components/marketplace/Icon'
 
 // Footer → Grabitt → Contact. Intro copy is Steve's, used exactly as written.
-// Social handles are placeholders for Steve to confirm.
-const INSTAGRAM_URL = 'https://www.instagram.com/grabitt'
-const FACEBOOK_URL = 'https://www.facebook.com/grabitt'
+// Socials all use the handle grabitt_net.
+const SOCIALS: { label: string; href: string }[] = [
+  { label: 'Instagram', href: 'https://www.instagram.com/grabitt_net' },
+  { label: 'TikTok', href: 'https://www.tiktok.com/@grabitt_net' },
+  { label: 'X', href: 'https://x.com/grabitt_net' },
+]
 
 const field: React.CSSProperties = {
   width: '100%', border: '1.5px solid var(--line, #ece3d7)', borderRadius: 12, padding: '12px 14px',
@@ -94,7 +97,7 @@ export default function ContactPage() {
       title="Contact Us"
       topbarTitle="Contact"
       intro="Want to reach out with ideas, questions, suggestions, or need a hand? There are plenty of ways to get us:"
-      pills={['Live Chat', 'Email', 'Message Centre', 'Instagram & Facebook']}
+      pills={['Live Chat', 'Email', 'Message Centre', 'Instagram · TikTok · X']}
     >
       <div style={{ display: 'grid', gap: 12, marginBottom: 22 }}>
         <LinkTile href="/help" icon="lifebuoy" label="Live chat" sub="Click Help anywhere on the site to jump into our live chat." />
@@ -106,16 +109,13 @@ export default function ContactPage() {
 
       <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(19px, 2.6vw, 24px)', fontWeight: 900, color: 'var(--dark)', margin: '26px 0 12px' }}>Come say hello</h2>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', flex: '1 1 200px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid var(--line, #ece3d7)', borderRadius: 14, padding: '14px 16px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)' }}>
-            <Icon name="share" size={18} strokeWidth={2} /> Instagram
-          </div>
-        </a>
-        <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', flex: '1 1 200px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid var(--line, #ece3d7)', borderRadius: 14, padding: '14px 16px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)' }}>
-            <Icon name="share" size={18} strokeWidth={2} /> Facebook
-          </div>
-        </a>
+        {SOCIALS.map(s => (
+          <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', flex: '1 1 160px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid var(--line, #ece3d7)', borderRadius: 14, padding: '14px 16px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)' }}>
+              <Icon name="share" size={18} strokeWidth={2} /> {s.label}
+            </div>
+          </a>
+        ))}
       </div>
     </InfoPage>
   )
