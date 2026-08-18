@@ -180,16 +180,28 @@ export const usersRouter = router({
   // messages, pending offers on your listings, and saved (favourite) items.
   dashboard: protectedProcedure.query(async ({ ctx }) => {
     const uid = ctx.user.id
-    const [active, sold, unread, offers, saved] = await Promise.all([
+    const [active, sold, unread, offers, saved, beingWatched, toShip, payDue, purchases, toPay] = await Promise.all([
       // "On sale" / "Sold" count ITEMS only — job and property listings are Listing
       // rows too, but they belong in the business hub, not the sell dashboard.
       ctx.prisma.listing.count({ where: { sellerId: uid, status: 'active', department: { notIn: ['jobs', 'property'] } } }),
       ctx.prisma.listing.count({ where: { sellerId: uid, status: 'sold', department: { notIn: ['jobs', 'property'] } } }),
       ctx.prisma.message.count({ where: { senderId: { not: uid }, readAt: null, thread: { participants: { some: { userId: uid } } } } }),
       ctx.prisma.offer.count({ where: { status: 'pending', listing: { sellerId: uid } } }),
+      // Saved / "Watching" — items this member has favourited.
       ctx.prisma.wishlistItem.count({ where: { userId: uid } }),
+      // "Being watched" — how many people are watching THIS member's listings.
+      ctx.prisma.wishlistItem.count({ where: { listing: { sellerId: uid } } }),
+      // "To ship" — the member's courier sales that are paid (held) but not yet dispatched.
+      ctx.prisma.transaction.count({ where: { sellerId: uid, fulfilmentType: 'courier', status: 'held', shippedAt: null } }),
+      // "Pay due" — funds due to the member (seller) but not yet released to them.
+      ctx.prisma.transaction.count({ where: { sellerId: uid, status: { in: ['held', 'confirmed_handover', 'completed'] }, fundsReleasedAt: null } }),
+      // "Purchases" — items the member has bought (excludes unpaid / cancelled / refunded).
+      ctx.prisma.transaction.count({ where: { buyerId: uid, status: { notIn: ['pending_payment', 'cancelled', 'refunded'] } } }),
+      // "To pay" — the member's own purchases still awaiting payment.
+      ctx.prisma.transaction.count({ where: { buyerId: uid, status: 'pending_payment' } }),
     ])
-    return { active, sold, unread, offers, saved }
+    // "Watching" is the same underlying figure as saved favourites.
+    return { active, sold, unread, offers, saved, watching: saved, beingWatched, toShip, payDue, purchases, toPay }
   }),
 
   // The seller info centre: current grade and fee, progress to the next grade,
@@ -295,6 +307,10 @@ export const usersRouter = router({
   updateProfile: protectedProcedure
     .input(z.object({
       displayName: z.string().min(2).max(50).optional(),
+      // Private real/legal name — never shown publicly.
+      fullName: z.string().max(80).nullish(),
+      // Member dashboard "Looking for work" toggle.
+      openToWork: z.boolean().optional(),
       avatar: z.string().url().optional(),
       locale: z.enum(['en', 'es', 'de', 'da', 'sv', 'nl', 'fr', 'pt']).optional(),
       // Attributes & preferences — feed personalisation, job matching and

@@ -384,6 +384,12 @@ model User {
   supabaseId         String    @unique
   email              String    @unique
   displayName        String
+  // Private real/legal name (never shown publicly) — the account holder's name,
+  // distinct from the public displayName/screen name shown on listings.
+  fullName           String?
+  // Member dashboard "Looking for work" toggle. When on, the member is surfaced
+  // as open to work and the profile card links straight to their attributes.
+  openToWork         Boolean   @default(false)
   avatar             String?
   phone              String?   // contact number, shared with a buyer only after a completed collection sale
   collectionAddress  String?   // collection address, shared with a buyer only after a completed collection sale

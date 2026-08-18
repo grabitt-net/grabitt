@@ -16,6 +16,7 @@ import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import SellerCentre from '@/components/marketplace/SellerCentre'
 import BusinessCentre from '@/components/marketplace/BusinessCentre'
+import MemberDashboard from '@/components/marketplace/MemberDashboard'
 import RewardsCard from '@/components/marketplace/RewardsCard'
 import MemberStatusCard from '@/components/marketplace/MemberStatusCard'
 import AffiliateCard from '@/components/marketplace/AffiliateCard'
@@ -262,6 +263,14 @@ function AccountInner() {
       <Topbar />
       <QuickActions />
       {needsBizOnboarding && <BusinessOnboardingModal onDone={() => load()} />}
+
+      {/* Personal members get Steve's Member Zone layout; business accounts keep
+          their existing hub (a separate business design is coming). */}
+      {!me?.isBusiness ? (
+        <div style={{ padding: '16px 14px' }}>
+          <MemberDashboard me={me} onReload={load} />
+        </div>
+      ) : (
       <div style={{ padding: '16px 14px', display: 'grid', gap: 18, gridTemplateColumns: '1fr' }} className="account-grid">
         {/* Sidebar / identity */}
         <aside style={{ alignSelf: 'start' }} className="account-side">
@@ -633,6 +642,7 @@ function AccountInner() {
           </>)}
         </section>
       </div>
+      )}
 
       <Footer />
       <CartFab />
