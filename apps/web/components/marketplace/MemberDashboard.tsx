@@ -213,7 +213,17 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
         </nav>
 
         <section style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-          {section === 'messages' && (
+          {section === 'messages' && (<>
+            <Link href="/messages/alerts" style={{ textDecoration: 'none' }}>
+              <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+                <Icon name="bell" size={20} strokeWidth={2} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{t('Grabitt Alerts')}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777' }}>{t('Match alerts, price drops and your saved searches.')}</div>
+                </div>
+                <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
+              </div>
+            </Link>
             <div style={card}>
               <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between' }}><span>{t('Message Centre')}</span><Link href="/messages" style={{ color: 'var(--orange)', fontSize: 12, textDecoration: 'none' }}>{t('See all →')}</Link></div>
               {threads === null ? <Muted>{t('Loading…')}</Muted> : threads.length === 0 ? <Muted>{t('No conversations yet.')}</Muted> : threads.slice(0, 6).map((th: any) => {
@@ -235,7 +245,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 )
               })}
             </div>
-          )}
+          </>)}
 
           {section === 'employment' && (<>
             <div style={card}>

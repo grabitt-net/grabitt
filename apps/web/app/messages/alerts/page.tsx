@@ -4,6 +4,7 @@ import Link from 'next/link'
 import SiteHeader from '@/components/marketplace/SiteHeader'
 import BottomNav from '@/components/marketplace/BottomNav'
 import WishManager from '@/components/marketplace/WishManager'
+import SavedSearchesLauncher from '@/components/marketplace/SavedSearchesLauncher'
 import { prisma } from 'server/src/db'
 
 export const runtime = 'nodejs'
@@ -42,6 +43,7 @@ export default async function GrabittAlertsPage() {
       </header>
 
       <WishManager />
+      <SavedSearchesLauncher />
 
       {alerts.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 24px' }}>
