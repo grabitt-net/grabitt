@@ -14,6 +14,7 @@ import MemberStatusCard from './MemberStatusCard'
 import RewardsCard from './RewardsCard'
 import AffiliateCard from './AffiliateCard'
 import { deptEmoji } from '@/lib/listingMap'
+import { getViews, type RecentCard } from '@/lib/recentViews'
 import { t } from '@/lib/i18n'
 
 // ── Personal member dashboard ────────────────────────────────────────────────
@@ -64,6 +65,10 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const [purchases, setPurchases] = useState<any[] | null>(null)
   const [payout, setPayout] = useState<any>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
+  // Recently viewed lives in localStorage — read after mount to avoid a
+  // server/client hydration mismatch.
+  const [recent, setRecent] = useState<RecentCard[]>([])
+  useEffect(() => { setRecent(getViews()) }, [])
 
   const load = useCallback(() => {
     const c: any = trpcAuthed()
@@ -348,14 +353,27 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
               </div>
             </Link>
-            <button onClick={() => openPanel('savedSearches' as PanelId)} style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
-              <Icon name="bell" size={20} strokeWidth={2} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{t('Saved searches')}</div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777' }}>{t('Let the right listings come to you.')}</div>
-              </div>
-              <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
-            </button>
+            {/* Recently viewed — items this member has recently looked at. */}
+            <div style={card}>
+              <div style={cardHead}>{t('Recently viewed')}</div>
+              {recent.length === 0 ? <Muted>{t('Items you view will appear here.')}</Muted> : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+                  {recent.map(r => (
+                    <Link key={r.id} href={`/listings/${r.id}`} style={{ textDecoration: 'none' }}>
+                      <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, overflow: 'hidden' }}>
+                        <div style={{ paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
+                          {r.image ? <img src={r.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{r.emoji ?? '🛍️'}</div>}
+                        </div>
+                        <div style={{ padding: '8px 8px 6px' }}>
+                          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</div>
+                          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>{r.price}</div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
             <div style={card}>
               <div style={cardHead}>{t('Orders')}</div>
               {purchases === null ? <Muted>{t('Loading…')}</Muted> : purchases.length === 0 ? <Muted>{t('No orders yet.')}</Muted> : purchases.slice(0, 8).map((p: any) => (
