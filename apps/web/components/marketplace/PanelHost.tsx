@@ -601,11 +601,11 @@ function PanelBody() {
     // padding and font. Primary = solid refined brand orange; secondary =
     // outlined. (Consistent with the Google button below.)
     const btnBase: React.CSSProperties = { width: '100%', borderRadius: 12, padding: '13px 16px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }
-    // New button standard (per Steve): white background, orange border, dark text
-    // — no filled-orange buttons. Primary keeps a bolder orange border; secondary
-    // uses a neutral border for hierarchy.
-    const btnPrimary: React.CSSProperties = { ...btnBase, background: '#fff', color: loading ? '#bbb' : '#1a1a1a', border: `2px solid ${loading ? '#e0d8d0' : 'var(--orange)'}`, cursor: loading ? 'not-allowed' : 'pointer' }
-    const btnGhost: React.CSSProperties = { ...btnBase, background: '#fff', color: '#1a1a1a', border: '1.5px solid #e0d8d0' }
+    // Button standard (per Steve): white background, black border, orange text
+    // — no filled buttons. Primary uses a bolder black border; secondary uses a
+    // lighter border for hierarchy.
+    const btnPrimary: React.CSSProperties = { ...btnBase, background: '#fff', color: loading ? '#bbb' : 'var(--orange)', border: `2px solid ${loading ? '#ddd' : '#111'}`, cursor: loading ? 'not-allowed' : 'pointer' }
+    const btnGhost: React.CSSProperties = { ...btnBase, background: '#fff', color: 'var(--orange)', border: '1.5px solid #999' }
     const link: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--orange)', cursor: 'pointer', textDecoration: 'underline', background: 'none', border: 'none', padding: 0 }
 
     if (authStep === 'done') {
