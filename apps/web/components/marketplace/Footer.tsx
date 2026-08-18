@@ -11,15 +11,16 @@ export default function Footer() {
   const fp = (key: string) => () => openPanel('footer', { key })
   const go = (href: string) => () => { window.location.href = href }
 
+  // 5 balanced columns, 20 links (see "Grabitt menu amends" — the reference
+  // index 1–20 is Steve's, not shown on the site). Column 1 links to the new
+  // dedicated pages; the rest keep their existing panels/routes until their
+  // pages are written.
   const cols: { heading: string; links: [string, () => void][] }[] = [
-    { heading: 'Grabitt', links: [['About Us', fp('about')], ['Why Us?', fp('why')], ['Pricing', fp('pricing')], ['Contact', fp('contact')]] },
-    { heading: 'Buying & Selling', links: [['Sell an item', () => openPanel('sell')], ['Buy Credits', () => openPanel('buyCredits')], ['Delivery', fp('collection')], ['Sold prices', () => openPanel('soldprices')]] },
-    { heading: 'Safety', links: [['Grabitt Guarantee', () => openPanel('shield')], ['Scam Centre', fp('scams')], ['Report a listing', () => openPanel('report')], ['My Disputes', () => openPanel('myDisputes')]] },
-    // Economic Living lives in Grabitt Guides — link through rather than
-    // duplicating the content in a panel.
-    { heading: 'Guides', links: [['Grabitt Guides', go('/community')], ['Economic Living', go('/community#economic-living')]] },
-    { heading: 'Business', links: [['For Business', go('/employers')], ['Business Directory', go('/directory')], ['Advertise with us', go('/advertiser')]] },
-    { heading: 'Help', links: [['Help Centre', go('/help')], ['Terms', fp('terms')], ['Dos & Don\'ts', fp('policy')], ['Suggest Ideas', fp('suggest')]] },
+    { heading: 'Grabitt', links: [['About Us', go('/about')], ['Why Us?', go('/why')], ['Pricing', go('/pricing')], ['Contact', go('/contact')]] },
+    { heading: 'Trading', links: [['Sell an item', () => openPanel('sell')], ['Delivery', fp('collection')], ['Sold Prices', () => openPanel('soldprices')], ['Terms', go('/terms')]] },
+    { heading: 'Safety & trust', links: [['Grabitt Guarantee', () => openPanel('shield')], ['Scam Centre', fp('scams')], ['Report a Listing', () => openPanel('report')], ['My Disputes', () => openPanel('myDisputes')]] },
+    { heading: 'Business', links: [['For Business', go('/employers')], ['Business Directory', go('/directory')], ['Advertise With Us', go('/advertiser')]] },
+    { heading: 'Help & guides', links: [['Help Centre', go('/help')], ['Grabitt Guides', go('/community')], ['Economic Living', go('/community#economic-living')], ['Dos & Don\'ts', fp('policy')], ['Suggest Ideas', fp('suggest')]] },
   ]
 
   return (
@@ -32,7 +33,7 @@ export default function Footer() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 16, maxWidth: 1000, margin: '0 auto' }}>
         {cols.map(col => (
           <div key={col.heading}>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: 'var(--dark, #1a1a1a)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>{col.heading}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark, #1a1a1a)', letterSpacing: 0.2, marginBottom: 12 }}>{col.heading}</div>
             {col.links.map(([label, onClick]) => (
               <button key={label} onClick={onClick} style={{ display: 'block', background: 'none', border: 'none', padding: '5px 0', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#1a1a1a', cursor: 'pointer', textAlign: 'left' }}>{label}</button>
             ))}
