@@ -308,6 +308,10 @@ interface ActionPanelProps {
   onClose: () => void
 }
 
+// Strip emoji from any modal title so every pop-up reads clean and professional
+// (a single central rule covers all ~40 ActionPanel modals at once).
+const stripEmoji = (s: string) => s.replace(/[\p{Extended_Pictographic}️‍]/gu, '').replace(/\s{2,}/g, ' ').trim()
+
 function ActionPanel({ title, children, onClose }: ActionPanelProps) {
   return (
     <div
@@ -320,11 +324,11 @@ function ActionPanel({ title, children, onClose }: ActionPanelProps) {
         className="panel-sheet"
         style={{ background: '#fff', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
-          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>{title}</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>{stripEmoji(title)}</span>
           <button onClick={onClose} aria-label="Close" style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 36, height: 36, fontSize: 16, color: 'var(--ink-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
-        <div style={{ overflowY: 'auto', padding: 16, flex: 1 }}>{children}</div>
+        <div style={{ overflowY: 'auto', padding: '18px 20px 20px', flex: 1 }}>{children}</div>
       </div>
     </div>
   )
