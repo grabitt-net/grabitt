@@ -22,6 +22,7 @@ import SignInFirst from './SignInFirst'
 import BusinessVerifyPanel from './BusinessVerifyPanel'
 import BannerSlot from './BannerSlot'
 import Icon from './Icon'
+import Logo from './Logo'
 import StorefrontEditor from './StorefrontEditor'
 import MultibuyEditor, { type MultibuyTier } from './MultibuyEditor'
 import { attributesFor } from '@/lib/listingAttributes'
@@ -592,8 +593,12 @@ function PanelBody() {
     }
 
     const inputStyle: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '12px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box', marginBottom: 10 }
-    const btnPrimary: React.CSSProperties = { width: '100%', background: loading ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: loading ? 'not-allowed' : 'pointer', marginBottom: 10 }
-    const btnGhost: React.CSSProperties = { width: '100%', background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }
+    // One shared button standard for every auth modal: same height, radius,
+    // padding and font. Primary = solid refined brand orange; secondary =
+    // outlined. (Consistent with the Google button below.)
+    const btnBase: React.CSSProperties = { width: '100%', borderRadius: 12, padding: '13px 16px', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }
+    const btnPrimary: React.CSSProperties = { ...btnBase, background: loading ? '#d8cbb5' : 'var(--orange)', color: '#fff', border: '1.5px solid transparent', cursor: loading ? 'not-allowed' : 'pointer' }
+    const btnGhost: React.CSSProperties = { ...btnBase, background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)' }
     const link: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--orange)', cursor: 'pointer', textDecoration: 'underline', background: 'none', border: 'none', padding: 0 }
 
     if (authStep === 'done') {
@@ -601,23 +606,23 @@ function PanelBody() {
       const nextPanel = panel.data?.next as PanelId | undefined
       const nextData = panel.data?.nextData as Record<string, unknown> | undefined
       return (
-        <ActionPanel title="✅ Welcome!" onClose={closePanel}>
-          <div style={{ textAlign: 'center', padding: '30px 0' }}>
-            <div style={{ fontSize: 60, marginBottom: 14 }}>🌴</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>You're in!</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>{t("Welcome back to Gran Canaria's marketplace.")}</div>
+        <ActionPanel title="Welcome!" onClose={closePanel}>
+          <div style={{ textAlign: 'center', padding: '28px 24px 30px' }}>
+            <Logo height={40} style={{ margin: '0 auto 18px' }} />
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 20, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t("You're in!")}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, color: '#555', marginBottom: 24 }}>{t("Welcome back to Gran Canaria's marketplace.")}</div>
             {nextPanel
-              ? <button onClick={() => openPanel(nextPanel, nextData)} style={btnPrimary}>Continue →</button>
-              : <button onClick={closePanel} style={btnPrimary}>Start browsing →</button>}
+              ? <button onClick={() => openPanel(nextPanel, nextData)} style={btnPrimary}>{t('Continue')}</button>
+              : <button onClick={closePanel} style={btnPrimary}>{t('Start browsing')}</button>}
           </div>
         </ActionPanel>
       )
     }
 
     if (authStep === 'verify') return (
-      <ActionPanel title="📧 Check your email" onClose={closePanel}>
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <div style={{ fontSize: 56, marginBottom: 14 }}>📧</div>
+      <ActionPanel title="Check your email" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '24px 24px 22px' }}>
+          <Logo height={36} style={{ margin: '0 auto 18px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>
             {authStep === 'verify' && password === '' ? 'Reset link sent!' : 'Confirm your email'}
           </div>
@@ -639,14 +644,14 @@ function PanelBody() {
         <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
 
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 16px 0', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 22px 0', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               {authStep !== 'choose' && (
                 <button onClick={() => { setAuthStep('choose'); setError('') }} style={{ background: 'none', border: 'none', fontSize: 18, color: 'var(--orange)', cursor: 'pointer', padding: 0 }}>‹</button>
               )}
               <div>
                 <div style={{ fontFamily: 'var(--font-body)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>
-                  {authStep === 'choose' ? '🌴 Grabitt' : authStep === 'login' ? 'Log in' : authStep === 'register' ? 'Create account' : 'Forgot password'}
+                  {authStep === 'choose' ? 'Grabitt' : authStep === 'login' ? 'Log in' : authStep === 'register' ? 'Create account' : 'Forgot password'}
                 </div>
                 {authStep === 'choose' && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Gran Canaria's local marketplace</div>}
               </div>
@@ -654,19 +659,19 @@ function PanelBody() {
             <button onClick={closePanel} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer' }}>✕</button>
           </div>
 
-          <div style={{ overflowY: 'auto', flex: 1, padding: 16 }}>
+          <div style={{ overflowY: 'auto', flex: 1, padding: '18px 22px 22px' }}>
 
             {authStep === 'choose' && (
               <>
-                <div style={{ textAlign: 'center', padding: '10px 0 20px' }}>
-                  <div style={{ fontSize: 52, marginBottom: 10 }}>🌴</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{t('Buy, sell & connect on the island')}</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>50 free credits when you join · Secure Stripe payments</div>
+                <div style={{ textAlign: 'center', padding: '6px 0 24px' }}>
+                  <Logo height={34} style={{ margin: '0 auto 18px' }} />
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t('Buy, sell & connect on the island')}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#888' }}>{t('50 free credits when you join · Secure Stripe payments')}</div>
                 </div>
 
                 {/* Social buttons */}
                 {error && <div style={{ background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{error}</div>}
-                <button onClick={handleGoogle} style={{ width: '100%', background: '#fff', color: 'var(--dark)', border: '1.5px solid #e0d8d0', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                <button onClick={handleGoogle} style={{ ...btnGhost, color: 'var(--dark)', border: '1.5px solid #e0d8d0' }}>
                   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.5l-6.6-5.6C29.6 34.5 26.9 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4 5.6l6.6 5.6C41.4 36.6 44 30.9 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
                   {t('Continue with Google')}
                 </button>
@@ -692,12 +697,12 @@ function PanelBody() {
                 <input value={email} onChange={e => setEmail(e.target.value)} placeholder={t("Email address")} type="email" style={inputStyle} />
                 <div style={{ position: 'relative', marginBottom: 4 }}>
                   <input value={password} onChange={e => setPassword(e.target.value)} placeholder={t("Password")} type={showPass ? 'text' : 'password'} style={{ ...inputStyle, marginBottom: 0, paddingRight: 44 }} />
-                  <button onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: 16, cursor: 'pointer' }}>{showPass ? '🙈' : '👁'}</button>
+                  <button onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: 12, fontWeight: 800, color: 'var(--orange)', fontFamily: 'var(--font-ui)', cursor: 'pointer' }}>{showPass ? t('Hide') : t('Show')}</button>
                 </div>
                 <div style={{ textAlign: 'right', marginBottom: 16 }}>
                   <button onClick={() => setAuthStep('forgot')} style={link}>{t('Forgot password?')}</button>
                 </div>
-                <button onClick={submitAuth} disabled={loading || !email || !password} style={btnPrimary}>{loading ? '⏳ Logging in…' : t('Log In')}</button>
+                <button onClick={submitAuth} disabled={loading || !email || !password} style={btnPrimary}>{loading ? t('Logging in…') : t('Log In')}</button>
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{t('No account?')} </span>
                   <button onClick={() => setAuthStep('register')} style={link}>{t('Create one')}</button>
@@ -713,7 +718,7 @@ function PanelBody() {
                 <input value={phone} onChange={e => setPhone(e.target.value)} placeholder={t("Phone (optional)")} type="tel" style={inputStyle} />
                 <div style={{ position: 'relative' }}>
                   <input value={password} onChange={e => setPassword(e.target.value)} placeholder={t("Create password (min 8 chars)")} type={showPass ? 'text' : 'password'} style={{ ...inputStyle, paddingRight: 44 }} />
-                  <button onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: 16, cursor: 'pointer' }}>{showPass ? '🙈' : '👁'}</button>
+                  <button onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: 12, fontWeight: 800, color: 'var(--orange)', fontFamily: 'var(--font-ui)', cursor: 'pointer' }}>{showPass ? t('Hide') : t('Show')}</button>
                 </div>
 
                 {/* Password strength */}
@@ -733,12 +738,12 @@ function PanelBody() {
 
                 {/* Referral bonus */}
                 <div style={{ background: '#f0fdf4', border: '1px solid var(--sage)', borderRadius: 12, padding: 12, marginBottom: 14, display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <span style={{ fontSize: 22 }}>🎁</span>
+                  <span style={{ color: 'var(--sage)', display: 'inline-flex', flexShrink: 0 }}><Icon name="coins" size={20} strokeWidth={2} /></span>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)', fontWeight: 800 }}>You'll get 50 free credits on sign-up!</div>
                 </div>
 
-                <button onClick={submitAuth} disabled={loading || !name || !email || password.length < 8} style={{ ...btnPrimary, background: loading || !name || !email || password.length < 8 ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>
-                  {loading ? '⏳ Creating account…' : `🚀 ${t('Create Account')}`}
+                <button onClick={submitAuth} disabled={loading || !name || !email || password.length < 8} style={{ ...btnPrimary, background: loading || !name || !email || password.length < 8 ? '#d8cbb5' : 'var(--orange)' }}>
+                  {loading ? t('Creating account…') : t('Create Account')}
                 </button>
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>Already have one? </span>
