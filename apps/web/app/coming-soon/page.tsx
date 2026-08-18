@@ -8,7 +8,7 @@
 // visually seamless.
 export const metadata = {
   title: 'Grabitt — Coming Soon',
-  description: 'Grabitt is launching soon in Gran Canaria.',
+  description: 'Grabitt is launching soon across the Canary Islands.',
 }
 
 const ACCENT = 'rgb(243, 113, 33)'

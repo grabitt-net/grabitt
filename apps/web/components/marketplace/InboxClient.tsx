@@ -24,7 +24,7 @@ type Alert = { id: string; kind: string; title: string; body: string; actionUrl:
 const ALERT_KINDS = ['price_drop', 'wish_matched', 'listing_expiring']
 const ALERT_ICON: Record<string, string> = { price_drop: '📉', wish_matched: '✨', listing_expiring: '⏳' }
 const TEAM_MESSAGES = [
-  "👋 Welcome to Grabitt — Gran Canaria's local marketplace!",
+  "👋 Welcome to Grabitt — the Canary Islands' local marketplace!",
   'Buy and sell safely: payments are held securely until you confirm handover, and our Safety Shield is one tap away any time.',
   'Got a question about buying, selling, jobs, property or safety? Reply here and our team will help. We usually respond within 24 hours (Mon–Fri).',
 ]

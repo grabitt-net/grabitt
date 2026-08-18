@@ -86,7 +86,7 @@ export default function JobsPage() {
     if (!coords) return []
     return [{
       id: j.listing?.id, title: j.jobTitle, company: j.company,
-      location: j.remote ? 'Remote' : (j.listing?.location ?? 'Gran Canaria'),
+      location: j.remote ? 'Remote' : (j.listing?.location ?? 'Canary Islands'),
       salary: salaryLabel(j.salaryMin, j.salaryMax, j.salaryPeriod),
       lat: coords[0], lng: coords[1],
     }]
@@ -202,7 +202,7 @@ export default function JobsPage() {
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.jobTitle}</div>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>{salaryLabel(j.salaryMin, j.salaryMax, j.salaryPeriod)}</div>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>{j.company}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>📍 {j.remote ? 'Remote' : (l.location ?? 'Gran Canaria')}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>📍 {j.remote ? 'Remote' : (l.location ?? 'Canary Islands')}</div>
                   </div>
                 </div>
               </Link>

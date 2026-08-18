@@ -22,7 +22,7 @@ export default function SponsorshipContent({ showIntro = true }: { showIntro?: b
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 44, marginBottom: 8 }}>🤝</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Sponsor Grabitt &amp; reach the island</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Thousands of daily active buyers across Gran Canaria</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Thousands of daily active buyers across the Canary Islands</div>
         </div>
       )}
 

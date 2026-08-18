@@ -114,7 +114,7 @@ function Inner() {
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#1a1a1a', marginBottom: 10 }}>
           ⚡ {geoTried && !centre
-            ? 'Limited-time offers across Gran Canaria. Enable location to see what’s near you.'
+            ? 'Limited-time offers across the Canary Islands. Enable location to see what’s near you.'
             : centre ? `Limited-time offers within ${radiusLabel(radius)} of you.` : 'Finding offers near you…'}
         </div>
 
@@ -174,7 +174,7 @@ function Inner() {
                 <div style={{ padding: '10px 11px 12px' }}>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.title}</div>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>€{Number(o.price).toLocaleString()}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>📍 {o.location ?? 'Gran Canaria'}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a' }}>📍 {o.location ?? 'Canary Islands'}</div>
                 </div>
               </div>
             </Link>

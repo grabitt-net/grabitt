@@ -115,7 +115,7 @@ function Inner() {
   return (
     <div style={{ padding: '16px 14px', maxWidth: 900, margin: '0 auto' }}>
       <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.6, marginBottom: 16 }}>
-        Put your business in front of Gran Canaria. Pick your placements and dates below — book up to <b>{cat.maxMonths} months</b> at a time.
+        Put your business in front of the Canary Islands. Pick your placements and dates below — book up to <b>{cat.maxMonths} months</b> at a time.
         The first month is charged pro-rata from your start date, and you save automatically when you book multiple slots or longer runs.
         Every banner is quantifiably click- and impression-tracked.
       </p>

@@ -56,7 +56,7 @@ export function toPanelItem(l: DbListing) {
     image: l.images?.[0] ?? null,
     images: l.images ?? [],
     emoji: DEPT_EMOJI[l.department] ?? '🛍️',
-    location: l.location ?? 'Gran Canaria',
+    location: l.location ?? 'Canary Islands',
     category: DEPT_LABEL[l.department] ?? l.department,
     condition: l.condition ? (COND_LABEL[l.condition] ?? l.condition) : '',
     sellerId: l.sellerId,

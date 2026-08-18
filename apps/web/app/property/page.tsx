@@ -113,7 +113,7 @@ export default function PropertyPage() {
 
   const points: PropertyPoint[] = displayed
     .filter(p => p.coords)
-    .map(p => ({ id: p.listing?.id, title: p.listing?.title ?? 'Property', price: `€${Number(p.listing?.price ?? 0).toLocaleString()}${(p.type === 'rent' || p.type === 'holiday') ? '/mo' : ''}`, location: p.listing?.location ?? 'Gran Canaria', lat: p.coords![0], lng: p.coords![1] }))
+    .map(p => ({ id: p.listing?.id, title: p.listing?.title ?? 'Property', price: `€${Number(p.listing?.price ?? 0).toLocaleString()}${(p.type === 'rent' || p.type === 'holiday') ? '/mo' : ''}`, location: p.listing?.location ?? 'Canary Islands', lat: p.coords![0], lng: p.coords![1] }))
 
   return (
     <PanelProvider>
@@ -240,7 +240,7 @@ export default function PropertyPage() {
                     €{Number(l.price ?? 0).toLocaleString()}<span style={{ fontSize: 12, fontWeight: 700, color: '#1a1a1a' }}>{isRent ? '/mo' : ''}</span>
                   </div>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{l.title}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>📍 {l.location ?? 'Gran Canaria'}{p.community ? ` · ${p.community}` : ''}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>📍 {l.location ?? 'Canary Islands'}{p.community ? ` · ${p.community}` : ''}</div>
 
                   {/* Key facts row */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 700, color: '#1a1a1a', marginTop: 6 }}>

@@ -9,7 +9,7 @@ export const HELP_TOPICS: HelpTopic[] = [
   {
     id: 'getting-started', icon: '🚀', title: 'Getting started', blurb: 'New to Grabitt? Start here.',
     articles: [
-      { q: 'What is Grabitt?', a: 'Grabitt is a local-first marketplace for Gran Canaria — buy and sell items, find jobs, rent or buy property, and hire tradespeople, all in one place. Grabitt is an intermediary: the contract is between the buyer and seller.' },
+      { q: 'What is Grabitt?', a: 'Grabitt is a local-first marketplace for the Canary Islands — buy and sell items, find jobs, rent or buy property, and hire tradespeople, all in one place. Grabitt is an intermediary: the contract is between the buyer and seller.' },
       { q: 'How do I create an account?', a: 'Tap Sign Up, choose an Individual or Business account, and register with email or Google. Individual accounts are free with 50 welcome credits.' },
       { q: 'Is it free to use?', a: 'Browsing and buying are free. You only pay when you sell (a small commission on completed sales), promote a listing, or take a paid plan such as Business or an agent plan.' },
     ],

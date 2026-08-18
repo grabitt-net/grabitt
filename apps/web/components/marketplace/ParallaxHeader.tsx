@@ -30,7 +30,7 @@ export default function ParallaxHeader() {
   const hasImg = !!slide?.imageUrl
   // With no CMS slides at all, show the branded default copy. Once slides exist,
   // respect each slide exactly — an image-only slide (no heading) shows no text.
-  const heading = slide ? (slide.heading ?? '') : "Gran Canaria's local marketplace"
+  const heading = slide ? (slide.heading ?? '') : "The Canary Islands' local marketplace"
   const subheading = slide ? (slide.subheading ?? '') : 'Buy & sell locally — safely. Funds held in escrow until handover.'
   const hasText = !!(heading || subheading)
 

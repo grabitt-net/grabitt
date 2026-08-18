@@ -38,7 +38,7 @@ function Inner() {
           <div style={card}>
             <div style={{ fontSize: 34, marginBottom: 8 }}>🙋</div>
             <div style={cardTitle}>I am looking for work</div>
-            <p style={cardText}>Browse jobs across Gran Canaria and apply in a couple of taps — free.</p>
+            <p style={cardText}>Browse jobs across the Canary Islands and apply in a couple of taps — free.</p>
             <button onClick={() => router.push('/jobs')} style={primaryBtn}>Browse Jobs</button>
           </div>
 

@@ -157,7 +157,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Pro
                     {listing.listing_type === 'free' ? 'Free' : `€${Number(listing.price).toLocaleString()}`}
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 9, color: '#bbb' }}>{listing.location ?? 'Gran Canaria'}</span>
+                    <span style={{ fontSize: 9, color: '#bbb' }}>{listing.location ?? 'Canary Islands'}</span>
                     {listing.condition && (
                       <span style={{
                         fontSize: 8, fontWeight: 800, color: 'var(--orange)',

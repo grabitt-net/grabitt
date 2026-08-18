@@ -31,24 +31,24 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net'
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: 'Grabitt — Gran Canaria Marketplace',
+    default: 'Grabitt — Canary Islands Marketplace',
     template: '%s · Grabitt',
   },
-  description: 'Buy, sell, hire and discover — local to Gran Canaria. Secure escrow, verified sellers and the Grabitt Guarantee on every order.',
+  description: 'Buy, sell, hire and discover — local to the Canary Islands. Secure escrow, verified sellers and the Grabitt Guarantee on every order.',
   applicationName: 'Grabitt',
   keywords: ['Gran Canaria', 'marketplace', 'buy', 'sell', 'jobs', 'property', 'Canary Islands', 'second hand'],
   openGraph: {
     type: 'website',
     siteName: 'Grabitt',
-    title: 'Grabitt — Gran Canaria Marketplace',
-    description: 'Buy, sell, hire and discover — local to Gran Canaria.',
+    title: 'Grabitt — Canary Islands Marketplace',
+    description: 'Buy, sell, hire and discover — local to the Canary Islands.',
     url: APP_URL,
     locale: 'en_GB',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Grabitt — Gran Canaria Marketplace',
-    description: 'Buy, sell, hire and discover — local to Gran Canaria.',
+    title: 'Grabitt — Canary Islands Marketplace',
+    description: 'Buy, sell, hire and discover — local to the Canary Islands.',
   },
 }
 

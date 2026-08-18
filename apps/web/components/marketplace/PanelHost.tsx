@@ -113,10 +113,10 @@ const SHIELD_CONTENT: Record<string, string> = {
     ${FAQ_ITEM('How do I delete my account / data?', 'Go to <strong>Account</strong> and choose delete your data. This removes your personal data in line with GDPR.')}
   </div>`,
   promise: `<div style="font-family:Nunito,sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;">
-    <p style="margin-bottom:12px;">At <strong>Grabitt</strong> we commit to making every transaction on Gran Canaria safe, fair and local. Our platform is built on three pillars:</p>
+    <p style="margin-bottom:12px;">At <strong>Grabitt</strong> we commit to making every transaction across the Canary Islands safe, fair and local. Our platform is built on three pillars:</p>
     <div style="background:#FFF3EE;border-radius:12px;padding:12px;margin-bottom:10px;"><strong>🔒 Secure payments</strong><br/>All payments go through Stripe escrow — funds are only released once both parties confirm the handover.</div>
     <div style="background:#F0FDF4;border-radius:12px;padding:12px;margin-bottom:10px;"><strong>👤 Verified members</strong><br/>We verify email, mobile, and optional ID to ensure you know who you're dealing with.</div>
-    <div style="background:#EEF4FF;border-radius:12px;padding:12px;"><strong>📍 Truly local</strong><br/>Grabitt is built for Gran Canaria — our support team is here, our members are your neighbours.</div>
+    <div style="background:#EEF4FF;border-radius:12px;padding:12px;"><strong>📍 Truly local</strong><br/>Grabitt is built for the Canary Islands — our support team is here, our members are your neighbours.</div>
   </div>`,
   rules: `<div style="font-family:Nunito,sans-serif;font-size:13px;color:#1a1a1a;">
     ${['Never pay outside Grabitt — Stripe keeps your money safe until handover.','Always meet in a public place for in-person exchanges.','Don\'t share your bank details, personal address, or passwords.','Report suspicious behaviour immediately using the 🚨 Report button.','Rate every transaction honestly so the community stays strong.','If a deal feels wrong, it probably is — trust your instincts.'].map((r, i) => `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0f0f0;"><span style="font-weight:900;color:var(--orange);flex-shrink:0;">${i + 1}.</span><span>${r}</span></div>`).join('')}
@@ -161,7 +161,7 @@ const _para = (text: string) => `<p style="font-size:12px;color:#444;font-family
 const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
   about: { title: 'ℹ️ About Grabitt', body:
     _para("Grabitt is the Canary Islands' first, dedicated, all-in-one marketplace connecting you with your target audience. It brings buyers, sellers, employers, jobseekers, businesses and charities all under one roof to significantly speed up getting what you want and helping each other.") +
-    _para('Based on Gran Canaria, we are constantly expanding and improving Grabitt — feel free to hit us up with ideas to earn free credits!') +
+    _para('Based in the Canary Islands, we are constantly expanding and improving Grabitt — feel free to hit us up with ideas to earn free credits!') +
     '<div style="margin-top:14px;display:flex;flex-direction:column;gap:9px;">' +
     ["Looking for a job or staff? We've got you covered. Search jobs, list jobs, apply and manage applications — it's easy!",
      "A structured, easy way to see what's for sale, who's selling, fast-ending offers, online stores — and convert your treasures into cash!",
@@ -185,7 +185,7 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
   terms: { title: '📄 Terms of Service', body: (() => {
     const sec = (t: string, b: string) => `<div style="font-family:Nunito,sans-serif;font-size:12px;font-weight:900;color:var(--orange);margin:12px 0 4px;">${t}</div><p style="font-size:11px;color:#555;font-family:Comfortaa,sans-serif;line-height:1.55;margin:0;">${b}</p>`
     return '<p style="font-size:11px;color:#555;font-family:Comfortaa,sans-serif;line-height:1.55;margin:0 0 6px;">Last updated: June 2026. By using Grabitt you agree to these Terms.</p>' +
-      sec('1. About Grabitt', 'Grabitt is a local-first marketplace connecting buyers and sellers in Gran Canaria and the wider Canary Islands. We provide the technology that lets members list, discover, buy and sell. Except where stated, Grabitt is not the buyer or seller — we act as an intermediary.') +
+      sec('1. About Grabitt', 'Grabitt is a local-first marketplace connecting buyers and sellers across the Canary Islands. We provide the technology that lets members list, discover, buy and sell. Except where stated, Grabitt is not the buyer or seller — we act as an intermediary.') +
       sec('2. Accounts', 'You must be 18 or older to transact. Keep your details accurate and your login secure. You are responsible for activity under your account. We may suspend accounts that breach these Terms or appear fraudulent.') +
       sec('3. Selling', 'As a Seller you confirm you have the right to sell the item, that it is accurately described, and that your prices and offer terms are honoured. You must not list prohibited items and must complete sales in good faith.') +
       sec('4. Buying & Offers', 'When an offer is accepted you contract directly with the Seller, not Grabitt. You agree to pay the agreed price and collect or receive the item as arranged. Accepted offers, including auto-accepted ones, are binding.') +
@@ -1273,7 +1273,7 @@ function PanelBody() {
 
   // ── NEAR ME ────────────────────────────────────────────────────────────────
   if (panel.id === 'near') {
-    const town = (panel.data?.town as string) || 'Gran Canaria'
+    const town = (panel.data?.town as string) || 'Canary Islands'
     const allItems: [string, string, string, string, string][] = []
     Object.entries(DEPT_LISTINGS).forEach(([dept, items]) => items.forEach(([e, t, p, l]) => allItems.push([e, t, p, l, dept])))
     const nearItems = allItems.filter(([, , , l]) => l.toLowerCase().includes(town.toLowerCase()))
@@ -2225,7 +2225,7 @@ function PanelBody() {
     }, [])
 
     const link = ref?.link ?? ''
-    const shareMsg = `Join me on Grabitt — Gran Canaria's local marketplace. Sign up with my link and we both earn 50 credits when you list your first item: ${link}`
+    const shareMsg = `Join me on Grabitt — the Canary Islands' local marketplace. Sign up with my link and we both earn 50 credits when you list your first item: ${link}`
     const copyLink = async () => {
       try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2000); toast('Link copied ✓') }
       catch { toast('Could not copy — long-press to copy') }
@@ -2306,7 +2306,7 @@ function PanelBody() {
     ]
     return (
       <ActionPanel title="📊 Sold Prices" onClose={closePanel}>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 14 }}>Recent completed sales across Gran Canaria</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 14 }}>Recent completed sales across the Canary Islands</div>
         {SOLD.map((s, i) => (
           <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
             <div style={{ width: 44, height: 44, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{s.emoji}</div>
@@ -2336,7 +2336,7 @@ function PanelBody() {
     const title    = (item.title    as string) || 'Item'
     const price    = (item.price    as string) || '€0'
     const emoji    = (item.emoji    as string) || '🛍️'
-    const location = (item.location as string) || 'Gran Canaria'
+    const location = (item.location as string) || 'Canary Islands'
     const priceNum = parseFloat(price.replace(/[^0-9.]/g, '')) || 0
 
     const deliveryFee = Number(item.deliveryFee) || 0
@@ -3342,7 +3342,7 @@ function PanelBody() {
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
           <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Your listing is live!</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>"{title}" is now visible to thousands of buyers on Gran Canaria.</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>"{title}" is now visible to thousands of buyers across the Canary Islands.</div>
           {grabItNow && <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--orange)', fontWeight: 800 }}>⚡ Grab It Now active — expires tonight at midnight!</div>}
           {featured && <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)', fontWeight: 800 }}>👀 Featured for 7 days — appearing at the top of search!</div>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

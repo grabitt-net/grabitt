@@ -23,7 +23,7 @@ export default function HomeHero() {
         <div style={{ position: 'absolute', right: -40, top: -40, width: 200, height: 200, background: 'rgba(255,255,255,0.08)', borderRadius: '50%' }} />
         <div style={{ position: 'relative', maxWidth: 640 }}>
           <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(24px, 4.2vw, 40px)', fontWeight: 700, lineHeight: 1.1, margin: 0 }}>
-            Gran Canaria&apos;s local marketplace
+            The Canary Islands&apos; local marketplace
           </h1>
           <p style={{ fontFamily: 'var(--font-ui)', fontSize: 'clamp(13px, 1.6vw, 16px)', fontWeight: 600, opacity: 0.95, margin: '10px 0 20px' }}>
             Buy &amp; sell locally — safely. Funds held in escrow until you confirm handover.

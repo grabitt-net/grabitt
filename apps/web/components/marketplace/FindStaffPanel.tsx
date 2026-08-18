@@ -380,7 +380,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
               <div style={{ textAlign: 'center', padding: '16px 0 12px' }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 64, fontWeight: 900, color: ORANGE, lineHeight: 1 }}>{matchCount}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginTop: 6 }}>{matchCount === 1 ? 'candidate matches' : 'candidates match'} your spec</div>
-                <div style={{ fontSize: 12, color: '#666', fontFamily: 'var(--font-ui)', marginTop: 4 }}>{role ? `${role} · ` : ''}Gran Canaria</div>
+                <div style={{ fontSize: 12, color: '#666', fontFamily: 'var(--font-ui)', marginTop: 4 }}>{role ? `${role} · ` : ''}Canary Islands</div>
               </div>
 
               {matchCount === 0 ? (
@@ -404,7 +404,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                             <div style={{ width: 40, height: 40, borderRadius: '50%', background: ORANGE, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, flexShrink: 0 }}>{rev ? rev.name.charAt(0) : (c.roles[0] || c.sector || '?').charAt(0)}</div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: '#1a1a1a' }}>{rev ? rev.name : (c.headline || c.roles[0] || 'Candidate')}</div>
-                              <div style={{ fontSize: 11, color: '#666', fontFamily: 'var(--font-ui)' }}>{[c.sector, c.location].filter(Boolean).join(' · ') || 'Gran Canaria'}{c.rating ? ` · ★ ${Number(c.rating).toFixed(1)}` : ''}</div>
+                              <div style={{ fontSize: 11, color: '#666', fontFamily: 'var(--font-ui)' }}>{[c.sector, c.location].filter(Boolean).join(' · ') || 'Canary Islands'}{c.rating ? ` · ★ ${Number(c.rating).toFixed(1)}` : ''}</div>
                             </div>
                             {/* Fit against this search, not a grade on the person. */}
                             <div title={c.matchNotes.map(n => `${n.factor}: ${n.points}/${n.of} — ${n.detail}`).join('\n')}

@@ -281,7 +281,7 @@ function ListingInner() {
             {/* Price with location + reference alongside it */}
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginTop: 3 }}>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)' }}>{priceLabel}</div>
-              <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 4 }}><Place>{job?.remote ? 'Remote' : (listing.location ?? 'Gran Canaria')}</Place> · Ref: {ref}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 4 }}><Place>{job?.remote ? 'Remote' : (listing.location ?? 'Canary Islands')}</Place> · Ref: {ref}</div>
             </div>
           </div>
 

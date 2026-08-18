@@ -4,9 +4,9 @@ import type { MetadataRoute } from 'next'
 // brand orange as the theme colour.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Grabitt — Gran Canaria Marketplace',
+    name: 'Grabitt — Canary Islands Marketplace',
     short_name: 'Grabitt',
-    description: 'Buy, sell, hire and discover — local to Gran Canaria.',
+    description: 'Buy, sell, hire and discover — local to the Canary Islands.',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',

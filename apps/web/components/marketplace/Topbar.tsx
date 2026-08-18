@@ -66,7 +66,7 @@ export default function Topbar({ title, back, backFallback }: { title?: string; 
 
   const handleNearMe = () => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      openPanel('near', { town: 'Gran Canaria' })
+      openPanel('near', { town: 'Canary Islands' })
       return
     }
     navigator.geolocation.getCurrentPosition(

@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 // Grabitt Team — a persistent, always-present welcome/support conversation.
 // Static content for now; a real support inbox can be wired in later.
 const MESSAGES = [
-  "👋 Welcome to Grabitt — Gran Canaria's local marketplace!",
+  "👋 Welcome to Grabitt — the Canary Islands' local marketplace!",
   'Buy and sell safely: payments are held securely until you confirm handover, and our Safety Shield is one tap away any time.',
   'Got a question about buying, selling, jobs, property or safety? Reply here and our team will help. We usually respond within 24 hours (Mon–Fri).',
 ]

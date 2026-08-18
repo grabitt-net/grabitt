@@ -6,7 +6,7 @@ import Icon, { IconName } from './Icon'
 // in the site Footer. Communicates why Grabitt is safe at a glance.
 const BADGES: { icon: IconName; title: string; body: string }[] = [
   { icon: 'shield', title: 'Secure escrow', body: 'Payment is held safely until you confirm handover.' },
-  { icon: 'mapPin', title: 'Local to Gran Canaria', body: 'Buy and sell with people near you across the island.' },
+  { icon: 'mapPin', title: 'Local to the Canaries', body: 'Buy and sell with people near you across the Canary Islands.' },
   { icon: 'check', title: 'Buyer protection', body: 'Every order is covered by the Grabitt Guarantee.' },
   { icon: 'truck', title: 'Tracked delivery', body: 'Funds release to sellers once an item is in transit.' },
 ]

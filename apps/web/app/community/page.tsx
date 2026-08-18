@@ -40,7 +40,7 @@ export default function CommunityIndexPage() {
 
       <header style={{ background: 'var(--sand)', padding: '14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', margin: '0 0 4px' }}>📰 Grabitt Guides</h1>
-        <p style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 13, color: '#1a1a1a', margin: 0 }}>Island tips, selling advice and the Gran Canaria second-hand economy.</p>
+        <p style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 13, color: '#1a1a1a', margin: 0 }}>Island tips, selling advice and the Canary Islands second-hand economy.</p>
       </header>
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '18px 14px 40px', width: '100%', boxSizing: 'border-box' }}>
