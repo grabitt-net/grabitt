@@ -617,7 +617,7 @@ function PanelBody() {
           <div style={{ textAlign: 'center', padding: '28px 24px 30px' }}>
             <Logo height={40} style={{ margin: '0 auto 18px' }} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 20, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t("You're in!")}</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, color: '#555', marginBottom: 24 }}>{t("Welcome back to Gran Canaria's marketplace.")}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, color: '#555', marginBottom: 24 }}>{t("Welcome back to the Canary Islands' marketplace.")}</div>
             {nextPanel
               ? <button onClick={() => openPanel(nextPanel, nextData)} style={btnPrimary}>{t('Continue')}</button>
               : <button onClick={closePanel} style={btnPrimary}>{t('Start browsing')}</button>}
@@ -658,9 +658,8 @@ function PanelBody() {
               )}
               <div>
                 <div style={{ fontFamily: 'var(--font-body)', fontSize: 17, fontWeight: 900, color: 'var(--dark)' }}>
-                  {authStep === 'choose' ? 'Grabitt' : authStep === 'login' ? 'Log in' : authStep === 'register' ? 'Create account' : 'Forgot password'}
+                  {authStep === 'choose' ? 'Grabitt - Your Everything, Local' : authStep === 'login' ? 'Log in' : authStep === 'register' ? 'Create account' : 'Forgot password'}
                 </div>
-                {authStep === 'choose' && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Gran Canaria's local marketplace</div>}
               </div>
             </div>
             <button onClick={closePanel} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer' }}>✕</button>
@@ -671,9 +670,11 @@ function PanelBody() {
             {authStep === 'choose' && (
               <>
                 <div style={{ textAlign: 'center', padding: '6px 0 24px' }}>
-                  <Logo height={34} style={{ margin: '0 auto 18px' }} />
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t('Buy, sell & connect on the island')}</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#888' }}>{t('50 free credits when you join · Secure Stripe payments')}</div>
+                  <Logo height={34} style={{ margin: '0 auto 12px' }} />
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 10 }}>{t('Buy. Sell. Work. Live.')}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#888' }}>
+                    <Icon name="lock" size={13} /> {t('Secure Stripe payments')}
+                  </div>
                 </div>
 
                 {/* Social buttons */}

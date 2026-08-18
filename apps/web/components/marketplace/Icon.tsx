@@ -8,7 +8,7 @@ export type IconName =
   | 'search' | 'mapPin' | 'bell' | 'heart' | 'coins' | 'user' | 'login'
   | 'message' | 'package' | 'lifebuoy' | 'menu' | 'cart' | 'plus'
   | 'shield' | 'check' | 'star' | 'arrowRight' | 'arrowLeft' | 'truck' | 'sparkle'
-  | 'briefcase' | 'home' | 'building' | 'zap' | 'tag' | 'share' | 'pencil' | 'trash'
+  | 'briefcase' | 'home' | 'building' | 'zap' | 'tag' | 'share' | 'pencil' | 'trash' | 'lock'
 
 const PATHS: Record<IconName, string> = {
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
@@ -39,6 +39,7 @@ const PATHS: Record<IconName, string> = {
   share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
   pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   trash: '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
 }
 
 export default function Icon({ name, size = 20, style, strokeWidth = 1.9 }: {
