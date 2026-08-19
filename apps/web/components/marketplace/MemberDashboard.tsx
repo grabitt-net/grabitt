@@ -23,7 +23,7 @@ import { t } from '@/lib/i18n'
 // snapshot · dashboard pills) over an 8-section left menu that swaps the right
 // panel. It sits BELOW the existing header + Grabitt NOW promo.
 
-type SectionId = 'messages' | 'employment' | 'listings' | 'admin' | 'saved' | 'loyalty' | 'addbiz' | 'activity'
+type SectionId = 'messages' | 'employment' | 'listings' | 'admin' | 'saved' | 'recent' | 'loyalty' | 'addbiz' | 'activity'
 type Seg = 'active' | 'sold' | 'draft' | 'buying'
 
 const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
@@ -32,6 +32,7 @@ const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
   { id: 'listings', label: 'Listings & Disputes', icon: 'tag' },
   { id: 'admin', label: 'Admin Centre', icon: 'user' },
   { id: 'saved', label: 'Saved Listings & Offers', icon: 'heart' },
+  { id: 'recent', label: 'Recently Viewed', icon: 'search' },
   { id: 'loyalty', label: 'Loyalty Centre', icon: 'coins' },
   { id: 'addbiz', label: 'Add Business or Charity', icon: 'building' },
   { id: 'activity', label: 'Activity Centre', icon: 'package' },
@@ -178,7 +179,27 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             </div>
           </div>
         </div>
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#999', fontWeight: 800, marginTop: 10, textAlign: 'right' }}>{t('Date range selectable per pill')}</div>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#999', fontWeight: 800, marginTop: 8, textAlign: 'right' }}>{t('Date range selectable per pill')}</div>
+
+        {/* Recently viewed carousel — inside the hub (per Steve). */}
+        {recent.length > 0 && (
+          <div style={{ marginTop: 12, borderTop: '1px dashed #e2d9c9', paddingTop: 12 }}>
+            <button onClick={() => setSection('recent')} style={{ ...hubGroupHead, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>{t('Recently viewed')} ›</button>
+            <div className="hide-scroll" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
+              {recent.map(r => (
+                <button key={r.id} onClick={() => router.push(`/listings/${r.id}`)} style={{ flex: '0 0 96px', width: 96, background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+                  <div style={{ paddingTop: '78%', background: '#f5f0e8', position: 'relative' }}>
+                    {r.image ? <img src={r.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>{r.emoji ?? '🛍️'}</div>}
+                  </div>
+                  <div style={{ padding: '5px 6px 7px' }}>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, color: 'var(--orange)' }}>{r.price}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── MENU + PANEL ────────────────────────────────────────────────────── */}
@@ -347,7 +368,23 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
               </div>
             </Link>
-            {/* Recently viewed — items this member has recently looked at. */}
+            <div style={card}>
+              <div style={cardHead}>{t('Orders')}</div>
+              {purchases === null ? <Muted>{t('Loading…')}</Muted> : purchases.length === 0 ? <Muted>{t('No orders yet.')}</Muted> : purchases.slice(0, 8).map((p: any) => (
+                <Link key={p.id} href={`/listings/${p.listing?.id}`} style={{ textDecoration: 'none' }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f5f5' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{p.listing?.images?.[0] ? <img src={p.listing.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.listing?.title ?? t('Item')}</div>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>{t(TX_LABEL[p.status] ?? p.status)}</div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>)}
+
+          {section === 'recent' && (
             <div style={card}>
               <div style={cardHead}>{t('Recently viewed')}</div>
               {recent.length === 0 ? <Muted>{t('Items you view will appear here.')}</Muted> : (
@@ -368,21 +405,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 </div>
               )}
             </div>
-            <div style={card}>
-              <div style={cardHead}>{t('Orders')}</div>
-              {purchases === null ? <Muted>{t('Loading…')}</Muted> : purchases.length === 0 ? <Muted>{t('No orders yet.')}</Muted> : purchases.slice(0, 8).map((p: any) => (
-                <Link key={p.id} href={`/listings/${p.listing?.id}`} style={{ textDecoration: 'none' }}>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f5f5' }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{p.listing?.images?.[0] ? <img src={p.listing.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.listing?.title ?? t('Item')}</div>
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>{t(TX_LABEL[p.status] ?? p.status)}</div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </>)}
+          )}
 
           {section === 'loyalty' && (<>
             <RewardsCard />
