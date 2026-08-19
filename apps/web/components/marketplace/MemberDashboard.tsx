@@ -129,9 +129,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       {/* ── MY HUB — profile column + Sales/Purchasing pills (per Steve) ─────── */}
       <div style={{ border: '3px solid #111', borderRadius: 16, padding: '14px 14px 14px', background: '#fff' }}>
         <div style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>{t('My Hub')}</div>
-        <div style={{ display: 'grid', gap: 14, gridTemplateColumns: '1fr' }} className="member-hub">
-          {/* Profile column — thick black border */}
-          <div style={{ border: '2px solid #111', borderRadius: 12, padding: 12 }}>
+        <div style={{ display: 'grid', gap: 0, gridTemplateColumns: '1fr' }} className="member-hub">
+          {/* Profile — thick black border */}
+          <div style={{ border: '2px solid #111', borderRadius: 12, padding: 12, alignSelf: 'start' }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
               <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'var(--sand)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange)', fontWeight: 900, fontSize: 19, fontFamily: 'var(--font-nunito)' }}>
                 {me?.avatar ? <img src={me.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (me?.displayName ?? '?')[0]?.toUpperCase()}
@@ -156,30 +156,34 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
               </button>} last />
           </div>
 
-          {/* Sales pills */}
-          <div>
-            <div style={hubGroupHead}>{t('Sales')}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <HubPill metricKey="sales" label={t('Sales')} onClick={() => { setSeg('sold'); setSection('listings') }} />
-              <HubPill metricKey="orders" label={t('Orders')} onClick={() => setSection('listings')} />
-              <HubPill metricKey="sold" label={t('Sold')} onClick={() => { setSeg('sold'); setSection('listings') }} />
-              <HubPill metricKey="toShip" label={t('To ship')} onClick={() => setSection('listings')} />
-              <HubPill metricKey="beingWatched" label={t('Being watched')} onClick={() => setSection('listings')} />
-              <HubPill metricKey="incomeDue" label={t('Income due')} onClick={() => setSection('listings')} />
+          {/* Sales — two divided columns of clickable oval pills */}
+          <div className="hub-col">
+            <div style={{ ...hubGroupHead, marginBottom: 12 }}>{t('Clickable pills')} · {t('Sales')}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
+              <div style={{ display: 'grid', gap: 12, alignContent: 'start', paddingRight: 12 }}>
+                <HubPill metricKey="sales" label={t('Sales')} onClick={() => { setSeg('sold'); setSection('listings') }} />
+                <HubPill metricKey="sold" label={t('Sold')} onClick={() => { setSeg('sold'); setSection('listings') }} />
+                <HubPill metricKey="beingWatched" label={t('Being watched')} onClick={() => setSection('listings')} />
+              </div>
+              <div className="sales-b" style={{ display: 'grid', gap: 12, alignContent: 'start', paddingLeft: 12 }}>
+                <HubPill metricKey="orders" label={t('Orders')} onClick={() => setSection('listings')} />
+                <HubPill metricKey="toShip" label={t('To ship')} onClick={() => setSection('listings')} />
+                <HubPill metricKey="incomeDue" label={t('Income due')} onClick={() => setSection('listings')} />
+              </div>
             </div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#777', fontWeight: 800, marginTop: 12, textDecoration: 'underline' }}>{t('Date range per pill')}</div>
           </div>
 
-          {/* Purchasing pills */}
-          <div>
-            <div style={hubGroupHead}>{t('Purchasing')}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+          {/* Purchasing */}
+          <div className="hub-col">
+            <div style={{ ...hubGroupHead, marginBottom: 12 }}>{t('Purchasing')}</div>
+            <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
               <HubPill metricKey="purchased" label={t('Purchased')} onClick={() => { setSeg('buying'); setSection('listings') }} />
               <HubPill metricKey="watching" label={t('Watching')} onClick={() => router.push('/favourites')} />
               <HubPill metricKey="toPay" label={t('To pay')} onClick={() => { setSeg('buying'); setSection('listings') }} />
             </div>
           </div>
         </div>
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#999', fontWeight: 800, marginTop: 8, textAlign: 'right' }}>{t('Date range selectable per pill')}</div>
 
         {/* Recently viewed carousel — inside the hub (per Steve). */}
         {recent.length > 0 && (
@@ -439,7 +443,12 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       </div>
 
       <style>{`
-        @media (min-width: 820px){ .member-hub{ grid-template-columns: minmax(190px, 0.85fr) 1.5fr 1fr !important; } }
+        .member-hub .hub-col{ padding-top: 12px; margin-top: 12px; border-top: 1px dashed #ddd; }
+        .member-hub .sales-b{ border-left: 1px solid #cfcfcf; }
+        @media (min-width: 820px){
+          .member-hub{ grid-template-columns: minmax(160px, 0.8fr) 1.7fr 1fr !important; align-items: stretch; }
+          .member-hub .hub-col{ border-top: none; margin-top: 0; padding-top: 0; padding-left: 16px; border-left: 1px solid #cfcfcf; }
+        }
         @media (min-width: 900px){ .member-body{ grid-template-columns: 240px 1fr !important; } .member-menu{ position: sticky; top: 70px; } }
       `}</style>
     </>
@@ -464,7 +473,8 @@ type MetricKey = 'sales' | 'sold' | 'beingWatched' | 'orders' | 'toShip' | 'inco
 const RANGES: [number, string][] = [[0, 'All'], [1, '24h'], [7, '7d'], [30, '30d'], [90, '90d']]
 
 function HubPill({ metricKey, label, onClick }: { metricKey: MetricKey; label: string; onClick: () => void }) {
-  const [days, setDays] = useState(0)
+  const [rangeIdx, setRangeIdx] = useState(0)
+  const days = RANGES[rangeIdx][0]
   const [data, setData] = useState<{ value: number; currency: boolean } | null>(null)
   useEffect(() => {
     let live = true
@@ -473,14 +483,19 @@ function HubPill({ metricKey, label, onClick }: { metricKey: MetricKey; label: s
   }, [metricKey, days])
   const val = data ? (data.currency ? `€${Number(data.value).toLocaleString()}` : String(data.value)) : '—'
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1.5px solid #111', borderRadius: 999, padding: '5px 6px 5px 12px', background: '#fff', minWidth: 0 }}>
-      <button onClick={onClick} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+    // Clean clickable oval: "Label — value", with a small per-pill date-range
+    // chip at the right that cycles All → 24h → 7d → 30d → 90d.
+    <button onClick={onClick} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid #111', borderRadius: 999, padding: '10px 34px 10px 14px', background: '#fff', cursor: 'pointer', minWidth: 0, width: '100%' }}>
+      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {label} — <span style={{ color: 'var(--orange)', fontWeight: 900 }}>{val}</span>
-      </button>
-      <select value={days} onChange={e => setDays(Number(e.target.value))} aria-label={`${label} date range`} style={{ flexShrink: 0, border: '1px solid #ddd', borderRadius: 999, background: '#f7f4ee', fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: '#7a6a55', padding: '3px 4px', cursor: 'pointer' }}>
-        {RANGES.map(([d, lab]) => <option key={d} value={d}>{lab}</option>)}
-      </select>
-    </div>
+      </span>
+      <span
+        role="button"
+        aria-label={`${label} date range: ${RANGES[rangeIdx][1]}`}
+        onClick={e => { e.stopPropagation(); setRangeIdx(i => (i + 1) % RANGES.length) }}
+        style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: '#f0ece3', borderRadius: 999, padding: '1px 6px', fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 800, color: '#8a7f6b', cursor: 'pointer' }}
+      >{RANGES[rangeIdx][1]}</span>
+    </button>
   )
 }
 
