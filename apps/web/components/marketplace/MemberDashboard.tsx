@@ -158,7 +158,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
           {/* Sales — two divided columns of clickable oval pills */}
           <div className="hub-col">
-            <div style={{ ...hubGroupHead, marginBottom: 12 }}>{t('Clickable pills')} · {t('Sales')}</div>
+            <div style={{ ...hubGroupHead, marginBottom: 12 }}>{t('Sales')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
               <div style={{ display: 'grid', gap: 12, alignContent: 'start', paddingRight: 12 }}>
                 <HubPill metricKey="sales" label={t('Sales')} onClick={() => { setSeg('sold'); setSection('listings') }} />
