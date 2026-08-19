@@ -184,25 +184,6 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           </div>
         </div>
 
-        {/* Recently viewed carousel — inside the hub (per Steve). */}
-        {recent.length > 0 && (
-          <div style={{ marginTop: 12, borderTop: '1px dashed #e2d9c9', paddingTop: 12 }}>
-            <button onClick={() => setSection('recent')} style={{ ...hubGroupHead, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>{t('Recently viewed')} ›</button>
-            <div className="hide-scroll" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
-              {recent.map(r => (
-                <button key={r.id} onClick={() => router.push(`/listings/${r.id}`)} style={{ flex: '0 0 96px', width: 96, background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
-                  <div style={{ paddingTop: '78%', background: '#f5f0e8', position: 'relative' }}>
-                    {r.image ? <img src={r.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>{r.emoji ?? '🛍️'}</div>}
-                  </div>
-                  <div style={{ padding: '5px 6px 7px' }}>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, color: 'var(--orange)' }}>{r.price}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── MENU + PANEL ────────────────────────────────────────────────────── */}
