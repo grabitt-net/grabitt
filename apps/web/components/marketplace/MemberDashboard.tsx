@@ -171,7 +171,6 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 <HubPill metricKey="incomeDue" label={t('Income due')} onClick={() => setSection('listings')} />
               </div>
             </div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#777', fontWeight: 800, marginTop: 12, textDecoration: 'underline' }}>{t('Date range per pill')}</div>
           </div>
 
           {/* Purchasing */}
