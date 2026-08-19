@@ -38,6 +38,16 @@ const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
   { id: 'activity', label: 'Activity Centre', icon: 'package' },
 ]
 
+// Activity Centre feed (rendered inline in the right panel — no pop-up).
+const ACTIVITY = [
+  { icon: '🛒', title: 'Purchased PS5 Console', detail: 'from @gc_gaming_shop', time: '2h ago', color: '#3b82f6' },
+  { icon: '💬', title: 'Message sent to María R.', detail: 'Re: Cleaning — Handy Help', time: '4h ago', color: '#8b5cf6' },
+  { icon: '💰', title: 'Offer received on Surfboard', detail: 'Dave M. offered €85', time: '6h ago', color: 'var(--orange)' },
+  { icon: '⭐', title: 'Review left for @seller_anna', detail: '5★ — Great seller!', time: '1d ago', color: '#eab308' },
+  { icon: '📦', title: 'Listed IKEA Sofa', detail: '€180 · Las Palmas', time: '2d ago', color: 'var(--sage)' },
+  { icon: '✅', title: 'Handover confirmed', detail: 'iPhone 13 — Released to @seller_mike', time: '3d ago', color: '#16a34a' },
+]
+
 const bucket = (s: string) => (s === 'sold' ? 'sold' : (s === 'active' || s === 'grab_it_now') ? 'active' : 'draft')
 const TX_LABEL: Record<string, string> = {
   pending_payment: 'Awaiting payment', held: 'Paid — in escrow', confirmed_handover: 'Handover confirmed',
@@ -410,14 +420,19 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           </>)}
 
           {section === 'activity' && (
-            <button onClick={() => openPanel('myActivity' as PanelId)} style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
-              <Icon name="package" size={20} strokeWidth={2} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{t('Activity Centre')}</div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777' }}>{t('Shows all your Grabitt activity.')}</div>
-              </div>
-              <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
-            </button>
+            <div style={card}>
+              <div style={cardHead}>{t('Activity Centre')}</div>
+              {ACTIVITY.map((a, i) => (
+                <div key={i} style={{ display: 'flex', gap: 12, padding: '11px 0', borderBottom: i === ACTIVITY.length - 1 ? 'none' : '1px solid #f5f5f5', alignItems: 'flex-start' }}>
+                  <div style={{ width: 38, height: 38, background: `${a.color}18`, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{a.icon}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 2 }}>{a.title}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>{a.detail}</div>
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: '#bbb', flexShrink: 0 }}>{a.time}</div>
+                </div>
+              ))}
+            </div>
           )}
         </section>
       </div>
