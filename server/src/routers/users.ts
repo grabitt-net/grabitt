@@ -204,6 +204,61 @@ export const usersRouter = router({
     return { active, sold, unread, offers, saved, watching: saved, beingWatched, toShip, payDue, purchases, toPay }
   }),
 
+  // A single "My Hub" pill metric, scoped to an optional date window (days back;
+  // 0 = all time). Each pill on the member hub fetches its own value so every
+  // pill can carry its own date range. Currency metrics return euros; the rest
+  // return a count.
+  hubMetric: protectedProcedure
+    .input(z.object({
+      key: z.enum(['sales', 'sold', 'beingWatched', 'orders', 'toShip', 'incomeDue', 'purchased', 'watching', 'toPay']),
+      days: z.number().int().min(0).max(3650).default(0),
+    }))
+    .query(async ({ ctx, input }) => {
+      const uid = ctx.user.id
+      const since = input.days > 0 ? new Date(Date.now() - input.days * 86400000) : null
+      const created = since ? { createdAt: { gte: since } } : {}
+      const num = (n: unknown) => Number(n ?? 0)
+
+      switch (input.key) {
+        case 'sales': {
+          const r = await ctx.prisma.transaction.aggregate({ _sum: { amount: true }, where: { sellerId: uid, status: { notIn: ['pending_payment', 'cancelled', 'refunded'] }, ...created } })
+          return { value: num(r._sum.amount), currency: true }
+        }
+        case 'sold': {
+          const c = await ctx.prisma.transaction.count({ where: { sellerId: uid, status: { in: ['completed', 'released', 'confirmed_handover'] }, ...created } })
+          return { value: c, currency: false }
+        }
+        case 'beingWatched': {
+          const c = await ctx.prisma.wishlistItem.count({ where: { listing: { sellerId: uid }, ...created } })
+          return { value: c, currency: false }
+        }
+        case 'orders': {
+          const c = await ctx.prisma.transaction.count({ where: { sellerId: uid, status: { notIn: ['cancelled', 'refunded'] }, ...created } })
+          return { value: c, currency: false }
+        }
+        case 'toShip': {
+          const c = await ctx.prisma.transaction.count({ where: { sellerId: uid, fulfilmentType: 'courier', status: 'held', shippedAt: null, ...created } })
+          return { value: c, currency: false }
+        }
+        case 'incomeDue': {
+          const r = await ctx.prisma.transaction.aggregate({ _sum: { sellerNet: true }, where: { sellerId: uid, status: { in: ['held', 'confirmed_handover', 'completed'] }, fundsReleasedAt: null, ...created } })
+          return { value: num(r._sum.sellerNet), currency: true }
+        }
+        case 'purchased': {
+          const c = await ctx.prisma.transaction.count({ where: { buyerId: uid, status: { notIn: ['pending_payment', 'cancelled', 'refunded'] }, ...created } })
+          return { value: c, currency: false }
+        }
+        case 'watching': {
+          const c = await ctx.prisma.wishlistItem.count({ where: { userId: uid, ...created } })
+          return { value: c, currency: false }
+        }
+        case 'toPay': {
+          const r = await ctx.prisma.transaction.aggregate({ _sum: { amount: true }, where: { buyerId: uid, status: 'pending_payment', ...created } })
+          return { value: num(r._sum.amount), currency: true }
+        }
+      }
+    }),
+
   // The seller info centre: current grade and fee, progress to the next grade,
   // profile completion, and per-listing performance. Everything the prototype's
   // profile hero and Seller Dashboard showed, from real data.

@@ -56,7 +56,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const { openPanel } = usePanel()
   const [section, setSection] = useState<SectionId>('listings')
   const [seg, setSeg] = useState<Seg>('active')
-  const [sortNewest, setSortNewest] = useState(true) // "Needs date" sort control
+  const sortNewest = true // My Listings default to newest-first
 
   const [dash, setDash] = useState<any>(null)
   const [listings, setListings] = useState<any[] | null>(null)
@@ -123,78 +123,62 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const memberRef = me?.id ? `M${String(me.id).replace(/-/g, '').slice(0, 6).toUpperCase()}` : ''
   const accountType = me?.memberStatus === 'blue_light' ? 'Bluelight' : me?.memberStatus === 'student' ? 'Student' : me?.memberStatus === 'charity' ? 'Charity' : 'Regular'
 
-  // Dashboard pills — [label, value, onClick]
-  const pillsLeft: [string, any, () => void][] = [
-    ['Offers', dash?.offers, () => setSection('listings')],
-    ['To ship', dash?.toShip, () => setSection('listings')],
-    ['Pay due', dash?.payDue, () => setSection('listings')],
-  ]
-  const pillsRight: [string, any, () => void][] = [
-    ['Watching', dash?.watching, () => router.push('/favourites')],
-    ['Purchases', dash?.purchases, () => { setSeg('buying'); setSection('listings') }],
-    ['To pay', dash?.toPay, () => { setSeg('buying'); setSection('listings') }],
-  ]
-
   return (
     <>
-      {/* ── TOP STRIP — three boxes ─────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr' }} className="member-top">
-        {/* Box 1 — profile identity */}
-        <div style={card}>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
-            <div style={{ width: 54, height: 54, borderRadius: '50%', background: 'var(--sand)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange)', fontWeight: 900, fontSize: 22, fontFamily: 'var(--font-nunito)' }}>
-              {me?.avatar ? <img src={me.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (me?.displayName ?? '?')[0]?.toUpperCase()}
+      {/* ── MY HUB — profile column + Sales/Purchasing pills (per Steve) ─────── */}
+      <div style={{ border: '3px solid #111', borderRadius: 16, padding: '14px 14px 14px', background: '#fff' }}>
+        <div style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>{t('My Hub')}</div>
+        <div style={{ display: 'grid', gap: 14, gridTemplateColumns: '1fr' }} className="member-hub">
+          {/* Profile column — thick black border */}
+          <div style={{ border: '2px solid #111', borderRadius: 12, padding: 12 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'var(--sand)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange)', fontWeight: 900, fontSize: 19, fontFamily: 'var(--font-nunito)' }}>
+                {me?.avatar ? <img src={me.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (me?.displayName ?? '?')[0]?.toUpperCase()}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 14.5, fontWeight: 700, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{me?.displayName ?? t('Your account')}</div>
+                <button onClick={() => openPanel('myRatings' as PanelId)} style={{ ...linkBtn, fontSize: 11.5 }}>⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'}</button>
+              </div>
             </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 16, fontWeight: 700, color: 'var(--dark)' }}>{me?.displayName ?? t('Your account')}</div>
-              <button onClick={() => openPanel('myRatings' as PanelId)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 12, color: 'var(--orange)', fontWeight: 800 }}>
-                ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'} · {t('View ratings')}
-              </button>
+            <Row label={t('Account type')} value={accountType} />
+            <Row label={t('Account ref')} value={memberRef} />
+            <Row label={t('Verified')} value={me?.isVerified
+              ? <span style={{ color: '#16a34a', fontWeight: 800 }}>{t('Yes')}</span>
+              : <button onClick={() => openPanel('verifyMe' as PanelId)} style={linkBtn}>{t('Get verified')}</button>} />
+            <Row label={t('Work required')} value={
+              <button onClick={toggleOpenToWork} style={{ background: me?.openToWork ? '#eef7f0' : '#f5f0e8', border: 'none', borderRadius: 50, padding: '4px 12px', cursor: 'pointer', color: me?.openToWork ? '#16a34a' : '#777', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 11.5 }}>
+                {me?.openToWork ? t('Looking for work') : t('Not looking')}
+              </button>} />
+            <Row label={t('Business A/C')} value={
+              <button onClick={() => me?.isBusiness ? router.push('/account?tab=business') : openPanel('business' as PanelId)} style={linkBtn}>
+                {me?.isBusiness ? t('Open') : t('Add / Upgrade')}
+              </button>} last />
+          </div>
+
+          {/* Sales pills */}
+          <div>
+            <div style={hubGroupHead}>{t('Sales')}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <HubPill metricKey="sales" label={t('Sales')} onClick={() => { setSeg('sold'); setSection('listings') }} />
+              <HubPill metricKey="orders" label={t('Orders')} onClick={() => setSection('listings')} />
+              <HubPill metricKey="sold" label={t('Sold')} onClick={() => { setSeg('sold'); setSection('listings') }} />
+              <HubPill metricKey="toShip" label={t('To ship')} onClick={() => setSection('listings')} />
+              <HubPill metricKey="beingWatched" label={t('Being watched')} onClick={() => setSection('listings')} />
+              <HubPill metricKey="incomeDue" label={t('Income due')} onClick={() => setSection('listings')} />
             </div>
           </div>
-          <Row label={t('Name')} value={me?.fullName || '—'} />
-          <Row label={t('Screen name')} value={me?.displayName || '—'} />
-          <Row label={t('Join date')} value={memberSince} />
-          <Row label={t('Business A/C')} value={
-            <button onClick={() => me?.isBusiness ? router.push('/account?tab=business') : openPanel('business' as PanelId)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--orange)', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 12.5 }}>
-              {me?.isBusiness ? t('Open') : t('Add / Upgrade')}
-            </button>} />
-          <Row label={t('Verified')} value={me?.isVerified
-            ? <span style={{ color: '#16a34a', fontWeight: 800 }}>{t('Yes')}</span>
-            : <button onClick={() => openPanel('verifyMe' as PanelId)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--orange)', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 12.5 }}>{t('Get verified')}</button>} />
-          <Row label={t('Account ref')} value={memberRef} />
-          <Row label={t('Account type')} value={accountType} />
-          <Row label={t('Work needed')} value={
-            <button onClick={toggleOpenToWork} style={{ background: me?.openToWork ? '#eef7f0' : '#f5f0e8', border: 'none', borderRadius: 50, padding: '4px 12px', cursor: 'pointer', color: me?.openToWork ? '#16a34a' : '#777', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 11.5 }}>
-              {me?.openToWork ? t('Looking for work') : t('Not looking for work')}
-            </button>} last />
-        </div>
 
-        {/* Box 2 — selling snapshot + date sort */}
-        <div style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div style={cardHead}>{t('Selling')}</div>
-            <button onClick={() => setSortNewest(s => !s)} title={t('Sort by date')} style={{ background: '#f5f0e8', border: 'none', borderRadius: 50, padding: '5px 11px', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#7a6a55' }}>
-              {t('Date')} {sortNewest ? '↓' : '↑'}
-            </button>
-          </div>
-          <SnapRow label={t('On sale')} value={dash?.active} onClick={() => { setSeg('active'); setSection('listings') }} />
-          <SnapRow label={t('Sold')} value={dash?.sold} onClick={() => { setSeg('sold'); setSection('listings') }} />
-          <SnapRow label={t('Being watched')} value={dash?.beingWatched} onClick={() => setSection('listings')} last />
-        </div>
-
-        {/* Box 3 — dashboard pills */}
-        <div style={card}>
-          <div style={cardHead}>{t('Dashboard')}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[...pillsLeft, ...pillsRight].map(([label, value, onClick], i) => (
-              <button key={label + i} onClick={onClick} style={{ background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '11px 8px', textAlign: 'left', cursor: 'pointer' }}>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', fontVariantNumeric: 'tabular-nums' }}>{value ?? '—'}</div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.3 }}>{t(label)}</div>
-              </button>
-            ))}
+          {/* Purchasing pills */}
+          <div>
+            <div style={hubGroupHead}>{t('Purchasing')}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+              <HubPill metricKey="purchased" label={t('Purchased')} onClick={() => { setSeg('buying'); setSection('listings') }} />
+              <HubPill metricKey="watching" label={t('Watching')} onClick={() => router.push('/favourites')} />
+              <HubPill metricKey="toPay" label={t('To pay')} onClick={() => { setSeg('buying'); setSection('listings') }} />
+            </div>
           </div>
         </div>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#999', fontWeight: 800, marginTop: 10, textAlign: 'right' }}>{t('Date range selectable per pill')}</div>
       </div>
 
       {/* ── MENU + PANEL ────────────────────────────────────────────────────── */}
@@ -432,7 +416,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       </div>
 
       <style>{`
-        @media (min-width: 760px){ .member-top{ grid-template-columns: 1.2fr 1fr 1.1fr !important; } }
+        @media (min-width: 820px){ .member-hub{ grid-template-columns: minmax(190px, 0.85fr) 1.5fr 1fr !important; } }
         @media (min-width: 900px){ .member-body{ grid-template-columns: 240px 1fr !important; } .member-menu{ position: sticky; top: 70px; } }
       `}</style>
     </>
@@ -448,12 +432,32 @@ function Row({ label, value, last }: { label: string; value: React.ReactNode; la
   )
 }
 
-function SnapRow({ label, value, onClick, last }: { label: string; value: any; onClick: () => void; last?: boolean }) {
+const linkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--orange)', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 12.5 }
+const hubGroupHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }
+
+// One clickable "My Hub" pill — an oval showing "Label — value" with its own
+// date-range selector (per Steve). Each pill fetches its own scoped metric.
+type MetricKey = 'sales' | 'sold' | 'beingWatched' | 'orders' | 'toShip' | 'incomeDue' | 'purchased' | 'watching' | 'toPay'
+const RANGES: [number, string][] = [[0, 'All'], [1, '24h'], [7, '7d'], [30, '30d'], [90, '90d']]
+
+function HubPill({ metricKey, label, onClick }: { metricKey: MetricKey; label: string; onClick: () => void }) {
+  const [days, setDays] = useState(0)
+  const [data, setData] = useState<{ value: number; currency: boolean } | null>(null)
+  useEffect(() => {
+    let live = true
+    ;(trpcAuthed() as any).users.hubMetric.query({ key: metricKey, days }).then((d: any) => { if (live) setData(d) }).catch(() => {})
+    return () => { live = false }
+  }, [metricKey, days])
+  const val = data ? (data.currency ? `€${Number(data.value).toLocaleString()}` : String(data.value)) : '—'
   return (
-    <button onClick={onClick} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', background: 'none', border: 'none', borderBottom: last ? 'none' : '1px solid #f5f0e8', padding: '9px 0', cursor: 'pointer' }}>
-      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: 'var(--dark)', fontWeight: 700 }}>{label}</span>
-      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, color: 'var(--orange)', fontWeight: 900, fontVariantNumeric: 'tabular-nums' }}>{value ?? '—'}</span>
-    </button>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1.5px solid #111', borderRadius: 999, padding: '5px 6px 5px 12px', background: '#fff', minWidth: 0 }}>
+      <button onClick={onClick} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {label} — <span style={{ color: 'var(--orange)', fontWeight: 900 }}>{val}</span>
+      </button>
+      <select value={days} onChange={e => setDays(Number(e.target.value))} aria-label={`${label} date range`} style={{ flexShrink: 0, border: '1px solid #ddd', borderRadius: 999, background: '#f7f4ee', fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: '#7a6a55', padding: '3px 4px', cursor: 'pointer' }}>
+        {RANGES.map(([d, lab]) => <option key={d} value={d}>{lab}</option>)}
+      </select>
+    </div>
   )
 }
 
