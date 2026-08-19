@@ -4,26 +4,38 @@ import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import { DEPT_ENUM } from '@/lib/listingMap'
 
-// Category tiles now use real photography (Unsplash) layered over the brand
-// gradient. The gradient stays as a base so a failed image simply falls back to
-// gradient + emoji — the card never renders broken. `img` param sizes are small
-// + cropped for fast loading.
-const IMG = (id: string) => `https://images.unsplash.com/${id}?w=320&h=320&fit=crop&q=55&auto=format`
+// Category tiles use Steve's circular illustrated artwork (name baked into the
+// image, cream ground, sage brush stroke + heart). Categories he hasn't supplied
+// art for yet get a matching circular placeholder so the whole grid reads as one
+// set — swap in a real image at /public/categories when it arrives.
+type Cat = { name: string; img?: string }
 
-const categories = [
-  { icon: '🏡', name: 'Home & Garden', grad: 'linear-gradient(135deg,#56ab2f,#a8e063)', img: IMG('photo-1416879595882-3373a0480b5b') },
-  { icon: '👗', name: 'Fashion', grad: 'linear-gradient(135deg,#f7971e,#ffd200)', img: IMG('photo-1445205170230-053b83016050') },
-  { icon: '⚽', name: 'Sport', grad: 'linear-gradient(135deg,#11998e,#38ef7d)', img: IMG('photo-1461896836934-ffe607ba8211') },
-  { icon: '🎮', name: 'Gaming', grad: 'linear-gradient(135deg,#8E2DE2,#c471f5)', img: IMG('photo-1542751371-adc38448a05e') },
-  { icon: '📱', name: 'Electronics', grad: 'linear-gradient(135deg,#4776E6,#8E54E9)', img: IMG('photo-1498049794561-7780e7231661') },
-  { icon: '🎁', name: 'Gift Ideas', grad: 'linear-gradient(135deg,#f953c6,#b91d73)', img: IMG('photo-1513885535751-8b9238bd345a') },
-  { icon: '🧸', name: 'Kids & Baby', grad: 'linear-gradient(135deg,#f9d423,#ff4e50)', img: IMG('photo-1515488042361-ee00e0ddd4e4') },
-  { icon: '💊', name: 'Health, Fitness & Diet', grad: 'linear-gradient(135deg,#43cea2,#185a9d)', img: IMG('photo-1571019613454-1cb2f99b2d8b') },
-  { icon: '🕺', name: 'Retro & Vintage', grad: 'linear-gradient(135deg,#d35400,#7a4419)', img: IMG('photo-1489599849927-2ee91cede3ba') },
-  { icon: '🔧', name: 'Handy Help', grad: 'linear-gradient(135deg,#00b09b,#96c93d)', img: IMG('photo-1581578731548-c64695cc6952') },
-  { icon: '🐾', name: 'Pet Supplies', grad: 'linear-gradient(135deg,#f093fb,#f5576c)', img: IMG('photo-1425082661705-1834bfd09dca') },
-  { icon: '🧶', name: 'Hobbies & Crafts', grad: 'linear-gradient(135deg,#ff9a9e,#fecfef)', img: IMG('photo-1522145085346-fbc07f16dc46') },
+const categories: Cat[] = [
+  { name: 'Home & Garden' },
+  { name: 'Fashion', img: '/categories/fashion.jpg' },
+  { name: 'Sport', img: '/categories/sport.jpg' },
+  { name: 'Gaming', img: '/categories/gaming.jpg' },
+  { name: 'Electronics', img: '/categories/electronics.jpg' },
+  { name: 'Gift Ideas' },
+  { name: 'Kids & Baby', img: '/categories/kids-baby.jpg' },
+  { name: 'Health, Fitness & Diet', img: '/categories/health-beauty.jpg' },
+  { name: 'Retro & Vintage', img: '/categories/retro.jpg' },
+  { name: 'Handy Help' },
+  { name: 'Pet Supplies' },
+  { name: 'Hobbies & Crafts' },
 ]
+
+// Circular placeholder matching the artwork style — cream ground, a soft sage
+// brush blob, the category name and a little heart.
+function Placeholder({ name }: { name: string }) {
+  return (
+    <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#f6f1e6', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '12%', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', width: '78%', height: '34%', background: '#c7cf9f', opacity: 0.55, borderRadius: '45% 55% 48% 52%', filter: 'blur(3px)' }} />
+      <span style={{ position: 'relative', fontFamily: 'var(--font-nunito)', fontWeight: 900, fontSize: 'clamp(10px, 2.3vw, 16px)', color: '#33352f', textAlign: 'center', textTransform: 'uppercase', lineHeight: 1.08, letterSpacing: 0.2 }}>{name}</span>
+      <span style={{ position: 'relative', color: '#8a9a5b', fontSize: 'clamp(11px, 2vw, 15px)', marginTop: 3, lineHeight: 1 }}>♥</span>
+    </div>
+  )
+}
 
 export default function CategoryGrid() {
   const [active, setActive] = useState<string | null>(null)
@@ -31,25 +43,20 @@ export default function CategoryGrid() {
   const { openPanel } = usePanel()
   const router = useRouter()
 
-  const handleTap = (cat: typeof categories[0]) => {
+  const handleTap = (cat: Cat) => {
     setActive(cat.name)
     // Jobs and Property have dedicated full pages with advanced search.
     if (cat.name === 'Jobs') return void router.push('/jobs')
     if (cat.name === 'Property') return void router.push('/property')
     if (cat.name === 'Grab It Now') return void router.push('/grabit')
-    // Every other department opens its own page (same shell as the rest of the
-    // site) rather than the old modal.
     const slug = DEPT_ENUM[cat.name]
     if (slug) router.push(`/category/${slug}`)
-    else openPanel('dept', { name: cat.name, icon: cat.icon, grad: cat.grad })
+    else openPanel('dept', { name: cat.name })
   }
 
   return (
     <section className="dept-grid-wrap" style={{ paddingTop: 16 }}>
-      <div className="dept-grid" style={{
-        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: 8, padding: '0 12px',
-      }}>
+      <div className="dept-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, padding: '0 12px' }}>
         {categories.map(cat => {
           const showImg = cat.img && !failed[cat.name]
           const isActive = active === cat.name
@@ -57,48 +64,25 @@ export default function CategoryGrid() {
             <button
               key={cat.name}
               onClick={() => handleTap(cat)}
+              aria-label={cat.name}
               className="cat-card"
               style={{
                 position: 'relative', border: 'none', padding: 0, cursor: 'pointer',
-                borderRadius: 14, overflow: 'hidden', aspectRatio: '1 / 1',
-                background: cat.grad, textAlign: 'left',
-                boxShadow: isActive ? '0 0 0 3px rgba(255,69,0,0.55)' : '0 2px 8px rgba(0,0,0,0.12)',
+                borderRadius: '50%', overflow: 'hidden', aspectRatio: '1 / 1', background: '#f6f1e6',
+                boxShadow: isActive ? '0 0 0 3px rgba(245,84,10,0.55)' : '0 2px 8px rgba(0,0,0,0.12)',
+                outline: '1px solid #e8ddc7', outlineOffset: -1,
                 transition: 'transform .15s ease, box-shadow .15s ease',
               }}
             >
-              {showImg && (
-                <img
-                  src={cat.img}
-                  alt=""
-                  loading="lazy"
-                  onError={() => setFailed(f => ({ ...f, [cat.name]: true }))}
-                  style={{
-                    position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                    // Lift the photography — many of the source shots are dark.
-                    filter: 'brightness(1.18) saturate(1.05)',
-                  }}
-                />
-              )}
-              {/* Scrim: only as strong as the label needs, and confined to the
-                  bottom third so the image itself stays bright. */}
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.60) 0%, rgba(0,0,0,0.28) 28%, rgba(0,0,0,0) 55%)' }} />
-              {/* Emoji fallback badge when no photo */}
-              {!showImg && (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30 }}>
-                  {cat.icon}
-                </div>
-              )}
-              <span style={{
-                position: 'absolute', left: 8, right: 8, bottom: 7,
-                fontFamily: 'var(--font-nunito)', fontWeight: 900,
-                // Scales with the tile: bigger on desktop, never cramped on a
-                // narrow phone. Capped so wide screens don't over-inflate it.
-                fontSize: 'clamp(12px, 2.6vw, 18px)',
-                color: '#fff', textAlign: 'left', lineHeight: 1.15,
-                textShadow: '0 1px 4px rgba(0,0,0,0.75)',
-              }}>
-                {cat.name}
-              </span>
+              {showImg
+                ? <img
+                    src={cat.img}
+                    alt={cat.name}
+                    loading="lazy"
+                    onError={() => setFailed(f => ({ ...f, [cat.name]: true }))}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                  />
+                : <Placeholder name={cat.name} />}
             </button>
           )
         })}
