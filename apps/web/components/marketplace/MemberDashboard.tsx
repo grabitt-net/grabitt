@@ -74,6 +74,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const [offers, setOffers] = useState<any[] | null>(null)
   const [threads, setThreads] = useState<any[] | null>(null)
   const [purchases, setPurchases] = useState<any[] | null>(null)
+  const [watched, setWatched] = useState<any[] | null>(null)
   const [payout, setPayout] = useState<any>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   // Recently viewed lives in localStorage — read after mount to avoid a
@@ -89,6 +90,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     c.offers.received.query().then((d: any) => setOffers(d as any[])).catch(() => setOffers([]))
     c.messages.myThreads.query().then((d: any) => setThreads(d as any[])).catch(() => setThreads([]))
     c.transactions.myPurchases.query().then((d: any) => setPurchases(d as any[])).catch(() => setPurchases([]))
+    c.wishlist.list.query().then((d: any) => setWatched(d as any[])).catch(() => setWatched([]))
   }, [])
   useEffect(() => { load() }, [load])
 
@@ -170,12 +172,12 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           <div className="hub-col">
             <div style={{ ...hubGroupHead, marginBottom: 12 }}>{t('Sales')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
-              <div style={{ display: 'grid', gap: 12, alignContent: 'start', paddingRight: 12 }}>
+              <div style={{ display: 'grid', gap: 12, alignContent: 'start', paddingRight: 16 }}>
                 <HubPill metricKey="sales" label={t('Sales')} onClick={() => { setSeg('sold'); setSection('listings') }} />
                 <HubPill metricKey="sold" label={t('Sold')} onClick={() => { setSeg('sold'); setSection('listings') }} />
                 <HubPill metricKey="beingWatched" label={t('Being watched')} onClick={() => setSection('listings')} />
               </div>
-              <div className="sales-b" style={{ display: 'grid', gap: 12, alignContent: 'start', paddingLeft: 12 }}>
+              <div className="sales-b" style={{ display: 'grid', gap: 12, alignContent: 'start', paddingLeft: 16 }}>
                 <HubPill metricKey="orders" label={t('Orders')} onClick={() => setSection('listings')} />
                 <HubPill metricKey="toShip" label={t('To ship')} onClick={() => setSection('listings')} />
                 <HubPill metricKey="incomeDue" label={t('Income due')} onClick={() => setSection('listings')} />
@@ -188,7 +190,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             <div style={{ ...hubGroupHead, marginBottom: 12 }}>{t('Purchasing')}</div>
             <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
               <HubPill metricKey="purchased" label={t('Purchased')} onClick={() => { setSeg('buying'); setSection('listings') }} />
-              <HubPill metricKey="watching" label={t('Watching')} onClick={() => router.push('/favourites')} />
+              <HubPill metricKey="watching" label={t('Watching')} onClick={() => setSection('saved')} />
               <HubPill metricKey="toPay" label={t('To pay')} onClick={() => { setSeg('buying'); setSection('listings') }} />
             </div>
           </div>
@@ -352,16 +354,31 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           )}
 
           {section === 'saved' && (<>
-            <Link href="/favourites" style={{ textDecoration: 'none' }}>
-              <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-                <Icon name="heart" size={20} strokeWidth={2} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{t('Saved listings')}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777' }}>{t('Items you’ve favourited.')}</div>
+            {/* Saved / watching — rendered inline (the Watching pill lands here). */}
+            <div style={card}>
+              <div style={cardHead}>{t('Saved & watching')}</div>
+              {watched === null ? <Muted>{t('Loading…')}</Muted> : watched.length === 0 ? <Muted>{t('Nothing saved yet.')}</Muted> : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+                  {watched.map((f: any) => {
+                    const l = f.listing
+                    const img = Array.isArray(l?.images) ? l.images[0] : null
+                    return (
+                      <Link key={f.listingId ?? l?.id} href={`/listings/${l?.id}`} style={{ textDecoration: 'none' }}>
+                        <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, overflow: 'hidden' }}>
+                          <div style={{ paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
+                            {img ? <img src={img} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>🛍️</div>}
+                          </div>
+                          <div style={{ padding: '8px 8px 6px' }}>
+                            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l?.title}</div>
+                            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>€{Number(l?.price ?? 0).toLocaleString()}</div>
+                          </div>
+                        </div>
+                      </Link>
+                    )
+                  })}
                 </div>
-                <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
-              </div>
-            </Link>
+              )}
+            </div>
             <div style={card}>
               <div style={cardHead}>{t('Orders')}</div>
               {purchases === null ? <Muted>{t('Loading…')}</Muted> : purchases.length === 0 ? <Muted>{t('No orders yet.')}</Muted> : purchases.slice(0, 8).map((p: any) => (
