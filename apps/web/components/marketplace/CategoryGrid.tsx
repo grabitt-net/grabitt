@@ -11,18 +11,18 @@ import { DEPT_ENUM } from '@/lib/listingMap'
 type Cat = { name: string; img?: string }
 
 const categories: Cat[] = [
-  { name: 'Home & Garden' },
+  { name: 'Home & Garden', img: '/categories/home-garden.jpg' },
   { name: 'Fashion', img: '/categories/fashion.jpg' },
   { name: 'Sport', img: '/categories/sport.jpg' },
   { name: 'Gaming', img: '/categories/gaming.jpg' },
   { name: 'Electronics', img: '/categories/electronics.jpg' },
-  { name: 'Gift Ideas' },
+  { name: 'Gift Ideas', img: '/categories/gift-ideas.jpg' },
   { name: 'Kids & Baby', img: '/categories/kids-baby.jpg' },
   { name: 'Health, Fitness & Diet', img: '/categories/health-beauty.jpg' },
   { name: 'Retro & Vintage', img: '/categories/retro.jpg' },
-  { name: 'Handy Help' },
-  { name: 'Pet Supplies' },
-  { name: 'Hobbies & Crafts' },
+  { name: 'Handy Help', img: '/categories/handy-help.jpg' },
+  { name: 'Pet Supplies', img: '/categories/pet-supplies.jpg' },
+  { name: 'Hobbies & Crafts', img: '/categories/hobbies-crafts.jpg' },
 ]
 
 // Circular placeholder matching the artwork style — cream ground, a soft sage
