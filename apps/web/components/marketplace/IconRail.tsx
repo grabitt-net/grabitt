@@ -24,9 +24,9 @@ export default function IconRail() {
   // Messages centre (threads, Grabitt Team, Alerts) rather than a cut-down panel.
   const items: { icon: IconName; label: string; panel: PanelId; href?: string; badge?: number; highlight?: boolean }[] = [
     { icon: 'bell',    label: 'Alerts',   panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
-    { icon: 'heart',   label: 'Saved',    panel: 'favourites', href: '/favourites' },
+    { icon: 'heart',   label: 'Saved',    panel: 'favourites', href: '/account?section=saved' },
     { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
-    { icon: 'message', label: 'Messages', panel: 'messages', href: '/messages' },
+    { icon: 'message', label: 'Messages', panel: 'messages', href: '/account?section=messages' },
     { icon: 'package', label: 'Sell',     panel: 'sell', highlight: true },
     { icon: 'lifebuoy', label: 'Help',    panel: 'help', href: '/help' },
   ]

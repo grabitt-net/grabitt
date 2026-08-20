@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { trpcAuthed, setAuthToken } from '@/lib/authToken'
 import { compressAndUpload } from '@/lib/storage'
 import { createClient } from '@/lib/supabase'
@@ -70,10 +70,18 @@ const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', bor
 const primaryBtn: React.CSSProperties = { background: '#fff', color: 'var(--orange)', border: '2px solid #111', borderRadius: 12, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }
 function Muted({ children }: { children: React.ReactNode }) { return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '16px 0', textAlign: 'center' }}>{children}</div> }
 
+const SECTION_IDS = new Set<string>(['business', 'messages', 'employment', 'listings', 'disputes', 'admin', 'saved', 'recommended', 'recent', 'loyalty', 'addbiz', 'activity', 'gdpr'])
+
 export default function MemberDashboard({ me, onReload }: { me: any; onReload: () => void }) {
   const router = useRouter()
+  const params = useSearchParams()
   const { openPanel } = usePanel()
   const [section, setSection] = useState<SectionId>(me?.isBusiness ? 'business' : 'listings')
+  // Deep-link a section via ?section= (e.g. the top rail's Saved / Messages).
+  useEffect(() => {
+    const s = params.get('section')
+    if (s && SECTION_IDS.has(s)) setSection(s as SectionId)
+  }, [params])
   const [seg, setSeg] = useState<Seg>('active')
   const sortNewest = true // My Listings default to newest-first
 
