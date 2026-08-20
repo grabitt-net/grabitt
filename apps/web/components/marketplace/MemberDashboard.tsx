@@ -307,6 +307,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
         </nav>
 
         <section id="hub-panel" style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+          {/* Advertising banner at the top of every menu section. */}
+          <BannerSlot position="user_dashboard" aspect="6 / 1" label="Dashboard" padded={false} />
+
           {section === 'hub' && hubView && <HubListView hubKey={hubView} title={hubTitle} />}
 
           {section === 'business' && me?.isBusiness && <BusinessCentre businessVerified={me?.businessVerified} />}
@@ -315,7 +318,6 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             /* Advertising banner on top, then the full inbox (list + preview),
                all in one rounded container. */
             <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
-              <BannerSlot position="messages" aspect="6 / 1" padded={false} />
               {me?.id && <InboxClient me={me.id} alertUnread={0} />}
             </div>
           )}
