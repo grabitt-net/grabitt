@@ -43,10 +43,10 @@ export default function QuickActions() {
       <button
         onClick={() => router.push('/grabit')}
         style={{
-          width: '100%', marginTop: 10, background: '#d4d4d4',
-          color: 'var(--orange)', border: 'none', borderRadius: 'var(--radius)',
+          width: '100%', marginTop: 10, background: 'linear-gradient(135deg, var(--orange), var(--orange2))',
+          color: '#fff', border: 'none', borderRadius: 'var(--radius)',
           padding: '15px 18px', fontFamily: 'var(--font-display)', fontSize: 17,
-          fontWeight: 700, letterSpacing: '-0.01em', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.18)',
+          fontWeight: 700, letterSpacing: '-0.01em', cursor: 'pointer', boxShadow: '0 6px 18px rgba(245,84,10,0.28)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
         }}
       >

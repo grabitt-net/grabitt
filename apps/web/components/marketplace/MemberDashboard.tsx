@@ -13,7 +13,7 @@ import TenantProfileCard from './TenantProfileCard'
 import MemberStatusCard from './MemberStatusCard'
 import RewardsCard from './RewardsCard'
 import AffiliateCard from './AffiliateCard'
-import { deptEmoji } from '@/lib/listingMap'
+import { deptEmoji, toPanelItem } from '@/lib/listingMap'
 import { getViews, type RecentCard } from '@/lib/recentViews'
 import { t } from '@/lib/i18n'
 
@@ -23,7 +23,7 @@ import { t } from '@/lib/i18n'
 // snapshot · dashboard pills) over an 8-section left menu that swaps the right
 // panel. It sits BELOW the existing header + Grabitt NOW promo.
 
-type SectionId = 'messages' | 'employment' | 'listings' | 'admin' | 'saved' | 'recent' | 'loyalty' | 'addbiz' | 'activity'
+type SectionId = 'messages' | 'employment' | 'listings' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity'
 type Seg = 'active' | 'sold' | 'draft' | 'buying'
 
 const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
@@ -32,6 +32,7 @@ const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
   { id: 'listings', label: 'Listings & Disputes', icon: 'tag' },
   { id: 'admin', label: 'Admin Centre', icon: 'user' },
   { id: 'saved', label: 'Saved Listings & Offers', icon: 'heart' },
+  { id: 'recommended', label: 'Recommended for You', icon: 'sparkle' },
   { id: 'recent', label: 'Recently Viewed', icon: 'search' },
   { id: 'loyalty', label: 'Loyalty Centre', icon: 'coins' },
   { id: 'addbiz', label: 'Add Business or Charity', icon: 'building' },
@@ -75,6 +76,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const [threads, setThreads] = useState<any[] | null>(null)
   const [purchases, setPurchases] = useState<any[] | null>(null)
   const [watched, setWatched] = useState<any[] | null>(null)
+  const [recommended, setRecommended] = useState<any[] | null>(null)
   const [payout, setPayout] = useState<any>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   // Recently viewed lives in localStorage — read after mount to avoid a
@@ -91,6 +93,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     c.messages.myThreads.query().then((d: any) => setThreads(d as any[])).catch(() => setThreads([]))
     c.transactions.myPurchases.query().then((d: any) => setPurchases(d as any[])).catch(() => setPurchases([]))
     c.wishlist.list.query().then((d: any) => setWatched(d as any[])).catch(() => setWatched([]))
+    c.listings.recommended.query().then((d: any) => setRecommended((d as any[]).map(toPanelItem))).catch(() => setRecommended([]))
   }, [])
   useEffect(() => { load() }, [load])
 
@@ -394,6 +397,29 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
               ))}
             </div>
           </>)}
+
+          {section === 'recommended' && (
+            <div style={card}>
+              <div style={cardHead}>{t('Recommended for you')}</div>
+              {recommended === null ? <Muted>{t('Loading…')}</Muted> : recommended.length === 0 ? <Muted>{t('Recommendations will appear as you browse.')}</Muted> : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+                  {recommended.map((it: any) => (
+                    <Link key={it.id} href={`/listings/${it.id}`} style={{ textDecoration: 'none' }}>
+                      <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, overflow: 'hidden' }}>
+                        <div style={{ paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
+                          {it.image ? <img src={it.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{it.emoji ?? '🛍️'}</div>}
+                        </div>
+                        <div style={{ padding: '8px 8px 6px' }}>
+                          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.title}</div>
+                          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>{it.price}</div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {section === 'recent' && (
             <div style={card}>
