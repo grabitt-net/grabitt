@@ -211,12 +211,16 @@ export const usersRouter = router({
   hubMetric: protectedProcedure
     .input(z.object({
       key: z.enum(['sales', 'sold', 'beingWatched', 'orders', 'toShip', 'incomeDue', 'purchased', 'watching', 'toPay']),
-      days: z.number().int().min(0).max(3650).default(0),
+      // Optional ISO date window; omit both for all-time.
+      from: z.string().optional(),
+      to: z.string().optional(),
     }))
     .query(async ({ ctx, input }) => {
       const uid = ctx.user.id
-      const since = input.days > 0 ? new Date(Date.now() - input.days * 86400000) : null
-      const created = since ? { createdAt: { gte: since } } : {}
+      const range: { gte?: Date; lte?: Date } = {}
+      if (input.from) range.gte = new Date(input.from)
+      if (input.to) range.lte = new Date(input.to)
+      const created = (range.gte || range.lte) ? { createdAt: range } : {}
       const num = (n: unknown) => Number(n ?? 0)
 
       switch (input.key) {

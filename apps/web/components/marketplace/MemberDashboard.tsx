@@ -71,6 +71,27 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const [seg, setSeg] = useState<Seg>('active')
   const sortNewest = true // My Listings default to newest-first
 
+  // Single date range applied to all My Hub pills.
+  const [rangePreset, setRangePreset] = useState<RangePreset>('all')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
+  const range = useMemo<{ from?: string; to?: string }>(() => {
+    const now = new Date()
+    const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x }
+    const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23, 59, 59, 999); return x }
+    // Monday-based start of the week.
+    const startOfWeek = (d: Date) => { const x = startOfDay(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x }
+    switch (rangePreset) {
+      case 'today': return { from: startOfDay(now).toISOString() }
+      case 'yesterday': { const y = new Date(now); y.setDate(y.getDate() - 1); return { from: startOfDay(y).toISOString(), to: endOfDay(y).toISOString() } }
+      case 'week': return { from: startOfWeek(now).toISOString() }
+      case 'lastweek': { const s = startOfWeek(now); s.setDate(s.getDate() - 7); const e = new Date(s); e.setDate(s.getDate() + 6); return { from: s.toISOString(), to: endOfDay(e).toISOString() } }
+      case 'month': return { from: new Date(now.getFullYear(), now.getMonth(), 1).toISOString() }
+      case 'custom': return { from: customFrom ? startOfDay(new Date(customFrom)).toISOString() : undefined, to: customTo ? endOfDay(new Date(customTo)).toISOString() : undefined }
+      default: return {}
+    }
+  }, [rangePreset, customFrom, customTo])
+
   const [dash, setDash] = useState<any>(null)
   const [listings, setListings] = useState<any[] | null>(null)
   const [offers, setOffers] = useState<any[] | null>(null)
@@ -196,32 +217,50 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           {/* Sales — column A */}
           <div className="hub-col">
             <div style={{ ...hubGroupHead, marginBottom: 12 }}>{t('Sales')}</div>
-            <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
-              <HubPill metricKey="sales" label={t('Sales')} onClick={() => { setSeg('sold'); setSection('listings') }} />
-              <HubPill metricKey="sold" label={t('Sold')} onClick={() => { setSeg('sold'); setSection('listings') }} />
-              <HubPill metricKey="beingWatched" label={t('Being watched')} onClick={() => setSection('listings')} />
+            <div className="pill-stack" style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
+              <HubPill metricKey="sales" label={t('Sales')} from={range.from} to={range.to} onClick={() => { setSeg('sold'); setSection('listings') }} />
+              <HubPill metricKey="sold" label={t('Sold')} from={range.from} to={range.to} onClick={() => { setSeg('sold'); setSection('listings') }} />
+              <HubPill metricKey="beingWatched" label={t('Being watched')} from={range.from} to={range.to} onClick={() => setSection('listings')} />
             </div>
           </div>
 
           {/* Sales — column B (heading hidden to keep pills aligned) */}
           <div className="hub-col">
             <div style={{ ...hubGroupHead, marginBottom: 12, visibility: 'hidden' }} aria-hidden>{t('Sales')}</div>
-            <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
-              <HubPill metricKey="orders" label={t('Orders')} onClick={() => setSection('listings')} />
-              <HubPill metricKey="toShip" label={t('To ship')} onClick={() => setSection('listings')} />
-              <HubPill metricKey="incomeDue" label={t('Income due')} onClick={() => setSection('listings')} />
+            <div className="pill-stack" style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
+              <HubPill metricKey="orders" label={t('Orders')} from={range.from} to={range.to} onClick={() => setSection('listings')} />
+              <HubPill metricKey="toShip" label={t('To ship')} from={range.from} to={range.to} onClick={() => setSection('listings')} />
+              <HubPill metricKey="incomeDue" label={t('Income due')} from={range.from} to={range.to} onClick={() => setSection('listings')} />
             </div>
           </div>
 
           {/* Purchasing */}
           <div className="hub-col">
             <div style={{ ...hubGroupHead, marginBottom: 12 }}>{t('Purchasing')}</div>
-            <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
-              <HubPill metricKey="purchased" label={t('Purchased')} onClick={() => { setSeg('buying'); setSection('listings') }} />
-              <HubPill metricKey="watching" label={t('Watching')} onClick={() => setSection('saved')} />
-              <HubPill metricKey="toPay" label={t('To pay')} onClick={() => { setSeg('buying'); setSection('listings') }} />
+            <div className="pill-stack" style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
+              <HubPill metricKey="purchased" label={t('Purchased')} from={range.from} to={range.to} onClick={() => { setSeg('buying'); setSection('listings') }} />
+              <HubPill metricKey="watching" label={t('Watching')} from={range.from} to={range.to} onClick={() => setSection('saved')} />
+              <HubPill metricKey="toPay" label={t('To pay')} from={range.from} to={range.to} onClick={() => { setSeg('buying'); setSection('listings') }} />
             </div>
           </div>
+        </div>
+
+        {/* Date range — applies to every pill above */}
+        <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
+          {HUB_PRESETS.map(([id, lbl]) => (
+            <button key={id} onClick={() => setRangePreset(id)} style={{
+              border: `1.5px solid ${rangePreset === id ? 'var(--orange)' : '#e5dccd'}`,
+              background: rangePreset === id ? '#FFF3EE' : '#fff', color: rangePreset === id ? 'var(--orange)' : '#7a6a55',
+              borderRadius: 999, padding: '6px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+            }}>{t(lbl)}</button>
+          ))}
+          {rangePreset === 'custom' && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12, color: 'var(--dark)' }} />
+              <span style={{ color: '#999' }}>–</span>
+              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12, color: 'var(--dark)' }} />
+            </span>
+          )}
         </div>
 
       </div>
@@ -508,9 +547,12 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       <style>{`
         .member-hub .hub-col{ padding-top: 12px; margin-top: 12px; border-top: 1px dashed #ddd; }
         @media (min-width: 820px){
-          .member-hub{ grid-template-columns: minmax(180px, 0.9fr) 1fr 1fr 1fr !important; align-items: stretch; }
+          .member-hub{ grid-template-columns: minmax(180px, 0.9fr) 1fr 1fr 1fr !important; align-items: start; }
           .member-hub .hub-profile{ margin-right: 16px; }
-          .member-hub .hub-col{ border-top: none; margin-top: 0; padding-top: 0; padding-left: 16px; padding-right: 16px; border-left: 1px solid #cfcfcf; }
+          .member-hub .hub-col{ border-top: none; margin-top: 0; padding-top: 0; padding-left: 16px; padding-right: 16px; }
+          /* Divider lines sit against the pill stacks, so they are only as tall
+             as the three pills (not the full profile height). */
+          .member-hub .hub-col .pill-stack{ border-left: 1px solid #cfcfcf; padding-left: 16px; margin-left: -16px; }
         }
         @media (min-width: 900px){ .member-body{ grid-template-columns: 240px 1fr !important; } .member-menu{ position: sticky; top: 70px; } }
       `}</style>
@@ -533,31 +575,26 @@ const hubGroupHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fo
 // One clickable "My Hub" pill — an oval showing "Label — value" with its own
 // date-range selector (per Steve). Each pill fetches its own scoped metric.
 type MetricKey = 'sales' | 'sold' | 'beingWatched' | 'orders' | 'toShip' | 'incomeDue' | 'purchased' | 'watching' | 'toPay'
-const RANGES: [number, string][] = [[0, 'All'], [1, '24h'], [7, '7d'], [30, '30d'], [90, '90d']]
+type RangePreset = 'all' | 'today' | 'yesterday' | 'week' | 'lastweek' | 'month' | 'custom'
+const HUB_PRESETS: [RangePreset, string][] = [
+  ['all', 'All'], ['today', 'Today'], ['yesterday', 'Yesterday'], ['week', 'This week'], ['lastweek', 'Last week'], ['month', 'This month'], ['custom', 'Custom'],
+]
 
-function HubPill({ metricKey, label, onClick }: { metricKey: MetricKey; label: string; onClick: () => void }) {
-  const [rangeIdx, setRangeIdx] = useState(0)
-  const days = RANGES[rangeIdx][0]
+// A clean clickable oval: "Label — value". Its value reflects the single hub
+// date range chosen below the pills.
+function HubPill({ metricKey, label, onClick, from, to }: { metricKey: MetricKey; label: string; onClick: () => void; from?: string; to?: string }) {
   const [data, setData] = useState<{ value: number; currency: boolean } | null>(null)
   useEffect(() => {
     let live = true
-    ;(trpcAuthed() as any).users.hubMetric.query({ key: metricKey, days }).then((d: any) => { if (live) setData(d) }).catch(() => {})
+    ;(trpcAuthed() as any).users.hubMetric.query({ key: metricKey, from, to }).then((d: any) => { if (live) setData(d) }).catch(() => {})
     return () => { live = false }
-  }, [metricKey, days])
+  }, [metricKey, from, to])
   const val = data ? (data.currency ? `€${Number(data.value).toLocaleString()}` : String(data.value)) : '—'
   return (
-    // Clean clickable oval: "Label — value", with a small per-pill date-range
-    // chip at the right that cycles All → 24h → 7d → 30d → 90d.
-    <button onClick={onClick} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid #111', borderRadius: 999, padding: '10px 34px 10px 14px', background: '#fff', cursor: 'pointer', minWidth: 0, width: '100%' }}>
+    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid #111', borderRadius: 999, padding: '10px 14px', background: '#fff', cursor: 'pointer', minWidth: 0, width: '100%' }}>
       <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {label} — <span style={{ color: 'var(--orange)', fontWeight: 900 }}>{val}</span>
       </span>
-      <span
-        role="button"
-        aria-label={`${label} date range: ${RANGES[rangeIdx][1]}`}
-        onClick={e => { e.stopPropagation(); setRangeIdx(i => (i + 1) % RANGES.length) }}
-        style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: '#f0ece3', borderRadius: 999, padding: '1px 6px', fontFamily: 'var(--font-nunito)', fontSize: 9, fontWeight: 800, color: '#8a7f6b', cursor: 'pointer' }}
-      >{RANGES[rangeIdx][1]}</span>
     </button>
   )
 }
