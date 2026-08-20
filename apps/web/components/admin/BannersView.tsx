@@ -45,7 +45,19 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
   const [infeedRows, setInfeedRows] = useState(3)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ ...EMPTY })
+  const [editId, setEditId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+
+  const startEdit = (b: Banner) => {
+    setEditId(b.id)
+    setForm({
+      title: b.title, imageUrl: b.imageUrl, linkUrl: b.linkUrl ?? '', position: b.position,
+      pageTarget: b.pageTarget ?? '', pages: b.pages ?? [], active: b.active, isTest: !!b.isTest,
+      startsAt: b.startsAt ? b.startsAt.slice(0, 10) : '', endsAt: b.endsAt ? b.endsAt.slice(0, 10) : '',
+    })
+    setShowAdd(true)
+  }
+  const startAdd = () => { setEditId(null); setForm({ ...EMPTY }); setShowAdd(v => !v) }
 
   const load = () => api.banners().then(b => {
     const rows = ((b ?? []) as Banner[]).slice().sort((x, y) => Number(x.approved !== false) - Number(y.approved !== false))
@@ -63,12 +75,13 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
     setSaving(true)
     try {
       await api.upsertBanner({
+        ...(editId ? { id: editId } : {}),
         title: form.title.trim(), imageUrl: form.imageUrl.trim(), linkUrl: form.linkUrl.trim() || undefined,
         position: form.position, pageTarget: form.pageTarget.trim() || undefined, active: form.active, isTest: form.isTest,
         pages: PAGE_TARGETABLE.has(form.position) ? form.pages : [],
         startsAt: form.startsAt || undefined, endsAt: form.endsAt || undefined,
       })
-      setForm({ ...EMPTY }); setShowAdd(false); await load()
+      setForm({ ...EMPTY }); setEditId(null); setShowAdd(false); await load()
     } finally { setSaving(false) }
   }
   async function toggle(b: Banner) {
@@ -97,7 +110,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
           <button onClick={toggleTestMode} title="Show a labelled placeholder in every empty slot so you can see where all banners sit" style={{ background: testMode ? '#16a34a' : '#f5f5f5', color: testMode ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
             {testMode ? '● Preview mode ON' : '○ Preview mode OFF'}
           </button>
-          <button onClick={() => setShowAdd(!showAdd)} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>+ New / test banner</button>
+          <button onClick={startAdd} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>+ New / test banner</button>
         </div>
       </div>
 
@@ -112,7 +125,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
 
       {showAdd && (
         <div style={{ background: '#fff', borderRadius: 14, padding: 18, marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ fontFamily: 'var(--font-ui)', fontWeight: 800, marginBottom: 12 }}>Add banner</h3>
+          <h3 style={{ fontFamily: 'var(--font-ui)', fontWeight: 800, marginBottom: 12 }}>{editId ? 'Edit banner' : 'Add banner'}</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
             <Field label="Title"><input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} style={inp} /></Field>
             <Field label="Placement">
@@ -150,8 +163,8 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
             </label>
           </div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-            <button onClick={() => setShowAdd(false)} style={ghostBtn}>Cancel</button>
-            <button onClick={save} disabled={saving || !form.title || !form.imageUrl} style={{ ...primaryBtn, opacity: saving || !form.title || !form.imageUrl ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Add banner'}</button>
+            <button onClick={() => { setShowAdd(false); setEditId(null) }} style={ghostBtn}>Cancel</button>
+            <button onClick={save} disabled={saving || !form.title || !form.imageUrl} style={{ ...primaryBtn, opacity: saving || !form.title || !form.imageUrl ? 0.6 : 1 }}>{saving ? 'Saving…' : editId ? 'Update banner' : 'Add banner'}</button>
           </div>
         </div>
       )}
@@ -174,13 +187,15 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
                   {(b.impressions ?? 0) > 0 && <span title="Click-through rate" style={{ color: '#16a34a' }}>{(((b.clickCount ?? 0) / (b.impressions ?? 1)) * 100).toFixed(1)}% CTR</span>}
                 </div>
                 {b.approved === false && !b.isTest ? (
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button onClick={() => setApproved(b, true)} style={{ ...pill, flex: 1, background: '#16a34a', color: '#fff' }}>✓ Approve</button>
+                    <button onClick={() => startEdit(b)} style={{ ...pill, background: '#eef4ff', color: '#2563eb' }}>Edit</button>
                     <button onClick={() => remove(b.id)} style={{ ...pill, background: '#fef2f2', color: '#ef4444' }}>Reject</button>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button onClick={() => toggle(b)} style={{ ...pill, flex: 1, background: b.active ? '#f0faf4' : '#f5f5f5', color: b.active ? '#16a34a' : '#aaa' }}>{b.active ? '● Live' : '○ Off'}</button>
+                    <button onClick={() => startEdit(b)} style={{ ...pill, background: '#eef4ff', color: '#2563eb' }}>Edit</button>
                     {!b.isTest && <button onClick={() => setApproved(b, false)} title="Send back for re-approval" style={{ ...pill, background: '#fff7ed', color: '#b45309' }}>Unapprove</button>}
                     <button onClick={() => remove(b.id)} style={{ ...pill, background: '#fef2f2', color: '#ef4444' }}>Delete</button>
                   </div>
