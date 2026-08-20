@@ -97,8 +97,8 @@ export default function MyHub({ me, onReload }: { me: any; onReload: () => void 
   const [hubView, setHubView] = useState<MetricKey | null>(null)
   const [hubTitle, setHubTitle] = useState('')
   const openHub = (key: MetricKey, title: string) => {
+    // Just swap the list content below — don't move the page.
     setHubView(key); setHubTitle(title)
-    setTimeout(() => document.getElementById('myhub-list')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60)
   }
 
   const avatarInput = useRef<HTMLInputElement>(null)
@@ -131,13 +131,13 @@ export default function MyHub({ me, onReload }: { me: any; onReload: () => void 
   return (
     <div>
       {/* Title */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '2px 0 14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '10px 0 42px' }}>
         <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
         <span style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 900, color: '#1e2b55', letterSpacing: 3 }}>{t('MY HUB')}</span>
         <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
       </div>
 
-      <div style={{ position: 'relative', background: '#f4f6fb', borderRadius: 20, padding: '30px 16px 18px', boxShadow: '0 6px 24px rgba(30,43,85,0.07)' }}>
+      <div style={{ position: 'relative', background: '#f4f6fb', borderRadius: 20, padding: '48px 16px 22px', boxShadow: '0 6px 24px rgba(30,43,85,0.07)' }}>
         <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#ffe0bb', color: 'var(--orange)', borderRadius: 999, padding: '8px 22px', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 900, letterSpacing: 2 }}>{t('Dashboard')}</div>
 
         <div className="myhub-grid" style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr' }}>

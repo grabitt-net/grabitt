@@ -75,8 +75,8 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const [hubView, setHubView] = useState<MetricKey | null>(null)
   const [hubTitle, setHubTitle] = useState('')
   const openHub = (key: MetricKey, title: string) => {
+    // Just swap the lower panel's content — don't move the page.
     setHubView(key); setHubTitle(title); setSection('hub')
-    setTimeout(() => document.getElementById('hub-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
   }
 
   const [dash, setDash] = useState<any>(null)
@@ -174,13 +174,13 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     <>
       {/* ── MY HUB ──────────────────────────────────────────────────────────── */}
       {/* Title with flanking rules */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '2px 0 14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '10px 0 42px' }}>
         <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
         <span style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 900, color: '#1e2b55', letterSpacing: 3 }}>{t('MY HUB')}</span>
         <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
       </div>
 
-      <div style={{ position: 'relative', background: '#f4f6fb', borderRadius: 20, padding: '30px 16px 18px', boxShadow: '0 6px 24px rgba(30,43,85,0.07)' }}>
+      <div style={{ position: 'relative', background: '#f4f6fb', borderRadius: 20, padding: '48px 16px 22px', boxShadow: '0 6px 24px rgba(30,43,85,0.07)' }}>
         {/* Dashboard pill — pale orange, matching the profile box */}
         <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#ffe0bb', color: 'var(--orange)', borderRadius: 999, padding: '8px 22px', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 900, letterSpacing: 2 }}>{t('Dashboard')}</div>
 
