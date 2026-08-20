@@ -48,12 +48,18 @@ export const complianceRouter = router({
   status: protectedProcedure.query(async ({ ctx }) => {
     const u = await ctx.prisma.user.findUniqueOrThrow({
       where: { id: ctx.user.id },
-      select: { gdprAcceptedAt: true, withdrawalWaiverAcceptedAt: true, deletedAt: true },
+      select: { gdprAcceptedAt: true, withdrawalWaiverAcceptedAt: true, deletedAt: true, marketingConsent: true, marketingConsentAt: true, createdAt: true },
     })
     return {
       gdprAccepted: !!u.gdprAcceptedAt,
       withdrawalWaiverAccepted: !!u.withdrawalWaiverAcceptedAt,
       deleted: !!u.deletedAt,
+      // Acceptance dates for the customer's own GDPR record.
+      gdprAcceptedAt: u.gdprAcceptedAt,
+      withdrawalWaiverAcceptedAt: u.withdrawalWaiverAcceptedAt,
+      marketingConsent: !!u.marketingConsent,
+      marketingConsentAt: u.marketingConsentAt,
+      accountCreatedAt: u.createdAt,
     }
   }),
 

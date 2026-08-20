@@ -28,7 +28,7 @@ import { t } from '@/lib/i18n'
 // snapshot · dashboard pills) over an 8-section left menu that swaps the right
 // panel. It sits BELOW the existing header + Grabitt NOW promo.
 
-type SectionId = 'business' | 'messages' | 'employment' | 'listings' | 'disputes' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'hub'
+type SectionId = 'business' | 'messages' | 'employment' | 'listings' | 'disputes' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'gdpr' | 'hub'
 type Seg = 'active' | 'sold' | 'draft' | 'buying'
 
 const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
@@ -43,6 +43,7 @@ const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
   { id: 'loyalty', label: 'Loyalty Centre', icon: 'coins' },
   { id: 'addbiz', label: 'Add Business or Charity', icon: 'building' },
   { id: 'activity', label: 'Activity Centre', icon: 'package' },
+  { id: 'gdpr', label: 'Privacy & GDPR', icon: 'lock' },
 ]
 
 // Activity Centre feed (rendered inline in the right panel — no pop-up).
@@ -240,9 +241,6 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                   ? <button onClick={() => router.push(`/shop/${storefront.slug}`)} style={navLinkBtn}>{t('View shop')}</button>
                   : <button onClick={() => openPanel('storefrontEdit' as PanelId)} style={navLinkBtn}>{t('Set up')}</button>} />
             )}
-            <button onClick={logout} style={{ marginTop: 12, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '9px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
-              <Icon name="login" size={14} strokeWidth={2.4} /> {t('Log out')}
-            </button>
           </div>
 
           {/* Sales */}
@@ -290,6 +288,14 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
               {t(s.label)}
             </button>
           ))}
+          {/* Log out — always the last option. */}
+          <button onClick={logout} style={{
+            display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', border: 'none', borderRadius: 12, padding: '11px 12px', cursor: 'pointer',
+            background: 'transparent', color: '#ef4444', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, marginTop: 4,
+          }}>
+            <span style={{ color: '#ef4444', display: 'inline-flex' }}><Icon name="login" size={17} strokeWidth={2} /></span>
+            {t('Log out')}
+          </button>
         </nav>
 
         <section id="hub-panel" style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
@@ -526,6 +532,8 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
               ))}
             </div>
           )}
+
+          {section === 'gdpr' && <GdprView />}
         </section>
       </div>
 
@@ -654,6 +662,50 @@ function DisputesList() {
       })}
     </div>
   )
+}
+
+// Privacy & GDPR — consent record (when policies were accepted) + a GDPR
+// deletion request.
+function GdprView() {
+  const [status, setStatus] = useState<any>(null)
+  const [confirmDelete, setConfirmDelete] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  useEffect(() => {
+    let live = true
+    ;(trpcAuthed() as any).compliance.status.query().then((d: any) => { if (live) setStatus(d) }).catch(() => { if (live) setStatus({}) })
+    return () => { live = false }
+  }, [])
+  const fmt = (d?: string | null) => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
+  const canDelete = confirmDelete.trim().toUpperCase() === 'DELETE'
+  const deleteAccount = async () => {
+    if (!canDelete) return
+    if (!(await confirmDialog({ title: t('Delete account?'), message: t('This permanently anonymises your account and signs you out. It cannot be undone. Continue?'), confirmLabel: t('Delete'), danger: true }))) return
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/account/delete', { method: 'POST' })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json?.error ?? 'failed')
+      await createClient().auth.signOut()
+      window.location.href = '/?deleted=1'
+    } catch { toast(t('Could not complete the deletion. Please contact privacy@grabitt.net.')); setDeleting(false) }
+  }
+  return (<>
+    <div style={card}>
+      <div style={cardHead}>{t('Your privacy record')}</div>
+      <Row label={t('Account created')} value={fmt(status?.accountCreatedAt)} />
+      <Row label={t('Terms & GDPR accepted')} value={status?.gdprAccepted ? fmt(status?.gdprAcceptedAt ?? status?.accountCreatedAt) : t('At sign-up')} />
+      <Row label={t('Right-to-withdraw waiver')} value={status?.withdrawalWaiverAccepted ? fmt(status?.withdrawalWaiverAcceptedAt) : t('Not accepted')} />
+      <Row label={t('Marketing emails')} value={status?.marketingConsent ? `${t('Opted in')} · ${fmt(status?.marketingConsentAt)}` : t('Not opted in')} last />
+      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#999', marginTop: 10, lineHeight: 1.5 }}>{t('These are the consents on record for your account. You can change your marketing choice any time in Admin Centre → Email preferences.')}</div>
+    </div>
+    <div style={{ ...card, border: '1px solid #fecaca' }}>
+      <div style={{ ...cardHead, color: '#ef4444' }}>{t('Request deletion (GDPR)')}</div>
+      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', lineHeight: 1.6, marginBottom: 10 }}>{t('Under the GDPR you can erase your personal data at any time. This happens immediately — your name, contact details and avatar are removed. Sales and purchase records are retained (legally required, and the other party has rights over them) but detached from your identity.')}</div>
+      <label style={fieldLabel}>{t('Type DELETE to confirm')}</label>
+      <input value={confirmDelete} onChange={e => setConfirmDelete(e.target.value)} placeholder="DELETE" style={field} />
+      <button onClick={deleteAccount} disabled={deleting || !canDelete} style={{ width: '100%', background: canDelete ? '#ef4444' : '#f0f0f0', color: canDelete ? '#fff' : '#aaa', border: 'none', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: canDelete ? 'pointer' : 'not-allowed' }}>{deleting ? t('Deleting…') : t('Permanently delete my data')}</button>
+    </div>
+  </>)
 }
 
 // Column theme + a heading with an icon in a coloured circle.
@@ -804,14 +856,7 @@ function AdminCentre({ me, onReload, payout, setupPayouts, openPanel, goInterest
       {/* Property-agent contact — business/agent accounts only */}
       {me?.isBusiness && <AgentProfileCard />}
 
-      {/* Close account */}
-      <div style={{ ...card, border: '1px solid #fecaca' }}>
-        <div style={{ ...cardHead, color: '#ef4444' }}>{t('Close account')}</div>
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', lineHeight: 1.6, marginBottom: 10 }}>{t('Under the GDPR you can erase your personal data at any time. This happens immediately.')}</div>
-        <label style={fieldLabel}>{t('Type DELETE to confirm')}</label>
-        <input value={confirmDelete} onChange={e => setConfirmDelete(e.target.value)} placeholder="DELETE" style={field} />
-        <button onClick={deleteAccount} disabled={deleting || confirmDelete.trim().toUpperCase() !== 'DELETE'} style={{ width: '100%', background: confirmDelete.trim().toUpperCase() === 'DELETE' ? '#ef4444' : '#f0f0f0', color: confirmDelete.trim().toUpperCase() === 'DELETE' ? '#fff' : '#aaa', border: 'none', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: confirmDelete.trim().toUpperCase() === 'DELETE' ? 'pointer' : 'not-allowed' }}>{deleting ? t('Deleting…') : t('Permanently delete my data')}</button>
-      </div>
+      {/* Account deletion lives under Privacy & GDPR. */}
     </>
   )
 }
