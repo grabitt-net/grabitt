@@ -1,5 +1,5 @@
 // Sponsorship & advertising packages. Shared so the exact same content renders
-// both in the advertise panel and inline on the For Business page (/employers),
+// both in the advertise panel and inline on the For Business page (/for-business),
 // where it needs to be prominent rather than hidden behind a link.
 
 const PACKAGES = [

@@ -41,7 +41,7 @@ export default function PricingPage() {
           Buy as much as you like, as often as you like — Grabitt never charges you a penny to buy. The only thing to watch for is postage or packaging fees set by the seller, so always check the listing before you commit. Simple.
         </PriceCard>
         <PriceCard name="Selling Items" price="2.5% to 8%">
-          Keep more of what you make. Selling fees run from just 2.5% up to 8%, depending on which business account you set up — the higher your level, the lower your fee. <Link href="/employers" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>See Business accounts</Link>
+          Keep more of what you make. Selling fees run from just 2.5% up to 8%, depending on which business account you set up — the higher your level, the lower your fee. <Link href="/for-business" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>See Business accounts</Link>
         </PriceCard>
         <PriceCard name="Featured Listing" price="€1.99">
           Want eyes on your item fast? For just €1.99, your listing jumps into the Featured area right at the top of the homepage — pimped-up visibility that puts you in front of everyone browsing Grabitt.

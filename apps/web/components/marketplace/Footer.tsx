@@ -19,7 +19,7 @@ export default function Footer() {
     { heading: 'Grabitt', links: [['About Us', go('/about')], ['Why Us?', go('/why')], ['Pricing', go('/pricing')], ['Contact', go('/contact')]] },
     { heading: 'Trading', links: [['Sell an item', () => openPanel('sell')], ['Delivery', fp('collection')], ['Sold Prices', () => openPanel('soldprices')], ['Terms', go('/terms')]] },
     { heading: 'Safety & trust', links: [['Grabitt Guarantee', () => openPanel('shield')], ['Scam Centre', fp('scams')], ['Report a Listing', () => openPanel('report')], ['My Disputes', () => openPanel('myDisputes')]] },
-    { heading: 'Business', links: [['For Business', go('/employers')], ['Business Directory', go('/directory')], ['Advertise With Us', go('/advertiser')]] },
+    { heading: 'Business', links: [['For Business', go('/for-business')], ['Business Directory', go('/directory')], ['Advertise With Us', go('/advertiser')]] },
     { heading: 'Help & guides', links: [['Help Centre', go('/help')], ['Grabitt Guides', go('/community')], ['Economic Living', go('/community#economic-living')], ['Dos & Don\'ts', fp('policy')], ['Suggest Ideas', fp('suggest')]] },
   ]
 

@@ -5,7 +5,7 @@ const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net'
 // Static + category routes for discovery. Individual listings change constantly
 // and are reachable from the category/search pages, so we index the hubs rather
 // than every ephemeral item.
-const STATIC = ['', '/search', '/jobs', '/property', '/directory', '/employers', '/community', '/help', '/grabit']
+const STATIC = ['', '/search', '/jobs', '/property', '/directory', '/for-business', '/community', '/help', '/grabit']
 const CATEGORIES = [
   'electronics', 'fashion', 'home_garden', 'sport', 'gaming', 'motors', 'retro_vintage',
   'pet_shop', 'kids_baby', 'collectables', 'hobbies_crafts', 'gift_ideas', 'services', 'handy_help',

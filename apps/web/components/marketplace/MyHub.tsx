@@ -165,7 +165,7 @@ export default function MyHub({ me, onReload }: { me: any; onReload: () => void 
                 {me?.openToWork ? t('Looking') : t('Not looking')}
               </button>} />
             <HubNavRow icon="briefcase" label={t('Business acc')} last value={
-              <button onClick={() => me?.isBusiness ? router.push('/account?tab=business') : openPanel('business' as PanelId)} style={navLinkBtn}>
+              <button onClick={() => router.push(me?.isBusiness ? '/account?tab=business' : '/for-business')} style={navLinkBtn}>
                 {me?.isBusiness ? t('Open') : t('Add / Upgrade')}
               </button>} />
             <button onClick={logout} style={{ marginTop: 12, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '9px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>

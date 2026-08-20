@@ -7,7 +7,7 @@ import Icon, { type IconName } from './Icon'
 
 // Persistent quick-actions bar — Sponsorship / Recruitment / Property / For
 // Business. Rendered under the header on every main page. Find Work + Find Staff
-// are consolidated into the Recruitment page; For Business points at /employers.
+// are consolidated into the Recruitment page; For Business points at /for-business.
 export default function QuickActions() {
   const { openPanel } = usePanel()
   const router = useRouter()
@@ -16,7 +16,7 @@ export default function QuickActions() {
     { label: 'Recruitment', icon: 'briefcase', action: () => router.push('/recruitment') },
     { label: 'Property', icon: 'building', action: () => router.push('/property') },
     // Sponsorship now lives inside the For Business page.
-    { label: 'For Business', icon: 'star', action: () => router.push('/employers') },
+    { label: 'For Business', icon: 'star', action: () => router.push('/for-business') },
   ]
 
   return (

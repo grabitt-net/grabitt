@@ -221,7 +221,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 {me?.openToWork ? t('Looking') : t('Not looking')}
               </button>} />
             <HubNavRow icon="briefcase" label={t('Business acc')} last value={
-              <button onClick={() => me?.isBusiness ? router.push('/account?tab=business') : openPanel('business' as PanelId)} style={navLinkBtn}>
+              <button onClick={() => router.push(me?.isBusiness ? '/account?tab=business' : '/for-business')} style={navLinkBtn}>
                 {me?.isBusiness ? t('Open') : t('Add / Upgrade')}
               </button>} />
             <button onClick={logout} style={{ marginTop: 12, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '9px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
@@ -482,7 +482,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           </>)}
 
           {section === 'addbiz' && (<>
-            <button onClick={() => router.push('/employers')} style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
+            <button onClick={() => router.push('/for-business')} style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
               <Icon name="building" size={20} strokeWidth={2} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{t('Go to Business')}</div>
