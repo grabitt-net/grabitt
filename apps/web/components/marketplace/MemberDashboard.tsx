@@ -15,6 +15,7 @@ import MemberStatusCard from './MemberStatusCard'
 import RewardsCard from './RewardsCard'
 import AffiliateCard from './AffiliateCard'
 import InboxClient from './InboxClient'
+import BannerSlot from './BannerSlot'
 import BusinessCentre from './BusinessCentre'
 import AgentProfileCard from './AgentProfileCard'
 import { deptEmoji, toPanelItem } from '@/lib/listingMap'
@@ -297,9 +298,10 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           {section === 'business' && me?.isBusiness && <BusinessCentre businessVerified={me?.businessVerified} />}
 
           {section === 'messages' && (
-            /* Full inbox inline — list on the left, conversation preview on the
-               right, no navigation away. (Ad banner slot goes above this later.) */
+            /* Advertising banner on top, then the full inbox (list + preview),
+               all in one rounded container. */
             <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+              <BannerSlot position="messages" aspect="6 / 1" padded={false} />
               {me?.id && <InboxClient me={me.id} alertUnread={0} />}
             </div>
           )}
