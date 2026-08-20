@@ -24,7 +24,7 @@ import { t } from '@/lib/i18n'
 // snapshot · dashboard pills) over an 8-section left menu that swaps the right
 // panel. It sits BELOW the existing header + Grabitt NOW promo.
 
-type SectionId = 'messages' | 'employment' | 'listings' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity'
+type SectionId = 'messages' | 'employment' | 'listings' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'hub'
 type Seg = 'active' | 'sold' | 'draft' | 'buying'
 
 const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
@@ -70,6 +70,14 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const [section, setSection] = useState<SectionId>('listings')
   const [seg, setSeg] = useState<Seg>('active')
   const sortNewest = true // My Listings default to newest-first
+
+  // Clicking a My Hub card opens its list in the panel below.
+  const [hubView, setHubView] = useState<MetricKey | null>(null)
+  const [hubTitle, setHubTitle] = useState('')
+  const openHub = (key: MetricKey, title: string) => {
+    setHubView(key); setHubTitle(title); setSection('hub')
+    setTimeout(() => document.getElementById('hub-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
+  }
 
   const [dash, setDash] = useState<any>(null)
   const [listings, setListings] = useState<any[] | null>(null)
@@ -206,9 +214,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           <div className="hub-mcol">
             <ColHeader icon="chart" title={t('Sales')} {...SALES_C} />
             <div style={{ display: 'grid', gap: 12 }}>
-              <MetricCard metricKey="sales" label={t('Sales')} icon="trendingUp" {...SALES_C} onClick={() => { setSeg('sold'); setSection('listings') }} />
-              <MetricCard metricKey="sold" label={t('Sold')} icon="cart" {...SALES_C} onClick={() => { setSeg('sold'); setSection('listings') }} />
-              <MetricCard metricKey="beingWatched" label={t('Being watched')} icon="heart" {...SALES_C} onClick={() => setSection('listings')} />
+              <MetricCard metricKey="sales" label={t('Sales')} icon="trendingUp" {...SALES_C} onClick={() => openHub('sales', t('Sales'))} />
+              <MetricCard metricKey="sold" label={t('Sold')} icon="cart" {...SALES_C} onClick={() => openHub('sold', t('Sold'))} />
+              <MetricCard metricKey="beingWatched" label={t('Being watched')} icon="heart" {...SALES_C} onClick={() => openHub('beingWatched', t('Being watched'))} />
             </div>
           </div>
 
@@ -216,9 +224,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           <div className="hub-mcol">
             <ColHeader icon="clipboard" title={t('Orders')} {...ORDERS_C} />
             <div style={{ display: 'grid', gap: 12 }}>
-              <MetricCard metricKey="orders" label={t('Orders')} icon="package" {...ORDERS_C} onClick={() => setSection('listings')} />
-              <MetricCard metricKey="toShip" label={t('To ship')} icon="truck" {...ORDERS_C} onClick={() => setSection('listings')} />
-              <MetricCard metricKey="incomeDue" label={t('Income due')} icon="coins" {...ORDERS_C} onClick={() => setSection('listings')} />
+              <MetricCard metricKey="orders" label={t('Orders')} icon="package" {...ORDERS_C} onClick={() => openHub('orders', t('Orders'))} />
+              <MetricCard metricKey="toShip" label={t('To ship')} icon="truck" {...ORDERS_C} onClick={() => openHub('toShip', t('To ship'))} />
+              <MetricCard metricKey="incomeDue" label={t('Income due')} icon="coins" {...ORDERS_C} onClick={() => openHub('incomeDue', t('Income due'))} />
             </div>
           </div>
 
@@ -226,9 +234,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           <div className="hub-mcol">
             <ColHeader icon="award" title={t('Purchasing')} {...PURCH_C} />
             <div style={{ display: 'grid', gap: 12 }}>
-              <MetricCard metricKey="purchased" label={t('Purchased')} icon="tag" {...PURCH_C} onClick={() => { setSeg('buying'); setSection('listings') }} />
-              <MetricCard metricKey="watching" label={t('Watching')} icon="eye" {...PURCH_C} onClick={() => setSection('saved')} />
-              <MetricCard metricKey="toPay" label={t('To pay')} icon="wallet" {...PURCH_C} onClick={() => { setSeg('buying'); setSection('listings') }} />
+              <MetricCard metricKey="purchased" label={t('Purchased')} icon="tag" {...PURCH_C} onClick={() => openHub('purchased', t('Purchased'))} />
+              <MetricCard metricKey="watching" label={t('Watching')} icon="eye" {...PURCH_C} onClick={() => openHub('watching', t('Watching'))} />
+              <MetricCard metricKey="toPay" label={t('To pay')} icon="wallet" {...PURCH_C} onClick={() => openHub('toPay', t('To pay'))} />
             </div>
           </div>
         </div>
@@ -249,7 +257,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           ))}
         </nav>
 
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+        <section id="hub-panel" style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+          {section === 'hub' && hubView && <HubListView hubKey={hubView} title={hubTitle} />}
+
           {section === 'messages' && (<>
             <Link href="/messages/alerts" style={{ textDecoration: 'none' }}>
               <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
@@ -571,6 +581,34 @@ function MetricCard({ metricKey, label, icon, color, tint, onClick }: { metricKe
         {label} - <span style={{ color, fontWeight: 900 }}>{val}</span>
       </span>
     </button>
+  )
+}
+
+// The list behind a hub card, shown in the panel below when a card is clicked.
+function HubListView({ hubKey, title }: { hubKey: MetricKey; title: string }) {
+  const [rows, setRows] = useState<any[] | null>(null)
+  useEffect(() => {
+    let live = true
+    setRows(null)
+    ;(trpcAuthed() as any).users.hubList.query({ key: hubKey }).then((d: any) => { if (live) setRows(d as any[]) }).catch(() => { if (live) setRows([]) })
+    return () => { live = false }
+  }, [hubKey])
+  return (
+    <div style={card}>
+      <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between' }}><span>{title}</span>{rows && <span style={{ color: 'var(--orange)' }}>{rows.length}</span>}</div>
+      {rows === null ? <Muted>{t('Loading…')}</Muted> : rows.length === 0 ? <Muted>{t('Nothing here yet.')}</Muted> : rows.map((r: any, i: number) => (
+        <Link key={r.listingId + i} href={`/listings/${r.listingId}`} style={{ textDecoration: 'none' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{r.image ? <img src={r.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>{r.subtitle}</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--orange)' }}>{r.price}</div>
+          </div>
+        </Link>
+      ))}
+    </div>
   )
 }
 

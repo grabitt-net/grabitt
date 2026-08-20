@@ -229,15 +229,18 @@ export const usersRouter = router({
           return { value: num(r._sum.amount), currency: true }
         }
         case 'sold': {
-          const c = await ctx.prisma.transaction.count({ where: { sellerId: uid, status: { in: ['completed', 'released', 'confirmed_handover'] }, ...created } })
+          // Items you've sold (listings marked sold — excludes jobs/property).
+          const c = await ctx.prisma.listing.count({ where: { sellerId: uid, status: 'sold', department: { notIn: ['jobs', 'property'] }, ...created } })
           return { value: c, currency: false }
         }
         case 'beingWatched': {
-          const c = await ctx.prisma.wishlistItem.count({ where: { listing: { sellerId: uid }, ...created } })
-          return { value: c, currency: false }
+          // How many of YOUR listings are being watched by other people.
+          const rows = await ctx.prisma.wishlistItem.findMany({ where: { listing: { sellerId: uid }, ...created }, select: { listingId: true }, distinct: ['listingId'] })
+          return { value: rows.length, currency: false }
         }
         case 'orders': {
-          const c = await ctx.prisma.transaction.count({ where: { sellerId: uid, status: { notIn: ['cancelled', 'refunded'] }, ...created } })
+          // Completed orders (money changed hands / delivered).
+          const c = await ctx.prisma.transaction.count({ where: { sellerId: uid, status: { in: ['completed', 'released', 'confirmed_handover'] }, ...created } })
           return { value: c, currency: false }
         }
         case 'toShip': {
@@ -259,6 +262,51 @@ export const usersRouter = router({
         case 'toPay': {
           const r = await ctx.prisma.transaction.aggregate({ _sum: { amount: true }, where: { buyerId: uid, status: 'pending_payment', ...created } })
           return { value: num(r._sum.amount), currency: true }
+        }
+      }
+    }),
+
+  // The list of items behind a My Hub pill — what the lower panel shows when a
+  // card is clicked. Returns a normalised row set for the chosen metric.
+  hubList: protectedProcedure
+    .input(z.object({ key: z.enum(['sales', 'sold', 'beingWatched', 'orders', 'toShip', 'incomeDue', 'purchased', 'watching', 'toPay']) }))
+    .query(async ({ ctx, input }) => {
+      const uid = ctx.user.id
+      const img = (images: unknown) => (Array.isArray(images) ? (images[0] as string | undefined) ?? null : null)
+      const eur = (n: unknown) => `€${Number(n ?? 0).toLocaleString()}`
+      const TX: Record<string, string> = { pending_payment: 'Awaiting payment', held: 'Paid — in escrow', confirmed_handover: 'Handover confirmed', completed: 'Completed', released: 'Funds released', disputed: 'In dispute', refunded: 'Refunded', cancelled: 'Cancelled' }
+
+      // Transaction-backed lists.
+      const txList = async (where: Record<string, unknown>, subtitle?: (t: any) => string) => {
+        const rows = await ctx.prisma.transaction.findMany({ where, orderBy: { createdAt: 'desc' }, include: { listing: { select: { id: true, title: true, images: true } } } })
+        return rows.map(t => ({ listingId: t.listingId, title: t.listing?.title ?? 'Item', image: img(t.listing?.images), price: eur(t.amount), subtitle: subtitle ? subtitle(t) : (TX[t.status] ?? t.status) }))
+      }
+
+      switch (input.key) {
+        case 'sales': return txList({ sellerId: uid, status: { notIn: ['pending_payment', 'cancelled', 'refunded'] } })
+        case 'orders': return txList({ sellerId: uid, status: { in: ['completed', 'released', 'confirmed_handover'] } })
+        case 'toShip': return txList({ sellerId: uid, fulfilmentType: 'courier', status: 'held', shippedAt: null }, () => 'Awaiting dispatch')
+        case 'incomeDue': return txList({ sellerId: uid, status: { in: ['held', 'confirmed_handover', 'completed'] }, fundsReleasedAt: null }, t => `${eur(t.sellerNet)} due to you`)
+        case 'purchased': return txList({ buyerId: uid, status: { notIn: ['pending_payment', 'cancelled', 'refunded'] } })
+        case 'toPay': return txList({ buyerId: uid, status: 'pending_payment' }, () => 'Payment due')
+        case 'sold': {
+          const rows = await ctx.prisma.listing.findMany({ where: { sellerId: uid, status: 'sold', department: { notIn: ['jobs', 'property'] } }, orderBy: { updatedAt: 'desc' }, select: { id: true, title: true, images: true, price: true } })
+          return rows.map(l => ({ listingId: l.id, title: l.title, image: img(l.images), price: eur(l.price), subtitle: 'Sold' }))
+        }
+        case 'watching': {
+          const rows = await ctx.prisma.wishlistItem.findMany({ where: { userId: uid }, orderBy: { createdAt: 'desc' }, include: { listing: { select: { id: true, title: true, images: true, price: true } } } })
+          return rows.map(w => ({ listingId: w.listingId, title: w.listing?.title ?? 'Item', image: img(w.listing?.images), price: eur(w.listing?.price), subtitle: 'Watching' }))
+        }
+        case 'beingWatched': {
+          const groups = await ctx.prisma.wishlistItem.groupBy({ by: ['listingId'], where: { listing: { sellerId: uid } }, _count: { _all: true } })
+          if (!groups.length) return []
+          const listings = await ctx.prisma.listing.findMany({ where: { id: { in: groups.map(g => g.listingId) } }, select: { id: true, title: true, images: true, price: true } })
+          const byId = new Map(listings.map(l => [l.id, l]))
+          return groups.map(g => {
+            const l = byId.get(g.listingId)
+            const n = g._count._all
+            return { listingId: g.listingId, title: l?.title ?? 'Item', image: img(l?.images), price: eur(l?.price), subtitle: `${n} ${n === 1 ? 'person' : 'people'} watching` }
+          })
         }
       }
     }),
