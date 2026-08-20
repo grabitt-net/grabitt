@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { trpcAuthed } from '@/lib/authToken'
+import { trpcAuthed, setAuthToken } from '@/lib/authToken'
+import { createClient } from '@/lib/supabase'
 import { compressAndUpload } from '@/lib/storage'
 import { toast } from '@/lib/ui'
 import { usePanel } from '@/context/PanelContext'
@@ -117,6 +118,12 @@ export default function MyHub({ me, onReload }: { me: any; onReload: () => void 
     try { await trpcAuthed().users.updateProfile.mutate({ openToWork: !me?.openToWork }); onReload() }
     catch { toast(t('Could not update. Please try again.')) }
   }
+  const logout = async () => {
+    try { await createClient().auth.signOut() } catch {}
+    setAuthToken(null)
+    if (typeof window !== 'undefined') localStorage.removeItem('grabitt_uid')
+    router.push('/')
+  }
 
   const memberRef = me?.id ? `M${String(me.id).replace(/-/g, '').slice(0, 6).toUpperCase()}` : ''
   const accountType = me?.memberStatus === 'blue_light' ? 'Bluelight' : me?.memberStatus === 'student' ? 'Student' : me?.memberStatus === 'charity' ? 'Charity' : 'Regular'
@@ -161,6 +168,9 @@ export default function MyHub({ me, onReload }: { me: any; onReload: () => void 
               <button onClick={() => me?.isBusiness ? router.push('/account?tab=business') : openPanel('business' as PanelId)} style={navLinkBtn}>
                 {me?.isBusiness ? t('Open') : t('Add / Upgrade')}
               </button>} />
+            <button onClick={logout} style={{ marginTop: 12, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '9px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
+              <Icon name="login" size={14} strokeWidth={2.4} /> {t('Log out')}
+            </button>
           </div>
 
           {/* Sales */}
