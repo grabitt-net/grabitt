@@ -167,33 +167,33 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       </div>
 
       <div style={{ position: 'relative', background: '#f4f6fb', borderRadius: 20, padding: '30px 16px 18px', boxShadow: '0 6px 24px rgba(30,43,85,0.07)' }}>
-        {/* Dashboard pill */}
-        <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#1e2b55', color: '#fff', borderRadius: 999, padding: '8px 22px', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 900, letterSpacing: 2 }}>{t('DASHBOARD')}</div>
+        {/* Dashboard pill — pale orange, matching the profile box */}
+        <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#fde8d8', color: 'var(--orange)', borderRadius: 999, padding: '8px 22px', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 900, letterSpacing: 2 }}>{t('Dashboard')}</div>
 
         <div className="member-hub" style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr' }}>
-          {/* Navy profile sidebar */}
-          <div style={{ background: '#1c2b52', borderRadius: 16, padding: 16, color: '#fff', alignSelf: 'start' }}>
+          {/* Profile sidebar — pale orange */}
+          <div style={{ background: '#fde8d8', borderRadius: 16, padding: 16, color: 'var(--dark)', alignSelf: 'start' }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
-              <button onClick={() => avatarInput.current?.click()} title={t('Change photo')} aria-label={t('Change photo')} style={{ position: 'relative', width: 48, height: 48, borderRadius: '50%', background: '#3b6fd4', overflow: 'hidden', flexShrink: 0, border: 'none', padding: 0, cursor: 'pointer' }}>
+              <button onClick={() => avatarInput.current?.click()} title={t('Change photo')} aria-label={t('Change photo')} style={{ position: 'relative', width: 48, height: 48, borderRadius: '50%', background: 'var(--orange)', overflow: 'hidden', flexShrink: 0, border: 'none', padding: 0, cursor: 'pointer' }}>
                 {me?.avatar
                   ? <img src={me.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Icon name="user" size={22} strokeWidth={2} /></span>}
-                <span style={{ position: 'absolute', right: -1, bottom: -1, width: 18, height: 18, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #1c2b52' }}><Icon name="pencil" size={9} strokeWidth={2.5} /></span>
+                <span style={{ position: 'absolute', right: -1, bottom: -1, width: 18, height: 18, borderRadius: '50%', background: 'var(--dark)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fde8d8' }}><Icon name="pencil" size={9} strokeWidth={2.5} /></span>
                 {avatarBusy && <span style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#fff' }}>…</span>}
               </button>
               <input ref={avatarInput} type="file" accept="image/*" onChange={onPickAvatar} style={{ display: 'none' }} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{me?.displayName ?? t('Your account')}</div>
-                <button onClick={() => openPanel('myRatings' as PanelId)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('Rating')} ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'}</button>
+                <div style={{ fontFamily: 'var(--font-body)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{me?.displayName ?? t('Your account')}</div>
+                <button onClick={() => openPanel('myRatings' as PanelId)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: '#8a6d3b' }}>{t('Rating')} ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'}</button>
               </div>
             </div>
             <HubNavRow icon="user" label={t('Account type')} value={accountType} />
             <HubNavRow icon="file" label={t('Account ref')} value={memberRef} />
-            <HubNavRow icon="shield" iconColor="#4ade80" label={t('Verified')} value={me?.isVerified
-              ? <span style={{ color: '#4ade80', fontWeight: 800 }}>{t('Yes')}</span>
+            <HubNavRow icon="shield" iconColor="#16a34a" label={t('Verified')} value={me?.isVerified
+              ? <span style={{ color: '#16a34a', fontWeight: 800 }}>{t('Yes')}</span>
               : <button onClick={() => openPanel('verifyMe' as PanelId)} style={navLinkBtn}>{t('Get verified')}</button>} />
             <HubNavRow icon="wrench" label={t('Work required')} value={
-              <button onClick={toggleOpenToWork} style={{ ...navLinkBtn, color: me?.openToWork ? '#4ade80' : 'rgba(255,255,255,0.85)' }}>
+              <button onClick={toggleOpenToWork} style={{ ...navLinkBtn, color: me?.openToWork ? '#16a34a' : '#6a5a48' }}>
                 {me?.openToWork ? t('Looking') : t('Not looking')}
               </button>} />
             <HubNavRow icon="briefcase" label={t('Business acc')} last value={
@@ -537,15 +537,15 @@ function Row({ label, value, last }: { label: string; value: React.ReactNode; la
 }
 
 const linkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--orange)', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 12.5 }
-const navLinkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#7fb0ff', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 11.5 }
+const navLinkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--orange)', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 11.5, whiteSpace: 'nowrap' }
 
-// One row of the navy profile sidebar: icon + label + value.
+// One row of the profile sidebar: icon + label + value, kept to a single line.
 function HubNavRow({ icon, label, value, iconColor, last }: { icon: IconName; label: string; value: React.ReactNode; iconColor?: string; last?: boolean }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', borderBottom: last ? 'none' : '1px dotted rgba(255,255,255,0.2)' }}>
-      <span style={{ color: iconColor ?? 'rgba(255,255,255,0.85)', display: 'inline-flex', flexShrink: 0 }}><Icon name={icon} size={16} strokeWidth={2} /></span>
-      <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.4 }}>{label}</span>
-      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: 'rgba(255,255,255,0.9)', textAlign: 'right' }}>{value}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 2px', borderBottom: last ? 'none' : '1px dotted rgba(180,120,60,0.35)' }}>
+      <span style={{ color: iconColor ?? 'var(--orange)', display: 'inline-flex', flexShrink: 0 }}><Icon name={icon} size={16} strokeWidth={2} /></span>
+      <span style={{ flexShrink: 0, fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap' }}>{label}</span>
+      <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: '#6a5a48', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>
     </div>
   )
 }
