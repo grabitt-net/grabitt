@@ -418,6 +418,10 @@ export const usersRouter = router({
       fullName: z.string().max(80).nullish(),
       // Member dashboard "Looking for work" toggle.
       openToWork: z.boolean().optional(),
+      // Recruitment taxonomy: languages + months of experience per job key.
+      // Kept loose (z.any) so the large AppRouter type stays within the
+      // compiler's instantiation-depth limit.
+      jobProfile: z.any().optional(),
       avatar: z.string().url().optional(),
       locale: z.enum(['en', 'es', 'de', 'da', 'sv', 'nl', 'fr', 'pt']).optional(),
       // Attributes & preferences — feed personalisation, job matching and
@@ -431,11 +435,13 @@ export const usersRouter = router({
       marketingConsent: z.boolean().optional(),
     }))
     .mutation(({ ctx, input }) => {
-      const { marketingConsent, ...rest } = input
+      const { marketingConsent, jobProfile, ...rest } = input
       return ctx.prisma.user.update({
         where: { id: ctx.user.id },
         data: {
           ...rest,
+          // Recruitment taxonomy is a JSON blob (only set when provided).
+          ...(jobProfile != null ? { jobProfile: jobProfile as object } : {}),
           // Stamp when consent was given — GDPR requires us to evidence it.
           ...(marketingConsent !== undefined
             ? { marketingConsent, marketingConsentAt: marketingConsent ? new Date() : null }

@@ -34,8 +34,8 @@ export default function AttributesCard({ compact, onSaved }: { compact?: boolean
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    trpcAuthed().users.me.query()
-      .then(u => {
+    (trpcAuthed() as any).users.me.query()
+      .then((u: unknown) => {
         const me = u as unknown as Attributes
         setAttrs({ interests: me.interests ?? [], hobbies: me.hobbies ?? [], skills: me.skills ?? [] })
       })
@@ -56,7 +56,7 @@ export default function AttributesCard({ compact, onSaved }: { compact?: boolean
   const save = async () => {
     setSaving(true)
     try {
-      await trpcAuthed().users.updateProfile.mutate(attrs)
+      await (trpcAuthed() as any).users.updateProfile.mutate(attrs)
       setSaved(true)
       onSaved?.()
     } catch { /* the button stays available to retry */ }

@@ -18,6 +18,7 @@ import InboxClient from './InboxClient'
 import BannerSlot from './BannerSlot'
 import BusinessCentre from './BusinessCentre'
 import AgentProfileCard from './AgentProfileCard'
+import JobCategories from './JobCategories'
 import { deptEmoji, toPanelItem } from '@/lib/listingMap'
 import { getViews, type RecentCard } from '@/lib/recentViews'
 import { t } from '@/lib/i18n'
@@ -325,7 +326,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
           {section === 'aboutme' && <AttributesCard />}
 
-          {section === 'employment' && (
+          {section === 'employment' && (<>
             <div style={card}>
               <div style={cardHead}>{t('Employment & CV')}</div>
               <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer', marginBottom: 12 }}>
@@ -343,7 +344,8 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 </div>
               </Link>
             </div>
-          )}
+            <JobCategories me={me} onReload={onReload} mode={me?.isBusiness ? 'employer' : 'seeker'} />
+          </>)}
 
           {section === 'listings' && (<>
             <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #ece3d7', borderRadius: 50, padding: 5, overflowX: 'auto' }}>
