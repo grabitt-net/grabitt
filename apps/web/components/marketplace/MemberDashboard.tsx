@@ -98,6 +98,15 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const [recommended, setRecommended] = useState<any[] | null>(null)
   const [payout, setPayout] = useState<any>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
+  // Business-only: the account's tier label and storefront slug.
+  const [bizTier, setBizTier] = useState<string | null>(null)
+  const [storefront, setStorefront] = useState<{ slug: string } | null>(null)
+  useEffect(() => {
+    if (!me?.isBusiness) return
+    const c: any = trpcAuthed()
+    c.business.tierStatus.query().then((d: any) => { if (d?.isBusiness) setBizTier(d.label) }).catch(() => {})
+    c.business.myStorefront.query().then((d: any) => setStorefront(d?.shop ?? null)).catch(() => {})
+  }, [me?.isBusiness])
   // Recently viewed lives in localStorage — read after mount to avoid a
   // server/client hydration mismatch.
   const [recent, setRecent] = useState<RecentCard[]>([])
@@ -211,7 +220,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 <button onClick={() => openPanel('myRatings' as PanelId)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: '#8a6d3b' }}>{t('Rating')} ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'}</button>
               </div>
             </div>
-            <HubNavRow icon="user" label={t('Account type')} value={accountType} />
+            <HubNavRow icon="user" label={t('Account type')} value={me?.isBusiness ? (bizTier ?? t('Business')) : me?.businessLight ? t('Business Light') : accountType} />
             <HubNavRow icon="file" label={t('Account ref')} value={memberRef} />
             <HubNavRow icon="shield" iconColor="#16a34a" label={t('Verified')} value={me?.isVerified
               ? <span style={{ color: '#16a34a', fontWeight: 800 }}>{t('Yes')}</span>
@@ -220,10 +229,16 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
               <button onClick={toggleOpenToWork} style={{ ...navLinkBtn, color: me?.openToWork ? '#16a34a' : '#6a5a48' }}>
                 {me?.openToWork ? t('Looking') : t('Not looking')}
               </button>} />
-            <HubNavRow icon="briefcase" label={t('Business acc')} last value={
+            <HubNavRow icon="briefcase" label={t('Business acc')} last={!me?.isBusiness} value={
               <button onClick={() => router.push(me?.isBusiness ? '/account?tab=business' : '/for-business')} style={navLinkBtn}>
                 {me?.isBusiness ? t('Open') : t('Add / Upgrade')}
               </button>} />
+            {me?.isBusiness && (
+              <HubNavRow icon="building" label={t('Storefront')} last value={
+                storefront?.slug
+                  ? <button onClick={() => router.push(`/shop/${storefront.slug}`)} style={navLinkBtn}>{t('View shop')}</button>
+                  : <button onClick={() => openPanel('storefrontEdit' as PanelId)} style={navLinkBtn}>{t('Set up')}</button>} />
+            )}
             <button onClick={logout} style={{ marginTop: 12, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '9px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
               <Icon name="login" size={14} strokeWidth={2.4} /> {t('Log out')}
             </button>
