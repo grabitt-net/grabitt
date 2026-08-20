@@ -71,27 +71,6 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const [seg, setSeg] = useState<Seg>('active')
   const sortNewest = true // My Listings default to newest-first
 
-  // Single date range applied to all My Hub pills.
-  const [rangePreset, setRangePreset] = useState<RangePreset>('all')
-  const [customFrom, setCustomFrom] = useState('')
-  const [customTo, setCustomTo] = useState('')
-  const range = useMemo<{ from?: string; to?: string }>(() => {
-    const now = new Date()
-    const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x }
-    const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23, 59, 59, 999); return x }
-    // Monday-based start of the week.
-    const startOfWeek = (d: Date) => { const x = startOfDay(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x }
-    switch (rangePreset) {
-      case 'today': return { from: startOfDay(now).toISOString() }
-      case 'yesterday': { const y = new Date(now); y.setDate(y.getDate() - 1); return { from: startOfDay(y).toISOString(), to: endOfDay(y).toISOString() } }
-      case 'week': return { from: startOfWeek(now).toISOString() }
-      case 'lastweek': { const s = startOfWeek(now); s.setDate(s.getDate() - 7); const e = new Date(s); e.setDate(s.getDate() + 6); return { from: s.toISOString(), to: endOfDay(e).toISOString() } }
-      case 'month': return { from: new Date(now.getFullYear(), now.getMonth(), 1).toISOString() }
-      case 'custom': return { from: customFrom ? startOfDay(new Date(customFrom)).toISOString() : undefined, to: customTo ? endOfDay(new Date(customTo)).toISOString() : undefined }
-      default: return {}
-    }
-  }, [rangePreset, customFrom, customTo])
-
   const [dash, setDash] = useState<any>(null)
   const [listings, setListings] = useState<any[] | null>(null)
   const [offers, setOffers] = useState<any[] | null>(null)
@@ -179,90 +158,80 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
   return (
     <>
-      {/* ── MY HUB — profile column + Sales/Purchasing pills (per Steve) ─────── */}
-      <div style={{ border: '3px solid #111', borderRadius: 16, padding: '14px 14px 14px', background: '#fff' }}>
-        <div style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>{t('My Hub')}</div>
-        <div style={{ display: 'grid', gap: 0, gridTemplateColumns: '1fr' }} className="member-hub">
-          {/* Profile — thick black border */}
-          <div className="hub-profile" style={{ border: '2px solid #111', borderRadius: 12, padding: 12 }}>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
-              <button onClick={() => avatarInput.current?.click()} title={t('Change photo')} aria-label={t('Change photo')} style={{ position: 'relative', width: 48, height: 48, borderRadius: '50%', background: 'var(--sand)', overflow: 'hidden', flexShrink: 0, border: 'none', padding: 0, cursor: 'pointer' }}>
+      {/* ── MY HUB ──────────────────────────────────────────────────────────── */}
+      {/* Title with flanking rules */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '2px 0 14px' }}>
+        <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
+        <span style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 900, color: '#1e2b55', letterSpacing: 3 }}>{t('MY HUB')}</span>
+        <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
+      </div>
+
+      <div style={{ position: 'relative', background: '#f4f6fb', borderRadius: 20, padding: '30px 16px 18px', boxShadow: '0 6px 24px rgba(30,43,85,0.07)' }}>
+        {/* Dashboard pill */}
+        <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#1e2b55', color: '#fff', borderRadius: 999, padding: '8px 22px', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 900, letterSpacing: 2 }}>{t('DASHBOARD')}</div>
+
+        <div className="member-hub" style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr' }}>
+          {/* Navy profile sidebar */}
+          <div style={{ background: '#1c2b52', borderRadius: 16, padding: 16, color: '#fff', alignSelf: 'start' }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
+              <button onClick={() => avatarInput.current?.click()} title={t('Change photo')} aria-label={t('Change photo')} style={{ position: 'relative', width: 48, height: 48, borderRadius: '50%', background: '#3b6fd4', overflow: 'hidden', flexShrink: 0, border: 'none', padding: 0, cursor: 'pointer' }}>
                 {me?.avatar
                   ? <img src={me.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--orange)', fontWeight: 900, fontSize: 19, fontFamily: 'var(--font-nunito)' }}>{(me?.displayName ?? '?')[0]?.toUpperCase()}</span>}
-                <span style={{ position: 'absolute', right: -1, bottom: -1, width: 18, height: 18, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff' }}><Icon name="pencil" size={9} strokeWidth={2.5} /></span>
-                {avatarBusy && <span style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: 'var(--orange)' }}>…</span>}
+                  : <span style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Icon name="user" size={22} strokeWidth={2} /></span>}
+                <span style={{ position: 'absolute', right: -1, bottom: -1, width: 18, height: 18, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #1c2b52' }}><Icon name="pencil" size={9} strokeWidth={2.5} /></span>
+                {avatarBusy && <span style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#fff' }}>…</span>}
               </button>
               <input ref={avatarInput} type="file" accept="image/*" onChange={onPickAvatar} style={{ display: 'none' }} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 14.5, fontWeight: 700, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{me?.displayName ?? t('Your account')}</div>
-                <button onClick={() => openPanel('myRatings' as PanelId)} style={{ ...linkBtn, fontSize: 11.5 }}>⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'}</button>
+                <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{me?.displayName ?? t('Your account')}</div>
+                <button onClick={() => openPanel('myRatings' as PanelId)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('Rating')} ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'}</button>
               </div>
             </div>
-            <Row label={t('Account type')} value={accountType} />
-            <Row label={t('Account ref')} value={memberRef} />
-            <Row label={t('Verified')} value={me?.isVerified
-              ? <span style={{ color: '#16a34a', fontWeight: 800 }}>{t('Yes')}</span>
-              : <button onClick={() => openPanel('verifyMe' as PanelId)} style={linkBtn}>{t('Get verified')}</button>} />
-            <Row label={t('Work required')} value={
-              <button onClick={toggleOpenToWork} style={{ background: me?.openToWork ? '#eef7f0' : '#f5f0e8', border: 'none', borderRadius: 50, padding: '4px 12px', cursor: 'pointer', color: me?.openToWork ? '#16a34a' : '#777', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 11.5 }}>
-                {me?.openToWork ? t('Looking for work') : t('Not looking')}
+            <HubNavRow icon="user" label={t('Account type')} value={accountType} />
+            <HubNavRow icon="file" label={t('Account ref')} value={memberRef} />
+            <HubNavRow icon="shield" iconColor="#4ade80" label={t('Verified')} value={me?.isVerified
+              ? <span style={{ color: '#4ade80', fontWeight: 800 }}>{t('Yes')}</span>
+              : <button onClick={() => openPanel('verifyMe' as PanelId)} style={navLinkBtn}>{t('Get verified')}</button>} />
+            <HubNavRow icon="wrench" label={t('Work required')} value={
+              <button onClick={toggleOpenToWork} style={{ ...navLinkBtn, color: me?.openToWork ? '#4ade80' : 'rgba(255,255,255,0.85)' }}>
+                {me?.openToWork ? t('Looking') : t('Not looking')}
               </button>} />
-            <Row label={t('Business A/C')} value={
-              <button onClick={() => me?.isBusiness ? router.push('/account?tab=business') : openPanel('business' as PanelId)} style={linkBtn}>
+            <HubNavRow icon="briefcase" label={t('Business acc')} last value={
+              <button onClick={() => me?.isBusiness ? router.push('/account?tab=business') : openPanel('business' as PanelId)} style={navLinkBtn}>
                 {me?.isBusiness ? t('Open') : t('Add / Upgrade')}
-              </button>} last />
+              </button>} />
           </div>
 
-          {/* Sales — column A */}
-          <div className="hub-col">
-            <div style={{ ...hubGroupHead, marginBottom: 12 }}>{t('Sales')}</div>
-            <div className="pill-stack" style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
-              <HubPill metricKey="sales" label={t('Sales')} from={range.from} to={range.to} onClick={() => { setSeg('sold'); setSection('listings') }} />
-              <HubPill metricKey="sold" label={t('Sold')} from={range.from} to={range.to} onClick={() => { setSeg('sold'); setSection('listings') }} />
-              <HubPill metricKey="beingWatched" label={t('Being watched')} from={range.from} to={range.to} onClick={() => setSection('listings')} />
+          {/* Sales */}
+          <div className="hub-mcol">
+            <ColHeader icon="chart" title={t('Sales')} {...SALES_C} />
+            <div style={{ display: 'grid', gap: 12 }}>
+              <MetricCard metricKey="sales" label={t('Sales')} icon="trendingUp" {...SALES_C} onClick={() => { setSeg('sold'); setSection('listings') }} />
+              <MetricCard metricKey="sold" label={t('Sold')} icon="cart" {...SALES_C} onClick={() => { setSeg('sold'); setSection('listings') }} />
+              <MetricCard metricKey="beingWatched" label={t('Being watched')} icon="heart" {...SALES_C} onClick={() => setSection('listings')} />
             </div>
           </div>
 
-          {/* Sales — column B (heading hidden to keep pills aligned) */}
-          <div className="hub-col">
-            <div style={{ ...hubGroupHead, marginBottom: 12, visibility: 'hidden' }} aria-hidden>{t('Sales')}</div>
-            <div className="pill-stack" style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
-              <HubPill metricKey="orders" label={t('Orders')} from={range.from} to={range.to} onClick={() => setSection('listings')} />
-              <HubPill metricKey="toShip" label={t('To ship')} from={range.from} to={range.to} onClick={() => setSection('listings')} />
-              <HubPill metricKey="incomeDue" label={t('Income due')} from={range.from} to={range.to} onClick={() => setSection('listings')} />
+          {/* Orders */}
+          <div className="hub-mcol">
+            <ColHeader icon="clipboard" title={t('Orders')} {...ORDERS_C} />
+            <div style={{ display: 'grid', gap: 12 }}>
+              <MetricCard metricKey="orders" label={t('Orders')} icon="package" {...ORDERS_C} onClick={() => setSection('listings')} />
+              <MetricCard metricKey="toShip" label={t('To ship')} icon="truck" {...ORDERS_C} onClick={() => setSection('listings')} />
+              <MetricCard metricKey="incomeDue" label={t('Income due')} icon="coins" {...ORDERS_C} onClick={() => setSection('listings')} />
             </div>
           </div>
 
           {/* Purchasing */}
-          <div className="hub-col">
-            <div style={{ ...hubGroupHead, marginBottom: 12 }}>{t('Purchasing')}</div>
-            <div className="pill-stack" style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
-              <HubPill metricKey="purchased" label={t('Purchased')} from={range.from} to={range.to} onClick={() => { setSeg('buying'); setSection('listings') }} />
-              <HubPill metricKey="watching" label={t('Watching')} from={range.from} to={range.to} onClick={() => setSection('saved')} />
-              <HubPill metricKey="toPay" label={t('To pay')} from={range.from} to={range.to} onClick={() => { setSeg('buying'); setSection('listings') }} />
+          <div className="hub-mcol">
+            <ColHeader icon="award" title={t('Purchasing')} {...PURCH_C} />
+            <div style={{ display: 'grid', gap: 12 }}>
+              <MetricCard metricKey="purchased" label={t('Purchased')} icon="tag" {...PURCH_C} onClick={() => { setSeg('buying'); setSection('listings') }} />
+              <MetricCard metricKey="watching" label={t('Watching')} icon="eye" {...PURCH_C} onClick={() => setSection('saved')} />
+              <MetricCard metricKey="toPay" label={t('To pay')} icon="wallet" {...PURCH_C} onClick={() => { setSeg('buying'); setSection('listings') }} />
             </div>
           </div>
         </div>
-
-        {/* Date range — applies to every pill above; sits under the pills, right-aligned */}
-        <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
-          {HUB_PRESETS.map(([id, lbl]) => (
-            <button key={id} onClick={() => setRangePreset(id)} style={{
-              border: `1.5px solid ${rangePreset === id ? 'var(--orange)' : '#e5dccd'}`,
-              background: rangePreset === id ? '#FFF3EE' : '#fff', color: rangePreset === id ? 'var(--orange)' : '#7a6a55',
-              borderRadius: 999, padding: '6px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer',
-            }}>{t(lbl)}</button>
-          ))}
-          {rangePreset === 'custom' && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12, color: 'var(--dark)' }} />
-              <span style={{ color: '#999' }}>–</span>
-              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12, color: 'var(--dark)' }} />
-            </span>
-          )}
-        </div>
-
       </div>
 
       {/* ── MENU + PANEL ────────────────────────────────────────────────────── */}
@@ -545,14 +514,12 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       </div>
 
       <style>{`
-        .member-hub .hub-col{ padding-top: 12px; margin-top: 12px; border-top: 1px dashed #ddd; }
-        @media (min-width: 820px){
-          .member-hub{ grid-template-columns: minmax(180px, 0.9fr) 1fr 1fr 1fr !important; align-items: start; }
-          .member-hub .hub-profile{ margin-right: 16px; }
-          .member-hub .hub-col{ border-top: none; margin-top: 0; padding-top: 0; padding-left: 16px; padding-right: 16px; }
-          /* Divider lines sit against the pill stacks, so they are only as tall
-             as the three pills (not the full profile height). */
-          .member-hub .hub-col .pill-stack{ border-left: 1px solid #cfcfcf; padding-left: 16px; margin-left: -16px; }
+        .member-hub .hub-mcol{ padding-top: 12px; margin-top: 12px; border-top: 1px dashed #e2e6ef; }
+        @media (min-width: 880px){
+          .member-hub{ grid-template-columns: 240px 1fr 1fr 1fr !important; align-items: start; }
+          .member-hub .hub-mcol{ border-top: none; margin-top: 0; padding: 0 16px; }
+          /* Vertical dividers only between the three metric columns. */
+          .member-hub .hub-mcol + .hub-mcol{ border-left: 1px solid #e2e6ef; }
         }
         @media (min-width: 900px){ .member-body{ grid-template-columns: 240px 1fr !important; } .member-menu{ position: sticky; top: 70px; } }
       `}</style>
@@ -570,34 +537,56 @@ function Row({ label, value, last }: { label: string; value: React.ReactNode; la
 }
 
 const linkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--orange)', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 12.5 }
-const hubGroupHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }
+const navLinkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#7fb0ff', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 11.5 }
+
+// One row of the navy profile sidebar: icon + label + value.
+function HubNavRow({ icon, label, value, iconColor, last }: { icon: IconName; label: string; value: React.ReactNode; iconColor?: string; last?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', borderBottom: last ? 'none' : '1px dotted rgba(255,255,255,0.2)' }}>
+      <span style={{ color: iconColor ?? 'rgba(255,255,255,0.85)', display: 'inline-flex', flexShrink: 0 }}><Icon name={icon} size={16} strokeWidth={2} /></span>
+      <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.4 }}>{label}</span>
+      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: 'rgba(255,255,255,0.9)', textAlign: 'right' }}>{value}</span>
+    </div>
+  )
+}
 
 // One clickable "My Hub" pill — an oval showing "Label — value" with its own
 // date-range selector (per Steve). Each pill fetches its own scoped metric.
 type MetricKey = 'sales' | 'sold' | 'beingWatched' | 'orders' | 'toShip' | 'incomeDue' | 'purchased' | 'watching' | 'toPay'
-type RangePreset = 'all' | 'today' | 'yesterday' | 'week' | 'lastweek' | 'month' | 'custom'
-const HUB_PRESETS: [RangePreset, string][] = [
-  ['all', 'All'], ['today', 'Today'], ['yesterday', 'Yesterday'], ['week', 'This week'], ['lastweek', 'Last week'], ['month', 'This month'], ['custom', 'Custom'],
-]
 
-// A clean clickable oval: "Label — value". Its value reflects the single hub
-// date range chosen below the pills.
-function HubPill({ metricKey, label, onClick, from, to }: { metricKey: MetricKey; label: string; onClick: () => void; from?: string; to?: string }) {
+// One white metric card: a tinted circular icon, the label, and the value in the
+// column's theme colour.
+function MetricCard({ metricKey, label, icon, color, tint, onClick }: { metricKey: MetricKey; label: string; icon: IconName; color: string; tint: string; onClick: () => void }) {
   const [data, setData] = useState<{ value: number; currency: boolean } | null>(null)
   useEffect(() => {
     let live = true
-    ;(trpcAuthed() as any).users.hubMetric.query({ key: metricKey, from, to }).then((d: any) => { if (live) setData(d) }).catch(() => {})
+    ;(trpcAuthed() as any).users.hubMetric.query({ key: metricKey }).then((d: any) => { if (live) setData(d) }).catch(() => {})
     return () => { live = false }
-  }, [metricKey, from, to])
+  }, [metricKey])
   const val = data ? (data.currency ? `€${Number(data.value).toLocaleString()}` : String(data.value)) : '—'
   return (
-    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid #111', borderRadius: 999, padding: '10px 14px', background: '#fff', cursor: 'pointer', minWidth: 0, width: '100%' }}>
-      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {label} — <span style={{ color: 'var(--orange)', fontWeight: 900 }}>{val}</span>
+    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '12px 14px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(30,43,85,0.05)', textAlign: 'left' }}>
+      <span style={{ flexShrink: 0, width: 40, height: 40, borderRadius: '50%', background: tint, color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Icon name={icon} size={19} strokeWidth={2} /></span>
+      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#334', textTransform: 'uppercase', letterSpacing: 0.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {label} - <span style={{ color, fontWeight: 900 }}>{val}</span>
       </span>
     </button>
   )
 }
+
+// Column theme + a heading with an icon in a coloured circle.
+function ColHeader({ icon, title, color, tint }: { icon: IconName; title: string; color: string; tint: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+      <span style={{ width: 34, height: 34, borderRadius: '50%', background: tint, color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name={icon} size={17} strokeWidth={2.2} /></span>
+      <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 900, color: '#1e2b55', textTransform: 'uppercase', letterSpacing: 1 }}>{title}</span>
+    </div>
+  )
+}
+
+const SALES_C = { color: '#2e8b3d', tint: '#e8f3e9' }
+const ORDERS_C = { color: '#3b6fd4', tint: '#e8effb' }
+const PURCH_C = { color: '#7b4fc9', tint: '#f0eaf9' }
 
 // Admin Centre — profile & details, payouts, verify, add business, tenant
 // profile, member status and close account, per Steve's Admin column.
