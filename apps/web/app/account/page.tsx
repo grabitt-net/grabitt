@@ -18,6 +18,7 @@ import SellerCentre from '@/components/marketplace/SellerCentre'
 import BusinessCentre from '@/components/marketplace/BusinessCentre'
 import MemberDashboard from '@/components/marketplace/MemberDashboard'
 import MyHub from '@/components/marketplace/MyHub'
+import InboxClient from '@/components/marketplace/InboxClient'
 import RewardsCard from '@/components/marketplace/RewardsCard'
 import MemberStatusCard from '@/components/marketplace/MemberStatusCard'
 import AffiliateCard from '@/components/marketplace/AffiliateCard'
@@ -481,31 +482,11 @@ function AccountInner() {
 
           </>)}
 
-          {mainTab === 'inbox' && (<>
-          {/* Messages */}
-          <div style={card}>
-            <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between' }}><span>{t('Recent messages')}</span><Link href="/messages" style={{ color: 'var(--orange)', fontSize: 12, textDecoration: 'none' }}>{t('See all →')}</Link></div>
-            {threads === null ? <Muted>{t('Loading…')}</Muted> : threads.length === 0 ? <Muted>{t('No conversations yet.')}</Muted> : threads.slice(0, 4).map((th: any) => {
-              const other = th.participants?.find((p: any) => p.userId !== me?.id)?.user
-              const last = th.messages?.[0]
-              const unread = !!last && last.senderId !== me?.id && !last.readAt
-              const preview = last ? (last.blocked ? `⚠️ ${t('Message hidden')}` : (last.senderId === me?.id ? t('You: ') : '') + last.body) : t('Start chatting…')
-              return (
-                <Link key={th.id} href={`/messages/${th.id}`} style={{ textDecoration: 'none' }}>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f5f5' }}>
-                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontFamily: 'var(--font-nunito)' }}>{(other?.displayName ?? '?')[0]?.toUpperCase()}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: unread ? 900 : 700, color: 'var(--dark)' }}>{other?.displayName ?? t('Grabitt user')}</div>
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: unread ? 'var(--dark)' : '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preview}</div>
-                    </div>
-                    {unread && <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--orange)' }} />}
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-
-          </>)}
+          {mainTab === 'inbox' && me?.id && (
+            <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+              <InboxClient me={me.id} alertUnread={0} />
+            </div>
+          )}
 
           {mainTab === 'settings' && (<>
           <SubTabs

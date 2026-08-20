@@ -14,6 +14,7 @@ import TenantProfileCard from './TenantProfileCard'
 import MemberStatusCard from './MemberStatusCard'
 import RewardsCard from './RewardsCard'
 import AffiliateCard from './AffiliateCard'
+import InboxClient from './InboxClient'
 import { deptEmoji, toPanelItem } from '@/lib/listingMap'
 import { getViews, type RecentCard } from '@/lib/recentViews'
 import { t } from '@/lib/i18n'
@@ -30,7 +31,7 @@ type Seg = 'active' | 'sold' | 'draft' | 'buying'
 const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
   { id: 'messages', label: 'Message Centre', icon: 'message' },
   { id: 'employment', label: 'Employment & CV', icon: 'briefcase' },
-  { id: 'listings', label: 'Listings & Disputes', icon: 'tag' },
+  { id: 'listings', label: 'Trading & Disputes', icon: 'tag' },
   { id: 'admin', label: 'Admin Centre', icon: 'user' },
   { id: 'saved', label: 'Saved Listings & Offers', icon: 'heart' },
   { id: 'recommended', label: 'Recommended for You', icon: 'sparkle' },
@@ -280,26 +281,10 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
               </div>
             </Link>
-            <div style={card}>
-              <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between' }}><span>{t('Message Centre')}</span><Link href="/messages" style={{ color: 'var(--orange)', fontSize: 12, textDecoration: 'none' }}>{t('See all →')}</Link></div>
-              {threads === null ? <Muted>{t('Loading…')}</Muted> : threads.length === 0 ? <Muted>{t('No conversations yet.')}</Muted> : threads.slice(0, 6).map((th: any) => {
-                const other = th.participants?.find((p: any) => p.userId !== me?.id)?.user
-                const last = th.messages?.[0]
-                const unread = !!last && last.senderId !== me?.id && !last.readAt
-                const preview = last ? (last.blocked ? t('Message hidden') : (last.senderId === me?.id ? t('You: ') : '') + last.body) : t('Start chatting…')
-                return (
-                  <Link key={th.id} href={`/messages/${th.id}`} style={{ textDecoration: 'none' }}>
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f5f5' }}>
-                      <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontFamily: 'var(--font-nunito)' }}>{(other?.displayName ?? '?')[0]?.toUpperCase()}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: unread ? 900 : 700, color: 'var(--dark)' }}>{other?.displayName ?? t('Grabitt user')}</div>
-                        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: unread ? 'var(--dark)' : '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preview}</div>
-                      </div>
-                      {unread && <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--orange)' }} />}
-                    </div>
-                  </Link>
-                )
-              })}
+            {/* Full inbox inline — list on the left, conversation preview on the
+                right, no navigation away. */}
+            <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+              {me?.id && <InboxClient me={me.id} alertUnread={0} />}
             </div>
           </>)}
 
