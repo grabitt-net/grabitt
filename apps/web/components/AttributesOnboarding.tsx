@@ -21,7 +21,7 @@ export default function AttributesOnboarding() {
     if (localStorage.getItem(SKIP_KEY)) return
     if (!getAuthToken()) return
     try {
-      const me = await trpcAuthed().users.me.query() as unknown as {
+      const me = await (trpcAuthed() as any).users.me.query() as unknown as {
         interests?: string[]; hobbies?: string[]; skills?: string[]
         gdprAcceptedAt?: string | null; withdrawalWaiverAcceptedAt?: string | null
       }

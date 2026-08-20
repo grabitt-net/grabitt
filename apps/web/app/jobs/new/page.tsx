@@ -38,7 +38,7 @@ export default function PostJobPage() {
       if (!token) token = await refreshAuthToken()
       if (!token) { router.push('/auth?next=/jobs/new'); return }
       try {
-        const me: any = await trpcAuthed().users.me.query()
+        const me: any = await (trpcAuthed() as any).users.me.query()
         setGate(me?.isBusiness ? 'ok' : 'needbusiness')
       } catch { router.push('/auth?next=/jobs/new') }
     })()

@@ -440,8 +440,8 @@ export const usersRouter = router({
         where: { id: ctx.user.id },
         data: {
           ...rest,
-          // Recruitment taxonomy is a JSON blob (only set when provided).
-          ...(jobProfile != null ? { jobProfile: jobProfile as object } : {}),
+          // Recruitment taxonomy is stored as a JSON string.
+          ...(jobProfile != null ? { jobProfile: JSON.stringify(jobProfile) } : {}),
           // Stamp when consent was given — GDPR requires us to evidence it.
           ...(marketingConsent !== undefined
             ? { marketingConsent, marketingConsentAt: marketingConsent ? new Date() : null }

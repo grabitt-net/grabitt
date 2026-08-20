@@ -390,10 +390,12 @@ model User {
   // Member dashboard "Looking for work" toggle. When on, the member is surfaced
   // as open to work and the profile card links straight to their attributes.
   openToWork         Boolean   @default(false)
-  // Recruitment job taxonomy selections: { languages: string[], experience:
+  // Recruitment job taxonomy selections, stored as a JSON string (not a Json
+  // column — a recursive JsonValue type blows the TS inference-depth limit at
+  // every users.me call site). Shape: { languages: string[], experience:
   // { [jobKey]: months } }. Jobseekers store months done; employers store the
   // months of experience they require.
-  jobProfile         Json?
+  jobProfile         String?
   avatar             String?
   phone              String?   // contact number, shared with a buyer only after a completed collection sale
   collectionAddress  String?   // collection address, shared with a buyer only after a completed collection sale

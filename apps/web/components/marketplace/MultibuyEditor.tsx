@@ -15,8 +15,8 @@ export default function MultibuyEditor({ value, onChange }: {
   const [isBusiness, setIsBusiness] = useState<boolean | null>(null)
 
   useEffect(() => {
-    trpcAuthed().users.me.query()
-      .then(u => setIsBusiness(!!(u as { isBusiness?: boolean }).isBusiness))
+    (trpcAuthed() as any).users.me.query()
+      .then((u: any) => setIsBusiness(!!(u as { isBusiness?: boolean }).isBusiness))
       .catch(() => setIsBusiness(false))
   }, [])
 

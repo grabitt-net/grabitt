@@ -93,7 +93,7 @@ function ListingInner() {
       let token = getAuthToken()
       if (!token) token = await refreshAuthToken()
       if (!token) return
-      try { const me: any = await trpcAuthed().users.me.query(); setMeId(me?.id ?? null) } catch { /* ignore */ }
+      try { const me: any = await (trpcAuthed() as any).users.me.query(); setMeId(me?.id ?? null) } catch { /* ignore */ }
     })()
   }, [])
 

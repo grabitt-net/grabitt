@@ -2359,8 +2359,8 @@ function PanelBody() {
 
     useEffect(() => {
       getTrpcClient()
-        .then(c => c.users.me.query())
-        .then(u => {
+        .then((c: any) => c.users.me.query())
+        .then((u: any) => {
           const me = u as unknown as { isBusiness: boolean; businessName: string | null }
           if (me.isBusiness && me.businessName?.trim()) setBizBuyer({ businessName: me.businessName.trim() })
         })

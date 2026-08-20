@@ -14,7 +14,10 @@ const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3
 const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }
 
 export default function JobCategories({ me, onReload, mode }: { me: any; onReload: () => void; mode: 'seeker' | 'employer' }) {
-  const jp = me?.jobProfile ?? {}
+  // jobProfile is stored as a JSON string.
+  const jp: { languages?: string[]; experience?: Record<string, number> } = (() => {
+    try { return typeof me?.jobProfile === 'string' ? JSON.parse(me.jobProfile) : (me?.jobProfile ?? {}) } catch { return {} }
+  })()
   const [languages, setLanguages] = useState<string[]>(Array.isArray(jp.languages) ? jp.languages : [])
   const [exp, setExp] = useState<Record<string, number>>(jp.experience && typeof jp.experience === 'object' ? { ...jp.experience } : {})
   const [open, setOpen] = useState<number | null>(null)

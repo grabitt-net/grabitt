@@ -58,7 +58,7 @@ export default function NewPropertyPage() {
       if (!token) { router.push('/auth?next=/property/new'); return }
       try {
         const [me, allow]: any = await Promise.all([
-          trpcAuthed().users.me.query(),
+          (trpcAuthed() as any).users.me.query(),
           (trpcAuthed() as any).property.myAllowance.query(),
         ])
         setAllowance(allow)
