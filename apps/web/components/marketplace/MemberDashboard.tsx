@@ -28,12 +28,13 @@ import { t } from '@/lib/i18n'
 // snapshot · dashboard pills) over an 8-section left menu that swaps the right
 // panel. It sits BELOW the existing header + Grabitt NOW promo.
 
-type SectionId = 'business' | 'messages' | 'employment' | 'listings' | 'disputes' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'gdpr' | 'hub'
+type SectionId = 'business' | 'messages' | 'employment' | 'aboutme' | 'listings' | 'disputes' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'gdpr' | 'hub'
 type Seg = 'active' | 'sold' | 'draft' | 'buying'
 
 const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
   { id: 'messages', label: 'Message Centre', icon: 'message' },
   { id: 'employment', label: 'Employment & CV', icon: 'briefcase' },
+  { id: 'aboutme', label: 'About Me', icon: 'star' },
   { id: 'listings', label: 'Trading', icon: 'tag' },
   { id: 'disputes', label: 'Disputes', icon: 'shield' },
   { id: 'admin', label: 'Admin Centre', icon: 'user' },
@@ -70,7 +71,7 @@ const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', bor
 const primaryBtn: React.CSSProperties = { background: '#fff', color: 'var(--orange)', border: '2px solid #111', borderRadius: 12, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }
 function Muted({ children }: { children: React.ReactNode }) { return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '16px 0', textAlign: 'center' }}>{children}</div> }
 
-const SECTION_IDS = new Set<string>(['business', 'messages', 'employment', 'listings', 'disputes', 'admin', 'saved', 'recommended', 'recent', 'loyalty', 'addbiz', 'activity', 'gdpr'])
+const SECTION_IDS = new Set<string>(['business', 'messages', 'employment', 'aboutme', 'listings', 'disputes', 'admin', 'saved', 'recommended', 'recent', 'loyalty', 'addbiz', 'activity', 'gdpr'])
 
 export default function MemberDashboard({ me, onReload }: { me: any; onReload: () => void }) {
   const router = useRouter()
@@ -322,7 +323,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             </div>
           )}
 
-          {section === 'employment' && (<>
+          {section === 'aboutme' && <AttributesCard />}
+
+          {section === 'employment' && (
             <div style={card}>
               <div style={cardHead}>{t('Employment & CV')}</div>
               <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer', marginBottom: 12 }}>
@@ -340,8 +343,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 </div>
               </Link>
             </div>
-            <AttributesCard />
-          </>)}
+          )}
 
           {section === 'listings' && (<>
             <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #ece3d7', borderRadius: 50, padding: 5, overflowX: 'auto' }}>
