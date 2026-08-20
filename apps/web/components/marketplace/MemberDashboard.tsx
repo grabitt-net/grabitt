@@ -245,8 +245,8 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           </div>
         </div>
 
-        {/* Date range — applies to every pill above */}
-        <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
+        {/* Date range — applies to every pill above; sits under the pills, right-aligned */}
+        <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
           {HUB_PRESETS.map(([id, lbl]) => (
             <button key={id} onClick={() => setRangePreset(id)} style={{
               border: `1.5px solid ${rangePreset === id ? 'var(--orange)' : '#e5dccd'}`,
