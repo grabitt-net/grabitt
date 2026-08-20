@@ -27,13 +27,14 @@ import { t } from '@/lib/i18n'
 // snapshot · dashboard pills) over an 8-section left menu that swaps the right
 // panel. It sits BELOW the existing header + Grabitt NOW promo.
 
-type SectionId = 'business' | 'messages' | 'employment' | 'listings' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'hub'
+type SectionId = 'business' | 'messages' | 'employment' | 'listings' | 'disputes' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'hub'
 type Seg = 'active' | 'sold' | 'draft' | 'buying'
 
 const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
   { id: 'messages', label: 'Message Centre', icon: 'message' },
   { id: 'employment', label: 'Employment & CV', icon: 'briefcase' },
-  { id: 'listings', label: 'Trading & Disputes', icon: 'tag' },
+  { id: 'listings', label: 'Trading', icon: 'tag' },
+  { id: 'disputes', label: 'Disputes', icon: 'shield' },
   { id: 'admin', label: 'Admin Centre', icon: 'user' },
   { id: 'saved', label: 'Saved Listings & Offers', icon: 'heart' },
   { id: 'recommended', label: 'Recommended for You', icon: 'sparkle' },
@@ -389,6 +390,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
               ))}
             </div>
 
+          </>)}
+
+          {section === 'disputes' && (
             <button onClick={() => openPanel('myDisputes' as PanelId)} style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
               <Icon name="shield" size={20} strokeWidth={2} />
               <div style={{ flex: 1 }}>
@@ -397,7 +401,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
               </div>
               <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
             </button>
-          </>)}
+          )}
 
           {section === 'admin' && (
             <AdminCentre me={me} onReload={onReload} payout={payout} setupPayouts={setupPayouts} openPanel={openPanel} goInterests={() => setSection('employment')} />
