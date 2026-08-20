@@ -15,6 +15,8 @@ import MemberStatusCard from './MemberStatusCard'
 import RewardsCard from './RewardsCard'
 import AffiliateCard from './AffiliateCard'
 import InboxClient from './InboxClient'
+import BusinessCentre from './BusinessCentre'
+import AgentProfileCard from './AgentProfileCard'
 import { deptEmoji, toPanelItem } from '@/lib/listingMap'
 import { getViews, type RecentCard } from '@/lib/recentViews'
 import { t } from '@/lib/i18n'
@@ -25,7 +27,7 @@ import { t } from '@/lib/i18n'
 // snapshot · dashboard pills) over an 8-section left menu that swaps the right
 // panel. It sits BELOW the existing header + Grabitt NOW promo.
 
-type SectionId = 'messages' | 'employment' | 'listings' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'hub'
+type SectionId = 'business' | 'messages' | 'employment' | 'listings' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'hub'
 type Seg = 'active' | 'sold' | 'draft' | 'buying'
 
 const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
@@ -68,9 +70,15 @@ function Muted({ children }: { children: React.ReactNode }) { return <div style=
 export default function MemberDashboard({ me, onReload }: { me: any; onReload: () => void }) {
   const router = useRouter()
   const { openPanel } = usePanel()
-  const [section, setSection] = useState<SectionId>('listings')
+  const [section, setSection] = useState<SectionId>(me?.isBusiness ? 'business' : 'listings')
   const [seg, setSeg] = useState<Seg>('active')
   const sortNewest = true // My Listings default to newest-first
+
+  // Business accounts get a Business Centre section (and no "add business"); the
+  // rest of the menu is shared with personal accounts.
+  const sections: { id: SectionId; label: string; icon: IconName }[] = me?.isBusiness
+    ? [{ id: 'business', label: 'Business Centre', icon: 'building' }, ...SECTIONS.filter(s => s.id !== 'addbiz')]
+    : SECTIONS
 
   // Clicking a My Hub card opens its list in the panel below.
   const [hubView, setHubView] = useState<MetricKey | null>(null)
@@ -255,7 +263,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       {/* ── MENU + PANEL ────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gap: 14, gridTemplateColumns: '1fr', marginTop: 14 }} className="member-body">
         <nav style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 8, display: 'flex', flexDirection: 'column', gap: 4, alignSelf: 'start' }} className="member-menu">
-          {SECTIONS.map(s => (
+          {sections.map(s => (
             <button key={s.id} onClick={() => setSection(s.id)} style={{
               display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', border: 'none', borderRadius: 12, padding: '11px 12px', cursor: 'pointer',
               background: section === s.id ? 'var(--sand)' : 'transparent', color: 'var(--dark)',
@@ -269,6 +277,8 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
         <section id="hub-panel" style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
           {section === 'hub' && hubView && <HubListView hubKey={hubView} title={hubTitle} />}
+
+          {section === 'business' && me?.isBusiness && <BusinessCentre businessVerified={me?.businessVerified} />}
 
           {section === 'messages' && (<>
             <Link href="/messages/alerts" style={{ textDecoration: 'none' }}>
@@ -750,6 +760,9 @@ function AdminCentre({ me, onReload, payout, setupPayouts, openPanel, goInterest
 
       {/* Tenant profile */}
       <TenantProfileCard />
+
+      {/* Property-agent contact — business/agent accounts only */}
+      {me?.isBusiness && <AgentProfileCard />}
 
       {/* Close account */}
       <div style={{ ...card, border: '1px solid #fecaca' }}>
