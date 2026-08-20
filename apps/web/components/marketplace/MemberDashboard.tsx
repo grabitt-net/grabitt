@@ -281,23 +281,13 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
           {section === 'business' && me?.isBusiness && <BusinessCentre businessVerified={me?.businessVerified} />}
 
-          {section === 'messages' && (<>
-            <Link href="/messages/alerts" style={{ textDecoration: 'none' }}>
-              <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-                <Icon name="bell" size={20} strokeWidth={2} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{t('Grabitt Alerts')}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777' }}>{t('Match alerts, price drops and your saved searches.')}</div>
-                </div>
-                <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
-              </div>
-            </Link>
-            {/* Full inbox inline — list on the left, conversation preview on the
-                right, no navigation away. */}
+          {section === 'messages' && (
+            /* Full inbox inline — list on the left, conversation preview on the
+               right, no navigation away. (Ad banner slot goes above this later.) */
             <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
               {me?.id && <InboxClient me={me.id} alertUnread={0} />}
             </div>
-          </>)}
+          )}
 
           {section === 'employment' && (<>
             <div style={card}>
