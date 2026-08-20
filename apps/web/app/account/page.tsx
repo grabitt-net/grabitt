@@ -17,6 +17,7 @@ import PanelHost from '@/components/marketplace/PanelHostLazy'
 import SellerCentre from '@/components/marketplace/SellerCentre'
 import BusinessCentre from '@/components/marketplace/BusinessCentre'
 import MemberDashboard from '@/components/marketplace/MemberDashboard'
+import MyHub from '@/components/marketplace/MyHub'
 import RewardsCard from '@/components/marketplace/RewardsCard'
 import MemberStatusCard from '@/components/marketplace/MemberStatusCard'
 import AffiliateCard from '@/components/marketplace/AffiliateCard'
@@ -394,9 +395,11 @@ function AccountInner() {
           {/* Sponsored banner below the dashboard nav links */}
           <BannerSlot position="user_dashboard" aspect="6 / 1" label="User dashboard" padded={false} />
 
-          {mainTab === 'business' && me?.isBusiness && (
+          {mainTab === 'business' && me?.isBusiness && (<>
+            {/* My Hub dashboard — same summary as personal accounts. */}
+            <MyHub me={me} onReload={load} />
             <BusinessCentre businessVerified={me?.businessVerified} />
-          )}
+          </>)}
 
           {mainTab === 'selling' && (<>
           <SubTabs
