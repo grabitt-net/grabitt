@@ -1,8 +1,9 @@
 'use client'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { trpcAuthed } from '@/lib/authToken'
+import { compressAndUpload } from '@/lib/storage'
 import { createClient } from '@/lib/supabase'
 import { toast, confirmDialog } from '@/lib/ui'
 import { usePanel } from '@/context/PanelContext'
@@ -124,6 +125,22 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     } catch { toast(t('Could not open Stripe. Please try again.')) }
   }
 
+  // Profile photo upload — compress client-side, store in the photos bucket, then
+  // save the public URL to the account.
+  const avatarInput = useRef<HTMLInputElement>(null)
+  const [avatarBusy, setAvatarBusy] = useState(false)
+  const onPickAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !me?.id) return
+    setAvatarBusy(true)
+    try {
+      const url = await compressAndUpload(file, `avatars/${me.id}/${crypto.randomUUID()}.jpg`)
+      await trpcAuthed().users.updateProfile.mutate({ avatar: url })
+      onReload()
+    } catch { toast(t('Could not upload your photo. Please try again.')) }
+    finally { setAvatarBusy(false); if (avatarInput.current) avatarInput.current.value = '' }
+  }
+
   const toggleOpenToWork = async () => {
     const next = !me?.openToWork
     try {
@@ -146,11 +163,16 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
         <div style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 12 }}>{t('My Hub')}</div>
         <div style={{ display: 'grid', gap: 0, gridTemplateColumns: '1fr' }} className="member-hub">
           {/* Profile — thick black border */}
-          <div style={{ border: '2px solid #111', borderRadius: 12, padding: 12, alignSelf: 'start' }}>
+          <div className="hub-profile" style={{ border: '2px solid #111', borderRadius: 12, padding: 12 }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
-              <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'var(--sand)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--orange)', fontWeight: 900, fontSize: 19, fontFamily: 'var(--font-nunito)' }}>
-                {me?.avatar ? <img src={me.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (me?.displayName ?? '?')[0]?.toUpperCase()}
-              </div>
+              <button onClick={() => avatarInput.current?.click()} title={t('Change photo')} aria-label={t('Change photo')} style={{ position: 'relative', width: 48, height: 48, borderRadius: '50%', background: 'var(--sand)', overflow: 'hidden', flexShrink: 0, border: 'none', padding: 0, cursor: 'pointer' }}>
+                {me?.avatar
+                  ? <img src={me.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--orange)', fontWeight: 900, fontSize: 19, fontFamily: 'var(--font-nunito)' }}>{(me?.displayName ?? '?')[0]?.toUpperCase()}</span>}
+                <span style={{ position: 'absolute', right: -1, bottom: -1, width: 18, height: 18, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff' }}><Icon name="pencil" size={9} strokeWidth={2.5} /></span>
+                {avatarBusy && <span style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: 'var(--orange)' }}>…</span>}
+              </button>
+              <input ref={avatarInput} type="file" accept="image/*" onChange={onPickAvatar} style={{ display: 'none' }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 14.5, fontWeight: 700, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{me?.displayName ?? t('Your account')}</div>
                 <button onClick={() => openPanel('myRatings' as PanelId)} style={{ ...linkBtn, fontSize: 11.5 }}>⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'}</button>
@@ -171,20 +193,23 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
               </button>} last />
           </div>
 
-          {/* Sales — two divided columns of clickable oval pills */}
+          {/* Sales — column A */}
           <div className="hub-col">
             <div style={{ ...hubGroupHead, marginBottom: 12 }}>{t('Sales')}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
-              <div style={{ display: 'grid', gap: 12, alignContent: 'start', paddingRight: 16 }}>
-                <HubPill metricKey="sales" label={t('Sales')} onClick={() => { setSeg('sold'); setSection('listings') }} />
-                <HubPill metricKey="sold" label={t('Sold')} onClick={() => { setSeg('sold'); setSection('listings') }} />
-                <HubPill metricKey="beingWatched" label={t('Being watched')} onClick={() => setSection('listings')} />
-              </div>
-              <div className="sales-b" style={{ display: 'grid', gap: 12, alignContent: 'start', paddingLeft: 16 }}>
-                <HubPill metricKey="orders" label={t('Orders')} onClick={() => setSection('listings')} />
-                <HubPill metricKey="toShip" label={t('To ship')} onClick={() => setSection('listings')} />
-                <HubPill metricKey="incomeDue" label={t('Income due')} onClick={() => setSection('listings')} />
-              </div>
+            <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
+              <HubPill metricKey="sales" label={t('Sales')} onClick={() => { setSeg('sold'); setSection('listings') }} />
+              <HubPill metricKey="sold" label={t('Sold')} onClick={() => { setSeg('sold'); setSection('listings') }} />
+              <HubPill metricKey="beingWatched" label={t('Being watched')} onClick={() => setSection('listings')} />
+            </div>
+          </div>
+
+          {/* Sales — column B (heading hidden to keep pills aligned) */}
+          <div className="hub-col">
+            <div style={{ ...hubGroupHead, marginBottom: 12, visibility: 'hidden' }} aria-hidden>{t('Sales')}</div>
+            <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
+              <HubPill metricKey="orders" label={t('Orders')} onClick={() => setSection('listings')} />
+              <HubPill metricKey="toShip" label={t('To ship')} onClick={() => setSection('listings')} />
+              <HubPill metricKey="incomeDue" label={t('Income due')} onClick={() => setSection('listings')} />
             </div>
           </div>
 
@@ -482,10 +507,10 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
       <style>{`
         .member-hub .hub-col{ padding-top: 12px; margin-top: 12px; border-top: 1px dashed #ddd; }
-        .member-hub .sales-b{ border-left: 1px solid #cfcfcf; }
         @media (min-width: 820px){
-          .member-hub{ grid-template-columns: minmax(160px, 0.8fr) 1.7fr 1fr !important; align-items: stretch; }
-          .member-hub .hub-col{ border-top: none; margin-top: 0; padding-top: 0; padding-left: 16px; border-left: 1px solid #cfcfcf; }
+          .member-hub{ grid-template-columns: minmax(180px, 0.9fr) 1fr 1fr 1fr !important; align-items: stretch; }
+          .member-hub .hub-profile{ margin-right: 16px; }
+          .member-hub .hub-col{ border-top: none; margin-top: 0; padding-top: 0; padding-left: 16px; padding-right: 16px; border-left: 1px solid #cfcfcf; }
         }
         @media (min-width: 900px){ .member-body{ grid-template-columns: 240px 1fr !important; } .member-menu{ position: sticky; top: 70px; } }
       `}</style>
