@@ -13,13 +13,15 @@ export default function ChatWindow({ threadId, userId, initialMessages }: Props)
   const { messages: live, sendMessage } = useChat(threadId, userId)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
   // Show server-rendered messages until the first live fetch returns.
   const messages = live.length > 0 ? live : initialMessages
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // Scroll only the message list to the newest message — never the page.
+    const el = listRef.current
+    if (el) el.scrollTop = el.scrollHeight
   }, [messages])
 
   async function send() {
@@ -43,7 +45,7 @@ export default function ChatWindow({ threadId, userId, initialMessages }: Props)
         </span>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', color: '#bbb', marginTop: 40, fontFamily: 'var(--font-nunito)', fontSize: 13 }}>
             Send a message to start the conversation
@@ -90,7 +92,6 @@ export default function ChatWindow({ threadId, userId, initialMessages }: Props)
             </div>
           )
         })}
-        <div ref={bottomRef} />
       </div>
 
       <div style={{

@@ -382,16 +382,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
           </>)}
 
-          {section === 'disputes' && (
-            <button onClick={() => openPanel('myDisputes' as PanelId)} style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
-              <Icon name="shield" size={20} strokeWidth={2} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{t('My Disputes')}</div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777' }}>{t('Open a dispute or track one in progress.')}</div>
-              </div>
-              <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
-            </button>
-          )}
+          {section === 'disputes' && <DisputesList />}
 
           {section === 'admin' && (
             <AdminCentre me={me} onReload={onReload} payout={payout} setupPayouts={setupPayouts} openPanel={openPanel} goInterests={() => setSection('employment')} />
@@ -606,6 +597,44 @@ function HubListView({ hubKey, title }: { hubKey: MetricKey; title: string }) {
           </div>
         </Link>
       ))}
+    </div>
+  )
+}
+
+// My disputes — rendered inline (like the messages list), not a pop-up.
+const DISPUTE_STATUS: Record<string, { label: string; color: string }> = {
+  open: { label: 'Open', color: '#ef4444' },
+  under_review: { label: 'Under review', color: '#d97706' },
+  awaiting_response: { label: 'Awaiting response', color: '#d97706' },
+  resolved: { label: 'Resolved', color: '#16a34a' },
+  rejected: { label: 'Rejected', color: '#888' },
+  closed: { label: 'Closed', color: '#888' },
+}
+function DisputesList() {
+  const [rows, setRows] = useState<any[] | null>(null)
+  useEffect(() => {
+    let live = true
+    ;(trpcAuthed() as any).disputes.mine.query().then((d: any) => { if (live) setRows(d as any[]) }).catch(() => { if (live) setRows([]) })
+    return () => { live = false }
+  }, [])
+  return (
+    <div style={card}>
+      <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between' }}><span>{t('My Disputes')}</span>{rows && <span style={{ color: 'var(--orange)' }}>{rows.length}</span>}</div>
+      {rows === null ? <Muted>{t('Loading…')}</Muted> : rows.length === 0 ? <Muted>{t('No disputes — nice and smooth.')}</Muted> : rows.map((d: any) => {
+        const l = d.transaction?.listing
+        const image = Array.isArray(l?.images) ? l.images[0] : null
+        const st = DISPUTE_STATUS[d.status] ?? { label: String(d.status ?? '').replace(/_/g, ' '), color: '#888' }
+        return (
+          <div key={d.id} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '11px 0', borderBottom: '1px solid #f5f5f5' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{image ? <img src={image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛡️'}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l?.title ?? t('Item')}</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.reason || t('Dispute raised')}</div>
+            </div>
+            <span style={{ flexShrink: 0, fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: st.color, background: `${st.color}18`, borderRadius: 50, padding: '3px 10px' }}>{st.label}</span>
+          </div>
+        )
+      })}
     </div>
   )
 }
