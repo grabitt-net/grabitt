@@ -1,5 +1,7 @@
 'use client'
+import { usePathname } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
+import { bannerPageKey } from '@/lib/bannerPages'
 import Logo from './Logo'
 import Icon from './Icon'
 import BannerSlot from './BannerSlot'
@@ -8,6 +10,7 @@ import BannerSlot from './BannerSlot'
 // info panels so content stays consistent with the rest of the app.
 export default function Footer() {
   const { openPanel } = usePanel()
+  const pathname = usePathname()
   const fp = (key: string) => () => openPanel('footer', { key })
   const go = (href: string) => () => { window.location.href = href }
 
@@ -27,7 +30,7 @@ export default function Footer() {
     <>
     {/* Sponsor banner — every page, above the footer. Renders nothing when no
         sponsor banner is active. */}
-    <BannerSlot position="sponsor_footer" aspect="4.5 / 1" />
+    <BannerSlot position="sponsor_footer" page={bannerPageKey(pathname)} aspect="4.5 / 1" />
     <footer style={{ background: 'var(--sand, #F5ECD7)', borderTop: '1px solid var(--sand2, #e8dcc0)', marginTop: 28, padding: '32px 20px 24px' }}>
       {/* All 5 heading columns stay on one row (never 4 + 1). */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 16, maxWidth: 1000, margin: '0 auto' }}>

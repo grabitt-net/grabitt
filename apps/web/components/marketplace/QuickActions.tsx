@@ -1,7 +1,8 @@
 'use client'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import { t } from '@/lib/i18n'
+import { bannerPageKey } from '@/lib/bannerPages'
 import BannerSlot from './BannerSlot'
 import Icon, { type IconName } from './Icon'
 
@@ -11,6 +12,7 @@ import Icon, { type IconName } from './Icon'
 export default function QuickActions() {
   const { openPanel } = usePanel()
   const router = useRouter()
+  const page = bannerPageKey(usePathname())
 
   const actions: { label: string; icon: IconName; action: () => void }[] = [
     { label: 'Recruitment', icon: 'briefcase', action: () => router.push('/recruitment') },
@@ -57,7 +59,7 @@ export default function QuickActions() {
 
       {/* Sponsor banner — every page, below the Grabitt Now promo. Renders
           nothing when no sponsor banner is active. */}
-      <div style={{ margin: '0 -14px' }}><BannerSlot position="sponsor_top" aspect="4.5 / 1" /></div>
+      <div style={{ margin: '0 -14px' }}><BannerSlot position="sponsor_top" page={page} aspect="4.5 / 1" /></div>
     </section>
   )
 }

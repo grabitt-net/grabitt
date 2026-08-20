@@ -1504,6 +1504,9 @@ model Banner {
   isTest       Boolean      @default(false) // admin-only test/preview banner (pre-launch)
   position  BannerPosition
   pageTarget   String?                     // category/page slug; null = every page for the position
+  // Multi-page targeting for site-wide slots (sponsor_top / sponsor_footer):
+  // the set of page keys this banner appears on. Empty = every page.
+  pages        String[]     @default([])
   grantId      String?      @unique        // the SponsorshipGrant that paid for a self-serve banner
   bookingId    String?      @unique        // the BannerBooking that paid for this banner
   startsAt  DateTime?

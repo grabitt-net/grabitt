@@ -178,7 +178,11 @@ export const bannersRouter = router({
           AND: [
             // Approved real banners always show. Test banners show only in test mode.
             testMode ? { OR: [{ approved: true, isTest: false }, { isTest: true }] } : { approved: true, isTest: false },
-            input.page ? { OR: [{ pageTarget: input.page }, { pageTarget: null }] } : { pageTarget: null },
+            // Page targeting: a category slug (pageTarget), or multi-page site-wide
+            // targeting (pages[]). Empty pages[] = every page for the position.
+            input.page
+              ? { OR: [{ pageTarget: input.page }, { pageTarget: null, pages: { isEmpty: true } }, { pageTarget: null, pages: { has: input.page } }] }
+              : { pageTarget: null, pages: { isEmpty: true } },
             { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
             { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
           ],
@@ -196,6 +200,7 @@ export const bannersRouter = router({
       isTest: z.boolean().optional(),
       position: z.enum(POSITIONS),
       pageTarget: z.string().optional(),
+      pages: z.array(z.string()).optional(),
       startsAt: z.string().optional(),
       endsAt: z.string().optional(),
     }))
@@ -204,6 +209,7 @@ export const bannersRouter = router({
       const parsed = {
         ...data,
         pageTarget: data.pageTarget || null,
+        pages: data.pages ?? [],
         startsAt: data.startsAt ? new Date(data.startsAt) : null,
         endsAt: data.endsAt ? new Date(data.endsAt) : null,
       }

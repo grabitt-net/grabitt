@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
 import ImageUploadField from './ImageUploadField'
+import { BANNER_PAGE_OPTIONS } from '@/lib/bannerPages'
 
 // Every sellable/placeable banner position, with a friendly label. Order groups
 // them by area so the admin reads them like a map of the site.
@@ -25,11 +26,13 @@ const POSITIONS: [string, string][] = [
 ]
 const POS_LABEL = Object.fromEntries(POSITIONS)
 
-interface Banner { id: string; title: string; imageUrl: string; linkUrl: string | null; active: boolean; approved?: boolean; isTest?: boolean; position: string; pageTarget?: string | null; startsAt: string | null; endsAt: string | null; clickCount?: number; impressions?: number }
+interface Banner { id: string; title: string; imageUrl: string; linkUrl: string | null; active: boolean; approved?: boolean; isTest?: boolean; position: string; pageTarget?: string | null; pages?: string[]; startsAt: string | null; endsAt: string | null; clickCount?: number; impressions?: number }
 interface Slot { id: string; label: string; monthlyCents: number; cap: number; exclusive: boolean; perPage: boolean; scope: string; active: boolean }
 interface Booking { id: string; userId: string; position: string; pageTarget?: string | null; months: number; startsAt: string; endsAt: string; amountCents: number; createdByAdmin: boolean; user?: { displayName?: string; email?: string; businessName?: string } }
 
-const EMPTY = { title: '', imageUrl: '', linkUrl: '', position: 'home_top', pageTarget: '', active: true, isTest: false, startsAt: '', endsAt: '' }
+const EMPTY = { title: '', imageUrl: '', linkUrl: '', position: 'home_top', pageTarget: '', pages: [] as string[], active: true, isTest: false, startsAt: '', endsAt: '' }
+// Site-wide sponsor slots can be limited to specific pages via checkboxes.
+const PAGE_TARGETABLE = new Set(['sponsor_top', 'sponsor_footer'])
 const eur = (c: number) => `€${(c / 100).toFixed(0)}`
 
 export default function BannersView({ initialPosition }: { initialPosition?: string | null }) {
@@ -62,13 +65,14 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
       await api.upsertBanner({
         title: form.title.trim(), imageUrl: form.imageUrl.trim(), linkUrl: form.linkUrl.trim() || undefined,
         position: form.position, pageTarget: form.pageTarget.trim() || undefined, active: form.active, isTest: form.isTest,
+        pages: PAGE_TARGETABLE.has(form.position) ? form.pages : [],
         startsAt: form.startsAt || undefined, endsAt: form.endsAt || undefined,
       })
       setForm({ ...EMPTY }); setShowAdd(false); await load()
     } finally { setSaving(false) }
   }
   async function toggle(b: Banner) {
-    await api.upsertBanner({ id: b.id, title: b.title, imageUrl: b.imageUrl, linkUrl: b.linkUrl || undefined, position: b.position, pageTarget: b.pageTarget || undefined, active: !b.active, isTest: b.isTest })
+    await api.upsertBanner({ id: b.id, title: b.title, imageUrl: b.imageUrl, linkUrl: b.linkUrl || undefined, position: b.position, pageTarget: b.pageTarget || undefined, pages: b.pages ?? [], active: !b.active, isTest: b.isTest })
     load()
   }
   async function remove(id: string) { await api.removeBanner(id); load() }
@@ -117,6 +121,20 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
               </select>
             </Field>
             <Field label="Page target (optional — for category slots, e.g. motors)"><input value={form.pageTarget} onChange={e => setForm(f => ({ ...f, pageTarget: e.target.value }))} placeholder="blank = site-wide" style={inp} /></Field>
+            {PAGE_TARGETABLE.has(form.position) && (
+              <div style={{ gridColumn: '1/-1' }}>
+                <Field label="Show on pages (none ticked = every page)">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px' }}>
+                    {BANNER_PAGE_OPTIONS.map(([key, label]) => (
+                      <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#444', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={form.pages.includes(key)} onChange={e => setForm(f => ({ ...f, pages: e.target.checked ? [...f.pages, key] : f.pages.filter(p => p !== key) }))} />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </Field>
+              </div>
+            )}
             <div />
             <div style={{ gridColumn: '1/-1' }}><ImageUploadField label="Banner image" kind="banner" value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} /></div>
             <div style={{ gridColumn: '1/-1' }}><Field label="Link URL (optional)"><input value={form.linkUrl} onChange={e => setForm(f => ({ ...f, linkUrl: e.target.value }))} placeholder="https://… or /listings" style={inp} /></Field></div>
@@ -148,7 +166,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
                 {b.approved === false && !b.isTest && <span style={{ position: 'absolute', top: 8, left: 8, background: '#f59e0b', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 50, textTransform: 'uppercase', letterSpacing: 0.4 }}>Pending approval</span>}
               </div>
               <div style={{ padding: 14 }}>
-                <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 10, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{POS_LABEL[b.position] ?? b.position}{b.pageTarget ? ` · ${b.pageTarget}` : ''}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 10, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{POS_LABEL[b.position] ?? b.position}{b.pageTarget ? ` · ${b.pageTarget}` : ''}{b.pages?.length ? ` · ${b.pages.join(', ')}` : ''}</div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 13, marginTop: 2, marginBottom: 6 }}>{b.title}</div>
                 <div style={{ display: 'flex', gap: 12, marginBottom: 8, fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>
                   <span title="Clicks">👆 <b>{b.clickCount ?? 0}</b></span>
