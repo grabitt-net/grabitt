@@ -70,11 +70,13 @@ export const PRICES = {
 // standalone directory subscription), that is tracked separately — the money
 // isn't collected just because the constant exists.
 
-// Jobs beyond the tier's free allowance: €39/job, 14 days live, with bundles.
+// Jobs beyond the tier's free allowance: €29/job initially, 14 days live.
+// Bundle prices are provisional (not yet wired to checkout) — confirm with Steve
+// before surfacing them; kept below €29/job so "buy in bulk and save" holds.
 export const JOBS_PRICING = {
-  perJobCents: 3900,
+  perJobCents: 2900,
   daysLive: 14,
-  bundles: { 5: 17500, 10: 35000 } as Record<number, number>, // €175 / €350
+  bundles: { 5: 13000, 10: 24500 } as Record<number, number>, // provisional: €130 / €245
 } as const
 
 // Property. Private: 1 free/month, €9 featured boost, €39 per extra listing.
