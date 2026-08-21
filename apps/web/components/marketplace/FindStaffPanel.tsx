@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { toast, confirmDialog } from '@/lib/ui'
 import type { PanelId } from '@/context/PanelContext'
 import { trpcAuthed } from '@/lib/authToken'
+import { JOB_SECTORS as CANON_SECTORS } from '@/lib/jobCategories'
 
 type Candidate = {
   seekerId: string; headline: string | null; sector: string | null; sectors: string[]; roles: string[]
@@ -129,20 +130,13 @@ function expLabel(m: number) {
 // spec, we show how many anonymous candidates match, and they buy credits to
 // unlock full profiles. Faithful to index.html openGetStaffPanel / runJobMatch.
 
-export const JOB_SECTORS: Record<string, string[]> = {
-  Hospitality: ['Bar work', 'Food prep', 'Waiting staff', 'Restaurant management', 'Reception', 'Cleaning', 'Events staff', 'Entertainment', 'Kitchen porter', 'Head chef'],
-  Office: ['Reception', 'Administration', 'PA / Executive assistant', 'Supervisor', 'Telephone marketing', 'Research', 'Accounting', 'Bookkeeping', 'Data entry', 'Office management'],
-  Legal: ['Lawyer', 'Legal secretary', 'Drafting', 'Administration', 'Court attendance', 'Enforcement', 'Claims handling', 'Witness statements', 'Paralegal', 'Compliance'],
-  Retail: ['Shop assistant', 'Supermarket', 'Online retail', 'Cash handling', 'Staff management', 'Cleaning', 'Stock management', 'Visual merchandising', 'Customer service', 'Loss prevention'],
-  Construction: ['Labourer', 'Electrician', 'Plumber', 'Carpenter', 'Painter & decorator', 'Tiler', 'Bricklayer', 'Site management', 'Health & safety', 'Project management'],
-  Healthcare: ['Nurse', 'Carer', 'Physiotherapist', 'Dentist', 'Doctor', 'Optician', 'Pharmacist', 'Massage therapist', 'Personal trainer', 'Yoga instructor'],
-  Education: ['Teacher', 'Teaching assistant', 'Tutor', 'Nursery worker', 'Au pair', 'School admin', 'Sports coach', 'Music teacher', 'Language teacher', 'SEN support'],
-  Technology: ['Developer', 'Designer', 'IT support', 'Network engineer', 'Cybersecurity', 'Data analyst', 'Project manager', 'Social media', 'SEO', 'E-commerce'],
-  Marine: ['Yacht captain', 'Crew', 'Dive instructor', 'Surf instructor', 'Kayak guide', 'Boat maintenance', 'Fishing guide', 'Water taxi', 'Marina management', 'Sailing instructor'],
-  Property: ['Villa cleaner', 'Housekeeper', 'Gardener', 'Pool maintenance', 'Property manager', 'Concierge', 'Driver / Chauffeur', 'Private chef', 'Security', 'Dog walker'],
-  'Sales & Marketing': ['Sales executive', 'Sales manager', 'Business development', 'Marketing manager', 'Digital marketing', 'Social media manager', 'Brand coordinator', 'Account manager', 'Telesales', 'Copywriter'],
-}
-export const JOB_LANGUAGES = ['English', 'Spanish', 'German', 'Swedish', 'Danish', 'Norwegian', 'Dutch', 'French', 'Finnish', 'Italian', 'Polish']
+// Employer search taxonomy is the single canonical recruitment taxonomy, so the
+// sector/role an employer searches for are the exact strings a jobseeker stores
+// when they tick roles — otherwise nothing would ever match.
+export const JOB_SECTORS: Record<string, string[]> = Object.fromEntries(
+  CANON_SECTORS.map(s => [s.name, s.jobs])
+)
+export const JOB_LANGUAGES = ['English', 'Spanish', 'German', 'Other']
 export const JOB_ATTRIBUTES: Record<string, string[]> = {
   hours: ['Full time', 'Part time', 'Seasonal', 'Flexible / Freelance'],
   availability: ['Immediate', '1 month', '3 months', '6 months+'],

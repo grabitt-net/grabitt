@@ -85,12 +85,12 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
     // an employer has already seen a thin profile.
     if (!hasWork) {
       toast('Please add at least one job to your work experience before listing yourself — employers see this as your CV.')
-      window.open('/cv', '_blank')
+      window.open('/account?section=employment', '_blank')
       return
     }
     if (!hasEducation) {
       toast('Please add your education before listing yourself for work.')
-      window.open('/cv', '_blank')
+      window.open('/account?section=employment', '_blank')
       return
     }
     setSaving(true)
@@ -289,7 +289,7 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
                     Employers see your work history and education as your CV, so both are needed before you can be listed.
                     Still to add: {[!hasWork && 'work experience', !hasEducation && 'education'].filter(Boolean).join(' and ')}.
                   </div>
-                  <a href="/cv" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, textDecoration: 'none' }}>📄 Open My CV</a>
+                  <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, textDecoration: 'none' }}>📄 My work profile</a>
                 </div>
               )}
 

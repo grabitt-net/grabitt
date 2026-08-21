@@ -221,7 +221,7 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
                       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#555' }}>{strengths.join(' · ')}</div>
                     </div>
                   )}
-                  <a href="/cv" target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 7, color: ORANGE, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800 }}>Edit in My CV →</a>
+                  <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 7, color: ORANGE, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800 }}>Edit work profile →</a>
                 </div>
               )}
 
@@ -264,15 +264,15 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
                 {hasCv === false ? (
                   <div style={{ background: '#FFF7ED', border: '1px solid #FFD4A0', borderRadius: 10, padding: '11px 12px' }}>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#9a5b1a', lineHeight: 1.5, marginBottom: 8 }}>
-                      You haven&apos;t built your CV yet. Employers receive a formatted Grabitt CV when you apply — add your experience so yours stands out.
+                      You haven&apos;t set up your work profile yet. Employers receive a formatted Grabitt CV when you apply — tick the roles you can do, your experience and languages so yours stands out.
                     </div>
-                    <a href="/cv" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, textDecoration: 'none' }}>📄 Build my CV</a>
+                    <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, textDecoration: 'none' }}>📄 Set up my work profile</a>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '9px 11px' }}>
                     <span style={{ fontSize: 15 }}>📄</span>
                     <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>Your CV will be sent (anonymous until they shortlist you)</span>
-                    <a href="/cv" target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a', textDecoration: 'none' }}>Edit</a>
+                    <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a', textDecoration: 'none' }}>Edit</a>
                   </div>
                 )}
               </div>

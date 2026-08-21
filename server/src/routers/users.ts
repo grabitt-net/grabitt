@@ -422,6 +422,15 @@ export const usersRouter = router({
       // Kept loose (z.any) so the large AppRouter type stays within the
       // compiler's instantiation-depth limit.
       jobProfile: z.any().optional(),
+      // Flattened form of jobProfile the client derives from the ticked roles,
+      // used to keep the seeker profile (recruiter search + generated CV) in
+      // step with the tick-boxes. Jobseekers only; ignored for business accounts.
+      seekerDerived: z.object({
+        sectors: z.array(z.string().max(80)).max(20),
+        roles: z.array(z.string().max(140)).max(200),
+        experienceMonths: z.number().int().min(0).max(600),
+        languages: z.array(z.string().max(40)).max(10),
+      }).optional(),
       avatar: z.string().url().optional(),
       locale: z.enum(['en', 'es', 'de', 'da', 'sv', 'nl', 'fr', 'pt']).optional(),
       // Attributes & preferences — feed personalisation, job matching and
@@ -434,12 +443,13 @@ export const usersRouter = router({
       collectionAddress: z.string().max(400).optional(),
       marketingConsent: z.boolean().optional(),
     }))
-    .mutation(({ ctx, input }) => {
-      const { marketingConsent, jobProfile, ...rest } = input
-      return ctx.prisma.user.update({
+    .mutation(async ({ ctx, input }) => {
+      const { marketingConsent, jobProfile, seekerDerived, openToWork, ...rest } = input
+      const user = await ctx.prisma.user.update({
         where: { id: ctx.user.id },
         data: {
           ...rest,
+          ...(openToWork !== undefined ? { openToWork } : {}),
           // Recruitment taxonomy is stored as a JSON string.
           ...(jobProfile != null ? { jobProfile: JSON.stringify(jobProfile) } : {}),
           // Stamp when consent was given — GDPR requires us to evidence it.
@@ -448,6 +458,29 @@ export const usersRouter = router({
             : {}),
         },
       })
+
+      // Bridge the tick-box recruitment data into the seeker profile that the
+      // employer Find Staff search and the generated CV read from. Jobseekers
+      // only — a business ticking roles in "employer" mode must not become a
+      // searchable candidate. `active` tracks the "looking for work" toggle.
+      if ((seekerDerived || openToWork !== undefined) && !user.isBusiness) {
+        const data: Record<string, unknown> = {}
+        if (seekerDerived) {
+          data.sectors = seekerDerived.sectors
+          data.sector = seekerDerived.sectors[0] ?? null
+          data.roles = seekerDerived.roles
+          data.experienceMonths = seekerDerived.experienceMonths
+          data.languages = seekerDerived.languages
+        }
+        if (openToWork !== undefined) data.active = openToWork
+        await ctx.prisma.seekerProfile.upsert({
+          where: { userId: ctx.user.id },
+          create: { userId: ctx.user.id, ...data },
+          update: data,
+        })
+      }
+
+      return user
     }),
 
   // Property-agent profile. When enabled, the agent's WhatsApp/email/agency are

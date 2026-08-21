@@ -18,8 +18,19 @@ export type CvData = {
   languages?: string[]
   availability?: string | null
   rightToWork?: string | null
+  roles?: string[]
+  experienceMonths?: number
   workExperience?: Array<{ title?: string; employer?: string; location?: string; start?: string; end?: string; current?: boolean; bullets?: string[] }>
   education?: Array<{ qualification?: string; institution?: string; start?: string; end?: string; status?: string }>
+}
+
+// Human label for the candidate's headline experience (bucketed lower bounds).
+function experienceLabel(months?: number): string | null {
+  if (months == null || months <= 0) return null
+  if (months < 6) return '3–6 months experience'
+  if (months < 12) return '6–12 months experience'
+  if (months < 24) return '1–2 years experience'
+  return '2+ years experience'
 }
 
 const NAVY = '#1e3a5f'
@@ -59,6 +70,8 @@ const dateRange = (a?: string, b?: string, current?: boolean) => {
 export default function CvDocument({ data, revealed, reference }: { data: CvData; revealed: boolean; reference?: string }) {
   const work = (data.workExperience || []).filter(w => w.title || w.employer)
   const edu = (data.education || []).filter(e => e.qualification || e.institution)
+  const roles = data.roles || []
+  const expLabel = experienceLabel(data.experienceMonths)
   const languages = data.languages || []
   const strengths = data.keyStrengths || []
   const certs = data.certifications || []
@@ -95,12 +108,19 @@ export default function CvDocument({ data, revealed, reference }: { data: CvData
               on their applications board, so the two can be matched up without
               exposing a name. */}
           <Text style={s.name}>{revealed ? (data.name || 'Candidate') : (reference || 'Candidate')}</Text>
-          {data.headline ? <Text style={s.headline}>{data.headline}</Text> : null}
+          {(data.headline || expLabel) ? <Text style={s.headline}>{data.headline || expLabel}</Text> : null}
           {!revealed && <Text style={[s.headline, { color: '#999', fontSize: 8.5 }]}>Identity shared once shortlisted</Text>}
 
           {data.summary ? (
             <><Text style={s.mainHead}>Professional Summary</Text><Text style={s.summary}>{data.summary}</Text></>
           ) : null}
+
+          {roles.length > 0 && (
+            <>
+              <Text style={s.mainHead}>Roles{expLabel ? `  ·  ${expLabel}` : ''}</Text>
+              <List items={roles} />
+            </>
+          )}
 
           {work.length > 0 && (
             <>

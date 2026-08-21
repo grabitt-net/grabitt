@@ -26,6 +26,28 @@ function monthsToBucket(m: number): string {
   if (m < 24) return '1to2y'
   return 'gt2y'
 }
+// Lower-bound months each bucket represents — used so the seeker profile's
+// single "experienceMonths" (max across ticked roles) drives recruiter filters.
+const BUCKET_MONTHS: Record<string, number> = { lt3m: 0, lt6m: 3, lt1y: 6, '1to2y': 12, gt2y: 24 }
+
+// Flatten the ticked roles/experience/languages into the seeker-profile shape
+// the recruiter search and generated CV consume.
+function deriveSeeker(languages: string[], exp: Record<string, string>) {
+  const sectors = new Set<string>()
+  const roles: string[] = []
+  let experienceMonths = 0
+  JOB_SECTORS.forEach((sec, si) => {
+    sec.jobs.forEach((job, ji) => {
+      const bucket = exp[jobKey(si, ji)]
+      if (!bucket) return
+      sectors.add(sec.name)
+      roles.push(job)
+      experienceMonths = Math.max(experienceMonths, BUCKET_MONTHS[bucket] ?? 0)
+    })
+  })
+  const langLabels = languages.map(k => (JOB_LANGUAGES.find(([lk]) => lk === k)?.[1]) ?? k)
+  return { sectors: [...sectors], roles, experienceMonths, languages: langLabels }
+}
 
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }
 const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }
@@ -62,7 +84,14 @@ export default function JobCategories({ me, onReload, mode }: { me: any; onReloa
   const toggleLang = (l: string) => { setState('idle'); setLanguages(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]) }
   const save = async () => {
     setState('saving')
-    try { await trpcAuthed().users.updateProfile.mutate({ jobProfile: { languages, experience: exp } }); onReload(); setState('saved'); setTimeout(() => setState('idle'), 2500) }
+    try {
+      // Jobseekers: also send a flattened form so the seeker profile that
+      // recruiters search and the generated CV render stays in step. (Employers
+      // pick roles to hire for — they must not be indexed as candidates.)
+      const seekerDerived = mode === 'seeker' ? deriveSeeker(languages, exp) : undefined
+      await trpcAuthed().users.updateProfile.mutate({ jobProfile: { languages, experience: exp }, ...(seekerDerived ? { seekerDerived } : {}) })
+      onReload(); setState('saved'); setTimeout(() => setState('idle'), 2500)
+    }
     catch { setState('idle'); toast(t('Could not save. Please try again.')) }
   }
   const filled = (si: number) => JOB_SECTORS[si].jobs.reduce((a, _, ji) => a + (exp[jobKey(si, ji)] ? 1 : 0), 0)
