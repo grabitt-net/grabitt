@@ -10,26 +10,51 @@ import { JOB_SECTORS, JOB_LANGUAGES, jobKey } from '@/lib/jobCategories'
 // months of experience they require. A languages filter applies across all
 // sectors. Saved to the account's jobProfile.
 
+// Experience buckets — click pills instead of a free-typed month count.
+const EXP_BUCKETS: { key: string; label: string }[] = [
+  { key: 'lt3m', label: '<3m' },
+  { key: 'lt6m', label: '<6m' },
+  { key: 'lt1y', label: '<1y' },
+  { key: '1to2y', label: '1-2y' },
+  { key: 'gt2y', label: '2+y' },
+]
+// Map any legacy stored month count onto the nearest bucket.
+function monthsToBucket(m: number): string {
+  if (m < 3) return 'lt3m'
+  if (m < 6) return 'lt6m'
+  if (m < 12) return 'lt1y'
+  if (m < 24) return '1to2y'
+  return 'gt2y'
+}
+
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }
 const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }
 
 export default function JobCategories({ me, onReload, mode }: { me: any; onReload: () => void; mode: 'seeker' | 'employer' }) {
-  // jobProfile is stored as a JSON string.
-  const jp: { languages?: string[]; experience?: Record<string, number> } = (() => {
+  // jobProfile is stored as a JSON string. Experience is a bucket per job.
+  const jp: { languages?: string[]; experience?: Record<string, unknown> } = (() => {
     try { return typeof me?.jobProfile === 'string' ? JSON.parse(me.jobProfile) : (me?.jobProfile ?? {}) } catch { return {} }
   })()
   const [languages, setLanguages] = useState<string[]>(Array.isArray(jp.languages) ? jp.languages : [])
-  const [exp, setExp] = useState<Record<string, number>>(jp.experience && typeof jp.experience === 'object' ? { ...jp.experience } : {})
+  const [exp, setExp] = useState<Record<string, string>>(() => {
+    const src = jp.experience && typeof jp.experience === 'object' ? jp.experience as Record<string, unknown> : {}
+    const out: Record<string, string> = {}
+    for (const [k, v] of Object.entries(src)) {
+      // New format = a bucket key; legacy format = a number of months → map to a bucket.
+      if (typeof v === 'string' && EXP_BUCKETS.some(b => b.key === v)) out[k] = v
+      else if (typeof v === 'number' && v > 0) out[k] = monthsToBucket(v)
+    }
+    return out
+  })
   const [open, setOpen] = useState<number | null>(null)
   const [state, setState] = useState<'idle' | 'saving' | 'saved'>('idle')
 
-  const setMonths = (key: string, v: string) => {
+  const setBucket = (key: string, bucket: string) => {
     setState('idle')
     setExp(prev => {
       const n = { ...prev }
-      const num = parseInt(v, 10)
-      if (!v || isNaN(num) || num <= 0) delete n[key]
-      else n[key] = Math.min(num, 999)
+      if (n[key] === bucket) delete n[key] // click the active pill again to clear
+      else n[key] = bucket
       return n
     })
   }
@@ -46,8 +71,8 @@ export default function JobCategories({ me, onReload, mode }: { me: any; onReloa
       <div style={cardHead}>{t('Recruitment — Job Categories')}</div>
       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#666', lineHeight: 1.5, marginBottom: 14 }}>
         {mode === 'employer'
-          ? t('Tag the roles you hire for and the months of experience you require, plus the languages needed.')
-          : t('Pick the roles you can do and how many months in total you have ever done each, and add the languages you speak.')}
+          ? t('Tag the roles you hire for and the experience you require, plus the languages needed.')
+          : t('Pick the roles you can do and how long you have done each, and add the languages you speak.')}
       </div>
 
       {/* Languages filter — applies across all sectors */}
@@ -83,16 +108,23 @@ export default function JobCategories({ me, onReload, mode }: { me: any; onReloa
                   {sec.jobs.map((job, ji) => {
                     const key = jobKey(si, ji)
                     return (
-                      <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #efe7db', borderRadius: 999, padding: '6px 8px 6px 14px', background: '#fff' }}>
-                        <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job}</span>
-                        <input type="number" min={0} max={999} value={exp[key] ?? ''} onChange={e => setMonths(key, e.target.value)} placeholder="0"
-                          aria-label={`${job} — ${mode === 'employer' ? 'months required' : 'months done'}`}
-                          style={{ width: 56, textAlign: 'center', border: '1.5px solid #e5dccd', borderRadius: 999, padding: '5px 6px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', outline: 'none' }} />
-                        <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, color: '#9a8f7f', paddingRight: 4 }}>{t('mo')}</span>
+                      <div key={key} style={{ border: '1px solid #efe7db', borderRadius: 14, padding: '8px 12px', background: '#fff' }}>
+                        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 6 }}>{job}</div>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {EXP_BUCKETS.map(b => {
+                            const on = exp[key] === b.key
+                            return (
+                              <button key={b.key} onClick={() => setBucket(key, b.key)}
+                                aria-pressed={on} aria-label={`${job} — ${b.label}`}
+                                style={{ border: `1.5px solid ${on ? 'var(--orange)' : '#e5dccd'}`, background: on ? '#FFF3EE' : '#fff', color: on ? 'var(--orange)' : '#7a6a55',
+                                  borderRadius: 999, padding: '5px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{b.label}</button>
+                            )
+                          })}
+                        </div>
                       </div>
                     )
                   })}
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#aaa', paddingTop: 2 }}>{mode === 'employer' ? t('Months of experience required') : t('Total months you have done each role')}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#aaa', paddingTop: 2 }}>{mode === 'employer' ? t('Experience required for each role') : t('How long you have done each role')}</div>
                 </div>
               )}
             </div>
