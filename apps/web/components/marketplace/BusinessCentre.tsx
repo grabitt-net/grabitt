@@ -8,6 +8,9 @@ import { BUSINESS_TIERS, BUSINESS_TIER_ORDER, BUSINESS_ADDONS } from '@grabitt/d
 import { t } from '@/lib/i18n'
 import Icon from './Icon'
 
+// Email/WhatsApp blasts are hidden from customers pending legal review.
+const BLASTS_ENABLED = process.env.NEXT_PUBLIC_BLASTS_ENABLED === '1'
+
 type Postings = {
   jobs: { id: string; title: string; location: string; status: string; applications: number }[]
   properties: { id: string; title: string; location: string; status: string; price: number; image: string | null }[]
@@ -321,8 +324,8 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
       </div>
 
       {/* ── Direct marketing blasts (double opt-in) ──
-           Hidden from customers pending legal review — do not re-enable without sign-off. */}
-      {false && (
+           Hidden from customers pending legal review — set NEXT_PUBLIC_BLASTS_ENABLED=1 to re-enable. */}
+      {BLASTS_ENABLED && (
       <div style={card}>
         <div style={cardHead}>📣 {t('Direct marketing')}</div>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginBottom: 10, lineHeight: 1.5 }}>
