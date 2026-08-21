@@ -29,7 +29,7 @@ import { t } from '@/lib/i18n'
 // snapshot · dashboard pills) over an 8-section left menu that swaps the right
 // panel. It sits BELOW the existing header + Grabitt NOW promo.
 
-type SectionId = 'business' | 'messages' | 'employment' | 'aboutme' | 'listings' | 'disputes' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'gdpr' | 'hub'
+type SectionId = 'business' | 'messages' | 'employment' | 'aboutme' | 'listings' | 'disputes' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'gdpr' | 'suggest' | 'hub'
 type Seg = 'active' | 'sold' | 'draft' | 'buying'
 
 const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
@@ -46,6 +46,7 @@ const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
   { id: 'addbiz', label: 'Add Business or Charity', icon: 'building' },
   { id: 'activity', label: 'Activity Centre', icon: 'package' },
   { id: 'gdpr', label: 'Privacy & GDPR', icon: 'lock' },
+  { id: 'suggest', label: 'Suggest ideas', icon: 'sparkle' },
 ]
 
 // Activity Centre feed (rendered inline in the right panel — no pop-up).
@@ -201,6 +202,16 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const memberRef = me?.id ? `M${String(me.id).replace(/-/g, '').slice(0, 6).toUpperCase()}` : ''
   const accountType = me?.memberStatus === 'blue_light' ? 'Bluelight' : me?.memberStatus === 'student' ? 'Student' : me?.memberStatus === 'charity' ? 'Charity' : 'Regular'
 
+  // Stable date-window bounds for the two headline pills in each metric column:
+  // "This month" (from the 1st) and "Year so far" (from January 1st).
+  const { monthStart, yearStart } = useMemo(() => {
+    const now = new Date()
+    return {
+      monthStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(),
+      yearStart: new Date(now.getFullYear(), 0, 1).toISOString(),
+    }
+  }, [])
+
   return (
     <>
       {/* ── MY HUB ──────────────────────────────────────────────────────────── */}
@@ -253,31 +264,34 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             )}
           </div>
 
-          {/* Sales */}
+          {/* Sales — headline split into This month / Year so far */}
           <div className="hub-mcol">
             <ColHeader icon="chart" title={t('Sales')} {...SALES_C} />
             <div style={{ display: 'grid', gap: 12 }}>
-              <MetricCard metricKey="sales" label={t('Sales')} icon="trendingUp" {...SALES_C} onClick={() => openHub('sales', t('Sales'))} />
+              <MetricCard metricKey="sales" label={t('This month')} icon="trendingUp" {...SALES_C} from={monthStart} onClick={() => openHub('sales', t('Sales'))} />
+              <MetricCard metricKey="sales" label={t('Year so far')} icon="trendingUp" {...SALES_C} from={yearStart} onClick={() => openHub('sales', t('Sales'))} />
               <MetricCard metricKey="sold" label={t('Sold')} icon="cart" {...SALES_C} onClick={() => openHub('sold', t('Sold'))} />
               <MetricCard metricKey="beingWatched" label={t('Being watched')} icon="heart" {...SALES_C} onClick={() => openHub('beingWatched', t('Being watched'))} />
             </div>
           </div>
 
-          {/* Orders */}
+          {/* Orders — headline split into This month / Year so far */}
           <div className="hub-mcol">
             <ColHeader icon="clipboard" title={t('Orders')} {...ORDERS_C} />
             <div style={{ display: 'grid', gap: 12 }}>
-              <MetricCard metricKey="orders" label={t('Orders')} icon="package" {...ORDERS_C} onClick={() => openHub('orders', t('Orders'))} />
+              <MetricCard metricKey="orders" label={t('This month')} icon="package" {...ORDERS_C} from={monthStart} onClick={() => openHub('orders', t('Orders'))} />
+              <MetricCard metricKey="orders" label={t('Year so far')} icon="package" {...ORDERS_C} from={yearStart} onClick={() => openHub('orders', t('Orders'))} />
               <MetricCard metricKey="toShip" label={t('To ship')} icon="truck" {...ORDERS_C} onClick={() => openHub('toShip', t('To ship'))} />
               <MetricCard metricKey="incomeDue" label={t('Income due')} icon="coins" {...ORDERS_C} onClick={() => openHub('incomeDue', t('Income due'))} />
             </div>
           </div>
 
-          {/* Purchasing */}
+          {/* Purchasing — headline split into This month / Year so far */}
           <div className="hub-mcol">
             <ColHeader icon="award" title={t('Purchasing')} {...PURCH_C} />
             <div style={{ display: 'grid', gap: 12 }}>
-              <MetricCard metricKey="purchased" label={t('Purchased')} icon="tag" {...PURCH_C} onClick={() => openHub('purchased', t('Purchased'))} />
+              <MetricCard metricKey="purchased" label={t('This month')} icon="tag" {...PURCH_C} from={monthStart} onClick={() => openHub('purchased', t('Purchased'))} />
+              <MetricCard metricKey="purchased" label={t('Year so far')} icon="tag" {...PURCH_C} from={yearStart} onClick={() => openHub('purchased', t('Purchased'))} />
               <MetricCard metricKey="watching" label={t('Watching')} icon="eye" {...PURCH_C} onClick={() => openHub('watching', t('Watching'))} />
               <MetricCard metricKey="toPay" label={t('To pay')} icon="wallet" {...PURCH_C} onClick={() => openHub('toPay', t('To pay'))} />
             </div>
@@ -412,6 +426,8 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           </>)}
 
           {section === 'disputes' && <DisputesList />}
+
+          {section === 'suggest' && <SuggestIdeas me={me} />}
 
           {section === 'admin' && (
             <AdminCentre me={me} onReload={onReload} payout={payout} setupPayouts={setupPayouts} openPanel={openPanel} goInterests={() => setSection('employment')} />
@@ -572,13 +588,13 @@ type MetricKey = 'sales' | 'sold' | 'beingWatched' | 'orders' | 'toShip' | 'inco
 
 // One white metric card: a tinted circular icon, the label, and the value in the
 // column's theme colour.
-function MetricCard({ metricKey, label, icon, color, tint, onClick }: { metricKey: MetricKey; label: string; icon: IconName; color: string; tint: string; onClick: () => void }) {
+function MetricCard({ metricKey, label, icon, color, tint, onClick, from }: { metricKey: MetricKey; label: string; icon: IconName; color: string; tint: string; onClick: () => void; from?: string }) {
   const [data, setData] = useState<{ value: number; currency: boolean } | null>(null)
   useEffect(() => {
     let live = true
-    ;(trpcAuthed() as any).users.hubMetric.query({ key: metricKey }).then((d: any) => { if (live) setData(d) }).catch(() => {})
+    ;(trpcAuthed() as any).users.hubMetric.query({ key: metricKey, ...(from ? { from } : {}) }).then((d: any) => { if (live) setData(d) }).catch(() => {})
     return () => { live = false }
-  }, [metricKey])
+  }, [metricKey, from])
   const val = data ? (data.currency ? `€${Number(data.value).toLocaleString()}` : String(data.value)) : '—'
   return (
     <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '12px 14px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(30,43,85,0.05)', textAlign: 'left' }}>
@@ -652,6 +668,44 @@ function DisputesList() {
           </div>
         )
       })}
+    </div>
+  )
+}
+
+// Suggest ideas — a quick note that lands in the CRM as a feature suggestion.
+function SuggestIdeas({ me }: { me: any }) {
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(false)
+  const submit = async () => {
+    if (msg.trim().length < 3) return
+    setBusy(true)
+    try {
+      await (trpcAuthed() as any).crm.submit.mutate({ type: 'suggestion', message: msg.trim(), name: me?.displayName || undefined, email: me?.email || undefined })
+      setDone(true); setMsg('')
+    } catch { toast(t('Could not send. Please try again.')) }
+    finally { setBusy(false) }
+  }
+  return (
+    <div style={card}>
+      <div style={cardHead}>{t('Suggest ideas')}</div>
+      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', lineHeight: 1.6, marginBottom: 10 }}>
+        {t('Got an idea to make Grabitt better? Tell us — every suggestion goes straight to the team.')}
+      </div>
+      {done ? (
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '14px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: '#16a34a' }}>
+          ✓ {t('Thanks! Your idea has been sent to the team.')}
+          <button onClick={() => setDone(false)} style={{ display: 'block', marginTop: 8, background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0 }}>{t('Suggest another')}</button>
+        </div>
+      ) : (
+        <>
+          <textarea value={msg} onChange={e => setMsg(e.target.value)} rows={5} placeholder={t('Your idea…')}
+            style={{ ...field, resize: 'vertical', minHeight: 100, marginBottom: 10 }} />
+          <button onClick={submit} disabled={busy || msg.trim().length < 3} style={{ width: '100%', background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: busy ? 'wait' : 'pointer', opacity: msg.trim().length < 3 ? 0.6 : 1 }}>
+            {busy ? t('Sending…') : t('Send idea')}
+          </button>
+        </>
+      )}
     </div>
   )
 }
