@@ -598,6 +598,10 @@ model SeekerProfile {
   // Whether the seeker allows employers to spend credits to unlock their
   // contact details. Default true (existing behaviour); they can turn it off.
   contactUnlockable Boolean @default(true)
+  // The seeker's own uploaded CV (private `cvs` bucket path), sent alongside the
+  // generated Grabitt CV when they apply.
+  uploadedCvPath   String?
+  uploadedCvName   String?
   // ── CV content — the candidate's real CV, entered structured and rendered to
   // a formatted PDF on apply. Repeatable sections are JSON arrays:
   //   workExperience: [{ title, employer, location, start, end, current, bullets[] }]

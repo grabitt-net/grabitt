@@ -439,6 +439,8 @@ export const usersRouter = router({
         hasCar: z.boolean().optional(),
         canWorkGC: z.boolean().optional(),
         allowUnlock: z.boolean().optional(),
+        uploadedCvPath: z.string().max(300).nullish(),
+        uploadedCvName: z.string().max(200).nullish(),
       }).optional(),
       avatar: z.string().url().optional(),
       locale: z.enum(['en', 'es', 'de', 'da', 'sv', 'nl', 'fr', 'pt']).optional(),
@@ -488,6 +490,8 @@ export const usersRouter = router({
           if (seekerDerived.hasCar !== undefined) data.hasCar = seekerDerived.hasCar
           if (seekerDerived.canWorkGC !== undefined) data.rightToWork = seekerDerived.canWorkGC ? 'Permitted to work in Gran Canaria' : 'Work permission not confirmed'
           if (seekerDerived.allowUnlock !== undefined) data.contactUnlockable = seekerDerived.allowUnlock
+          if (seekerDerived.uploadedCvPath !== undefined) data.uploadedCvPath = seekerDerived.uploadedCvPath || null
+          if (seekerDerived.uploadedCvName !== undefined) data.uploadedCvName = seekerDerived.uploadedCvName || null
         }
         if (openToWork !== undefined) data.active = openToWork
         await ctx.prisma.seekerProfile.upsert({

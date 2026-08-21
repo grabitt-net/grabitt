@@ -68,11 +68,14 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
     // Everything already captured — summary, skills, strengths, languages and
     // any CV file previously uploaded — is pulled in rather than re-asked.
     trpcAuthed().seekers.myProfile.query().then((p: any) => {
-      setHasCv(!!(p && (p.summary || (p.workExperience?.length) || (p.skills?.length) || (p.education?.length))))
+      setHasCv(!!(p && (p.summary || (p.roles?.length) || (p.languages?.length) || (p.workExperience?.length) || (p.skills?.length) || (p.education?.length))))
       if (p?.summary) setSummary(p.summary)
       if (p?.keyStrengths?.length) setStrengths(p.keyStrengths)
       if (p?.skills?.length) setSkills(p.skills)
       if (p?.languageLevels?.length) setLangs(p.languageLevels)
+      // Auto-attach the CV they uploaded on their profile, so it goes with the
+      // generated Grabitt CV. They can still swap or remove it below.
+      if (p?.uploadedCvPath) { setCvChoice('own'); setCvPath(p.uploadedCvPath); setCvName(p.uploadedCvName || 'My CV') }
     }).catch(() => setHasCv(false))
   }, [listingId])
 

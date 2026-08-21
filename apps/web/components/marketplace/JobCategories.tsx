@@ -1,6 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { trpcAuthed } from '@/lib/authToken'
+import { uploadCv } from '@/lib/storage'
 import { toast } from '@/lib/ui'
 import { t } from '@/lib/i18n'
 import { JOB_SECTORS, JOB_LANGUAGES, jobKey } from '@/lib/jobCategories'
@@ -34,7 +35,7 @@ function monthsToBucket(m: number): string {
 const BUCKET_MONTHS: Record<string, number> = { lt3m: 0, lt6m: 3, lt1y: 6, '1to2y': 12, gt2y: 24 }
 const langLabel = (k: string) => (JOB_LANGUAGES.find(([lk]) => lk === k)?.[1]) ?? k
 
-type About = { bio: string; location: string; nationality: string; drives?: boolean; hasCar?: boolean; canWorkGC?: boolean; allowUnlock: boolean }
+type About = { bio: string; location: string; nationality: string; drives?: boolean; hasCar?: boolean; canWorkGC?: boolean; allowUnlock: boolean; uploadedCvPath?: string; uploadedCvName?: string }
 
 // Flatten everything into the seeker-profile shape the recruiter search and
 // generated CV consume.
@@ -57,6 +58,7 @@ function deriveSeeker(langs: Record<string, Level>, exp: Record<string, string>,
     sectors: [...sectors], roles, experienceMonths, languages, languageLevels,
     bio: about.bio.trim(), location: about.location.trim(), nationality: about.nationality.trim(),
     drives: !!about.drives, hasCar: !!(about.drives && about.hasCar), canWorkGC: !!about.canWorkGC, allowUnlock: about.allowUnlock,
+    uploadedCvPath: about.uploadedCvPath ?? null, uploadedCvName: about.uploadedCvName ?? null,
   }
 }
 
@@ -113,10 +115,24 @@ export default function JobCategories({ me, onReload, mode }: { me: any; onReloa
     hasCar: typeof a0.hasCar === 'boolean' ? a0.hasCar : undefined,
     canWorkGC: typeof a0.canWorkGC === 'boolean' ? a0.canWorkGC : undefined,
     allowUnlock: typeof a0.allowUnlock === 'boolean' ? a0.allowUnlock : true,
+    uploadedCvPath: typeof a0.uploadedCvPath === 'string' ? a0.uploadedCvPath : undefined,
+    uploadedCvName: typeof a0.uploadedCvName === 'string' ? a0.uploadedCvName : undefined,
   })
   const [open, setOpen] = useState<number | null>(null)
   const [state, setState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [showCv, setShowCv] = useState(false)
+  const [cvBusy, setCvBusy] = useState(false)
+  const cvInputRef = useRef<HTMLInputElement>(null)
+
+  const pickCv = async (file: File | null) => {
+    if (!file) return
+    setCvBusy(true)
+    try {
+      const { path } = await uploadCv(file, me?.id ?? 'me')
+      patchAbout({ uploadedCvPath: path, uploadedCvName: file.name })
+    } catch (e) { toast(e instanceof Error ? e.message : t('Could not upload your CV.')) }
+    finally { setCvBusy(false); if (cvInputRef.current) cvInputRef.current.value = '' }
+  }
 
   const touch = () => setState('idle')
   const setBucket = (key: string, bucket: string) => {
@@ -189,6 +205,27 @@ export default function JobCategories({ me, onReload, mode }: { me: any; onReloa
             <textarea value={about.bio} onChange={e => patchAbout({ bio: e.target.value })} rows={4}
               placeholder={t('A bio about you to tell the employer why they should interview you.')}
               style={{ ...field, resize: 'vertical', minHeight: 80 }} />
+          </div>
+
+          {/* Upload your own CV — sent alongside the generated Grabitt CV on apply */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={subLabel}>{t('Your CV (optional)')}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: DARK, lineHeight: 1.5, marginBottom: 6 }}>
+              {t('Upload your own CV and it will be sent alongside your Grabitt CV whenever you apply for a job.')}
+            </div>
+            <input ref={cvInputRef} type="file" accept=".pdf,.doc,.docx" onChange={e => pickCv(e.target.files?.[0] ?? null)} style={{ display: 'none' }} />
+            {about.uploadedCvPath ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '9px 11px' }}>
+                <span style={{ fontSize: 15 }}>📎</span>
+                <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{about.uploadedCvName || t('CV uploaded')}</span>
+                <button onClick={() => cvInputRef.current?.click()} disabled={cvBusy} style={{ background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{t('Replace')}</button>
+                <button onClick={() => patchAbout({ uploadedCvPath: undefined, uploadedCvName: undefined })} style={{ background: 'none', border: 'none', color: '#c00', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{t('Remove')}</button>
+              </div>
+            ) : (
+              <button onClick={() => cvInputRef.current?.click()} disabled={cvBusy} style={{ width: '100%', background: '#fff', color: 'var(--orange)', border: '1.5px dashed var(--orange)', borderRadius: 10, padding: '12px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, cursor: cvBusy ? 'wait' : 'pointer' }}>
+                {cvBusy ? t('Uploading…') : `📎 ${t('Choose a file (PDF or Word)')}`}
+              </button>
+            )}
           </div>
 
           <div style={{ marginBottom: 12 }}>
