@@ -97,7 +97,8 @@ function EmployersInner() {
       }
     })()
     createLooseTrpcClient().sponsorship.catalog.query()
-      .then((d: any) => { if (live) { setCatalog(d.items as SponsorItem[]); if (Array.isArray(d.durations)) setDurations(d.durations); if (Array.isArray(d.pages)) setPages(d.pages) } })
+      // Email/WhatsApp blasts are hidden from customers pending legal review — filter them out of the public catalog.
+      .then((d: any) => { if (live) { setCatalog((d.items as SponsorItem[]).filter(it => !blastKind(it.id))); if (Array.isArray(d.durations)) setDurations(d.durations); if (Array.isArray(d.pages)) setPages(d.pages) } })
       .catch(() => {})
     return () => { live = false }
   }, [])

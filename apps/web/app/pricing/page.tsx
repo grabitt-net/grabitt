@@ -73,12 +73,7 @@ export default function PricingPage() {
         <PriceCard name="Featured Partner" price="€79">
           This is a fantastic way to be everywhere. Your banner and message appears across all pages on a rotation with 7 featured partners — including the message box, alerts, saved, and all landing pages. It clicks through to your business directory listing that is live during your banner sponsorship.
         </PriceCard>
-        <PriceCard name="Email Blast" price="€149">
-          One of our most POWERFUL marketing tools at your disposal. Write your email copy, create a great offer, tell them about your business and how to get in touch — and away we go! We provide a full delivery and open statistics report, including any that bounce, who we contact to check if they received it, or if their email address changed. You must be at least a Business client to use this service, and it&apos;s strictly limited to once per quarter.
-        </PriceCard>
-        <PriceCard name="WhatsApp Blast" price="€199" note="Coming Soon">
-          THE most powerful communication method we have — direct to the members&apos; WhatsApp, giving you a great opportunity to grab their attention in real time! Delivery stats and successful send report provided. You must be a standard business user to use this service, and it&apos;s limited to once per quarter.
-        </PriceCard>
+        {/* Email Blast and WhatsApp Blast are hidden from customers pending legal review — do not re-enable without sign-off. */}
       </Section>
     </InfoPage>
   )

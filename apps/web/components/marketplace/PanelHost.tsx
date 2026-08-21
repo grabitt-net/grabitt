@@ -224,8 +224,7 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
     _priceCard('🔓', 'Handy Help lead', '5 credits', "Unlock a customer's help request.", '#00b09b') +
     _head('Advertise your business', '#8b5cf6') +
     _priceCard('🖼️', 'Page banners', '€39/mo', 'Across Grabitt pages, with click stats.', '#8b5cf6') +
-    _priceCard('📧', 'Email blast', '€149', 'Per send (bundles from €400/3), with open & click stats.', '#8b5cf6') +
-    _priceCard('💬', 'WhatsApp blasts', '€199', 'Per blast (bundles from €500/3), with interaction data.', '#8b5cf6') +
+    /* Email/WhatsApp blasts hidden from customers pending legal review — do not re-enable without sign-off. */
     _priceCard('📒', 'Business directory', '€15/mo', 'From €15/mo · €40/quarter · €150/year.', '#8b5cf6') +
     _head('Extras', '#888') +
     _priceCard('🤝', 'Grabitt Assist', '€99–299', 'We photograph & sell on your behalf.') +
@@ -4754,7 +4753,8 @@ function PanelBody() {
       getTrpcClient().then(c => c.subscriptions.foundingBusinessStatus.query())
         .then((s: any) => setFoundingBizLeft(s?.remaining ?? 0)).catch(() => setFoundingBizLeft(0))
       getTrpcClient().then(c => c.sponsorship.catalog.query())
-        .then((d: any) => { setCatalog(d.items ?? []); if (Array.isArray(d.durations)) setDurations(d.durations) }).catch(() => {})
+        // Email/WhatsApp blasts hidden from customers pending legal review — filter them out of the public catalog.
+        .then((d: any) => { setCatalog((d.items ?? []).filter((it: any) => it.id !== 'email_blast' && it.id !== 'whatsapp_blast')); if (Array.isArray(d.durations)) setDurations(d.durations) }).catch(() => {})
     }, [])
 
     // Guard AFTER the hooks — an early return before them would change the hook

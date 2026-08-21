@@ -320,12 +320,14 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
         </Link>
       </div>
 
-      {/* ── Direct marketing blasts (double opt-in) ── */}
+      {/* ── Direct marketing blasts (double opt-in) ──
+           Hidden from customers pending legal review — do not re-enable without sign-off. */}
+      {false && (
       <div style={card}>
         <div style={cardHead}>📣 {t('Direct marketing')}</div>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginBottom: 10, lineHeight: 1.5 }}>
           {t('Send promotions to opted-in members. Buy a bundle of sends; use them any time.')}
-          {blasts && <span style={{ display: 'block', marginTop: 4, fontWeight: 800, color: '#16a34a' }}>{t('You have')} {blasts.email} {t('email')} · {blasts.whatsapp} {t('WhatsApp')} {t('sends left')}.</span>}
+          {blasts && <span style={{ display: 'block', marginTop: 4, fontWeight: 800, color: '#16a34a' }}>{t('You have')} {blasts?.email} {t('email')} · {blasts?.whatsapp} {t('WhatsApp')} {t('sends left')}.</span>}
         </div>
         {(['email', 'whatsapp'] as const).map(ch => {
           const left = blasts ? (ch === 'email' ? blasts.email : blasts.whatsapp) : 0
@@ -358,6 +360,7 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
         })}
         {cNote && composeCh === null && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: cNote.startsWith('✓') ? '#16a34a' : '#ef4444', marginTop: 4 }}>{cNote}</div>}
       </div>
+      )}
 
       {/* ── Business tools ── */}
       <div style={card}>
