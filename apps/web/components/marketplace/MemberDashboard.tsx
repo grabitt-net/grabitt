@@ -328,21 +328,14 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
           {section === 'employment' && (<>
             <div style={card}>
-              <div style={cardHead}>{t('Employment & CV')}</div>
-              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer', marginBottom: 12 }}>
+              <div style={cardHead}>{t('Employment')}</div>
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer' }}>
                 <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{t('I am looking for work')}</span>
                 <input type="checkbox" checked={!!me?.openToWork} onChange={toggleOpenToWork} style={{ width: 18, height: 18, accentColor: 'var(--orange)' }} />
               </label>
-              <Link href="/cv" style={{ textDecoration: 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: 12, cursor: 'pointer' }}>
-                  <Icon name="briefcase" size={20} strokeWidth={2} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{t('Build CV')}</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777' }}>{t('The CV recruiters get when you apply for jobs.')}</div>
-                  </div>
-                  <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
-                </div>
-              </Link>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', marginTop: 8, lineHeight: 1.5 }}>
+                {t('Your CV is built automatically from the roles, experience and languages you tick below. Use “Show my CV” to preview what recruiters see.')}
+              </div>
             </div>
             <JobCategories me={me} onReload={onReload} mode={me?.isBusiness ? 'employer' : 'seeker'} />
           </>)}

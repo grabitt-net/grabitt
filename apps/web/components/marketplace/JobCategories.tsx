@@ -48,6 +48,7 @@ export default function JobCategories({ me, onReload, mode }: { me: any; onReloa
   })
   const [open, setOpen] = useState<number | null>(null)
   const [state, setState] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [showCv, setShowCv] = useState(false)
 
   const setBucket = (key: string, bucket: string) => {
     setState('idle')
@@ -74,6 +75,15 @@ export default function JobCategories({ me, onReload, mode }: { me: any; onReloa
           ? t('Tag the roles you hire for and the experience you require, plus the languages needed.')
           : t('Pick the roles you can do and how long you have done each, and add the languages you speak.')}
       </div>
+
+      {/* Show my CV — a profile generated from the ticked roles/experience/languages */}
+      {mode === 'seeker' && (
+        <button onClick={() => setShowCv(true)} style={{
+          width: '100%', marginBottom: 16, background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)',
+          borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}>📄 {t('Show my CV')}</button>
+      )}
 
       {/* Languages filter — applies across all sectors */}
       <div style={{ marginBottom: 16 }}>
@@ -135,6 +145,65 @@ export default function JobCategories({ me, onReload, mode }: { me: any; onReloa
       <button onClick={save} disabled={state === 'saving'} style={{ width: '100%', marginTop: 14, background: state === 'saved' ? 'var(--sage)' : 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: state === 'saving' ? 'wait' : 'pointer' }}>
         {state === 'saving' ? t('Saving…') : state === 'saved' ? t('Saved ✓') : t('Save')}
       </button>
+
+      {showCv && <CvPreview me={me} languages={languages} exp={exp} onClose={() => setShowCv(false)} />}
+    </div>
+  )
+}
+
+// A read-only CV/profile generated from the ticked roles, experience and
+// languages — the same structured data a subscribing business matches against.
+function CvPreview({ me, languages, exp, onClose }: { me: any; languages: string[]; exp: Record<string, string>; onClose: () => void }) {
+  const bucketLabel = (k: string) => EXP_BUCKETS.find(b => b.key === k)?.label ?? k
+  const langLabel = (k: string) => (JOB_LANGUAGES.find(([lk]) => lk === k)?.[1]) ?? k
+  const name = me?.fullName || me?.displayName || t('Candidate')
+  // Group the ticked roles under their sector.
+  const bySector = JOB_SECTORS.map((sec, si) => ({
+    name: sec.name,
+    roles: sec.jobs.map((job, ji) => ({ job, bucket: exp[jobKey(si, ji)] })).filter(r => r.bucket),
+  })).filter(s => s.roles.length > 0)
+  const empty = bySector.length === 0 && languages.length === 0
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(20,20,25,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 18, maxWidth: 520, width: '100%', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 18px', borderBottom: '1px solid #efe7db', position: 'sticky', top: 0, background: '#fff', borderRadius: '18px 18px 0 0' }}>
+          <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 17, fontWeight: 700, color: 'var(--dark)' }}>📄 {t('My CV')}</span>
+          <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 20, color: '#999', cursor: 'pointer', lineHeight: 1 }}>✕</button>
+        </div>
+        <div style={{ padding: '16px 18px 22px' }}>
+          <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>{name}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: me?.openToWork ? '#16a34a' : '#999', marginTop: 2 }}>
+            {me?.openToWork ? `● ${t('Open to work')}` : t('Not currently looking')}
+          </div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#aaa', marginTop: 6, lineHeight: 1.5 }}>
+            {t('Anonymous until an employer unlocks you — no name or contact is shown to recruiters until then.')}
+          </div>
+
+          {empty && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#888', marginTop: 18, textAlign: 'center', padding: '20px 0' }}>{t('Tick some roles and languages below, then reopen to see your CV.')}</div>}
+
+          {languages.length > 0 && (
+            <div style={{ marginTop: 18 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{t('Languages')}</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {languages.map(l => <span key={l} style={{ background: '#FFF3EE', border: '1px solid #f3d3c2', color: 'var(--orange)', borderRadius: 999, padding: '4px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>{langLabel(l)}</span>)}
+              </div>
+            </div>
+          )}
+
+          {bySector.map(sec => (
+            <div key={sec.name} style={{ marginTop: 18 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{sec.name}</div>
+              {sec.roles.map(r => (
+                <div key={r.job} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f5f0e8' }}>
+                  <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)' }}>{r.job}</span>
+                  <span style={{ background: '#f4f6fb', color: '#3b6fd4', borderRadius: 999, padding: '3px 11px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, whiteSpace: 'nowrap' }}>{bucketLabel(r.bucket!)} {t('exp')}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
