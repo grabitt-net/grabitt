@@ -193,6 +193,10 @@ export const seekersRouter = router({
         availability: profile.availability,
         rightToWork: profile.rightToWork,
         location: [profile.areaDetail, profile.town, profile.location].filter(Boolean).join(', '),
+        nationality: profile.nationality,
+        drives: profile.drives,
+        hasCar: profile.hasCar,
+        contactUnlockable: profile.contactUnlockable,
         workExperience: profile.workExperience,
         education: profile.education,
         rating: profile.user.avgRating,
@@ -312,6 +316,11 @@ export const seekersRouter = router({
         select: { id: true, displayName: true, email: true, phone: true, avatar: true, seekerProfile: true },
       })
       if (!seeker || !seeker.seekerProfile) throw new TRPCError({ code: 'NOT_FOUND', message: 'Candidate not found' })
+
+      // The candidate can switch off contact unlocking entirely.
+      if (seeker.seekerProfile.contactUnlockable === false) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: "This candidate hasn't allowed their contact details to be unlocked." })
+      }
 
       const already = await ctx.prisma.candidateUnlock.findUnique({
         where: { employerId_seekerId: { employerId: ctx.user.id, seekerId: input.seekerId } },

@@ -20,6 +20,9 @@ export type CvData = {
   rightToWork?: string | null
   roles?: string[]
   experienceMonths?: number
+  nationality?: string | null
+  drives?: boolean | null
+  hasCar?: boolean | null
   workExperience?: Array<{ title?: string; employer?: string; location?: string; start?: string; end?: string; current?: boolean; bullets?: string[] }>
   education?: Array<{ qualification?: string; institution?: string; start?: string; end?: string; status?: string }>
 }
@@ -98,6 +101,13 @@ export default function CvDocument({ data, revealed, reference }: { data: CvData
               <Text style={s.sideHead}>Availability</Text>
               {data.availability ? <Text style={s.contact}>{data.availability}</Text> : null}
               {data.rightToWork ? <Text style={[s.contact, { marginTop: 2 }]}>{data.rightToWork}</Text> : null}
+            </>
+          )}
+          {(data.nationality || data.drives != null) && (
+            <>
+              <Text style={s.sideHead}>Details</Text>
+              {data.nationality ? <Text style={s.contact}>{data.nationality}</Text> : null}
+              {data.drives != null ? <Text style={[s.contact, { marginTop: 2 }]}>{data.drives ? (data.hasCar ? 'Drives · has a car' : 'Drives') : 'Does not drive'}</Text> : null}
             </>
           )}
         </View>

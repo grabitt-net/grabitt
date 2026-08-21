@@ -5,7 +5,7 @@
 // across ALL sectors — multilingual ability is a key hiring factor here.
 
 export const JOB_LANGUAGES: [key: string, label: string][] = [
-  ['en', 'English'], ['es', 'Spanish'], ['de', 'German'], ['other', 'Other'],
+  ['en', 'English'], ['es', 'Spanish'], ['de', 'German'], ['sv', 'Swedish'], ['da', 'Danish'], ['other', 'Other'],
 ]
 
 export const JOB_SECTORS: { name: string; jobs: string[] }[] = [

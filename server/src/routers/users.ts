@@ -430,6 +430,15 @@ export const usersRouter = router({
         roles: z.array(z.string().max(140)).max(200),
         experienceMonths: z.number().int().min(0).max(600),
         languages: z.array(z.string().max(40)).max(10),
+        languageLevels: z.array(z.object({ language: z.string().max(40), level: z.string().max(20) })).max(10).optional(),
+        // About Me
+        bio: z.string().max(2000).optional(),
+        location: z.string().max(120).optional(),
+        nationality: z.string().max(60).optional(),
+        drives: z.boolean().optional(),
+        hasCar: z.boolean().optional(),
+        canWorkGC: z.boolean().optional(),
+        allowUnlock: z.boolean().optional(),
       }).optional(),
       avatar: z.string().url().optional(),
       locale: z.enum(['en', 'es', 'de', 'da', 'sv', 'nl', 'fr', 'pt']).optional(),
@@ -471,6 +480,14 @@ export const usersRouter = router({
           data.roles = seekerDerived.roles
           data.experienceMonths = seekerDerived.experienceMonths
           data.languages = seekerDerived.languages
+          if (seekerDerived.languageLevels !== undefined) data.languageLevels = seekerDerived.languageLevels
+          if (seekerDerived.bio !== undefined) data.summary = seekerDerived.bio || null
+          if (seekerDerived.location !== undefined) data.location = seekerDerived.location || null
+          if (seekerDerived.nationality !== undefined) data.nationality = seekerDerived.nationality || null
+          if (seekerDerived.drives !== undefined) data.drives = seekerDerived.drives
+          if (seekerDerived.hasCar !== undefined) data.hasCar = seekerDerived.hasCar
+          if (seekerDerived.canWorkGC !== undefined) data.rightToWork = seekerDerived.canWorkGC ? 'Permitted to work in Gran Canaria' : 'Work permission not confirmed'
+          if (seekerDerived.allowUnlock !== undefined) data.contactUnlockable = seekerDerived.allowUnlock
         }
         if (openToWork !== undefined) data.active = openToWork
         await ctx.prisma.seekerProfile.upsert({

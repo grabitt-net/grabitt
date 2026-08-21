@@ -591,6 +591,13 @@ model SeekerProfile {
   town             String?  // specific town
   areaDetail       String?  // neighbourhood or district within that town
   active           Boolean  @default(true)
+  // About Me — extra profile detail entered in the recruitment section.
+  nationality      String?
+  drives           Boolean?
+  hasCar           Boolean?
+  // Whether the seeker allows employers to spend credits to unlock their
+  // contact details. Default true (existing behaviour); they can turn it off.
+  contactUnlockable Boolean @default(true)
   // ── CV content — the candidate's real CV, entered structured and rendered to
   // a formatted PDF on apply. Repeatable sections are JSON arrays:
   //   workExperience: [{ title, employer, location, start, end, current, bullets[] }]

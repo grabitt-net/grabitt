@@ -17,6 +17,9 @@ export type CvSnapshot = {
   rightToWork: string | null
   experienceMonths: number
   roles: string[]
+  nationality: string | null
+  drives: boolean | null
+  hasCar: boolean | null
   workExperience: unknown[]
   education: unknown[]
 }
@@ -25,7 +28,9 @@ type UserLite = { displayName: string; email: string | null; phone: string | nul
 type ProfileLite = {
   headline: string | null; summary: string | null; skills: string[]; keyStrengths: string[]
   certifications: string[]; languages: string[]; availability: string | null; rightToWork: string | null
-  location: string | null; experienceMonths: number; roles?: string[]; workExperience: unknown; education: unknown
+  location: string | null; experienceMonths: number; roles?: string[]
+  nationality?: string | null; drives?: boolean | null; hasCar?: boolean | null
+  workExperience: unknown; education: unknown
 } | null
 
 export function buildCvSnapshot(user: UserLite, profile: ProfileLite): CvSnapshot {
@@ -44,6 +49,9 @@ export function buildCvSnapshot(user: UserLite, profile: ProfileLite): CvSnapsho
     rightToWork: profile?.rightToWork ?? null,
     experienceMonths: profile?.experienceMonths ?? 0,
     roles: profile?.roles ?? [],
+    nationality: profile?.nationality ?? null,
+    drives: profile?.drives ?? null,
+    hasCar: profile?.hasCar ?? null,
     workExperience: Array.isArray(profile?.workExperience) ? profile!.workExperience as unknown[] : [],
     education: Array.isArray(profile?.education) ? profile!.education as unknown[] : [],
   }
