@@ -52,14 +52,17 @@ export default function PricingPage() {
         <PriceRow name="Grabitt NOW!" price="€4.99 per listing">
           Got something that needs gone <em>fast</em>? Grabitt NOW! is built for urgency — discounted items and hot offers that can&apos;t wait. For €4.99 your listing lands right at the top of the homepage for a full 72 hours, in its own dedicated carousel alongside boosted listings (two separate carousels). It&apos;s the express lane for anything you need to shift quickly — grab the attention, make the sale, done.
         </PriceRow>
+        <PriceRow name="Property Listing" price="€39 per listing" note="1 free every month">
+          List a property to rent or sell. Everyone gets one free property listing every month — after that it&apos;s just €39 per listing. Business accounts get an allowance included with their plan. Want more eyes on it? Add a Featured boost for €9 to lift your property to the top for 4 weeks.
+        </PriceRow>
       </Section>
 
       <Section title="For Business — Recruitment & Directory">
         <PriceRow name="Post a Job" price="€29 per listing" note="Paid business accounts only">
           Hiring? Post a job for €29 and it stays live for a full 14 days. Got ongoing recruitment? Buy job listings in bulk and save.
         </PriceRow>
-        <PriceRow name="Advertise for Staff" price="€29 per listing">
-          Need a team? Advertise for staff at €29 per listing, or grab a bulk listings package if you&apos;re hiring regularly.
+        <PriceRow name="Recruit Staff" price="€29 per listing" note="Paid business accounts only">
+          Need a team? Recruit staff at €29 per listing, or grab a bulk listings package if you&apos;re hiring regularly.
         </PriceRow>
         <PriceRow name="Business Directory" price="€15/month" note="Or annual for a discount">
           Get found. List your business in the Grabitt Directory for €15 a month, or go annual for a tidy discount. What we&apos;ve been missing is a nice clean business directory here on the Canary Islands. Split into industry, you come up when people search for a plumber, dentist, doctor, lawyer — you name it. You get your logo, contact details, and a brief description of what you do and where you are, with a map pin.
