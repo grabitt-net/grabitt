@@ -91,7 +91,10 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   // Business accounts get a Business Centre section (and no "add business"); the
   // rest of the menu is shared with personal accounts.
   const sections: { id: SectionId; label: string; icon: IconName }[] = me?.isBusiness
-    ? [{ id: 'business', label: 'Business Centre', icon: 'building' }, ...SECTIONS.filter(s => s.id !== 'addbiz')]
+    ? [{ id: 'business', label: 'Business Centre', icon: 'building' },
+       // Business-relevant relabels: the jobseeker "Employment & CV" section is
+       // the employer recruiting view for a business account.
+       ...SECTIONS.filter(s => s.id !== 'addbiz').map(s => s.id === 'employment' ? { ...s, label: 'Recruitment' } : s)]
     : SECTIONS
 
   // Clicking a My Hub card opens its list in the panel below.
@@ -248,10 +251,13 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             <HubNavRow icon="shield" iconColor="#16a34a" label={t('Verified')} value={me?.isVerified
               ? <span style={{ color: '#16a34a', fontWeight: 800 }}>{t('Yes')}</span>
               : <button onClick={() => openPanel('verifyMe' as PanelId)} style={navLinkBtn}>{t('Get verified')}</button>} />
-            <HubNavRow icon="wrench" label={t('Work required')} value={
-              <button onClick={toggleOpenToWork} style={{ ...navLinkBtn, color: me?.openToWork ? '#16a34a' : '#6a5a48' }}>
-                {me?.openToWork ? t('Looking') : t('Not looking')}
-              </button>} />
+            {/* Jobseeker "looking for work" toggle — personal accounts only. */}
+            {!me?.isBusiness && (
+              <HubNavRow icon="wrench" label={t('Work required')} value={
+                <button onClick={toggleOpenToWork} style={{ ...navLinkBtn, color: me?.openToWork ? '#16a34a' : '#6a5a48' }}>
+                  {me?.openToWork ? t('Looking') : t('Not looking')}
+                </button>} />
+            )}
             <HubNavRow icon="briefcase" label={t('Business acc')} last={!me?.isBusiness} value={
               <button onClick={() => router.push(me?.isBusiness ? '/account?tab=business' : '/for-business')} style={navLinkBtn}>
                 {me?.isBusiness ? t('Open') : t('Add / Upgrade')}
@@ -361,13 +367,19 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
           {section === 'employment' && (<>
             <div style={card}>
-              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer' }}>
-                <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{t('I am looking for work')}</span>
-                <input type="checkbox" checked={!!me?.openToWork} onChange={toggleOpenToWork} style={{ width: 18, height: 18, accentColor: 'var(--orange)' }} />
-              </label>
-              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', marginTop: 8, lineHeight: 1.5 }}>
-                {t('Your CV is built automatically from the roles, experience and details you add below. Use “Show my CV” to preview what recruiters see.')}
-              </div>
+              {me?.isBusiness ? (
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', lineHeight: 1.5 }}>
+                  {t('Tag the roles you hire for and the experience and languages you need. Post a job advert or search the candidate database from the Recruit pill or the Business Centre.')}
+                </div>
+              ) : (<>
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer' }}>
+                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{t('I am looking for work')}</span>
+                  <input type="checkbox" checked={!!me?.openToWork} onChange={toggleOpenToWork} style={{ width: 18, height: 18, accentColor: 'var(--orange)' }} />
+                </label>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', marginTop: 8, lineHeight: 1.5 }}>
+                  {t('Your CV is built automatically from the roles, experience and details you add below. Use “Show my CV” to preview what recruiters see.')}
+                </div>
+              </>)}
             </div>
             <JobCategories me={me} onReload={onReload} mode={me?.isBusiness ? 'employer' : 'seeker'} />
           </>)}
