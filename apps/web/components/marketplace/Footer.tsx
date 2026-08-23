@@ -23,7 +23,7 @@ export default function Footer() {
     { heading: 'Trading', links: [['Sell an item', () => openPanel('sell')], ['Delivery', fp('collection')], ['Sold Prices', () => openPanel('soldprices')], ['Terms', go('/terms')]] },
     { heading: 'Safety & trust', links: [['Grabitt Guarantee', () => openPanel('shield')], ['Scam Centre', fp('scams')], ['Report a Listing', () => openPanel('report')], ['My Disputes', go('/account?section=disputes')]] },
     { heading: 'Business', links: [['For Business', go('/for-business')], ['Business Directory', go('/directory')], ['Advertise With Us', go('/advertise')]] },
-    { heading: 'Help & guides', links: [['Help Centre', go('/help')], ['Grabitt Guides', go('/community')], ['Economic Living', go('/community#economic-living')], ['Dos & Don\'ts', fp('policy')], ['Suggest Ideas', go('/suggest')]] },
+    { heading: 'Help & guides', links: [['Help Centre', go('/help')], ['Grabitt Guides', go('/community')], ['Economic Living', go('/economic')], ['Dos & Don\'ts', go('/dos')], ['Suggest Ideas', go('/suggest')]] },
   ]
 
   return (
