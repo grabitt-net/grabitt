@@ -10,11 +10,12 @@ export default function TermsPage() {
         <h1 style={h1}>Terms of Service</h1>
         <p style={muted}>Last updated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
 
-        <p style={p}>These terms govern your use of <strong>Grabitt</strong>, a digital marketplace operating in Gran Canaria, Canary Islands, Spain. By creating an account or using the service you agree to them. Please read section 7 (right of withdrawal) carefully — it affects your legal rights.</p>
+        <div style={{ background: '#fff6e6', border: '1px solid #f0e0bd', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#8a6d3b', marginBottom: 14 }}>⚠️ Draft pending legal review — this document is a working draft and must be reviewed and finalised by a Spanish lawyer before it is relied upon.</div>
+        <p style={p}>These terms govern your use of <strong>Grabitt</strong>, a digital marketplace operating across the <strong>Canary Islands</strong>, Spain. By creating an account or using the service you agree to them. Please read section 7 (right of withdrawal) carefully — it affects your legal rights.</p>
 
         {/* 1 */}
         <h2 style={h2}>1. Who we are &amp; what Grabitt is</h2>
-        <p style={p}>Grabitt operates an online marketplace and classified-listings platform connecting buyers, sellers, employers, job-seekers, landlords, agents and tradespeople in Gran Canaria. Contact: <a href="mailto:support@grabitt.net" style={a}>support@grabitt.net</a>.</p>
+        <p style={p}>Grabitt operates an online marketplace and classified-listings platform connecting buyers, sellers, employers, job-seekers, landlords, agents and tradespeople across the Canary Islands. Contact: <a href="mailto:support@grabitt.net" style={a}>support@grabitt.net</a>.</p>
         <p style={p}><strong>Grabitt is an intermediary, not the seller.</strong> We do not own, hold, inspect, store or handle the goods or property listed, and we do not employ the people who advertise services or jobs. The contract of sale or engagement is formed <strong>directly between the buyer and the seller</strong> (or employer and applicant); Grabitt is not a party to it.</p>
 
         {/* 2 */}
@@ -39,6 +40,16 @@ export default function TermsPage() {
         <h2 style={h2}>4. Buying on Grabitt</h2>
         <p style={p}>Listings are invitations to treat. A contract forms when payment is authorised and the seller accepts. Payments are processed by <strong>Stripe</strong>. For protected purchases, funds are held in <strong>escrow</strong> and released to the seller on confirmed handover (QR code for collection or in-person delivery) or, for tracked courier delivery, once the item shows as in transit.</p>
         <p style={p}>Buyers should inspect items at handover wherever possible. Descriptions, photographs and condition grades are supplied by sellers, not by Grabitt.</p>
+        <p style={p}><strong>Confirmation at handover.</strong> For collection and in-person delivery, the buyer scans the transaction code at the point of handover and chooses <strong>Accept</strong> or <strong>Reject</strong>. Accept completes the transaction and releases the held funds to the seller. Reject opens a formal dispute (section 10) and the funds remain held pending resolution. Payment is only released once the buyer scans to accept; until then all funds remain protected.</p>
+
+        <h3 style={h3}>Rule A — Auto-completion &amp; deemed-positive feedback</h3>
+        <p style={p}>After handover or delivery, the buyer has <strong>3 days</strong> to either raise a dispute or leave feedback. If the buyer does nothing, an automatic message warns them that the transaction will complete within <strong>24 hours</strong> unless they act. If they still do nothing, the transaction <strong>auto-completes</strong>, any remaining held funds release to the seller, and it is recorded as a <strong>deemed-positive rating that counts fully toward the seller&apos;s rating and promotion progression</strong>, exactly like an actively-left positive.</p>
+        <p style={p}><em>Reason:</em> this protects sellers from losing hard-earned rating progress because of buyer inactivity, and ensures fair, timely release of funds. We acknowledge transparently that a small number of transactions may auto-complete as positive without active buyer confirmation — this is an accepted trade-off, because the greater unfairness is sellers being blocked from progression by unresponsive buyers. The 3-day dispute window is the safeguard: any genuinely unhappy buyer has clear opportunity and incentive to raise a dispute before completion.</p>
+
+        <h3 style={h3}>Rule B — Buyer feedback obligation</h3>
+        <p style={p}>Leaving feedback is a <strong>condition of buying on Grabitt</strong>. Repeatedly failing to leave feedback will <strong>negatively affect the buyer&apos;s own standing/rating</strong> on the platform.</p>
+        <p style={p}><em>Reason:</em> feedback is the trust engine of the marketplace; buyers benefit from sellers&apos; ratings, so they carry a shared responsibility to contribute to them.</p>
+        <p style={p}>Both rules are shown plainly to the buyer and seller at the point of transaction, so there are no surprises.</p>
 
         {/* 5 */}
         <h2 style={h2}>5. Selling on Grabitt</h2>
