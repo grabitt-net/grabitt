@@ -2296,28 +2296,7 @@ function PanelBody() {
 
   // ── SOLD PRICES ──────────────────────────────────────────────────────────────
   if (panel.id === 'soldprices') {
-    const SOLD = [
-      { emoji: '📱', title: 'iPhone 13 — 128GB', price: '€480', date: '28 Jun', location: 'Las Palmas' },
-      { emoji: '🚴', title: 'Road Bike — Carbon', price: '€640', date: '26 Jun', location: 'Maspalomas' },
-      { emoji: '💻', title: 'Dell XPS 15', price: '€720', date: '25 Jun', location: 'Telde' },
-      { emoji: '🛋️', title: 'L-Shape Sofa', price: '€220', date: '24 Jun', location: 'Las Palmas' },
-      { emoji: '🎮', title: 'PS5 Digital Edition', price: '€350', date: '22 Jun', location: 'Playa del Inglés' },
-    ]
-    return (
-      <ActionPanel title="📊 Sold Prices" onClose={closePanel}>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 14 }}>Recent completed sales across the Canary Islands</div>
-        {SOLD.map((s, i) => (
-          <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
-            <div style={{ width: 44, height: 44, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{s.emoji}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 2 }}>📍 {s.location} · {s.date}</div>
-            </div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: 'var(--sage)', flexShrink: 0 }}>SOLD {s.price}</div>
-          </div>
-        ))}
-      </ActionPanel>
-    )
+    return <SoldPricesPanel closePanel={closePanel} initialQuery={(panel.data?.query as string) || ''} department={(panel.data?.department as string) || ''} />
   }
 
   // ── ADVERTISE ────────────────────────────────────────────────────────────────
@@ -3636,6 +3615,8 @@ function PanelBody() {
                     <input type="number" value={price} onChange={e => setPrice(e.target.value)} disabled={freeItem} placeholder="0.00" min="0" step="0.01"
                       style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '13px 12px 13px 30px', fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--orange)', outline: 'none', boxSizing: 'border-box', opacity: freeItem ? 0.4 : 1 }} />
                   </div>
+                  {/* Check what similar items sold for — draft is auto-saved, so nothing is lost. */}
+                  <button type="button" onClick={() => openPanel('soldprices', { query: title.trim(), department: dept })} style={{ marginTop: 8, background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 999, padding: '7px 14px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>📊 {t('Check sold prices')}</button>
                   <div onClick={() => { setFreeItem(v => !v); if (!freeItem) setPrice('0') }} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, cursor: 'pointer' }}>
                     <div style={{ width: 20, height: 20, borderRadius: 4, border: `2px solid ${freeItem ? 'var(--sage)' : '#ccc'}`, background: freeItem ? 'var(--sage)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {freeItem && <span style={{ color: '#fff', fontSize: 11, fontWeight: 900 }}>✓</span>}
@@ -4991,4 +4972,63 @@ function PanelBody() {
   }
 
   return null
+}
+
+// Sold Prices tool — real recent completed sales, searchable. Each result links
+// to the privacy-stripped read-only ended listing (/sold/[id]).
+type SoldRow = { listingId: string; title: string; department: string | null; amount: number; soldAt: string; image: string | null }
+function SoldPricesPanel({ closePanel, initialQuery, department }: { closePanel: () => void; initialQuery: string; department: string }) {
+  const [q, setQ] = useState(initialQuery)
+  const [data, setData] = useState<{ count: number; avg: number | null; min: number | null; max: number | null; rows: SoldRow[] } | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const run = (query: string) => {
+    setLoading(true)
+    createLooseTrpcClient().listings.soldPrices.query({ q: query.trim() || undefined, department: department || undefined })
+      .then(d => setData(d as never)).catch(() => setData(null)).finally(() => setLoading(false))
+  }
+  useEffect(() => { run(initialQuery) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const euro = (n: number | null) => n == null ? '—' : `€${Number(n).toLocaleString()}`
+
+  return (
+    <ActionPanel title="📊 Sold Prices" onClose={closePanel}>
+      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', marginBottom: 12, lineHeight: 1.5 }}>
+        See what similar items recently sold for{department ? ` in ${department}` : ''}, so you can price with confidence.
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') run(q) }} placeholder="Search sold items…" style={{ flex: 1, boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none' }} />
+        <button onClick={() => run(q)} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '0 16px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Search</button>
+      </div>
+
+      {data && data.count > 0 && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          {[['Average', data.avg], ['Lowest', data.min], ['Highest', data.max]].map(([label, v]) => (
+            <div key={label as string} style={{ flex: 1, background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: '#8a6d3b', textTransform: 'uppercase', letterSpacing: 0.3 }}>{label as string}</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 900, color: 'var(--sage)' }}>{euro(v as number | null)}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 30, fontFamily: 'var(--font-ui)', color: '#aaa', fontSize: 13 }}>Loading…</div>
+      ) : !data || data.rows.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 30, fontFamily: 'var(--font-ui)', color: '#aaa', fontSize: 13 }}>No recent sold items{q.trim() ? ` matching “${q.trim()}”` : ''} yet.</div>
+      ) : (
+        data.rows.map((s, i) => (
+          <button key={s.listingId + i} onClick={() => { window.location.href = `/sold/${s.listingId}` }} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', width: '100%', background: 'none', border: 'none', borderBottomStyle: 'solid', cursor: 'pointer', textAlign: 'left' }}>
+            <div style={{ width: 44, height: 44, background: '#f5f0e8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0, overflow: 'hidden' }}>{s.image ? <img src={s.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🛍️'}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 2 }}>{s.department || 'Item'} · {new Date(s.soldAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--sage)', flexShrink: 0 }}>SOLD €{s.amount.toLocaleString()}</div>
+          </button>
+        ))
+      )}
+      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#aaa', marginTop: 12, lineHeight: 1.5 }}>Tap a result to view the ended listing (item details only — seller and buyer details are never shown).</div>
+    </ActionPanel>
+  )
 }

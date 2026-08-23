@@ -351,6 +351,62 @@ export const listingsRouter = router({
       }
     }),
 
+  // General sold-price lookup (no listing context) — powers the Sold Prices tool
+  // in the footer and the in-flow "Check sold prices" overlay. Search by keyword
+  // and/or department across recent completed sales.
+  soldPrices: publicProcedure
+    .input(z.object({ q: z.string().max(80).optional(), department: z.string().max(60).optional() }))
+    .query(async ({ ctx, input }) => {
+      const SOLD = ['confirmed_handover', 'completed', 'released'] as const
+      const listingFilter: Record<string, unknown> = {}
+      if (input.department) listingFilter.department = input.department
+      if (input.q && input.q.trim()) listingFilter.title = { contains: input.q.trim(), mode: 'insensitive' }
+      const txns = await ctx.prisma.transaction.findMany({
+        where: { status: { in: SOLD as unknown as never }, ...(Object.keys(listingFilter).length ? { listing: { is: listingFilter } } : {}) },
+        orderBy: { updatedAt: 'desc' },
+        take: 40,
+        select: { amount: true, updatedAt: true, listing: { select: { id: true, title: true, images: true, department: true } } },
+      })
+      const rows = txns.map(t => ({
+        listingId: t.listing.id, title: t.listing.title, department: t.listing.department,
+        amount: Number(t.amount), soldAt: t.updatedAt,
+        image: Array.isArray(t.listing.images) ? (t.listing.images[0] ?? null) : null,
+      }))
+      const amounts = rows.map(r => r.amount)
+      return {
+        count: rows.length,
+        avg: amounts.length ? Math.round(amounts.reduce((a, b) => a + b, 0) / amounts.length * 100) / 100 : null,
+        min: amounts.length ? Math.min(...amounts) : null,
+        max: amounts.length ? Math.max(...amounts) : null,
+        rows,
+      }
+    }),
+
+  // Read-only view of an ENDED (sold) listing for the Sold Prices tool. Returns
+  // ONLY the item content and the sold price — NEVER any seller/buyer identity,
+  // contact, location or message/transaction history (privacy requirement).
+  endedListing: publicProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const SOLD = ['confirmed_handover', 'completed', 'released'] as const
+      const l = await ctx.prisma.listing.findUnique({
+        where: { id: input.id },
+        select: { id: true, title: true, description: true, condition: true, department: true, images: true, price: true },
+      })
+      if (!l) throw new TRPCError({ code: 'NOT_FOUND' })
+      const soldTx = await ctx.prisma.transaction.findFirst({
+        where: { listingId: l.id, status: { in: SOLD as unknown as never } },
+        orderBy: { updatedAt: 'desc' },
+        select: { amount: true, updatedAt: true },
+      })
+      return {
+        id: l.id, title: l.title, description: l.description, condition: l.condition,
+        department: l.department, images: Array.isArray(l.images) ? l.images : [],
+        soldPrice: soldTx ? Number(soldTx.amount) : Number(l.price),
+        soldAt: soldTx?.updatedAt ?? null,
+      }
+    }),
+
   // A seller's public storefront: their profile + active listings.
   bySeller: publicProcedure
     .input(z.object({ sellerId: z.string().uuid() }))
