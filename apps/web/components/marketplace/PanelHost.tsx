@@ -2867,6 +2867,13 @@ function PanelBody() {
     const [submitting, setSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState('')
     const [done, setDone] = useState(false)
+    // Reject-at-handover flow: after scanning, the buyer can reject with a reason,
+    // which opens a formal dispute and keeps funds held.
+    const [rejecting, setRejecting] = useState(false)
+    const [rejectReason, setRejectReason] = useState('')
+    const [rejectDetail, setRejectDetail] = useState('')
+    const [rejected, setRejected] = useState(false)
+    const REJECT_REASONS = ['Damaged', 'Not as described', 'Wrong item', 'Missing parts', 'Other']
 
     const CHECKS = [
       'I have received the item in person from the seller',
@@ -2875,6 +2882,18 @@ function PanelBody() {
     ]
     const allChecked = checklist.every(Boolean)
     const codeClean = code.trim().toUpperCase()
+
+    if (rejected) return (
+      <ActionPanel title="⚠️ Item rejected" onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <Logo height={40} style={{ margin: '0 auto 14px' }} />
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#b45309', marginBottom: 8 }}>Dispute opened</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20, lineHeight: 1.6 }}>You&apos;ve rejected this item and a formal dispute has been opened. Your payment stays securely held while it&apos;s resolved — nothing has been released to the seller.</div>
+          <button onClick={() => openPanel('myDisputes', item)} style={{ width: '100%', background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>View my disputes</button>
+          <button onClick={closePanel} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, cursor: 'pointer' }}>Done</button>
+        </div>
+      </ActionPanel>
+    )
 
     if (done) return (
       <ActionPanel title="✅ Handover confirmed" onClose={closePanel}>
@@ -2893,10 +2912,26 @@ function PanelBody() {
       setSubmitError('')
       try {
         const client = await getTrpcClient()
-        await client.transactions.confirmHandoverByCode.mutate({ transactionId, code: codeClean })
+        await client.transactions.confirmHandoverByCode.mutate({ transactionId, code: codeClean, outcome: 'accept' })
         setDone(true)
       } catch (err) {
         setSubmitError((err as Error).message || 'Failed to confirm handover')
+      } finally {
+        setSubmitting(false)
+      }
+    }
+
+    const handleReject = async () => {
+      if (!rejectReason) { setSubmitError('Please choose a reason for rejecting.'); return }
+      setSubmitting(true)
+      setSubmitError('')
+      try {
+        const client = await getTrpcClient()
+        const reason = rejectReason + (rejectDetail.trim() ? ` — ${rejectDetail.trim()}` : '')
+        await client.transactions.confirmHandoverByCode.mutate({ transactionId, code: codeClean, outcome: 'reject', rejectReason: reason })
+        setRejected(true)
+      } catch (err) {
+        setSubmitError((err as Error).message || 'Failed to reject item')
       } finally {
         setSubmitting(false)
       }
@@ -2937,18 +2972,43 @@ function PanelBody() {
         </div>
 
         <div style={{ background: '#fff8f0', border: '1px solid #ffe0cc', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#a8460f' }}>
-          ⚠️ If there is an issue with the item, <strong style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => openPanel('dispute', item)}>raise a dispute</strong> instead. Once confirmed this cannot be undone.
+          ⚠️ Scan or enter the code, then choose. <strong>Accept</strong> releases payment and completes the sale. <strong>Reject</strong> opens a formal dispute and keeps your money held.
         </div>
 
         {submitError && <div style={{ color: '#ef4444', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 12 }}>{submitError}</div>}
 
-        <button
-          onClick={handleConfirm}
-          disabled={codeClean.length !== 6 || !allChecked || submitting}
-          style={{ width: '100%', background: codeClean.length === 6 && allChecked && !submitting ? 'var(--sage)' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: codeClean.length === 6 && allChecked && !submitting ? 'pointer' : 'not-allowed' }}
-        >
-          {submitting ? '⏳ Confirming…' : '✅ Confirm & Release Payment'}
-        </button>
+        {rejecting ? (
+          <div style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: 14, padding: 14, marginBottom: 4 }}>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: '#b91c1c', marginBottom: 8 }}>Why are you rejecting this item?</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+              {REJECT_REASONS.map(r => (
+                <button key={r} onClick={() => setRejectReason(r)} style={{ border: `1.5px solid ${rejectReason === r ? '#ef4444' : '#e5dccd'}`, background: rejectReason === r ? '#fee2e2' : '#fff', color: rejectReason === r ? '#b91c1c' : '#555', borderRadius: 999, padding: '6px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{r}</button>
+              ))}
+            </div>
+            <textarea value={rejectDetail} onChange={e => setRejectDetail(e.target.value)} rows={3} placeholder="Add any detail (optional)…" style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none', resize: 'vertical', marginBottom: 10 }} />
+            <button onClick={handleReject} disabled={codeClean.length !== 6 || !rejectReason || submitting} style={{ width: '100%', background: codeClean.length === 6 && rejectReason && !submitting ? '#ef4444' : '#ccc', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: codeClean.length === 6 && rejectReason && !submitting ? 'pointer' : 'not-allowed', marginBottom: 8 }}>
+              {submitting ? '⏳ Opening dispute…' : '✕ Reject & open dispute'}
+            </button>
+            <button onClick={() => { setRejecting(false); setSubmitError('') }} disabled={submitting} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 12, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}>Back</button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={handleConfirm}
+              disabled={codeClean.length !== 6 || !allChecked || submitting}
+              style={{ flex: 2, background: codeClean.length === 6 && allChecked && !submitting ? 'var(--sage)' : '#ccc', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: codeClean.length === 6 && allChecked && !submitting ? 'pointer' : 'not-allowed' }}
+            >
+              {submitting ? '⏳ Confirming…' : '✅ Accept & release'}
+            </button>
+            <button
+              onClick={() => { setRejecting(true); setSubmitError('') }}
+              disabled={codeClean.length !== 6 || submitting}
+              style={{ flex: 1, background: '#fff', color: '#ef4444', border: '2px solid #ef4444', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: codeClean.length === 6 && !submitting ? 'pointer' : 'not-allowed', opacity: codeClean.length === 6 ? 1 : 0.5 }}
+            >
+              ✕ Reject
+            </button>
+          </div>
+        )}
       </ActionPanel>
     )
   }

@@ -117,6 +117,31 @@ export async function releaseFundsToSeller(
   return { ok: true, sellerNet: Number(tx.sellerNet) }
 }
 
+// Buyer rejected the item at the handover scan. Opens a formal dispute and keeps
+// the Stripe funds held (nothing is captured/released). Mirrors disputes.open.
+async function rejectAtHandover(
+  prisma: PrismaClient,
+  tx: { id: string; sellerId: string; listing?: { title: string | null } | null },
+  buyerId: string,
+  rejectReason?: string,
+) {
+  const existing = await prisma.dispute.findUnique({ where: { transactionId: tx.id } })
+  if (existing) throw new TRPCError({ code: 'CONFLICT', message: 'A dispute is already open for this order' })
+  const reason = (rejectReason && rejectReason.trim()) || 'Rejected at handover'
+  await prisma.transaction.update({ where: { id: tx.id }, data: { status: 'disputed', handoverQrToken: null } })
+  const dispute = await prisma.dispute.create({
+    data: { transactionId: tx.id, raisedById: buyerId, reason, evidence: [] },
+  })
+  await prisma.notification.create({
+    data: {
+      userId: tx.sellerId, kind: 'system', title: '⚠️ Item rejected at handover',
+      body: `The buyer rejected "${tx.listing?.title ?? 'the item'}" at handover — reason: ${reason}. A dispute is now open and the payment stays securely held pending resolution.`,
+      actionUrl: '/account?section=disputes',
+    },
+  })
+  return { ok: true, rejected: true, disputeId: dispute.id }
+}
+
 // Courier dispatch. Records that the parcel is moving — this does NOT pay the
 // seller. (It used to: funds were released on the first carrier scan, i.e.
 // before the buyer had the item. Payment now waits for delivery.)
@@ -396,6 +421,10 @@ export const transactionsRouter = router({
     .input(z.object({
       transactionId: z.string().uuid(),
       token: z.string().min(1),  // full JWT from QR scan
+      // At handover the buyer scans, then chooses: Accept (release) or Reject
+      // (open a dispute, funds stay held). Defaults to accept for older clients.
+      outcome: z.enum(['accept', 'reject']).default('accept'),
+      rejectReason: z.string().max(600).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const tx = await ctx.prisma.transaction.findUniqueOrThrow({
@@ -426,7 +455,8 @@ export const transactionsRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'QR code has already been used or superseded' })
       }
 
-      // Single fund-release path — captures Stripe payment + pays the seller (§10.2)
+      // Reject → open a formal dispute, funds stay held. Accept → release.
+      if (input.outcome === 'reject') return rejectAtHandover(ctx.prisma, tx, ctx.user.id, input.rejectReason)
       return releaseFundsToSeller(ctx.prisma, tx, 'handover')
     }),
 
@@ -436,6 +466,8 @@ export const transactionsRouter = router({
     .input(z.object({
       transactionId: z.string().uuid(),
       code: z.string().length(6),
+      outcome: z.enum(['accept', 'reject']).default('accept'),
+      rejectReason: z.string().max(600).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const tx = await ctx.prisma.transaction.findUniqueOrThrow({
@@ -464,7 +496,7 @@ export const transactionsRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'QR code has expired — ask the seller to generate a new one' })
       }
 
-      // Single fund-release path — same as the QR scan
+      if (input.outcome === 'reject') return rejectAtHandover(ctx.prisma, tx, ctx.user.id, input.rejectReason)
       return releaseFundsToSeller(ctx.prisma, tx, 'handover')
     }),
 
