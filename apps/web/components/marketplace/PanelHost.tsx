@@ -2853,6 +2853,9 @@ function PanelBody() {
                   <div style={{ background: '#f0fdf4', border: '1px solid var(--sage)', borderRadius: 12, padding: 12, marginTop: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)', textAlign: 'left' }}>
                     ✅ Show this screen to the buyer — they scan the QR or type the code above to release your payment.
                   </div>
+                  <div style={{ background: '#f0f7ff', border: '1px solid #dbeafe', borderRadius: 12, padding: 12, marginTop: 10, fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#1e40af', textAlign: 'left', lineHeight: 1.5 }}>
+                    ℹ️ Funds are held via Stripe until the buyer accepts — or, if they don&apos;t respond within 3 days, the sale auto-completes as a positive that counts fully toward your rating and progression.
+                  </div>
                 </>
               )}
             </div>
@@ -2971,8 +2974,11 @@ function PanelBody() {
           ))}
         </div>
 
-        <div style={{ background: '#fff8f0', border: '1px solid #ffe0cc', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#a8460f' }}>
+        <div style={{ background: '#fff8f0', border: '1px solid #ffe0cc', borderRadius: 12, padding: 12, marginBottom: 12, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#a8460f' }}>
           ⚠️ Scan or enter the code, then choose. <strong>Accept</strong> releases payment and completes the sale. <strong>Reject</strong> opens a formal dispute and keeps your money held.
+        </div>
+        <div style={{ background: '#f0f7ff', border: '1px solid #dbeafe', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#1e40af', lineHeight: 1.5 }}>
+          ℹ️ You have <strong>3 days</strong> to leave feedback or raise a dispute. If you don&apos;t respond (even after a 24-hour reminder), the sale auto-completes as a positive review. Repeatedly skipping feedback affects your standing.
         </div>
 
         {submitError && <div style={{ color: '#ef4444', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 12 }}>{submitError}</div>}
