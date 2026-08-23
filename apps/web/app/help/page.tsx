@@ -1,16 +1,14 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { PanelProvider } from '@/context/PanelContext'
 import { createLooseTrpcClient } from '@/lib/trpc'
-import Topbar from '@/components/marketplace/Topbar'
-import Footer from '@/components/marketplace/Footer'
-import PanelHost from '@/components/marketplace/PanelHostLazy'
+import InfoPage from '@/components/marketplace/InfoPage'
 import { HELP_TOPICS, HELP_CATEGORIES, helpCategory, type HelpTopic } from '@/lib/helpContent'
 
 // Full Help Centre: an AI assistant on top, searchable topic categories below.
+// Uses the standard footer-page template (logo, title, hero, pills).
 export default function HelpPage() {
-  return <PanelProvider><Inner /></PanelProvider>
+  return <Inner />
 }
 
 type Msg = { role: 'user' | 'assistant'; content: string }
@@ -56,15 +54,13 @@ function Inner() {
   }, [query, allTopics])
 
   return (
-    <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <Topbar title="Help Centre" />
-      <div style={{ padding: '18px 16px', maxWidth: 760, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 18 }}>
-          <div style={{ fontSize: 40 }}>❓</div>
-          <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--dark)', margin: '4px 0 0' }}>How can we help?</h1>
-          <p style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 13, color: '#666', margin: '6px 0 0' }}>Ask our assistant, or browse the topics below.</p>
-        </div>
-
+    <InfoPage
+      title="Help Centre"
+      topbarTitle="Help Centre"
+      intro="Ask our assistant, or browse the topics below."
+      pills={['AI assistant', 'Searchable guides', 'Buyer & seller help', 'Live chat']}
+    >
+      <div style={{ maxWidth: 760, margin: '0 auto' }}>
         <AiAssistant />
 
         {/* Search */}
@@ -110,10 +106,7 @@ function Inner() {
           Still stuck? <Link href="/messages/team" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>Message the Grabitt team</Link>.
         </div>
       </div>
-
-      <Footer />
-      <PanelHost />
-    </main>
+    </InfoPage>
   )
 }
 

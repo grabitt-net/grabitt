@@ -4,13 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken } from '@/lib/authToken'
-import { PanelProvider } from '@/context/PanelContext'
-import Topbar from '@/components/marketplace/Topbar'
-import QuickActions from '@/components/marketplace/QuickActions'
-import Footer from '@/components/marketplace/Footer'
-import CartFab from '@/components/marketplace/CartFab'
-import PanelHost from '@/components/marketplace/PanelHostLazy'
-import EconomicLiving from '@/components/marketplace/EconomicLiving'
+import InfoPage from '@/components/marketplace/InfoPage'
 
 type Post = { id: string; title: string; excerpt: string; category: string; emoji: string; imageUrl: string | null }
 
@@ -33,17 +27,13 @@ export default function CommunityIndexPage() {
   if (!authed) return <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-nunito)', color: '#888' }}>Loading…</main>
 
   return (
-    <PanelProvider>
-    <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <Topbar title="Grabitt Guides" />
-      <QuickActions />
-
-      <header style={{ background: 'var(--sand)', padding: '14px', borderBottom: '1.5px solid var(--sand2)' }}>
-        <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', margin: '0 0 4px' }}>📰 Grabitt Guides</h1>
-        <p style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 13, color: '#1a1a1a', margin: 0 }}>Island tips, selling advice and the Canary Islands second-hand economy.</p>
-      </header>
-
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '18px 14px 40px', width: '100%', boxSizing: 'border-box' }}>
+    <InfoPage
+      title="Grabitt Guides"
+      topbarTitle="Grabitt Guides"
+      intro="Island tips, selling advice and the Canary Islands second-hand economy."
+      pills={['Selling tips', 'Island know-how', 'Buyer guides', 'Local economy']}
+    >
+      <div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 14 }}>
           {posts.map(p => (
             <Link key={p.id} href={`/community/${p.id}`} style={{ textDecoration: 'none' }}>
@@ -60,14 +50,7 @@ export default function CommunityIndexPage() {
             </Link>
           ))}
         </div>
-
-        <EconomicLiving />
       </div>
-
-      <Footer />
-      <CartFab />
-      <PanelHost />
-    </main>
-    </PanelProvider>
+    </InfoPage>
   )
 }
