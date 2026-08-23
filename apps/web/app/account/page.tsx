@@ -262,7 +262,7 @@ function AccountInner() {
 
   return (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <Topbar />
+      <Topbar title={me?.isBusiness ? 'Business Hub' : 'My Hub'} />
       <QuickActions />
       {needsBizOnboarding && <BusinessOnboardingModal onDone={() => load()} />}
 

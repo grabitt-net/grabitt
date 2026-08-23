@@ -79,7 +79,11 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const router = useRouter()
   const params = useSearchParams()
   const { openPanel } = usePanel()
-  const [section, setSection] = useState<SectionId>(me?.isBusiness ? 'business' : 'listings')
+  // Business users can flip their hub to a personal view (and back). effBiz is
+  // "show the business hub" — used for all layout decisions below.
+  const [personalView, setPersonalView] = useState(false)
+  const effBiz = !!me?.isBusiness && !personalView
+  const [section, setSection] = useState<SectionId>(me?.isBusiness ? 'business' : 'messages')
   // Deep-link a section via ?section= (e.g. the top rail's Saved / Messages).
   useEffect(() => {
     const s = params.get('section')
@@ -90,11 +94,12 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
   // Business accounts get a Business Centre section (and no "add business"); the
   // rest of the menu is shared with personal accounts.
-  const sections: { id: SectionId; label: string; icon: IconName }[] = me?.isBusiness
+  const sections: { id: SectionId; label: string; icon: IconName }[] = effBiz
     ? [{ id: 'business', label: 'Business Centre', icon: 'building' },
-       // Business-relevant relabels: the jobseeker "Employment & CV" section is
-       // the employer recruiting view for a business account.
-       ...SECTIONS.filter(s => s.id !== 'addbiz').map(s => s.id === 'employment' ? { ...s, label: 'Recruitment' } : s)]
+       // Business hub: no "add business", no personal "About Me" (handled in the
+       // Business Centre) and no separate Admin Centre (folded into Business
+       // Centre). "Employment & CV" becomes the employer recruiting view.
+       ...SECTIONS.filter(s => !['addbiz', 'aboutme', 'admin'].includes(s.id)).map(s => s.id === 'employment' ? { ...s, label: 'Recruitment' } : s)]
     : SECTIONS
 
   // Clicking a My Hub card opens its list in the panel below.
@@ -231,7 +236,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
         <div className="member-hub" style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr' }}>
           {/* Profile sidebar — pale orange */}
-          <div style={{ background: '#ffe0bb', borderRadius: 16, padding: 16, color: 'var(--dark)', alignSelf: 'start' }}>
+          <div style={{ background: '#ffe0bb', borderRadius: 16, padding: 16, color: 'var(--dark)', alignSelf: 'stretch' }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
               <button onClick={() => avatarInput.current?.click()} title={t('Change photo')} aria-label={t('Change photo')} style={{ position: 'relative', width: 48, height: 48, borderRadius: '50%', background: 'var(--orange)', overflow: 'hidden', flexShrink: 0, border: 'none', padding: 0, cursor: 'pointer' }}>
                 {me?.avatar
@@ -246,23 +251,30 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 <button onClick={() => openPanel('myRatings' as PanelId)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: '#8a6d3b' }}>{t('Rating')} ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'}</button>
               </div>
             </div>
-            <HubNavRow icon="user" label={t('Account type')} value={me?.isBusiness ? (bizTier ?? t('Business')) : me?.businessLight ? t('Business Light') : accountType} />
+            <HubNavRow icon="user" label={t('Account type')} value={effBiz ? (bizTier ?? t('Business')) : me?.businessLight && !personalView ? t('Business Light') : accountType} />
             <HubNavRow icon="file" label={t('Account ref')} value={memberRef} />
             <HubNavRow icon="shield" iconColor="#16a34a" label={t('Verified')} value={me?.isVerified
               ? <span style={{ color: '#16a34a', fontWeight: 800 }}>{t('Yes')}</span>
               : <button onClick={() => openPanel('verifyMe' as PanelId)} style={navLinkBtn}>{t('Get verified')}</button>} />
-            {/* Jobseeker "looking for work" toggle — personal accounts only. */}
-            {!me?.isBusiness && (
+            {/* Business hub: staff required (recruit). Personal: looking-for-work toggle. */}
+            {effBiz ? (
+              <HubNavRow icon="wrench" label={t('Staff required')} value={
+                <button onClick={() => router.push('/recruitment')} style={navLinkBtn}>{t('Recruit')}</button>} />
+            ) : !me?.isBusiness ? (
               <HubNavRow icon="wrench" label={t('Work required')} value={
                 <button onClick={toggleOpenToWork} style={{ ...navLinkBtn, color: me?.openToWork ? '#16a34a' : '#6a5a48' }}>
                   {me?.openToWork ? t('Looking') : t('Not looking')}
                 </button>} />
+            ) : null}
+            {me?.isBusiness ? (
+              /* Switch easily between the business and personal profile. */
+              <HubNavRow icon="briefcase" label={effBiz ? t('Personal account') : t('Business account')} last={!effBiz} value={
+                <button onClick={() => { const goPersonal = !personalView; setPersonalView(goPersonal); setSection(goPersonal ? 'messages' : 'business') }} style={navLinkBtn}>{t('Switch')}</button>} />
+            ) : (
+              <HubNavRow icon="briefcase" label={t('Business acc')} last value={
+                <button onClick={() => router.push('/for-business')} style={navLinkBtn}>{t('Add / Upgrade')}</button>} />
             )}
-            <HubNavRow icon="briefcase" label={t('Business acc')} last={!me?.isBusiness} value={
-              <button onClick={() => router.push(me?.isBusiness ? '/account?tab=business' : '/for-business')} style={navLinkBtn}>
-                {me?.isBusiness ? t('Open') : t('Add / Upgrade')}
-              </button>} />
-            {me?.isBusiness && (
+            {effBiz && (
               <HubNavRow icon="building" label={t('Storefront')} last value={
                 storefront?.slug
                   ? <button onClick={() => router.push(`/shop/${storefront.slug}`)} style={navLinkBtn}>{t('View shop')}</button>
@@ -305,16 +317,15 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
         </div>
       </div>
 
-      {/* Quick-action pills — under the dashboard, above the menu. */}
-      {me?.isBusiness && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+      {/* Quick-action pills — under the dashboard, above the menu, centred. */}
+      {effBiz && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14, justifyContent: 'center' }}>
           {([
             ['🏷️', t('Sell now'), () => openPanel('sell' as PanelId)],
-            ['🛒', t('Buy now'), () => router.push('/')],
             ['💼', t('Recruit'), () => router.push('/recruitment')],
             ['🏠', t('Property'), () => router.push('/property/new')],
             ['📣', t('Buy banners'), () => router.push('/advertise')],
-            ['⚡', t('Grabitt NOW'), () => router.push('/grabit')],
+            ['⚡', t('Grabitt now'), () => router.push('/grabit')],
           ] as [string, string, () => void][]).map(([emoji, label, onClick]) => (
             <button key={label} onClick={onClick} style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)',
@@ -353,7 +364,12 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
           {section === 'hub' && hubView && <HubListView hubKey={hubView} title={hubTitle} />}
 
-          {section === 'business' && me?.isBusiness && <BusinessCentre businessVerified={me?.businessVerified} />}
+          {section === 'business' && me?.isBusiness && (<>
+            <BusinessCentre businessVerified={me?.businessVerified} />
+            {/* Admin Centre folded into the Business Centre (bank/payouts, profile,
+                verification, account) — no separate menu item on the business hub. */}
+            <AdminCentre me={me} onReload={onReload} payout={payout} setupPayouts={setupPayouts} openPanel={openPanel} goInterests={() => setSection('employment')} />
+          </>)}
 
           {section === 'messages' && (
             /* Advertising banner on top, then the full inbox (list + preview),
@@ -367,7 +383,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
           {section === 'employment' && (<>
             <div style={card}>
-              {me?.isBusiness ? (
+              {effBiz ? (
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', lineHeight: 1.5 }}>
                   {t('Tag the roles you hire for and the experience and languages you need. Post a job advert or search the candidate database from the Recruit pill or the Business Centre.')}
                 </div>
@@ -381,7 +397,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 </div>
               </>)}
             </div>
-            <JobCategories me={me} onReload={onReload} mode={me?.isBusiness ? 'employer' : 'seeker'} />
+            <JobCategories me={me} onReload={onReload} mode={effBiz ? 'employer' : 'seeker'} />
           </>)}
 
           {section === 'listings' && (<>
@@ -630,9 +646,8 @@ function MetricCard({ metricKey, label, icon, color, tint, onClick, from }: { me
   return (
     <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '12px 14px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(30,43,85,0.05)', textAlign: 'left' }}>
       <span style={{ flexShrink: 0, width: 40, height: 40, borderRadius: '50%', background: tint, color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Icon name={icon} size={19} strokeWidth={2} /></span>
-      <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#334', textTransform: 'uppercase', letterSpacing: 0.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {label} - <span style={{ color, fontWeight: 900 }}>{val}</span>
-      </span>
+      <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#334', letterSpacing: 0.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+      <span style={{ flexShrink: 0, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color, textAlign: 'right' }}>{val}</span>
     </button>
   )
 }
@@ -788,9 +803,9 @@ function GdprView() {
 // Column theme + a heading with an icon in a coloured circle.
 function ColHeader({ icon, title, color, tint }: { icon: IconName; title: string; color: string; tint: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-      <span style={{ width: 34, height: 34, borderRadius: '50%', background: tint, color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name={icon} size={17} strokeWidth={2.2} /></span>
-      <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 900, color: '#1e2b55', textTransform: 'uppercase', letterSpacing: 1 }}>{title}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+      <span style={{ width: 40, height: 40, borderRadius: '50%', background: tint, color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name={icon} size={18} strokeWidth={2.2} /></span>
+      <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 900, color: '#1e2b55', letterSpacing: 0.5 }}>{title}</span>
     </div>
   )
 }
