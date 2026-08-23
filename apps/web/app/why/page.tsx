@@ -1,5 +1,4 @@
 'use client'
-import { usePanel } from '@/context/PanelContext'
 import InfoPage from '@/components/marketplace/InfoPage'
 import Icon from '@/components/marketplace/Icon'
 
@@ -54,18 +53,17 @@ function TickList({ items }: { items: [string, string][] }) {
 }
 
 function SuggestButton() {
-  const { openPanel } = usePanel()
   return (
     <div style={{ textAlign: 'center', margin: '6px 0 18px' }}>
-      <button
-        onClick={() => openPanel('footer', { key: 'suggest' })}
+      <a
+        href="/suggest"
         style={{
-          fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--orange)',
-          background: '#fff', border: '2px solid #111', borderRadius: 12, padding: '12px 22px', cursor: 'pointer',
+          display: 'inline-block', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--orange)',
+          background: '#fff', border: '2px solid #111', borderRadius: 12, padding: '12px 22px', cursor: 'pointer', textDecoration: 'none',
         }}
       >
         Suggest an Idea
-      </button>
+      </a>
     </div>
   )
 }
