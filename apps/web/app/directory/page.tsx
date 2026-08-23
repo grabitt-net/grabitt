@@ -31,9 +31,13 @@ export default function DirectoryPage() {
         <Topbar title="Business Directory" />
         <QuickActions />
         <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 14px' }}>
-          <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.6, marginBottom: 16 }}>
-            Local businesses advertising on Grabitt. Want to appear here? <Link href="/advertiser" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>List your business ›</Link>
+          <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.6, marginBottom: 14 }}>
+            Local businesses advertising on Grabitt.
           </p>
+          {/* Prominent, eye-catching call to action — much larger than the old inline link. */}
+          <Link href="/advertiser" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', boxSizing: 'border-box', background: 'linear-gradient(135deg, var(--orange), var(--orange2, #ff8a3d))', color: '#fff', borderRadius: 999, padding: '16px 22px', fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, textDecoration: 'none', boxShadow: '0 6px 18px rgba(245,84,10,0.28)', marginBottom: 18 }}>
+            📖 List your business ›
+          </Link>
 
           {categories.length > 2 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>

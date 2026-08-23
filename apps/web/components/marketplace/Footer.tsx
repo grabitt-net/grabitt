@@ -21,8 +21,8 @@ export default function Footer() {
   const cols: { heading: string; links: [string, () => void][] }[] = [
     { heading: 'Grabitt', links: [['About Us', go('/about')], ['Why Us?', go('/why')], ['Pricing', go('/pricing')], ['Contact', go('/contact')]] },
     { heading: 'Trading', links: [['Sell an item', () => openPanel('sell')], ['Delivery', fp('collection')], ['Sold Prices', () => openPanel('soldprices')], ['Terms', go('/terms')]] },
-    { heading: 'Safety & trust', links: [['Grabitt Guarantee', () => openPanel('shield')], ['Scam Centre', fp('scams')], ['Report a Listing', () => openPanel('report')], ['My Disputes', () => openPanel('myDisputes')]] },
-    { heading: 'Business', links: [['For Business', go('/for-business')], ['Business Directory', go('/directory')], ['Advertise With Us', go('/advertiser')]] },
+    { heading: 'Safety & trust', links: [['Grabitt Guarantee', () => openPanel('shield')], ['Scam Centre', fp('scams')], ['Report a Listing', () => openPanel('report')], ['My Disputes', go('/account?section=disputes')]] },
+    { heading: 'Business', links: [['For Business', go('/for-business')], ['Business Directory', go('/directory')], ['Advertise With Us', go('/advertise')]] },
     { heading: 'Help & guides', links: [['Help Centre', go('/help')], ['Grabitt Guides', go('/community')], ['Economic Living', go('/community#economic-living')], ['Dos & Don\'ts', fp('policy')], ['Suggest Ideas', fp('suggest')]] },
   ]
 
@@ -32,8 +32,9 @@ export default function Footer() {
         sponsor banner is active. */}
     <BannerSlot position="sponsor_footer" page={bannerPageKey(pathname)} aspect="4.5 / 1" />
     <footer style={{ background: 'var(--sand, #F5ECD7)', borderTop: '1px solid var(--sand2, #e8dcc0)', marginTop: 28, padding: '32px 20px 24px' }}>
-      {/* All 5 heading columns stay on one row (never 4 + 1). */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 16, maxWidth: 1000, margin: '0 auto' }}>
+      {/* All 5 heading columns stay on one row (never 4 + 1), spread evenly
+          across the full page width and centred. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 24, maxWidth: 1280, margin: '0 auto' }}>
         {cols.map(col => (
           <div key={col.heading}>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark, #1a1a1a)', letterSpacing: 0.2, marginBottom: 12 }}>{col.heading}</div>
