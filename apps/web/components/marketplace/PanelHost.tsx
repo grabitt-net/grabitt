@@ -3382,6 +3382,30 @@ function PanelBody() {
     const [featured, setFeatured] = useState(false)
     const [uploading, setUploading] = useState(false)
 
+    // ── Auto-save draft ──────────────────────────────────────────────────────
+    // Never lose a half-made listing to a stray click or closed tab. The typed
+    // fields are auto-saved to the browser and offered back next time Sell opens.
+    // (Photos are re-added on resume.) Cleared once the listing goes live.
+    const DRAFT_KEY = 'grabitt_listing_draft'
+    const [draftFound, setDraftFound] = useState<Record<string, unknown> | null>(null)
+    const draftBody = JSON.stringify({ title, dept, condition, desc, price, brand, colour, size, attrs, stock, town, offersDelivery, deliveryMethod, deliveryFee, autoAcceptMin })
+    useEffect(() => {
+      if (step === 'done') { try { localStorage.removeItem(DRAFT_KEY) } catch {} ; return }
+      if (title.trim() || desc.trim() || price.trim()) { try { localStorage.setItem(DRAFT_KEY, draftBody) } catch {} }
+    }, [draftBody, step])
+    useEffect(() => {
+      try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const d = JSON.parse(raw); if (d && (d.title || d.desc || d.price)) setDraftFound(d) } } catch {}
+    }, [])
+    const restoreDraft = () => {
+      const d = draftFound; if (!d) return
+      setTitle((d.title as string) || ''); setDept((d.dept as string) || prefillCat); setCondition((d.condition as string) || '')
+      setDesc((d.desc as string) || ''); setPrice((d.price as string) || ''); setBrand((d.brand as string) || ''); setColour((d.colour as string) || ''); setSize((d.size as string) || '')
+      setAttrs((d.attrs as Record<string, string>) || {}); setStock((d.stock as string) || '1'); setTown((d.town as string) || 'Las Palmas')
+      setOffersDelivery(!!d.offersDelivery); setDeliveryMethod((d.deliveryMethod as 'courier' | 'in_person') || 'courier'); setDeliveryFee((d.deliveryFee as string) || ''); setAutoAcceptMin((d.autoAcceptMin as string) || '')
+      setStep('details'); setDraftFound(null)
+    }
+    const discardDraft = () => { try { localStorage.removeItem(DRAFT_KEY) } catch {} ; setDraftFound(null) }
+
     const STEPS = ['photos','details','price','preview'] as const
     const stepIdx = STEPS.indexOf(step as typeof STEPS[number])
     const progress = stepIdx >= 0 ? ((stepIdx + 1) / STEPS.length) * 100 : 100
@@ -3395,6 +3419,20 @@ function PanelBody() {
         reader.readAsDataURL(file)
       })
     }
+
+    // Offer to resume a saved draft when Sell first opens and nothing's typed yet.
+    if (draftFound && !title && !desc && !price) return (
+      <ActionPanel title="📝 Resume your draft?" onClose={closePanel}>
+        <div style={{ padding: '10px 0 6px' }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, color: '#3a3a3a', lineHeight: 1.6, marginBottom: 4 }}>
+            You started a listing and didn&apos;t finish it. Pick up where you left off?
+          </div>
+          {!!draftFound.title && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)', background: '#f9f6f2', border: '1px solid #efe7db', borderRadius: 10, padding: '10px 12px', margin: '10px 0 16px' }}>“{String(draftFound.title)}”{draftFound.price ? ` · €${String(draftFound.price)}` : ''}</div>}
+          <button onClick={restoreDraft} style={{ width: '100%', background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginBottom: 10 }}>Resume draft</button>
+          <button onClick={discardDraft} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, cursor: 'pointer' }}>Start fresh</button>
+        </div>
+      </ActionPanel>
+    )
 
     if (step === 'done') return (
       <ActionPanel title="🎉 Listing live!" onClose={closePanel}>
