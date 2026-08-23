@@ -299,6 +299,25 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
         </div>
       </div>
 
+      {/* Quick-action pills — under the dashboard, above the menu. */}
+      {me?.isBusiness && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+          {([
+            ['🏷️', t('Sell now'), () => openPanel('sell' as PanelId)],
+            ['🛒', t('Buy now'), () => router.push('/')],
+            ['💼', t('Recruit'), () => router.push('/recruitment')],
+            ['🏠', t('Property'), () => router.push('/property/new')],
+            ['📣', t('Buy banners'), () => router.push('/advertise')],
+            ['⚡', t('Grabitt NOW'), () => router.push('/grabit')],
+          ] as [string, string, () => void][]).map(([emoji, label, onClick]) => (
+            <button key={label} onClick={onClick} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)',
+              borderRadius: 999, padding: '9px 16px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer',
+            }}><span>{emoji}</span>{label}</button>
+          ))}
+        </div>
+      )}
+
       {/* ── MENU + PANEL ────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gap: 14, gridTemplateColumns: '1fr', marginTop: 14 }} className="member-body">
         <nav style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 8, display: 'flex', flexDirection: 'column', gap: 4, alignSelf: 'start' }} className="member-menu">
