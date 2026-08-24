@@ -937,33 +937,43 @@ function PanelBody() {
 
   // ── SELL ────────────────────────────────────────────────────────────────────
   if (panel.id === 'sell') {
+    // Dashboard-consistent card styling (matches My Hub / Business Hub).
+    const optionCard: React.CSSProperties = { display: 'flex', gap: 12, alignItems: 'center', width: '100%', textAlign: 'left', background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '12px 14px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }
+    const iconTile: React.CSSProperties = { width: 40, height: 40, borderRadius: '50%', background: '#FFF3EE', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19, flexShrink: 0 }
     return (
-      <ActionPanel title="📦 Sell on Grabitt" onClose={closePanel}>
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <Logo height={40} style={{ margin: '0 auto 14px' }} />
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 4 }}>List an item in 60 seconds</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666' }}>Fees from 2.5% · Secure Stripe payments</div>
+      <ActionPanel title="Sell on Grabitt" onClose={closePanel}>
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
+          <Logo height={36} style={{ margin: '0 auto 12px' }} />
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>List an item in 60 seconds</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#1a1a1a' }}>Fees from 2.5% · Secure Stripe payments</div>
         </div>
-        {([['🏡','Sell an item','List anything from furniture to electronics', () => openPanel('createListing')],['💼','Post a job','Find staff or freelancers', () => { closePanel(); window.location.href = '/jobs/new' }],['🏠','List a property','Rent or sell a home', () => { closePanel(); window.location.href = '/property/new' }],['🔧','Offer a service','Plumbers, cleaners, tutors & more', () => openPanel('createListing', { category: 'Services' })]] as [string,string,string,()=>void][]).map(([icon, title, desc, action], i) => (
-          <div key={i} onClick={action} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
-            <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{icon}</div>
-            <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{title}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{desc}</div></div>
-            <span style={{ color: 'var(--orange)', marginLeft: 'auto' }}>›</span>
-          </div>
-        ))}
-        <button onClick={() => openPanel('createListing')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>🚀 Start Listing</button>
+
+        <div style={{ display: 'grid', gap: 10 }}>
+          {([['🏡','Sell an item','List anything from furniture to electronics', () => openPanel('createListing')],['💼','Post a job','Find staff or freelancers', () => { closePanel(); window.location.href = '/jobs/new' }],['🏠','List a property','Rent or sell a home', () => { closePanel(); window.location.href = '/property/new' }],['🔧','Offer a service','Plumbers, cleaners, tutors & more', () => openPanel('createListing', { category: 'Services' })]] as [string,string,string,()=>void][]).map(([icon, title, desc, action], i) => (
+            <button key={i} onClick={action} style={optionCard}>
+              <span style={iconTile}>{icon}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{title}</span>
+                <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#1a1a1a' }}>{desc}</span>
+              </span>
+              <span style={{ color: 'var(--orange)', fontWeight: 900, flexShrink: 0 }}>›</span>
+            </button>
+          ))}
+        </div>
+
+        <button onClick={() => openPanel('createListing')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>🚀 Start listing</button>
 
         {/* Bulk import — Business feature; the page itself gates non-business users */}
-        <button onClick={() => { closePanel(); window.location.href = '/sell/import' }} style={{ width: '100%', background: '#fff', color: '#555', border: '1.5px solid var(--sand2)', borderRadius: 14, padding: '12px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginTop: 10 }}>📄 Bulk import from CSV · Business</button>
+        <button onClick={() => { closePanel(); window.location.href = '/sell/import' }} style={{ ...optionCard, justifyContent: 'center', marginTop: 10, color: '#1a1a1a', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800 }}>📄 Bulk import from CSV · Business</button>
 
         {/* Business upsell — routes to the Business subscription signup */}
-        <button onClick={() => openPanel('business')} style={{ width: '100%', background: '#fff', border: '2px solid var(--orange)', borderRadius: 14, padding: '14px', marginTop: 10, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 40, height: 40, background: '#FFF3EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🏢</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Sign up as a Business</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>Storefront, 🏢 badge & Dealer status · 14 days free, then €29/mo</div>
-          </div>
-          <span style={{ color: 'var(--orange)', fontWeight: 900 }}>›</span>
+        <button onClick={() => openPanel('business')} style={{ ...optionCard, border: '1.5px solid var(--orange)', marginTop: 10 }}>
+          <span style={iconTile}>🏢</span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>Sign up as a Business</span>
+            <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#1a1a1a' }}>Storefront, 🏢 badge &amp; Dealer status · 14 days free, then €29/mo</span>
+          </span>
+          <span style={{ color: 'var(--orange)', fontWeight: 900, flexShrink: 0 }}>›</span>
         </button>
       </ActionPanel>
     )
