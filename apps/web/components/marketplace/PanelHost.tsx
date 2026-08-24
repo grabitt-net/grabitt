@@ -967,14 +967,19 @@ function PanelBody() {
           )}
         </div>
 
-        {/* Business upsell — routes to the Business subscription signup */}
-        <button onClick={() => openPanel('business')} style={{ display: 'flex', gap: 10, alignItems: 'center', width: '100%', textAlign: 'left', background: '#FFF9F5', border: '1.5px solid var(--orange)', borderRadius: 14, padding: '11px 12px', cursor: 'pointer', marginTop: 12 }}>
-          <span style={{ ...iconTile, width: 36, height: 36, fontSize: 18 }}>🏢</span>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>Sign up as a Business</span>
-            <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888' }}>Storefront &amp; lower fees · 14 days free</span>
-          </span>
-        </button>
+        {/* Sign-up upsells — Business and Charity / Blue Light / Student, side by side */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+          <button onClick={() => openPanel('business')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 5, background: '#FFF9F5', border: '1.5px solid var(--orange)', borderRadius: 14, padding: '13px 10px', cursor: 'pointer' }}>
+            <span style={{ ...iconTile, width: 34, height: 34, fontSize: 17 }}>🏢</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>Sign up as a Business</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', lineHeight: 1.3 }}>Storefront &amp; lower fees · 14 days free</span>
+          </button>
+          <button onClick={() => { closePanel(); window.location.href = '/account?section=addbiz' }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 5, background: '#fff', border: '1.5px solid #eef0f4', borderRadius: 14, padding: '13px 10px', cursor: 'pointer' }}>
+            <span style={{ ...iconTile, width: 34, height: 34, fontSize: 17, background: '#eef4ff', color: '#3b6fd4' }}>❤️</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>Charity / Blue Light / Student</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', lineHeight: 1.3 }}>Apply for a reduced or free rate</span>
+          </button>
+        </div>
       </ActionPanel>
     )
   }
