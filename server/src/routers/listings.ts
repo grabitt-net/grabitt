@@ -182,7 +182,7 @@ export const listingsRouter = router({
         sellerId: { not: ctx.user.id },
         ...(depts.length ? { department: { in: depts as never } } : {}),
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { bumpedAt: 'desc' },
       take: 12,
       include: { seller: { select: { id: true, displayName: true, avatar: true, grade: true } } },
     })
@@ -418,7 +418,7 @@ export const listingsRouter = router({
       if (!seller) throw new TRPCError({ code: 'NOT_FOUND' })
       const listings = await ctx.prisma.listing.findMany({
         where: { sellerId: input.sellerId, status: 'active' },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { bumpedAt: 'desc' },
         take: 60,
         select: { id: true, title: true, price: true, images: true, location: true, department: true },
       })
@@ -738,7 +738,9 @@ export const listingsRouter = router({
         ? { price: 'asc' as const }
         : sort === 'price_desc'
         ? { price: 'desc' as const }
-        : { createdAt: 'desc' as const }
+        // "Newest" ranks by the freshness clock so weekly-refreshed listings
+        // (and relists) rise back to the top of the queue.
+        : { bumpedAt: 'desc' as const }
 
       const [items, total] = await Promise.all([
         ctx.prisma.listing.findMany({ where, skip, take: limit, orderBy, include: { seller: { select: { id: true, displayName: true, grade: true, avgRating: true } } } }),

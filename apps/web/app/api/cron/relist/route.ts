@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic'
 // free, up to 3 times. After the 3rd relist + 21 more days it expires.
 // Triggered by Vercel Cron (see vercel.json); protected by CRON_SECRET.
 const RELIST_DAYS = 21
+const HANDY_RELIST_DAYS = 30   // Handy Help posts run a 30-day cycle
 const MAX_RELISTS = 3
 const EXCLUDED = ['jobs', 'property'] as const
 
@@ -37,12 +38,15 @@ export async function GET(req: Request) {
         department: { notIn: EXCLUDED as unknown as never[] },
         createdAt: { lt: cutoff },
       },
-      select: { id: true, sellerId: true, title: true, relistCount: true, images: true },
+      select: { id: true, sellerId: true, title: true, relistCount: true, images: true, department: true, createdAt: true },
       take: BATCH,
     })
     if (due.length === 0) break
     scanned += due.length
+    const handyCutoff = new Date(); handyCutoff.setDate(handyCutoff.getDate() - HANDY_RELIST_DAYS)
     for (const l of due) {
+    // Handy Help runs a longer 30-day cycle — skip until it's actually due.
+    if (l.department === 'handy_help' && l.createdAt >= handyCutoff) continue
     if (l.relistCount < MAX_RELISTS) {
       // Rotate the main photo on each relist so a refreshed listing looks new
       // in the feed — the first image moves to the back, promoting the next one.
@@ -52,7 +56,7 @@ export async function GET(req: Request) {
         : l.images
       await prisma.listing.update({
         where: { id: l.id },
-        data: { relistCount: { increment: 1 }, createdAt: new Date(), images: rotated },
+        data: { relistCount: { increment: 1 }, createdAt: new Date(), bumpedAt: new Date(), images: rotated },
       })
       await prisma.notification.create({
         data: {
