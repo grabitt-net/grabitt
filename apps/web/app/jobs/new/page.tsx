@@ -10,13 +10,17 @@ import PanelHost from '@/components/marketplace/PanelHostLazy'
 import type { JobQuestion, JobQuestionType } from '@/lib/jobQuestions'
 import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
 import { GC_TOWNS } from '@/lib/gcTowns'
+import { JOB_SECTORS, JOB_LANGUAGES } from '@/lib/jobCategories'
+
+// Experience-required buckets — same vocabulary as the candidate profile; the
+// value is the lower-bound months stored on the advert for auto-matching.
+const EXP_REQUIRED: [string, number][] = [['<3m', 0], ['<6m', 3], ['<1y', 6], ['1-2y', 12], ['2+y', 24]]
 
 const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
 
 const TYPES: [string, string][] = [
   ['Full Time', 'full_time'], ['Part Time', 'part_time'], ['Contract', 'contract'], ['Temp', 'temporary'], ['Volunteer', 'volunteer'],
 ]
-const SECTORS = ['Hostelería', 'Retail', 'Construcción', 'Administración', 'Salud', 'Educación', 'Transporte', 'Turismo', 'Limpieza', 'Tech / IT', 'Other']
 
 export default function PostJobPage() {
   const router = useRouter()
@@ -26,6 +30,13 @@ export default function PostJobPage() {
     remote: false, hours: '', startDate: '', description: '',
   })
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+  // Structured matching data (canonical taxonomy) captured for candidate auto-matching.
+  const [roles, setRoles] = useState<string[]>([])
+  const [expMonths, setExpMonths] = useState<number | null>(null)
+  const [languages, setLanguages] = useState<string[]>([])
+  const sectorJobs = JOB_SECTORS.find(s => s.name === f.sector)?.jobs ?? []
+  const toggleRole = (r: string) => setRoles(p => p.includes(r) ? p.filter(x => x !== r) : [...p, r])
+  const toggleLang = (l: string) => setLanguages(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [questions, setQuestions] = useState<JobQuestion[]>([])
@@ -69,6 +80,9 @@ export default function PostJobPage() {
         location: f.location.trim(),
         ...(f.address.trim() && { address: f.address.trim() }),
         ...(f.sector && { sector: f.sector }),
+        ...(roles.length && { roles }),
+        ...(languages.length && { languages }),
+        ...(expMonths != null && { experienceMonths: expMonths }),
         ...(f.description.trim() && { description: f.description.trim() }),
         ...(f.salaryMin && { salaryMin: Number(f.salaryMin) }),
         ...(f.salaryMax && { salaryMax: Number(f.salaryMax) }),
@@ -125,8 +139,8 @@ export default function PostJobPage() {
             </div>
             <Field label="Establishment type *"><input value={f.establishmentType} onChange={e => set('establishmentType', e.target.value)} placeholder="e.g. Beach bar, 4-star hotel, Family restaurant" style={inp} /></Field>
             <Field label="Category / sector">
-              <select value={f.sector} onChange={e => set('sector', e.target.value)} style={sel}>
-                <option value="">Select…</option>{SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+              <select value={f.sector} onChange={e => { set('sector', e.target.value); setRoles([]) }} style={sel}>
+                <option value="">Select…</option>{JOB_SECTORS.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
               </select>
             </Field>
           </Row>
@@ -137,6 +151,41 @@ export default function PostJobPage() {
             <Field label="Hours of operation"><input value={f.hours} onChange={e => set('hours', e.target.value)} placeholder="e.g. Mon–Fri 9:00–17:00" style={inp} /></Field>
           </Row>
           <label style={chk}><input type="checkbox" checked={f.remote} onChange={e => set('remote', e.target.checked)} /> Remote / work from home</label>
+        </Section>
+
+        {/* Candidate matching — captured against the same taxonomy as jobseeker
+            profiles, so we can auto-match this advert to people looking for work. */}
+        <Section title="Candidate matching">
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 10, lineHeight: 1.5 }}>
+            Tell us the exact role(s), experience and languages you need. We use this to match your advert to suitable candidates (and to power employer searches).
+          </div>
+          {f.sector ? (
+            <Field label="Role(s) this advert covers">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                {sectorJobs.map(r => {
+                  const on = roles.includes(r)
+                  return <button key={r} type="button" onClick={() => toggleRole(r)} style={pill(on)}>{r}</button>
+                })}
+              </div>
+            </Field>
+          ) : (
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#b45309', marginBottom: 10 }}>Pick a category / sector above to choose the specific roles.</div>
+          )}
+          <Field label="Minimum experience required">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              {EXP_REQUIRED.map(([lbl, m]) => (
+                <button key={lbl} type="button" onClick={() => setExpMonths(expMonths === m ? null : m)} style={pill(expMonths === m)}>{lbl}</button>
+              ))}
+            </div>
+          </Field>
+          <Field label="Languages required">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              {JOB_LANGUAGES.map(([, label]) => {
+                const on = languages.includes(label)
+                return <button key={label} type="button" onClick={() => toggleLang(label)} style={pill(on)}>{label}</button>
+              })}
+            </div>
+          </Field>
         </Section>
 
         <Section title="Location">
@@ -255,3 +304,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const inp: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 8, padding: '9px 11px', fontFamily: 'var(--font-ui)', fontSize: 13, boxSizing: 'border-box', background: '#fff', outline: 'none' }
 const sel: React.CSSProperties = { ...inp, cursor: 'pointer', fontWeight: 700 }
 const chk: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 700, color: '#555', cursor: 'pointer' }
+const pill = (on: boolean): React.CSSProperties => ({ border: `1.5px solid ${on ? 'var(--orange)' : '#e5dccd'}`, background: on ? '#FFF3EE' : '#fff', color: on ? 'var(--orange)' : '#555', borderRadius: 999, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 })

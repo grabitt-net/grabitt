@@ -1315,6 +1315,12 @@ model JobListing {
   skills       String[]
   applyUrl     String?
   expiresAt    DateTime?
+  // Structured recruitment taxonomy for candidate auto-matching — same
+  // vocabulary as SeekerProfile (canonical JOB_SECTORS roles, language labels,
+  // experience lower bound in months).
+  roles        String[]  @default([])
+  languages    String[]  @default([])
+  experienceMonths Int?
   // Extended job-post details (Post a Job form)
   sector       String?   // job category e.g. Hostelería, Retail, Construction
   address      String?   // full address (also drives the listing map)
