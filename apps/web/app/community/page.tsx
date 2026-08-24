@@ -20,7 +20,7 @@ export default function CommunityIndexPage() {
       if (!token) token = await refreshAuthToken()
       if (!token) { router.replace('/auth?next=/community'); return }
       setAuthed(true)
-      createLooseTrpcClient().community.list.query({ limit: 30 }).then(p => setPosts(p as Post[])).catch(() => {})
+      createLooseTrpcClient().community.list.query({ limit: 30, section: 'guide' }).then(p => setPosts(p as Post[])).catch(() => {})
     })()
   }, [router])
 

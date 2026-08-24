@@ -13,17 +13,20 @@ const CATEGORIES = ['Guide', 'Island Tips', 'Economy', 'Selling', 'Safety', 'New
 const EMOJIS = ['📰', '🏷️', '📊', '🛡️', '💼', '🌴', '💡', '🛒', '📈', '✨']
 const EMPTY = { title: '', excerpt: '', body: '', category: 'Guide', emoji: '📰', imageUrl: '', published: true, sortOrder: 0 }
 
-export default function CommunityView() {
+// Manages one blog section: "guide" (Grabitt Guides) or "news" (News).
+export default function CommunityView({ section = 'guide' }: { section?: 'guide' | 'news' }) {
   const api = useCrmApi()
+  const isNews = section === 'news'
+  const noun = isNews ? 'article' : 'guide'
   const [posts, setPosts] = useState<Post[]>([])
   const [editing, setEditing] = useState<string | 'new' | null>(null)
-  const [form, setForm] = useState({ ...EMPTY })
+  const [form, setForm] = useState({ ...EMPTY, category: isNews ? 'News' : 'Guide' })
   const [saving, setSaving] = useState(false)
 
-  const load = () => api.communityPosts().then(p => setPosts((p ?? []) as Post[])).catch(() => {})
-  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const load = () => api.communityPosts(section).then(p => setPosts((p ?? []) as Post[])).catch(() => {})
+  useEffect(() => { load() }, [section]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function openNew() { setForm({ ...EMPTY, sortOrder: posts.length + 1 }); setEditing('new') }
+  function openNew() { setForm({ ...EMPTY, category: isNews ? 'News' : 'Guide', sortOrder: posts.length + 1 }); setEditing('new') }
   function openEdit(p: Post) {
     setForm({ title: p.title, excerpt: p.excerpt, body: p.body, category: p.category, emoji: p.emoji, imageUrl: p.imageUrl ?? '', published: p.published, sortOrder: p.sortOrder })
     setEditing(p.id)
@@ -39,6 +42,7 @@ export default function CommunityView() {
         excerpt: form.excerpt.trim(),
         body: form.body.trim(),
         category: form.category,
+        section,
         emoji: form.emoji,
         imageUrl: form.imageUrl.trim() || null,
         published: form.published,
@@ -49,11 +53,11 @@ export default function CommunityView() {
   }
 
   async function togglePublished(p: Post) {
-    await api.upsertCommunityPost({ id: p.id, title: p.title, excerpt: p.excerpt, body: p.body, category: p.category, emoji: p.emoji, imageUrl: p.imageUrl, published: !p.published, sortOrder: p.sortOrder })
+    await api.upsertCommunityPost({ id: p.id, title: p.title, excerpt: p.excerpt, body: p.body, category: p.category, section, emoji: p.emoji, imageUrl: p.imageUrl, published: !p.published, sortOrder: p.sortOrder })
     load()
   }
   async function remove(id: string) {
-    if (!(await confirmDialog({ message: 'Delete this guide? This cannot be undone.', confirmLabel: 'Delete', danger: true }))) return
+    if (!(await confirmDialog({ message: `Delete this ${noun}? This cannot be undone.`, confirmLabel: 'Delete', danger: true }))) return
     await api.removeCommunityPost(id); load()
   }
 
@@ -61,15 +65,15 @@ export default function CommunityView() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>Grabitt Guides</span> — community content</h2>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>Published guides appear on the homepage and at /community.</div>
+          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>{isNews ? 'Grabitt News' : 'Grabitt Guides'}</span> — {isNews ? 'blog articles' : 'community content'}</h2>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{isNews ? 'Published articles appear at /news.' : 'Published guides appear on the homepage and at /community.'}</div>
         </div>
-        <button onClick={openNew} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>+ New Guide</button>
+        <button onClick={openNew} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>+ New {isNews ? 'article' : 'guide'}</button>
       </div>
 
       {editing && (
         <div style={{ background: '#fff', borderRadius: 14, padding: 18, marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ fontFamily: 'var(--font-ui)', fontWeight: 800, marginBottom: 12 }}>{editing === 'new' ? 'New guide' : 'Edit guide'}</h3>
+          <h3 style={{ fontFamily: 'var(--font-ui)', fontWeight: 800, marginBottom: 12 }}>{editing === 'new' ? `New ${noun}` : `Edit ${noun}`}</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
             <div style={{ gridColumn: '1/-1' }}><Field label="Title">
               <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} style={inp} />
@@ -100,7 +104,7 @@ export default function CommunityView() {
           </label>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
             <button onClick={() => setEditing(null)} style={{ padding: '7px 16px', borderRadius: 50, border: '1.5px solid #e5e7eb', background: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
-            <button onClick={save} disabled={saving || !form.title || !form.excerpt || !form.body} style={{ padding: '7px 18px', borderRadius: 50, border: 'none', background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 12, cursor: 'pointer', opacity: saving || !form.title || !form.excerpt || !form.body ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save guide'}</button>
+            <button onClick={save} disabled={saving || !form.title || !form.excerpt || !form.body} style={{ padding: '7px 18px', borderRadius: 50, border: 'none', background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 12, cursor: 'pointer', opacity: saving || !form.title || !form.excerpt || !form.body ? 0.6 : 1 }}>{saving ? 'Saving…' : `Save ${noun}`}</button>
           </div>
         </div>
       )}
@@ -123,7 +127,7 @@ export default function CommunityView() {
           </div>
         ))}
         {posts.length === 0 && (
-          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px 20px', color: '#ccc', fontFamily: 'var(--font-ui)', fontWeight: 800 }}>No guides yet — add one to show it on the site</div>
+          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px 20px', color: '#ccc', fontFamily: 'var(--font-ui)', fontWeight: 800 }}>No {noun}s yet — add one to show it on the site</div>
         )}
       </div>
     </div>

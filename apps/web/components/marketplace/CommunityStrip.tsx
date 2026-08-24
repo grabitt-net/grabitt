@@ -10,7 +10,7 @@ type Post = { id: string; title: string; excerpt: string; category: string; emoj
 export default function CommunityStrip() {
   const [posts, setPosts] = useState<Post[]>([])
   useEffect(() => {
-    createLooseTrpcClient().community.list.query({ limit: 8 })
+    createLooseTrpcClient().community.list.query({ limit: 8, section: 'guide' })
       .then(p => setPosts(p as Post[]))
       .catch(() => {})
   }, [])

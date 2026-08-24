@@ -9,7 +9,7 @@ export type IconName =
   | 'message' | 'package' | 'lifebuoy' | 'menu' | 'cart' | 'plus'
   | 'shield' | 'check' | 'star' | 'arrowRight' | 'arrowLeft' | 'truck' | 'sparkle'
   | 'briefcase' | 'home' | 'building' | 'zap' | 'tag' | 'share' | 'pencil' | 'trash' | 'lock'
-  | 'chart' | 'clipboard' | 'award' | 'trendingUp' | 'eye' | 'wallet' | 'wrench' | 'file'
+  | 'chart' | 'clipboard' | 'award' | 'trendingUp' | 'eye' | 'wallet' | 'wrench' | 'file' | 'newspaper'
 
 const PATHS: Record<IconName, string> = {
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
@@ -49,6 +49,7 @@ const PATHS: Record<IconName, string> = {
   wallet: '<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h16a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M16 12h.01"/>',
   wrench: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2 2.6-2.6Z"/>',
   file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/>',
+  newspaper: '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8Z"/>',
 }
 
 export default function Icon({ name, size = 20, style, strokeWidth = 1.9 }: {

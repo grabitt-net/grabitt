@@ -39,6 +39,7 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
     { icon: 'bell', label: 'Alerts', panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
     { icon: 'heart', label: 'Saved', panel: 'favourites', href: '/favourites' },
     { icon: 'message', label: 'Messages', panel: 'messages', href: '/messages' },
+    { icon: 'newspaper', label: 'News', panel: 'help', href: '/news' },
     { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
     { icon: 'lifebuoy', label: 'Help', panel: 'help', href: '/help' },
   ]
@@ -76,8 +77,8 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
       </div>
 
       {/* Sell CTA */}
-      <button onClick={() => openPanel('sell')} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>
-        <Icon name="plus" size={17} strokeWidth={2.4} /> {t('Sell')}
+      <button onClick={() => openPanel('sell')} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 22px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>
+        {t('Sell')}
       </button>
 
       {/* Account actions */}

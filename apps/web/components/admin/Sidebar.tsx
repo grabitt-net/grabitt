@@ -50,6 +50,7 @@ const SECTIONS: Section[] = [
       { icon: '🖼️', label: 'Homepage', id: 'homepage' },
       { icon: '🎯', label: 'Banners', id: 'banners' },
       { icon: '📰', label: 'Guides', id: 'community' },
+      { icon: '🗞️', label: 'News', id: 'news' },
       { icon: '❓', label: 'Help', id: 'help' },
     ],
   },

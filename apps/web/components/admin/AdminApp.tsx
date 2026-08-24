@@ -60,6 +60,7 @@ const COMMANDS: Command[] = [
   { id: 'homepage', label: 'Homepage', icon: '🖼️', group: 'Content' },
   { id: 'banners', label: 'Banners', icon: '🎯', group: 'Content', keywords: 'ads sponsor' },
   { id: 'community', label: 'Guides', icon: '📰', group: 'Content' },
+  { id: 'news', label: 'News', icon: '🗞️', group: 'Content', keywords: 'blog articles' },
   { id: 'help', label: 'Help', icon: '❓', group: 'Content', keywords: 'faq support' },
   { id: 'sponsorship', label: 'Sponsorship', icon: '📣', group: 'Content', keywords: 'advertising banner price sponsor placement' },
   { id: 'directory', label: 'Directory', icon: '📒', group: 'Content', keywords: 'advertiser business directory listing' },
@@ -83,7 +84,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'help' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'news' | 'help' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -223,7 +224,8 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'audit'      && <AuditTrailView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'compliance' && <ComplianceView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'homepage'   && <HomepageView onEditBanners={(pos) => { setBannerPosition(pos); setView('banners') }} />}
-                {view === 'community'  && <CommunityView />}
+                {view === 'community'  && <CommunityView section="guide" />}
+                {view === 'news'       && <CommunityView section="news" />}
                 {view === 'help'       && <HelpView />}
                 {view === 'rewards'    && <RewardsView />}
                 {view === 'planner'    && <PlannerView />}
