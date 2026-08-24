@@ -226,11 +226,11 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       {/* Title with flanking rules */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '10px 0 42px' }}>
         <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
-        <span style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 900, color: '#1e2b55', letterSpacing: 3 }}>{t('MY HUB')}</span>
+        <span style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 900, color: '#1e2b55', letterSpacing: 3 }}>{effBiz ? t('BUSINESS HUB') : t('MY HUB')}</span>
         <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
       </div>
 
-      <div style={{ position: 'relative', background: '#f4f6fb', borderRadius: 20, padding: '48px 16px 22px', boxShadow: '0 6px 24px rgba(30,43,85,0.07)' }}>
+      <div style={{ position: 'relative', background: '#f4f6fb', borderRadius: 20, padding: '48px 16px 22px', boxShadow: '0 6px 24px rgba(30,43,85,0.07)', border: '1.5px solid #d7deec' }}>
         {/* Dashboard pill — pale orange, matching the profile box */}
         <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#ffe0bb', color: 'var(--orange)', borderRadius: 999, padding: '8px 22px', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 900, letterSpacing: 2 }}>{t('Dashboard')}</div>
 
@@ -317,24 +317,6 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
         </div>
       </div>
 
-      {/* Quick-action pills — under the dashboard, above the menu, centred. */}
-      {effBiz && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14, justifyContent: 'center' }}>
-          {([
-            ['🏷️', t('Sell now'), () => openPanel('sell' as PanelId)],
-            ['💼', t('Recruit'), () => router.push('/recruitment')],
-            ['🏠', t('Property'), () => router.push('/property/new')],
-            ['📣', t('Buy banners'), () => router.push('/advertise')],
-            ['⚡', t('Grabitt now'), () => router.push('/grabit')],
-          ] as [string, string, () => void][]).map(([emoji, label, onClick]) => (
-            <button key={label} onClick={onClick} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)',
-              borderRadius: 999, padding: '9px 16px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer',
-            }}><span>{emoji}</span>{label}</button>
-          ))}
-        </div>
-      )}
-
       {/* ── MENU + PANEL ────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gap: 14, gridTemplateColumns: '1fr', marginTop: 14 }} className="member-body">
         <nav style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 8, display: 'flex', flexDirection: 'column', gap: 4, alignSelf: 'start' }} className="member-menu">
@@ -359,6 +341,23 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
         </nav>
 
         <section id="hub-panel" style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+          {/* Quick-action pills — centred directly over the sponsor banner. */}
+          {effBiz && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+              {([
+                ['🏷️', t('Sell now'), () => openPanel('sell' as PanelId)],
+                ['💼', t('Recruit'), () => router.push('/recruitment')],
+                ['🏠', t('Property'), () => router.push('/property/new')],
+                ['📣', t('Buy banners'), () => router.push('/advertise')],
+                ['⚡', t('Grabitt now'), () => router.push('/grabit')],
+              ] as [string, string, () => void][]).map(([emoji, label, onClick]) => (
+                <button key={label} onClick={onClick} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)',
+                  borderRadius: 999, padding: '9px 16px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer',
+                }}><span>{emoji}</span>{label}</button>
+              ))}
+            </div>
+          )}
           {/* Advertising banner at the top of every menu section. */}
           <BannerSlot position="user_dashboard" aspect="6 / 1" label="Dashboard" padded={false} />
 
