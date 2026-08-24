@@ -1,4 +1,5 @@
 import { prisma } from 'server/src/db'
+import { rotateCovers } from '@/lib/rotateCovers'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -41,12 +42,10 @@ export async function GET(req: Request) {
     if (due.length === 0) break
     scanned += due.length
     for (const l of due) {
-      // Rotate the main photo so the refreshed listing looks new in the feed —
-      // the first image moves to the back, promoting the next. Single-photo
-      // listings just get bumped.
-      const rotated = Array.isArray(l.images) && l.images.length > 1
-        ? [...l.images.slice(1), l.images[0]]
-        : l.images
+      // Rotate the cover among the first 3 photos (the designated front covers)
+      // so a refreshed listing looks new without disturbing the gallery order of
+      // the rest. Fewer than 3 photos: rotate what's there.
+      const rotated = rotateCovers(l.images)
       await prisma.listing.update({ where: { id: l.id }, data: { bumpedAt: new Date(), images: rotated } })
       refreshed++
     }

@@ -1,4 +1,5 @@
 import { prisma } from 'server/src/db'
+import { rotateCovers } from '@/lib/rotateCovers'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -48,12 +49,8 @@ export async function GET(req: Request) {
     // Handy Help runs a longer 30-day cycle — skip until it's actually due.
     if (l.department === 'handy_help' && l.createdAt >= handyCutoff) continue
     if (l.relistCount < MAX_RELISTS) {
-      // Rotate the main photo on each relist so a refreshed listing looks new
-      // in the feed — the first image moves to the back, promoting the next one.
-      // A listing with only one photo is left as-is.
-      const rotated = Array.isArray(l.images) && l.images.length > 1
-        ? [...l.images.slice(1), l.images[0]]
-        : l.images
+      // Rotate the cover among the first 3 photos (front covers) on each relist.
+      const rotated = rotateCovers(l.images)
       await prisma.listing.update({
         where: { id: l.id },
         data: { relistCount: { increment: 1 }, createdAt: new Date(), bumpedAt: new Date(), images: rotated },

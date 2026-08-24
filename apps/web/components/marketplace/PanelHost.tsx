@@ -3507,8 +3507,8 @@ function PanelBody() {
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed #e0d8d0', borderRadius: 16, padding: 24, cursor: 'pointer', background: '#faf7f4' }}>
                     <Logo height={40} style={{ margin: '0 auto 14px' }} />
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>Add up to 8 photos</div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Tap to choose from your device</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>Add 6–8 photos</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Tap to choose from your device · 6 minimum</div>
                     <input type="file" accept="image/*" multiple onChange={handleFileChange} style={{ display: 'none' }} />
                   </label>
                 </div>
@@ -3516,15 +3516,18 @@ function PanelBody() {
                 {photos.length > 0 && (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 14 }}>
                     {photos.map((src, i) => (
-                      <div key={i} style={{ position: 'relative', paddingTop: '100%', borderRadius: 10, overflow: 'hidden', background: '#f5f0e8' }}>
+                      <div key={i} style={{ position: 'relative', paddingTop: '100%', borderRadius: 10, overflow: 'hidden', background: '#f5f0e8', border: i < 3 ? '2px solid var(--orange)' : '2px solid transparent' }}>
                         <img src={src} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                        {i === 0 && <div style={{ position: 'absolute', bottom: 4, left: 4, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: 8, fontFamily: 'var(--font-ui)', fontWeight: 900, padding: '2px 5px', borderRadius: 4 }}>MAIN</div>}
+                        {i < 3 && <div style={{ position: 'absolute', bottom: 4, left: 4, background: 'var(--orange)', color: '#fff', fontSize: 8, fontFamily: 'var(--font-ui)', fontWeight: 900, padding: '2px 5px', borderRadius: 4 }}>{i === 0 ? 'COVER 1 · MAIN' : `COVER ${i + 1}`}</div>}
                         <button onClick={() => setPhotos(prev => prev.filter((_, j) => j !== i))} style={{ position: 'absolute', top: 3, right: 3, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 20, height: 20, color: '#fff', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                       </div>
                     ))}
                   </div>
                 )}
 
+                <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 10, fontFamily: 'var(--font-ui)', fontSize: 11, color: '#a8460f', lineHeight: 1.5 }}>
+                  🖼️ <strong>Your first 3 photos are your front covers.</strong> Make them clear and well-lit — if the item hasn&apos;t sold, we rotate through these as the main cover each week to keep your listing looking fresh.
+                </div>
                 <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11, color: '#a8460f' }}>
                   💡 Good photos = 3× more offers. Shoot in natural light against a plain background.
                 </div>
@@ -3857,13 +3860,13 @@ function PanelBody() {
                   if (next) setStep(next)
                 }}
                 disabled={
-                  (step === 'photos' && false) ||
+                  (step === 'photos' && photos.length < 6) ||
                   (step === 'details' && (!title.trim() || !dept || !condition)) ||
                   (step === 'price' && !freeItem && !price)
                 }
-                style={{ flex: 2, background: (step === 'details' && (!title.trim() || !dept || !condition)) || (step === 'price' && !freeItem && !price) ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
+                style={{ flex: 2, background: (step === 'photos' && photos.length < 6) || (step === 'details' && (!title.trim() || !dept || !condition)) || (step === 'price' && !freeItem && !price) ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
               >
-                {step === 'photos' ? (photos.length > 0 ? `${t('Continue')} · ${photos.length} 📷 →` : `${t('Add photos')} →`) : `${t('Continue')} →`}
+                {step === 'photos' ? (photos.length >= 6 ? `${t('Continue')} · ${photos.length} 📷 →` : `${t('Add at least 6 photos')} (${photos.length}/6)`) : `${t('Continue')} →`}
               </button>
             )}
           </div>
