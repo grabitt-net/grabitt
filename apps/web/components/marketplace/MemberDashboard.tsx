@@ -870,9 +870,9 @@ function GdprView() {
 
 // Column theme + a heading with an icon in a coloured circle.
 function ColHeader({ icon, title, color, tint }: { icon: IconName; title: string; color: string; tint: string }) {
+  // Left padding matches the metric pills' inner padding so the header icon
+  // (and text) line up exactly with the pill icons/text below.
   return (
-    {/* Left padding matches the metric pills' inner padding so the header icon
-        (and text) line up exactly with the pill icons/text below. */}
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, padding: '0 14px' }}>
       <span style={{ width: 40, height: 40, borderRadius: '50%', background: tint, color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name={icon} size={18} strokeWidth={2.2} /></span>
       <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 900, color: '#1e2b55', letterSpacing: 0.5 }}>{title}</span>
