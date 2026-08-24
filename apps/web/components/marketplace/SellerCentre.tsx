@@ -6,6 +6,9 @@ import { FEE_RATES, LISTING_CAPS, GRADE_THRESHOLDS } from '@grabitt/design-token
 import { t } from '@/lib/i18n'
 import BannerSlot from './BannerSlot'
 
+// CSV bulk import is hidden for now (reintroduce later) — set NEXT_PUBLIC_CSV_IMPORT=1.
+const CSV_IMPORT_ENABLED = process.env.NEXT_PUBLIC_CSV_IMPORT === '1'
+
 // The seller info centre from the prototype's profile hero: which grade you're
 // on and what it costs you, how far off the next one you are, the full ladder so
 // the upgrade path is visible, how complete your profile is, and how your
@@ -181,7 +184,7 @@ export default function SellerCentre() {
       {/* ── Seller dashboard ──────────────────────────────────────────────── */}
       {tab === 'dashboard' && (
         <div style={{ borderTop: '1px solid #f0ece5', paddingTop: 12 }}>
-          {data.isBusiness && (
+          {CSV_IMPORT_ENABLED && data.isBusiness && (
             <Link href="/sell/import" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', background: '#fff8f0', border: '1px solid #ffd4a0', borderRadius: 12, padding: '11px 12px', marginBottom: 12 }}>
               <span style={{ fontSize: 20 }}>📄</span>
               <span style={{ flex: 1, minWidth: 0 }}>

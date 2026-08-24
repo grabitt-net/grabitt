@@ -937,6 +937,8 @@ function PanelBody() {
 
   // ── SELL ────────────────────────────────────────────────────────────────────
   if (panel.id === 'sell') {
+    // CSV bulk import hidden for now (reintroduce later via NEXT_PUBLIC_CSV_IMPORT=1).
+    const CSV_IMPORT_ENABLED = process.env.NEXT_PUBLIC_CSV_IMPORT === '1'
     // Dashboard-consistent card styling (matches My Hub / Business Hub).
     const optionCard: React.CSSProperties = { display: 'flex', gap: 12, alignItems: 'center', width: '100%', textAlign: 'left', background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '12px 14px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }
     const iconTile: React.CSSProperties = { width: 40, height: 40, borderRadius: '50%', background: '#FFF3EE', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19, flexShrink: 0 }
@@ -961,13 +963,13 @@ function PanelBody() {
           ))}
         </div>
 
-        <button onClick={() => openPanel('createListing')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>🚀 Start listing</button>
-
-        {/* Bulk import — Business feature; the page itself gates non-business users */}
-        <button onClick={() => { closePanel(); window.location.href = '/sell/import' }} style={{ ...optionCard, justifyContent: 'center', marginTop: 10, color: '#1a1a1a', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800 }}>📄 Bulk import from CSV · Business</button>
+        {/* Bulk import — hidden for now (reintroduce later via NEXT_PUBLIC_CSV_IMPORT=1). */}
+        {CSV_IMPORT_ENABLED && (
+          <button onClick={() => { closePanel(); window.location.href = '/sell/import' }} style={{ ...optionCard, justifyContent: 'center', marginTop: 10, color: '#1a1a1a', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800 }}>📄 Bulk import from CSV · Business</button>
+        )}
 
         {/* Business upsell — routes to the Business subscription signup */}
-        <button onClick={() => openPanel('business')} style={{ ...optionCard, border: '1.5px solid var(--orange)', marginTop: 10 }}>
+        <button onClick={() => openPanel('business')} style={{ ...optionCard, border: '1.5px solid var(--orange)', marginTop: 12 }}>
           <span style={iconTile}>🏢</span>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>Sign up as a Business</span>
