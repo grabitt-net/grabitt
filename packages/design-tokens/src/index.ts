@@ -90,6 +90,17 @@ export const PROPERTY_PRICING = {
   businessBundles: { 5: 17500, 10: 35000 } as Record<number, number>,
 } as const
 
+// Handy Help — classified section (decided 2026-08). A personal account posts a
+// request for FREE. Business Lite / Directory accounts pay to place an advert or
+// to unlock a listing so they can reply. Every post is valid for 30 days.
+// Poster's details stay hidden until they accept a proposal.
+export const HANDY_PRICING = {
+  personalPostFree: true,
+  businessPlaceCents: 999,   // €9.99 for a business to place a Handy Help advert
+  businessUnlockCents: 299,  // €2.99 for a business to unlock a listing to reply
+  validityDays: 30,
+} as const
+
 // Standalone business-directory subscription (company name, phone, email,
 // website, short description, logo — not a storefront). NOTE: the CURRENT build
 // grants a directory entry only while a paid banner runs; this standalone
