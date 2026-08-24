@@ -20,6 +20,13 @@ export default function MemberStatusCard() {
 
   const load = () => trpcAuthed().status.mine.query().then(d => setMine(d as unknown as Mine)).catch(() => {})
   useEffect(() => { load() }, [])
+  // Deep-link ?apply=charity (from the Sell popup's Charity card) pre-opens that
+  // application straight away.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const a = new URLSearchParams(window.location.search).get('apply')
+    if (a && (MEMBER_STATUS_IDS as readonly string[]).includes(a)) setApplyFor(a)
+  }, [])
 
   const submit = async () => {
     if (!applyFor) return

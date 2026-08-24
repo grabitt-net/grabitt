@@ -974,10 +974,10 @@ function PanelBody() {
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>Sign up as a Business</span>
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', lineHeight: 1.3 }}>Storefront &amp; lower fees · 14 days free</span>
           </button>
-          <button onClick={() => { closePanel(); window.location.href = '/account?section=addbiz' }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 5, background: '#fff', border: '1.5px solid #eef0f4', borderRadius: 14, padding: '13px 10px', cursor: 'pointer' }}>
-            <span style={{ ...iconTile, width: 34, height: 34, fontSize: 17, background: '#eef4ff', color: '#3b6fd4' }}>❤️</span>
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>Charity / Blue Light / Student</span>
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', lineHeight: 1.3 }}>Apply for a reduced or free rate</span>
+          <button onClick={() => { closePanel(); window.location.href = '/account?section=addbiz&apply=charity' }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 5, background: '#fff', border: '1.5px solid #eef0f4', borderRadius: 14, padding: '13px 10px', cursor: 'pointer' }}>
+            <span style={{ ...iconTile, width: 34, height: 34, fontSize: 17, background: '#fdeaf0', color: '#e11d74' }}>❤️</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>Charity</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', lineHeight: 1.3 }}>Set up a verified charity profile — free</span>
           </button>
         </div>
       </ActionPanel>
