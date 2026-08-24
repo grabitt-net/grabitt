@@ -573,6 +573,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           </>)}
 
           {section === 'activity' && <HandyProposalsCard />}
+          {section === 'activity' && <HandyMyProposalsCard />}
 
           {section === 'activity' && (
             <div style={card}>
@@ -752,6 +753,35 @@ function HandyProposalsCard() {
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+// Handy Help — proposals I've sent as a responder, and their status.
+function HandyMyProposalsCard() {
+  const [rows, setRows] = useState<any[] | null>(null)
+  useEffect(() => { (trpcAuthed() as any).handy.myProposals.query().then((d: any) => setRows(d as any[])).catch(() => setRows([])) }, [])
+  if (rows !== null && rows.length === 0) return null
+  const STATUS: Record<string, { label: string; color: string }> = {
+    sent: { label: 'Awaiting reply', color: '#3b82f6' }, accepted: { label: 'Accepted ✓', color: '#16a34a' }, declined: { label: 'Declined', color: '#888' },
+  }
+  return (
+    <div style={card}>
+      <div style={cardHead}>🔧 {t('Handy Help — your responses')}</div>
+      {rows === null ? <Muted>{t('Loading…')}</Muted> : rows.map((p: any) => {
+        const st = STATUS[p.status] ?? STATUS.sent
+        const img = Array.isArray(p.listing?.images) ? p.listing.images[0] : null
+        return (
+          <div key={p.id} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '11px 0', borderBottom: '1px solid #f5f5f5' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{img ? <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🔧'}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.listing?.title ?? t('Post')}</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.message}</div>
+            </div>
+            <span style={{ flexShrink: 0, fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: st.color, background: `${st.color}18`, borderRadius: 50, padding: '3px 10px' }}>{st.label}</span>
+          </div>
+        )
+      })}
     </div>
   )
 }
