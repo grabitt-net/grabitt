@@ -3537,33 +3537,33 @@ function PanelBody() {
             {/* ── Step 2: Details ── */}
             {step === 'details' && (
               <>
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Title')} *</div>
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Title')} *</div>
                   <input value={title} onChange={e => setTitle(e.target.value)} placeholder='e.g. "iPhone 14 Pro — Unlocked, 256GB"' style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa', marginTop: 3 }}>{title.length}/80</div>
                 </div>
 
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Department')} *</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Department')} *</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                     {DEPTS.map(d => (
-                      <button key={d} onClick={() => setDept(d)} style={{ background: dept === d ? 'var(--orange)' : '#f5f0e8', color: dept === d ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{d}</button>
+                      <button key={d} onClick={() => setDept(d)} style={{ background: dept === d ? '#FFF3EE' : '#fff', color: dept === d ? 'var(--orange)' : '#555', border: `1.5px solid ${dept === d ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{d}</button>
                     ))}
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Condition')} *</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Condition')} *</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                     {CONDITIONS.map(c => (
-                      <button key={c} onClick={() => setCondition(c)} style={{ background: condition === c ? 'var(--sage)' : '#f5f0e8', color: condition === c ? '#fff' : '#555', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{c}</button>
+                      <button key={c} onClick={() => setCondition(c)} style={{ background: condition === c ? '#eefaf0' : '#fff', color: condition === c ? 'var(--sage)' : '#555', border: `1.5px solid ${condition === c ? 'var(--sage)' : '#e5dccd'}`, borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{c}</button>
                     ))}
                   </div>
                 </div>
 
                 {/* Item facts — optional, but they fill the buyer's Details panel */}
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Model / Brand')}, {t('Colour')} &amp; {t('Size')}</div>
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Model / Brand')}, {t('Colour')} &amp; {t('Size')}</div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <input value={brand} onChange={e => setBrand(e.target.value)} placeholder={t('Model / Brand')} style={{ flex: 1, minWidth: 0, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
                     <input value={colour} onChange={e => setColour(e.target.value)} placeholder={t('Colour')} style={{ flex: 1, minWidth: 0, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
@@ -3600,8 +3600,8 @@ function PanelBody() {
                   )
                 })()}
 
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Description</div>
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>Description</div>
                   <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder='Describe the item — include any defects, accessories included, reason for selling...' rows={4} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', resize: 'none', boxSizing: 'border-box' }} />
                 </div>
 
