@@ -48,6 +48,27 @@ export default function NewPropertyPage() {
   // list, so buyers can reach them by WhatsApp / email directly.
   const [agent, setAgent] = useState({ agencyName: '', agentWhatsapp: '', agentEmail: '' })
 
+  // Auto-save draft — never lose a half-written property advert. Saved to the
+  // browser; offered back on return; cleared once the property is posted.
+  const PROP_DRAFT_KEY = 'grabitt_property_draft'
+  const [draftFound, setDraftFound] = useState<any | null>(null)
+  const draftBody = JSON.stringify({ f, features })
+  useEffect(() => {
+    if (f.title.trim() || f.address.trim() || f.description.trim()) {
+      try { localStorage.setItem(PROP_DRAFT_KEY, draftBody) } catch {}
+    }
+  }, [draftBody, f.title, f.address, f.description])
+  useEffect(() => {
+    try { const raw = localStorage.getItem(PROP_DRAFT_KEY); if (raw) { const d = JSON.parse(raw); if (d?.f && (d.f.title || d.f.address)) setDraftFound(d) } } catch {}
+  }, [])
+  const restoreDraft = () => {
+    const d = draftFound; if (!d) return
+    if (d.f) setF(d.f)
+    if (Array.isArray(d.features)) setFeatures(d.features)
+    setDraftFound(null)
+  }
+  const discardDraft = () => { try { localStorage.removeItem(PROP_DRAFT_KEY) } catch {}; setDraftFound(null) }
+
   const set = (k: string, v: any) => setF(prev => ({ ...prev, [k]: v }))
   const setAg = (k: string, v: string) => setAgent(prev => ({ ...prev, [k]: v }))
 
@@ -133,6 +154,7 @@ export default function NewPropertyPage() {
         ...(f.distTown && { distTown: Number(f.distTown) }),
         ...(features.length ? { features } : {}),
       })
+      try { localStorage.removeItem(PROP_DRAFT_KEY) } catch {}
       // Beyond the free allowance a property is €39 — pay, then the webhook
       // publishes it. Within allowance it's already live.
       if (listing?.pendingPayment && listing?.checkoutUrl) { window.location.href = listing.checkoutUrl; return }
@@ -156,6 +178,16 @@ export default function NewPropertyPage() {
       {gate === 'checking' && <div style={{ textAlign: 'center', padding: 60, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Checking your account…</div>}
       {gate === 'needbusiness' && <BusinessGate />}
       {gate === 'needplan' && <PlanGate />}
+
+      {gate === 'ok' && draftFound && (
+        <div style={{ maxWidth: 640, margin: '10px auto 0', padding: '0 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', background: '#fff6e6', border: '1px solid #f0e0bd', borderRadius: 12, padding: '11px 14px' }}>
+            <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-ui)', fontSize: 13, color: '#8a6d3b', fontWeight: 700 }}>📝 You have an unfinished property advert{draftFound.f?.title ? ` — “${draftFound.f.title}”` : ''}.</span>
+            <button type="button" onClick={restoreDraft} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>Resume</button>
+            <button type="button" onClick={discardDraft} style={{ background: '#fff', color: '#8a6d3b', border: '1px solid #e0d8d0', borderRadius: 10, padding: '8px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>Discard</button>
+          </div>
+        </div>
+      )}
 
       {gate === 'ok' && (
       <form onSubmit={submit} style={{ maxWidth: 640, margin: '0 auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>

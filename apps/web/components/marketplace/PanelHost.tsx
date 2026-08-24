@@ -3537,13 +3537,13 @@ function PanelBody() {
             {/* ── Step 2: Details ── */}
             {step === 'details' && (
               <>
-                <div style={{ marginBottom: 18 }}>
+                <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '14px 14px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Title')} *</div>
                   <input value={title} onChange={e => setTitle(e.target.value)} placeholder='e.g. "iPhone 14 Pro — Unlocked, 256GB"' style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa', marginTop: 3 }}>{title.length}/80</div>
                 </div>
 
-                <div style={{ marginBottom: 18 }}>
+                <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '14px 14px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Department')} *</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                     {DEPTS.map(d => (
@@ -3552,7 +3552,7 @@ function PanelBody() {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 18 }}>
+                <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '14px 14px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Condition')} *</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                     {CONDITIONS.map(c => (
@@ -3562,7 +3562,7 @@ function PanelBody() {
                 </div>
 
                 {/* Item facts — optional, but they fill the buyer's Details panel */}
-                <div style={{ marginBottom: 18 }}>
+                <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '14px 14px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Model / Brand')}, {t('Colour')} &amp; {t('Size')}</div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <input value={brand} onChange={e => setBrand(e.target.value)} placeholder={t('Model / Brand')} style={{ flex: 1, minWidth: 0, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
@@ -3600,7 +3600,7 @@ function PanelBody() {
                   )
                 })()}
 
-                <div style={{ marginBottom: 18 }}>
+                <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '14px 14px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>Description</div>
                   <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder='Describe the item — include any defects, accessories included, reason for selling...' rows={4} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', resize: 'none', boxSizing: 'border-box' }} />
                 </div>
