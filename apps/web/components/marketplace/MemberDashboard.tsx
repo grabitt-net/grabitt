@@ -572,6 +572,8 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             <MemberStatusCard />
           </>)}
 
+          {section === 'activity' && <HandyProposalsCard />}
+
           {section === 'activity' && (
             <div style={card}>
               <div style={cardHead}>{t('Activity Centre')}</div>
@@ -714,6 +716,42 @@ function DisputesList() {
           </div>
         )
       })}
+    </div>
+  )
+}
+
+// Handy Help — proposals received on my posts. Review and accept; contact is
+// revealed to the responder (and shown here) once accepted.
+function HandyProposalsCard() {
+  const [rows, setRows] = useState<any[] | null>(null)
+  const [busy, setBusy] = useState('')
+  const load = () => { (trpcAuthed() as any).handy.receivedProposals.query().then((d: any) => setRows(d as any[])).catch(() => setRows([])) }
+  useEffect(() => { load() }, [])
+  const accept = async (id: string) => {
+    setBusy(id)
+    try { await (trpcAuthed() as any).handy.acceptProposal.mutate({ proposalId: id }); load() }
+    catch { toast(t('Could not accept. Please try again.')) } finally { setBusy('') }
+  }
+  if (rows !== null && rows.length === 0) return null
+  return (
+    <div style={card}>
+      <div style={cardHead}>🔧 {t('Handy Help — responses to your posts')}</div>
+      {rows === null ? <Muted>{t('Loading…')}</Muted> : rows.map((p: any) => (
+        <div key={p.id} style={{ padding: '11px 0', borderBottom: '1px solid #f5f5f5' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)', flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.responder.displayName}{p.responder.rating ? ` · ★ ${Number(p.responder.rating).toFixed(1)}` : ''}</span>
+            <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#888', whiteSpace: 'nowrap' }}>{t('re')}: {p.listing.title}</span>
+          </div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#444', lineHeight: 1.5, marginBottom: 8 }}>{p.message}</div>
+          {p.status === 'accepted' ? (
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '8px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>
+              ✓ {t('Accepted')} — {[p.responder.phone, p.responder.email].filter(Boolean).join(' · ') || t('contact shared')}
+            </div>
+          ) : (
+            <button onClick={() => accept(p.id)} disabled={busy === p.id} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: busy === p.id ? 'wait' : 'pointer' }}>{busy === p.id ? t('Accepting…') : t('Accept & share my contact')}</button>
+          )}
+        </div>
+      ))}
     </div>
   )
 }

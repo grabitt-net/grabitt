@@ -141,6 +141,25 @@ export const handyRouter = router({
       return { ok: true }
     }),
 
+  // All proposals across the Handy Help posts I placed — for my inbox, where I
+  // review and accept. Responder contact is included only once accepted.
+  receivedProposals: protectedProcedure.query(async ({ ctx }) => {
+    const proposals = await ctx.prisma.handyProposal.findMany({
+      where: { listing: { sellerId: ctx.user.id } },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        listing: { select: { id: true, title: true } },
+        responder: { select: { id: true, displayName: true, avatar: true, avgRating: true, email: true, phone: true } },
+      },
+    })
+    return proposals.map(p => ({
+      id: p.id, status: p.status, message: p.message, createdAt: p.createdAt,
+      listing: { id: p.listing.id, title: p.listing.title },
+      responder: { id: p.responder.id, displayName: p.responder.displayName, avatar: p.responder.avatar, rating: p.responder.avgRating,
+        ...(p.status === 'accepted' ? { email: p.responder.email, phone: p.responder.phone } : {}) },
+    }))
+  }),
+
   // Proposals I've sent (as a responder).
   myProposals: protectedProcedure.query(({ ctx }) =>
     ctx.prisma.handyProposal.findMany({

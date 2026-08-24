@@ -4,7 +4,7 @@ import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { CreateListingInputSchema, SearchInputSchema } from '@grabitt/types'
 import { sellerName, missingBusinessName } from '../lib/identity'
 import { enforceBusinessListingAllowance } from '../lib/businessLimits'
-import { LISTING_CAPS, GRADE_THRESHOLDS, PRICES, BUSINESS_LIGHT } from '@grabitt/design-tokens'
+import { LISTING_CAPS, GRADE_THRESHOLDS, PRICES, BUSINESS_LIGHT, HANDY_PRICING } from '@grabitt/design-tokens'
 import { getStripe } from '../lib/stripe'
 
 // Fallback shown on a job advert when the employer hasn't set an establishment
@@ -501,6 +501,14 @@ export const listingsRouter = router({
         lightFee = usedThisMonth < BUSINESS_LIGHT.caps.items ? 0 : BUSINESS_LIGHT.perListingCents
       }
 
+      // Handy Help is a paid classified for businesses: a Business (or Business
+      // Light) placing a Handy Help advert pays €9.99. Personal accounts post
+      // free. This replaces the normal listing fee for that post.
+      let fee = lightFee
+      if (input.department === 'handy_help' && (user.isBusiness || user.businessLight)) {
+        fee = HANDY_PRICING.businessPlaceCents
+      }
+
       const listing = await ctx.prisma.listing.create({
         data: {
           ...input,
@@ -508,15 +516,15 @@ export const listingsRouter = router({
           // sparse title still yields several relevant tags.
           tags: autoTags(input.title, [input.description, input.brand, input.colour, input.size, input.department, input.condition, ...Object.values(input.attributes ?? {})].filter(Boolean).join(' ')),
           sellerId: user.id,
-          status: lightFee > 0 ? 'draft' : 'active',
+          status: fee > 0 ? 'draft' : 'active',
         },
       })
 
-      if (lightFee > 0) {
+      if (fee > 0) {
         const session = await getStripe().checkout.sessions.create({
           mode: 'payment',
           ...(user.stripeCustomerId ? { customer: user.stripeCustomerId } : { customer_email: user.email }),
-          line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: lightFee, product_data: { name: `Grabitt listing fee — ${input.title}` } } }],
+          line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name: `Grabitt listing fee — ${input.title}` } } }],
           payment_intent_data: { metadata: { kind: 'listing_publish', listingId: listing.id } },
           success_url: `${APP_URL}/listings/${listing.id}?published=1`,
           cancel_url: `${APP_URL}/sell?cancelled=1`,
