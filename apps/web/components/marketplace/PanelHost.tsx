@@ -939,43 +939,41 @@ function PanelBody() {
   if (panel.id === 'sell') {
     // CSV bulk import hidden for now (reintroduce later via NEXT_PUBLIC_CSV_IMPORT=1).
     const CSV_IMPORT_ENABLED = process.env.NEXT_PUBLIC_CSV_IMPORT === '1'
-    // Dashboard-consistent card styling (matches My Hub / Business Hub).
-    const optionCard: React.CSSProperties = { display: 'flex', gap: 12, alignItems: 'center', width: '100%', textAlign: 'left', background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '12px 14px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }
-    const iconTile: React.CSSProperties = { width: 40, height: 40, borderRadius: '50%', background: '#FFF3EE', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19, flexShrink: 0 }
+    // Compact tile cards (per Steve): icon + short label + one-line explanation,
+    // no wide arrow buttons.
+    const tile: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 7, background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '16px 10px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }
+    const iconTile: React.CSSProperties = { width: 44, height: 44, borderRadius: '50%', background: '#FFF3EE', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }
     return (
       <ActionPanel title="Sell on Grabitt" onClose={closePanel}>
-        <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <Logo height={36} style={{ margin: '0 auto 12px' }} />
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>List an item in 60 seconds</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#1a1a1a' }}>Fees from 2.5% · Secure Stripe payments</div>
+        <div style={{ textAlign: 'center', marginBottom: 14 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 2 }}>What would you like to list?</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888' }}>Fees from 2.5% · Secure Stripe payments</div>
         </div>
 
-        <div style={{ display: 'grid', gap: 10 }}>
-          {([['🏡','Sell an item','List anything from furniture to electronics', () => openPanel('createListing')],['💼','Post a job','Find staff or freelancers', () => { closePanel(); window.location.href = '/jobs/new' }],['🏠','List a property','Rent or sell a home', () => { closePanel(); window.location.href = '/property/new' }],['🔧','Offer a service','Plumbers, cleaners, tutors & more', () => openPanel('createListing', { category: 'Services' })]] as [string,string,string,()=>void][]).map(([icon, title, desc, action], i) => (
-            <button key={i} onClick={action} style={optionCard}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {([['🏡','Sell an item','Furniture, tech & more', () => openPanel('createListing')],['💼','Post a job','Find staff fast', () => { closePanel(); window.location.href = '/jobs/new' }],['🏠','List a property','Rent or sell a home', () => { closePanel(); window.location.href = '/property/new' }],['🔧','Offer a service','Trades, cleaning & help', () => openPanel('createListing', { category: 'Services' })]] as [string,string,string,()=>void][]).map(([icon, title, desc, action], i) => (
+            <button key={i} onClick={action} style={tile}>
               <span style={iconTile}>{icon}</span>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{title}</span>
-                <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#1a1a1a' }}>{desc}</span>
-              </span>
-              <span style={{ color: 'var(--orange)', fontWeight: 900, flexShrink: 0 }}>›</span>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</span>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>{desc}</span>
             </button>
           ))}
+          {CSV_IMPORT_ENABLED && (
+            <button onClick={() => { closePanel(); window.location.href = '/sell/import' }} style={tile}>
+              <span style={iconTile}>📄</span>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Bulk import</span>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>Upload a CSV · Business</span>
+            </button>
+          )}
         </div>
 
-        {/* Bulk import — hidden for now (reintroduce later via NEXT_PUBLIC_CSV_IMPORT=1). */}
-        {CSV_IMPORT_ENABLED && (
-          <button onClick={() => { closePanel(); window.location.href = '/sell/import' }} style={{ ...optionCard, justifyContent: 'center', marginTop: 10, color: '#1a1a1a', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800 }}>📄 Bulk import from CSV · Business</button>
-        )}
-
         {/* Business upsell — routes to the Business subscription signup */}
-        <button onClick={() => openPanel('business')} style={{ ...optionCard, border: '1.5px solid var(--orange)', marginTop: 12 }}>
-          <span style={iconTile}>🏢</span>
+        <button onClick={() => openPanel('business')} style={{ display: 'flex', gap: 10, alignItems: 'center', width: '100%', textAlign: 'left', background: '#FFF9F5', border: '1.5px solid var(--orange)', borderRadius: 14, padding: '11px 12px', cursor: 'pointer', marginTop: 12 }}>
+          <span style={{ ...iconTile, width: 36, height: 36, fontSize: 18 }}>🏢</span>
           <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>Sign up as a Business</span>
-            <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#1a1a1a' }}>Storefront, 🏢 badge &amp; Dealer status · 14 days free, then €29/mo</span>
+            <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>Sign up as a Business</span>
+            <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888' }}>Storefront &amp; lower fees · 14 days free</span>
           </span>
-          <span style={{ color: 'var(--orange)', fontWeight: 900, flexShrink: 0 }}>›</span>
         </button>
       </ActionPanel>
     )
