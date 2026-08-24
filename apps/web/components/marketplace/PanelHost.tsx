@@ -3969,58 +3969,7 @@ function PanelBody() {
 
   // ── HANDY HELP ────────────────────────────────────────────────────────────────
   if (panel.id === 'handy') {
-    const TRADES = [
-      { id: 'plumbing', label: 'Plumbing', emoji: '🔧' }, { id: 'electrical', label: 'Electrical', emoji: '⚡' },
-      { id: 'cleaning', label: 'Cleaning', emoji: '🧹' }, { id: 'painting', label: 'Painting', emoji: '🎨' },
-      { id: 'gardening', label: 'Gardening', emoji: '🌿' }, { id: 'moving', label: 'Moving', emoji: '📦' },
-      { id: 'assembly', label: 'Assembly', emoji: '🔩' }, { id: 'it_support', label: 'IT Support', emoji: '💻' },
-      { id: 'tutoring', label: 'Tutoring', emoji: '📚' }, { id: 'beauty', label: 'Beauty', emoji: '💅' },
-      { id: 'building', label: 'Building', emoji: '🏗️' }, { id: 'pool', label: 'Pool Care', emoji: '🏊' },
-      { id: 'security', label: 'Security', emoji: '🛡️' }, { id: 'other', label: 'Other', emoji: '🤝' },
-    ]
-    const MOCK_HANDY = [
-      { id: 'h1', name: 'Carlos M.', trade: 'plumbing', rate: '€35/hr', location: 'Las Palmas', rating: 4.9, jobs: 47, available: true },
-      { id: 'h2', name: 'Ana L.', trade: 'cleaning', rate: '€12/hr', location: 'Maspalomas', rating: 4.8, jobs: 123, available: true },
-      { id: 'h3', name: 'Juan P.', trade: 'electrical', rate: '€40/hr', location: 'Telde', rating: 4.7, jobs: 62, available: false },
-      { id: 'h4', name: 'María R.', trade: 'painting', rate: '€25/hr', location: 'Vecindario', rating: 5.0, jobs: 28, available: true },
-      { id: 'h5', name: 'Ahmed K.', trade: 'gardening', rate: '€15/hr', location: 'Arucas', rating: 4.6, jobs: 89, available: true },
-    ]
-    const [selectedTrade, setSelectedTrade] = useState<string | null>(null)
-    const shownHandy = selectedTrade ? MOCK_HANDY.filter(h => h.trade === selectedTrade) : MOCK_HANDY
-    return (
-      <ActionPanel title="🔧 Handy Help" onClose={closePanel}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
-          {TRADES.map(tr => (
-            <button key={tr.id} onClick={() => setSelectedTrade(selectedTrade === tr.id ? null : tr.id)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 4px', borderRadius: 12, border: `2px solid ${selectedTrade === tr.id ? 'var(--orange)' : '#f0ebe4'}`, background: selectedTrade === tr.id ? '#FFF3EE' : '#fff', cursor: 'pointer' }}>
-              <span style={{ fontSize: 22 }}>{tr.emoji}</span>
-              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: selectedTrade === tr.id ? 'var(--orange)' : '#555', textAlign: 'center' }}>{tr.label}</span>
-            </button>
-          ))}
-        </div>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 10, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
-          {selectedTrade ? TRADES.find(t => t.id === selectedTrade)?.label : 'All'} · {shownHandy.length} available
-        </div>
-        {shownHandy.map(h => (
-          <div key={h.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
-            <div style={{ width: 48, height: 48, background: h.available ? '#f0fdf4' : '#f0f0f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>
-              {TRADES.find(t => t.id === h.trade)?.emoji ?? '🤝'}
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--dark)' }}>{h.name}</span>
-                {h.available && <span style={{ background: '#d1fae5', color: '#065f46', fontFamily: 'var(--font-ui)', fontSize: 8, fontWeight: 900, padding: '1px 6px', borderRadius: 50 }}>AVAILABLE</span>}
-              </div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>⭐ {h.rating} · {h.jobs} jobs · 📍 {h.location}</div>
-            </div>
-            <div style={{ textAlign: 'right' as const }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--orange)' }}>{h.rate}</div>
-              <button onClick={() => openPanel('chatThread', { name: h.name })} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, cursor: 'pointer', marginTop: 4 }}>Contact</button>
-            </div>
-          </div>
-        ))}
-        <button onClick={() => openPanel('createListing', { category: 'Handy Help' })} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 16 }}>+ Offer Your Services</button>
-      </ActionPanel>
-    )
+    return <HandyPanel closePanel={closePanel} openPanel={openPanel} />
   }
 
   // ── GRAB IT NOW (live deals) ─────────────────────────────────────────────────
@@ -5044,6 +4993,87 @@ function SoldPricesPanel({ closePanel, initialQuery, department }: { closePanel:
         ))
       )}
       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#aaa', marginTop: 12, lineHeight: 1.5 }}>Tap a result to view the ended listing (item details only — seller and buyer details are never shown).</div>
+    </ActionPanel>
+  )
+}
+
+// Handy Help — classified feed. Personal posts free; a business pays €2.99 to
+// respond (unlock). Poster contact stays hidden until they accept. Each post is
+// valid 30 days with a live countdown.
+type HandyRow = { id: string; title: string; description: string | null; image: string | null; location: string | null; price: number; expiresAt: string }
+function countdown(expiresAt: string): { label: string; urgent: boolean } {
+  const ms = new Date(expiresAt).getTime() - Date.now()
+  if (ms <= 0) return { label: 'Expired', urgent: true }
+  const days = Math.floor(ms / 86_400_000)
+  const hours = Math.floor((ms % 86_400_000) / 3_600_000)
+  if (days >= 1) return { label: `Expires in ${days}d ${hours}h`, urgent: days < 3 }
+  return { label: `Expires in ${hours}h`, urgent: true }
+}
+function HandyPanel({ closePanel, openPanel }: { closePanel: () => void; openPanel: (id: PanelId, data?: Record<string, unknown>) => void }) {
+  const [rows, setRows] = useState<HandyRow[] | null>(null)
+  const [respondingTo, setRespondingTo] = useState<HandyRow | null>(null)
+  const [message, setMessage] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState('')
+
+  useEffect(() => {
+    createLooseTrpcClient().handy.feed.query({ page: 1 }).then(d => setRows(d as HandyRow[])).catch(() => setRows([]))
+  }, [])
+
+  const submitResponse = async () => {
+    if (!respondingTo || message.trim().length < 3) return
+    setBusy(true); setNote('')
+    try {
+      const client = await getTrpcClient()
+      const res = await client.handy.respond.mutate({ listingId: respondingTo.id, message: message.trim() }) as { paid: boolean; checkoutUrl?: string }
+      if (res.paid && res.checkoutUrl) { window.location.href = res.checkoutUrl; return }
+      setNote('✓ Sent! The poster will share their contact if they accept.'); setRespondingTo(null); setMessage('')
+    } catch (e) { setNote((e as Error).message || 'Could not send') } finally { setBusy(false) }
+  }
+
+  return (
+    <ActionPanel title="🔧 Handy Help" onClose={closePanel}>
+      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', lineHeight: 1.5, marginBottom: 12 }}>
+        Need a hand? Post a request free. Businesses can respond to help — poster details stay private until you accept.
+      </div>
+      <button onClick={() => openPanel('createListing', { category: 'Handy Help' })} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 14 }}>+ Post a request</button>
+
+      {note && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: note.startsWith('✓') ? '#16a34a' : '#ef4444', marginBottom: 10 }}>{note}</div>}
+
+      {rows === null ? (
+        <div style={{ textAlign: 'center', padding: 30, fontFamily: 'var(--font-ui)', color: '#aaa', fontSize: 13 }}>Loading…</div>
+      ) : rows.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 30, fontFamily: 'var(--font-ui)', color: '#aaa', fontSize: 13 }}>No open requests right now. Be the first to post!</div>
+      ) : rows.map(r => {
+        const cd = countdown(r.expiresAt)
+        return (
+          <div key={r.id} style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: 12, marginBottom: 10, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 10, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>{r.image ? <img src={r.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🔧'}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)' }}>{r.title}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{r.description}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
+                  {r.location && <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888' }}>📍 {r.location}</span>}
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, color: cd.urgent ? '#b45309' : '#16a34a', background: cd.urgent ? '#fff7ed' : '#f0fdf4', borderRadius: 50, padding: '2px 8px' }}>⏳ {cd.label}</span>
+                </div>
+              </div>
+            </div>
+            {respondingTo?.id === r.id ? (
+              <div style={{ marginTop: 10 }}>
+                <textarea value={message} onChange={e => setMessage(e.target.value)} rows={3} placeholder="Your proposal — how you can help, availability, rough price…" style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '9px 11px', fontFamily: 'var(--font-ui)', fontSize: 12.5, outline: 'none', resize: 'vertical', marginBottom: 8 }} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={submitResponse} disabled={busy || message.trim().length < 3} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>{busy ? 'Sending…' : 'Send proposal'}</button>
+                  <button onClick={() => { setRespondingTo(null); setMessage('') }} style={{ background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 10, padding: '10px 14px', fontFamily: 'var(--font-ui)', fontSize: 12.5, cursor: 'pointer' }}>Cancel</button>
+                </div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 6 }}>Businesses are charged €2.99 to respond. Personal accounts respond free.</div>
+              </div>
+            ) : (
+              <button onClick={() => { setRespondingTo(r); setNote('') }} style={{ width: '100%', marginTop: 10, background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 10, padding: 9, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>Respond</button>
+            )}
+          </div>
+        )
+      })}
     </ActionPanel>
   )
 }

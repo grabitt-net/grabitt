@@ -548,6 +548,7 @@ model User {
   disputes           Dispute[]          @relation("DisputeRaiser")
   crmContacts        CrmContact[]       @relation("CrmAssigned")
   handyListings      HandyListing[]
+  handyProposals     HandyProposal[]  @relation("HandyResponder")
   following          Following[]        @relation("Follower")
   followers          Following[]        @relation("Following")
   pushTokens         PushToken[]
@@ -776,6 +777,7 @@ model Listing {
   jobListing       JobListing?
   propertyListing  PropertyListing?
   handyListing     HandyListing?
+  handyProposals   HandyProposal[]
   wishlistItems    WishlistItem[]
   cartItems        CartItem[]
   reports          Report[]
@@ -1475,6 +1477,24 @@ model HandyListing {
 
   @@index([category])
   @@index([providerId])
+}
+
+// A response/proposal to a Handy Help classified. A business pays €2.99 to
+// unlock a listing and send a proposal; the poster's contact stays hidden until
+// they accept one (status → accepted).
+model HandyProposal {
+  id          String   @id @default(uuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id])
+  responderId String
+  responder   User     @relation("HandyResponder", fields: [responderId], references: [id])
+  message     String
+  status      String   @default("sent") // sent | accepted | declined
+  createdAt   DateTime @default(now())
+
+  @@unique([listingId, responderId])
+  @@index([listingId])
+  @@index([responderId])
 }
 
 // ── CRM (Exec only) ──────────────────────────────────────────────────────────

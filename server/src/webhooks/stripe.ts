@@ -258,6 +258,23 @@ export async function handleStripeEvent(event: Stripe.Event) {
       if (pi.metadata?.kind === 'listing_publish' && pi.metadata.listingId) {
         await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active' } }).catch(() => {})
       }
+      // Handy Help — a business paid €2.99 to unlock a post; create their
+      // proposal now (idempotent per listing+responder) and notify the poster.
+      if (pi.metadata?.kind === 'handy_unlock' && pi.metadata.listingId && pi.metadata.responderId) {
+        const listingId = pi.metadata.listingId
+        const responderId = pi.metadata.responderId
+        const message = pi.metadata.message || 'I would like to help with this.'
+        const existing = await prisma.handyProposal.findUnique({ where: { listingId_responderId: { listingId, responderId } }, select: { id: true } }).catch(() => null)
+        if (!existing) {
+          await prisma.handyProposal.create({ data: { listingId, responderId, message } }).catch(() => {})
+          const l = await prisma.listing.findUnique({ where: { id: listingId }, select: { title: true, sellerId: true } }).catch(() => null)
+          if (l) {
+            await prisma.notification.create({
+              data: { userId: l.sellerId, kind: 'system', title: '🔧 New response to your Handy Help post', body: `A business responded to "${l.title}". Review it and accept to share your contact.`, actionUrl: '/account?section=activity' },
+            }).catch(() => {})
+          }
+        }
+      }
       // A direct-marketing blast bundle — credit the sends.
       if (pi.metadata?.kind === 'blast' && pi.metadata.userId && pi.metadata.qty) {
         const n = Number(pi.metadata.qty) || 0
