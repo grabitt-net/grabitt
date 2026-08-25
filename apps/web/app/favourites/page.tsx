@@ -19,7 +19,6 @@ export default function FavouritesPage() {
   const router = useRouter()
   const [items, setItems] = useState<Fav[] | null>(null)
   const [loading, setLoading] = useState(true)
-  const [query, setQuery] = useState('')
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
 
   useEffect(() => {
@@ -40,12 +39,11 @@ export default function FavouritesPage() {
   }
 
   const shown = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    let list = (items ?? []).filter(f => !q || `${f.listing.title} ${f.listing.location}`.toLowerCase().includes(q))
+    let list = (items ?? [])
     if (sort === 'price_asc') list = [...list].sort((a, b) => Number(a.listing.price) - Number(b.listing.price))
     else if (sort === 'price_desc') list = [...list].sort((a, b) => Number(b.listing.price) - Number(a.listing.price))
     return list
-  }, [items, query, sort])
+  }, [items, sort])
 
   return (
     <PanelProvider>
@@ -53,11 +51,7 @@ export default function FavouritesPage() {
       <Topbar title="Favourites" />
       <QuickActions />
 
-      <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
-        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search your favourites…" style={inp} />
-      </header>
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 14px 10px' }}>
         <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888', fontWeight: 700 }}>
           {loading ? 'Loading…' : `${shown.length} favourite${shown.length === 1 ? '' : 's'}`}
         </span>
