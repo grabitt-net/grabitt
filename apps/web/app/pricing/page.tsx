@@ -58,6 +58,9 @@ export default function PricingPage() {
         <PriceRow name="Grabitt NOW!" price="€4.99 per listing" href="/?sell=1" cta="List an item">
           Got something that needs gone <em>fast</em>? Grabitt NOW! is built for urgency — discounted items and hot offers that can&apos;t wait. For €4.99 your listing lands right at the top of the homepage for a full 72 hours, in its own dedicated carousel alongside boosted listings (two separate carousels). It&apos;s the express lane for anything you need to shift quickly — grab the attention, make the sale, done.
         </PriceRow>
+        <PriceRow name="Handy Help" price="Free" note="Personal accounts" href="/handy" cta="Post a request">
+          Need a hand — or want to lend one? Personal accounts post a Handy Help request completely free. Every post stays live for 30 days with a countdown on the card, and your contact details stay hidden until you accept a response. Business accounts pay to take part (see For Business).
+        </PriceRow>
         <PriceRow name="Property or Rental" price="€39 per listing" note="1 free every month" href="/property/new" cta="List a property">
           List a property to rent or sell. Everyone gets one free property listing every month — after that it&apos;s just €39 per listing. Business accounts get an allowance included with their plan. Want more eyes on it? Add a Featured boost for €9 to lift your property to the top for 4 weeks.
         </PriceRow>
@@ -69,6 +72,9 @@ export default function PricingPage() {
         </PriceRow>
         <PriceRow name="Recruitment Database Search" price="Optional extra" note="Needs a live job advert" href="/recruitment" cta="Post a job">
           An optional add-on that speeds up your recruitment — available only to businesses with a live, paid-for job advert. Enter your criteria, click search, and it brings up already-registered candidates who match, so you don&apos;t wait for applications to arrive. Unlocking a candidate&apos;s CV and contact details is charged per candidate and tied to the job advert you&apos;re hiring for. A full recruitment advert still gives much broader coverage for candidates not yet a member.
+        </PriceRow>
+        <PriceRow name="Handy Help" price="€9.99 to place · €2.99 to reply" note="Business Lite & Directory" href="/handy" cta="Open Handy Help">
+          Business Lite and Directory accounts can take part in Handy Help: €9.99 to place your own advert, or €2.99 to unlock a listing so you can reply to it. Personal accounts post for free. Every post runs for 30 days and the poster&apos;s contact details stay hidden until they accept.
         </PriceRow>
         <PriceRow name="Business Directory" price="€15/month" note="Or annual for a discount" href="/for-business" cta="Get listed">
           Get found. List your business in the Grabitt Directory for €15 a month, or go annual for a tidy discount. What we&apos;ve been missing is a nice clean business directory here on the Canary Islands. Split into industry, you come up when people search for a plumber, dentist, doctor, lawyer — you name it. You get your logo, contact details, and a brief description of what you do and where you are, with a map pin.
