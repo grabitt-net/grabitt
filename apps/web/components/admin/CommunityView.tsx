@@ -10,6 +10,7 @@ interface Post {
 }
 
 const CATEGORIES = ['Guide', 'Island Tips', 'Economy', 'Selling', 'Safety', 'News']
+const NEWS_CATEGORIES = ['Announcements', 'Island News', 'Features', 'Updates']
 const EMOJIS = ['📰', '🏷️', '📊', '🛡️', '💼', '🌴', '💡', '🛒', '📈', '✨']
 const EMPTY = { title: '', excerpt: '', body: '', category: 'Guide', emoji: '📰', imageUrl: '', published: true, sortOrder: 0 }
 
@@ -18,15 +19,16 @@ export default function CommunityView({ section = 'guide' }: { section?: 'guide'
   const api = useCrmApi()
   const isNews = section === 'news'
   const noun = isNews ? 'article' : 'guide'
+  const cats = isNews ? NEWS_CATEGORIES : CATEGORIES
   const [posts, setPosts] = useState<Post[]>([])
   const [editing, setEditing] = useState<string | 'new' | null>(null)
-  const [form, setForm] = useState({ ...EMPTY, category: isNews ? 'News' : 'Guide' })
+  const [form, setForm] = useState({ ...EMPTY, category: isNews ? 'Announcements' : 'Guide' })
   const [saving, setSaving] = useState(false)
 
   const load = () => api.communityPosts(section).then(p => setPosts((p ?? []) as Post[])).catch(() => {})
   useEffect(() => { load() }, [section]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function openNew() { setForm({ ...EMPTY, category: isNews ? 'News' : 'Guide', sortOrder: posts.length + 1 }); setEditing('new') }
+  function openNew() { setForm({ ...EMPTY, category: isNews ? 'Announcements' : 'Guide', sortOrder: posts.length + 1 }); setEditing('new') }
   function openEdit(p: Post) {
     setForm({ title: p.title, excerpt: p.excerpt, body: p.body, category: p.category, emoji: p.emoji, imageUrl: p.imageUrl ?? '', published: p.published, sortOrder: p.sortOrder })
     setEditing(p.id)
@@ -80,7 +82,7 @@ export default function CommunityView({ section = 'guide' }: { section?: 'guide'
             </Field></div>
             <Field label="Category">
               <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inp}>
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                {cats.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </Field>
             <Field label="Icon">

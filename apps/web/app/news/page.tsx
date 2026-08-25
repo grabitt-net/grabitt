@@ -8,27 +8,44 @@ import { createLooseTrpcClient } from '@/lib/trpc'
 // (News management) and stored as CommunityPost rows with section = "news".
 type Post = { id: string; title: string; excerpt: string; category: string; emoji: string; imageUrl: string | null; createdAt: string }
 
+const CATS = ['All', 'Announcements', 'Island News', 'Features', 'Updates']
+
 export default function NewsPage() {
   const [posts, setPosts] = useState<Post[] | null>(null)
+  const [cat, setCat] = useState('All')
   useEffect(() => {
     createLooseTrpcClient().community.list.query({ limit: 30, section: 'news' })
       .then(p => setPosts(p as Post[])).catch(() => setPosts([]))
   }, [])
+
+  const shown = posts && cat !== 'All' ? posts.filter(p => p.category === cat) : posts
 
   return (
     <InfoPage
       title="Grabitt News"
       topbarTitle="News"
       intro="The latest from Grabitt and the Canary Islands — updates, announcements, features and island happenings."
-      pills={['Announcements', 'Island news', 'Features', 'Updates']}
     >
-      {posts === null ? (
+      {/* Clickable category filters */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 18 }}>
+        {CATS.map(c => {
+          const on = cat === c
+          return (
+            <button key={c} onClick={() => setCat(c)} style={{
+              border: `1.5px solid ${on ? 'var(--orange)' : '#e5dccd'}`, background: on ? 'var(--orange)' : '#fff', color: on ? '#fff' : 'var(--dark)',
+              borderRadius: 999, padding: '7px 15px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer',
+            }}>{c}</button>
+          )
+        })}
+      </div>
+
+      {shown === null ? (
         <div style={{ textAlign: 'center', padding: 50, fontFamily: 'var(--font-ui)', color: '#aaa' }}>Loading…</div>
-      ) : posts.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 50, fontFamily: 'var(--font-ui)', color: '#aaa' }}>No news yet — check back soon.</div>
+      ) : shown.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 50, fontFamily: 'var(--font-ui)', color: '#aaa' }}>{cat === 'All' ? 'No news yet — check back soon.' : `No ${cat} articles yet.`}</div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 14 }}>
-          {posts.map(p => (
+          {shown.map(p => (
             <Link key={p.id} href={`/news/${p.id}`} style={{ textDecoration: 'none' }}>
               <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 4px rgba(30,43,85,0.05)', height: '100%' }}>
                 <div style={{ height: 130, background: 'linear-gradient(135deg,#e8dfd0,#f5f0e8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
