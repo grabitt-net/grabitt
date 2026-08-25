@@ -38,8 +38,6 @@ interface Slot { id: string; label: string; monthlyCents: number; cap: number; e
 interface Booking { id: string; userId: string; position: string; pageTarget?: string | null; months: number; startsAt: string; endsAt: string; amountCents: number; createdByAdmin: boolean; user?: { displayName?: string; email?: string; businessName?: string } }
 
 const EMPTY = { title: '', imageUrl: '', linkUrl: '', position: 'home_top', pageTarget: '', pages: [] as string[], active: true, isTest: false, startsAt: '', endsAt: '' }
-// Site-wide sponsor slots can be limited to specific pages via checkboxes.
-const PAGE_TARGETABLE = new Set(['sponsor_top', 'sponsor_footer'])
 const eur = (c: number) => `€${(c / 100).toFixed(0)}`
 
 export default function BannersView({ initialPosition }: { initialPosition?: string | null }) {
@@ -85,7 +83,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
         ...(editId ? { id: editId } : {}),
         title: form.title.trim(), imageUrl: form.imageUrl.trim(), linkUrl: form.linkUrl.trim() || undefined,
         position: form.position, pageTarget: form.pageTarget.trim() || undefined, active: form.active, isTest: form.isTest,
-        pages: PAGE_TARGETABLE.has(form.position) ? form.pages : [],
+        pages: form.pages,
         startsAt: form.startsAt || undefined, endsAt: form.endsAt || undefined,
       })
       setForm({ ...EMPTY }); setEditId(null); setShowAdd(false); await load()
@@ -151,7 +149,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
               </div>
             </Field>
             <Field label="Page target (optional — for category slots, e.g. motors)"><input value={form.pageTarget} onChange={e => setForm(f => ({ ...f, pageTarget: e.target.value }))} placeholder="blank = site-wide" style={inp} /></Field>
-            {PAGE_TARGETABLE.has(form.position) && (
+            {(
               <div style={{ gridColumn: '1/-1' }}>
                 <Field label="Show on pages (none ticked = every page)">
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px' }}>
@@ -189,7 +187,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
       {tab === 'banners' && (
         <>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#8a8378', marginBottom: 12, background: '#faf8f4', border: '1px solid #efe9df', borderRadius: 10, padding: '9px 12px' }}>
-          💡 The <strong>site-wide sponsor banners</strong> (Featured Partner rail — top &amp; footer) show across many pages, so their cards have <strong>tap-to-toggle page chips</strong> to turn them on/off per page. Every other placement lives on one fixed page, so it has no per-page choice.
+          💡 Every banner card has <strong>tap-to-toggle page chips</strong>: pick <strong>All pages</strong>, or choose exactly which pages it shows on. Changes save instantly.
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
           {banners.map(b => (
@@ -211,7 +209,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
                 {/* Per-page on/off — only for site-wide placements that actually
                     render across multiple pages. Click a page to show/hide the
                     banner there; "All pages" clears the restriction. */}
-                {PAGE_TARGETABLE.has(b.position) && (
+                {(
                   <div style={{ marginBottom: 10, background: '#faf8f4', border: '1px solid #efe9df', borderRadius: 10, padding: '8px 9px' }}>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, fontWeight: 800, color: '#999', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>
                       Shows on {b.pages?.length ? `${b.pages.length} page${b.pages.length === 1 ? '' : 's'}` : 'all pages'} — tap to change

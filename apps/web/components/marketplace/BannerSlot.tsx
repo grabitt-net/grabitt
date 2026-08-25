@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { createLooseTrpcClient } from '@/lib/trpc'
+import { bannerPageKey } from '@/lib/bannerPages'
 
 type Banner = { id: string; title: string; imageUrl: string; linkUrl: string | null }
 type Position =
@@ -44,12 +46,17 @@ export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius 
   const [preview, setPreview] = useState(false)
   const [idx, setIdx] = useState(0)
   const seen = useRef<Set<string>>(new Set())
+  const pathname = usePathname()
+  // Every slot now reports the page it's on, so per-page targeting (Banner.pages)
+  // works for ALL placements — not just the site-wide sponsor rails. An explicit
+  // `page` prop (category slug) still wins.
+  const effectivePage = page ?? bannerPageKey(pathname)
 
   useEffect(() => {
     const c = createLooseTrpcClient()
-    c.banners.active.query({ position, ...(page ? { page } : {}) }).then(d => setBanners(d as unknown as Banner[])).catch(() => {})
+    c.banners.active.query({ position, page: effectivePage }).then(d => setBanners(d as unknown as Banner[])).catch(() => {})
     c.banners.previewMode.query().then(d => setPreview(!!(d as { on?: boolean })?.on)).catch(() => {})
-  }, [position, page])
+  }, [position, effectivePage])
 
   useEffect(() => {
     if (banners.length < 2) return
