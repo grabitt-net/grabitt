@@ -14,6 +14,31 @@ type Position =
 // nothing when there are no active banners — UNLESS admin preview/test mode is
 // on, in which case an empty slot shows a labelled placeholder so admins can see
 // where every banner sits before launch.
+// Every banner slot scales responsively (width:100% + aspect-ratio + cover), so
+// an advertiser only needs ONE image per slot at the slot's aspect ratio — no
+// separate mobile/desktop versions. We recommend a source ~2000px wide so it
+// stays crisp on the widest (desktop) layout at retina density; height follows
+// the slot's aspect. This turns an aspect string like "5 / 1" into that advice.
+// The aspect ratio each slot renders at (mirrors the `aspect` prop passed at
+// every usage site). Central so the admin editor can show advertisers the exact
+// recommended image size per placement.
+export const BANNER_ASPECTS: Record<string, string> = {
+  home_top: '5 / 1', home_mid: '3.4 / 1', home_hero: '3.4 / 1',
+  category: '5 / 1', category_top: '5 / 1', category_infeed: '7 / 1', category_footer: '6 / 1',
+  search_top: '5 / 1', search_footer: '6 / 1', sticky_bottom: '6 / 1',
+  similar_items: '5 / 1', seller_dashboard: '6 / 1', user_dashboard: '6 / 1',
+  checkout: '6 / 1', jobs: '5 / 1', sponsor_top: '4.5 / 1', sponsor_footer: '4.5 / 1',
+  messages: '6 / 1', notifications: '5 / 1',
+}
+
+const REC_WIDTH = 2000
+export function recommendedSize(aspect: string): { w: number; h: number; label: string } {
+  const [wR, hR] = aspect.split('/').map(s => parseFloat(s.trim()))
+  const ratio = wR && hR ? wR / hR : 3.4
+  const h = Math.round(REC_WIDTH / ratio)
+  return { w: REC_WIDTH, h, label: `${REC_WIDTH} × ${h} px` }
+}
+
 export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius = 16, padded = true, label }: { position: Position; page?: string; aspect?: string; radius?: number; padded?: boolean; label?: string }) {
   const [banners, setBanners] = useState<Banner[]>([])
   const [preview, setPreview] = useState(false)
@@ -37,9 +62,10 @@ export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius 
     if (!preview) return null
     return (
       <div style={{ padding: padded ? '14px 14px 0' : 0 }}>
-        <div style={{ width: '100%', aspectRatio: aspect, borderRadius: radius, border: '2px dashed var(--orange2)', background: 'repeating-linear-gradient(45deg,#fff7ed,#fff7ed 12px,#ffedd5 12px,#ffedd5 24px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+        <div style={{ width: '100%', aspectRatio: aspect, borderRadius: radius, border: '2px dashed var(--orange2)', background: 'repeating-linear-gradient(45deg,#fff7ed,#fff7ed 12px,#ffedd5 12px,#ffedd5 24px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', padding: 6 }}>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: '#c2410c', textTransform: 'uppercase', letterSpacing: 0.6 }}>Banner slot</span>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#9a3412' }}>{label ?? position}{page ? ` · ${page}` : ''}</span>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 700, color: '#c2410c' }}>{recommendedSize(aspect).label} · {aspect.replace(/\s/g, '')}</span>
         </div>
       </div>
     )
