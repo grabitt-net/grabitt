@@ -171,6 +171,11 @@ export const bannersRouter = router({
     .query(async ({ ctx, input }) => {
       const now = new Date()
       const testMode = await isTestMode(ctx.prisma)
+      // Slot-level per-page switch (admin → Slots & pricing). If this slot is
+      // limited to specific pages and the current page isn't one of them, the
+      // whole slot is off here — show nothing.
+      const slot = await getSlot(ctx.prisma, input.position)
+      if (slot?.pages?.length && (!input.page || !slot.pages.includes(input.page))) return []
       return ctx.prisma.banner.findMany({
         where: {
           position: input.position as never,
@@ -229,20 +234,31 @@ export const bannersRouter = router({
 
   saveConfig: execProcedure
     .input(z.object({
-      slots: z.record(z.object({ monthlyCents: z.number().int().min(0).optional(), cap: z.number().int().min(1).optional(), active: z.boolean().optional() })).optional(),
+      // `pages` limits which site pages a slot renders on (empty/absent = every
+      // page). Enforced in `active`, below.
+      slots: z.record(z.object({ monthlyCents: z.number().int().min(0).optional(), cap: z.number().int().min(1).optional(), active: z.boolean().optional(), pages: z.array(z.string()).optional() })).optional(),
       infeedEveryRows: z.number().int().min(1).max(20).optional(),
       testMode: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const row = await ctx.prisma.bannerConfig.findUnique({ where: { id: 'default' } })
       const cur = (row?.data as Record<string, unknown> | undefined) ?? {}
+      const curSlots = (cur.slots as Record<string, Record<string, unknown>> | undefined) ?? {}
+      // Deep-merge each slot override so a partial patch (e.g. just `pages`)
+      // doesn't wipe the slot's other overrides (price/cap/active).
+      const mergedSlots = { ...curSlots }
+      if (input.slots) {
+        for (const [id, patch] of Object.entries(input.slots)) {
+          mergedSlots[id] = { ...(curSlots[id] ?? {}), ...patch }
+        }
+      }
       const next = {
         ...cur,
-        ...(input.slots ? { slots: { ...(cur.slots as object ?? {}), ...input.slots } } : {}),
+        ...(input.slots ? { slots: mergedSlots } : {}),
         ...(input.infeedEveryRows != null ? { infeedEveryRows: input.infeedEveryRows } : {}),
         ...(input.testMode != null ? { testMode: input.testMode } : {}),
       }
-      return ctx.prisma.bannerConfig.upsert({ where: { id: 'default' }, create: { id: 'default', data: next }, update: { data: next } })
+      return ctx.prisma.bannerConfig.upsert({ where: { id: 'default' }, create: { id: 'default', data: next as never }, update: { data: next as never } })
     }),
 
   // ── Admin: bookings & override ───────────────────────────────────────────────

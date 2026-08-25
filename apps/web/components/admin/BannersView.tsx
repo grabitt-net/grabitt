@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
 import ImageUploadField from './ImageUploadField'
 import { BANNER_PAGE_OPTIONS } from '@/lib/bannerPages'
@@ -34,7 +34,7 @@ const POSITIONS: [string, string][] = [
 const POS_LABEL = Object.fromEntries(POSITIONS)
 
 interface Banner { id: string; title: string; imageUrl: string; linkUrl: string | null; active: boolean; approved?: boolean; isTest?: boolean; position: string; pageTarget?: string | null; pages?: string[]; startsAt: string | null; endsAt: string | null; clickCount?: number; impressions?: number }
-interface Slot { id: string; label: string; monthlyCents: number; cap: number; exclusive: boolean; perPage: boolean; scope: string; active: boolean }
+interface Slot { id: string; label: string; monthlyCents: number; cap: number; exclusive: boolean; perPage: boolean; scope: string; active: boolean; pages?: string[] }
 interface Booking { id: string; userId: string; position: string; pageTarget?: string | null; months: number; startsAt: string; endsAt: string; amountCents: number; createdByAdmin: boolean; user?: { displayName?: string; email?: string; businessName?: string } }
 
 const EMPTY = { title: '', imageUrl: '', linkUrl: '', position: 'home_top', pageTarget: '', pages: [] as string[], active: true, isTest: false, startsAt: '', endsAt: '' }
@@ -51,6 +51,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ ...EMPTY })
   const [editId, setEditId] = useState<string | null>(null)
+  const [expandedSlot, setExpandedSlot] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   const startEdit = (b: Banner) => {
@@ -105,7 +106,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
 
   async function toggleTestMode() { const next = !testMode; setTestMode(next); await api.saveBannerConfig({ testMode: next }); }
   async function saveInfeed(n: number) { setInfeedRows(n); await api.saveBannerConfig({ infeedEveryRows: n }) }
-  async function saveSlot(id: string, patch: { monthlyCents?: number; cap?: number; active?: boolean }) {
+  async function saveSlot(id: string, patch: { monthlyCents?: number; cap?: number; active?: boolean; pages?: string[] }) {
     setSlots(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s))
     await api.saveBannerConfig({ slots: { [id]: patch } })
   }
@@ -264,18 +265,45 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-ui)', fontSize: 12.5 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: '#999', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                <th style={th}>Slot</th><th style={th}>€/month</th><th style={th}>Advertisers (cap)</th><th style={th}>Type</th><th style={th}>Active</th>
+                <th style={th}>Slot</th><th style={th}>€/month</th><th style={th}>Advertisers (cap)</th><th style={th}>Type</th><th style={th}>Pages</th><th style={th}>Active</th>
               </tr>
             </thead>
             <tbody>
               {slots.map(s => (
-                <tr key={s.id} style={{ borderTop: '1px solid #f5f0e8' }}>
+                <Fragment key={s.id}>
+                <tr style={{ borderTop: '1px solid #f5f0e8' }}>
                   <td style={td}><div style={{ fontWeight: 800 }}>{s.label}</div><div style={{ color: '#aaa', fontSize: 10.5 }}>{s.scope}</div></td>
                   <td style={td}><input type="number" min={0} value={Math.round(s.monthlyCents / 100)} onChange={e => saveSlot(s.id, { monthlyCents: Math.max(0, Number(e.target.value) || 0) * 100 })} style={{ ...inp, width: 80 }} /></td>
                   <td style={td}>{s.exclusive ? <span style={{ color: '#c2410c', fontWeight: 800 }}>Exclusive (1)</span> : <input type="number" min={1} value={s.cap} onChange={e => saveSlot(s.id, { cap: Math.max(1, Number(e.target.value) || 1) })} style={{ ...inp, width: 64 }} />}</td>
                   <td style={{ ...td, color: '#888' }}>{s.perPage ? 'Per page' : 'Site-wide'}</td>
+                  <td style={td}>
+                    <button onClick={() => setExpandedSlot(v => v === s.id ? null : s.id)} style={{ ...pill, background: '#eef4ff', color: '#2563eb' }}>
+                      {s.pages?.length ? `${s.pages.length} page${s.pages.length === 1 ? '' : 's'}` : 'All pages'} ▾
+                    </button>
+                  </td>
                   <td style={td}><button onClick={() => saveSlot(s.id, { active: !s.active })} style={{ ...pill, background: s.active ? '#f0faf4' : '#f5f5f5', color: s.active ? '#16a34a' : '#aaa' }}>{s.active ? '● On sale' : '○ Off'}</button></td>
                 </tr>
+                {expandedSlot === s.id && (
+                  <tr>
+                    <td colSpan={6} style={{ padding: '0 14px 12px' }}>
+                      <div style={{ background: '#faf8f4', border: '1px solid #efe9df', borderRadius: 10, padding: '10px 12px' }}>
+                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, fontWeight: 800, color: '#999', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 7 }}>
+                          Show this banner on — {s.pages?.length ? `${s.pages.length} selected` : 'all pages'}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          <button onClick={() => saveSlot(s.id, { pages: [] })} style={pageChip(!s.pages?.length)}>All pages</button>
+                          {BANNER_PAGE_OPTIONS.map(([key, lab]) => {
+                            const on = !!s.pages?.includes(key)
+                            return (
+                              <button key={key} onClick={() => saveSlot(s.id, { pages: on ? (s.pages ?? []).filter(p => p !== key) : [...(s.pages ?? []), key] })} style={pageChip(on)}>{on ? '✓ ' : ''}{lab}</button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>

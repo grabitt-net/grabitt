@@ -15,9 +15,11 @@ export type BannerSlot = {
   perPage: boolean
   scope: string
   active: boolean
+  // Pages this slot is allowed to render on (empty = every page). Admin-set.
+  pages: string[]
 }
 
-type SlotOverride = { monthlyCents?: number; cap?: number; active?: boolean }
+type SlotOverride = { monthlyCents?: number; cap?: number; active?: boolean; pages?: string[] }
 type BannerConfigData = {
   slots?: Record<string, SlotOverride>
   infeedEveryRows?: number
@@ -46,6 +48,7 @@ export async function getBannerCatalog(prisma: PrismaClient): Promise<BannerSlot
       perPage: base.perPage,
       scope: base.scope,
       active: ov.active !== false,
+      pages: Array.isArray(ov.pages) ? ov.pages : [],
     }
   })
 }
