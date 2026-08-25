@@ -276,7 +276,9 @@ export const propertyRouter = router({
     .mutation(async ({ ctx, input }) => {
       const listing = await ctx.prisma.listing.update({
         where: { id: input.listingId },
-        data: { status: 'active' },
+        // Start the 30-day live term from approval (go-live), not from when the
+        // listing was first submitted for review.
+        data: { status: 'active', createdAt: new Date(), bumpedAt: new Date() },
         select: { id: true, title: true, sellerId: true },
       })
       await ctx.prisma.notification.create({

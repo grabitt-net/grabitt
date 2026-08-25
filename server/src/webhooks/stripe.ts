@@ -256,7 +256,10 @@ export async function handleStripeEvent(event: Stripe.Event) {
       }
       // A job/property advert bought beyond the free allowance — publish it.
       if (pi.metadata?.kind === 'listing_publish' && pi.metadata.listingId) {
-        await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active' } }).catch(() => {})
+        // Start the listing's live clock at go-live (payment), not at draft
+        // creation — so a property's 30-day term (and an item's 21-day cycle)
+        // counts from when buyers can actually see it.
+        await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active', createdAt: new Date(), bumpedAt: new Date() } }).catch(() => {})
       }
       // Handy Help — a business paid €2.99 to unlock a post; create their
       // proposal now (idempotent per listing+responder) and notify the poster.

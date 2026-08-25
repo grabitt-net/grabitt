@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic'
 // Triggered by Vercel Cron (see vercel.json); protected by CRON_SECRET.
 const RELIST_DAYS = 21
 const HANDY_RELIST_DAYS = 30   // Handy Help posts run a 30-day cycle
+const PROPERTY_DAYS = 30       // Property listings run a flat 30-day term
 const MAX_RELISTS = 3
 const EXCLUDED = ['jobs', 'property'] as const
 
@@ -82,5 +83,31 @@ export async function GET(req: Request) {
     if (due.length < BATCH) break
   }
 
-  return Response.json({ ok: true, scanned, relisted, expired })
+  // Property has no auto-relist — it runs a flat 30-day term, then expires.
+  const propCutoff = new Date(); propCutoff.setDate(propCutoff.getDate() - PROPERTY_DAYS)
+  let propertyExpired = 0
+  for (;;) {
+    const due = await prisma.listing.findMany({
+      where: { status: 'active', department: 'property', createdAt: { lt: propCutoff } },
+      select: { id: true, sellerId: true, title: true },
+      take: BATCH,
+    })
+    if (due.length === 0) break
+    for (const l of due) {
+      await prisma.listing.update({ where: { id: l.id }, data: { status: 'expired' } })
+      await prisma.notification.create({
+        data: {
+          userId: l.sellerId,
+          kind: 'listing_expiring',
+          title: 'Property listing expired',
+          body: `"${l.title}" has reached its 30-day limit. Re-list it any time to keep it live.`,
+          actionUrl: `/listings/${l.id}`,
+        },
+      })
+      propertyExpired++
+    }
+    if (due.length < BATCH) break
+  }
+
+  return Response.json({ ok: true, scanned, relisted, expired, propertyExpired })
 }

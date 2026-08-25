@@ -62,7 +62,7 @@ export default function PricingPage() {
         <PriceRow name="Handy Help" price="Free" note="Personal accounts" term="Live for 30 days" href="/handy" cta="Post a request">
           Need a hand — or want to lend one? Personal accounts post a Handy Help request completely free. Every post stays live for 30 days with a countdown on the card, and your contact details stay hidden until you accept a response. Business accounts pay to take part (see For Business).
         </PriceRow>
-        <PriceRow name="Property or Rental" price="€39 per listing" note="1 free every month" term="Stays live until sold or removed" href="/property/new" cta="List a property">
+        <PriceRow name="Property or Rental" price="€39 per listing" note="1 free every month" term="Live for 30 days" href="/property/new" cta="List a property">
           List a property to rent or sell. Everyone gets one free property listing every month — after that it&apos;s just €39 per listing. Business accounts get an allowance included with their plan.
         </PriceRow>
       </Section>
@@ -80,7 +80,7 @@ export default function PricingPage() {
         <PriceRow name="Business Directory" price="€15/month" note="Or annual for a discount" href="/for-business" cta="Get listed">
           Get found. List your business in the Grabitt Directory for €15 a month, or go annual for a tidy discount. What we&apos;ve been missing is a nice clean business directory here on the Canary Islands. Split into industry, you come up when people search for a plumber, dentist, doctor, lawyer — you name it. You get your logo, contact details, and a brief description of what you do and where you are, with a map pin.
         </PriceRow>
-        <PriceRow name="Property or Rental" price="€39 per listing" note="Allowance included" term="Stays live until sold or removed" href="/property/new" cta="List a property">
+        <PriceRow name="Property or Rental" price="€39 per listing" note="Allowance included" term="Live for 30 days" href="/property/new" cta="List a property">
           Agents and businesses: property listings are included in your plan&apos;s allowance — list up to your tier&apos;s limit each month, then it&apos;s just €39 per extra listing.
         </PriceRow>
       </Section>
