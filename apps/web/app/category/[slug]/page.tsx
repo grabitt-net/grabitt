@@ -3,7 +3,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createLooseTrpcClient } from '@/lib/trpc'
-import { PanelProvider } from '@/context/PanelContext'
+import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
@@ -108,6 +108,11 @@ export default function CategoryPage() {
 
 
       <header style={{ background: 'var(--sand)', padding: '14px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
+        {/* Handy Help — advertisers post directly from the category lander. The
+            createListing flow applies the business €9.99 place gate. */}
+        {slug === 'handy_help' && (
+          <div style={{ marginBottom: 12 }}><PlaceHandyAdButton /></div>
+        )}
         {/* Category description — copy supplied per category (CATEGORY_DESC).
             Sits above the subcategory pills; the search lives in the header bar. */}
         {CATEGORY_DESC[slug] && (
@@ -185,6 +190,18 @@ export default function CategoryPage() {
       <PanelHost />
     </main>
     </PanelProvider>
+  )
+}
+
+// "Place an ad" for the Handy Help lander — opens the createListing flow with
+// the Handy Help category preset (business €9.99 place gate applies there).
+function PlaceHandyAdButton() {
+  const { openPanel } = usePanel()
+  return (
+    <button onClick={() => openPanel('createListing', { category: 'Handy Help' })} style={{
+      display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff',
+      border: 'none', borderRadius: 14, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer',
+    }}>🔧 Place an ad</button>
   )
 }
 

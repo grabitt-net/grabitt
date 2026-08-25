@@ -951,7 +951,7 @@ function PanelBody() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {([['🏡','Sell an item','Furniture, tech & more', () => openPanel('createListing')],['💼','Post a job','Find staff fast', () => { closePanel(); window.location.href = '/jobs/new' }],['🏠','List a property','Rent or sell a home', () => { closePanel(); window.location.href = '/property/new' }],['🔧','Offer a service','Trades, cleaning & help', () => openPanel('createListing', { category: 'Services' })]] as [string,string,string,()=>void][]).map(([icon, title, desc, action], i) => (
+          {([['🏡','Sell an item','Furniture, tech & more', () => openPanel('createListing')],['💼','Post a job','Find staff fast', () => { closePanel(); window.location.href = '/jobs/new' }],['🏠','List a property','Rent or sell a home', () => { closePanel(); window.location.href = '/property/new' }],['🔧','Offer a service','Advertise in Handy Help', () => openPanel('createListing', { category: 'Handy Help' })]] as [string,string,string,()=>void][]).map(([icon, title, desc, action], i) => (
             <button key={i} onClick={action} style={tile}>
               <span style={iconTile}>{icon}</span>
               <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</span>

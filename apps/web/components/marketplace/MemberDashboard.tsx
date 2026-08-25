@@ -341,15 +341,20 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
         </nav>
 
         <section id="hub-panel" style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-          {/* Quick-action pills — centred directly over the sponsor banner. */}
-          {effBiz && (
+          {/* Quick-action pills — centred directly over the sponsor banner.
+              Both hubs get Sell now + Offer a service (Handy Help); the Business
+              Hub adds the business-only shortcuts. */}
+          {(
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
               {([
                 ['🏷️', t('Sell now'), () => openPanel('sell' as PanelId)],
-                ['💼', t('Recruit'), () => router.push('/recruitment')],
-                ['🏠', t('Property'), () => router.push('/property/new')],
-                ['📣', t('Buy banners'), () => router.push('/advertise')],
-                ['⚡', t('Grabitt now'), () => router.push('/grabit')],
+                ['🔧', t('Offer a service'), () => openPanel('createListing' as PanelId, { category: 'Handy Help' })],
+                ...(effBiz ? [
+                  ['💼', t('Recruit'), () => router.push('/recruitment')],
+                  ['🏠', t('Property'), () => router.push('/property/new')],
+                  ['📣', t('Buy banners'), () => router.push('/advertise')],
+                  ['⚡', t('Grabitt now'), () => router.push('/grabit')],
+                ] as [string, string, () => void][] : []),
               ] as [string, string, () => void][]).map(([emoji, label, onClick]) => (
                 <button key={label} onClick={onClick} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)',
