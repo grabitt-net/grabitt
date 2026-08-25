@@ -17,6 +17,10 @@ import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
 // A department/category now opens its own page (matching /jobs and /property)
 // instead of the old modal. Same site shell (Topbar + app-shell + Footer) with
 // the category search inputs on top and the listing grid below.
+// Per-category description shown above the subcategory pills. Copy supplied by
+// Steve per category — add entries keyed by department slug as they arrive.
+const CATEGORY_DESC: Record<string, string> = {}
+
 const SUBCATS: Record<string, string[]> = {
   // Exact subcategories from the V20 prototype's deptConfig, each with an 'All'
   // pill prepended. Departments the prototype didn't define keep a sensible set.
@@ -47,7 +51,6 @@ export default function CategoryPage() {
   const emoji = deptEmoji(slug)
   const subcats = SUBCATS[label] ?? ['All']
 
-  const [query, setQuery] = useState('')
   const [activeSub, setActiveSub] = useState('All')
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
   const [items, setItems] = useState<DbListing[]>([])
@@ -83,18 +86,16 @@ export default function CategoryPage() {
   // There is no real "subcategory" column, so a pill matches when any of its
   // meaningful words appears in the listing's title, description or auto-tags.
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
     const subWords = activeSub !== 'All'
       ? activeSub.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length >= 3)
       : []
     return items.filter(l => {
       const li = l as DbListing & { description?: string; tags?: string[] }
       const haystack = [li.title, li.description, ...(li.tags ?? [])].join(' ').toLowerCase()
-      if (q && !haystack.includes(q)) return false
       if (subWords.length && !subWords.some(w => haystack.includes(w))) return false
       return true
     })
-  }, [items, query, activeSub])
+  }, [items, activeSub])
 
   return (
     <PanelProvider>
@@ -106,14 +107,18 @@ export default function CategoryPage() {
       <BannerSlot position="category" page={slug} aspect="5 / 1" />
 
 
-      <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
-        <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${label}…`} style={inp} />
+      <header style={{ background: 'var(--sand)', padding: '14px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
+        {/* Category description — copy supplied per category (CATEGORY_DESC).
+            Sits above the subcategory pills; the search lives in the header bar. */}
+        {CATEGORY_DESC[slug] && (
+          <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.6, margin: '0 0 12px', maxWidth: 760 }}>{CATEGORY_DESC[slug]}</p>
+        )}
 
         {/* Wrap onto multiple lines rather than a slidable bar, so every
             subcategory is visible at once (nothing cut off). Small screens
             flow to a few rows; wide screens fit on one. */}
         {subcats.length > 1 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, paddingTop: 10 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {subcats.map(sub => <Chip key={sub} active={activeSub === sub} onClick={() => setActiveSub(sub)}>{sub}</Chip>)}
           </div>
         )}
