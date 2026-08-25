@@ -148,6 +148,9 @@ export const JOB_ATTRIBUTES: Record<string, string[]> = {
 }
 export const EXP_OPTIONS = [['0', 'Any experience'], ['3', '3+ months'], ['6', '6+ months'], ['12', '1+ year'], ['24', '2+ years'], ['36', '3+ years'], ['60', '5+ years']]
 const ORANGE = 'var(--orange)'
+// Compact choose-tile styling, mirroring the Sell popup.
+const CHOOSE_TILE: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 7, background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '16px 10px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }
+const CHOOSE_ICON: React.CSSProperties = { width: 44, height: 44, borderRadius: '50%', background: '#FFF3EE', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }
 
 const LABEL: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: ORANGE, textTransform: 'uppercase', marginBottom: 6 }
 const SELECT: React.CSSProperties = { width: '100%', border: '1.5px solid #eee', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' }
@@ -285,33 +288,28 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
               </button>
             </div>
           ) : mode === 'choose' && matchCount === null ? (
-            /* Two ways to hire — post a role and wait, or go looking. */
+            /* Two ways to hire — mirrors the Sell popup's compact tile style. */
             <div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#666', lineHeight: 1.6, marginBottom: 16 }}>
-                Hiring for {access.businessName || 'your business'}? Advertise the role, or search candidates who have already listed themselves for work.
+              <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 2 }}>How would you like to hire?</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888' }}>Hiring for {access.businessName || 'your business'}</div>
               </div>
 
-              <button onClick={() => { onClose(); window.location.href = '/jobs/new' }} style={{ width: '100%', textAlign: 'left', background: '#fff', border: '1.5px solid #e5dccd', borderRadius: 14, padding: 15, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 26 }}>📢</span>
-                <span style={{ flex: 1 }}>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a' }}>Place a job advert</span>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', marginTop: 2 }}>Free to post. Candidates apply to you.</span>
-                </span>
-                <span style={{ color: ORANGE, fontWeight: 900, fontSize: 18 }}>›</span>
-              </button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <button onClick={() => { onClose(); window.location.href = '/jobs/new' }} style={CHOOSE_TILE}>
+                  <span style={CHOOSE_ICON}>📢</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Place a job advert</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>Candidates apply to you</span>
+                </button>
 
-              <button onClick={() => setMode('search')} disabled={!access.canSearch} style={{ width: '100%', textAlign: 'left', background: access.canSearch ? '#fff' : '#fafafa', border: '1.5px solid #e5dccd', borderRadius: 14, padding: 15, cursor: access.canSearch ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 12, opacity: access.canSearch ? 1 : 0.7 }}>
-                <span style={{ fontSize: 26 }}>🔍</span>
-                <span style={{ flex: 1 }}>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a' }}>Search the candidate database</span>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', marginTop: 2 }}>
-                    Optional add-on · searching &amp; profiles are free · {euro(access.cvUnlockCents)} to unlock a candidate&apos;s CV &amp; contact
-                  </span>
-                </span>
-                <span style={{ color: ORANGE, fontWeight: 900, fontSize: 18 }}>›</span>
-              </button>
+                <button onClick={() => setMode('search')} disabled={!access.canSearch} style={{ ...CHOOSE_TILE, cursor: access.canSearch ? 'pointer' : 'not-allowed', opacity: access.canSearch ? 1 : 0.6 }}>
+                  <span style={CHOOSE_ICON}>🔍</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Search candidates</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>Free to browse · {euro(access.cvUnlockCents)} to unlock a CV</span>
+                </button>
+              </div>
 
-              <div style={{ marginTop: 14, background: access.canSearch ? '#f0fdf4' : '#FFF7ED', border: `1px solid ${access.canSearch ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 10, padding: '10px 12px' }}>
+              <div style={{ marginTop: 12, background: access.canSearch ? '#f0fdf4' : '#FFF7ED', border: `1px solid ${access.canSearch ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 12, padding: '10px 12px' }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: access.canSearch ? '#16a34a' : '#9a5b1a' }}>
                   {access.canSearch ? `${access.liveJobs.length} live job advert${access.liveJobs.length === 1 ? '' : 's'}` : 'A live job advert is required'}
                 </div>
