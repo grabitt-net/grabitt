@@ -95,6 +95,13 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
     await api.upsertBanner({ id: b.id, title: b.title, imageUrl: b.imageUrl, linkUrl: b.linkUrl || undefined, position: b.position, pageTarget: b.pageTarget || undefined, pages: b.pages ?? [], active: !b.active, isTest: b.isTest })
     load()
   }
+  // Toggle which pages a site-wide banner shows on, straight from its card.
+  // pages[] is an explicit allow-list; empty = every page.
+  async function savePages(b: Banner, pages: string[]) {
+    setBanners(prev => prev.map(x => x.id === b.id ? { ...x, pages } : x)) // optimistic
+    await api.upsertBanner({ id: b.id, title: b.title, imageUrl: b.imageUrl, linkUrl: b.linkUrl || undefined, position: b.position, pageTarget: b.pageTarget || undefined, pages, active: b.active, isTest: b.isTest })
+    load()
+  }
   async function remove(id: string) { await api.removeBanner(id); load() }
   async function setApproved(b: Banner, approved: boolean) { await api.approveBanner(b.id, approved); load() }
 
@@ -180,6 +187,10 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
       )}
 
       {tab === 'banners' && (
+        <>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#8a8378', marginBottom: 12, background: '#faf8f4', border: '1px solid #efe9df', borderRadius: 10, padding: '9px 12px' }}>
+          💡 The <strong>site-wide sponsor banners</strong> (Featured Partner rail — top &amp; footer) show across many pages, so their cards have <strong>tap-to-toggle page chips</strong> to turn them on/off per page. Every other placement lives on one fixed page, so it has no per-page choice.
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
           {banners.map(b => (
             <div key={b.id} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', borderTop: `4px solid ${b.approved === false ? '#f59e0b' : b.active ? 'var(--orange)' : '#e5e7eb'}` }}>
@@ -196,6 +207,33 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
                   <span title="Impressions">👁 <b>{b.impressions ?? 0}</b></span>
                   {(b.impressions ?? 0) > 0 && <span title="Click-through rate" style={{ color: '#16a34a' }}>{(((b.clickCount ?? 0) / (b.impressions ?? 1)) * 100).toFixed(1)}% CTR</span>}
                 </div>
+
+                {/* Per-page on/off — only for site-wide placements that actually
+                    render across multiple pages. Click a page to show/hide the
+                    banner there; "All pages" clears the restriction. */}
+                {PAGE_TARGETABLE.has(b.position) && (
+                  <div style={{ marginBottom: 10, background: '#faf8f4', border: '1px solid #efe9df', borderRadius: 10, padding: '8px 9px' }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, fontWeight: 800, color: '#999', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>
+                      Shows on {b.pages?.length ? `${b.pages.length} page${b.pages.length === 1 ? '' : 's'}` : 'all pages'} — tap to change
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      <button
+                        onClick={() => savePages(b, [])}
+                        style={pageChip(!b.pages?.length)}
+                      >All pages</button>
+                      {BANNER_PAGE_OPTIONS.map(([key, lab]) => {
+                        const on = !!b.pages?.includes(key)
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => savePages(b, on ? (b.pages ?? []).filter(p => p !== key) : [...(b.pages ?? []), key])}
+                            style={pageChip(on)}
+                          >{on ? '✓ ' : ''}{lab}</button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
                 {b.approved === false && !b.isTest ? (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button onClick={() => setApproved(b, true)} style={{ ...pill, flex: 1, background: '#16a34a', color: '#fff' }}>✓ Approve</button>
@@ -215,6 +253,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
           ))}
           {banners.length === 0 && <div style={emptyBox}>No banners yet — add one (or a test banner) to show it on the site</div>}
         </div>
+        </>
       )}
 
       {tab === 'pricing' && (
@@ -318,6 +357,11 @@ const inp: React.CSSProperties = { width: '100%', padding: '7px 10px', border: '
 const th: React.CSSProperties = { padding: '10px 14px', fontFamily: 'var(--font-ui)', fontWeight: 800 }
 const td: React.CSSProperties = { padding: '10px 14px', verticalAlign: 'top' }
 const pill: React.CSSProperties = { padding: '5px 11px', borderRadius: 50, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-ui)' }
+const pageChip = (on: boolean): React.CSSProperties => ({
+  padding: '4px 10px', borderRadius: 50, cursor: 'pointer', fontSize: 10.5, fontWeight: 800, fontFamily: 'var(--font-ui)',
+  border: on ? '1.5px solid #16a34a' : '1.5px solid #e2ddd3',
+  background: on ? '#f0faf4' : '#fff', color: on ? '#16a34a' : '#8a8378',
+})
 const ghostBtn: React.CSSProperties = { padding: '7px 16px', borderRadius: 50, border: '1.5px solid #e5e7eb', background: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }
 const primaryBtn: React.CSSProperties = { padding: '7px 18px', borderRadius: 50, border: 'none', background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 12, cursor: 'pointer' }
 const emptyBox: React.CSSProperties = { gridColumn: '1/-1', textAlign: 'center', padding: '60px 20px', color: '#ccc', fontFamily: 'var(--font-ui)', fontWeight: 800 }
