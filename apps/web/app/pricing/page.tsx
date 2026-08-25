@@ -52,8 +52,8 @@ export default function PricingPage() {
         <PriceRow name="Selling Items" price="2.5% to 8%" href="/?sell=1" cta="List an item">
           Keep more of what you make. Selling fees run from just 2.5% up to 8%, depending on which business account you set up — the higher your level, the lower your fee. <Link href="/for-business" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>See Business accounts</Link>
         </PriceRow>
-        <PriceRow name="Featured Listing" price="€1.99" href="/?sell=1" cta="List an item">
-          Want eyes on your item fast? For just €1.99, your listing jumps into the Featured area right at the top of the homepage — pimped-up visibility that puts you in front of everyone browsing Grabitt.
+        <PriceRow name="Featured Listing" price="€1.99" per="per week" href="/?sell=1" cta="List an item">
+          Want eyes on your item fast? For just €1.99 a week, your listing jumps into the Featured area right at the top of the homepage — pimped-up visibility that puts you in front of everyone browsing Grabitt.
         </PriceRow>
         <PriceRow name="Grabitt NOW!" price="€4.99 per listing" href="/?sell=1" cta="List an item">
           Got something that needs gone <em>fast</em>? Grabitt NOW! is built for urgency — discounted items and hot offers that can&apos;t wait. For €4.99 your listing lands right at the top of the homepage for a full 72 hours, in its own dedicated carousel alongside boosted listings (two separate carousels). It&apos;s the express lane for anything you need to shift quickly — grab the attention, make the sale, done.
