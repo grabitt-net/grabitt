@@ -79,6 +79,14 @@ export const JOBS_PRICING = {
   bundles: { 5: 13000, 10: 24500 } as Record<number, number>, // provisional: €130 / €245
 } as const
 
+// Recruitment database search — an OPTIONAL add-on, available only to a business
+// that has a live, paid-for job advert. Searching/browsing matches is free; the
+// charge is per candidate you unlock (CV + contact details), and each unlock is
+// tied to one of your live job adverts. No credits — a straight €-charge.
+export const RECRUITMENT_PRICING = {
+  cvUnlockCents: 499,   // €4.99 to unlock one candidate's CV + contact
+} as const
+
 // Property. Private: 1 free/month, €9 featured boost, €39 per extra listing.
 // Business: €39/listing with the same 5/10 bundles. Advertising only — Grabitt
 // takes no commission or deposit on property.

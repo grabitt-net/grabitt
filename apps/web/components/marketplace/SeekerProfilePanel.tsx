@@ -6,7 +6,7 @@ import { JOB_SECTORS, JOB_LANGUAGES, JOB_ATTRIBUTES, EXP_OPTIONS } from './FindS
 import { skillsForSectors, LANGUAGE_LEVELS, formatLanguage, parseLanguages, type LanguageEntry } from '@/lib/jobSkills'
 
 // "List yourself for work" — a job-seeker's available-for-work profile. Employers
-// find these anonymously via Find Staff and spend credits to unlock contact.
+// find these anonymously via Find Staff and pay to unlock contact.
 
 const ORANGE = 'var(--orange)'
 const GC_TOWNS = ['Las Palmas', 'Maspalomas', 'Playa del Ingl\u00e9s', 'Puerto Rico', 'Arucas', 'Telde',
@@ -128,7 +128,7 @@ export default function SeekerProfilePanel({ onClose }: { onClose: () => void })
           {!loaded ? <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)' }}>Loading…</div> : (
             <>
               <div style={{ fontSize: 11, color: ORANGE, fontFamily: 'var(--font-ui)', marginBottom: 14, lineHeight: 1.5 }}>
-                Add your details so employers searching Find Staff can match you. Your contact details stay hidden until an employer spends credits to unlock them.
+                Add your details so employers searching Find Staff can match you. Your contact details stay hidden until an employer pays to unlock them against a live job advert.
               </div>
 
               <div style={{ marginBottom: 12 }}>

@@ -275,6 +275,20 @@ export async function handleStripeEvent(event: Stripe.Event) {
           }
         }
       }
+      // Recruitment database — a paid CV/contact unlock, tied to the employer's
+      // live job advert. Record the unlock and let the candidate know.
+      if (pi.metadata?.kind === 'cv_unlock' && pi.metadata.employerId && pi.metadata.seekerId) {
+        const employerId = pi.metadata.employerId
+        const seekerId = pi.metadata.seekerId
+        const jobListingId = pi.metadata.jobListingId || null
+        const existing = await prisma.candidateUnlock.findUnique({ where: { employerId_seekerId: { employerId, seekerId } }, select: { id: true } }).catch(() => null)
+        if (!existing) {
+          await prisma.candidateUnlock.create({ data: { employerId, seekerId, jobListingId } }).catch(() => {})
+          await prisma.notification.create({
+            data: { userId: seekerId, kind: 'system', title: '👀 An employer unlocked your profile', body: 'A registered employer has viewed your work profile and contact details.', actionUrl: '/account' },
+          }).catch(() => {})
+        }
+      }
       // A direct-marketing blast bundle — credit the sends.
       if (pi.metadata?.kind === 'blast' && pi.metadata.userId && pi.metadata.qty) {
         const n = Number(pi.metadata.qty) || 0

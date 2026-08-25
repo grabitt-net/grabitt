@@ -23,9 +23,11 @@ type FullProfile = {
   rightToWork: string | null; location: string
   workExperience: { title?: string; employer?: string; location?: string; start?: string; end?: string; current?: boolean; bullets?: string[] }[] | null
   education: { qualification?: string; institution?: string; start?: string; end?: string; status?: string }[] | null
-  rating: number | null; verified: boolean; alreadyCharged: boolean; contactUnlocked: boolean; unlockCost: number
+  rating: number | null; verified: boolean; alreadyCharged: boolean; contactUnlocked: boolean; unlockCents: number
 }
 type Revealed = { name: string; email: string; phone: string | null; avatar: string | null; location: string | null; languages: string[]; availability: string | null }
+type LiveJob = { id: string; jobTitle: string }
+const euro = (cents: number) => `€${(cents / 100).toFixed(2)}`
 
 // Everything the employer paid to see: history, education, skills and the CV.
 // Contact details are deliberately absent — that's the separate unlock.
@@ -97,7 +99,7 @@ function FullProfileBlock({ p, seekerId }: { p: FullProfile; seekerId: string })
       </a>
       {!p.contactUnlocked && (
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#1a1a1a', textAlign: 'center' }}>
-          🔒 Name and contact appear once you unlock them ({p.unlockCost} credits).
+          🔒 Name and contact appear once you unlock them ({euro(p.unlockCents)}).
         </div>
       )}
     </div>
@@ -127,8 +129,9 @@ function expLabel(m: number) {
 }
 
 // "Find Staff" (Get Staff) — replicates the V20 HTML flow: employers build a job
-// spec, we show how many anonymous candidates match, and they buy credits to
-// unlock full profiles. Faithful to index.html openGetStaffPanel / runJobMatch.
+// spec, we show how many anonymous candidates match, and they pay per candidate
+// to unlock the CV & contact — the search being an optional add-on to a live,
+// paid-for job advert. Faithful to index.html openGetStaffPanel / runJobMatch.
 
 // Employer search taxonomy is the single canonical recruitment taxonomy, so the
 // sector/role an employer searches for are the exact strings a jobseeker stores
@@ -150,21 +153,22 @@ const LABEL: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 10,
 const SELECT: React.CSSProperties = { width: '100%', border: '1.5px solid #eee', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' }
 
 type Access = {
-  isBusiness: boolean; businessName: string | null; credits: number
-  viewCost: number; unlockCost: number; canSearch: boolean; profilesViewed: number
+  isBusiness: boolean; businessName: string | null
+  hasLiveJob: boolean; liveJobs: LiveJob[]; cvUnlockCents: number
+  canSearch: boolean; profilesViewed: number
 }
 
 export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => void; openPanel: (id: PanelId, data?: Record<string, unknown>) => void }) {
-  // Find Staff is a Business feature, and searching costs credits once you open
-  // a profile. Both are settled before showing the criteria form, rather than
-  // letting someone fill one in and then refusing them.
+  // Find Staff is a Business feature, and the candidate database is an add-on to
+  // a live job advert. We check that up front rather than letting someone fill
+  // in a search and then refusing them.
   const [access, setAccess] = useState<Access | null>(null)
   const [mode, setMode] = useState<'choose' | 'search'>('choose')
 
   useEffect(() => {
     trpcAuthed().seekers.searchAccess.query()
       .then(a => setAccess(a as Access))
-      .catch(() => setAccess({ isBusiness: false, businessName: null, credits: 0, viewCost: 1, unlockCost: 10, canSearch: false, profilesViewed: 0 }))
+      .catch(() => setAccess({ isBusiness: false, businessName: null, hasLiveJob: false, liveJobs: [], cvUnlockCents: 499, canSearch: false, profilesViewed: 0 }))
   }, [])
 
   const [sector, setSector] = useState('')
@@ -174,11 +178,13 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
   const [attrs, setAttrs] = useState<Record<string, string[]>>({ hours: [], availability: [], rightToWork: [], location: [] })
   const [matchCount, setMatchCount] = useState<number | null>(null)
   const [candidates, setCandidates] = useState<Candidate[]>([])
-  const [unlockCost, setUnlockCost] = useState(10)
+  const [unlockCents, setUnlockCents] = useState(499)
+  // Which of my live job adverts each CV unlock is charged against. Defaults to
+  // the first live advert; the employer can switch it when they have several.
+  const [unlockJobId, setUnlockJobId] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [revealed, setRevealed] = useState<Record<string, Revealed>>({})
   const [unlockingId, setUnlockingId] = useState<string | null>(null)
-  const [viewCost, setViewCost] = useState(1)
   const [profiles, setProfiles] = useState<Record<string, FullProfile>>({})
   const [openingId, setOpeningId] = useState<string | null>(null)
   // Which profiles are expanded right now. Kept apart from the loaded data so a
@@ -191,21 +197,16 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
     return next
   })
 
-  // Opening a profile spends a credit the first time; after that it's free, so
-  // the confirmation only appears when there is actually something to pay.
+  // Opening a profile is free — it's the CV/contact unlock that's charged.
   const openProfile = async (c: Candidate) => {
-    // Already fetched this session — just show it again, free and instant.
+    // Already fetched this session — just show it again, instant.
     if (profiles[c.seekerId]) { toggleExpanded(c.seekerId); return }
-    if (!c.viewed && !c.unlocked) {
-      if (!(await confirmDialog({ message: `Open this profile for ${viewCost} credit? You can reopen it free afterwards.`, confirmLabel: 'Open' }))) return
-    }
     setOpeningId(c.seekerId)
     try {
       const full = await trpcAuthed().seekers.viewCandidate.mutate({ seekerId: c.seekerId }) as unknown as FullProfile
       setProfiles(p => ({ ...p, [c.seekerId]: full }))
       setExpanded(prev => new Set(prev).add(c.seekerId))
       setCandidates(list => list.map(x => x.seekerId === c.seekerId ? { ...x, viewed: true } : x))
-      if (access) setAccess({ ...access, credits: access.credits - (c.viewed || c.unlocked ? 0 : viewCost) })
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not open that profile.')
     } finally { setOpeningId(null) }
@@ -227,26 +228,35 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
         availability: attrs.availability.length ? attrs.availability : undefined,
         rightToWork: attrs.rightToWork.length ? attrs.rightToWork : undefined,
         location: attrs.location.length ? attrs.location : undefined,
-      }) as { count: number; candidates: Candidate[]; unlockCost: number; viewCost?: number }
+      }) as { count: number; candidates: Candidate[]; cvUnlockCents: number; liveJobs: LiveJob[] }
       setCandidates(res.candidates)
-      if (res.viewCost) setViewCost(res.viewCost)
-      setUnlockCost(res.unlockCost)
+      setUnlockCents(res.cvUnlockCents)
+      if (res.liveJobs?.length && !unlockJobId) setUnlockJobId(res.liveJobs[0].id)
       setMatchCount(res.count)
     } catch { toast('Could not search candidates. Please sign in as an employer and try again.') }
     finally { setLoading(false) }
   }
 
+  // Unlocking a candidate's CV + contact is a €-charge tied to one of my live
+  // job adverts. If already unlocked the server returns the contact directly;
+  // otherwise it returns a Stripe checkout URL and we send the employer there.
   const unlock = async (c: Candidate) => {
     if (revealed[c.seekerId]) return
+    const jobId = unlockJobId || access?.liveJobs?.[0]?.id
+    if (!jobId) { toast('You need a live job advert to unlock candidates. Post a job first.'); return }
+    const job = access?.liveJobs?.find(j => j.id === jobId)
+    if (!(await confirmDialog({ message: `Unlock this candidate's CV & contact for ${euro(unlockCents)}? The charge is linked to your advert "${job?.jobTitle ?? 'your job'}".`, confirmLabel: `Pay ${euro(unlockCents)}` }))) return
     setUnlockingId(c.seekerId)
     try {
-      const r = await trpcAuthed().seekers.unlockCandidate.mutate({ seekerId: c.seekerId }) as Revealed & { seekerId: string }
-      setRevealed(prev => ({ ...prev, [c.seekerId]: r }))
-      setCandidates(prev => prev.map(x => x.seekerId === c.seekerId ? { ...x, unlocked: true } : x))
-    } catch (e: any) {
-      const msg = String(e?.message || '')
-      if (msg.includes('credits')) { if (await confirmDialog({ message: 'Not enough credits to unlock. Buy more now?', confirmLabel: 'Buy credits' })) { onClose(); openPanel('buyCredits') } }
-      else toast('Could not unlock this candidate. Please try again.')
+      const r = await trpcAuthed().seekers.unlockCandidate.mutate({ seekerId: c.seekerId, jobListingId: jobId }) as
+        (Revealed & { seekerId: string; unlocked: true }) | { paid: true; unlocked: false; checkoutUrl: string }
+      if ('checkoutUrl' in r && r.checkoutUrl) { window.location.href = r.checkoutUrl; return }
+      if ('unlocked' in r && r.unlocked) {
+        setRevealed(prev => ({ ...prev, [c.seekerId]: r as Revealed }))
+        setCandidates(prev => prev.map(x => x.seekerId === c.seekerId ? { ...x, unlocked: true } : x))
+      }
+    } catch {
+      toast('Could not unlock this candidate. Please try again.')
     } finally { setUnlockingId(null) }
   }
 
@@ -295,7 +305,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                 <span style={{ flex: 1 }}>
                   <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a' }}>Search the candidate database</span>
                   <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', marginTop: 2 }}>
-                    Searching is free · {access.viewCost} credit to open a profile · {access.unlockCost} to unlock contact
+                    Optional add-on · searching &amp; profiles are free · {euro(access.cvUnlockCents)} to unlock a candidate&apos;s CV &amp; contact
                   </span>
                 </span>
                 <span style={{ color: ORANGE, fontWeight: 900, fontSize: 18 }}>›</span>
@@ -303,22 +313,22 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
 
               <div style={{ marginTop: 14, background: access.canSearch ? '#f0fdf4' : '#FFF7ED', border: `1px solid ${access.canSearch ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 10, padding: '10px 12px' }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: access.canSearch ? '#16a34a' : '#9a5b1a' }}>
-                  {access.credits} credits available
+                  {access.canSearch ? `${access.liveJobs.length} live job advert${access.liveJobs.length === 1 ? '' : 's'}` : 'A live job advert is required'}
                 </div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: access.canSearch ? '#15803d' : '#9a5b1a', marginTop: 2, lineHeight: 1.5 }}>
                   {access.canSearch
-                    ? `${access.profilesViewed} profiles opened so far. Opening one you've already paid for is free.`
-                    : `You need at least ${access.viewCost} credit to open a candidate profile.`}
+                    ? `The database is an optional extra for businesses with a live advert. Each CV unlock (${euro(access.cvUnlockCents)}) is linked to one of your adverts.`
+                    : 'Post a job advert first — the candidate database is an optional add-on that speeds up hiring for a role you already have live.'}
                 </div>
                 {!access.canSearch && (
-                  <button onClick={() => { onClose(); openPanel('buyCredits') }} style={{ marginTop: 8, background: ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>Buy credits</button>
+                  <button onClick={() => { onClose(); window.location.href = '/jobs/new' }} style={{ marginTop: 8, background: ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>Post a job</button>
                 )}
               </div>
             </div>
           ) : matchCount === null ? (
             <>
               <div style={{ fontSize: 11, color: ORANGE, fontFamily: 'var(--font-ui)', marginBottom: 14, lineHeight: 1.5 }}>
-                Build your job spec below. We&apos;ll match it against anonymous candidate profiles and show you how many qualify. Use credits to unlock full profiles.
+                Build your job spec below. We&apos;ll match it against anonymous candidate profiles and show you how many qualify. Opening a profile is free; unlocking a candidate&apos;s CV &amp; contact is charged and linked to your job advert.
               </div>
 
               <div style={{ marginBottom: 12 }}>
@@ -385,7 +395,15 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
               ) : (
                 <>
                   <div style={{ background: '#FFF3EE', border: '1.5px solid #FFD4C0', borderRadius: 14, padding: 12, marginBottom: 14 }}>
-                    <div style={{ fontSize: 12, color: '#555', fontFamily: 'var(--font-ui)', lineHeight: 1.5 }}>🔒 Spend <strong>{unlockCost} credits</strong> to reveal a candidate&apos;s name, email, phone &amp; availability. Already-unlocked candidates stay free.</div>
+                    <div style={{ fontSize: 12, color: '#555', fontFamily: 'var(--font-ui)', lineHeight: 1.5 }}>🔒 Unlocking a candidate&apos;s CV, name &amp; contact is <strong>{euro(unlockCents)}</strong> — linked to the job advert you&apos;re hiring for. Already-unlocked candidates stay free.</div>
+                    {(access?.liveJobs?.length ?? 0) > 1 && (
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: ORANGE, textTransform: 'uppercase', marginBottom: 4 }}>Unlock against advert</div>
+                        <select value={unlockJobId} onChange={e => setUnlockJobId(e.target.value)} style={{ ...SELECT, padding: '8px 10px', fontSize: 12 }}>
+                          {access!.liveJobs.map(j => <option key={j.id} value={j.id}>{j.jobTitle}</option>)}
+                        </select>
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
@@ -414,8 +432,8 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                             ))}
                           </div>
 
-                          {/* Full profile — history, CV and all. Costs a credit
-                              the first time, free to reopen. */}
+                          {/* Full profile — history, CV and all. Free to open;
+                              only the CV/contact unlock is charged. */}
                           {profiles[c.seekerId] && expanded.has(c.seekerId) ? (
                             <>
                               <FullProfileBlock p={profiles[c.seekerId]} seekerId={c.seekerId} />
@@ -428,9 +446,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                               style={{ width: '100%', marginBottom: 8, background: '#fff', color: ORANGE, border: `1.5px solid ${ORANGE}`, borderRadius: 10, padding: 9, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
                               {openingId === c.seekerId
                                 ? 'Opening…'
-                                : (c.viewed || c.unlocked || profiles[c.seekerId])
-                                  ? '📄 View full profile (already paid)'
-                                  : `📄 Open full profile · ${viewCost} credit`}
+                                : '📄 Open full profile · free'}
                             </button>
                           )}
 
@@ -443,22 +459,18 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                           ) : isUnlocked ? (
                             <div style={{ fontSize: 11, color: '#22c55e', fontFamily: 'var(--font-ui)', fontWeight: 800 }}>✓ Unlocked — reopen to view details</div>
                           ) : (
-                            <button onClick={() => unlock(c)} disabled={unlockingId === c.seekerId} style={{ width: '100%', background: ORANGE, color: '#fff', border: 'none', borderRadius: 10, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', opacity: unlockingId === c.seekerId ? 0.6 : 1 }}>{unlockingId === c.seekerId ? 'Unlocking…' : `🔓 Unlock · ${unlockCost} credits`}</button>
+                            <button onClick={() => unlock(c)} disabled={unlockingId === c.seekerId} style={{ width: '100%', background: ORANGE, color: '#fff', border: 'none', borderRadius: 10, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', opacity: unlockingId === c.seekerId ? 0.6 : 1 }}>{unlockingId === c.seekerId ? 'Unlocking…' : `🔓 Unlock CV & contact · ${euro(unlockCents)}`}</button>
                           )}
                         </div>
                       )
                     })}
                   </div>
 
-                  <div onClick={() => { onClose(); openPanel('buyCredits') }} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#FFF3EE', border: `1.5px solid ${ORANGE}`, borderRadius: 12, padding: 12, cursor: 'pointer', marginBottom: 12 }}>
-                    <div style={{ fontSize: 22 }}>🪙</div>
-                    <div style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#1a1a1a' }}>Need more credits? Top up →</div>
-                  </div>
                 </>
               )}
 
               <button onClick={() => setMatchCount(null)} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 10 }}>← Adjust spec</button>
-              <div style={{ textAlign: 'center', fontSize: 10, color: '#666', fontFamily: 'var(--font-ui)' }}>Secure payment via Stripe · Credits never expire · Must be a registered employer</div>
+              <div style={{ textAlign: 'center', fontSize: 10, color: '#666', fontFamily: 'var(--font-ui)' }}>Secure payment via Stripe · Each unlock is linked to your live job advert · Must be a registered employer</div>
             </>
           )}
         </div>

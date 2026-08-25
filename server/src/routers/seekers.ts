@@ -2,10 +2,31 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, protectedProcedure } from '../trpc'
 import { scoreSuitability } from '../lib/suitability'
+import { getStripe } from '../lib/stripe'
+import { RECRUITMENT_PRICING } from '@grabitt/design-tokens'
 
-// Credits an employer spends to reveal one candidate's contact details.
-const UNLOCK_COST = 10   // contact details
-const VIEW_COST = 1      // opening a candidate's full profile
+const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
+
+// The candidate database is an OPTIONAL add-on to an existing paid job advert.
+// Searching and opening profiles are free; revealing a candidate's CV + contact
+// is a €-charge (RECRUITMENT_PRICING.cvUnlockCents) tied to one of the
+// employer's own live job adverts. No credits are used anywhere here.
+
+// An employer may search only while they have a live, paid-for job advert. This
+// returns those adverts (so the UI can tie each CV unlock to a specific role).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function liveJobsOf(prisma: any, employerId: string) {
+  const now = new Date()
+  return prisma.jobListing.findMany({
+    where: {
+      employerId,
+      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      listing: { status: 'active' },
+    },
+    select: { id: true, jobTitle: true },
+    orderBy: { createdAt: 'desc' },
+  }) as Promise<Array<{ id: string; jobTitle: string }>>
+}
 
 const workExperienceItem = z.object({
   title: z.string().max(120).default(''),
@@ -119,16 +140,20 @@ export const seekersRouter = router({
   searchAccess: protectedProcedure.query(async ({ ctx }) => {
     const me = await ctx.prisma.user.findUniqueOrThrow({
       where: { id: ctx.user.id },
-      select: { isBusiness: true, businessName: true, credits: true },
+      select: { isBusiness: true, businessName: true },
     })
-    const viewed = await ctx.prisma.candidateView.count({ where: { employerId: ctx.user.id } })
+    const [viewed, liveJobs] = await Promise.all([
+      ctx.prisma.candidateView.count({ where: { employerId: ctx.user.id } }),
+      liveJobsOf(ctx.prisma, ctx.user.id),
+    ])
     return {
       isBusiness: me.isBusiness,
       businessName: me.businessName,
-      credits: me.credits,
-      viewCost: VIEW_COST,
-      unlockCost: UNLOCK_COST,
-      canSearch: me.isBusiness && me.credits >= VIEW_COST,
+      // Search is an add-on: allowed only with a live, paid-for job advert.
+      hasLiveJob: liveJobs.length > 0,
+      liveJobs,
+      cvUnlockCents: RECRUITMENT_PRICING.cvUnlockCents,
+      canSearch: me.isBusiness && liveJobs.length > 0,
       profilesViewed: viewed,
     }
   }),
@@ -143,10 +168,16 @@ export const seekersRouter = router({
 
       const me = await ctx.prisma.user.findUniqueOrThrow({
         where: { id: ctx.user.id },
-        select: { isBusiness: true, credits: true },
+        select: { isBusiness: true },
       })
       if (!me.isBusiness) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Searching for staff is a Business account feature' })
+      }
+      // Opening a profile is free, but the database is only open to businesses
+      // with a live, paid-for job advert.
+      const liveJobs = await liveJobsOf(ctx.prisma, ctx.user.id)
+      if (liveJobs.length === 0) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'The candidate database is available while you have a live job advert. Post a job to search.' })
       }
 
       const profile = await ctx.prisma.seekerProfile.findUnique({
@@ -159,18 +190,10 @@ export const seekersRouter = router({
         where: { employerId_seekerId: { employerId: ctx.user.id, seekerId: input.seekerId } },
       })
 
+      // Opening a profile is free now — just record it once (for "profiles
+      // opened" and so we never double-count).
       if (!already) {
-        if (me.credits < VIEW_COST) {
-          throw new TRPCError({ code: 'FORBIDDEN', message: `You need ${VIEW_COST} credit to open a profile` })
-        }
-        const balance = me.credits - VIEW_COST
-        await ctx.prisma.$transaction([
-          ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { credits: balance } }),
-          ctx.prisma.creditEvent.create({
-            data: { userId: ctx.user.id, kind: 'admin_adjustment', delta: -VIEW_COST, balance, note: `Viewed candidate ${input.seekerId}` },
-          }),
-          ctx.prisma.candidateView.create({ data: { employerId: ctx.user.id, seekerId: input.seekerId } }),
-        ])
+        await ctx.prisma.candidateView.create({ data: { employerId: ctx.user.id, seekerId: input.seekerId } })
       }
 
       const unlocked = await ctx.prisma.candidateUnlock.findUnique({
@@ -203,7 +226,7 @@ export const seekersRouter = router({
         verified: profile.user.isVerified,
         alreadyCharged: !!already,
         contactUnlocked: !!unlocked,
-        unlockCost: UNLOCK_COST,
+        unlockCents: RECRUITMENT_PRICING.cvUnlockCents,
       }
     }),
 
@@ -227,6 +250,11 @@ export const seekersRouter = router({
       })
       if (!me.isBusiness) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Searching for staff is a Business account feature' })
+      }
+      // The search is an optional add-on to a live, paid-for job advert.
+      const liveJobs = await liveJobsOf(ctx.prisma, ctx.user.id)
+      if (liveJobs.length === 0) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'The candidate database is available while you have a live job advert. Post a job to search.' })
       }
 
       const where: Record<string, unknown> = {
@@ -301,13 +329,16 @@ export const seekersRouter = router({
         }
       }).sort((a, b) => b.matchScore - a.matchScore)
 
-      return { count: candidates.length, candidates, unlockCost: UNLOCK_COST, viewCost: VIEW_COST }
+      return { count: candidates.length, candidates, cvUnlockCents: RECRUITMENT_PRICING.cvUnlockCents, liveJobs }
     }),
 
-  // Spend credits to reveal a candidate's contact details. Idempotent: if this
-  // employer already unlocked the seeker, it's free.
+  // Reveal a candidate's CV + contact details. This is the one charged step of
+  // the database add-on: €RECRUITMENT_PRICING.cvUnlockCents, paid via Stripe and
+  // tied to one of the employer's own live job adverts. Idempotent — a candidate
+  // already unlocked opens again free and returns their contact straight away.
+  // The paid unlock record is created by the Stripe webhook (kind: cv_unlock).
   unlockCandidate: protectedProcedure
-    .input(z.object({ seekerId: z.string().uuid() }))
+    .input(z.object({ seekerId: z.string().uuid(), jobListingId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       if (input.seekerId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: "That's your own profile" })
 
@@ -326,39 +357,51 @@ export const seekersRouter = router({
         where: { employerId_seekerId: { employerId: ctx.user.id, seekerId: input.seekerId } },
       })
 
-      if (!already) {
-        const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { credits: true } })
-        if (me.credits < UNLOCK_COST) {
-          throw new TRPCError({ code: 'FORBIDDEN', message: `You need ${UNLOCK_COST} credits to unlock this candidate` })
+      // Already unlocked — hand back the contact details, no charge.
+      if (already) {
+        const p = seeker.seekerProfile
+        return {
+          paid: false as const,
+          unlocked: true as const,
+          seekerId: seeker.id,
+          name: seeker.displayName,
+          email: seeker.email,
+          phone: seeker.phone,
+          avatar: seeker.avatar,
+          headline: p.headline,
+          sector: p.sector,
+          roles: p.roles,
+          experienceMonths: p.experienceMonths,
+          languages: p.languages,
+          availability: p.availability,
+          location: p.location,
         }
-        const newBalance = me.credits - UNLOCK_COST
-        await ctx.prisma.$transaction([
-          ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { credits: newBalance } }),
-          ctx.prisma.creditEvent.create({
-            data: { userId: ctx.user.id, kind: 'admin_adjustment', delta: -UNLOCK_COST, balance: newBalance, note: `Unlocked candidate ${input.seekerId}` },
-          }),
-          ctx.prisma.candidateUnlock.create({ data: { employerId: ctx.user.id, seekerId: input.seekerId } }),
-        ])
-        // Let the seeker know an employer is interested.
-        await ctx.prisma.notification.create({
-          data: { userId: input.seekerId, kind: 'system', title: '👀 An employer unlocked your profile', body: 'A registered employer has viewed your work profile and contact details.', actionUrl: '/account' },
-        })
       }
 
-      const p = seeker.seekerProfile
-      return {
-        seekerId: seeker.id,
-        name: seeker.displayName,
-        email: seeker.email,
-        phone: seeker.phone,
-        avatar: seeker.avatar,
-        headline: p.headline,
-        sector: p.sector,
-        roles: p.roles,
-        experienceMonths: p.experienceMonths,
-        languages: p.languages,
-        availability: p.availability,
-        location: p.location,
+      // First unlock — the CV unlock must be tied to one of the employer's own
+      // live, paid-for job adverts. Verify the advert belongs to them and is live.
+      const job = await ctx.prisma.jobListing.findUnique({
+        where: { id: input.jobListingId },
+        select: { id: true, employerId: true, jobTitle: true, expiresAt: true, listing: { select: { status: true } } },
+      })
+      if (!job || job.employerId !== ctx.user.id) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Choose one of your own job adverts to unlock this candidate for.' })
       }
+      const jobLive = job.listing?.status === 'active' && (!job.expiresAt || job.expiresAt > new Date())
+      if (!jobLive) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'That job advert is no longer live. Pick a live advert to unlock against.' })
+      }
+
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { email: true, stripeCustomerId: true } })
+      const session = await getStripe().checkout.sessions.create({
+        mode: 'payment',
+        ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email ?? undefined }),
+        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: RECRUITMENT_PRICING.cvUnlockCents, product_data: { name: `Grabitt — unlock candidate CV & contact (${job.jobTitle})` } } }],
+        payment_intent_data: { metadata: { kind: 'cv_unlock', employerId: ctx.user.id, seekerId: input.seekerId, jobListingId: job.id } },
+        success_url: `${appUrl()}/recruitment?unlocked=${input.seekerId}`,
+        cancel_url: `${appUrl()}/recruitment?cancelled=1`,
+      })
+      if (!session.url) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Could not start checkout' })
+      return { paid: true as const, unlocked: false as const, checkoutUrl: session.url }
     }),
 })

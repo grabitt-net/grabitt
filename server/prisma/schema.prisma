@@ -649,6 +649,11 @@ model CandidateUnlock {
   employer   User     @relation("EmployerUnlocks", fields: [employerId], references: [id])
   seekerId   String
   seeker     User     @relation("SeekerUnlocked", fields: [seekerId], references: [id])
+  // The live job advert this unlock was bought against. Every paid CV unlock is
+  // tied to one of the employer's own live job listings (the recruitment search
+  // is an add-on to an existing paid advert), so we can show which role a
+  // candidate was unlocked for and keep the charge linked to that advert.
+  jobListingId String?
   createdAt  DateTime @default(now())
 
   @@unique([employerId, seekerId])

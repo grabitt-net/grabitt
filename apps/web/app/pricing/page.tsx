@@ -65,10 +65,10 @@ export default function PricingPage() {
 
       <Section title="For Business">
         <PriceRow name="Post a Job" price="€29 per listing" note="Paid business accounts only" href="/recruitment" cta="Post a job">
-          Hiring? Post a job for €29 and it stays live for a full 14 days. Got ongoing recruitment? Buy job listings in bulk and save.
+          Need some superstars to add to your team? Place an ad on Grabitt which enables you to filter and manage the candidates real time. You can buy job listings in bulk or pay per listing.
         </PriceRow>
-        <PriceRow name="Recruitment Database Search" price="€5.99 per search" note="Paid business accounts only" href="/recruitment" cta="Search now">
-          Find people fast with this fantastic feature — you enter your criteria, click search, and it brings up anyone suitable! The biggest benefit here is speed: it pulls up already-registered candidates. A full recruitment advert gives much broader coverage for candidates not yet a member.
+        <PriceRow name="Recruitment Database Search" price="Optional extra" note="Needs a live job advert" href="/recruitment" cta="Post a job">
+          An optional add-on that speeds up your recruitment — available only to businesses with a live, paid-for job advert. Enter your criteria, click search, and it brings up already-registered candidates who match, so you don&apos;t wait for applications to arrive. Unlocking a candidate&apos;s CV and contact details is charged per candidate and tied to the job advert you&apos;re hiring for. A full recruitment advert still gives much broader coverage for candidates not yet a member.
         </PriceRow>
         <PriceRow name="Business Directory" price="€15/month" note="Or annual for a discount" href="/for-business" cta="Get listed">
           Get found. List your business in the Grabitt Directory for €15 a month, or go annual for a tidy discount. What we&apos;ve been missing is a nice clean business directory here on the Canary Islands. Split into industry, you come up when people search for a plumber, dentist, doctor, lawyer — you name it. You get your logo, contact details, and a brief description of what you do and where you are, with a map pin.
