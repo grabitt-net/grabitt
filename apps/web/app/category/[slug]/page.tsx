@@ -19,7 +19,22 @@ import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
 // the category search inputs on top and the listing grid below.
 // Per-category description shown above the subcategory pills. Copy supplied by
 // Steve per category — add entries keyed by department slug as they arrive.
-const CATEGORY_DESC: Record<string, string> = {}
+// Department page intros — Steve's lander copy, used verbatim. Headline + body
+// sit under the page title, above the subcategory pills.
+const CATEGORY_DESC: Record<string, { title: string; body: string }> = {
+  home_garden: { title: 'Make your space feel like home.', body: "Sofas, tables, tools, plants and everything in between — kit out your home and garden for less, or sell the pieces you've outgrown. One person's clear-out is another's perfect find. Refresh your space, free up a room, and pocket some cash while you're at it." },
+  fashion: { title: 'Look good, spend less, sell smart.', body: "Refresh your wardrobe without the price tag — or turn last season's finds into cash. From everyday staples to standout pieces, buy pre-loved fashion near you and give great clothes a second life. Clear out the closet, make some space, and stay stylish for less." },
+  sport: { title: 'Get out, get active, get a bargain.', body: "Bikes, boards, boots and gear for every sport under the Canarian sun. Whether you're kitting out for a new hobby or selling the gear gathering dust in the garage, it's all here. Buy smart, sell easy, and get back out there." },
+  gaming: { title: 'Level up for less.', body: "Consoles, games, controllers and collectibles — grab your next gaming fix without paying full price, or cash in the kit you've finished with. Trade up, clear the shelf, and keep playing. Game on!" },
+  electronics: { title: 'Tech that works for you — and your wallet.', body: "Phones, laptops, TVs, gadgets and more, all from people near you. Upgrade for less, or sell your old tech and turn it into cash instead of clutter. Smart buys, quick sells, no drama." },
+  gift_ideas: { title: 'The perfect gift is closer than you think.', body: "Stuck for ideas? Browse thoughtful, unique and budget-friendly gifts for every occasion, all sourced locally. Find something special, support island sellers, and make someone's day — without blowing the budget." },
+  kids_baby: { title: 'Big savings for little ones.', body: "Kids grow fast — and so does the pile of stuff they've outgrown! Grab prams, toys, clothes and gear for a fraction of the price, or sell on what your little ones no longer need. Save money, free up space, and pass it on." },
+  health_fitness: { title: 'Look after yourself for less.', body: "Skincare, haircare, wellness and beauty finds to help you feel your best. Discover great products from local sellers, or pass on the bits that weren't for you. Treat yourself, save a little, and glow on." },
+  retro_vintage: { title: "Old soul? You'll love it here.", body: "Timeless furniture, vintage finds and mid-century treasures with real character. Hunt down that one-of-a-kind piece, or sell the classics you're ready to part with to someone who'll cherish them. History, style, and a great deal — all in one." },
+  handy_help: { title: 'Need a hand? Find it here.', body: 'Your local classifieds for domestic and personal help — builders, joiners, electricians, plumbers, cleaners, gardeners, lawyers, dentists, doctors, nurses and more. Whatever the job, big or small, connect with trusted local people ready to help. Problem solved, the island way.' },
+  pet_shop: { title: 'Everything for your best friend.', body: "Beds, bowls, toys, tanks and treats — spoil your pets for less, or sell on the supplies they no longer use. Great gear for happy pets, all from fellow island animal lovers. Because they deserve the best (for a bit less)." },
+  hobbies_crafts: { title: 'Feed your passion for less.', body: "Art supplies, instruments, model kits, craft materials and more — whatever your hobby, stock up affordably or sell the kit you're no longer using. Start something new, clear out the old, and let your creativity loose." },
+}
 
 const SUBCATS: Record<string, string[]> = {
   // Exact subcategories from the V20 prototype's deptConfig, each with an 'All'
@@ -111,7 +126,10 @@ export default function CategoryPage() {
         {/* Category description — copy supplied per category (CATEGORY_DESC).
             Sits above the subcategory pills; the search lives in the header bar. */}
         {CATEGORY_DESC[slug] && (
-          <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.6, margin: '0 0 12px', maxWidth: 760 }}>{CATEGORY_DESC[slug]}</p>
+          <div style={{ margin: '0 0 12px', maxWidth: 760 }}>
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 16, fontWeight: 700, color: 'var(--dark)', marginBottom: 4 }}>{CATEGORY_DESC[slug].title}</div>
+            <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.6, margin: 0 }}>{CATEGORY_DESC[slug].body}</p>
+          </div>
         )}
 
         {/* Wrap onto multiple lines rather than a slidable bar, so every
