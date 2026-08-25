@@ -60,7 +60,7 @@ export default function PricingPage() {
           Got something that needs gone <em>fast</em>? Grabitt NOW! is built for urgency — discounted items and hot offers that can&apos;t wait. For €4.99 your listing lands right at the top of the homepage for a full 72 hours, in its own dedicated carousel alongside boosted listings (two separate carousels). It&apos;s the express lane for anything you need to shift quickly — grab the attention, make the sale, done.
         </PriceRow>
         <PriceRow name="Handy Help" price="Free" note="Personal accounts" term="Live for 30 days" href="/handy" cta="Post a request">
-          Need a hand — or want to lend one? Personal accounts post a Handy Help request completely free. Every post stays live for 30 days with a countdown on the card, and your contact details stay hidden until you accept a response. Business accounts pay to take part (see For Business).
+          Need a hand — or want to lend one? Personal accounts post a Handy Help request completely free. Every post stays live for 30 days with a countdown on the card, and your contact details stay hidden until you accept a response. Fees apply for business (see For Business).
         </PriceRow>
         <PriceRow name="Property or Rental" price="€39 per listing" note="1 free every month" term="Live for 30 days" href="/property/new" cta="List a property">
           List a property to rent or sell. Everyone gets one free property listing every month — after that it&apos;s just €39 per listing. Business accounts get an allowance included with their plan.

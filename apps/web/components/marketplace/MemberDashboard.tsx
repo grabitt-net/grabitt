@@ -571,6 +571,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             <MemberStatusCard />
           </>)}
 
+          {section === 'activity' && <HandyMyPostsCard />}
           {section === 'activity' && <HandyProposalsCard />}
           {section === 'activity' && <HandyMyProposalsCard />}
 
@@ -778,6 +779,52 @@ function HandyMyProposalsCard() {
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.message}</div>
             </div>
             <span style={{ flexShrink: 0, fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: st.color, background: `${st.color}18`, borderRadius: 50, padding: '3px 10px' }}>{st.label}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// Handy Help — the posts I placed. Mark one as sorted, or answer the 7-day
+// "do you still need help?" prompt (Yes relists for another 7 days, No closes it).
+function HandyMyPostsCard() {
+  const [rows, setRows] = useState<any[] | null>(null)
+  const [busy, setBusy] = useState('')
+  const load = () => { (trpcAuthed() as any).handy.myPosts.query().then((d: any) => setRows(d as any[])).catch(() => setRows([])) }
+  useEffect(() => { load() }, [])
+  const resolve = async (id: string) => {
+    setBusy(id)
+    try { await (trpcAuthed() as any).handy.markResolved.mutate({ listingId: id }); load() }
+    catch { toast(t('Could not update. Please try again.')) } finally { setBusy('') }
+  }
+  const confirm = async (id: string, stillNeeded: boolean) => {
+    setBusy(id)
+    try { await (trpcAuthed() as any).handy.confirmStillNeeded.mutate({ listingId: id, stillNeeded }); load() }
+    catch { toast(t('Could not update. Please try again.')) } finally { setBusy('') }
+  }
+  const active = (rows ?? []).filter((r: any) => r.status === 'active')
+  if (rows !== null && active.length === 0) return null
+  return (
+    <div style={card}>
+      <div style={cardHead}>🔧 {t('Handy Help — your posts')}</div>
+      {rows === null ? <Muted>{t('Loading…')}</Muted> : active.map((p: any) => {
+        const daysLeft = Math.max(0, Math.ceil((new Date(p.expiresAt).getTime() - Date.now()) / 86400000))
+        return (
+          <div key={p.id} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '11px 0', borderBottom: '1px solid #f5f5f5', flexWrap: 'wrap' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{p.image ? <img src={p.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🔧'}</div>
+            <div style={{ flex: 1, minWidth: 120 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: p.awaitingConfirm ? '#b45309' : '#888' }}>{p.awaitingConfirm ? t('Do you still need help?') : `${daysLeft} ${daysLeft === 1 ? t('day') : t('days')} ${t('left')}`}</div>
+            </div>
+            {p.awaitingConfirm ? (
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                <button onClick={() => confirm(p.id, true)} disabled={busy === p.id} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '7px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>{t('Yes, keep it live')}</button>
+                <button onClick={() => confirm(p.id, false)} disabled={busy === p.id} style={{ background: '#fff', color: '#888', border: '1.5px solid #e5e5e5', borderRadius: 10, padding: '7px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{t('No')}</button>
+              </div>
+            ) : (
+              <button onClick={() => resolve(p.id)} disabled={busy === p.id} style={{ flexShrink: 0, background: '#fff', color: '#16a34a', border: '1.5px solid #bbf7d0', borderRadius: 10, padding: '7px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{t('Got the help ✓')}</button>
+            )}
           </div>
         )
       })}

@@ -778,6 +778,10 @@ model Listing {
   // weekly cron bumps this to now() and rotates the main photo so the feed stays
   // fresh; the relist cron also bumps it. Public feeds order by bumpedAt desc.
   bumpedAt         DateTime         @default(now())
+  // Handy Help lifecycle: when the 7-day "do you still need help?" prompt was
+  // sent. Null while inside the first 7 days or just after a "yes" relist; set
+  // when awaiting the poster's confirmation. Drives the confirm/drop-off sweep.
+  handyAskedAt     DateTime?
   updatedAt        DateTime         @updatedAt
 
   transactions     Transaction[]

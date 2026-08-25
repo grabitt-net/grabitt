@@ -25,15 +25,15 @@ export const handyRouter = router({
       })
     ),
 
-  // The classified feed: active Handy Help posts within their 30-day validity.
-  // Poster contact is NEVER included here — it's revealed only when the poster
-  // accepts a proposal.
+  // The classified feed: live Handy Help posts. A post stays live until the
+  // poster marks it done or the 7-day confirm/drop-off sweep expires it, so we
+  // filter on status alone (a post in its confirmation grace window is still
+  // live). Poster contact is NEVER included here — revealed only on accept.
   feed: publicProcedure
     .input(z.object({ page: z.number().default(1) }))
     .query(async ({ ctx, input }) => {
-      const cutoff = new Date(Date.now() - VALIDITY_MS)
       const rows = await ctx.prisma.listing.findMany({
-        where: { department: 'handy_help', status: 'active', createdAt: { gte: cutoff } },
+        where: { department: 'handy_help', status: 'active' },
         orderBy: { bumpedAt: 'desc' },
         skip: (input.page - 1) * 20,
         take: 20,
@@ -60,8 +60,10 @@ export const handyRouter = router({
       })
       if (!listing || listing.department !== 'handy_help') throw new TRPCError({ code: 'NOT_FOUND', message: 'Post not found' })
       if (listing.sellerId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: 'You cannot respond to your own post' })
-      if (listing.status !== 'active' || expiryOf(listing.createdAt) < new Date()) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This post has expired.' })
+      // A post is open while it's active — expiry is now driven by the poster
+      // marking it done, or the 7-day confirm/drop-off sweep flipping its status.
+      if (listing.status !== 'active') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This post is no longer live.' })
       }
       const existing = await ctx.prisma.handyProposal.findUnique({
         where: { listingId_responderId: { listingId: listing.id, responderId: ctx.user.id } },
@@ -168,4 +170,54 @@ export const handyRouter = router({
       include: { listing: { select: { id: true, title: true, images: true } } },
     })
   ),
+
+  // The Handy Help posts I placed, for managing them: mark as sorted, or answer
+  // the 7-day "do you still need help?" prompt. `awaitingConfirm` is true once
+  // the sweep has asked and is waiting for my yes/no.
+  myPosts: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.prisma.listing.findMany({
+      where: { department: 'handy_help', sellerId: ctx.user.id, status: { in: ['active', 'expired'] } },
+      orderBy: { bumpedAt: 'desc' },
+      select: { id: true, title: true, images: true, status: true, createdAt: true, handyAskedAt: true },
+    })
+    return rows.map(l => ({
+      id: l.id, title: l.title,
+      image: Array.isArray(l.images) ? (l.images[0] ?? null) : null,
+      status: l.status,
+      createdAt: l.createdAt,
+      expiresAt: expiryOf(l.createdAt),
+      awaitingConfirm: l.status === 'active' && !!l.handyAskedAt,
+    }))
+  }),
+
+  // Poster marks that they've now received the help they needed — the post
+  // closes and drops out of the feed.
+  markResolved: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUnique({ where: { id: input.listingId }, select: { sellerId: true, department: true } })
+      if (!listing || listing.sellerId !== ctx.user.id || listing.department !== 'handy_help') throw new TRPCError({ code: 'FORBIDDEN' })
+      await ctx.prisma.listing.update({ where: { id: input.listingId }, data: { status: 'removed', handyAskedAt: null } })
+      return { ok: true }
+    }),
+
+  // Poster answers the 7-day prompt. "Yes, still need help" relists for another
+  // 7 days and the cycle continues; "no" closes the post.
+  confirmStillNeeded: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid(), stillNeeded: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUnique({ where: { id: input.listingId }, select: { sellerId: true, department: true, status: true } })
+      if (!listing || listing.sellerId !== ctx.user.id || listing.department !== 'handy_help') throw new TRPCError({ code: 'FORBIDDEN' })
+      if (listing.status !== 'active') throw new TRPCError({ code: 'BAD_REQUEST', message: 'This post is no longer live.' })
+      if (input.stillNeeded) {
+        // Relist: reset the 7-day clock, clear the prompt, bump to the top.
+        await ctx.prisma.listing.update({
+          where: { id: input.listingId },
+          data: { createdAt: new Date(), bumpedAt: new Date(), handyAskedAt: null },
+        })
+        return { ok: true, relisted: true }
+      }
+      await ctx.prisma.listing.update({ where: { id: input.listingId }, data: { status: 'removed', handyAskedAt: null } })
+      return { ok: true, relisted: false }
+    }),
 })

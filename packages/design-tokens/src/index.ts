@@ -106,7 +106,11 @@ export const HANDY_PRICING = {
   personalPostFree: true,
   businessPlaceCents: 999,   // €9.99 for a business to place a Handy Help advert
   businessUnlockCents: 299,  // €2.99 for a business to unlock a listing to reply
-  validityDays: 30,
+  // A post runs for 7 days. At 7 days we ask the poster to confirm they still
+  // need help: "yes" relists for another 7 days, "no" or no reply within the
+  // grace window drops the post off.
+  validityDays: 7,
+  confirmGraceDays: 3,
 } as const
 
 // Standalone business-directory subscription (company name, phone, email,
