@@ -45,7 +45,7 @@ export default function PricingPage() {
       intro="Nice clean transparent pricing to help you make good decisions. Here is a list of our pricing!"
       pills={['No Fees to Buy', 'Low Selling Fees', 'No Fees on Jobs to Apply', 'Transparent Pricing']}
     >
-      <Section title="For Everyone">
+      <Section title="For You">
         <PriceRow name="Buying" price="Free" href="/" cta="Browse items">
           Buy as much as you like, as often as you like — Grabitt never charges you a penny to buy. The only thing to watch for is postage or packaging fees set by the seller, so always check the listing before you commit. Simple.
         </PriceRow>
@@ -79,13 +79,13 @@ export default function PricingPage() {
       </Section>
 
       <Section title={<>Sponsorship — <span style={{ color: 'var(--orange)' }}>Get Seen</span></>}>
-        <PriceRow name="Homepage Sponsor" price="€299" per="per month" href="/advertise" cta="Buy now">
+        <PriceRow name="Homepage Sponsor" price="€299" per="per month" note="Business only" href="/advertise" cta="Buy now">
           Grab prime position! THE most prominent banner on the entire site. Visible to everyone who visits the page, clickable to your listing, and you get a business directory listing for the duration of your banner sponsorship where you can put your information, offers and contact details. You must be a minimum Business Light account for this type of sponsorship — but WOW, it&apos;s a zinger!
         </PriceRow>
-        <PriceRow name="Category Sponsor" price="€149" per="per month" href="/advertise" cta="Buy now">
+        <PriceRow name="Category Sponsor" price="€149" per="per month" note="Business only" href="/advertise" cta="Buy now">
           Industry domination! Grab this banner to be in front of buyers looking for a certain item in a certain department — they get to see you right at the top of their page! It clicks through to your business directory listing that is live during your banner sponsorship.
         </PriceRow>
-        <PriceRow name="Featured Partner" price="€79" per="per month" href="/advertise" cta="Buy now">
+        <PriceRow name="Featured Partner" price="€79" per="per month" note="Business only" href="/advertise" cta="Buy now">
           A fantastic way to be almost everywhere. Your banner rotates with up to 7 featured partners across the site — the message box, alerts, saved and more — <em>not</em> the top of the homepage or the landing pages, but everything else, on rotation. It clicks through to your business directory listing that is live during your banner sponsorship.
         </PriceRow>
         {/* Email Blast and WhatsApp Blast are hidden from customers pending legal review — do not re-enable without sign-off. */}
