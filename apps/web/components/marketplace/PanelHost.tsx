@@ -3507,8 +3507,8 @@ function PanelBody() {
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed #e0d8d0', borderRadius: 16, padding: 24, cursor: 'pointer', background: '#faf7f4' }}>
                     <Logo height={40} style={{ margin: '0 auto 14px' }} />
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>Add 6–8 photos</div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Tap to choose from your device · 6 minimum</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>Add 4–8 photos</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Tap to choose from your device · 4 minimum</div>
                     <input type="file" accept="image/*" multiple onChange={handleFileChange} style={{ display: 'none' }} />
                   </label>
                 </div>
@@ -3525,11 +3525,10 @@ function PanelBody() {
                   </div>
                 )}
 
-                <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 10, fontFamily: 'var(--font-ui)', fontSize: 11, color: '#a8460f', lineHeight: 1.5 }}>
-                  🖼️ <strong>Your first 3 photos are your front covers.</strong> Make them clear and well-lit — if the item hasn&apos;t sold, we rotate through these as the main cover each week to keep your listing looking fresh.
-                </div>
-                <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11, color: '#a8460f' }}>
-                  💡 Good photos = 3× more offers. Shoot in natural light against a plain background.
+                <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div>🖼️ <strong>Your first 3 photos are your front covers.</strong> Make them clear and well-lit — if the item hasn&apos;t sold, we rotate through these as the main cover each week to keep your listing looking fresh.</div>
+                  <div>💡 <strong>Good photos = 3× more offers.</strong> Shoot in natural light against a plain background.</div>
+                  <div>🔄 <strong>Your listing stays live for 21 days.</strong> Each week we automatically refresh it using one of your existing photos and lift it back up the results — keeping it fresh and in front of as many buyers as possible.</div>
                 </div>
               </>
             )}
@@ -3860,13 +3859,13 @@ function PanelBody() {
                   if (next) setStep(next)
                 }}
                 disabled={
-                  (step === 'photos' && photos.length < 6) ||
+                  (step === 'photos' && photos.length < 4) ||
                   (step === 'details' && (!title.trim() || !dept || !condition)) ||
                   (step === 'price' && !freeItem && !price)
                 }
-                style={{ flex: 2, background: (step === 'photos' && photos.length < 6) || (step === 'details' && (!title.trim() || !dept || !condition)) || (step === 'price' && !freeItem && !price) ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
+                style={{ flex: 2, background: (step === 'photos' && photos.length < 4) || (step === 'details' && (!title.trim() || !dept || !condition)) || (step === 'price' && !freeItem && !price) ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
               >
-                {step === 'photos' ? (photos.length >= 6 ? `${t('Continue')} · ${photos.length} 📷 →` : `${t('Add at least 6 photos')} (${photos.length}/6)`) : `${t('Continue')} →`}
+                {step === 'photos' ? (photos.length >= 4 ? `${t('Continue')} · ${photos.length} 📷 →` : `${t('Add at least 4 photos')} (${photos.length}/4)`) : `${t('Continue')} →`}
               </button>
             )}
           </div>
