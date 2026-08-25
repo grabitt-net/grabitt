@@ -6,22 +6,24 @@ import InfoPage from '@/components/marketplace/InfoPage'
 // Footer → Grabitt → Pricing. Prices and rules are exact — do not change.
 // Descriptive copy is Steve's, used as written.
 
-// One row in the pricing list: name + price on a line, note pill, blurb, and a
-// call-to-action link.
+// One row in the pricing list: name + note + blurb on the left; price and the
+// clickable link stacked on the right.
 function PriceRow({ name, price, per, note, href, cta, children }: { name: string; price: string; per?: string; note?: string; href: string; cta: string; children: ReactNode }) {
   return (
-    <li style={{ listStyle: 'none', padding: '14px 0', borderBottom: '1px solid var(--line, #ece3d7)' }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+    <li style={{ listStyle: 'none', padding: '16px 0', borderBottom: '1px solid var(--line, #ece3d7)', display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div style={{ flex: 1, minWidth: 220 }}>
         <h3 style={{ fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', margin: 0 }}>
           {name}
           {note && <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#8a6d3b', background: '#fff6e6', border: '1px solid #f0e0bd', borderRadius: 999, padding: '2px 9px', marginLeft: 10, whiteSpace: 'nowrap' }}>{note}</span>}
         </h3>
-        <span style={{ fontFamily: 'var(--font-body)', fontSize: 17, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }}>
-          {price}{per && <span style={{ fontSize: 12, fontWeight: 800, color: '#8a6d3b', marginLeft: 4 }}>{per}</span>}
-        </span>
+        <p style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, lineHeight: 1.6, color: '#3a3a3a', margin: '6px 0 0' }}>{children}</p>
       </div>
-      <p style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, lineHeight: 1.6, color: '#3a3a3a', margin: '6px 0 0' }}>{children}</p>
-      <Link href={href} style={{ display: 'inline-block', marginTop: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--orange)', textDecoration: 'none' }}>{cta} →</Link>
+      <div style={{ flexShrink: 0, textAlign: 'right', minWidth: 120 }}>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 17, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }}>
+          {price}{per && <span style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#8a6d3b' }}>{per}</span>}
+        </div>
+        <Link href={href} style={{ display: 'inline-block', marginTop: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--orange)', textDecoration: 'none', border: '1.5px solid var(--orange)', borderRadius: 999, padding: '6px 14px', whiteSpace: 'nowrap' }}>{cta}</Link>
+      </div>
     </li>
   )
 }
@@ -70,6 +72,9 @@ export default function PricingPage() {
         </PriceRow>
         <PriceRow name="Business Directory" price="€15/month" note="Or annual for a discount" href="/for-business" cta="Get listed">
           Get found. List your business in the Grabitt Directory for €15 a month, or go annual for a tidy discount. What we&apos;ve been missing is a nice clean business directory here on the Canary Islands. Split into industry, you come up when people search for a plumber, dentist, doctor, lawyer — you name it. You get your logo, contact details, and a brief description of what you do and where you are, with a map pin.
+        </PriceRow>
+        <PriceRow name="Property or Rental" price="€39 per listing" note="Allowance included" href="/property/new" cta="List a property">
+          Agents and businesses: property listings are included in your plan&apos;s allowance — list up to your tier&apos;s limit each month, then it&apos;s just €39 per extra listing. Add a €9 Featured boost to lift any property to the top for 4 weeks.
         </PriceRow>
       </Section>
 
