@@ -37,12 +37,13 @@ export const handyRouter = router({
         orderBy: { bumpedAt: 'desc' },
         skip: (input.page - 1) * 20,
         take: 20,
-        select: { id: true, title: true, description: true, images: true, location: true, price: true, createdAt: true },
+        select: { id: true, title: true, description: true, images: true, location: true, price: true, createdAt: true, handyKind: true },
       })
       return rows.map(l => ({
         id: l.id, title: l.title, description: l.description,
         image: Array.isArray(l.images) ? (l.images[0] ?? null) : null,
         location: l.location, price: Number(l.price),
+        kind: l.handyKind ?? 'request',
         expiresAt: expiryOf(l.createdAt),
       }))
     }),
@@ -161,6 +162,60 @@ export const handyRouter = router({
         ...(p.status === 'accepted' ? { email: p.responder.email, phone: p.responder.phone } : {}) },
     }))
   }),
+
+  // Place a Handy Help post. Two shapes:
+  //  • 'request' — a person describes a service they NEED (free).
+  //  • 'offer'   — a business advertises a service they PROVIDE (€9.99).
+  // The €9.99 is charged only for a business "offer"; the draft is published by
+  // the Stripe webhook (kind: listing_publish). Everything else goes live now.
+  createPost: protectedProcedure
+    .input(z.object({
+      kind: z.enum(['request', 'offer']),
+      title: z.string().min(4).max(100),
+      description: z.string().min(1).max(2000),
+      location: z.string().max(100).optional(),
+      price: z.number().min(0).optional(),
+      images: z.array(z.string().url()).max(8).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const me = await ctx.prisma.user.findUniqueOrThrow({
+        where: { id: ctx.user.id },
+        select: { isBusiness: true, businessLight: true, email: true, stripeCustomerId: true },
+      })
+      const business = me.isBusiness || me.businessLight
+      // Only a business "offer" advert is charged; personal requests are free.
+      const paid = business && input.kind === 'offer'
+
+      const listing = await ctx.prisma.listing.create({
+        data: {
+          sellerId: ctx.user.id,
+          title: input.title.trim(),
+          description: input.description.trim(),
+          price: input.price ?? 0,
+          department: 'handy_help',
+          condition: 'new',
+          location: (input.location ?? '').trim() || 'Canary Islands',
+          images: input.images ?? [],
+          handyKind: input.kind,
+          status: paid ? 'draft' : 'active',
+        },
+        select: { id: true },
+      })
+
+      if (paid) {
+        const session = await getStripe().checkout.sessions.create({
+          mode: 'payment',
+          ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email ?? undefined }),
+          line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: HANDY_PRICING.businessPlaceCents, product_data: { name: `Grabitt Handy Help advert — ${input.title.trim()}` } } }],
+          payment_intent_data: { metadata: { kind: 'listing_publish', listingId: listing.id } },
+          success_url: `${appUrl()}/handy?placed=1`,
+          cancel_url: `${appUrl()}/handy?cancelled=1`,
+        })
+        if (!session.url) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Could not start checkout' })
+        return { paid: true as const, checkoutUrl: session.url }
+      }
+      return { paid: false as const, id: listing.id }
+    }),
 
   // Proposals I've sent (as a responder).
   myProposals: protectedProcedure.query(({ ctx }) =>

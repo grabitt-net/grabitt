@@ -786,6 +786,10 @@ model Listing {
   attributes       Json?
   viewCount        Int              @default(0)
   relistCount      Int              @default(0)  // standard listings auto-relist free 3× every 21 days
+  // Handy Help post type: 'request' (someone needs a service — personal, free)
+  // or 'offer' (a business advertises a service they provide — €9.99). Null for
+  // non-handy listings.
+  handyKind        String?
   createdAt        DateTime         @default(now())
   // Freshness/sort clock, separate from createdAt (the relist/expiry clock). A
   // weekly cron bumps this to now() and rotates the main photo so the feed stays

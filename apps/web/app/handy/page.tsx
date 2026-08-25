@@ -63,7 +63,10 @@ function Inner() {
             <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 24, fontWeight: 700, color: 'var(--dark)', margin: 0 }}>🔧 Handy Help</h1>
             <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#555', margin: '6px 0 0', lineHeight: 1.5 }}>Need a hand? Post a request free. Businesses can respond — poster details stay private until you accept.</p>
           </div>
-          <button onClick={() => openPanel('createListing', { category: 'Handy Help' })} style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 18px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Post a request</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => openPanel('handyPost', { kind: 'request' })} style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 16px', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>🙋 Request</button>
+            <button onClick={() => openPanel('handyPost', { kind: 'offer' })} style={{ background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 14, padding: '12px 16px', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>🧰 Offer</button>
+          </div>
         </div>
 
         {note && <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '11px 13px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: '#16a34a', marginBottom: 14 }}>{note}</div>}

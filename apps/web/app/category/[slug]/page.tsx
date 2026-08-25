@@ -108,11 +108,6 @@ export default function CategoryPage() {
 
 
       <header style={{ background: 'var(--sand)', padding: '14px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
-        {/* Handy Help — advertisers post directly from the category lander. The
-            createListing flow applies the business €9.99 place gate. */}
-        {slug === 'handy_help' && (
-          <div style={{ marginBottom: 12 }}><PlaceHandyAdButton /></div>
-        )}
         {/* Category description — copy supplied per category (CATEGORY_DESC).
             Sits above the subcategory pills; the search lives in the header bar. */}
         {CATEGORY_DESC[slug] && (
@@ -121,9 +116,11 @@ export default function CategoryPage() {
 
         {/* Wrap onto multiple lines rather than a slidable bar, so every
             subcategory is visible at once (nothing cut off). Small screens
-            flow to a few rows; wide screens fit on one. */}
-        {subcats.length > 1 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+            flow to a few rows; wide screens fit on one. On the Handy Help
+            lander the "Place an ad" button sits in line with the pills. */}
+        {(subcats.length > 1 || slug === 'handy_help') && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 5 }}>
+            {slug === 'handy_help' && <PlaceHandyAdButton />}
             {subcats.map(sub => <Chip key={sub} active={activeSub === sub} onClick={() => setActiveSub(sub)}>{sub}</Chip>)}
           </div>
         )}
@@ -193,14 +190,15 @@ export default function CategoryPage() {
   )
 }
 
-// "Place an ad" for the Handy Help lander — opens the createListing flow with
-// the Handy Help category preset (business €9.99 place gate applies there).
+// "Place an ad" for the Handy Help lander — opens the two-part Handy Help post
+// form (business €9.99 gate applies to a business offer). Sized to sit in line
+// with the subcategory pills.
 function PlaceHandyAdButton() {
   const { openPanel } = usePanel()
   return (
-    <button onClick={() => openPanel('createListing', { category: 'Handy Help' })} style={{
-      display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff',
-      border: 'none', borderRadius: 14, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer',
+    <button onClick={() => openPanel('handyPost', { kind: 'request' })} style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--orange)', color: '#fff',
+      border: 'none', borderRadius: 999, padding: '6px 13px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap',
     }}>🔧 Place an ad</button>
   )
 }

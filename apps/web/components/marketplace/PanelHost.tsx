@@ -951,7 +951,7 @@ function PanelBody() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {([['🏡','Sell an item','Furniture, tech & more', () => openPanel('createListing')],['💼','Post a job','Find staff fast', () => { closePanel(); window.location.href = '/jobs/new' }],['🏠','List a property','Rent or sell a home', () => { closePanel(); window.location.href = '/property/new' }],['🔧','Offer a service','Advertise in Handy Help', () => openPanel('createListing', { category: 'Handy Help' })]] as [string,string,string,()=>void][]).map(([icon, title, desc, action], i) => (
+          {([['🏡','Sell an item','Furniture, tech & more', () => openPanel('createListing')],['💼','Post a job','Find staff fast', () => { closePanel(); window.location.href = '/jobs/new' }],['🏠','List a property','Rent or sell a home', () => { closePanel(); window.location.href = '/property/new' }],['🔧','Offer a service','Advertise in Handy Help', () => openPanel('handyPost', { kind: 'offer' })]] as [string,string,string,()=>void][]).map(([icon, title, desc, action], i) => (
             <button key={i} onClick={action} style={tile}>
               <span style={iconTile}>{icon}</span>
               <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</span>
@@ -3974,6 +3974,10 @@ function PanelBody() {
     return <HandyPanel closePanel={closePanel} openPanel={openPanel} />
   }
 
+  if (panel.id === 'handyPost') {
+    return <HandyPostPanel closePanel={closePanel} initialKind={(panel.data?.kind as 'request' | 'offer') || 'request'} />
+  }
+
   // ── GRAB IT NOW (live deals) ─────────────────────────────────────────────────
   if (panel.id === 'grabItNow') {
     const DEALS = [
@@ -5011,6 +5015,131 @@ function countdown(expiresAt: string): { label: string; urgent: boolean } {
   if (days >= 1) return { label: `Expires in ${days}d ${hours}h`, urgent: days < 3 }
   return { label: `Expires in ${hours}h`, urgent: true }
 }
+// Two-part Handy Help post form. 'request' = a person needs a service (free);
+// 'offer' = a business advertises a service they provide (€9.99, gated in
+// handy.createPost). The segmented control lets either entry point switch.
+function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; initialKind: 'request' | 'offer' }) {
+  const HANDY_TOWNS = ['Las Palmas','Maspalomas','Playa del Inglés','Puerto Rico','Arucas','Telde','Santa Lucía','Ingenio','Agüimes','Gáldar','Mogán','Vecindario','Tenerife','Lanzarote','Fuerteventura','Other']
+  const [kind, setKind] = useState<'request' | 'offer'>(initialKind)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [town, setTown] = useState('Las Palmas')
+  const [budget, setBudget] = useState('')
+  const [photos, setPhotos] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [posted, setPosted] = useState(false)
+  const [note, setNote] = useState('')
+  const isRequest = kind === 'request'
+
+  const onFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []).slice(0, 4 - photos.length)
+    if (!files.length) return
+    setUploading(true)
+    try {
+      for (const f of files) {
+        const url = await compressAndUpload(f, listingPhotoPath('handy'))
+        setPhotos(p => [...p, url])
+      }
+    } catch { toast('Photo upload failed. Please try again.') } finally { setUploading(false) }
+  }
+
+  const submit = async () => {
+    if (title.trim().length < 4) { setNote('Add a short title (at least 4 characters).'); return }
+    if (!description.trim()) { setNote('Add a few details.'); return }
+    setBusy(true); setNote('')
+    try {
+      const c = await getTrpcClient()
+      const res = await c.handy.createPost.mutate({
+        kind, title: title.trim(), description: description.trim(),
+        location: town, price: budget ? Number(budget) : undefined,
+        images: photos.length ? photos : undefined,
+      }) as { paid: boolean; checkoutUrl?: string }
+      if (res.paid && res.checkoutUrl) { window.location.href = res.checkoutUrl; return }
+      setPosted(true)
+    } catch (e) { setNote((e as Error).message || 'Could not post. Please try again.') } finally { setBusy(false) }
+  }
+
+  const cardStyle: React.CSSProperties = { background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '13px 14px 15px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }
+  const inputStyle: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }
+  const lbl: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 6, display: 'block' }
+
+  if (posted) {
+    return (
+      <ActionPanel title={isRequest ? 'Request posted' : 'Advert posted'} onClose={closePanel}>
+        <div style={{ textAlign: 'center', padding: '18px 8px' }}>
+          <div style={{ fontSize: 44, marginBottom: 10 }}>✅</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 6 }}>{isRequest ? 'Your request is live' : 'Your advert is live'}</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#666', lineHeight: 1.6, marginBottom: 18 }}>
+            It runs for 7 days. {isRequest ? 'Providers can respond — their details appear once you accept.' : 'People needing help can find and contact you.'}
+          </div>
+          <button onClick={() => { closePanel(); window.location.href = '/handy' }} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>View Handy Help</button>
+        </div>
+      </ActionPanel>
+    )
+  }
+
+  return (
+    <ActionPanel title="Handy Help" onClose={closePanel}>
+      {/* Request vs Offer */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        {([['request', '🙋 Request a service'], ['offer', '🧰 Offer a service']] as [typeof kind, string][]).map(([k, label]) => (
+          <button key={k} onClick={() => setKind(k)} style={{ flex: 1, padding: '10px 8px', borderRadius: 12, cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, border: kind === k ? '1.5px solid var(--orange)' : '1.5px solid #eef0f4', background: kind === k ? '#FFF3EE' : '#fff', color: kind === k ? 'var(--orange)' : '#888' }}>{label}</button>
+        ))}
+      </div>
+
+      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.55, marginBottom: 12 }}>
+        {isRequest
+          ? 'Describe the help you need — it’s free. Businesses can respond, and their details stay private until you accept.'
+          : 'Advertise the service your business provides across the Canaries. Business adverts are €9.99 for 7 days.'}
+      </div>
+
+      <div style={cardStyle}>
+        <label style={lbl}>{isRequest ? 'What do you need?' : 'Your service'} *</label>
+        <input value={title} onChange={e => setTitle(e.target.value)} placeholder={isRequest ? 'e.g. Need a plumber for a leaking tap' : 'e.g. Reliable plumber — 15 yrs experience'} maxLength={100} style={inputStyle} />
+      </div>
+
+      <div style={cardStyle}>
+        <label style={lbl}>Details *</label>
+        <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder={isRequest ? 'When you need it, where, and any details that help.' : 'What you offer, areas covered, experience, availability.'} maxLength={2000} style={{ ...inputStyle, resize: 'vertical' }} />
+      </div>
+
+      <div style={cardStyle}>
+        <label style={lbl}>Location</label>
+        <select value={town} onChange={e => setTown(e.target.value)} style={inputStyle}>
+          {HANDY_TOWNS.map(tn => <option key={tn} value={tn}>{tn}</option>)}
+        </select>
+        <label style={{ ...lbl, marginTop: 12 }}>{isRequest ? 'Budget (optional)' : 'From price / rate (optional)'}</label>
+        <input value={budget} onChange={e => setBudget(e.target.value.replace(/[^0-9.]/g, ''))} inputMode="decimal" placeholder="€ — leave blank if not sure" style={inputStyle} />
+      </div>
+
+      <div style={cardStyle}>
+        <label style={lbl}>Photos (optional)</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {photos.map((src, i) => (
+            <div key={i} style={{ position: 'relative', width: 62, height: 62, borderRadius: 10, overflow: 'hidden', background: '#f5f0e8' }}>
+              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <button onClick={() => setPhotos(p => p.filter((_, j) => j !== i))} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 18, height: 18, color: '#fff', fontSize: 10, cursor: 'pointer' }}>✕</button>
+            </div>
+          ))}
+          {photos.length < 4 && (
+            <label style={{ width: 62, height: 62, borderRadius: 10, border: '2px dashed #e0d8d0', background: '#faf7f4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: '#c9a', cursor: 'pointer' }}>
+              {uploading ? '…' : '+'}
+              <input type="file" accept="image/*" multiple onChange={onFiles} style={{ display: 'none' }} />
+            </label>
+          )}
+        </div>
+      </div>
+
+      {note && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#ef4444', marginBottom: 10 }}>{note}</div>}
+
+      <button onClick={submit} disabled={busy || uploading} style={{ width: '100%', background: busy || uploading ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: busy || uploading ? 'default' : 'pointer' }}>
+        {busy ? 'Posting…' : isRequest ? 'Post request · Free' : 'Continue · €9.99 for business'}
+      </button>
+    </ActionPanel>
+  )
+}
+
 function HandyPanel({ closePanel, openPanel }: { closePanel: () => void; openPanel: (id: PanelId, data?: Record<string, unknown>) => void }) {
   const [rows, setRows] = useState<HandyRow[] | null>(null)
   const [respondingTo, setRespondingTo] = useState<HandyRow | null>(null)
@@ -5038,7 +5167,10 @@ function HandyPanel({ closePanel, openPanel }: { closePanel: () => void; openPan
       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', lineHeight: 1.5, marginBottom: 12 }}>
         Need a hand? Post a request free. Businesses can respond to help — poster details stay private until you accept.
       </div>
-      <button onClick={() => openPanel('createListing', { category: 'Handy Help' })} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 14 }}>+ Post a request</button>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        <button onClick={() => openPanel('handyPost', { kind: 'request' })} style={{ flex: 1, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer' }}>🙋 Request a service</button>
+        <button onClick={() => openPanel('handyPost', { kind: 'offer' })} style={{ flex: 1, background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer' }}>🧰 Offer a service</button>
+      </div>
 
       {note && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: note.startsWith('✓') ? '#16a34a' : '#ef4444', marginBottom: 10 }}>{note}</div>}
 

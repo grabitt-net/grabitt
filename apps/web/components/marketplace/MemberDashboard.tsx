@@ -348,7 +348,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
               {([
                 ['🏷️', t('Sell now'), () => openPanel('sell' as PanelId)],
-                ['🔧', t('Offer a service'), () => openPanel('createListing' as PanelId, { category: 'Handy Help' })],
+                effBiz
+                  ? ['🧰', t('Offer a service'), () => openPanel('handyPost' as PanelId, { kind: 'offer' })]
+                  : ['🙋', t('Request a service'), () => openPanel('handyPost' as PanelId, { kind: 'request' })],
                 ...(effBiz ? [
                   ['💼', t('Recruit'), () => router.push('/recruitment')],
                   ['🏠', t('Property'), () => router.push('/property/new')],

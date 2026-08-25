@@ -10,7 +10,7 @@ export type PanelId =
   | 'invite' | 'recentviewed' | 'favourites' | 'soldprices' | 'advertise'
   | 'checkout' | 'makeOffer' | 'offerReceived' | 'handover' | 'reviewTx' | 'dispute' | 'mySales'
   | 'createListing' | 'chatThread'
-  | 'jobs' | 'property' | 'handy' | 'grabItNow' | 'profile' | 'featureListing'
+  | 'jobs' | 'property' | 'handy' | 'handyPost' | 'grabItNow' | 'profile' | 'featureListing'
   | 'myActivity' | 'myRatings' | 'report' | 'verifyMe' | 'following'
   | 'cart' | 'buyCredits' | 'transaction' | 'myDisputes' | 'storefront' | 'storefrontEdit' | 'applications'
   | 'findStaff' | 'seekerProfile'
