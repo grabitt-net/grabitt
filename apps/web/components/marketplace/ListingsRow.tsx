@@ -23,7 +23,7 @@ export default function ListingsRow({ title, seeAllHref }: Props) {
   return (
     <section>
       <div style={{
-        display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+        display: 'flex', alignItems: 'baseline', gap: 12,
         padding: '20px 16px 10px',
       }}>
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>

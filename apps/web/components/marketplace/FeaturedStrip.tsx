@@ -30,9 +30,9 @@ export default function FeaturedStrip() {
 
   return (
     <section style={{ padding: '16px 0 0' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 14px 12px' }}>
         <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>Featured</h2>
-        <button onClick={() => router.push('/search?featured=1')} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#FFF3EE', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--orange)', fontWeight: 800, cursor: 'pointer' }}>See all <Icon name="arrowRight" size={14} /></button>
+        <button onClick={() => router.push('/search?featured=1')} style={{ background: '#FFF3EE', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--orange)', fontWeight: 800, cursor: 'pointer' }}>See all</button>
       </div>
       <div ref={scrollRef} style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none', gap: 10, padding: '0 14px 4px' }}>
         {items.map(l => {

@@ -24,16 +24,14 @@ export default function BottomCarousel() {
   return (
     <section style={{ margin: '24px 14px 0' }}>
       <div style={{ background: 'linear-gradient(180deg,#fff,#faf6f0)', border: '1px solid #ece3d7', borderRadius: 16, padding: '16px 16px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: 'var(--orange)', display: 'flex' }}><Icon name="sparkle" size={17} /></span>
-            <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>Just listed</h2>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <span style={{ color: 'var(--orange)', display: 'flex' }}><Icon name="sparkle" size={17} /></span>
+          <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>Just listed</h2>
           <button
             onClick={() => openPanel('justlisted')}
-            style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#FFF3EE', color: 'var(--orange)', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}
+            style={{ background: '#FFF3EE', color: 'var(--orange)', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}
           >
-            See all <Icon name="arrowRight" size={14} />
+            See all
           </button>
         </div>
         <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
