@@ -34,6 +34,38 @@ export const homepageRouter = router({
       return { ok: true }
     }),
 
+  // ── Homepage category tiles ─────────────────────────────────────────────────
+  // Public: enabled tiles in admin order (the homepage grid renders from this).
+  categories: publicProcedure.query(({ ctx }) =>
+    ctx.prisma.homeCategory.findMany({ where: { enabled: true }, orderBy: { sortOrder: 'asc' }, select: { name: true, img: true } })
+  ),
+
+  // Exec: the full tile list for the admin editor.
+  allCategories: execProcedure.query(({ ctx }) =>
+    ctx.prisma.homeCategory.findMany({ orderBy: { sortOrder: 'asc' } })
+  ),
+
+  // Exec: persist the reordered / toggled tiles.
+  saveCategories: execProcedure
+    .input(z.object({
+      categories: z.array(z.object({
+        name: z.string(),
+        enabled: z.boolean(),
+        sortOrder: z.number().int(),
+      })),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.prisma.$transaction(
+        input.categories.map(c =>
+          ctx.prisma.homeCategory.update({
+            where: { name: c.name },
+            data: { enabled: c.enabled, sortOrder: c.sortOrder },
+          })
+        )
+      )
+      return { ok: true }
+    }),
+
   // ── Parallax hero slider ────────────────────────────────────────────────────
   // Public: active slides in order (what the homepage hero rotates through).
   heroSlides: publicProcedure.query(({ ctx }) =>

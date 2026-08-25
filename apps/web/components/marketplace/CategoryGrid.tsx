@@ -1,16 +1,19 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import { DEPT_ENUM } from '@/lib/listingMap'
 
 // Category tiles use Steve's circular illustrated artwork (name baked into the
 // image, cream ground, sage brush stroke + heart). Categories he hasn't supplied
 // art for yet get a matching circular placeholder so the whole grid reads as one
 // set — swap in a real image at /public/categories when it arrives.
-type Cat = { name: string; img?: string }
+type Cat = { name: string; img?: string | null }
 
-const categories: Cat[] = [
+// Default order — also the fallback if the admin-controlled list can't be
+// fetched, and the seed shape for the HomeCategory table.
+const DEFAULT_CATEGORIES: Cat[] = [
   { name: 'Home & Garden', img: '/categories/home-garden.jpg' },
   { name: 'Fashion', img: '/categories/fashion.jpg' },
   { name: 'Sport', img: '/categories/sport.jpg' },
@@ -40,8 +43,20 @@ function Placeholder({ name }: { name: string }) {
 export default function CategoryGrid() {
   const [active, setActive] = useState<string | null>(null)
   const [failed, setFailed] = useState<Record<string, boolean>>({})
+  // Admin-ordered tiles from homepage.categories; falls back to the default set
+  // if the fetch fails or nothing is configured yet.
+  const [categories, setCategories] = useState<Cat[]>(DEFAULT_CATEGORIES)
   const { openPanel } = usePanel()
   const router = useRouter()
+
+  useEffect(() => {
+    createLooseTrpcClient().homepage.categories.query()
+      .then(rows => {
+        const list = rows as Cat[]
+        if (list.length) setCategories(list)
+      })
+      .catch(() => {})
+  }, [])
 
   const handleTap = (cat: Cat) => {
     setActive(cat.name)
@@ -76,7 +91,7 @@ export default function CategoryGrid() {
             >
               {showImg
                 ? <img
-                    src={cat.img}
+                    src={cat.img ?? undefined}
                     alt={cat.name}
                     loading="lazy"
                     onError={() => setFailed(f => ({ ...f, [cat.name]: true }))}

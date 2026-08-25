@@ -56,6 +56,19 @@ model HomeSection {
   @@index([sortOrder])
 }
 
+// Homepage category tiles — admin-orderable grid. `name` drives the tile's
+// destination (mapped via DEPT_ENUM on the client); `img` is the circular
+// artwork. Seeded from the previously hard-coded list.
+model HomeCategory {
+  id        String  @id @default(uuid())
+  name      String  @unique
+  img       String?
+  enabled   Boolean @default(true)
+  sortOrder Int
+
+  @@index([sortOrder])
+}
+
 // Parallax hero slider — a set of slides (image + heading + link), NOT banners.
 model HeroSlide {
   id         String   @id @default(uuid())
