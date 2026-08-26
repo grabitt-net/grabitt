@@ -360,7 +360,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                   ['💼', t('Recruit'), () => router.push('/recruitment')],
                   ['🏠', t('Property'), () => router.push('/property/new')],
                   ['📣', t('Buy banners'), () => router.push('/advertise')],
-                  ['⚡', t('Grabitt now'), () => router.push('/grabit')],
+                  ['⚡', t('Grabitt now'), () => router.push('/grabitt-now')],
                 ] as [string, string, () => void][] : []),
               ] as [string, string, () => void][]).map(([emoji, label, onClick]) => (
                 <button key={label} onClick={onClick} style={{

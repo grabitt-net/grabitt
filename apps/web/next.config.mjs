@@ -20,6 +20,10 @@ const nextConfig = {
     if (isServer) config.plugins = [...config.plugins, new PrismaPlugin()]
     return config
   },
+  // Grabitt NOW! moved from /grabit to /grabitt-now — keep old links working.
+  async redirects() {
+    return [{ source: '/grabit', destination: '/grabitt-now', permanent: true }]
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },   // real user uploads

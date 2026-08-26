@@ -63,7 +63,7 @@ export default function CategoryGrid() {
     // Jobs and Property have dedicated full pages with advanced search.
     if (cat.name === 'Jobs') return void router.push('/jobs')
     if (cat.name === 'Property') return void router.push('/property')
-    if (cat.name === 'Grab It Now') return void router.push('/grabit')
+    if (cat.name === 'Grab It Now') return void router.push('/grabitt-now')
     const slug = DEPT_ENUM[cat.name]
     if (slug) router.push(`/category/${slug}`)
     else openPanel('dept', { name: cat.name })

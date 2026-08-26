@@ -11,7 +11,7 @@ export default function Hero() {
     <section style={{ padding: '8px 14px 4px' }} className="hero">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <button
-          onClick={() => router.push('/grabit')}
+          onClick={() => router.push('/grabitt-now')}
           style={{
             width: '100%', background: 'linear-gradient(135deg, var(--orange), var(--orange2))',
             color: '#fff', border: 'none', borderRadius: 14,

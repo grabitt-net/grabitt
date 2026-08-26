@@ -43,7 +43,7 @@ export default function QuickActions() {
 
       {/* Grabitt Now promo — shown on every page, below the pills */}
       <button
-        onClick={() => router.push('/grabit')}
+        onClick={() => router.push('/grabitt-now')}
         style={{
           width: '100%', marginTop: 10, background: 'linear-gradient(135deg, var(--orange), var(--orange2))',
           color: '#fff', border: 'none', borderRadius: 'var(--radius)',
