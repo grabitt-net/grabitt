@@ -1,7 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import InfoPage from '@/components/marketplace/InfoPage'
-import { createLooseTrpcClient } from '@/lib/trpc'
+import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 
 // Footer → Help & guides → Suggest Ideas (item 20). Intro copy is Steve's, used
 // exactly as written. The "Suggest an Idea" button on the Why Us? page links here.
@@ -10,23 +11,31 @@ const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', bor
 const label: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--dark)', marginBottom: 6 }
 
 export default function SuggestPage() {
-  const [name, setName] = useState('')
+  const router = useRouter()
   const [category, setCategory] = useState<'suggestion' | 'bug'>('suggestion')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
   const [err, setErr] = useState('')
+  // Suggesting an idea requires being signed in — the confirmation lands in the
+  // member's own inbox, so we need to know who they are.
+  const [authed, setAuthed] = useState<boolean | null>(null)
+  useEffect(() => {
+    (async () => {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      setAuthed(!!token)
+    })()
+  }, [])
 
   const submit = async () => {
     if (message.trim().length < 3) { setErr('Please tell us a little more.'); return }
     setErr(''); setBusy(true)
     try {
-      await createLooseTrpcClient().crm.submit.mutate({
-        type: 'suggestion',
-        name: name.trim() || undefined,
+      await trpcAuthed().crm.submitIdea.mutate({
         message: `[${category === 'bug' ? 'Error / bug' : 'Suggestion'}] ${message.trim()}`,
       })
-      setDone(true); setName(''); setMessage('')
+      setDone(true); setMessage('')
     } catch { setErr('Something went wrong — please try again.') }
     finally { setBusy(false) }
   }
@@ -44,19 +53,22 @@ export default function SuggestPage() {
       pills={['Community built', 'Fast fixes', 'Always improving', 'Your voice counts']}
     >
       <div style={{ maxWidth: 620, margin: '0 auto', background: '#fff', border: '1px solid #ece3d7', borderRadius: 20, padding: 'clamp(18px, 3vw, 28px)', boxShadow: '0 6px 24px rgba(30,43,85,0.06)' }}>
-        {done ? (
+        {authed === false ? (
+          <div style={{ textAlign: 'center', padding: '20px 4px' }}>
+            <div style={{ fontSize: 34, marginBottom: 8 }}>🔒</div>
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 900, color: 'var(--dark)', marginBottom: 6 }}>Sign in to suggest an idea</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, color: '#3a3a3a', lineHeight: 1.6, marginBottom: 16 }}>So we can reply and drop a copy in your inbox, please sign in first.</div>
+            <button onClick={() => router.push('/auth?next=/suggest')} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 24px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Sign in</button>
+          </div>
+        ) : done ? (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <div style={{ fontSize: 34, marginBottom: 8 }}>✅</div>
             <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 900, color: 'var(--dark)', marginBottom: 6 }}>Thank you!</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, color: '#3a3a3a', lineHeight: 1.6 }}>Your message has reached the team. We usually act on things straight away — please allow up to 24 hours.</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, color: '#3a3a3a', lineHeight: 1.6 }}>Your message has reached the team, and a copy is in your inbox. We usually act on things straight away — please allow up to 24 hours.</div>
             <button onClick={() => setDone(false)} style={{ marginTop: 14, background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Send another →</button>
           </div>
         ) : (
           <>
-            <div style={{ marginBottom: 14 }}>
-              <span style={label}>Name (optional)</span>
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name" style={field} />
-            </div>
             <div style={{ marginBottom: 14 }}>
               <span style={label}>What is this?</span>
               <div style={{ display: 'flex', gap: 8 }}>

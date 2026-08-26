@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
-import { router, execProcedure, publicProcedure } from '../trpc'
+import { router, execProcedure, publicProcedure, protectedProcedure } from '../trpc'
 import type { PrismaClient, Prisma } from '@prisma/client'
 import { notifyUser } from '../lib/notify'
 
@@ -52,6 +52,34 @@ export const crmRouter = router({
         },
         select: { id: true },
       })
+    }),
+
+  // Logged-in "Suggest ideas" submission. Captures the idea as a CRM lead AND
+  // drops a confirmation message into the member's own inbox so they can see it
+  // was received.
+  submitIdea: protectedProcedure
+    .input(z.object({ message: z.string().min(3).max(4000) }))
+    .mutation(async ({ ctx, input }) => {
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { displayName: true, email: true } })
+      await ctx.prisma.crmContact.create({
+        data: {
+          name: me.displayName || 'Member',
+          email: me.email ?? undefined,
+          stage: 'lead',
+          notes: `[Feature suggestion] ${input.message.trim()}`,
+          tags: ['inbound', 'suggestion'],
+        },
+      })
+      await ctx.prisma.notification.create({
+        data: {
+          userId: ctx.user.id,
+          kind: 'system',
+          title: '💡 Thanks for your idea',
+          body: `We’ve received your suggestion and it’s gone straight to the team:\n\n“${input.message.trim().slice(0, 500)}”\n\nWe usually act on things quickly — please allow up to 24 hours.`,
+          actionUrl: '/account?section=messages',
+        },
+      })
+      return { ok: true as const }
     }),
 
   contacts: execProcedure

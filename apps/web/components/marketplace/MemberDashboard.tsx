@@ -894,7 +894,7 @@ function SuggestIdeas({ me }: { me: any }) {
     if (msg.trim().length < 3) return
     setBusy(true)
     try {
-      await (trpcAuthed() as any).crm.submit.mutate({ type: 'suggestion', message: msg.trim(), name: me?.displayName || undefined, email: me?.email || undefined })
+      await (trpcAuthed() as any).crm.submitIdea.mutate({ message: msg.trim() })
       setDone(true); setMsg('')
     } catch { toast(t('Could not send. Please try again.')) }
     finally { setBusy(false) }
@@ -907,7 +907,7 @@ function SuggestIdeas({ me }: { me: any }) {
       </div>
       {done ? (
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '14px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: '#16a34a' }}>
-          ✓ {t('Thanks! Your idea has been sent to the team.')}
+          ✓ {t('Thanks! Your idea has been sent to the team — a copy is in your inbox.')}
           <button onClick={() => setDone(false)} style={{ display: 'block', marginTop: 8, background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0 }}>{t('Suggest another')}</button>
         </div>
       ) : (
