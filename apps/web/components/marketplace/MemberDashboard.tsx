@@ -83,7 +83,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   // "show the business hub" — used for all layout decisions below.
   const [personalView, setPersonalView] = useState(false)
   const effBiz = !!me?.isBusiness && !personalView
-  const [section, setSection] = useState<SectionId>(me?.isBusiness ? 'business' : 'messages')
+  // Land on the account's own home — Business Centre for business, the My Hub
+  // overview for everyone else — rather than dropping straight into Messages.
+  const [section, setSection] = useState<SectionId>(me?.isBusiness ? 'business' : 'hub')
   // Deep-link a section via ?section= (e.g. the top rail's Saved / Messages).
   useEffect(() => {
     const s = params.get('section')
@@ -248,6 +250,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
               <input ref={avatarInput} type="file" accept="image/*" onChange={onPickAvatar} style={{ display: 'none' }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontFamily: 'var(--font-body)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{me?.displayName ?? t('Your account')}</div>
+                {effBiz && (me?.businessLight
+                  ? <EditableBusinessName initial={me?.businessName ?? ''} />
+                  : me?.businessName ? <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--orange)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>🏢 {me.businessName}</div> : null)}
                 <button onClick={() => openPanel('myRatings' as PanelId)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, color: '#8a6d3b' }}>{t('Rating')} ⭐ {me?.avgRating ? Number(me.avgRating).toFixed(1) : '—'}</button>
               </div>
             </div>
@@ -629,6 +634,37 @@ const linkBtn: React.CSSProperties = { background: 'none', border: 'none', paddi
 const navLinkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--orange)', fontWeight: 800, fontFamily: 'var(--font-nunito)', fontSize: 11.5, whiteSpace: 'nowrap' }
 
 // One row of the profile sidebar: icon + label + value, kept to a single line.
+// Inline-editable business name for the Business Hub. Business Light accounts
+// have no storefront, so this is where they set the name shown across Grabitt.
+function EditableBusinessName({ initial }: { initial: string }) {
+  const [name, setName] = useState(initial)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(initial)
+  const [busy, setBusy] = useState(false)
+  const save = async () => {
+    const v = draft.trim()
+    if (v.length < 2) { toast(t('Enter a business name (2+ characters).')); return }
+    setBusy(true)
+    try { await (trpcAuthed() as any).business.setBusinessName.mutate({ name: v }); setName(v); setEditing(false) }
+    catch (e) { toast(e instanceof Error ? e.message : 'Could not save.') } finally { setBusy(false) }
+  }
+  if (editing) {
+    return (
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        <input value={draft} onChange={e => setDraft(e.target.value)} placeholder={t('Business name')} autoFocus
+          style={{ flex: 1, minWidth: 0, border: '1.5px solid var(--orange)', borderRadius: 8, padding: '4px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, background: '#fff', color: 'var(--dark)' }} />
+        <button onClick={save} disabled={busy} style={{ flexShrink: 0, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 8, padding: '4px 9px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, cursor: 'pointer' }}>{busy ? '…' : '✓'}</button>
+      </div>
+    )
+  }
+  return (
+    <button onClick={() => { setDraft(name); setEditing(true) }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--orange)', maxWidth: '100%' }}>
+      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>🏢 {name || t('Add business name')}</span>
+      <Icon name="pencil" size={10} strokeWidth={2.5} />
+    </button>
+  )
+}
+
 function HubNavRow({ icon, label, value, iconColor, last }: { icon: IconName; label: string; value: React.ReactNode; iconColor?: string; last?: boolean }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 2px', borderBottom: last ? 'none' : '1px dotted rgba(180,120,60,0.35)' }}>

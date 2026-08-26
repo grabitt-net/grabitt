@@ -227,6 +227,20 @@ export const businessRouter = router({
       return { ok: true }
     }),
 
+  // Set the trading/business name. Used by the storefront editor (full business
+  // accounts) and, for Business Light — who have no storefront — the editable
+  // name field on the Business Hub. This is the name shown across Grabitt.
+  setBusinessName: protectedProcedure
+    .input(z.object({ name: z.string().trim().min(2).max(80) }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, businessLight: true } })
+      if (!user.isBusiness && !user.businessLight) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'A business name is a Business account feature' })
+      }
+      await ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { businessName: input.name.trim() } })
+      return { ok: true as const, businessName: input.name.trim() }
+    }),
+
   // ── Storefront ─────────────────────────────────────────────────────────────
   myStorefront: protectedProcedure.query(async ({ ctx }): Promise<MyStorefront> => {
     const [shop, user] = await Promise.all([

@@ -39,7 +39,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
   const bannerRef = useRef<HTMLInputElement>(null)
 
   const [f, setF] = useState({
-    template: 'classic', tagline: '', about: '', bannerUrl: '', accentColour: 'var(--orange)',
+    businessName: '', template: 'classic', tagline: '', about: '', bannerUrl: '', accentColour: 'var(--orange)',
     categories: [] as string[], featuredIds: [] as string[],
     shippingPolicy: '', returnsPolicy: '', paymentPolicy: '', published: false, slug: '',
   })
@@ -50,19 +50,22 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
       trpcAuthed().business.myStorefront.query().catch(() => null),
       trpcAuthed().listings.mine.query().catch(() => []),
     ]).then(([s, listings]) => {
-      const res = s as { shop: Shop | null; isBusiness: boolean; businessVerified: boolean } | null
+      const res = s as { shop: Shop | null; isBusiness: boolean; businessVerified: boolean; businessName: string | null } | null
       setIsBiz(!!res?.isBusiness)
       setVerified(!!res?.businessVerified)
       setMine((listings as MyListing[]) ?? [])
       if (res?.shop) {
         setShop(res.shop)
         setF({
+          businessName: res.businessName ?? '',
           template: res.shop.template, tagline: res.shop.tagline ?? '', about: res.shop.about ?? '',
           bannerUrl: res.shop.bannerUrl ?? '', accentColour: res.shop.accentColour ?? 'var(--orange)',
           categories: res.shop.categories, featuredIds: res.shop.featuredIds,
           shippingPolicy: res.shop.shippingPolicy ?? '', returnsPolicy: res.shop.returnsPolicy ?? '',
           paymentPolicy: res.shop.paymentPolicy ?? '', published: res.shop.published, slug: res.shop.slug,
         })
+      } else if (res?.businessName) {
+        setF(prev => ({ ...prev, businessName: res.businessName ?? '' }))
       }
       setLoaded(true)
     })
@@ -74,6 +77,9 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
   const save = async (publishOverride?: boolean) => {
     setSaving(true); setErr(''); setSavedMsg('')
     try {
+      if (f.businessName.trim().length >= 2) {
+        await trpcAuthed().business.setBusinessName.mutate({ name: f.businessName.trim() })
+      }
       await trpcAuthed().business.upsertStorefront.mutate({
         template: f.template as 'classic' | 'grid' | 'showcase' | 'minimal',
         tagline: f.tagline.trim() || undefined,
@@ -160,6 +166,9 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
 
               {/* Branding */}
               <Section title="Branding">
+                <Label>Business name</Label>
+                <input value={f.businessName} onChange={e => set('businessName', e.target.value)} placeholder="e.g. Isla Ceramics" style={INPUT} />
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '2px 0 8px' }}>Shown across Grabitt and on your Business Hub.</div>
                 <Label>Tagline</Label>
                 <input value={f.tagline} onChange={e => set('tagline', e.target.value)} placeholder="e.g. Handmade island ceramics" style={INPUT} />
                 <Label>About your shop</Label>
