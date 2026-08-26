@@ -138,7 +138,7 @@ function Inner() {
         )}
 
         <div style={{ textAlign: 'center', marginTop: 24, fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#888' }}>
-          Still stuck? <Link href="/messages/team" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>Message the Grabitt team</Link>.
+          Still stuck? <Link href="/contact" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>Email the Grabitt team</Link>.
         </div>
       </div>
     </InfoPage>

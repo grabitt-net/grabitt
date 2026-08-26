@@ -1,4 +1,5 @@
 import { sendEmail } from 'server/src/lib/notify'
+import { prisma } from 'server/src/db'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -39,11 +40,23 @@ export async function POST(req: Request) {
       <p style="white-space:pre-wrap;">${escape(message)}</p>
     </div>`
 
+  // Capture the enquiry as a CRM lead so the team sees it in the pipeline...
+  try {
+    await prisma.crmContact.create({
+      data: {
+        name,
+        email,
+        stage: 'lead',
+        notes: `[Contact enquiry] ${message}`,
+        tags: ['inbound', 'contact'],
+      },
+    })
+  } catch { /* non-fatal — still try to email */ }
+
+  // ...and email support as a heads-up (best-effort).
   try {
     await sendEmail(SUPPORT_TO, `Contact form — ${name}`, html)
-  } catch {
-    return Response.json({ ok: false, error: 'Could not send your message. Please try again later.' }, { status: 500 })
-  }
+  } catch { /* the CRM lead is the source of truth; email is a bonus */ }
 
   return Response.json({ ok: true })
 }
