@@ -8,7 +8,6 @@ import { useNotifications } from '@/hooks/useNotifications'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
 import Icon, { IconName } from './Icon'
 import Logo from './Logo'
-import BackButton from './BackButton'
 import { t } from '@/lib/i18n'
 
 // Desktop-only top navigation (shown ≥820px via .desktop-nav in globals.css).
@@ -47,7 +46,6 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
 
   return (
     <div className="desktop-nav" style={{ alignItems: 'center', gap: 20, padding: '12px 28px', maxWidth: 1120, margin: '0 auto' }}>
-      {back && <BackButton fallback={backFallback} />}
       {/* Logo — opens the Grabitt menu on the home page, links home elsewhere */}
       {isHome ? (
         <button onClick={scrollToFooter} aria-label="Go to menu"
@@ -81,8 +79,16 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
         {t('Sell')}
       </button>
 
-      {/* Account actions */}
+      {/* Account actions — Back sits here (right of Sell) as an icon+label, so it
+          mirrors the other menu items instead of an arrow beside the logo. */}
       <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+        {back && (
+          <button onClick={() => { if (typeof window !== 'undefined' && window.history.length > 1) router.back(); else router.push(backFallback ?? '/') }} title={t('Back')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 8px', color: 'var(--dark)' }}>
+            <Icon name="arrowLeft" size={21} />
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#7a6a55' }}>{t('Back')}</span>
+          </button>
+        )}
         {actions.map(a => (
           <button key={a.label} onClick={() => a.href ? router.push(a.href) : a.panel === 'profile' ? router.push('/account') : openPanel(a.panel)} title={a.label}
             style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 8px', color: 'var(--dark)' }}>
