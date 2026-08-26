@@ -25,9 +25,9 @@ function Inner() {
 
       <div style={{ padding: '18px 16px', maxWidth: 640, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 22 }}>
-          <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 26, fontWeight: 900, color: 'var(--dark)', margin: 0 }}>Recruitment</h1>
+          <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 26, fontWeight: 900, color: 'var(--dark)', margin: 0 }}>Your next job, or your next hire — sorted.</h1>
           <p style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 13.5, color: '#666', lineHeight: 1.6, margin: '8px 0 0' }}>
-            Connecting employers with workers across every industry.
+            Looking for work or looking for staff? Grabitt connects island employers with island talent. Post a vacancy, build your CV, and apply in a few taps. From hospitality to tech, seasonal to permanent — the right role (or the right person) is closer than you think.
           </p>
         </div>
 

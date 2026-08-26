@@ -112,6 +112,10 @@ function Inner() {
       <QuickActions />
 
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
+        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 16, fontWeight: 700, color: 'var(--dark)', marginBottom: 3 }}>Need it gone? Gone it is.</div>
+        <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#1a1a1a', lineHeight: 1.55, margin: '0 0 12px', maxWidth: 760 }}>
+          This is the urgent aisle — listings live for just 3 days, for anything you need sold fast. Moving out, downsizing, or just need quick cash? Drop it in Grabitt NOW!, grab a buyer before the clock runs out, and clear the decks. Bargain hunters, this is where the deals move quickest — snap them up before they vanish!
+        </p>
         <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#1a1a1a', marginBottom: 10 }}>
           ⚡ {geoTried && !centre
             ? 'Limited-time offers across the Canary Islands. Enable location to see what’s near you.'

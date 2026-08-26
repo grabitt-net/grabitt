@@ -121,6 +121,10 @@ export default function PropertyPage() {
       <Topbar title="Property" />
       <QuickActions />
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
+        <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 16, fontWeight: 700, color: 'var(--dark)', marginBottom: 3 }}>Find your place in the sun.</div>
+        <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#1a1a1a', lineHeight: 1.55, margin: '0 0 12px', maxWidth: 760 }}>
+          Buying, selling, renting, or letting — your next home or investment is right here on the islands. Browse houses, apartments and holiday lets across the Canaries, or list your own property to reach local buyers and tenants directly. No jargon, no faff — just island living made simple.
+        </p>
         {/* Type tabs + List-a-property on one line — pills scroll, button stays put */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
