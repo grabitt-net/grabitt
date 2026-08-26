@@ -30,6 +30,7 @@ interface Member {
   collectionAddress: string | null
   avatar: string | null
   isBusiness: boolean
+  businessLight: boolean
   businessVerified: boolean
   businessName: string | null
   isVerified: boolean
@@ -239,6 +240,7 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
     businessName: member.businessName ?? '',
     grade: member.grade,
     isBusiness: member.isBusiness,
+    businessLight: member.businessLight,
     businessVerified: member.businessVerified,
     isVerified: member.isVerified,
     emailVerified: member.emailVerified,
@@ -271,6 +273,7 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
         businessName: f.businessName.trim() || null,
         grade: f.grade,
         isBusiness: f.isBusiness,
+        businessLight: f.businessLight,
         businessVerified: f.businessVerified,
         isVerified: f.isVerified,
         emailVerified: f.emailVerified,
@@ -365,8 +368,12 @@ function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: (
             </select>
             <L>Credits</L><input value={f.credits} onChange={e => set('credits', e.target.value)} inputMode="numeric" style={inp} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-              <Check label="Business account" checked={f.isBusiness} onChange={v => set('isBusiness', v)} />
+              <Check label="Business account (full)" checked={f.isBusiness} onChange={v => set('isBusiness', v ? true : false)} />
+              <Check label="Business Light (starter plan)" checked={f.businessLight} onChange={v => set('businessLight', v)} />
               <Check label="Business verified (shield)" checked={f.businessVerified} onChange={v => set('businessVerified', v)} />
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 6, lineHeight: 1.5 }}>
+              Personal = neither ticked. <strong>Business Light</strong> is the starter plan (limited allowance). <strong>Business account</strong> is the full plan; its tier &amp; caps come from the Grade / Business level (Dealer = Business, Trader = Plus, Pro = Pro).
             </div>
           </Card>
 

@@ -100,7 +100,7 @@ export const crmRouter = router({
         select: {
           id: true, supabaseId: true, displayName: true, email: true, grade: true, salesCount: true,
           avgRating: true, credits: true, createdAt: true, phone: true, collectionAddress: true, avatar: true,
-          isBusiness: true, businessVerified: true, businessName: true, isVerified: true,
+          isBusiness: true, businessLight: true, businessVerified: true, businessName: true, isVerified: true,
           emailVerified: true, phoneVerified: true, idVerified: true, addressVerified: true,
           idDocStatus: true, addressDocStatus: true,
           strikeCount: true, suspendedUntil: true, suspendedReason: true, deletedAt: true, locale: true,
@@ -125,6 +125,7 @@ export const crmRouter = router({
       businessName: z.string().max(80).nullable().optional(),
       grade: z.enum(['grabber', 'dealer', 'trader', 'pro']).optional(),
       isBusiness: z.boolean().optional(),
+      businessLight: z.boolean().optional(),
       businessVerified: z.boolean().optional(),
       isVerified: z.boolean().optional(),
       emailVerified: z.boolean().optional(),
