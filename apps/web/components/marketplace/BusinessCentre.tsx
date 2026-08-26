@@ -185,11 +185,8 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
         <AllowanceBar label={t('Items')} icon="🛍️" used={s.usage.items} cap={s.caps.items} color="var(--orange)" />
         <AllowanceBar label={t('Job adverts')} icon="💼" used={s.usage.jobs} cap={s.caps.jobs} color="#3b82f6" />
         <AllowanceBar label={t('Property listings')} icon="🏠" used={s.usage.property} cap={s.caps.property} color="#0f766e" />
-        <button onClick={() => openPanel('buyCredits')} style={{ width: '100%', marginTop: 12, background: '#f9f6f2', border: '1px dashed #d8cbb5', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: '#8a5a2a', cursor: 'pointer' }}>
-          ➕ {t('Buy extra listing credits')}
-        </button>
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a', marginTop: 8, lineHeight: 1.5 }}>
-          {t('Allowances reset on the 1st of each month. Once you hit a cap, top up with credits to keep listing.')}
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a', marginTop: 10, lineHeight: 1.5 }}>
+          {t('Allowances reset on the 1st of each month. Once you hit a cap, extra listings are simply charged per listing.')}
         </div>
       </div>
 
@@ -373,9 +370,8 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
           <Tool icon="🏪" title={t('My storefront')} sub={t('Layout, branding, featured items and policies.')} onClick={() => openPanel('storefrontEdit')} />
           <Tool icon="📢" title={t('Place a job advert')} sub={t('Candidates apply straight to you.')} onClick={() => router.push('/jobs/new')} />
           <Tool icon="📋" title={t('Applicants')} sub={t('Review and move candidates through your pipeline.')} onClick={() => openPanel('applications')} />
-          <Tool icon="🔍" title={t('Search candidates')} sub={t('Searching is free — credits open a profile.')} onClick={() => openPanel('findStaff')} />
+          <Tool icon="🔍" title={t('Search candidates')} sub={t('Add-on to a live advert — free to browse, pay per CV unlock.')} onClick={() => openPanel('findStaff')} />
           <Tool icon="📖" title={t('Directory listing')} sub={t('List your business in the Grabitt directory — from €15/mo.')} onClick={() => router.push('/advertiser')} />
-          <Tool icon="💳" title={t('Credits')} sub={t('Top up credits for searches and extra listings.')} onClick={() => openPanel('buyCredits')} />
         </div>
       </div>
     </div>
@@ -437,8 +433,9 @@ function Muted({ children }: { children: React.ReactNode }) {
   return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '10px 0', textAlign: 'center' }}>{children}</div>
 }
 
-const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }
-const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }
+// Cards match the Business Hub dashboard: navy headings, the hub's pale border.
+const card: React.CSSProperties = { background: '#fff', border: '1.5px solid #d7deec', borderRadius: 16, padding: 16, boxShadow: '0 4px 18px rgba(30,43,85,0.06)' }
+const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#1e2b55', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }
 const miniBtn: React.CSSProperties = { background: '#f5efe6', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#8a5a2a', cursor: 'pointer', textTransform: 'none', letterSpacing: 0 }
 const miniInput: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 8, padding: '8px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12, outline: 'none', background: '#fff', marginBottom: 7 }
 const row: React.CSSProperties = { display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f0e8' }
