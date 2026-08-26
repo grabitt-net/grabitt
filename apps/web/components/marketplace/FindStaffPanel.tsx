@@ -11,10 +11,14 @@ type Candidate = {
   experienceMonths: number; languages: string[]; hours: string[]; availability: string | null
   rightToWork: string | null; location: string | null; rating: number | null; unlocked: boolean
   viewed: boolean
+  // Whether we've already invited them to apply / they've applied for this job.
+  invited?: boolean
+  applied?: boolean
   // How well they match THIS search — not a grade on the person.
   matchScore: number
   matchNotes: { factor: string; points: number; of: number; detail: string }[]
 }
+type MatchJob = { id: string; jobTitle: string; sector: string | null; roles: string[]; languages: string[]; experienceMonths: number | null }
 
 type FullProfile = {
   seekerId: string; headline: string | null; summary: string | null
@@ -181,6 +185,11 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
   const [attrs, setAttrs] = useState<Record<string, string[]>>({ hours: [], availability: [], rightToWork: [], location: [] })
   const [matchCount, setMatchCount] = useState<number | null>(null)
   const [candidates, setCandidates] = useState<Candidate[]>([])
+  // The advert we're searching FOR — the search matches its spec, and unlocks +
+  // invites are tied to it.
+  const [searchJobId, setSearchJobId] = useState<string>('')
+  const [matchJob, setMatchJob] = useState<MatchJob | null>(null)
+  const [invitingId, setInvitingId] = useState<string | null>(null)
   const [unlockCents, setUnlockCents] = useState(499)
   // Which of my live job adverts each CV unlock is charged against. Defaults to
   // the first live advert; the employer can switch it when they have several.
@@ -218,26 +227,33 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
   const toggleLang = (l: string) => setLangs(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l])
   const toggleAttr = (key: string, o: string) => setAttrs(p => ({ ...p, [key]: p[key].includes(o) ? p[key].filter(x => x !== o) : [...p[key], o] }))
 
-  const runMatch = async () => {
-    if (!sector) { toast('Pick a sector to match against.'); return }
+  // Search the database FOR a chosen advert — the match uses that advert's spec.
+  const runMatchForJob = async (jobId: string) => {
+    if (!jobId) { toast('Pick which job advert to hire for.'); return }
+    setSearchJobId(jobId)
+    setUnlockJobId(jobId)
     setLoading(true)
     try {
-      const res = await trpcAuthed().seekers.matchCandidates.query({
-        sector,
-        role: role || undefined,
-        experienceMonths: Number(exp) || undefined,
-        languages: langs.length ? langs : undefined,
-        hours: attrs.hours.length ? attrs.hours : undefined,
-        availability: attrs.availability.length ? attrs.availability : undefined,
-        rightToWork: attrs.rightToWork.length ? attrs.rightToWork : undefined,
-        location: attrs.location.length ? attrs.location : undefined,
-      }) as { count: number; candidates: Candidate[]; cvUnlockCents: number; liveJobs: LiveJob[] }
+      const res = await trpcAuthed().seekers.matchForJob.query({ jobListingId: jobId }) as
+        { count: number; candidates: Candidate[]; cvUnlockCents: number; job: MatchJob }
       setCandidates(res.candidates)
       setUnlockCents(res.cvUnlockCents)
-      if (res.liveJobs?.length && !unlockJobId) setUnlockJobId(res.liveJobs[0].id)
+      setMatchJob(res.job)
       setMatchCount(res.count)
-    } catch { toast('Could not search candidates. Please sign in as an employer and try again.') }
+    } catch (e) { toast(e instanceof Error ? e.message : 'Could not search candidates.') }
     finally { setLoading(false) }
+  }
+
+  // Invite a matched candidate to apply for this advert — marks them "invited",
+  // not "applied".
+  const invite = async (c: Candidate) => {
+    if (!searchJobId) return
+    setInvitingId(c.seekerId)
+    try {
+      await trpcAuthed().seekers.inviteToApply.mutate({ seekerId: c.seekerId, jobListingId: searchJobId })
+      setCandidates(prev => prev.map(x => x.seekerId === c.seekerId ? { ...x, invited: true } : x))
+    } catch (e) { toast(e instanceof Error ? e.message : 'Could not send the invite.') }
+    finally { setInvitingId(null) }
   }
 
   // Unlocking a candidate's CV + contact is a €-charge tied to one of my live
@@ -295,94 +311,63 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888' }}>Hiring for {access.businessName || 'your business'}</div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {/* No live advert → the ONLY option is to place one. With a live
+                  advert the database search add-on also appears. */}
+              <div style={{ display: 'grid', gridTemplateColumns: access.hasLiveJob ? '1fr 1fr' : '1fr', gap: 10 }}>
                 <button onClick={() => { onClose(); window.location.href = '/jobs/new' }} style={CHOOSE_TILE}>
                   <span style={CHOOSE_ICON}>📢</span>
                   <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Place a job advert</span>
                   <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>Candidates apply to you</span>
                 </button>
 
-                <button onClick={() => setMode('search')} disabled={!access.canSearch} style={{ ...CHOOSE_TILE, cursor: access.canSearch ? 'pointer' : 'not-allowed', opacity: access.canSearch ? 1 : 0.6 }}>
-                  <span style={CHOOSE_ICON}>🔍</span>
-                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Search candidates</span>
-                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>Free to browse · {euro(access.cvUnlockCents)} to unlock a CV</span>
-                </button>
+                {access.hasLiveJob && (
+                  <button onClick={() => setMode('search')} style={CHOOSE_TILE}>
+                    <span style={CHOOSE_ICON}>🔍</span>
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Search candidates</span>
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>Match your advert · {euro(access.cvUnlockCents)} to unlock a CV</span>
+                  </button>
+                )}
               </div>
 
-              <div style={{ marginTop: 12, background: access.canSearch ? '#f0fdf4' : '#FFF7ED', border: `1px solid ${access.canSearch ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 12, padding: '10px 12px' }}>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: access.canSearch ? '#16a34a' : '#9a5b1a' }}>
-                  {access.canSearch ? `${access.liveJobs.length} live job advert${access.liveJobs.length === 1 ? '' : 's'}` : 'A live job advert is required'}
+              <div style={{ marginTop: 12, background: access.hasLiveJob ? '#f0fdf4' : '#FFF7ED', border: `1px solid ${access.hasLiveJob ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 12, padding: '10px 12px' }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: access.hasLiveJob ? '#16a34a' : '#9a5b1a' }}>
+                  {access.hasLiveJob ? `${access.liveJobs.length} live job advert${access.liveJobs.length === 1 ? '' : 's'}` : 'A live job advert is required to search'}
                 </div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: access.canSearch ? '#15803d' : '#9a5b1a', marginTop: 2, lineHeight: 1.5 }}>
-                  {access.canSearch
-                    ? `The database is an optional extra for businesses with a live advert. Each CV unlock (${euro(access.cvUnlockCents)}) is linked to one of your adverts.`
-                    : 'Post a job advert first — the candidate database is an optional add-on that speeds up hiring for a role you already have live.'}
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: access.hasLiveJob ? '#15803d' : '#9a5b1a', marginTop: 2, lineHeight: 1.5 }}>
+                  {access.hasLiveJob
+                    ? `The database search is an add-on to your advert — it matches the exact spec you placed, and each CV unlock (${euro(access.cvUnlockCents)}) is linked to that advert.`
+                    : 'Place a job advert first. The candidate database search then becomes available as an add-on, matching the spec you set on the advert.'}
                 </div>
-                {!access.canSearch && (
-                  <button onClick={() => { onClose(); window.location.href = '/jobs/new' }} style={{ marginTop: 8, background: ORANGE, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>Post a job</button>
-                )}
               </div>
             </div>
           ) : matchCount === null ? (
+            /* Pick which live advert to hire for — the search matches its spec. */
             <>
-              <div style={{ fontSize: 11, color: ORANGE, fontFamily: 'var(--font-ui)', marginBottom: 14, lineHeight: 1.5 }}>
-                Build your job spec below. We&apos;ll match it against anonymous candidate profiles and show you how many qualify. Opening a profile is free; unlocking a candidate&apos;s CV &amp; contact is charged and linked to your job advert.
+              <div style={{ fontSize: 12, color: '#555', fontFamily: 'var(--font-ui)', marginBottom: 14, lineHeight: 1.55 }}>
+                Choose the advert you&apos;re hiring for. We&apos;ll search the database for candidates who match the spec you placed on it — sector, role, experience and languages.
               </div>
 
-              <div style={{ marginBottom: 12 }}>
-                <div style={LABEL}>Sector</div>
-                <select value={sector} onChange={e => { setSector(e.target.value); setRole('') }} style={SELECT}>
-                  <option value="">Select sector…</option>
-                  {Object.keys(JOB_SECTORS).map(s => <option key={s}>{s}</option>)}
-                </select>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {access.liveJobs.map(j => (
+                  <button key={j.id} onClick={() => runMatchForJob(j.id)} disabled={loading} style={{ width: '100%', textAlign: 'left', background: '#fff', border: '1.5px solid #e5dccd', borderRadius: 14, padding: 15, cursor: loading ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: 12, opacity: loading ? 0.6 : 1 }}>
+                    <span style={{ fontSize: 24 }}>📋</span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a' }}>{j.jobTitle}</span>
+                      <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', marginTop: 2 }}>{loading && searchJobId === j.id ? 'Searching…' : 'Search candidates for this advert'}</span>
+                    </span>
+                    <span style={{ color: ORANGE, fontWeight: 900, fontSize: 18 }}>›</span>
+                  </button>
+                ))}
               </div>
 
-              {sector && (
-                <div style={{ marginBottom: 12 }}>
-                  <div style={LABEL}>Role</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {JOB_SECTORS[sector].map(r => (
-                      <span key={r} onClick={() => setRole(role === r ? '' : r)} style={{ background: role === r ? ORANGE : '#f0f0f0', color: role === r ? '#fff' : '#555', borderRadius: 50, padding: '6px 12px', fontSize: 11, fontFamily: 'var(--font-ui)', fontWeight: 700, cursor: 'pointer' }}>{r}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div style={{ marginBottom: 12 }}>
-                <div style={LABEL}>Minimum Experience</div>
-                <select value={exp} onChange={e => setExp(e.target.value)} style={SELECT}>
-                  {EXP_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
-              </div>
-
-              <div style={{ marginBottom: 12 }}>
-                <div style={LABEL}>Languages Required</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {JOB_LANGUAGES.map(l => (
-                    <span key={l} onClick={() => toggleLang(l)} style={{ background: langs.includes(l) ? ORANGE : '#f8f9fa', color: langs.includes(l) ? '#fff' : '#1a1a1a', borderRadius: 50, padding: '6px 12px', fontSize: 11, fontFamily: 'var(--font-ui)', fontWeight: 700, cursor: 'pointer' }}>{l}</span>
-                  ))}
-                </div>
-              </div>
-
-              {(['hours', 'availability', 'rightToWork', 'location'] as const).map(key => (
-                <div key={key} style={{ marginBottom: 12 }}>
-                  <div style={LABEL}>{key === 'rightToWork' ? 'Right to Work' : key}</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {JOB_ATTRIBUTES[key].map(o => (
-                      <span key={o} onClick={() => toggleAttr(key, o)} style={{ background: attrs[key].includes(o) ? ORANGE : '#f8f9fa', color: attrs[key].includes(o) ? '#fff' : '#1a1a1a', borderRadius: 8, padding: '6px 10px', fontSize: 11, fontFamily: 'var(--font-ui)', fontWeight: 700, cursor: 'pointer' }}>{o}</span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              <button onClick={runMatch} disabled={loading} style={{ width: '100%', background: ORANGE, color: '#fff', border: 'none', borderRadius: 50, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginTop: 4, opacity: loading ? 0.6 : 1 }}>{loading ? 'Searching…' : '🔍 Find Matching Candidates →'}</button>
+              <button onClick={() => setMode('choose')} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginTop: 14 }}>← Back</button>
             </>
           ) : (
             <>
               <div style={{ textAlign: 'center', padding: '16px 0 12px' }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 64, fontWeight: 900, color: ORANGE, lineHeight: 1 }}>{matchCount}</div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginTop: 6 }}>{matchCount === 1 ? 'candidate matches' : 'candidates match'} your spec</div>
-                <div style={{ fontSize: 12, color: '#666', fontFamily: 'var(--font-ui)', marginTop: 4 }}>{role ? `${role} · ` : ''}Canary Islands</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginTop: 6 }}>{matchCount === 1 ? 'candidate matches' : 'candidates match'} your advert</div>
+                {matchJob && <div style={{ fontSize: 12, color: '#666', fontFamily: 'var(--font-ui)', marginTop: 4 }}>for “{matchJob.jobTitle}”{matchJob.sector ? ` · ${matchJob.sector}` : ''}</div>}
               </div>
 
               {matchCount === 0 ? (
@@ -459,6 +444,18 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                           ) : (
                             <button onClick={() => unlock(c)} disabled={unlockingId === c.seekerId} style={{ width: '100%', background: ORANGE, color: '#fff', border: 'none', borderRadius: 10, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', opacity: unlockingId === c.seekerId ? 0.6 : 1 }}>{unlockingId === c.seekerId ? 'Unlocking…' : `🔓 Unlock CV & contact · ${euro(unlockCents)}`}</button>
                           )}
+
+                          {/* Invite this candidate to apply for the advert — they
+                              show as "invited", not "applied". */}
+                          <div style={{ marginTop: 8 }}>
+                            {c.applied ? (
+                              <div style={{ fontSize: 11, color: '#16a34a', fontFamily: 'var(--font-ui)', fontWeight: 800, textAlign: 'center' }}>✓ Already applied to this advert</div>
+                            ) : c.invited ? (
+                              <div style={{ fontSize: 11, color: '#2563eb', fontFamily: 'var(--font-ui)', fontWeight: 800, textAlign: 'center' }}>📨 Invited to apply</div>
+                            ) : (
+                              <button onClick={() => invite(c)} disabled={invitingId === c.seekerId} style={{ width: '100%', background: '#fff', color: '#2563eb', border: '1.5px solid #bfdbfe', borderRadius: 10, padding: 9, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer', opacity: invitingId === c.seekerId ? 0.6 : 1 }}>{invitingId === c.seekerId ? 'Sending…' : '📨 Invite to apply'}</button>
+                            )}
+                          </div>
                         </div>
                       )
                     })}
@@ -467,7 +464,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                 </>
               )}
 
-              <button onClick={() => setMatchCount(null)} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 10 }}>← Adjust spec</button>
+              <button onClick={() => { setMatchCount(null); setCandidates([]) }} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 10 }}>← Choose another advert</button>
               <div style={{ textAlign: 'center', fontSize: 10, color: '#666', fontFamily: 'var(--font-ui)' }}>Secure payment via Stripe · Each unlock is linked to your live job advert · Must be a registered employer</div>
             </>
           )}

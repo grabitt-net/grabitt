@@ -332,6 +332,100 @@ export const seekersRouter = router({
       return { count: candidates.length, candidates, cvUnlockCents: RECRUITMENT_PRICING.cvUnlockCents, liveJobs }
     }),
 
+  // Search the candidate database FOR a specific live job advert. The criteria
+  // are taken from the advert itself (sector, roles, languages, experience), so
+  // the results are ranked against exactly what the employer specified when they
+  // placed the job. Each result carries whether they've already been invited to
+  // apply or applied for this advert.
+  matchForJob: protectedProcedure
+    .input(z.object({ jobListingId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true } })
+      if (!me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'Searching for staff is a Business account feature' })
+
+      const job = await ctx.prisma.jobListing.findUnique({
+        where: { id: input.jobListingId },
+        select: { id: true, employerId: true, jobTitle: true, sector: true, roles: true, languages: true, experienceMonths: true, skills: true, expiresAt: true, listing: { select: { status: true } } },
+      })
+      if (!job || job.employerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'Choose one of your own job adverts.' })
+      const jobLive = job.listing?.status === 'active' && (!job.expiresAt || job.expiresAt > new Date())
+      if (!jobLive) throw new TRPCError({ code: 'FORBIDDEN', message: 'That job advert is no longer live.' })
+
+      const where: Record<string, unknown> = { active: true, userId: { not: ctx.user.id } }
+      if (job.sector) where.OR = [{ sector: job.sector }, { sectors: { has: job.sector } }]
+      if (job.roles?.length) where.roles = { hasSome: job.roles }
+      if (job.experienceMonths) where.experienceMonths = { gte: job.experienceMonths }
+      if (job.languages?.length) where.languages = { hasEvery: job.languages }
+
+      const [profiles, unlocks, views, apps] = await Promise.all([
+        ctx.prisma.seekerProfile.findMany({ where, orderBy: [{ experienceMonths: 'desc' }, { createdAt: 'desc' }], take: 60, include: { user: { select: { avgRating: true } } } }),
+        ctx.prisma.candidateUnlock.findMany({ where: { employerId: ctx.user.id }, select: { seekerId: true } }),
+        ctx.prisma.candidateView.findMany({ where: { employerId: ctx.user.id }, select: { seekerId: true } }),
+        ctx.prisma.jobApplication.findMany({ where: { jobListingId: job.id }, select: { applicantId: true, status: true } }),
+      ])
+      const unlockedIds = new Set(unlocks.map(u => u.seekerId))
+      const viewedIds = new Set(views.map(v => v.seekerId))
+      const appByUser = new Map(apps.map(a => [a.applicantId, a.status as string]))
+
+      const candidates = profiles.map(p => {
+        const fit = scoreSuitability({
+          job: { sector: job.sector ?? null, skills: job.skills ?? [], jobTitle: job.roles?.[0] ?? job.jobTitle ?? null },
+          candidate: { sectors: p.sectors, sector: p.sector, roles: p.roles, skills: p.skills, languages: p.languages, experienceMonths: p.experienceMonths, availability: p.availability, hours: p.hours },
+        })
+        const appStatus = appByUser.get(p.userId)
+        return {
+          seekerId: p.userId,
+          headline: p.headline,
+          sector: p.sector,
+          sectors: p.sectors.length ? p.sectors : (p.sector ? [p.sector] : []),
+          roles: p.roles,
+          skills: p.skills.slice(0, 8),
+          experienceMonths: p.experienceMonths,
+          languages: p.languages,
+          hours: p.hours,
+          availability: p.availability,
+          rightToWork: p.rightToWork,
+          location: [p.areaDetail, p.town, p.location].filter(Boolean).join(', '),
+          rating: p.user.avgRating,
+          matchScore: fit.score,
+          matchNotes: fit.notes,
+          unlocked: unlockedIds.has(p.userId),
+          viewed: viewedIds.has(p.userId),
+          invited: appStatus === 'invited',
+          applied: !!appStatus && appStatus !== 'invited',
+        }
+      }).sort((a, b) => b.matchScore - a.matchScore)
+
+      return {
+        count: candidates.length,
+        candidates,
+        cvUnlockCents: RECRUITMENT_PRICING.cvUnlockCents,
+        job: { id: job.id, jobTitle: job.jobTitle, sector: job.sector, roles: job.roles, languages: job.languages, experienceMonths: job.experienceMonths },
+      }
+    }),
+
+  // Invite a candidate to apply for one of the employer's live adverts. Creates
+  // a JobApplication marked 'invited' (not 'applied') and notifies the candidate.
+  // Idempotent — if they already applied or were invited, nothing changes.
+  inviteToApply: protectedProcedure
+    .input(z.object({ seekerId: z.string().uuid(), jobListingId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const job = await ctx.prisma.jobListing.findUnique({ where: { id: input.jobListingId }, select: { id: true, employerId: true, jobTitle: true } })
+      if (!job || job.employerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'Choose one of your own job adverts.' })
+
+      const existing = await ctx.prisma.jobApplication.findUnique({
+        where: { jobListingId_applicantId: { jobListingId: job.id, applicantId: input.seekerId } },
+        select: { id: true, status: true },
+      })
+      if (existing) return { ok: true, already: true as const, status: existing.status }
+
+      await ctx.prisma.jobApplication.create({ data: { jobListingId: job.id, applicantId: input.seekerId, status: 'invited' } })
+      await ctx.prisma.notification.create({
+        data: { userId: input.seekerId, kind: 'system', title: '📨 You’ve been invited to apply', body: `An employer invited you to apply for “${job.jobTitle}”. Open it to complete your application.`, actionUrl: '/jobs' },
+      })
+      return { ok: true, already: false as const, status: 'invited' as const }
+    }),
+
   // Reveal a candidate's CV + contact details. This is the one charged step of
   // the database add-on: €RECRUITMENT_PRICING.cvUnlockCents, paid via Stripe and
   // tied to one of the employer's own live job adverts. Idempotent — a candidate
