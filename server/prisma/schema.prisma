@@ -90,16 +90,36 @@ model HeroSlide {
 // executive suite; read publicly by the /help page and the AI assistant.
 model HelpArticle {
   id         String   @id @default(uuid())
-  category   String                         // category id, e.g. "getting-started"
+  category   String                         // category slug, e.g. "getting-started"
   question   String
   answer     String
   sortOrder  Int      @default(0)
   active     Boolean  @default(true)
+  // "Was this helpful?" deflection signal — increments from the public article.
+  helpfulYes Int      @default(0)
+  helpfulNo  Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@index([category])
   @@index([active])
+}
+
+// Help Centre categories — the sections of the helpdesk. Admin-editable so the
+// grid's title, description and icon can change without a deploy. `slug` is what
+// HelpArticle.category references.
+model HelpCategory {
+  id         String   @id @default(uuid())
+  slug       String   @unique
+  title      String
+  blurb      String   @default("")
+  icon       String   @default("📄")
+  sortOrder  Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([sortOrder])
 }
 
 // A member's application for a special status (student / blue_light / charity).

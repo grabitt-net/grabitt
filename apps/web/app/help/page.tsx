@@ -12,38 +12,46 @@ export default function HelpPage() {
 }
 
 type Msg = { role: 'user' | 'assistant'; content: string }
+type LArticle = { q: string; a: string; id?: string }
+type LTopic = { id: string; icon: string; title: string; blurb: string; articles: LArticle[] }
 
 function Inner() {
   const [query, setQuery] = useState('')
   // Helpdesk navigation: category grid → category's article list → one article.
   const [catId, setCatId] = useState<string | null>(null)
-  const [article, setArticle] = useState<{ q: string; a: string; topic: HelpTopic } | null>(null)
+  const [article, setArticle] = useState<{ q: string; a: string; id?: string; topic: LTopic } | null>(null)
   // Admin-managed articles from the database, grouped into topics using the
   // category metadata. Falls back to the built-in content if the DB is empty
   // or unreachable, so the Help Centre is never blank.
-  const [allTopics, setAllTopics] = useState<HelpTopic[]>(HELP_TOPICS)
+  const [allTopics, setAllTopics] = useState<LTopic[]>(HELP_TOPICS)
 
   useEffect(() => {
-    createLooseTrpcClient().help.articles.query()
-      .then((res) => {
-        const rows = res as { category: string; question: string; answer: string }[]
-        if (!Array.isArray(rows) || rows.length === 0) return
-        const byCat = new Map<string, HelpTopic>()
-        // Preserve the category order from HELP_CATEGORIES, then any extras.
-        const order = HELP_CATEGORIES.map(c => c.id)
-        rows.sort((a, b) => order.indexOf(a.category) - order.indexOf(b.category))
-        for (const r of rows) {
-          let topic = byCat.get(r.category)
-          if (!topic) {
-            const meta = helpCategory(r.category)
-            topic = { id: meta.id, icon: meta.icon, title: meta.title, blurb: meta.blurb, articles: [] }
-            byCat.set(r.category, topic)
-          }
-          topic.articles.push({ q: r.question, a: r.answer })
+    const client = createLooseTrpcClient()
+    Promise.all([
+      client.help.articles.query().catch(() => []),
+      client.help.categories.query().catch(() => []),
+    ]).then(([artRes, catRes]) => {
+      const rows = artRes as { id: string; category: string; question: string; answer: string }[]
+      if (!Array.isArray(rows) || rows.length === 0) return
+      // Admin-managed category metadata (title/blurb/icon/order); fall back to
+      // the built-in metadata for any category not in the table.
+      const cats = catRes as { slug: string; title: string; blurb: string; icon: string }[]
+      const meta = new Map(cats.map(c => [c.slug, c]))
+      const order = cats.length ? cats.map(c => c.slug) : HELP_CATEGORIES.map(c => c.id)
+      const byCat = new Map<string, LTopic>()
+      rows.sort((a, b) => order.indexOf(a.category) - order.indexOf(b.category))
+      for (const r of rows) {
+        let topic = byCat.get(r.category)
+        if (!topic) {
+          const m = meta.get(r.category)
+          const fb = helpCategory(r.category)
+          topic = { id: r.category, icon: m?.icon || fb.icon, title: m?.title || fb.title, blurb: m?.blurb ?? fb.blurb, articles: [] }
+          byCat.set(r.category, topic)
         }
-        setAllTopics(Array.from(byCat.values()))
-      })
-      .catch(() => {})
+        topic.articles.push({ q: r.question, a: r.answer, id: r.id })
+      }
+      setAllTopics(Array.from(byCat.values()))
+    }).catch(() => {})
   }, [])
 
   const q = query.trim().toLowerCase()
@@ -97,6 +105,7 @@ function Inner() {
             <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
               <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 900, color: 'var(--dark)', margin: '0 0 12px', lineHeight: 1.3 }}>{article.q}</h2>
               <p style={{ fontFamily: 'var(--font-ui)', fontSize: 14.5, color: '#333', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>{article.a}</p>
+              {article.id && <HelpfulVote articleId={article.id} />}
             </div>
           </div>
         ) : currentTopic ? (
@@ -149,6 +158,29 @@ function ArticleRow({ q, icon, sub, onClick }: { q: string; icon?: string; sub?:
     </button>
   )
 }
+
+// "Was this helpful?" — records a deflection signal for the article.
+function HelpfulVote({ articleId }: { articleId: string }) {
+  const [voted, setVoted] = useState<null | boolean>(null)
+  const vote = (helpful: boolean) => {
+    setVoted(helpful)
+    createLooseTrpcClient().help.rate.mutate({ id: articleId, helpful }).catch(() => {})
+  }
+  return (
+    <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid #f0eae0', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      {voted === null ? (
+        <>
+          <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#888' }}>Was this helpful?</span>
+          <button onClick={() => vote(true)} style={voteBtn}>👍 Yes</button>
+          <button onClick={() => vote(false)} style={voteBtn}>👎 No</button>
+        </>
+      ) : (
+        <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#16a34a' }}>{voted ? '✓ Thanks for your feedback!' : 'Thanks — we’ll improve this article.'}</span>
+      )}
+    </div>
+  )
+}
+const voteBtn: React.CSSProperties = { background: '#fff', border: '1.5px solid #e5dccd', borderRadius: 999, padding: '6px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', cursor: 'pointer' }
 
 function Crumb({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (

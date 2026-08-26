@@ -39,4 +39,47 @@ export const helpRouter = router({
   remove: execProcedure
     .input(z.object({ id: z.string() }))
     .mutation(({ ctx, input }) => ctx.prisma.helpArticle.delete({ where: { id: input.id } })),
+
+  // "Was this helpful?" — public deflection signal from the article view.
+  rate: publicProcedure
+    .input(z.object({ id: z.string(), helpful: z.boolean() }))
+    .mutation(({ ctx, input }) =>
+      ctx.prisma.helpArticle.update({
+        where: { id: input.id },
+        data: input.helpful ? { helpfulYes: { increment: 1 } } : { helpfulNo: { increment: 1 } },
+        select: { id: true },
+      })
+    ),
+
+  // ── Categories (the helpdesk sections) ──────────────────────────────────────
+  // Public: active categories in order (drives the Help Centre grid).
+  categories: publicProcedure.query(({ ctx }) =>
+    ctx.prisma.helpCategory.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' }, select: { slug: true, title: true, blurb: true, icon: true } })
+  ),
+
+  // Admin: every category for management (incl. article counts, added below).
+  allCategories: execProcedure.query(({ ctx }) =>
+    ctx.prisma.helpCategory.findMany({ orderBy: { sortOrder: 'asc' } })
+  ),
+
+  upsertCategory: execProcedure
+    .input(z.object({
+      id: z.string().optional(),
+      slug: z.string().min(1).max(60).regex(/^[a-z0-9-]+$/, 'lowercase letters, numbers and hyphens only'),
+      title: z.string().min(1).max(80),
+      blurb: z.string().max(160).default(''),
+      icon: z.string().max(8).default('📄'),
+      sortOrder: z.number().int().default(0),
+      active: z.boolean().default(true),
+    }))
+    .mutation(({ ctx, input }) => {
+      const { id, ...data } = input
+      return id
+        ? ctx.prisma.helpCategory.update({ where: { id }, data })
+        : ctx.prisma.helpCategory.create({ data })
+    }),
+
+  removeCategory: execProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(({ ctx, input }) => ctx.prisma.helpCategory.delete({ where: { id: input.id } })),
 })

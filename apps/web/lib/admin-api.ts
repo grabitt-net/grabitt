@@ -135,6 +135,11 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('help.upsert', 'mutation', data, execToken),
     removeHelpArticle: (id: string) =>
       rpc<any>('help.remove', 'mutation', { id }, execToken),
+    helpCategories: () => rpc<any[]>('help.allCategories', 'query', undefined, execToken),
+    upsertHelpCategory: (data: Record<string, unknown>) =>
+      rpc<any>('help.upsertCategory', 'mutation', data, execToken),
+    removeHelpCategory: (id: string) =>
+      rpc<any>('help.removeCategory', 'mutation', { id }, execToken),
 
     // Rewards — ways to earn, redemption options, and manual grants
     rewardRules: () => rpc<any[]>('rewards.allRules', 'query', undefined, execToken),
