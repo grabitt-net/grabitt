@@ -265,7 +265,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-ui)', fontSize: 12.5 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: '#999', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                <th style={th}>Slot</th><th style={th}>€/month</th><th style={th}>Advertisers (cap)</th><th style={th}>Type</th><th style={th}>Pages</th><th style={th}>Active</th>
+                <th style={th}>Slot</th><th style={th}>€/month</th><th style={th}>Advertisers (cap)</th><th style={th}>Type</th><th style={th}>Pages</th><th style={th}>On / Off</th>
               </tr>
             </thead>
             <tbody>
@@ -281,7 +281,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
                       {s.pages?.length ? `${s.pages.length} page${s.pages.length === 1 ? '' : 's'}` : 'All pages'} ▾
                     </button>
                   </td>
-                  <td style={td}><button onClick={() => saveSlot(s.id, { active: !s.active })} style={{ ...pill, background: s.active ? '#f0faf4' : '#f5f5f5', color: s.active ? '#16a34a' : '#aaa' }}>{s.active ? '● On sale' : '○ Off'}</button></td>
+                  <td style={td}><button onClick={() => saveSlot(s.id, { active: !s.active })} title={s.active ? 'Banner is live — tap to switch it off everywhere' : 'Banner is off — tap to switch it on'} style={{ ...pill, background: s.active ? '#f0faf4' : '#fef2f2', color: s.active ? '#16a34a' : '#ef4444' }}>{s.active ? '● On' : '○ Off'}</button></td>
                 </tr>
                 {expandedSlot === s.id && (
                   <tr>

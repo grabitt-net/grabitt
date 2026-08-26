@@ -171,10 +171,11 @@ export const bannersRouter = router({
     .query(async ({ ctx, input }) => {
       const now = new Date()
       const testMode = await isTestMode(ctx.prisma)
-      // Slot-level per-page switch (admin → Slots & pricing). If this slot is
-      // limited to specific pages and the current page isn't one of them, the
-      // whole slot is off here — show nothing.
+      // Slot-level switches (admin → Slots & pricing):
+      //  • active=false → the banner is switched OFF entirely (shows nowhere).
+      //  • pages[]      → if set, the slot renders only on those pages.
       const slot = await getSlot(ctx.prisma, input.position)
+      if (slot && !slot.active) return []
       if (slot?.pages?.length && (!input.page || !slot.pages.includes(input.page))) return []
       return ctx.prisma.banner.findMany({
         where: {
