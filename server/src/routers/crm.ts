@@ -82,6 +82,38 @@ export const crmRouter = router({
       return { ok: true as const }
     }),
 
+  // Dedicated support inbox — just the inbound help enquiries (contact form) and
+  // member ideas, kept separate from sales prospects. `open` filters out ones
+  // already marked resolved.
+  supportInbox: execProcedure
+    .input(z.object({ status: z.enum(['open', 'resolved', 'all']).default('open') }).optional())
+    .query(async ({ ctx, input }) => {
+      const status = input?.status ?? 'open'
+      const rows = await ctx.prisma.crmContact.findMany({
+        where: { tags: { hasSome: ['contact', 'suggestion'] } },
+        orderBy: { createdAt: 'desc' },
+        take: 300,
+        select: { id: true, name: true, email: true, notes: true, tags: true, createdAt: true },
+      })
+      const mapped = rows.map(r => ({
+        id: r.id, name: r.name, email: r.email, notes: r.notes, createdAt: r.createdAt,
+        kind: r.tags.includes('suggestion') ? 'suggestion' as const : 'contact' as const,
+        resolved: r.tags.includes('resolved'),
+      }))
+      return status === 'all' ? mapped : mapped.filter(m => (status === 'resolved') === m.resolved)
+    }),
+
+  // Mark a support enquiry resolved (or reopen it) via a 'resolved' tag.
+  resolveSupport: execProcedure
+    .input(z.object({ id: z.string().uuid(), resolved: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const row = await ctx.prisma.crmContact.findUniqueOrThrow({ where: { id: input.id }, select: { tags: true } })
+      const tags = new Set(row.tags)
+      if (input.resolved) tags.add('resolved'); else tags.delete('resolved')
+      await ctx.prisma.crmContact.update({ where: { id: input.id }, data: { tags: Array.from(tags) } })
+      return { ok: true as const }
+    }),
+
   contacts: execProcedure
     .input(z.object({ stage: z.enum(['lead','qualified','pitch','proposal','close','won','nurture']).optional(), page: z.number().default(1) }))
     .query(({ ctx, input }) =>

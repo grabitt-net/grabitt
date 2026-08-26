@@ -47,6 +47,7 @@ const SECTIONS: Section[] = [
     items: [
       { icon: '🤞', label: 'Prospects', id: 'pipeline', countKey: 'pipeline' },
       { icon: '📇', label: 'Contacts', id: 'contacts' },
+      { icon: '📨', label: 'Support inbox', id: 'support' },
       { icon: '🖼️', label: 'Homepage', id: 'homepage' },
       { icon: '🎯', label: 'Banners', id: 'banners' },
       { icon: '📰', label: 'Guides', id: 'community' },
