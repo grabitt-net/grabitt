@@ -125,7 +125,7 @@ function Inner() {
             <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(22px, 4.4vw, 34px)', fontWeight: 700, color: '#fff', lineHeight: 1.15, margin: 0 }}>Grabitt NOW!</h1>
             <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(14px, 2.2vw, 17px)', fontWeight: 700, color: '#fff', margin: '10px auto 0', maxWidth: 720 }}>Need it gone? Gone it is.</div>
             <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, lineHeight: 1.6, color: 'rgba(255,255,255,0.95)', maxWidth: 720, margin: '8px auto 0' }}>
-              The urgent aisle — listings live for just 3 days, for anything you need sold fast. Browse hot offers from right across the Canaries, then filter by distance, type or location to zero in. Bargain hunters, this is where the deals move quickest — grab them before they vanish!
+              This is the urgent aisle — listings live for just 3 days, for anything you need sold fast. Moving out, downsizing, or just need quick cash? Drop it in Grabitt NOW!, grab a buyer before the clock runs out, and clear the decks. Bargain hunters, this is where the deals move quickest — snap them up before they vanish!
             </p>
           </div>
         </div>
@@ -134,8 +134,8 @@ function Inner() {
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#1a1a1a', marginBottom: 10 }}>
           ⚡ {centre
-            ? `Showing offers across the Canaries — filtered to within ${radiusLabel(radius)} of you. Change the filters below to widen or refine.`
-            : 'Showing offers across the Canaries. Enable location to also filter by distance.'}
+            ? 'Limited-time offers across the Canary Islands. Use the filters below to refine.'
+            : 'Limited-time offers across the Canary Islands. Enable location to filter by distance.'}
         </div>
 
         {/* Filters */}
