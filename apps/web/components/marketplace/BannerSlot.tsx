@@ -50,6 +50,8 @@ export function recommendedSize(aspect: string): { w: number; h: number; label: 
 export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius = 16, padded = true, label }: { position: Position; page?: string; aspect?: string; radius?: number; padded?: boolean; label?: string }) {
   const [banners, setBanners] = useState<Banner[]>([])
   const [preview, setPreview] = useState(false)
+  // Whether this slot is switched on for the current page (admin On/Off + pages).
+  const [slotOn, setSlotOn] = useState(true)
   const [idx, setIdx] = useState(0)
   const seen = useRef<Set<string>>(new Set())
   const pathname = usePathname()
@@ -62,6 +64,7 @@ export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius 
     const c = createLooseTrpcClient()
     c.banners.active.query({ position, page: effectivePage }).then(d => setBanners(d as unknown as Banner[])).catch(() => {})
     c.banners.previewMode.query().then(d => setPreview(!!(d as { on?: boolean })?.on)).catch(() => {})
+    c.banners.slotActive.query({ position, page: effectivePage }).then(d => setSlotOn(d !== false)).catch(() => {})
   }, [position, effectivePage])
 
   useEffect(() => {
@@ -72,7 +75,9 @@ export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius 
 
   // Empty + preview mode → labelled placeholder marking the slot.
   if (banners.length === 0) {
-    if (!preview) return null
+    // Preview shows a placeholder only for slots that are actually switched on
+    // for this page, so preview mirrors exactly what's live here.
+    if (!preview || !slotOn) return null
     return (
       <div style={{ padding: padded ? '14px 14px 0' : 0 }}>
         <div style={{ width: '100%', aspectRatio: aspect, borderRadius: radius, border: '2px dashed var(--orange2)', background: 'repeating-linear-gradient(45deg,#fff7ed,#fff7ed 12px,#ffedd5 12px,#ffedd5 24px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', padding: 6 }}>

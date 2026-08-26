@@ -161,6 +161,19 @@ export const bannersRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(({ ctx, input }) => ctx.prisma.banner.delete({ where: { id: input.id } })),
 
+  // Whether a slot is switched on for a given page (respects the admin On/Off
+  // and per-page settings). Preview mode uses this so a disabled / off-page slot
+  // shows no placeholder — the preview then reflects exactly what's live here.
+  slotActive: publicProcedure
+    .input(z.object({ position: z.enum(POSITIONS), page: z.string().optional() }))
+    .query(async ({ ctx, input }) => {
+      const slot = await getSlot(ctx.prisma, input.position)
+      if (!slot) return true
+      if (!slot.active) return false
+      if (slot.pages?.length && (!input.page || !slot.pages.includes(input.page))) return false
+      return true
+    }),
+
   active: publicProcedure
     .input(z.object({
       position: z.enum(POSITIONS),
