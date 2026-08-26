@@ -84,7 +84,7 @@ export default function HelpView() {
   }
 
   return (
-    <div style={{ padding: 20, maxWidth: 900 }}>
+    <div style={{ padding: 20, width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 20, fontWeight: 900, color: '#1a1a1a' }}>Help Centre</div>
