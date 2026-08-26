@@ -15,7 +15,9 @@ type Msg = { role: 'user' | 'assistant'; content: string }
 
 function Inner() {
   const [query, setQuery] = useState('')
-  const [openId, setOpenId] = useState<string | null>(null)
+  // Helpdesk navigation: category grid → category's article list → one article.
+  const [catId, setCatId] = useState<string | null>(null)
+  const [article, setArticle] = useState<{ q: string; a: string; topic: HelpTopic } | null>(null)
   // Admin-managed articles from the database, grouped into topics using the
   // category metadata. Falls back to the built-in content if the DB is empty
   // or unreachable, so the Help Centre is never blank.
@@ -44,69 +46,113 @@ function Inner() {
       .catch(() => {})
   }, [])
 
-  // Filter topics/articles by the search box.
-  const topics = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return allTopics
-    return allTopics
-      .map(t => ({ ...t, articles: t.articles.filter(a => (a.q + ' ' + a.a + ' ' + t.title).toLowerCase().includes(q)) }))
-      .filter(t => t.articles.length > 0 || t.title.toLowerCase().includes(q))
-  }, [query, allTopics])
+  const q = query.trim().toLowerCase()
+  // Flat search results across every article (helpdesk-style search).
+  const results = useMemo(() => {
+    if (!q) return [] as { q: string; a: string; topic: HelpTopic }[]
+    const out: { q: string; a: string; topic: HelpTopic }[] = []
+    for (const t of allTopics) for (const a of t.articles) {
+      if ((a.q + ' ' + a.a + ' ' + t.title).toLowerCase().includes(q)) out.push({ q: a.q, a: a.a, topic: t })
+    }
+    return out
+  }, [q, allTopics])
+
+  const currentTopic = catId ? allTopics.find(t => t.id === catId) ?? null : null
+  const openArticle = (a: { q: string; a: string }, topic: HelpTopic) => { setArticle({ ...a, topic }); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }
 
   return (
     <InfoPage
       title="Help Centre"
       topbarTitle="Help Centre"
-      intro="Ask our assistant, or browse the topics below."
+      intro="Search our guides, ask the assistant, or browse by topic."
       pills={['AI assistant', 'Searchable guides', 'Buyer & seller help', 'Live chat']}
     >
-      <div style={{ maxWidth: 760, margin: '0 auto' }}>
+      <div style={{ maxWidth: 860, margin: '0 auto' }}>
         <AiAssistant />
 
         {/* Search */}
         <input
-          value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Search help articles…"
-          style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 12, padding: '12px 14px', fontFamily: 'var(--font-nunito)', fontSize: 14, outline: 'none', background: '#fff', margin: '20px 0 14px' }}
+          value={query} onChange={e => { setQuery(e.target.value); setCatId(null); setArticle(null) }}
+          placeholder="Search the Help Centre…"
+          style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 12, padding: '13px 16px', fontFamily: 'var(--font-nunito)', fontSize: 14.5, outline: 'none', background: '#fff', margin: '20px 0 16px' }}
         />
 
-        {/* Topics */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {topics.map(t => (
-            <div key={t.id} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              <button onClick={() => setOpenId(openId === t.id ? null : t.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                <span style={{ fontSize: 24 }}>{t.icon}</span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{t.title}</span>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#1a1a1a' }}>{t.blurb}</span>
-                </span>
-                <span style={{ color: 'var(--orange)', fontWeight: 900, transform: openId === t.id ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }}>›</span>
-              </button>
-              {(openId === t.id || query.trim()) && (
-                <div style={{ padding: '0 16px 8px' }}>
-                  {t.articles.map((a, i) => (
-                    <details key={i} style={{ borderTop: '1px solid #f4efe8' }}>
-                      <summary style={{ padding: '11px 0', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', cursor: 'pointer' }}>{a.q}</summary>
-                      <p style={{ margin: '0 0 12px', fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#555', lineHeight: 1.6 }}>{a.a}</p>
-                    </details>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-          {topics.length === 0 && (
+        {q ? (
+          /* ── Search results ── */
+          results.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 40, fontFamily: 'var(--font-nunito)', color: '#bbb' }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
               No articles match “{query}”. Try the assistant above, or contact support.
             </div>
-          )}
-        </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#888', fontWeight: 700, marginBottom: 2 }}>{results.length} result{results.length === 1 ? '' : 's'}</div>
+              {results.map((r, i) => <ArticleRow key={i} q={r.q} icon={r.topic.icon} sub={r.topic.title} onClick={() => openArticle(r, r.topic)} />)}
+            </div>
+          )
+        ) : article ? (
+          /* ── One article ── */
+          <div>
+            <Crumb onClick={() => setArticle(null)}>{article.topic.icon} {article.topic.title}</Crumb>
+            <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
+              <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 900, color: 'var(--dark)', margin: '0 0 12px', lineHeight: 1.3 }}>{article.q}</h2>
+              <p style={{ fontFamily: 'var(--font-ui)', fontSize: 14.5, color: '#333', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>{article.a}</p>
+            </div>
+          </div>
+        ) : currentTopic ? (
+          /* ── One category's articles ── */
+          <div>
+            <Crumb onClick={() => setCatId(null)}>← All topics</Crumb>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '2px 0 14px' }}>
+              <span style={{ fontSize: 30 }}>{currentTopic.icon}</span>
+              <span>
+                <span style={{ display: 'block', fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{currentTopic.title}</span>
+                <span style={{ display: 'block', fontFamily: 'var(--font-comfortaa)', fontSize: 12.5, color: '#888' }}>{currentTopic.blurb}</span>
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {currentTopic.articles.map((a, i) => <ArticleRow key={i} q={a.q} onClick={() => openArticle(a, currentTopic)} />)}
+            </div>
+          </div>
+        ) : (
+          /* ── Category grid ── */
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 12 }}>
+            {allTopics.map(t => (
+              <button key={t.id} onClick={() => setCatId(t.id)} style={{ textAlign: 'left', background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: '18px 16px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(30,43,85,0.05)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 30 }}>{t.icon}</span>
+                <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 15.5, fontWeight: 900, color: 'var(--dark)' }}>{t.title}</span>
+                <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#888', lineHeight: 1.45 }}>{t.blurb}</span>
+                <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: 'var(--orange)', marginTop: 2 }}>{t.articles.length} article{t.articles.length === 1 ? '' : 's'} ›</span>
+              </button>
+            ))}
+          </div>
+        )}
 
-        <div style={{ textAlign: 'center', marginTop: 20, fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#888' }}>
+        <div style={{ textAlign: 'center', marginTop: 24, fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#888' }}>
           Still stuck? <Link href="/messages/team" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>Message the Grabitt team</Link>.
         </div>
       </div>
     </InfoPage>
+  )
+}
+
+// One clickable article row (used in category lists and search results).
+function ArticleRow({ q, icon, sub, onClick }: { q: string; icon?: string; sub?: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{ width: '100%', textAlign: 'left', background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: '13px 15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 11, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+      {icon && <span style={{ fontSize: 20, flexShrink: 0 }}>{icon}</span>}
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 800, color: 'var(--dark)' }}>{q}</span>
+        {sub && <span style={{ display: 'block', fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#999' }}>{sub}</span>}
+      </span>
+      <span style={{ color: 'var(--orange)', fontWeight: 900, flexShrink: 0 }}>›</span>
+    </button>
+  )
+}
+
+function Crumb({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick} style={{ background: 'none', border: 'none', padding: '0 0 12px', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--orange)' }}>{children}</button>
   )
 }
 

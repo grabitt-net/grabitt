@@ -16,20 +16,39 @@ type Turn = { role: 'user' | 'assistant'; content: string }
 // Grounding digest — prefer the live, admin-managed articles so the assistant
 // tracks whatever the Help Centre currently shows; fall back to the built-in
 // content if the database is empty or unreachable.
-async function grounding(): Promise<string> {
+// Retrieval: rank articles by keyword overlap with the question and keep only
+// the most relevant handful. This keeps each AI call small and cheap — we send
+// the pieces of the Help Centre that actually relate to the question, not the
+// whole thing. Falls back to the full set when nothing scores (small anyway).
+const STOP = new Set(['the', 'a', 'an', 'to', 'of', 'and', 'or', 'is', 'are', 'do', 'i', 'my', 'how', 'can', 'what', 'in', 'on', 'for', 'with', 'you', 'your', 'me', 'it'])
+function tokens(s: string): string[] {
+  return s.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !STOP.has(w))
+}
+async function grounding(question: string): Promise<string> {
+  let rows: { category: string; question: string; answer: string }[] = []
   try {
-    const rows = await createLooseTrpcClient().help.articles.query() as { category: string; question: string; answer: string }[]
-    if (Array.isArray(rows) && rows.length > 0) {
-      const byCat = new Map<string, string[]>()
-      for (const r of rows) {
-        const arr = byCat.get(r.category) ?? []
-        arr.push(`Q: ${r.question}\nA: ${r.answer}`)
-        byCat.set(r.category, arr)
-      }
-      return Array.from(byCat.entries()).map(([cat, qa]) => `## ${helpCategory(cat).title}\n${qa.join('\n')}`).join('\n\n')
-    }
+    const res = await createLooseTrpcClient().help.articles.query() as typeof rows
+    if (Array.isArray(res)) rows = res
   } catch { /* fall through to static */ }
-  return helpDigest()
+  if (rows.length === 0) return helpDigest()
+
+  const qWords = new Set(tokens(question))
+  const scored = rows.map(r => {
+    const words = tokens(`${r.question} ${r.answer} ${r.category}`)
+    let score = 0
+    for (const w of words) if (qWords.has(w)) score++
+    return { r, score }
+  })
+  const top = scored.filter(s => s.score > 0).sort((a, b) => b.score - a.score).slice(0, 10).map(s => s.r)
+  const chosen = top.length >= 3 ? top : rows.slice(0, 14) // small corpus → just send a bounded slice
+
+  const byCat = new Map<string, string[]>()
+  for (const r of chosen) {
+    const arr = byCat.get(r.category) ?? []
+    arr.push(`Q: ${r.question}\nA: ${r.answer}`)
+    byCat.set(r.category, arr)
+  }
+  return Array.from(byCat.entries()).map(([cat, qa]) => `## ${helpCategory(cat).title}\n${qa.join('\n')}`).join('\n\n')
 }
 
 const systemFor = (digest: string) => `You are the Grabitt Help Assistant. Grabitt is a local-first marketplace for the Canary Islands (buying/selling items, jobs/recruitment, property, and services).
@@ -64,7 +83,7 @@ export async function POST(req: Request) {
     { role: 'user' as const, content: question },
   ]
 
-  const system = systemFor(await grounding())
+  const system = systemFor(await grounding(question))
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -74,10 +93,11 @@ export async function POST(req: Request) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-opus-5',
-        max_tokens: 700,
-        thinking: { type: 'disabled' },
-        output_config: { effort: 'low' },
+        // Haiku keeps the assistant cheap to run: the answer is grounded in the
+        // Help Centre content (below), so a small, fast model is all that's
+        // needed — no expensive reasoning model per customer question.
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 500,
         system,
         messages,
       }),
