@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic'
 // AI help assistant. Answers a visitor's question grounded in the Grabitt help
 // content, so replies stay accurate to how the platform actually works.
 //
-// Calls the Anthropic Messages API over raw HTTP (rather than the SDK) so this
-// route has no extra dependency to install/lock. Requires ANTHROPIC_API_KEY in
+// Calls the OpenAI Chat Completions API over raw HTTP (rather than the SDK) so
+// this route has no extra dependency to install/lock. Requires OPENAI_API_KEY in
 // the environment; without it the endpoint returns a graceful fallback.
 
 type Turn = { role: 'user' | 'assistant'; content: string }
@@ -60,7 +60,7 @@ ${digest}
 --- END ---`
 
 export async function POST(req: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.OPENAI_API_KEY
   let body: { question?: string; history?: Turn[] }
   try { body = await req.json() } catch { return Response.json({ error: 'Bad request' }, { status: 400 }) }
 
@@ -85,21 +85,20 @@ export async function POST(req: Request) {
 
   const system = systemFor(await grounding(question))
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    // OpenAI Chat Completions over raw HTTP (no SDK dependency). gpt-4o-mini is
+    // cheap and fast — plenty for answering from the grounded Help Centre
+    // content. The system prompt is the first message in OpenAI's format.
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'authorization': `Bearer ${apiKey}`,
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        // Haiku keeps the assistant cheap to run: the answer is grounded in the
-        // Help Centre content (below), so a small, fast model is all that's
-        // needed — no expensive reasoning model per customer question.
-        model: 'claude-haiku-4-5-20251001',
+        model: 'gpt-4o-mini',
         max_tokens: 500,
-        system,
-        messages,
+        temperature: 0.3,
+        messages: [{ role: 'system', content: system }, ...messages],
       }),
     })
 
@@ -108,12 +107,11 @@ export async function POST(req: Request) {
     }
 
     const data = await res.json()
-    if (data?.stop_reason === 'refusal') {
+    const choice = Array.isArray(data?.choices) ? data.choices[0] : null
+    if (choice?.finish_reason === 'content_filter') {
       return Response.json({ answer: "I can't help with that one — please contact our team via the app for anything sensitive." })
     }
-    const answer = Array.isArray(data?.content)
-      ? data.content.filter((b: { type?: string }) => b?.type === 'text').map((b: { text?: string }) => b.text ?? '').join('').trim()
-      : ''
+    const answer = (choice?.message?.content ?? '').toString().trim()
     return Response.json({ answer: answer || "I'm not sure about that — try the help topics below, or contact support." })
   } catch {
     return Response.json({ answer: "Sorry — the assistant is temporarily unavailable. Please try the help topics below.", error: true }, { status: 200 })
