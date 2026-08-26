@@ -12,16 +12,18 @@ interface Post {
 const CATEGORIES = ['Guide', 'Island Tips', 'Economy', 'Selling', 'Safety', 'News']
 const NEWS_CATEGORIES = ['Announcements', 'Island News', 'Features', 'Updates']
 const ECONOMIC_CATEGORIES = ['Money Saving', 'Smart Buying', 'Island Life', 'Budgeting', 'Guides']
+const EVENT_CATEGORIES = ['Markets', 'Music & Nightlife', 'Family', 'Food & Drink', 'Community', 'Sport']
 const EMOJIS = ['📰', '🏷️', '📊', '🛡️', '💼', '🌴', '💡', '🛒', '📈', '✨']
 const EMPTY = { title: '', excerpt: '', body: '', category: 'Guide', emoji: '📰', imageUrl: '', published: true, sortOrder: 0 }
 
-type Section = 'guide' | 'news' | 'economic'
+type Section = 'guide' | 'news' | 'economic' | 'events'
 // Per-section labels + categories, so one editor drives Guides, News and
 // Economic Living (all CommunityPost rows, distinguished by `section`).
 const SECTION_CFG: Record<Section, { heading: string; sub: string; noun: string; cats: string[]; defaultCat: string }> = {
   guide:    { heading: 'Grabitt Guides', sub: 'Published guides appear on the homepage and at /community.', noun: 'guide', cats: CATEGORIES, defaultCat: 'Guide' },
   news:     { heading: 'Grabitt News', sub: 'Published articles appear at /news.', noun: 'article', cats: NEWS_CATEGORIES, defaultCat: 'Announcements' },
   economic: { heading: 'Economic Living', sub: 'Published articles appear at /economic.', noun: 'article', cats: ECONOMIC_CATEGORIES, defaultCat: 'Money Saving' },
+  events: { heading: 'Events', sub: 'Published events appear on the News page under the Events tab.', noun: 'event', cats: EVENT_CATEGORIES, defaultCat: 'Community' },
 }
 
 // Manages one blog section: Grabitt Guides, News, or Economic Living.

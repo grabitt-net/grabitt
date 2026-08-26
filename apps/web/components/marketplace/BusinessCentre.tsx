@@ -158,7 +158,7 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
 
         {/* Progress to / maintenance of the next level */}
         {s.next ? (
-          <div style={{ marginTop: 14, background: '#fff', border: '1px solid #efe7db', borderRadius: 12, padding: 12 }}>
+          <div style={{ marginTop: 14, background: '#fff', border: '1px solid #d7deec', borderRadius: 12, padding: 12 }}>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>
               {t('Climb to')} {s.next.label} — {fmtPct(s.next.feePct)} {t('fee')}
             </div>
@@ -169,7 +169,7 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
             </div>
           </div>
         ) : (
-          <div style={{ marginTop: 14, background: '#fff', border: '1px solid #efe7db', borderRadius: 12, padding: 12 }}>
+          <div style={{ marginTop: 14, background: '#fff', border: '1px solid #d7deec', borderRadius: 12, padding: 12 }}>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--dark)' }}>{t('Top level reached 🎉')}</div>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 4, lineHeight: 1.5 }}>
               {t('Keep {s} sales in every rolling 90 days and a {r}★ rating to hold Business Pro.')
@@ -272,10 +272,10 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
                 <span style={{ fontSize: 16 }}>{a?.icon ?? '📢'}</span>
                 <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)' }}>{a?.label ?? g.addonId}{g.pageTarget ? ` · ${g.pageTarget}` : ''}</span>
                 <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#16a34a', fontWeight: 800 }}>{t('until')} {new Date(g.endsAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
-                {g.needsPageBanner && <button onClick={() => { setCreativeFor(creativeFor === g.id ? null : g.id); setCreativeMsg('') }} style={{ background: g.hasCreative ? '#f0fdf4' : '#FFF3EE', border: `1px solid ${g.hasCreative ? '#bbf7d0' : '#FFD4A0'}`, color: g.hasCreative ? '#16a34a' : '#8a5a2a', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{g.hasCreative ? t('Edit banner') : t('Upload banner')}</button>}
+                {g.needsPageBanner && <button onClick={() => { setCreativeFor(creativeFor === g.id ? null : g.id); setCreativeMsg('') }} style={{ background: g.hasCreative ? '#f0fdf4' : '#FFF3EE', border: `1px solid ${g.hasCreative ? '#bbf7d0' : '#FFD4A0'}`, color: g.hasCreative ? '#16a34a' : '#1e2b55', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{g.hasCreative ? t('Edit banner') : t('Upload banner')}</button>}
               </div>
               {creativeFor === g.id && (
-                <div style={{ marginTop: 8, background: '#f9f6f2', borderRadius: 10, padding: 10 }}>
+                <div style={{ marginTop: 8, background: '#f4f6fb', borderRadius: 10, padding: 10 }}>
                   <input value={creativeImg} onChange={e => setCreativeImg(e.target.value)} placeholder={t('Banner image URL (wide)')} style={miniInput} />
                   <input value={creativeLink} onChange={e => setCreativeLink(e.target.value)} placeholder={t('Link URL (e.g. your storefront)')} style={miniInput} />
                   {creativeMsg && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: creativeMsg.startsWith('✓') ? '#16a34a' : '#ef4444', marginBottom: 6 }}>{creativeMsg}</div>}
@@ -302,10 +302,10 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
                 <span style={{ fontSize: 16 }}>🖼️</span>
                 <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)' }}>{b.position.replace(/_/g, ' ')}{b.pageTarget ? ` · ${b.pageTarget}` : ''}</span>
                 <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: b.approved ? '#16a34a' : '#9a5b1a', fontWeight: 800 }}>{status}</span>
-                <button onClick={() => { setBkFor(bkFor === b.id ? null : b.id); setBkMsg('') }} style={{ background: b.hasCreative ? '#f0fdf4' : '#FFF3EE', border: `1px solid ${b.hasCreative ? '#bbf7d0' : '#FFD4A0'}`, color: b.hasCreative ? '#16a34a' : '#8a5a2a', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{b.hasCreative ? t('Edit banner') : t('Upload banner')}</button>
+                <button onClick={() => { setBkFor(bkFor === b.id ? null : b.id); setBkMsg('') }} style={{ background: b.hasCreative ? '#f0fdf4' : '#FFF3EE', border: `1px solid ${b.hasCreative ? '#bbf7d0' : '#FFD4A0'}`, color: b.hasCreative ? '#16a34a' : '#1e2b55', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{b.hasCreative ? t('Edit banner') : t('Upload banner')}</button>
               </div>
               {bkFor === b.id && (
-                <div style={{ marginTop: 8, background: '#f9f6f2', borderRadius: 10, padding: 10 }}>
+                <div style={{ marginTop: 8, background: '#f4f6fb', borderRadius: 10, padding: 10 }}>
                   <input value={bkImg} onChange={e => setBkImg(e.target.value)} placeholder={t('Banner image URL (wide)')} style={miniInput} />
                   <input value={bkLink} onChange={e => setBkLink(e.target.value)} placeholder={t('Link URL (e.g. your storefront)')} style={miniInput} />
                   {bkMsg && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: bkMsg.startsWith('✓') ? '#16a34a' : '#ef4444', marginBottom: 6 }}>{bkMsg}</div>}
@@ -315,7 +315,7 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
             </div>
           )
         })}
-        <Link href="/advertise" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 12, background: '#f9f6f2', border: '1px dashed #d8cbb5', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: '#8a5a2a' }}>
+        <Link href="/advertise" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 12, background: '#f4f6fb', border: '1px dashed #c3cee0', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: '#1e2b55' }}>
           ➕ {t('Buy a banner placement')}
         </Link>
       </div>
@@ -335,18 +335,18 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
             <div key={ch} style={{ marginBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                 <div style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)' }}>{ch === 'email' ? '📧 Email blast' : '💬 WhatsApp blast'}</div>
-                {left > 0 && <button onClick={() => { setComposeCh(composeCh === ch ? null : ch); setCNote('') }} style={{ background: '#FFF3EE', border: '1px solid #FFD4A0', color: '#8a5a2a', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }}>✍️ {t('Compose')} ({left})</button>}
+                {left > 0 && <button onClick={() => { setComposeCh(composeCh === ch ? null : ch); setCNote('') }} style={{ background: '#FFF3EE', border: '1px solid #FFD4A0', color: '#1e2b55', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }}>✍️ {t('Compose')} ({left})</button>}
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {(bundles?.[ch] ?? []).map(b => (
-                  <button key={b.qty} onClick={() => buyBlast(ch, b.qty)} disabled={blastBusy !== ''} style={{ flex: 1, minWidth: 90, border: '1.5px solid #e5dccd', background: '#fff', borderRadius: 10, padding: '8px 6px', cursor: 'pointer', textAlign: 'center' }}>
+                  <button key={b.qty} onClick={() => buyBlast(ch, b.qty)} disabled={blastBusy !== ''} style={{ flex: 1, minWidth: 90, border: '1.5px solid #d7deec', background: '#fff', borderRadius: 10, padding: '8px 6px', cursor: 'pointer', textAlign: 'center' }}>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--orange)' }}>€{(b.cents / 100).toFixed(0)}</div>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 800, color: '#1a1a1a' }}>{blastBusy === `${ch}:${b.qty}` ? 'Opening…' : `${b.qty} send${b.qty > 1 ? 's' : ''}`}</div>
                   </button>
                 ))}
               </div>
               {composeCh === ch && (
-                <div style={{ marginTop: 8, background: '#f9f6f2', borderRadius: 10, padding: 10 }}>
+                <div style={{ marginTop: 8, background: '#f4f6fb', borderRadius: 10, padding: 10 }}>
                   {ch === 'email' && <input value={cSubj} onChange={e => setCSubj(e.target.value)} placeholder={t('Subject')} style={miniInput} />}
                   <textarea value={cMsg} onChange={e => setCMsg(e.target.value)} placeholder={t('Your message, offer or news…')} rows={3} style={{ ...miniInput, resize: 'vertical' }} />
                   <input value={cLink} onChange={e => setCLink(e.target.value)} placeholder={t('Link (optional)')} style={miniInput} />
@@ -413,7 +413,7 @@ function AllowanceBar({ label, icon, used, cap, color }: { label: string; icon: 
 
 function Tool({ icon, title, sub, onClick, highlight }: { icon: string; title: string; sub: string; onClick: () => void; highlight?: boolean }) {
   return (
-    <button onClick={onClick} style={{ width: '100%', textAlign: 'left', background: highlight ? '#f0fdf4' : '#f9f6f2', border: `1px solid ${highlight ? '#bbf7d0' : '#efe7db'}`, borderRadius: 12, padding: '12px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 11 }}>
+    <button onClick={onClick} style={{ width: '100%', textAlign: 'left', background: highlight ? '#f0fdf4' : '#f4f6fb', border: `1px solid ${highlight ? '#bbf7d0' : '#d7deec'}`, borderRadius: 12, padding: '12px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 11 }}>
       <span style={{ fontSize: 20 }}>{icon}</span>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</span>
@@ -436,8 +436,8 @@ function Muted({ children }: { children: React.ReactNode }) {
 // Cards match the Business Hub dashboard: navy headings, the hub's pale border.
 const card: React.CSSProperties = { background: '#fff', border: '1.5px solid #d7deec', borderRadius: 16, padding: 16, boxShadow: '0 4px 18px rgba(30,43,85,0.06)' }
 const cardHead: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#1e2b55', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }
-const miniBtn: React.CSSProperties = { background: '#f5efe6', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#8a5a2a', cursor: 'pointer', textTransform: 'none', letterSpacing: 0 }
-const miniInput: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 8, padding: '8px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12, outline: 'none', background: '#fff', marginBottom: 7 }
+const miniBtn: React.CSSProperties = { background: '#eef2f8', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#1e2b55', cursor: 'pointer', textTransform: 'none', letterSpacing: 0 }
+const miniInput: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #d7deec', borderRadius: 8, padding: '8px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12, outline: 'none', background: '#fff', marginBottom: 7 }
 const row: React.CSSProperties = { display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f5f0e8' }
 const rowTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
 const rowSub: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }

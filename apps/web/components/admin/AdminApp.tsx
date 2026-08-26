@@ -63,6 +63,7 @@ const COMMANDS: Command[] = [
   { id: 'community', label: 'Guides', icon: '📰', group: 'Content' },
   { id: 'news', label: 'News', icon: '🗞️', group: 'Content', keywords: 'blog articles' },
   { id: 'economic', label: 'Economic Living', icon: '💡', group: 'Content', keywords: 'economic living money saving articles' },
+  { id: 'events', label: 'Events', icon: '📅', group: 'Content', keywords: 'events whats on listings calendar' },
   { id: 'help', label: 'Help', icon: '❓', group: 'Content', keywords: 'faq support' },
   { id: 'support', label: 'Support inbox', icon: '📨', group: 'People', keywords: 'help contact enquiries suggestions tickets' },
   { id: 'sponsorship', label: 'Sponsorship', icon: '📣', group: 'Content', keywords: 'advertising banner price sponsor placement' },
@@ -87,7 +88,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'news' | 'economic' | 'help' | 'support' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'news' | 'economic' | 'events' | 'help' | 'support' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -230,6 +231,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'community'  && <CommunityView section="guide" />}
                 {view === 'news'       && <CommunityView section="news" />}
                 {view === 'economic'   && <CommunityView section="economic" />}
+                {view === 'events'     && <CommunityView section="events" />}
                 {view === 'help'       && <HelpView />}
                 {view === 'support'    && <SupportInboxView />}
                 {view === 'rewards'    && <RewardsView />}
