@@ -108,36 +108,36 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* ── Tier + fee ── */}
-      <div style={{ ...card, background: `linear-gradient(135deg, ${color}14, #fff)`, borderColor: `${color}55` }}>
+      {/* ── Tier + fee ── (pale-orange, matching the Business Hub profile box) */}
+      <div style={{ ...card, background: '#ffe0bb', border: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ width: 46, height: 46, borderRadius: 12, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Icon name="building" size={24} strokeWidth={2} /></div>
+          <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Icon name="building" size={24} strokeWidth={2} /></div>
           <div style={{ flex: 1, minWidth: 140 }}>
-            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 19, fontWeight: 700, color: 'var(--dark)' }}>{s.label}</div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a' }}>{t('Your business level')}</div>
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 19, fontWeight: 700, color: '#1e2b55' }}>{s.label}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#6a5a48' }}>{t('Your business level')}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color }}>{fmtPct(s.feePct)}</div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('fee on item sales')}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--orange)' }}>{fmtPct(s.feePct)}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#8a6d3b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('fee on item sales')}</div>
           </div>
         </div>
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 8, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#6a5a48', marginTop: 8, lineHeight: 1.5 }}>
           {t('The item-sale fee. Property and job listings are never charged a sales fee.')}
         </div>
 
         {/* Current standing — rating + trailing sales at a glance */}
         <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-          <div style={{ flex: 1, background: '#fff', border: '1px solid #efe7db', borderRadius: 12, padding: '11px 12px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>
+          <div style={{ flex: 1, background: '#fff', border: '1px solid #f0d3ad', borderRadius: 12, padding: '11px 12px', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: '#1e2b55' }}>
               {s.ratingCount > 0 ? `★ ${s.rating.toFixed(1)}` : '★ —'}
             </div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#8a6d3b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>
               {t('rating')}{s.ratingCount > 0 ? ` · ${s.ratingCount}` : ''}
             </div>
           </div>
-          <div style={{ flex: 1, background: '#fff', border: '1px solid #efe7db', borderRadius: 12, padding: '11px 12px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{s.sales90d}</div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('sales · 90 days')}</div>
+          <div style={{ flex: 1, background: '#fff', border: '1px solid #f0d3ad', borderRadius: 12, padding: '11px 12px', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: '#1e2b55' }}>{s.sales90d}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#8a6d3b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('sales · 90 days')}</div>
           </div>
         </div>
 

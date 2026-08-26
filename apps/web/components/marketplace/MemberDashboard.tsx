@@ -86,11 +86,21 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   // Land on the account's own home — Business Centre for business, the My Hub
   // overview for everyone else — rather than dropping straight into Messages.
   const [section, setSection] = useState<SectionId>(me?.isBusiness ? 'business' : 'hub')
+  // `me` loads async, so the initial default above can be wrong (defaults to
+  // 'hub' before we know it's a business account). Set the landing section once,
+  // when `me` first resolves — Business Centre for business, My Hub otherwise —
+  // unless a ?section= deep-link is present. `didInitSection` stops it from
+  // stomping later navigation.
+  const didInitSection = useRef(false)
   // Deep-link a section via ?section= (e.g. the top rail's Saved / Messages).
   useEffect(() => {
     const s = params.get('section')
-    if (s && SECTION_IDS.has(s)) setSection(s as SectionId)
-  }, [params])
+    if (s && SECTION_IDS.has(s)) { setSection(s as SectionId); didInitSection.current = true; return }
+    if (me && !didInitSection.current) {
+      didInitSection.current = true
+      setSection(me.isBusiness ? 'business' : 'hub')
+    }
+  }, [params, me])
   const [seg, setSeg] = useState<Seg>('active')
   const sortNewest = true // My Listings default to newest-first
 
@@ -362,11 +372,11 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                   ['📣', t('Buy banners'), () => router.push('/advertise')],
                   ['⚡', t('Grabitt now'), () => router.push('/grabitt-now')],
                 ] as [string, string, () => void][] : []),
-              ] as [string, string, () => void][]).map(([emoji, label, onClick]) => (
+              ] as [string, string, () => void][]).map(([, label, onClick]) => (
                 <button key={label} onClick={onClick} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)',
-                  borderRadius: 999, padding: '9px 16px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer',
-                }}><span>{emoji}</span>{label}</button>
+                  background: '#ffe0bb', color: 'var(--orange)', border: 'none',
+                  borderRadius: 999, padding: '8px 22px', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 900, letterSpacing: 2, cursor: 'pointer', textTransform: 'uppercase',
+                }}>{label}</button>
               ))}
             </div>
           )}
