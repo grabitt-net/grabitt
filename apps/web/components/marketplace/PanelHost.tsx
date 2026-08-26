@@ -1210,9 +1210,9 @@ function PanelBody() {
       ['💰', 'Pricing', () => openPanel('footer', { key: 'pricing' })],
       ['🤝', 'Delivery & Collection', () => openPanel('footer', { key: 'collection' })],
       ['😡', 'Scam Centre', () => openPanel('footer', { key: 'scams' })],
-      // Economic Living lives in Grabitt Guides, not a panel — same target as
+      // Economic Living is its own news-style section at /economic — same as
       // the footer link, so there's one copy of it.
-      ['💡', 'Economic Living', () => { window.location.href = '/community#economic-living' }],
+      ['💡', 'Economic Living', () => { window.location.href = '/economic' }],
       ['📋', "Dos & Don'ts", () => openPanel('footer', { key: 'policy' })],
       ['💡', 'Suggest Ideas', () => openPanel('footer', { key: 'suggest' })],
       ['🕘', 'Recently viewed', () => openPanel('recentviewed')],

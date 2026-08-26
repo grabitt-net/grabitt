@@ -6,7 +6,7 @@ import { router, publicProcedure, execProcedure } from '../trpc'
 export const communityRouter = router({
   // Public: published posts for a section (guide = Grabitt Guides, news = News).
   list: publicProcedure
-    .input(z.object({ limit: z.number().int().min(1).max(30).default(12), section: z.enum(['guide', 'news']).optional() }).optional())
+    .input(z.object({ limit: z.number().int().min(1).max(30).default(12), section: z.enum(['guide', 'news', 'economic']).optional() }).optional())
     .query(({ ctx, input }) =>
       ctx.prisma.communityPost.findMany({
         where: { published: true, ...(input?.section ? { section: input.section } : {}) },
@@ -24,7 +24,7 @@ export const communityRouter = router({
 
   // Admin: everything (optionally one section), for management.
   all: execProcedure
-    .input(z.object({ section: z.enum(['guide', 'news']).optional() }).optional())
+    .input(z.object({ section: z.enum(['guide', 'news', 'economic']).optional() }).optional())
     .query(({ ctx, input }) =>
       ctx.prisma.communityPost.findMany({ where: input?.section ? { section: input.section } : {}, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] })
     ),
@@ -36,7 +36,7 @@ export const communityRouter = router({
       excerpt: z.string().min(3).max(300),
       body: z.string().min(3),
       category: z.string().max(40).default('Guide'),
-      section: z.enum(['guide', 'news']).default('guide'),
+      section: z.enum(['guide', 'news', 'economic']).default('guide'),
       emoji: z.string().max(8).default('📰'),
       imageUrl: z.string().url().nullable().optional(),
       published: z.boolean().default(true),

@@ -375,7 +375,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
               ] as [string, string, () => void][]).map(([, label, onClick]) => (
                 <button key={label} onClick={onClick} style={{
                   background: '#ffe0bb', color: 'var(--orange)', border: 'none',
-                  borderRadius: 999, padding: '8px 22px', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 900, letterSpacing: 2, cursor: 'pointer', textTransform: 'uppercase',
+                  borderRadius: 999, padding: '6px 13px', fontFamily: 'var(--font-body)', fontSize: 11.5, fontWeight: 900, letterSpacing: 0.5, cursor: 'pointer', textTransform: 'uppercase', whiteSpace: 'nowrap',
                 }}>{label}</button>
               ))}
             </div>

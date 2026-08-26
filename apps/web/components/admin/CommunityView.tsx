@@ -11,24 +11,35 @@ interface Post {
 
 const CATEGORIES = ['Guide', 'Island Tips', 'Economy', 'Selling', 'Safety', 'News']
 const NEWS_CATEGORIES = ['Announcements', 'Island News', 'Features', 'Updates']
+const ECONOMIC_CATEGORIES = ['Money Saving', 'Smart Buying', 'Island Life', 'Budgeting', 'Guides']
 const EMOJIS = ['📰', '🏷️', '📊', '🛡️', '💼', '🌴', '💡', '🛒', '📈', '✨']
 const EMPTY = { title: '', excerpt: '', body: '', category: 'Guide', emoji: '📰', imageUrl: '', published: true, sortOrder: 0 }
 
-// Manages one blog section: "guide" (Grabitt Guides) or "news" (News).
-export default function CommunityView({ section = 'guide' }: { section?: 'guide' | 'news' }) {
+type Section = 'guide' | 'news' | 'economic'
+// Per-section labels + categories, so one editor drives Guides, News and
+// Economic Living (all CommunityPost rows, distinguished by `section`).
+const SECTION_CFG: Record<Section, { heading: string; sub: string; noun: string; cats: string[]; defaultCat: string }> = {
+  guide:    { heading: 'Grabitt Guides', sub: 'Published guides appear on the homepage and at /community.', noun: 'guide', cats: CATEGORIES, defaultCat: 'Guide' },
+  news:     { heading: 'Grabitt News', sub: 'Published articles appear at /news.', noun: 'article', cats: NEWS_CATEGORIES, defaultCat: 'Announcements' },
+  economic: { heading: 'Economic Living', sub: 'Published articles appear at /economic.', noun: 'article', cats: ECONOMIC_CATEGORIES, defaultCat: 'Money Saving' },
+}
+
+// Manages one blog section: Grabitt Guides, News, or Economic Living.
+export default function CommunityView({ section = 'guide' }: { section?: Section }) {
   const api = useCrmApi()
-  const isNews = section === 'news'
-  const noun = isNews ? 'article' : 'guide'
-  const cats = isNews ? NEWS_CATEGORIES : CATEGORIES
+  const cfg = SECTION_CFG[section]
+  const isNews = section !== 'guide' // article-style sections
+  const noun = cfg.noun
+  const cats = cfg.cats
   const [posts, setPosts] = useState<Post[]>([])
   const [editing, setEditing] = useState<string | 'new' | null>(null)
-  const [form, setForm] = useState({ ...EMPTY, category: isNews ? 'Announcements' : 'Guide' })
+  const [form, setForm] = useState({ ...EMPTY, category: cfg.defaultCat })
   const [saving, setSaving] = useState(false)
 
   const load = () => api.communityPosts(section).then(p => setPosts((p ?? []) as Post[])).catch(() => {})
   useEffect(() => { load() }, [section]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function openNew() { setForm({ ...EMPTY, category: isNews ? 'Announcements' : 'Guide', sortOrder: posts.length + 1 }); setEditing('new') }
+  function openNew() { setForm({ ...EMPTY, category: cfg.defaultCat, sortOrder: posts.length + 1 }); setEditing('new') }
   function openEdit(p: Post) {
     setForm({ title: p.title, excerpt: p.excerpt, body: p.body, category: p.category, emoji: p.emoji, imageUrl: p.imageUrl ?? '', published: p.published, sortOrder: p.sortOrder })
     setEditing(p.id)
@@ -67,8 +78,8 @@ export default function CommunityView({ section = 'guide' }: { section?: 'guide'
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>{isNews ? 'Grabitt News' : 'Grabitt Guides'}</span> — {isNews ? 'blog articles' : 'community content'}</h2>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{isNews ? 'Published articles appear at /news.' : 'Published guides appear on the homepage and at /community.'}</div>
+          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>{cfg.heading}</span> — {isNews ? 'blog articles' : 'community content'}</h2>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{cfg.sub}</div>
         </div>
         <button onClick={openNew} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>+ New {isNews ? 'article' : 'guide'}</button>
       </div>
