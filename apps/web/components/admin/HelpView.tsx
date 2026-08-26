@@ -24,9 +24,20 @@ export default function HelpView() {
   const [form, setForm] = useState({ ...EMPTY })
   const [saving, setSaving] = useState(false)
 
+  const [gaps, setGaps] = useState<{ id: string; question: string; askedCount: number; lastAskedAt: string }[]>([])
   const load = () => api.helpArticles().then(a => setArticles((a ?? []) as Article[])).catch(() => {})
   const loadCats = () => api.helpCategories().then(c => setCats((c ?? []) as Category[])).catch(() => {})
-  useEffect(() => { load(); loadCats() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const loadGaps = () => api.helpGaps('open').then(g => setGaps((g ?? []) as typeof gaps)).catch(() => {})
+  useEffect(() => { load(); loadCats(); loadGaps() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // "Add as article" — prefill the editor with the unanswered question.
+  function addFromGap(g: { id: string; question: string }) {
+    setForm({ ...EMPTY, category: catOpts[0]?.id ?? EMPTY.category, question: g.question, sortOrder: articles.length })
+    setEditing('new')
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  async function resolveGap(id: string) { await api.resolveHelpGap(id, true); loadGaps() }
+  async function removeGap(id: string) { await api.removeHelpGap(id); loadGaps() }
   // Category options for the dropdown — DB categories, falling back to built-ins.
   const catOpts = cats.length ? cats.map(c => ({ id: c.slug, icon: c.icon, title: c.title })) : HELP_CATEGORIES
 
@@ -125,6 +136,29 @@ export default function HelpView() {
           ))}
         </div>
       </div>
+
+      {/* ── Unanswered questions the AI flagged ── */}
+      {gaps.length > 0 && (
+        <div style={{ background: '#fffbea', border: '1.5px solid #fde68a', borderRadius: 12, padding: 14, margin: '14px 0' }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: '#92400e', marginBottom: 8 }}>⚠️ Unanswered questions <span style={{ color: '#b8860b', fontWeight: 700 }}>· {gaps.length}</span></div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#8a6d3b', marginBottom: 10 }}>The assistant couldn&apos;t answer these from the Help Centre. Add an article, or resolve if not needed.</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {gaps.map(g => (
+              <div key={g.id} style={{ display: 'flex', gap: 10, alignItems: 'center', background: '#fff', border: '1px solid #fde68a', borderRadius: 10, padding: '9px 12px', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 160 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{g.question}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#b8860b', marginTop: 2 }}>Asked {g.askedCount}×{g.askedCount > 1 ? ` · last ${new Date(g.lastAskedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button onClick={() => addFromGap(g)} style={{ ...btnPrimary, fontSize: 11, padding: '5px 11px' }}>+ Add as article</button>
+                  <button onClick={() => resolveGap(g.id)} style={{ ...btnGhost, fontSize: 11, padding: '5px 11px' }}>Resolve</button>
+                  <button onClick={() => removeGap(g.id)} title="Delete" style={{ ...iconBtn, color: '#ef4444', padding: '4px 8px' }}><Icon name="trash" size={13} strokeWidth={2} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {editing && (
         <div style={{ background: '#FFF9F5', border: '1.5px solid #FFD9C2', borderRadius: 12, padding: 16, margin: '14px 0' }}>

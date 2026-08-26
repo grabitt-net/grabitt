@@ -139,6 +139,12 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('help.upsert', 'mutation', data, execToken),
     removeHelpArticle: (id: string) =>
       rpc<any>('help.remove', 'mutation', { id }, execToken),
+    helpGaps: (status?: 'open' | 'resolved' | 'all') =>
+      rpc<any[]>('help.gaps', 'query', status ? { status } : undefined, execToken),
+    resolveHelpGap: (id: string, resolved: boolean) =>
+      rpc<any>('help.resolveGap', 'mutation', { id, resolved }, execToken),
+    removeHelpGap: (id: string) =>
+      rpc<any>('help.removeGap', 'mutation', { id }, execToken),
     helpCategories: () => rpc<any[]>('help.allCategories', 'query', undefined, execToken),
     upsertHelpCategory: (data: Record<string, unknown>) =>
       rpc<any>('help.upsertCategory', 'mutation', data, execToken),

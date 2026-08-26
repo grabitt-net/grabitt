@@ -82,4 +82,26 @@ export const helpRouter = router({
   removeCategory: execProcedure
     .input(z.object({ id: z.string() }))
     .mutation(({ ctx, input }) => ctx.prisma.helpCategory.delete({ where: { id: input.id } })),
+
+  // ── Unanswered questions (gaps) ─────────────────────────────────────────────
+  // Admin: questions the AI couldn't answer from the Help Centre, so an article
+  // can be added. `open` hides ones already marked resolved.
+  gaps: execProcedure
+    .input(z.object({ status: z.enum(['open', 'resolved', 'all']).default('open') }).optional())
+    .query(({ ctx, input }) => {
+      const status = input?.status ?? 'open'
+      return ctx.prisma.helpGap.findMany({
+        where: status === 'all' ? {} : { resolved: status === 'resolved' },
+        orderBy: [{ askedCount: 'desc' }, { lastAskedAt: 'desc' }],
+        take: 300,
+      })
+    }),
+
+  resolveGap: execProcedure
+    .input(z.object({ id: z.string(), resolved: z.boolean() }))
+    .mutation(({ ctx, input }) => ctx.prisma.helpGap.update({ where: { id: input.id }, data: { resolved: input.resolved }, select: { id: true } })),
+
+  removeGap: execProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(({ ctx, input }) => ctx.prisma.helpGap.delete({ where: { id: input.id } })),
 })

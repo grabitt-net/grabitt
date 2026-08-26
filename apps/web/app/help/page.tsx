@@ -66,7 +66,7 @@ function Inner() {
   }, [q, allTopics])
 
   const currentTopic = catId ? allTopics.find(t => t.id === catId) ?? null : null
-  const openArticle = (a: { q: string; a: string }, topic: HelpTopic) => { setArticle({ ...a, topic }); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  const openArticle = (a: { q: string; a: string; id?: string }, topic: LTopic) => setArticle({ ...a, topic })
 
   return (
     <InfoPage

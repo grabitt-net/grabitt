@@ -105,6 +105,20 @@ model HelpArticle {
   @@index([active])
 }
 
+// Unanswered questions — logged when the AI assistant can't answer from the
+// Help Centre content, so admins can see the gaps and add articles for them.
+model HelpGap {
+  id          String   @id @default(uuid())
+  question    String
+  norm        String   @unique          // normalised (lowercased/trimmed) for dedupe
+  askedCount  Int      @default(1)
+  resolved    Boolean  @default(false)
+  lastAskedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([resolved])
+}
+
 // Help Centre categories — the sections of the helpdesk. Admin-editable so the
 // grid's title, description and icon can change without a deploy. `slug` is what
 // HelpArticle.category references.

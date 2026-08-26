@@ -1,5 +1,20 @@
 import { helpDigest, helpCategory } from '@/lib/helpContent'
 import { createLooseTrpcClient } from '@/lib/trpc'
+import { prisma } from 'server/src/db'
+
+// Record a question the assistant couldn't answer, so admins can add an article
+// for it. Deduped by a normalised form; repeats bump askedCount.
+async function logGap(question: string) {
+  const norm = question.toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 300)
+  if (norm.length < 4) return
+  try {
+    await prisma.helpGap.upsert({
+      where: { norm },
+      create: { question: question.trim().slice(0, 500), norm },
+      update: { askedCount: { increment: 1 }, lastAskedAt: new Date(), resolved: false },
+    })
+  } catch { /* non-fatal */ }
+}
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -53,7 +68,9 @@ async function grounding(question: string): Promise<string> {
 
 const systemFor = (digest: string) => `You are the Grabitt Help Assistant. Grabitt is a local-first marketplace for the Canary Islands (buying/selling items, jobs/recruitment, property, and services).
 
-Answer the user's question using ONLY the Grabitt help information below. Be concise, friendly and practical — a few short sentences, plain text, no markdown headings. If the answer isn't covered, say you're not sure and suggest they contact support via the app, rather than inventing details. Never ask for or repeat passwords, card numbers or other sensitive data. Do not include internal or system XML tags in your response.
+Answer the user's question using ONLY the Grabitt help information below. Be concise, friendly and practical — a few short sentences, plain text, no markdown headings. Never ask for or repeat passwords, card numbers or other sensitive data. Do not include internal or system XML tags in your response.
+
+IMPORTANT: If the Grabitt help information below does not contain what's needed to answer the question, begin your reply with the exact token [[NO_ANSWER]] (nothing before it), then a short friendly message saying you're not certain and suggesting they contact the team via the app. Only use that token when the answer genuinely isn't in the help information — never for greetings or general chit-chat.
 
 --- GRABITT HELP KNOWLEDGE ---
 ${digest}
@@ -111,7 +128,14 @@ export async function POST(req: Request) {
     if (choice?.finish_reason === 'content_filter') {
       return Response.json({ answer: "I can't help with that one — please contact our team via the app for anything sensitive." })
     }
-    const answer = (choice?.message?.content ?? '').toString().trim()
+    let answer = (choice?.message?.content ?? '').toString().trim()
+    // The model flags an unanswered question with [[NO_ANSWER]] — log it as a
+    // gap for the admin, then strip the token from the customer-facing reply.
+    if (answer.includes('[[NO_ANSWER]]')) {
+      await logGap(question)
+      answer = answer.replace(/\[\[NO_ANSWER\]\]/g, '').trim()
+      if (!answer) answer = "I'm not certain about that one — please contact the Grabitt team via the app and we'll help."
+    }
     return Response.json({ answer: answer || "I'm not sure about that — try the help topics below, or contact support." })
   } catch {
     return Response.json({ answer: "Sorry — the assistant is temporarily unavailable. Please try the help topics below.", error: true }, { status: 200 })
