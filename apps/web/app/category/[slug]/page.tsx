@@ -151,8 +151,8 @@ export default function CategoryPage() {
             lander the "Place an ad" button sits in line with the pills. */}
         {(subcats.length > 1 || slug === 'handy_help') && (
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 5 }}>
-            {slug === 'handy_help' && <PlaceHandyAdButton />}
             {subcats.map(sub => <Chip key={sub} active={activeSub === sub} onClick={() => setActiveSub(sub)}>{sub}</Chip>)}
+            {slug === 'handy_help' && <span style={{ marginLeft: 'auto' }}><PlaceHandyAdButton /></span>}
           </div>
         )}
       </header>
