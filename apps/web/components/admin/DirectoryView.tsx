@@ -5,7 +5,7 @@ import { useCrmApi } from './AdminApp'
 interface Listing {
   id: string; userId: string; name: string; category: string | null; description: string | null
   phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null
-  live: boolean; user?: { email?: string; displayName?: string }
+  live: boolean; reviewStatus?: string; adminNote?: string | null; user?: { email?: string; displayName?: string }
 }
 
 export default function DirectoryView() {
@@ -14,10 +14,20 @@ export default function DirectoryView() {
   const [editing, setEditing] = useState<Listing | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const load = () => api.directoryListings().then(d => setRows((d ?? []) as Listing[])).catch(() => {})
+  const load = () => api.directoryListings().then(d => {
+    // Surface listings awaiting review first, then rejected, then the rest.
+    const order = (s?: string) => (s === 'pending' ? 0 : s === 'rejected' ? 1 : 2)
+    setRows(((d ?? []) as Listing[]).slice().sort((a, b) => order(a.reviewStatus) - order(b.reviewStatus)))
+  }).catch(() => {})
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const remove = async (id: string) => { await api.removeDirectoryListing(id); load() }
+  const approve = async (id: string) => { await api.reviewDirectoryListing(id, 'approved'); load() }
+  const reject = async (id: string) => {
+    const note = window.prompt('Reason for rejection (shown to the advertiser so they can fix & resubmit):', '')
+    if (note === null) return
+    await api.reviewDirectoryListing(id, 'rejected', note || undefined); load()
+  }
   const grantYear = async (id: string) => { const d = new Date(); d.setFullYear(d.getFullYear() + 1); await api.setDirectoryPaidUntil(id, d.toISOString()); load() }
   const clearPaid = async (id: string) => { await api.setDirectoryPaidUntil(id, null); load() }
   const save = async () => {
@@ -34,12 +44,13 @@ export default function DirectoryView() {
   const set = (k: keyof Listing, v: string) => setEditing(e => e ? { ...e, [k]: v } : e)
 
   const liveCount = rows.filter(r => r.live).length
+  const pendingCount = rows.filter(r => r.reviewStatus === 'pending').length
 
   return (
     <div>
       <div style={{ marginBottom: 14 }}>
         <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>Business</span> Directory</h2>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{rows.length} advertiser listing{rows.length === 1 ? '' : 's'} · {liveCount} live now (a listing shows only while a paid banner runs).</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{rows.length} listing{rows.length === 1 ? '' : 's'} · {liveCount} live · {pendingCount > 0 ? <span style={{ color: '#b45309', fontWeight: 800 }}>{pendingCount} awaiting review</span> : 'none awaiting review'} (a listing shows only while paid and approved).</div>
       </div>
 
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
@@ -53,9 +64,20 @@ export default function DirectoryView() {
                 <td style={td}><div style={{ fontWeight: 800 }}>{l.name}</div>{l.location && <div style={{ color: '#aaa', fontSize: 10.5 }}>📍 {l.location}</div>}</td>
                 <td style={{ ...td, color: '#888' }}>{l.user?.email ?? l.userId}</td>
                 <td style={{ ...td, color: '#888' }}>{l.category ?? '—'}</td>
-                <td style={td}>{l.live ? <span style={{ color: '#16a34a', fontWeight: 800 }}>🟢 Live</span> : <span style={{ color: '#b45309', fontWeight: 800 }}>🟠 Hidden</span>}</td>
                 <td style={td}>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  {l.reviewStatus === 'pending'
+                    ? <span style={{ color: '#b45309', fontWeight: 800 }}>🟠 Awaiting review</span>
+                    : l.reviewStatus === 'rejected'
+                      ? <span style={{ color: '#ef4444', fontWeight: 800 }} title={l.adminNote ?? ''}>⛔ Rejected</span>
+                      : l.live ? <span style={{ color: '#16a34a', fontWeight: 800 }}>🟢 Live</span> : <span style={{ color: '#888', fontWeight: 800 }}>⚪ Approved · unpaid</span>}
+                  {l.reviewStatus === 'rejected' && l.adminNote && <div style={{ color: '#aaa', fontSize: 10, marginTop: 3, maxWidth: 200 }}>“{l.adminNote}”</div>}
+                </td>
+                <td style={td}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {l.reviewStatus === 'pending' && <button onClick={() => approve(l.id)} style={{ ...pill, background: '#16a34a', color: '#fff' }}>✓ Approve</button>}
+                    {l.reviewStatus === 'pending' && <button onClick={() => reject(l.id)} style={{ ...pill, background: '#fef2f2', color: '#ef4444' }}>Reject</button>}
+                    {l.reviewStatus === 'approved' && <button onClick={() => reject(l.id)} title="Send back for changes" style={{ ...pill, background: '#fff7ed', color: '#b45309' }}>Unapprove</button>}
+                    {l.reviewStatus === 'rejected' && <button onClick={() => approve(l.id)} style={{ ...pill, background: '#f0faf4', color: '#16a34a' }}>Approve</button>}
                     <button onClick={() => setEditing(l)} style={{ ...pill, background: '#f0f0f0', color: '#555' }}>Edit</button>
                     <a href={`/directory/${l.id}`} target="_blank" rel="noopener" style={{ ...pill, background: '#fff7ed', color: '#c2410c', textDecoration: 'none', display: 'inline-block' }}>View</a>
                     {l.live ? <button onClick={() => clearPaid(l.id)} style={{ ...pill, background: '#f5f5f5', color: '#888' }}>Clear paid</button> : <button onClick={() => grantYear(l.id)} style={{ ...pill, background: '#f0faf4', color: '#16a34a' }}>Comp 1yr</button>}

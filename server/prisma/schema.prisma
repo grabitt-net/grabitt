@@ -233,8 +233,15 @@ model DirectoryListing {
   // Standalone directory subscription: the listing is visible while paidUntil is
   // in the future. Extended by a directory purchase (monthly/quarterly/yearly).
   paidUntil   DateTime?
+  // Admin review gate: a paid listing only shows publicly once an admin approves
+  // the business info the advertiser submitted. Editing the details sends it back
+  // to review (resubmit). pending | approved | rejected.
+  reviewStatus String  @default("pending")
+  adminNote   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([reviewStatus])
 }
 
 // Singleton admin-editable sponsorship pricing (per-add-on monthly base price +

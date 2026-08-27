@@ -11,7 +11,7 @@ import { createLooseTrpcClient } from '@/lib/trpc'
 import Button from '@/components/ui/Button'
 
 type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null }
-type Mine = { isAdvertiser: boolean; isBusiness: boolean; listing: Listing | null; live: boolean; paidUntil: string | null }
+type Mine = { isAdvertiser: boolean; isBusiness: boolean; listing: Listing | null; live: boolean; paidUntil: string | null; reviewStatus: string | null; adminNote: string | null }
 type Term = { term: 'month' | 'quarter' | 'year'; cents: number; months: number; label: string }
 type Booking = { id: string; position: string; pageTarget: string | null; startsAt: string; endsAt: string; hasCreative: boolean; approved: boolean }
 
@@ -149,15 +149,26 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
 
   return (
     <div style={{ display: 'grid', gap: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: mine.live ? '#f0fdf4' : '#fff7ed', border: `1px solid ${mine.live ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 12, padding: '11px 14px' }}>
-        <span style={{ fontSize: 18 }}>{mine.live ? '🟢' : '🟠'}</span>
-        <div style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: mine.live ? '#16a34a' : '#9a5b1a' }}>
-          {mine.live
+      {(() => {
+        const inReview = !mine.live && mine.reviewStatus === 'pending' && !!mine.listing
+        const rejected = mine.reviewStatus === 'rejected'
+        const good = mine.live
+        return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: good ? '#f0fdf4' : rejected ? '#fef2f2' : '#fff7ed', border: `1px solid ${good ? '#bbf7d0' : rejected ? '#fecaca' : '#FFD4A0'}`, borderRadius: 12, padding: '11px 14px' }}>
+        <span style={{ fontSize: 18 }}>{good ? '🟢' : rejected ? '⛔' : inReview ? '⏳' : '🟠'}</span>
+        <div style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: good ? '#16a34a' : rejected ? '#ef4444' : '#9a5b1a' }}>
+          {good
             ? `Your listing is live in the directory${mine.paidUntil ? ` until ${new Date(mine.paidUntil).toLocaleDateString('en-GB')}` : ''}.`
-            : 'Your listing is hidden — subscribe below to appear in the directory.'}
+            : rejected
+              ? `Your listing needs changes before it can go live${mine.adminNote ? `: “${mine.adminNote}”` : '.'} Edit the details below to resubmit for review.`
+              : inReview
+                ? 'Your business details are with our team for review — your listing will appear once approved.'
+                : 'Your listing is hidden — add your business details and subscribe below to appear in the directory.'}
         </div>
         {mine.listing && mine.live && <Link href={`/directory/${mine.listing.id}`} style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, color: 'var(--orange)', textDecoration: 'none' }}>View ›</Link>}
       </div>
+        )
+      })()}
 
       <Card>
         <H>Directory subscription</H>

@@ -35,18 +35,18 @@ export const directoryRouter = router({
     .input(z.object({ category: z.string().optional() }).optional())
     .query(async ({ ctx, input }) => {
       const listings = await ctx.prisma.directoryListing.findMany({
-        where: { paidUntil: { gt: new Date() }, ...(input?.category ? { category: input.category } : {}) },
+        where: { paidUntil: { gt: new Date() }, reviewStatus: 'approved', ...(input?.category ? { category: input.category } : {}) },
         orderBy: { name: 'asc' },
       })
       return listings
     }),
 
-  // Public: one listing — only while its subscription is paid.
+  // Public: one listing — only while its subscription is paid AND approved.
   get: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const listing = await ctx.prisma.directoryListing.findUnique({ where: { id: input.id } })
-      if (!listing || !isLive(listing.paidUntil)) throw new TRPCError({ code: 'NOT_FOUND', message: 'This listing is not currently live.' })
+      if (!listing || !isLive(listing.paidUntil) || listing.reviewStatus !== 'approved') throw new TRPCError({ code: 'NOT_FOUND', message: 'This listing is not currently live.' })
       return listing
     }),
 
@@ -59,7 +59,7 @@ export const directoryRouter = router({
   mine: protectedProcedure.query(async ({ ctx }) => {
     const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isAdvertiser: true, isBusiness: true } })
     const listing = await ctx.prisma.directoryListing.findUnique({ where: { userId: ctx.user.id } })
-    return { isAdvertiser: me.isAdvertiser, isBusiness: me.isBusiness, listing, live: isLive(listing?.paidUntil), paidUntil: listing?.paidUntil ?? null }
+    return { isAdvertiser: me.isAdvertiser, isBusiness: me.isBusiness, listing, live: isLive(listing?.paidUntil) && listing?.reviewStatus === 'approved', paidUntil: listing?.paidUntil ?? null, reviewStatus: listing?.reviewStatus ?? null, adminNote: listing?.adminNote ?? null }
   }),
 
   // Advertiser/business: buy or renew the directory subscription (one-off payment
@@ -121,10 +121,12 @@ export const directoryRouter = router({
         logoUrl: input.logoUrl || null,
         location: input.location || null,
       }
+      // Submitting/editing the business info sends it (back) to admin review —
+      // it stays hidden until an admin approves. Clear any prior rejection note.
       return ctx.prisma.directoryListing.upsert({
         where: { userId: ctx.user.id },
-        create: { userId: ctx.user.id, ...data },
-        update: data,
+        create: { userId: ctx.user.id, ...data, reviewStatus: 'pending', adminNote: null },
+        update: { ...data, reviewStatus: 'pending', adminNote: null },
       })
     }),
 
@@ -154,6 +156,18 @@ export const directoryRouter = router({
       const data = Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, v === '' ? null : v]))
       return ctx.prisma.directoryListing.update({ where: { id }, data })
     }),
+
+  // Admin: approve or reject the submitted business info. Approving makes the
+  // listing public (while paid); rejecting keeps it hidden with a note the
+  // advertiser sees so they can fix and resubmit.
+  adminReview: execProcedure
+    .input(z.object({ id: z.string(), status: z.enum(['approved', 'rejected', 'pending']), note: z.string().max(400).optional() }))
+    .mutation(({ ctx, input }) =>
+      ctx.prisma.directoryListing.update({
+        where: { id: input.id },
+        data: { reviewStatus: input.status, adminNote: input.status === 'rejected' ? (input.note || null) : null },
+      })
+    ),
 
   // Admin remove a listing entirely.
   adminRemove: execProcedure
