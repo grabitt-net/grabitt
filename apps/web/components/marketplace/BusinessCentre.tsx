@@ -179,8 +179,7 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
       </div>
 
       {/* ── Monthly listing allowance ── (dashboard-style stat cards) */}
-      <div style={card}>
-        <div style={cardHead}>{t('This month’s listing allowance')}</div>
+      <Collapsible title={t('This month’s listing allowance')}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           <AllowanceCard label={t('Items')} icon="🛍️" used={s.usage.items} cap={s.caps.items} color="var(--orange)" />
           <AllowanceCard label={t('Job adverts')} icon="💼" used={s.usage.jobs} cap={s.caps.jobs} color="#3b82f6" />
@@ -189,14 +188,13 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#7a8299', marginTop: 10, lineHeight: 1.5 }}>
           {t('Allowances reset on the 1st of each month. Once you hit a cap, extra listings are simply charged per listing.')}
         </div>
-      </div>
+      </Collapsible>
 
       {/* ── Posted jobs ── */}
-      <div style={card}>
-        <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>💼 {t('Posted jobs')}{postings ? ` · ${postings.jobs.length}` : ''}</span>
-          <button onClick={() => router.push('/jobs/new')} style={miniBtn}>+ {t('Post')}</button>
-        </div>
+      <Collapsible
+        title={<>💼 {t('Posted jobs')}{postings ? ` · ${postings.jobs.length}` : ''}</>}
+        right={<button onClick={() => router.push('/jobs/new')} style={miniBtn}>+ {t('Post')}</button>}
+      >
         {!postings ? <Muted>{t('Loading…')}</Muted> : postings.jobs.length === 0 ? <Muted>{t('No job adverts yet.')}</Muted> : postings.jobs.map(j => (
           <Link key={j.id} href={`/listings/${j.id}`} style={{ textDecoration: 'none' }}>
             <div style={row}>
@@ -208,14 +206,13 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
             </div>
           </Link>
         ))}
-      </div>
+      </Collapsible>
 
       {/* ── Property listings ── */}
-      <div style={card}>
-        <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>🏠 {t('Property listings')}{postings ? ` · ${postings.properties.length}` : ''}</span>
-          <button onClick={() => router.push('/property/new')} style={miniBtn}>+ {t('List')}</button>
-        </div>
+      <Collapsible
+        title={<>🏠 {t('Property listings')}{postings ? ` · ${postings.properties.length}` : ''}</>}
+        right={<button onClick={() => router.push('/property/new')} style={miniBtn}>+ {t('List')}</button>}
+      >
         {!postings ? <Muted>{t('Loading…')}</Muted> : postings.properties.length === 0 ? <Muted>{t('No property listings yet.')}</Muted> : postings.properties.map(p => (
           <Link key={p.id} href={`/listings/${p.id}`} style={{ textDecoration: 'none' }}>
             <div style={row}>
@@ -230,14 +227,14 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
             </div>
           </Link>
         ))}
-      </div>
+      </Collapsible>
 
       {/* ── Purchased CV views ── */}
-      <div style={card}>
-        <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>🔓 {t('Purchased CV views')}{postings ? ` · ${postings.unlockedCandidates.length}` : ''}</span>
-          <button onClick={() => openPanel('findStaff')} style={miniBtn}>{t('Search')}</button>
-        </div>
+      <Collapsible
+        defaultOpen={false}
+        title={<>🔓 {t('Purchased CV views')}{postings ? ` · ${postings.unlockedCandidates.length}` : ''}</>}
+        right={<button onClick={() => openPanel('findStaff')} style={miniBtn}>{t('Search')}</button>}
+      >
         {!postings ? <Muted>{t('Loading…')}</Muted> : postings.unlockedCandidates.length === 0 ? <Muted>{t('You haven’t unlocked any candidate CVs yet.')}</Muted> : postings.unlockedCandidates.map(c => (
           <div key={c.seekerId} style={row}>
             <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>{(c.name ?? '?')[0]?.toUpperCase()}</div>
@@ -247,11 +244,10 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
             </div>
           </div>
         ))}
-      </div>
+      </Collapsible>
 
       {/* ── Sponsorship & advertising (one-off, timed) ── */}
-      <div style={card}>
-        <div style={cardHead}>📣 {t('Sponsorship & advertising')}</div>
+      <Collapsible defaultOpen={false} title={<>📣 {t('Sponsorship & advertising')}</>}>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginBottom: 10, lineHeight: 1.5 }}>
           {t('Buy homepage, category and featured banner placements for a set number of months — a one-off payment, not a subscription.')}
         </div>
@@ -319,13 +315,12 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
         <Link href="/advertise" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 12, background: '#f4f6fb', border: '1px dashed #c3cee0', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: '#1e2b55' }}>
           ➕ {t('Buy a banner placement')}
         </Link>
-      </div>
+      </Collapsible>
 
       {/* ── Direct marketing blasts (double opt-in) ──
            Hidden from customers pending legal review — set NEXT_PUBLIC_BLASTS_ENABLED=1 to re-enable. */}
       {BLASTS_ENABLED && (
-      <div style={card}>
-        <div style={cardHead}>📣 {t('Direct marketing')}</div>
+      <Collapsible defaultOpen={false} title={<>📣 {t('Direct marketing')}</>}>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginBottom: 10, lineHeight: 1.5 }}>
           {t('Send promotions to opted-in members. Buy a bundle of sends; use them any time.')}
           {blasts && <span style={{ display: 'block', marginTop: 4, fontWeight: 800, color: '#16a34a' }}>{t('You have')} {blasts?.email} {t('email')} · {blasts?.whatsapp} {t('WhatsApp')} {t('sends left')}.</span>}
@@ -360,12 +355,11 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
           )
         })}
         {cNote && composeCh === null && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: cNote.startsWith('✓') ? '#16a34a' : '#ef4444', marginTop: 4 }}>{cNote}</div>}
-      </div>
+      </Collapsible>
       )}
 
       {/* ── Business tools ── */}
-      <div style={card}>
-        <div style={cardHead}>{t('Business tools')}</div>
+      <Collapsible title={t('Business tools')}>
         <div style={{ display: 'grid', gap: 8 }}>
           {!businessVerified && <Tool icon="🛡️" title={t('Verify your business')} sub={t('Required before your shop can go live.')} onClick={() => openPanel('businessVerify')} highlight />}
           <Tool icon="🏪" title={t('My storefront')} sub={t('Layout, branding, featured items and policies.')} onClick={() => openPanel('storefrontEdit')} />
@@ -374,7 +368,23 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
           <Tool icon="🔍" title={t('Search candidates')} sub={t('Add-on to a live advert — free to browse, pay per CV unlock.')} onClick={() => openPanel('findStaff')} />
           <Tool icon="📖" title={t('Directory listing')} sub={t('List your business in the Grabitt directory — from €15/mo.')} onClick={() => router.push('/advertiser')} />
         </div>
+      </Collapsible>
+    </div>
+  )
+}
+
+// Collapsible card: a tap-to-toggle header (title + optional action on the
+// right) over content that folds away — keeps the Business Centre compact.
+function Collapsible({ title, right, defaultOpen = true, children }: { title: React.ReactNode; right?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div style={card}>
+      <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+        <span style={{ ...cardHead, marginBottom: 0, flex: 1 }}>{title}</span>
+        {right && <span onClick={e => e.stopPropagation()}>{right}</span>}
+        <span style={{ color: '#9aa3ba', fontSize: 16, fontWeight: 900, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', display: 'inline-block' }}>›</span>
       </div>
+      {open && <div style={{ marginTop: 12 }}>{children}</div>}
     </div>
   )
 }

@@ -1091,7 +1091,8 @@ function AdminCentre({ me, onReload, payout, setupPayouts, openPanel, goInterest
         </button>
       )}
 
-      {/* Add business */}
+      {/* Add business — personal accounts only (a business already has one) */}
+      {!me?.isBusiness && (
       <button onClick={() => openPanel('business' as PanelId)} style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
         <Icon name="building" size={20} strokeWidth={2} />
         <div style={{ flex: 1 }}>
@@ -1100,6 +1101,7 @@ function AdminCentre({ me, onReload, payout, setupPayouts, openPanel, goInterest
         </div>
         <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
       </button>
+      )}
 
       {/* Areas of interest */}
       <button onClick={goInterests} style={{ ...card, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
@@ -1111,8 +1113,8 @@ function AdminCentre({ me, onReload, payout, setupPayouts, openPanel, goInterest
         <span style={{ color: 'var(--orange)', fontWeight: 900, fontSize: 18 }}>›</span>
       </button>
 
-      {/* Tenant profile */}
-      <TenantProfileCard />
+      {/* Tenant profile — renters only, not relevant for a business account */}
+      {!me?.isBusiness && <TenantProfileCard />}
 
       {/* Property-agent contact — business/agent accounts only */}
       {me?.isBusiness && <AgentProfileCard />}
