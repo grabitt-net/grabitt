@@ -4810,6 +4810,7 @@ function PanelBody() {
     const [catalog, setCatalog] = useState<any[]>([])
     const [durations, setDurations] = useState<number[]>([1, 3, 6, 12])
     const [bizBusy, setBizBusy] = useState(false)
+    const [bizPromo, setBizPromo] = useState('')
     const [bizInterval, setBizInterval] = useState<'month' | 'year' | 'light'>(() => {
       try { const v = sessionStorage.getItem('grabitt_biz_interval'); return v === 'year' ? 'year' : v === 'light' ? 'light' : 'month' } catch { return 'month' }
     })
@@ -4851,7 +4852,7 @@ function PanelBody() {
         if (!token) token = await refreshAuthToken()
         if (!token) { toast('Please log in first'); openPanel('login'); return }
         const client = await getTrpcClient()
-        const res = await client.subscriptions.createCheckout.mutate({ plan: plan as never, ...(sponsorItems.length ? { sponsorship: sponsorItems as never } : {}) })
+        const res = await client.subscriptions.createCheckout.mutate({ plan: plan as never, ...(sponsorItems.length ? { sponsorship: sponsorItems as never } : {}), ...(bizPromo.trim() ? { discountCode: bizPromo.trim() } : {}) } as never)
         try { sessionStorage.removeItem('grabitt_biz_sponsorship') } catch {}
         if (res.url) window.location.href = res.url
         else { toast('Could not start checkout'); setBizBusy(false) }
@@ -4935,7 +4936,11 @@ function PanelBody() {
           {sponsorTotal > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: '#555', marginTop: 6 }}><span>Sponsorship (one-off)</span><span>{eur(sponsorTotal)}</span></div>}
         </div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>{bizInterval === 'light' ? (sponsorTotal > 0 ? 'Business Light is free — you only pay the sponsorship above. Add your business details when you first sign in.' : 'Business Light is free — no card needed. You only pay €0.99 when you list an item.') : 'You’ll add a card on Stripe — the account is free for 14 days. We’ll ask for your business details when you first sign in.'}</div>
-        <button onClick={() => bizInterval === 'light' ? startLight() : startCheckout(bizInterval === 'year' ? 'business_annual' : 'business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? (bizInterval === 'light' ? 'Setting up…' : 'Opening Stripe…') : bizInterval === 'light' ? (sponsorTotal > 0 ? '🆓 Start free & pay sponsorship' : '🆓 Start free with Business Light') : sponsorTotal > 0 ? '🚀 Start trial & add sponsorship' : '🚀 Start 14-day free trial'}</button>
+        {bizInterval !== 'light' && (
+          <input value={bizPromo} onChange={e => setBizPromo(e.target.value.toUpperCase())} placeholder="Discount code (optional)"
+            style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e0d8d0', borderRadius: 12, padding: '11px 13px', fontFamily: 'var(--font-ui)', fontSize: 13.5, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--dark)', outline: 'none', marginBottom: 10 }} />
+        )}
+        <button onClick={() => bizInterval === 'light' ? startLight() : startCheckout(bizInterval === 'year' ? 'business_annual' : 'business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? (bizInterval === 'light' ? 'Setting up…' : 'Opening Stripe…') : bizInterval === 'light' ? (sponsorTotal > 0 ? '🆓 Start free & pay sponsorship' : '🆓 Start free with Business Light') : sponsorTotal > 0 ? '🚀 Start trial & add sponsorship' : bizPromo.trim() ? '🚀 Apply code & subscribe' : '🚀 Start 14-day free trial'}</button>
 
         {/* Founding cohort annual lock-in — only while slots remain (first 100) */}
         {(foundingBizLeft === null || foundingBizLeft > 0) && (<>

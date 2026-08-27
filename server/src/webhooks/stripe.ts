@@ -163,6 +163,13 @@ export async function handleStripeEvent(event: Stripe.Event) {
       if (s.metadata?.kind === 'banner_order' && s.metadata.userId && s.metadata.basket) {
         await provisionBannerOrder(s.metadata.userId, s.metadata.basket)
       }
+      // A promo code applied to a subscription/plan checkout — record it.
+      if (s.metadata?.discountCodeId && s.metadata.discountUserId) {
+        await recordRedemption(prisma, {
+          codeId: s.metadata.discountCodeId, userId: s.metadata.discountUserId, appliedTo: 'business_upgrade',
+          originalCents: Number(s.metadata.originalCents) || 0, discountCents: Number(s.metadata.discountCents) || 0,
+        }).catch(() => {})
+      }
       break
     }
     // Escrow purchases use capture_method: 'manual'. When the buyer authorises

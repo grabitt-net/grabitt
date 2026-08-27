@@ -5,6 +5,7 @@ import { getStripe } from '../lib/stripe'
 import { SUBSCRIPTION_PLANS, FOUNDING_BUSINESS_CAP } from '@grabitt/design-tokens'
 import { getSponsorshipCatalog, sponsorMonthlyCents, bannerForAddon, blastKind, addonLineCents, isValidAddonQty } from '../lib/sponsorshipPricing'
 import type { PrismaClient } from '@prisma/client'
+import { validateDiscount } from '../lib/discounts'
 
 const PLAN_IDS = Object.keys(SUBSCRIPTION_PLANS) as (keyof typeof SUBSCRIPTION_PLANS)[]
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
@@ -48,10 +49,28 @@ export const subscriptionsRouter = router({
       // SAME basket. These are added as one-time line items on the subscription
       // checkout and granted (as timed SponsorshipGrants) on completion.
       sponsorship: z.array(z.object({ addonId: z.string(), months: z.number().int(), pageTarget: z.string().optional() })).optional(),
+      discountCode: z.string().max(40).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const plan = SUBSCRIPTION_PLANS[input.plan as keyof typeof SUBSCRIPTION_PLANS]
       const isBusinessPlan = input.plan.startsWith('business')
+
+      // Promo code on the plan itself — validated for the business_upgrade flow,
+      // applied as a one-time Stripe coupon on the first invoice. A code (e.g.
+      // "€28.99 off" to make the first month 1c) skips the trial so the reduced
+      // amount charges immediately.
+      let discountCodeId: string | null = null
+      let discountCents = 0
+      let couponId: string | undefined
+      if (input.discountCode) {
+        const dr = await validateDiscount(ctx.prisma, { code: input.discountCode, userId: ctx.user.id, kind: 'business_upgrade', amountCents: plan.amountCents })
+        if (!dr.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: dr.reason })
+        if (dr.discountCents > 0) {
+          discountCodeId = dr.codeId; discountCents = dr.discountCents
+          const coupon = await getStripe().coupons.create({ amount_off: discountCents, currency: 'eur', duration: 'once', name: `Grabitt ${dr.code}` })
+          couponId = coupon.id
+        }
+      }
 
       // The Founding Business annual plan is limited to the first N businesses.
       if (input.plan === 'business_founding_annual') {
@@ -100,12 +119,20 @@ export const subscriptionsRouter = router({
         mode: 'subscription',
         customer,
         line_items: lineItems,
+        // A promo coupon applies to the plan's first invoice.
+        ...(couponId ? { discounts: [{ coupon: couponId }] } : {}),
         subscription_data: {
-          ...(plan.trialDays ? { trial_period_days: plan.trialDays } : {}),
+          // A discount charges immediately (no trial) so the reduced amount can
+          // be tested / taken now.
+          ...(plan.trialDays && !discountCodeId ? { trial_period_days: plan.trialDays } : {}),
           metadata: { userId: ctx.user.id, plan: input.plan },
         },
-        // Session metadata drives the sponsorship grants on checkout.session.completed.
-        metadata: basketParts.length ? { kind: 'sponsorship', userId: ctx.user.id, basket: basketParts.join(',') } : {},
+        // Session metadata drives the sponsorship grants + promo redemption on
+        // checkout.session.completed.
+        metadata: {
+          ...(basketParts.length ? { kind: 'sponsorship', userId: ctx.user.id, basket: basketParts.join(',') } : {}),
+          ...(discountCodeId ? { discountCodeId, discountCents: String(discountCents), originalCents: String(plan.amountCents), discountUserId: ctx.user.id } : {}),
+        },
         // Land business signups on the account page so we can prompt for their
         // business details on first login.
         success_url: `${appUrl()}/${isBusinessPlan ? 'account?welcome=business' : '?sub=success'}`,
