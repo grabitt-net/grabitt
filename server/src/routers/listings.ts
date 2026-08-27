@@ -6,6 +6,7 @@ import { sellerName, missingBusinessName } from '../lib/identity'
 import { enforceBusinessListingAllowance } from '../lib/businessLimits'
 import { LISTING_CAPS, GRADE_THRESHOLDS, PRICES, BUSINESS_LIGHT, HANDY_PRICING } from '@grabitt/design-tokens'
 import { getStripe } from '../lib/stripe'
+import { validateDiscount, recordRedemption } from '../lib/discounts'
 
 // Fallback shown on a job advert when the employer hasn't set an establishment
 // type — never their name.
@@ -426,8 +427,9 @@ export const listingsRouter = router({
     }),
 
   create: protectedProcedure
-    .input(CreateListingInputSchema)
-    .mutation(async ({ ctx, input }) => {
+    .input(CreateListingInputSchema.extend({ discountCode: z.string().max(40).optional() }))
+    .mutation(async ({ ctx, input: rawInput }) => {
+      const { discountCode, ...input } = rawInput
       const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
 
       // Advertiser accounts are for buying advertising + a directory entry only —
@@ -509,6 +511,18 @@ export const listingsRouter = router({
         fee = HANDY_PRICING.businessPlaceCents
       }
 
+      // Apply a promo code to the listing fee, if one was entered and valid for
+      // this flow + category. A 100%-off code brings the fee to 0 (published for
+      // free); a partial code reduces the Stripe charge.
+      let discountCents = 0
+      let discountCodeId: string | null = null
+      const originalFee = fee
+      if (fee > 0 && discountCode) {
+        const dr = await validateDiscount(ctx.prisma, { code: discountCode, userId: user.id, kind: 'listing_publish', category: input.department, amountCents: fee })
+        if (!dr.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: dr.reason })
+        discountCents = dr.discountCents; discountCodeId = dr.codeId; fee = Math.max(0, fee - discountCents)
+      }
+
       const listing = await ctx.prisma.listing.create({
         data: {
           ...input,
@@ -525,11 +539,20 @@ export const listingsRouter = router({
           mode: 'payment',
           ...(user.stripeCustomerId ? { customer: user.stripeCustomerId } : { customer_email: user.email }),
           line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name: `Grabitt listing fee — ${input.title}` } } }],
-          payment_intent_data: { metadata: { kind: 'listing_publish', listingId: listing.id } },
+          payment_intent_data: { metadata: {
+            kind: 'listing_publish', listingId: listing.id,
+            // So the webhook can record the promo redemption on success.
+            ...(discountCodeId ? { discountCodeId, discountCents: String(discountCents), originalCents: String(originalFee) } : {}),
+          } },
           success_url: `${APP_URL}/listings/${listing.id}?published=1`,
           cancel_url: `${APP_URL}/sell?cancelled=1`,
         })
         return { ...listing, pendingPayment: true, checkoutUrl: session.url }
+      }
+
+      // Published for free (or 100%-off code) — record the redemption now.
+      if (discountCodeId) {
+        await recordRedemption(ctx.prisma, { codeId: discountCodeId, userId: user.id, appliedTo: 'listing_publish', originalCents: originalFee, discountCents })
       }
 
       // Wish matching: alert buyers whose active "I'm looking for X" wish this

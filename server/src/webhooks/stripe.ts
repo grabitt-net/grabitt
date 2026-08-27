@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { getStripe } from '../lib/stripe'
 import { prisma } from '../db'
 import { grantCreditPack } from '../routers/credits'
+import { recordRedemption } from '../lib/discounts'
 import { SUBSCRIPTION_PLANS } from '@grabitt/design-tokens'
 import { bannerForAddon } from '../lib/sponsorshipPricing'
 
@@ -259,7 +260,14 @@ export async function handleStripeEvent(event: Stripe.Event) {
         // Start the listing's live clock at go-live (payment), not at draft
         // creation — so a property's 30-day term (and an item's 21-day cycle)
         // counts from when buyers can actually see it.
-        await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active', createdAt: new Date(), bumpedAt: new Date() } }).catch(() => {})
+        const l = await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active', createdAt: new Date(), bumpedAt: new Date() }, select: { sellerId: true } }).catch(() => null)
+        // Record the promo redemption, if a discount code was applied.
+        if (l && pi.metadata.discountCodeId) {
+          await recordRedemption(prisma, {
+            codeId: pi.metadata.discountCodeId, userId: l.sellerId, appliedTo: 'listing_publish',
+            originalCents: Number(pi.metadata.originalCents) || 0, discountCents: Number(pi.metadata.discountCents) || 0,
+          }).catch(() => {})
+        }
       }
       // Handy Help — a business paid €2.99 to unlock a post; create their
       // proposal now (idempotent per listing+responder) and notify the poster.

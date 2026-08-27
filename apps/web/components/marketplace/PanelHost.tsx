@@ -3381,6 +3381,7 @@ function PanelBody() {
     const [grabItNow, setGrabItNow] = useState(false)
     const [featured, setFeatured] = useState(false)
     const [uploading, setUploading] = useState(false)
+    const [promoCode, setPromoCode] = useState('')
 
     // ── Auto-save draft ──────────────────────────────────────────────────────
     // Never lose a half-made listing to a stray click or closed tab. The typed
@@ -3650,6 +3651,14 @@ function PanelBody() {
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 4 }}>Buyers can purchase multiple units until stock runs out.</div>
                 </div>
 
+                {/* Promo / discount code — applied to any listing fee at checkout */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Discount code (optional)</div>
+                  <input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder="Enter a code"
+                    style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, letterSpacing: 1, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box', textTransform: 'uppercase' }} />
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 4 }}>Applied to any listing fee at checkout.</div>
+                </div>
+
                 {/* Auto-accept offers minimum (seller-only; never shown to buyers) */}
                 {!freeItem && (
                   <div style={{ marginBottom: 14 }}>
@@ -3826,6 +3835,7 @@ function PanelBody() {
                       autoAcceptMin: !freeItem && parseFloat(autoAcceptMin) > 0 ? parseFloat(autoAcceptMin) : undefined,
                       ...(multibuyTiers.length && !freeItem ? { multibuyTiers } : {}),
                       ...(Object.keys(attrs).length ? { attributes: attrs } : {}),
+                      ...(promoCode.trim() ? { discountCode: promoCode.trim() } : {}),
                     })
                     // Business Light: the €0.99 per-listing fee is due before the
                     // item goes live — the create returns a checkout URL.
