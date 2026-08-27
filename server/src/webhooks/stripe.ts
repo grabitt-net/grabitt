@@ -245,6 +245,14 @@ export async function handleStripeEvent(event: Stripe.Event) {
     // intents such as credit-pack top-ups. Only credit packs need action here.
     case 'payment_intent.succeeded': {
       const pi = event.data.object as Stripe.PaymentIntent
+      // Generic promo-code redemption — any paid flow that carried a discount
+      // records it here, so individual routers don't each need webhook code.
+      if (pi.metadata?.discountCodeId && pi.metadata.discountUserId) {
+        await recordRedemption(prisma, {
+          codeId: pi.metadata.discountCodeId, userId: pi.metadata.discountUserId, appliedTo: pi.metadata.kind || 'checkout',
+          originalCents: Number(pi.metadata.originalCents) || 0, discountCents: Number(pi.metadata.discountCents) || 0,
+        }).catch(() => {})
+      }
       if (pi.metadata?.kind === 'credit_pack' && pi.metadata.userId && pi.metadata.packId) {
         await grantCreditPack(prisma, pi.metadata.userId, pi.metadata.packId, pi.id)
       }
@@ -267,14 +275,8 @@ export async function handleStripeEvent(event: Stripe.Event) {
         // Start the listing's live clock at go-live (payment), not at draft
         // creation — so a property's 30-day term (and an item's 21-day cycle)
         // counts from when buyers can actually see it.
-        const l = await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active', createdAt: new Date(), bumpedAt: new Date() }, select: { sellerId: true } }).catch(() => null)
-        // Record the promo redemption, if a discount code was applied.
-        if (l && pi.metadata.discountCodeId) {
-          await recordRedemption(prisma, {
-            codeId: pi.metadata.discountCodeId, userId: l.sellerId, appliedTo: 'listing_publish',
-            originalCents: Number(pi.metadata.originalCents) || 0, discountCents: Number(pi.metadata.discountCents) || 0,
-          }).catch(() => {})
-        }
+        await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active', createdAt: new Date(), bumpedAt: new Date() } }).catch(() => {})
+        // (Promo redemption, if any, is recorded by the generic block above.)
       }
       // Handy Help — a business paid €2.99 to unlock a post; create their
       // proposal now (idempotent per listing+responder) and notify the poster.

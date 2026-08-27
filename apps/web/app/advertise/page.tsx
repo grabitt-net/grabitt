@@ -43,6 +43,7 @@ function Inner() {
   const [paying, setPaying] = useState(false)
   const [err, setErr] = useState('')
   const [signedIn, setSignedIn] = useState<boolean | null>(null)
+  const [promo, setPromo] = useState('')
 
   // Know up front whether the visitor can pay, so we prompt sign-in rather than
   // failing at the checkout step.
@@ -102,7 +103,7 @@ function Inner() {
     if (!signedIn) { openPanel('login'); return }
     setErr(''); setPaying(true)
     try {
-      const payload = { lines: lines.map(l => ({ position: l.position, pageTarget: l.pageTarget || undefined, months: l.months, startsAt: new Date(l.startsAt).toISOString() })) }
+      const payload = { lines: lines.map(l => ({ position: l.position, pageTarget: l.pageTarget || undefined, months: l.months, startsAt: new Date(l.startsAt).toISOString() })), ...(promo.trim() ? { discountCode: promo.trim() } : {}) }
       const res = await trpcAuthed().banners.order.mutate(payload) as { url?: string }
       if (res?.url) window.location.href = res.url
       else setErr('Could not start checkout — please sign in as a business and try again.')
@@ -196,6 +197,9 @@ function Inner() {
       )}
 
       {err && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#b91c1c', marginBottom: 10, fontWeight: 700 }}>{err}</div>}
+
+      <input value={promo} onChange={e => setPromo(e.target.value.toUpperCase())} placeholder="Discount code (optional)"
+        style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 12, padding: '11px 13px', fontFamily: 'var(--font-nunito)', fontSize: 13.5, letterSpacing: 1, textTransform: 'uppercase', outline: 'none', marginBottom: 10 }} />
 
       <button onClick={pay} disabled={paying || anyClash || missingPage || !lines.length}
         style={{ width: '100%', background: anyClash || missingPage ? '#e5e7eb' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: anyClash || missingPage ? '#999' : '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: anyClash || missingPage ? 'default' : 'pointer' }}>

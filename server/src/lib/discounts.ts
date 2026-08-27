@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
+import { TRPCError } from '@trpc/server'
 
 // Applying a promo code at checkout. `kind` is the checkout flow (e.g.
 // 'business_upgrade', 'listing_publish'); `category` is the item department slug
@@ -50,6 +51,34 @@ export async function validateDiscount(prisma: PrismaClient, ctx: DiscountContex
   discountCents = Math.max(0, Math.min(discountCents, ctx.amountCents))
 
   return { ok: true, codeId: dc.id, code, discountCents, isTest: dc.isTest }
+}
+
+// Reusable helper for a one-off (payment-mode) checkout: validate an optional
+// code, return the discount to subtract and the Stripe metadata to attach (so
+// the webhook records the redemption). Throws a user-facing error on an invalid
+// code, or when the discounted total would fall below Stripe's €0.50 minimum.
+const STRIPE_MIN_CENTS = 50
+export async function applyPromo(
+  prisma: PrismaClient,
+  code: string | undefined | null,
+  userId: string,
+  kind: string,
+  amountCents: number,
+  category?: string | null,
+): Promise<{ codeId: string | null; discountCents: number; meta: Record<string, string> }> {
+  if (!code || !code.trim()) return { codeId: null, discountCents: 0, meta: {} }
+  const res = await validateDiscount(prisma, { code, userId, kind, category: category ?? null, amountCents })
+  if (!res.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: res.reason })
+  if (res.discountCents <= 0) return { codeId: null, discountCents: 0, meta: {} }
+  const finalCents = amountCents - res.discountCents
+  if (finalCents < STRIPE_MIN_CENTS) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'The discounted amount is below Stripe’s €0.50 minimum for this purchase — use a code that leaves at least €0.50.' })
+  }
+  return {
+    codeId: res.codeId,
+    discountCents: res.discountCents,
+    meta: { discountCodeId: res.codeId, discountCents: String(res.discountCents), originalCents: String(amountCents), discountUserId: userId },
+  }
 }
 
 // Record a redemption and bump the code's used count. Call after a successful

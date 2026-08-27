@@ -9,6 +9,7 @@ import {
 } from '../lib/bannerAdvertising'
 import { BANNER_SLOT_IDS, BANNER_MAX_MONTHS, BANNER_DURATIONS } from '@grabitt/design-tokens'
 import { SPONSOR_PAGES } from '../lib/sponsorshipPricing'
+import { applyPromo } from '../lib/discounts'
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 const POSITIONS = BANNER_SLOT_IDS as unknown as [string, ...string[]]
@@ -61,7 +62,7 @@ export const bannersRouter = router({
   // every line, then starts a Stripe payment. Bookings + banners are provisioned
   // by the webhook on payment success (banners start unapproved for review).
   order: protectedProcedure
-    .input(z.object({ lines: z.array(OrderLineInput).min(1).max(12) }))
+    .input(z.object({ lines: z.array(OrderLineInput).min(1).max(12), discountCode: z.string().max(40).optional() }))
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { email: true, stripeCustomerId: true } })
       const lines = input.lines.map(toLine)
@@ -79,11 +80,16 @@ export const bannersRouter = router({
       const quote = await quoteOrder(ctx.prisma, lines)
       const basket = lines.map(l => `${l.position}|${l.pageTarget ?? ''}|${l.months}|${l.startsAt.toISOString()}`).join(',')
 
+      // Promo code — validated for the sponsorship/advertising flow, reduces the
+      // Stripe charge (redemption recorded by the webhook).
+      const promo = await applyPromo(ctx.prisma, input.discountCode, ctx.user.id, 'sponsorship', quote.totalCents)
+      const finalCents = quote.totalCents - promo.discountCents
+
       const session = await getStripe().checkout.sessions.create({
         mode: 'payment',
         ...(user.stripeCustomerId ? { customer: user.stripeCustomerId } : { customer_email: user.email }),
-        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: quote.totalCents, product_data: { name: `Grabitt banner advertising — ${lines.length} placement${lines.length === 1 ? '' : 's'}${quote.discountPct ? ` (−${quote.discountPct}%)` : ''}` } } }],
-        payment_intent_data: { metadata: { kind: 'banner_order', userId: ctx.user.id, basket } },
+        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: finalCents, product_data: { name: `Grabitt banner advertising — ${lines.length} placement${lines.length === 1 ? '' : 's'}${quote.discountPct ? ` (−${quote.discountPct}%)` : ''}${promo.codeId ? ' · promo' : ''}` } } }],
+        payment_intent_data: { metadata: { kind: 'banner_order', userId: ctx.user.id, basket, ...promo.meta } },
         success_url: `${appUrl()}/account?tab=business&banner=success`,
         cancel_url: `${appUrl()}/employers?banner=cancelled`,
       })
