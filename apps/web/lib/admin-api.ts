@@ -38,6 +38,7 @@ export function makeCrmApi(execToken: string) {
     // Contacts
     contacts: (stage?: string) =>
       rpc<any[]>('crm.contacts', 'query', { stage, page: 1 }, execToken),
+    businessMembers: () => rpc<any[]>('crm.businessMembers', 'query', undefined, execToken),
     supportInbox: (status?: 'open' | 'resolved' | 'all') =>
       rpc<any[]>('crm.supportInbox', 'query', status ? { status } : undefined, execToken),
     resolveSupport: (id: string, resolved: boolean) =>

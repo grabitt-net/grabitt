@@ -18,27 +18,41 @@ type Application = {
 }
 
 const TABS: [string, string][] = [
+  ['businesses', 'Businesses'],
   ['pending', 'Pending'],
   ['approved', 'Approved'],
   ['rejected', 'Rejected'],
 ]
 
+type BizMember = {
+  id: string; displayName: string; email: string; businessName: string | null; verified: boolean
+  tierLabel: string; feePct: number; rating: number | null; salesTotal: number; sales90d: number
+  next: { label: string; needSales: number; needRating: number } | null
+}
+
 export default function BusinessView({ execToken, onOpenMember }: {
   execToken: string
   onOpenMember?: (userId: string) => void
 }) {
-  const [tab, setTab] = useState('pending')
+  const [tab, setTab] = useState('businesses')
   const [rows, setRows] = useState<Application[] | null>(null)
+  const [bizMembers, setBizMembers] = useState<BizMember[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [err, setErr] = useState('')
 
   const load = useCallback(async () => {
-    setRows(null); setErr('')
+    setErr('')
     try {
-      setRows(await makeCrmApi(execToken).businessVerifications(tab) as Application[])
+      if (tab === 'businesses') {
+        setBizMembers(null)
+        setBizMembers(await makeCrmApi(execToken).businessMembers() as BizMember[])
+      } else {
+        setRows(null)
+        setRows(await makeCrmApi(execToken).businessVerifications(tab) as Application[])
+      }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Could not load applications')
-      setRows([])
+      setErr(e instanceof Error ? e.message : 'Could not load')
+      if (tab === 'businesses') setBizMembers([]); else setRows([])
     }
   }, [execToken, tab])
 
@@ -68,7 +82,7 @@ export default function BusinessView({ execToken, onOpenMember }: {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>Business verification</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{tab === 'businesses' ? 'Business accounts' : 'Business verification'}</h2>
         <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
           {TABS.map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{ border: '1px solid #ddd', borderRadius: 8, padding: '6px 12px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', background: tab === id ? '#1a1a1a' : '#fff', color: tab === id ? '#fff' : '#555' }}>{label}</button>
@@ -78,7 +92,45 @@ export default function BusinessView({ execToken, onOpenMember }: {
 
       {err && <div style={{ background: '#fff5f5', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 8, padding: '9px 12px', fontSize: 12.5, marginBottom: 12 }}>{err}</div>}
 
-      {!rows ? <div style={{ padding: 30, color: '#999', fontSize: 13 }}>Loading…</div>
+      {tab === 'businesses' ? (
+        !bizMembers ? <div style={{ padding: 30, color: '#999', fontSize: 13 }}>Loading…</div>
+        : bizMembers.length === 0 ? <div style={{ padding: 40, textAlign: 'center', color: '#999', fontSize: 13 }}>No business accounts yet.</div>
+        : (
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Nunito, sans-serif', fontSize: 12.5 }}>
+              <thead><tr style={{ textAlign: 'left', color: '#999', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                {['Business', 'Level', 'Feedback', 'Sales (90d / total)', 'Progress to next', ''].map(h => <th key={h} style={{ padding: '10px 14px' }}>{h}</th>)}
+              </tr></thead>
+              <tbody>
+                {bizMembers.map(b => {
+                  const salesPct = b.next ? Math.min(100, Math.round((b.sales90d / Math.max(1, b.next.needSales)) * 100)) : 100
+                  const ratingOk = b.next ? (b.rating ?? 0) >= b.next.needRating : true
+                  return (
+                    <tr key={b.id} style={{ borderTop: '1px solid #f5f0e8' }}>
+                      <td style={{ padding: '10px 14px' }}>
+                        <div style={{ fontWeight: 800, color: '#1a1a1a' }}>{b.businessName || <span style={{ color: '#c0392b' }}>No business name</span>}</div>
+                        <div style={{ color: '#999', fontSize: 11 }}>{b.displayName} · {b.email}{b.verified ? ' · ✓ verified' : ''}</div>
+                      </td>
+                      <td style={{ padding: '10px 14px' }}><span style={{ fontWeight: 800, color: '#1e2b55' }}>{b.tierLabel}</span><div style={{ color: '#999', fontSize: 11 }}>{b.feePct}% fee</div></td>
+                      <td style={{ padding: '10px 14px', fontWeight: 800, color: '#1a1a1a' }}>{b.rating != null && b.rating > 0 ? `★ ${b.rating.toFixed(1)}` : '★ —'}</td>
+                      <td style={{ padding: '10px 14px', fontWeight: 800, color: '#1a1a1a' }}>{b.sales90d} <span style={{ color: '#bbb', fontWeight: 600 }}>/ {b.salesTotal}</span></td>
+                      <td style={{ padding: '10px 14px', minWidth: 170 }}>
+                        {b.next ? (
+                          <div>
+                            <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>To {b.next.label}: sales {b.sales90d}/{b.next.needSales} · ★ {ratingOk ? '✓' : `${(b.rating ?? 0).toFixed(1)}/${b.next.needRating}`}</div>
+                            <div style={{ height: 6, background: '#eef2f8', borderRadius: 50, overflow: 'hidden' }}><div style={{ width: `${salesPct}%`, height: '100%', background: salesPct >= 100 && ratingOk ? '#16a34a' : 'var(--orange)' }} /></div>
+                          </div>
+                        ) : <span style={{ color: '#16a34a', fontWeight: 800, fontSize: 11 }}>Top level ✓</span>}
+                      </td>
+                      <td style={{ padding: '10px 14px' }}><button onClick={() => onOpenMember?.(b.id)} style={{ background: '#eef4ff', color: '#2563eb', border: 'none', borderRadius: 7, padding: '5px 11px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Open</button></td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : !rows ? <div style={{ padding: 30, color: '#999', fontSize: 13 }}>Loading…</div>
       : rows.length === 0 ? (
         <div style={{ padding: 40, textAlign: 'center', color: '#999', fontSize: 13 }}>Nothing {tab}.</div>
       ) : (

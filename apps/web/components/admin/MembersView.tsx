@@ -3,7 +3,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { confirmDialog, toast } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 import MemberActivity from './MemberActivity'
-import { BUSINESS_TIERS } from '@grabitt/design-tokens'
+import { BUSINESS_TIERS, businessTierForGrade } from '@grabitt/design-tokens'
+
+// The label to show in the Account level column: business tier for business
+// accounts (Business / Business Plus / Business Pro), personal grade otherwise.
+const accountLevel = (m: { isBusiness: boolean; businessLight?: boolean; grade: string }) =>
+  m.businessLight ? 'Business Light' : m.isBusiness ? businessTierForGrade(m.grade).label : (m.grade[0].toUpperCase() + m.grade.slice(1))
 
 // Business level ↔ grade mapping (Business = Dealer, Plus = Trader, Pro = Pro).
 const LEVEL_OPTS: [string, string][] = [
@@ -50,7 +55,7 @@ interface Member {
 
 const GRADES = ['grabber', 'dealer', 'trader', 'pro'] as const
 const gradeColors: Record<string, string> = { grabber: 'var(--orange)', dealer: '#f59e0b', trader: '#3b82f6', pro: '#7c3aed' }
-const FILTERS = ['All', 'Member', 'Business', 'Suspended', 'New'] as const
+const FILTERS = ['All', 'Member', 'Suspended', 'New'] as const
 
 function statusOf(m: Member): { label: string; color: string } {
   if (m.deletedAt) return { label: 'deleted', color: '#888' }
@@ -113,7 +118,6 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
     const q = search.toLowerCase()
     if (q && ![m.displayName, m.email, m.businessName].some(v => v?.toLowerCase().includes(q))) return false
     if (filter === 'Member') return !m.isBusiness && statusOf(m).label !== 'suspended'
-    if (filter === 'Business') return m.isBusiness
     if (filter === 'Suspended') return statusOf(m).label === 'suspended'
     if (filter === 'New') return new Date(m.createdAt).getTime() > thirtyDaysAgo
     return true
@@ -144,7 +148,7 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
-              {['Member', 'Email', 'Grade', 'Account', 'Sales', 'Credits', 'Joined', 'Status', 'Actions'].map(h => <th key={h} style={th}>{h}</th>)}
+              {['Member', 'Email', 'Account level', 'Type', 'Sales', 'Joined', 'Status', 'Actions'].map(h => <th key={h} style={th}>{h}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -159,13 +163,12 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
                     {m.businessName && <div style={{ fontSize: 11, color: '#999', fontWeight: 600 }}>{m.businessName}</div>}
                   </td>
                   <td style={{ ...td, color: '#888' }}>{m.email}</td>
-                  <td style={td}><span style={{ color: gradeColors[m.grade] ?? '#aaa', fontWeight: 900, fontSize: 11, textTransform: 'capitalize' }}>{m.grade}</span></td>
+                  <td style={td}><span style={{ color: gradeColors[m.grade] ?? '#aaa', fontWeight: 900, fontSize: 11 }}>{accountLevel(m)}</span></td>
                   <td style={td}>
                     {m.isAdmin && <span style={{ ...pill('#111'), marginRight: 4 }}>ADMIN</span>}
-                    {m.isBusiness ? <span style={pill('#7c3aed')}>Business{m.businessVerified ? ' ✓' : ''}</span> : <span style={{ color: '#bbb', fontSize: 11 }}>Personal</span>}
+                    {m.isBusiness ? <span style={pill('#7c3aed')}>Business{m.businessVerified ? ' ✓' : ''}</span> : m.businessLight ? <span style={pill('#0ea5e9')}>Business Light</span> : <span style={{ color: '#bbb', fontSize: 11 }}>Personal</span>}
                   </td>
                   <td style={td}>{m.salesCount}</td>
-                  <td style={td}>{m.credits}</td>
                   <td style={{ ...td, fontSize: 11, color: '#999' }}>{new Date(m.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                   <td style={td}><span style={pill(st.color)}>{st.label}</span></td>
                   <td style={td} onClick={stop}>
@@ -180,7 +183,7 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
                 </tr>
               )
             })}
-            {filtered.length === 0 && <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: '#ccc', fontFamily: 'Nunito, sans-serif', fontSize: 13 }}>No members found</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#ccc', fontFamily: 'Nunito, sans-serif', fontSize: 13 }}>No members found</td></tr>}
           </tbody>
         </table>
       </div>

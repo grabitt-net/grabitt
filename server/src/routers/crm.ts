@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server'
 import { router, execProcedure, publicProcedure, protectedProcedure } from '../trpc'
 import type { PrismaClient, Prisma } from '@prisma/client'
 import { notifyUser } from '../lib/notify'
+import { businessTierForGrade, BUSINESS_TIERS, BUSINESS_TIER_ORDER } from '@grabitt/design-tokens'
 
 // Records a privileged action against the acting admin. Best-effort: an audit
 // failure must never break the action the admin actually asked for.
@@ -211,6 +212,43 @@ export const crmRouter = router({
       await writeAudit(ctx.prisma, ctx.execUser.id, userId, 'member_update', { fields: Object.keys(data) })
       return { ok: true, id: updated.id }
     }),
+
+  // Business members list — for the admin Business menu. Shows each business's
+  // name, current level (tier), feedback rating and sales, and progress to the
+  // next level. No credits (retired).
+  businessMembers: execProcedure.query(async ({ ctx }) => {
+    const users = await ctx.prisma.user.findMany({
+      where: { isBusiness: true, deletedAt: null },
+      select: { id: true, displayName: true, email: true, businessName: true, grade: true, avgRating: true, salesCount: true, businessVerified: true },
+      orderBy: { salesCount: 'desc' },
+      take: 500,
+    })
+    const ids = users.map(u => u.id)
+    const since = new Date(Date.now() - 90 * 86400000)
+    const agg = ids.length
+      ? await ctx.prisma.transaction.groupBy({ by: ['sellerId'], where: { sellerId: { in: ids }, createdAt: { gte: since } }, _count: true })
+      : []
+    const sales90 = new Map(agg.map(a => [a.sellerId, a._count]))
+    return users.map(u => {
+      const tier = businessTierForGrade(u.grade)
+      const idx = BUSINESS_TIER_ORDER.indexOf(tier.key)
+      const nextKey = BUSINESS_TIER_ORDER[idx + 1]
+      const next = nextKey ? BUSINESS_TIERS[nextKey] : null
+      return {
+        id: u.id,
+        displayName: u.displayName,
+        email: u.email,
+        businessName: u.businessName,
+        verified: u.businessVerified,
+        tierLabel: tier.label,
+        feePct: tier.feeRate * 100,
+        rating: u.avgRating == null ? null : Number(u.avgRating),
+        salesTotal: u.salesCount,
+        sales90d: sales90.get(u.id) ?? 0,
+        next: next ? { label: next.label, needSales: next.criteria.sales90d, needRating: next.criteria.rating } : null,
+      }
+    })
+  }),
 
   // Exec suite: everything about one member, for the 360° detail view —
   // listings, sales, purchases, jobs, applications, property, messages,
