@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { getStripe } from '../lib/stripe'
 import { HANDY_PRICING } from '@grabitt/design-tokens'
+import { applyPromo } from '../lib/discounts'
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 const VALIDITY_MS = HANDY_PRICING.validityDays * 86_400_000
@@ -176,6 +177,7 @@ export const handyRouter = router({
       location: z.string().max(100).optional(),
       price: z.number().min(0).optional(),
       images: z.array(z.string().url()).max(8).optional(),
+      discountCode: z.string().max(40).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const me = await ctx.prisma.user.findUniqueOrThrow({
@@ -203,11 +205,13 @@ export const handyRouter = router({
       })
 
       if (paid) {
+        const promo = await applyPromo(ctx.prisma, input.discountCode, ctx.user.id, 'handy_place', HANDY_PRICING.businessPlaceCents)
+        const fee = HANDY_PRICING.businessPlaceCents - promo.discountCents
         const session = await getStripe().checkout.sessions.create({
           mode: 'payment',
           ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email ?? undefined }),
-          line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: HANDY_PRICING.businessPlaceCents, product_data: { name: `Grabitt Handy Help advert — ${input.title.trim()}` } } }],
-          payment_intent_data: { metadata: { kind: 'listing_publish', listingId: listing.id } },
+          line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name: `Grabitt Handy Help advert — ${input.title.trim()}` } } }],
+          payment_intent_data: { metadata: { kind: 'listing_publish', listingId: listing.id, ...promo.meta } },
           success_url: `${appUrl()}/handy?placed=1`,
           cancel_url: `${appUrl()}/handy?cancelled=1`,
         })

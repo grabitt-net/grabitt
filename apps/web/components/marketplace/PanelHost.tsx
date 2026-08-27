@@ -5040,6 +5040,7 @@ function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; i
   const [description, setDescription] = useState('')
   const [town, setTown] = useState('Las Palmas')
   const [budget, setBudget] = useState('')
+  const [hpPromo, setHpPromo] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -5069,6 +5070,7 @@ function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; i
         kind, title: title.trim(), description: description.trim(),
         location: town, price: budget ? Number(budget) : undefined,
         images: photos.length ? photos : undefined,
+        ...(kind === 'offer' && hpPromo.trim() ? { discountCode: hpPromo.trim() } : {}),
       }) as { paid: boolean; checkoutUrl?: string }
       if (res.paid && res.checkoutUrl) { window.location.href = res.checkoutUrl; return }
       setPosted(true)
@@ -5145,6 +5147,11 @@ function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; i
           )}
         </div>
       </div>
+
+      {!isRequest && (
+        <input value={hpPromo} onChange={e => setHpPromo(e.target.value.toUpperCase())} placeholder="Discount code (optional)"
+          style={{ ...inputStyle, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }} />
+      )}
 
       {note && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#ef4444', marginBottom: 10 }}>{note}</div>}
 
