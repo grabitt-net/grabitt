@@ -65,6 +65,11 @@ export const subscriptionsRouter = router({
       if (input.discountCode) {
         const dr = await validateDiscount(ctx.prisma, { code: input.discountCode, userId: ctx.user.id, kind: 'business_upgrade', amountCents: plan.amountCents })
         if (!dr.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: dr.reason })
+        // The business plan already comes with a free trial, so it's the offer —
+        // real promo codes can't be stacked on it. Only test codes are honoured
+        // here (they skip the trial to charge the reduced amount for live-Stripe
+        // testing).
+        if (!dr.isTest) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Business plans already include a free trial, so a discount code can’t be applied here.' })
         if (dr.discountCents > 0) {
           discountCodeId = dr.codeId; discountCents = dr.discountCents
           const coupon = await getStripe().coupons.create({ amount_off: discountCents, currency: 'eur', duration: 'once', name: `Grabitt ${dr.code}` })
