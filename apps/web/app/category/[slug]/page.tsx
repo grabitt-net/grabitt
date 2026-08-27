@@ -119,7 +119,7 @@ export default function CategoryPage() {
       <QuickActions />
 
       {/* Category Sponsor — the fixed top banner for this category (1 advertiser) */}
-      <BannerSlot position="category" page={slug} aspect="5 / 1" />
+      <BannerSlot position="category" page={slug} aspect="2.5 / 1" />
 
       {/* Orange hero — the category name and its description, centred on the same
           orange box used by the footer/info pages. */}

@@ -32,7 +32,7 @@ type Position =
 // recommended image size per placement.
 export const BANNER_ASPECTS: Record<string, string> = {
   home_top: '5 / 1', home_mid: '3.4 / 1', home_hero: '3.4 / 1',
-  category: '5 / 1', category_top: '5 / 1', category_infeed: '7 / 1', category_footer: '6 / 1',
+  category: '2.5 / 1', category_top: '2.5 / 1', category_infeed: '7 / 1', category_footer: '6 / 1',
   search_top: '5 / 1', search_footer: '6 / 1', sticky_bottom: '6 / 1',
   similar_items: '5 / 1', seller_dashboard: '6 / 1', user_dashboard: '6 / 1',
   checkout: '6 / 1', jobs: '5 / 1', sponsor_top: '4.5 / 1', sponsor_footer: '4.5 / 1',
