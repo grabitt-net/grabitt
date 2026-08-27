@@ -1,6 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
-import { confirmDialog } from '@/lib/ui'
+import { confirmDialog, toast } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 import MemberActivity from './MemberActivity'
 import { BUSINESS_TIERS } from '@grabitt/design-tokens'
@@ -83,6 +83,31 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
     if (m) setSelected(m)
   }, [focusUserId, members])
 
+  // Quick row actions — suspend / reactivate / password reset without opening
+  // the full editor.
+  const [rowBusy, setRowBusy] = useState('')
+  const stop = (e: React.MouseEvent) => e.stopPropagation()
+  const quickSuspend = async (m: Member, e: React.MouseEvent) => {
+    stop(e)
+    if (!(await confirmDialog({ message: `Suspend ${m.email}? They won't be able to use their account until reactivated.`, confirmLabel: 'Suspend', danger: true }))) return
+    setRowBusy(m.id)
+    try { await api.updateMember({ userId: m.id, suspendedUntil: new Date('2099-12-31T00:00:00.000Z').toISOString(), suspendedReason: 'Suspended by admin' }); await refresh() }
+    catch { toast('Could not suspend — please try again.') } finally { setRowBusy('') }
+  }
+  const quickUnsuspend = async (m: Member, e: React.MouseEvent) => {
+    stop(e)
+    setRowBusy(m.id)
+    try { await api.updateMember({ userId: m.id, suspendedUntil: null, suspendedReason: null }); await refresh() }
+    catch { toast('Could not reactivate — please try again.') } finally { setRowBusy('') }
+  }
+  const quickReset = async (m: Member, e: React.MouseEvent) => {
+    stop(e)
+    if (!(await confirmDialog({ message: `Send a password-reset / account email to ${m.email}?`, confirmLabel: 'Send' }))) return
+    setRowBusy(m.id)
+    try { await api.memberAuthAction({ action: 'reset_password', userId: m.id }); toast(`✓ Sent to ${m.email}`) }
+    catch { toast('Could not send — please try again.') } finally { setRowBusy('') }
+  }
+
   const thirtyDaysAgo = Date.now() - 30 * 86400000
   const filtered = members.filter(m => {
     const q = search.toLowerCase()
@@ -119,7 +144,7 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
-              {['Member', 'Email', 'Grade', 'Account', 'Sales', 'Credits', 'Joined', 'Status', ''].map(h => <th key={h} style={th}>{h}</th>)}
+              {['Member', 'Email', 'Grade', 'Account', 'Sales', 'Credits', 'Joined', 'Status', 'Actions'].map(h => <th key={h} style={th}>{h}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -143,7 +168,15 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
                   <td style={td}>{m.credits}</td>
                   <td style={{ ...td, fontSize: 11, color: '#999' }}>{new Date(m.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                   <td style={td}><span style={pill(st.color)}>{st.label}</span></td>
-                  <td style={{ ...td, color: 'var(--orange)', fontWeight: 800, fontSize: 11 }}>Edit →</td>
+                  <td style={td} onClick={stop}>
+                    <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <button onClick={() => setSelected(m)} style={rowBtn('#eef4ff', '#2563eb')}>Edit</button>
+                      {st.label === 'suspended'
+                        ? <button onClick={e => quickUnsuspend(m, e)} disabled={rowBusy === m.id} style={rowBtn('#f0faf4', '#16a34a')}>{rowBusy === m.id ? '…' : 'Reactivate'}</button>
+                        : <button onClick={e => quickSuspend(m, e)} disabled={rowBusy === m.id} style={rowBtn('#fef2f2', '#ef4444')}>{rowBusy === m.id ? '…' : 'Suspend'}</button>}
+                      <button onClick={e => quickReset(m, e)} disabled={rowBusy === m.id} style={rowBtn('#fff7ed', '#b45309')} title="Send a password-reset / account email">Reset</button>
+                    </div>
+                  </td>
                 </tr>
               )
             })}
@@ -521,6 +554,10 @@ const chip = (active: boolean): React.CSSProperties => ({
 const pill = (color: string): React.CSSProperties => ({
   background: `${color}18`, color, borderRadius: 50, padding: '3px 10px',
   fontSize: 10, fontWeight: 800, fontFamily: 'Nunito, sans-serif', whiteSpace: 'nowrap',
+})
+const rowBtn = (bg: string, fg: string): React.CSSProperties => ({
+  background: bg, color: fg, border: 'none', borderRadius: 7, padding: '5px 10px',
+  fontSize: 11, fontWeight: 800, fontFamily: 'Nunito, sans-serif', cursor: 'pointer', whiteSpace: 'nowrap',
 })
 const topTab = (active: boolean): React.CSSProperties => ({
   background: active ? '#1a1a1a' : '#fff', color: active ? '#fff' : '#666',
