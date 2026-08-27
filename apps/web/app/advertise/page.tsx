@@ -7,6 +7,7 @@ import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
+import PromoField from '@/components/marketplace/PromoField'
 
 type Slot = { id: string; label: string; monthlyCents: number; cap: number; exclusive: boolean; perPage: boolean; scope: string }
 type Catalog = { slots: Slot[]; durations: number[]; maxMonths: number; pages: string[] }
@@ -43,7 +44,7 @@ function Inner() {
   const [paying, setPaying] = useState(false)
   const [err, setErr] = useState('')
   const [signedIn, setSignedIn] = useState<boolean | null>(null)
-  const [promo, setPromo] = useState('')
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountCents: number } | null>(null)
 
   // Know up front whether the visitor can pay, so we prompt sign-in rather than
   // failing at the checkout step.
@@ -103,7 +104,7 @@ function Inner() {
     if (!signedIn) { openPanel('login'); return }
     setErr(''); setPaying(true)
     try {
-      const payload = { lines: lines.map(l => ({ position: l.position, pageTarget: l.pageTarget || undefined, months: l.months, startsAt: new Date(l.startsAt).toISOString() })), ...(promo.trim() ? { discountCode: promo.trim() } : {}) }
+      const payload = { lines: lines.map(l => ({ position: l.position, pageTarget: l.pageTarget || undefined, months: l.months, startsAt: new Date(l.startsAt).toISOString() })), ...(appliedPromo ? { discountCode: appliedPromo.code } : {}) }
       const res = await trpcAuthed().banners.order.mutate(payload) as { url?: string }
       if (res?.url) window.location.href = res.url
       else setErr('Could not start checkout — please sign in as a business and try again.')
@@ -198,12 +199,13 @@ function Inner() {
 
       {err && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#b91c1c', marginBottom: 10, fontWeight: 700 }}>{err}</div>}
 
-      <input value={promo} onChange={e => setPromo(e.target.value.toUpperCase())} placeholder="Discount code (optional)"
-        style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 12, padding: '11px 13px', fontFamily: 'var(--font-nunito)', fontSize: 13.5, letterSpacing: 1, textTransform: 'uppercase', outline: 'none', marginBottom: 10 }} />
+      {quote && quote.totalCents > 0 && signedIn && (
+        <PromoField kind="sponsorship" amountCents={quote.totalCents} onApplied={setAppliedPromo} />
+      )}
 
       <button onClick={pay} disabled={paying || anyClash || missingPage || !lines.length}
         style={{ width: '100%', background: anyClash || missingPage ? '#e5e7eb' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: anyClash || missingPage ? '#999' : '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: anyClash || missingPage ? 'default' : 'pointer' }}>
-        {paying ? 'Starting checkout…' : missingPage ? 'Choose a page for each category slot' : anyClash ? 'Fix the date clashes above' : signedIn === false ? 'Sign in to book' : quote ? `Pay ${eur(quote.totalCents)} & book` : 'Continue'}
+        {paying ? 'Starting checkout…' : missingPage ? 'Choose a page for each category slot' : anyClash ? 'Fix the date clashes above' : signedIn === false ? 'Sign in to book' : quote ? `Pay ${eur(Math.max(0, quote.totalCents - (appliedPromo?.discountCents ?? 0)))} & book` : 'Continue'}
       </button>
       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', textAlign: 'center', marginTop: 10 }}>
         After payment you’ll upload your banner image from your business dashboard. Banners go live once approved by our team.

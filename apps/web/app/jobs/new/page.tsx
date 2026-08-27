@@ -9,6 +9,8 @@ import Topbar from '@/components/marketplace/Topbar'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import type { JobQuestion, JobQuestionType } from '@/lib/jobQuestions'
 import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
+import PromoField from '@/components/marketplace/PromoField'
+import { JOBS_PRICING } from '@grabitt/design-tokens'
 import { GC_TOWNS } from '@/lib/gcTowns'
 import { JOB_SECTORS, JOB_LANGUAGES } from '@/lib/jobCategories'
 
@@ -39,7 +41,7 @@ export default function PostJobPage() {
   const toggleLang = (l: string) => setLanguages(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [promo, setPromo] = useState('')
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountCents: number } | null>(null)
   const [questions, setQuestions] = useState<JobQuestion[]>([])
   // Only business accounts may post jobs.
   const [gate, setGate] = useState<'checking' | 'ok' | 'needbusiness'>('checking')
@@ -129,7 +131,7 @@ export default function PostJobPage() {
               ...(q.type === 'choice' ? { options: (q.options ?? []).filter(Boolean) } : {}),
             })),
         } : {}),
-        ...(promo.trim() ? { discountCode: promo.trim() } : {}),
+        ...(appliedPromo ? { discountCode: appliedPromo.code } : {}),
       })
       try { localStorage.removeItem(JOB_DRAFT_KEY) } catch {}
       // Beyond the free allowance a job is €39 — go pay, then the webhook
@@ -287,8 +289,7 @@ export default function PostJobPage() {
 
         {error && <div style={{ background: '#fff0f0', border: '1px solid #ffcdd2', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#c62828', fontFamily: 'var(--font-ui)' }}>{error}</div>}
 
-        <input value={promo} onChange={e => setPromo(e.target.value.toUpperCase())} placeholder="Discount code (optional)"
-          style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e0d8d0', borderRadius: 12, padding: '11px 13px', fontFamily: 'var(--font-ui)', fontSize: 13.5, letterSpacing: 1, textTransform: 'uppercase', outline: 'none' }} />
+        <PromoField kind="job" amountCents={JOBS_PRICING.perJobCents} onApplied={setAppliedPromo} />
 
         <button type="submit" disabled={saving} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
           {saving ? 'Posting…' : 'Post Job →'}

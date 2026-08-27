@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { toast, confirmDialog } from '@/lib/ui'
-import { BLAST_BUNDLES } from '@grabitt/design-tokens'
+import { BLAST_BUNDLES, SUBSCRIPTION_PLANS } from '@grabitt/design-tokens'
 import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import type { PanelId } from '@/context/PanelContext'
@@ -17,6 +17,7 @@ import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/
 import StripePayment from './StripePayment'
 import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
+import PromoField from './PromoField'
 import SeekerProfilePanel from './SeekerProfilePanel'
 import SignInFirst from './SignInFirst'
 import BusinessVerifyPanel from './BusinessVerifyPanel'
@@ -3651,13 +3652,6 @@ function PanelBody() {
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 4 }}>Buyers can purchase multiple units until stock runs out.</div>
                 </div>
 
-                {/* Promo / discount code — applied to any listing fee at checkout */}
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Discount code (optional)</div>
-                  <input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder="Enter a code"
-                    style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, letterSpacing: 1, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box', textTransform: 'uppercase' }} />
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 4 }}>Applied to any listing fee at checkout.</div>
-                </div>
 
                 {/* Auto-accept offers minimum (seller-only; never shown to buyers) */}
                 {!freeItem && (
@@ -3835,7 +3829,6 @@ function PanelBody() {
                       autoAcceptMin: !freeItem && parseFloat(autoAcceptMin) > 0 ? parseFloat(autoAcceptMin) : undefined,
                       ...(multibuyTiers.length && !freeItem ? { multibuyTiers } : {}),
                       ...(Object.keys(attrs).length ? { attributes: attrs } : {}),
-                      ...(promoCode.trim() ? { discountCode: promoCode.trim() } : {}),
                     })
                     // Business Light: the €0.99 per-listing fee is due before the
                     // item goes live — the create returns a checkout URL.
@@ -4810,7 +4803,7 @@ function PanelBody() {
     const [catalog, setCatalog] = useState<any[]>([])
     const [durations, setDurations] = useState<number[]>([1, 3, 6, 12])
     const [bizBusy, setBizBusy] = useState(false)
-    const [bizPromo, setBizPromo] = useState('')
+    const [appliedBiz, setAppliedBiz] = useState<{ code: string; discountCents: number } | null>(null)
     const [bizInterval, setBizInterval] = useState<'month' | 'year' | 'light'>(() => {
       try { const v = sessionStorage.getItem('grabitt_biz_interval'); return v === 'year' ? 'year' : v === 'light' ? 'light' : 'month' } catch { return 'month' }
     })
@@ -4852,7 +4845,7 @@ function PanelBody() {
         if (!token) token = await refreshAuthToken()
         if (!token) { toast('Please log in first'); openPanel('login'); return }
         const client = await getTrpcClient()
-        const res = await client.subscriptions.createCheckout.mutate({ plan: plan as never, ...(sponsorItems.length ? { sponsorship: sponsorItems as never } : {}), ...(bizPromo.trim() ? { discountCode: bizPromo.trim() } : {}) } as never)
+        const res = await client.subscriptions.createCheckout.mutate({ plan: plan as never, ...(sponsorItems.length ? { sponsorship: sponsorItems as never } : {}), ...(appliedBiz ? { discountCode: appliedBiz.code } : {}) } as never)
         try { sessionStorage.removeItem('grabitt_biz_sponsorship') } catch {}
         if (res.url) window.location.href = res.url
         else { toast('Could not start checkout'); setBizBusy(false) }
@@ -4937,10 +4930,9 @@ function PanelBody() {
         </div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 10 }}>{bizInterval === 'light' ? (sponsorTotal > 0 ? 'Business Light is free — you only pay the sponsorship above. Add your business details when you first sign in.' : 'Business Light is free — no card needed. You only pay €0.99 when you list an item.') : 'You’ll add a card on Stripe — the account is free for 14 days. We’ll ask for your business details when you first sign in.'}</div>
         {bizInterval !== 'light' && (
-          <input value={bizPromo} onChange={e => setBizPromo(e.target.value.toUpperCase())} placeholder="Discount code (optional)"
-            style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e0d8d0', borderRadius: 12, padding: '11px 13px', fontFamily: 'var(--font-ui)', fontSize: 13.5, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--dark)', outline: 'none', marginBottom: 10 }} />
+          <PromoField kind="business_upgrade" amountCents={bizInterval === 'year' ? SUBSCRIPTION_PLANS.business_annual.amountCents : SUBSCRIPTION_PLANS.business.amountCents} onApplied={setAppliedBiz} />
         )}
-        <button onClick={() => bizInterval === 'light' ? startLight() : startCheckout(bizInterval === 'year' ? 'business_annual' : 'business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? (bizInterval === 'light' ? 'Setting up…' : 'Opening Stripe…') : bizInterval === 'light' ? (sponsorTotal > 0 ? '🆓 Start free & pay sponsorship' : '🆓 Start free with Business Light') : sponsorTotal > 0 ? '🚀 Start trial & add sponsorship' : bizPromo.trim() ? '🚀 Apply code & subscribe' : '🚀 Start 14-day free trial'}</button>
+        <button onClick={() => bizInterval === 'light' ? startLight() : startCheckout(bizInterval === 'year' ? 'business_annual' : 'business')} disabled={bizBusy} style={{ width: '100%', background: bizBusy ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: bizBusy ? 'default' : 'pointer' }}>{bizBusy ? (bizInterval === 'light' ? 'Setting up…' : 'Opening Stripe…') : bizInterval === 'light' ? (sponsorTotal > 0 ? '🆓 Start free & pay sponsorship' : '🆓 Start free with Business Light') : sponsorTotal > 0 ? '🚀 Start trial & add sponsorship' : appliedBiz ? '🚀 Apply code & subscribe' : '🚀 Start 14-day free trial'}</button>
 
         {/* Founding cohort annual lock-in — only while slots remain (first 100) */}
         {(foundingBizLeft === null || foundingBizLeft > 0) && (<>
@@ -5040,7 +5032,7 @@ function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; i
   const [description, setDescription] = useState('')
   const [town, setTown] = useState('Las Palmas')
   const [budget, setBudget] = useState('')
-  const [hpPromo, setHpPromo] = useState('')
+  const [appliedHp, setAppliedHp] = useState<{ code: string; discountCents: number } | null>(null)
   const [photos, setPhotos] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -5070,7 +5062,7 @@ function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; i
         kind, title: title.trim(), description: description.trim(),
         location: town, price: budget ? Number(budget) : undefined,
         images: photos.length ? photos : undefined,
-        ...(kind === 'offer' && hpPromo.trim() ? { discountCode: hpPromo.trim() } : {}),
+        ...(kind === 'offer' && appliedHp ? { discountCode: appliedHp.code } : {}),
       }) as { paid: boolean; checkoutUrl?: string }
       if (res.paid && res.checkoutUrl) { window.location.href = res.checkoutUrl; return }
       setPosted(true)
@@ -5148,10 +5140,7 @@ function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; i
         </div>
       </div>
 
-      {!isRequest && (
-        <input value={hpPromo} onChange={e => setHpPromo(e.target.value.toUpperCase())} placeholder="Discount code (optional)"
-          style={{ ...inputStyle, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }} />
-      )}
+      {!isRequest && <PromoField kind="handy_place" amountCents={999} onApplied={setAppliedHp} />}
 
       {note && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#ef4444', marginBottom: 10 }}>{note}</div>}
 
