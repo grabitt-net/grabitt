@@ -8,6 +8,7 @@ import SupportInboxView from './SupportInboxView'
 import MembersView from './MembersView'
 import CandidatesView from './CandidatesView'
 import BusinessView from './BusinessView'
+import DiscountsView from './DiscountsView'
 import DisputesView from './DisputesView'
 import ReportsView from './ReportsView'
 import BannersView from './BannersView'
@@ -49,6 +50,7 @@ const COMMANDS: Command[] = [
   { id: 'retention', label: 'Retention', icon: '📊', group: 'Overview' },
   { id: 'members', label: 'Members', icon: '🪪', group: 'People' },
   { id: 'business', label: 'Business', icon: '🏢', group: 'People' },
+  { id: 'discounts', label: 'Discount codes', icon: '🏷️', group: 'Content', keywords: 'promo promotion coupon voucher discount codes' },
   { id: 'candidates', label: 'Candidates', icon: '🙋', group: 'People' },
   { id: 'contacts', label: 'Contacts', icon: '📇', group: 'People' },
   { id: 'pipeline', label: 'Prospects', icon: '🤞', group: 'People', keywords: 'crm deals' },
@@ -88,7 +90,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'news' | 'economic' | 'events' | 'help' | 'support' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'news' | 'economic' | 'events' | 'help' | 'support' | 'discounts' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -211,6 +213,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'members'    && <MembersView   members={members} focusUserId={focusMemberId} />}
                 {view === 'candidates' && <CandidatesView execToken={execToken} onOpenMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'business'   && <BusinessView   execToken={execToken} onOpenMember={(id) => { setFocusMemberId(id); setView('members') }} />}
+                {view === 'discounts'  && <DiscountsView />}
                 {view === 'disputes'   && <DisputesView  disputes={disputes} onUpdate={setDisputes} />}
                 {view === 'reports'    && <ReportsView   onCountChange={setReportsOpen} />}
                 {view === 'banners'    && <BannersView initialPosition={bannerPosition} />}

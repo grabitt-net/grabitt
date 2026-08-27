@@ -34,6 +34,7 @@ import { businessRouter } from './routers/business'
 import { reportsRouter } from './routers/reports'
 import { accountLevelsRouter } from './routers/accountLevels'
 import { sponsorshipRouter } from './routers/sponsorship'
+import { discountsRouter } from './routers/discounts'
 import { execTasksRouter } from './routers/execTasks'
 
 export const appRouter = router({
@@ -73,6 +74,7 @@ export const appRouter = router({
   affiliates: affiliatesRouter,
   accountLevels: accountLevelsRouter,
   sponsorship: sponsorshipRouter,
+  discounts: discountsRouter,
 })
 
 export type AppRouter = typeof appRouter

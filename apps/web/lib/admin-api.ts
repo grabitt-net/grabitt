@@ -39,6 +39,10 @@ export function makeCrmApi(execToken: string) {
     contacts: (stage?: string) =>
       rpc<any[]>('crm.contacts', 'query', { stage, page: 1 }, execToken),
     businessMembers: () => rpc<any[]>('crm.businessMembers', 'query', undefined, execToken),
+    discountCodes: () => rpc<any[]>('discounts.list', 'query', undefined, execToken),
+    upsertDiscount: (data: Record<string, unknown>) => rpc<any>('discounts.upsert', 'mutation', data, execToken),
+    removeDiscount: (id: string) => rpc<any>('discounts.remove', 'mutation', { id }, execToken),
+    discountRedemptions: (codeId: string) => rpc<any[]>('discounts.redemptions', 'query', { codeId }, execToken),
     supportInbox: (status?: 'open' | 'resolved' | 'all') =>
       rpc<any[]>('crm.supportInbox', 'query', status ? { status } : undefined, execToken),
     resolveSupport: (id: string, resolved: boolean) =>

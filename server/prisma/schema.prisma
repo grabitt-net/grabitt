@@ -1789,3 +1789,49 @@ model Referral {
 
   @@index([affiliateLinkId])
 }
+
+// Promotional discount codes. Admin-generated, applied at checkout to reduce the
+// charged amount. Scope controls where a code works (which paid flows / item
+// categories) and how often it can be redeemed.
+model DiscountCode {
+  id            String   @id @default(uuid())
+  code          String   @unique                 // stored uppercase
+  description   String?
+  // Discount — one of these. percentOff wins if both set.
+  percentOff    Int?                              // 1-100
+  amountOffCents Int?                             // fixed cents off
+  // Validity window (null = open-ended).
+  startsAt      DateTime?
+  endsAt        DateTime?
+  active        Boolean  @default(true)
+  // Usage limits.
+  maxUses       Int?                              // total redemptions allowed (null = unlimited)
+  usedCount     Int      @default(0)
+  oncePerCustomer Boolean @default(true)
+  // Applicability. `appliesTo` = which checkout kinds it works on (e.g.
+  // listing_publish, listing_promo, business_upgrade, handy_place, handy_unlock,
+  // job, property, cv_unlock, sponsorship) or ['all']. `categories` = department
+  // slugs it's limited to for item listings ([] = any category).
+  appliesTo     String[] @default([])
+  categories    String[] @default([])
+  isTest        Boolean  @default(false)          // generic pre-launch test code
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  redemptions   DiscountRedemption[]
+  @@index([active])
+}
+
+model DiscountRedemption {
+  id            String   @id @default(uuid())
+  codeId        String
+  discount      DiscountCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  userId        String
+  appliedTo     String                            // the checkout kind it was used on
+  originalCents Int
+  discountCents Int
+  createdAt     DateTime @default(now())
+
+  @@index([codeId])
+  @@index([userId])
+}
