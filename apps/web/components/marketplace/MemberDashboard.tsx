@@ -284,7 +284,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             {me?.isBusiness ? (
               /* Switch easily between the business and personal profile. */
               <HubNavRow icon="briefcase" label={effBiz ? t('Personal account') : t('Business account')} last={!effBiz} value={
-                <button onClick={() => { const goPersonal = !personalView; setPersonalView(goPersonal); setSection(goPersonal ? 'messages' : 'business') }} style={navLinkBtn}>{t('Switch')}</button>} />
+                <button onClick={() => { const goPersonal = !personalView; setPersonalView(goPersonal); setSection(goPersonal ? 'hub' : 'business'); didInitSection.current = true }} style={navLinkBtn}>{t('Switch')}</button>} />
             ) : (
               <HubNavRow icon="briefcase" label={t('Business acc')} last value={
                 <button onClick={() => router.push('/for-business')} style={navLinkBtn}>{t('Add / Upgrade')}</button>} />
