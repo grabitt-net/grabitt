@@ -343,21 +343,21 @@ export const crmRouter = router({
         })),
         jobsPosted: jobsPosted.map(j => ({
           id: j.id, listingId: j.listingId, jobTitle: j.jobTitle, company: j.company,
-          type: j.type, status: j.listing.status, applicants: j._count.applications, createdAt: j.createdAt,
+          type: j.type, status: j.listing?.status ?? 'removed', applicants: j._count.applications, createdAt: j.createdAt,
         })),
         applications: applications.map(a => ({
           id: a.id, status: a.status, createdAt: a.createdAt,
-          jobTitle: a.jobListing.jobTitle, company: a.jobListing.company, listingId: a.jobListing.listingId,
+          jobTitle: a.jobListing?.jobTitle ?? '—', company: a.jobListing?.company ?? '—', listingId: a.jobListing?.listingId ?? null,
           coverNote: a.coverNote, cvOnFile: !!a.cvUrl,
         })),
         sales: sales.map(t => ({
-          id: t.id, item: t.listing.title, amount: money(t.amount), fee: money(t.platformFee),
+          id: t.id, item: t.listing?.title ?? '—', amount: money(t.amount), fee: money(t.platformFee),
           net: money(t.sellerNet), status: t.status, createdAt: t.createdAt,
-          counterparty: t.buyer.displayName, counterpartyId: t.buyer.id,
+          counterparty: t.buyer?.displayName ?? '—', counterpartyId: t.buyer?.id ?? null,
         })),
         purchases: purchases.map(t => ({
-          id: t.id, item: t.listing.title, amount: money(t.amount), status: t.status,
-          createdAt: t.createdAt, counterparty: t.seller.displayName, counterpartyId: t.seller.id,
+          id: t.id, item: t.listing?.title ?? '—', amount: money(t.amount), status: t.status,
+          createdAt: t.createdAt, counterparty: t.seller?.displayName ?? '—', counterpartyId: t.seller?.id ?? null,
         })),
         threads: threads.map(tp => {
           const other = tp.thread.participants.find(p => p.userId !== id)
@@ -368,12 +368,12 @@ export const crmRouter = router({
             withId: other?.user.id ?? null,
             messages: tp.thread._count.messages,
             lastAt: last?.createdAt ?? null,
-            lastPreview: last ? last.body.slice(0, 120) : null,
+            lastPreview: last?.body ? last.body.slice(0, 120) : null,
           }
         }).sort((a, b) => (b.lastAt?.getTime() ?? 0) - (a.lastAt?.getTime() ?? 0)),
-        reviewsGiven: reviewsGiven.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, about: r.subject.displayName, createdAt: r.createdAt })),
-        reviewsReceived: reviewsReceived.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, by: r.author.displayName, createdAt: r.createdAt })),
-        disputes: disputes.map(d => ({ id: d.id, status: d.status, reason: d.reason, item: d.transaction.listing.title, createdAt: d.createdAt })),
+        reviewsGiven: reviewsGiven.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, about: r.subject?.displayName ?? '—', createdAt: r.createdAt })),
+        reviewsReceived: reviewsReceived.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, by: r.author?.displayName ?? '—', createdAt: r.createdAt })),
+        disputes: disputes.map(d => ({ id: d.id, status: d.status, reason: d.reason, item: d.transaction?.listing?.title ?? '—', createdAt: d.createdAt })),
         credits: credits.map(c => ({ id: c.id, kind: c.kind, delta: c.delta, balance: c.balance, note: c.note, createdAt: c.createdAt })),
         consents: consents.map(c => ({ id: c.id, kind: c.kind, acceptedAt: c.acceptedAt, ipAddress: c.ipAddress })),
         subscriptions: subscriptions.map(s => ({ id: s.id, plan: s.plan, status: s.status, currentPeriodEnd: s.currentPeriodEnd, cancelAtPeriodEnd: s.cancelAtPeriodEnd })),
@@ -429,9 +429,9 @@ export const crmRouter = router({
             include: { listing: { select: { title: true } }, buyer: { select: { id: true, displayName: true } } },
           })
           return page(rows.map(t => ({
-            id: t.id, item: t.listing.title, amount: money(t.amount), fee: money(t.platformFee),
+            id: t.id, item: t.listing?.title ?? '—', amount: money(t.amount), fee: money(t.platformFee),
             net: money(t.sellerNet), status: t.status, createdAt: t.createdAt,
-            counterparty: t.buyer.displayName, counterpartyId: t.buyer.id,
+            counterparty: t.buyer?.displayName ?? '—', counterpartyId: t.buyer?.id ?? null,
           })))
         }
         case 'purchases': {
@@ -440,8 +440,8 @@ export const crmRouter = router({
             include: { listing: { select: { title: true } }, seller: { select: { id: true, displayName: true } } },
           })
           return page(rows.map(t => ({
-            id: t.id, item: t.listing.title, amount: money(t.amount), status: t.status,
-            createdAt: t.createdAt, counterparty: t.seller.displayName, counterpartyId: t.seller.id,
+            id: t.id, item: t.listing?.title ?? '—', amount: money(t.amount), status: t.status,
+            createdAt: t.createdAt, counterparty: t.seller?.displayName ?? '—', counterpartyId: t.seller?.id ?? null,
           })))
         }
         case 'jobsPosted': {
@@ -451,7 +451,7 @@ export const crmRouter = router({
           })
           return page(rows.map(j => ({
             id: j.id, listingId: j.listingId, jobTitle: j.jobTitle, company: j.company,
-            type: j.type, status: j.listing.status, applicants: j._count.applications, createdAt: j.createdAt,
+            type: j.type, status: j.listing?.status ?? 'removed', applicants: j._count.applications, createdAt: j.createdAt,
           })))
         }
         case 'applications': {
@@ -460,8 +460,8 @@ export const crmRouter = router({
             include: { jobListing: { select: { jobTitle: true, company: true, listingId: true } } },
           })
           return page(rows.map(a => ({
-            id: a.id, status: a.status, createdAt: a.createdAt, jobTitle: a.jobListing.jobTitle,
-            company: a.jobListing.company, listingId: a.jobListing.listingId,
+            id: a.id, status: a.status, createdAt: a.createdAt, jobTitle: a.jobListing?.jobTitle ?? '—',
+            company: a.jobListing?.company ?? '—', listingId: a.jobListing?.listingId ?? null,
             coverNote: a.coverNote, cvOnFile: !!a.cvUrl,
           })))
         }
@@ -484,7 +484,7 @@ export const crmRouter = router({
             return {
               id: tp.thread.id, with: other?.user.displayName ?? 'Unknown', withId: other?.user.id ?? null,
               messages: tp.thread._count.messages, lastAt: last?.createdAt ?? null,
-              lastPreview: last ? last.body.slice(0, 120) : null,
+              lastPreview: last?.body ? last.body.slice(0, 120) : null,
             }
           }))
         }
@@ -499,21 +499,21 @@ export const crmRouter = router({
             where: { authorId: id }, orderBy: { createdAt: 'desc' }, skip, take,
             include: { subject: { select: { id: true, displayName: true } } },
           })
-          return page(rows.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, about: r.subject.displayName, createdAt: r.createdAt })))
+          return page(rows.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, about: r.subject?.displayName ?? '—', createdAt: r.createdAt })))
         }
         case 'reviewsReceived': {
           const rows = await ctx.prisma.review.findMany({
             where: { subjectId: id }, orderBy: { createdAt: 'desc' }, skip, take,
             include: { author: { select: { id: true, displayName: true } } },
           })
-          return page(rows.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, by: r.author.displayName, createdAt: r.createdAt })))
+          return page(rows.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, by: r.author?.displayName ?? '—', createdAt: r.createdAt })))
         }
         case 'disputes': {
           const rows = await ctx.prisma.dispute.findMany({
             where: { raisedById: id }, orderBy: { createdAt: 'desc' }, skip, take,
             include: { transaction: { include: { listing: { select: { title: true } } } } },
           })
-          return page(rows.map(d => ({ id: d.id, status: d.status, reason: d.reason, item: d.transaction.listing.title, createdAt: d.createdAt })))
+          return page(rows.map(d => ({ id: d.id, status: d.status, reason: d.reason, item: d.transaction?.listing?.title ?? '—', createdAt: d.createdAt })))
         }
         case 'strikes': {
           const rows = await ctx.prisma.userStrike.findMany({
