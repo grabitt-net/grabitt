@@ -7,6 +7,7 @@ import { overflowFeeCents } from '../lib/businessLimits'
 import { scoreSuitability } from '../lib/suitability'
 import { getStripe } from '../lib/stripe'
 import { JOBS_PRICING } from '@grabitt/design-tokens'
+import { applyPromo } from '../lib/discounts'
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
@@ -428,6 +429,7 @@ export const jobsRouter = router({
       lat: z.number().optional(),
       lng: z.number().optional(),
       applicationQuestions: z.array(questionSchema).max(15).optional(),
+      discountCode: z.string().max(40).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       // Only Business accounts may post job adverts.
@@ -436,7 +438,9 @@ export const jobsRouter = router({
       // Beyond the tier's monthly free allowance, a job advert is €39 (14 days).
       // The listing is created hidden until the fee is paid; the webhook publishes
       // it. Within allowance, it publishes immediately.
-      const fee = await overflowFeeCents(ctx.prisma, ctx.user.id, 'jobs', JOBS_PRICING.perJobCents)
+      let fee = await overflowFeeCents(ctx.prisma, ctx.user.id, 'jobs', JOBS_PRICING.perJobCents)
+      const promo = fee > 0 ? await applyPromo(ctx.prisma, input.discountCode, ctx.user.id, 'job', fee) : { codeId: null, discountCents: 0, meta: {} as Record<string, string> }
+      fee -= promo.discountCents
       const created = await ctx.prisma.listing.create({
         data: {
           sellerId: ctx.user.id,
@@ -486,7 +490,7 @@ export const jobsRouter = router({
         mode: 'payment',
         ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email }),
         line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name: `Grabitt job advert — ${input.jobTitle} (14 days)` } } }],
-        payment_intent_data: { metadata: { kind: 'listing_publish', listingId: created.id } },
+        payment_intent_data: { metadata: { kind: 'listing_publish', listingId: created.id, ...promo.meta } },
         success_url: `${appUrl()}/listings/${created.id}?published=1`,
         cancel_url: `${appUrl()}/jobs/new?cancelled=1`,
       })

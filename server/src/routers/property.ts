@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
 import { getStripe } from '../lib/stripe'
 import { businessTierForGrade, PROPERTY_PRICING } from '@grabitt/design-tokens'
+import { applyPromo } from '../lib/discounts'
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
@@ -49,6 +50,7 @@ export const propertyRouter = router({
       distBeach: z.number().int().min(0).max(1_000_000).optional(),
       distTown: z.number().int().min(0).max(1_000_000).optional(),
       features: z.array(z.string().max(40)).max(40).optional(),
+      discountCode: z.string().max(40).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       // Anyone can advertise property (advertising only — no commission). The
@@ -65,7 +67,9 @@ export const propertyRouter = router({
       const usedThisMonth = await ctx.prisma.listing.count({
         where: { sellerId: ctx.user.id, department: 'property', createdAt: { gte: monthStart } },
       })
-      const fee = usedThisMonth >= freeAllowance ? PROPERTY_PRICING.privateExtraListingCents : 0
+      let fee = usedThisMonth >= freeAllowance ? PROPERTY_PRICING.privateExtraListingCents : 0
+      const promo = fee > 0 ? await applyPromo(ctx.prisma, input.discountCode, ctx.user.id, 'property', fee) : { codeId: null, discountCents: 0, meta: {} as Record<string, string> }
+      fee -= promo.discountCents
 
       const created = await ctx.prisma.listing.create({
         data: {
@@ -127,7 +131,7 @@ export const propertyRouter = router({
         mode: 'payment',
         ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email }),
         line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name: `Grabitt property advert — ${input.title}` } } }],
-        payment_intent_data: { metadata: { kind: 'listing_publish', listingId: created.id } },
+        payment_intent_data: { metadata: { kind: 'listing_publish', listingId: created.id, ...promo.meta } },
         success_url: `${appUrl()}/listings/${created.id}?published=1`,
         cancel_url: `${appUrl()}/property/new?cancelled=1`,
       })

@@ -40,6 +40,7 @@ export default function NewPropertyPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [promo, setPromo] = useState('')
   // Agents need a Business account AND a property-agent plan with remaining
   // allowance before they can list.
   const [gate, setGate] = useState<'checking' | 'ok' | 'needbusiness' | 'needplan'>('checking')
@@ -153,6 +154,7 @@ export default function NewPropertyPage() {
         ...(f.distBeach && { distBeach: Number(f.distBeach) }),
         ...(f.distTown && { distTown: Number(f.distTown) }),
         ...(features.length ? { features } : {}),
+        ...(promo.trim() ? { discountCode: promo.trim() } : {}),
       })
       try { localStorage.removeItem(PROP_DRAFT_KEY) } catch {}
       // Beyond the free allowance a property is €39 — pay, then the webhook
@@ -340,6 +342,9 @@ export default function NewPropertyPage() {
         </Section>
 
         {error && <div style={{ background: '#fff0f0', border: '1px solid #ffcdd2', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#c62828', fontFamily: 'var(--font-ui)' }}>{error}</div>}
+
+        <input value={promo} onChange={e => setPromo(e.target.value.toUpperCase())} placeholder="Discount code (optional)"
+          style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #e0d8d0', borderRadius: 12, padding: '11px 13px', fontFamily: 'var(--font-ui)', fontSize: 13.5, letterSpacing: 1, textTransform: 'uppercase', outline: 'none' }} />
 
         <button type="submit" disabled={saving} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
           {saving ? 'Listing…' : 'List Property →'}
