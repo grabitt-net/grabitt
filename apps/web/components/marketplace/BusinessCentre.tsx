@@ -104,7 +104,6 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
 
   if (!data || !data.isBusiness) return null
   const s = data
-  const color = TIER_COLOR[s.grade] ?? 'var(--orange)'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -148,9 +147,9 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
             const on = g === s.grade
             const reached = BUSINESS_TIER_ORDER.indexOf(g) <= BUSINESS_TIER_ORDER.indexOf(s.grade)
             return (
-              <div key={g} style={{ flex: 1, textAlign: 'center', background: on ? color : reached ? `${TIER_COLOR[g]}22` : '#f5f0e8', borderRadius: 10, padding: '9px 4px' }}>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: on ? '#fff' : reached ? TIER_COLOR[g] : '#b7ab98' }}>{tier.label}</div>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: on ? '#fff' : '#a99', marginTop: 2 }}>{fmtPct(tier.feeRate * 100)}</div>
+              <div key={g} style={{ flex: 1, textAlign: 'center', background: on ? '#eef3fc' : reached ? `${TIER_COLOR[g]}22` : '#f5f0e8', border: on ? '1.5px solid var(--orange)' : '1.5px solid transparent', borderRadius: 10, padding: '9px 4px' }}>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: on ? '#1e2b55' : reached ? TIER_COLOR[g] : '#b7ab98' }}>{tier.label}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: on ? '#5a6b8c' : '#a99', marginTop: 2 }}>{fmtPct(tier.feeRate * 100)}</div>
               </div>
             )
           })}
@@ -179,13 +178,15 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
         )}
       </div>
 
-      {/* ── Monthly listing allowance ── */}
+      {/* ── Monthly listing allowance ── (dashboard-style stat cards) */}
       <div style={card}>
         <div style={cardHead}>{t('This month’s listing allowance')}</div>
-        <AllowanceBar label={t('Items')} icon="🛍️" used={s.usage.items} cap={s.caps.items} color="var(--orange)" />
-        <AllowanceBar label={t('Job adverts')} icon="💼" used={s.usage.jobs} cap={s.caps.jobs} color="#3b82f6" />
-        <AllowanceBar label={t('Property listings')} icon="🏠" used={s.usage.property} cap={s.caps.property} color="#0f766e" />
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a', marginTop: 10, lineHeight: 1.5 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          <AllowanceCard label={t('Items')} icon="🛍️" used={s.usage.items} cap={s.caps.items} color="var(--orange)" />
+          <AllowanceCard label={t('Job adverts')} icon="💼" used={s.usage.jobs} cap={s.caps.jobs} color="#3b82f6" />
+          <AllowanceCard label={t('Property')} icon="🏠" used={s.usage.property} cap={s.caps.property} color="#0f766e" />
+        </div>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#7a8299', marginTop: 10, lineHeight: 1.5 }}>
           {t('Allowances reset on the 1st of each month. Once you hit a cap, extra listings are simply charged per listing.')}
         </div>
       </div>
@@ -395,18 +396,21 @@ function Criterion({ label, have, need, decimals }: { label: string; have: numbe
   )
 }
 
-function AllowanceBar({ label, icon, used, cap, color }: { label: string; icon: string; used: number; cap: number; color: string }) {
+// Dashboard-style allowance stat card: big used/cap figure, a slim progress
+// bar and a label — three sit side by side in a grid.
+function AllowanceCard({ label, icon, used, cap, color }: { label: string; icon: string; used: number; cap: number; color: string }) {
   const pct = cap > 0 ? Math.min(100, Math.round((used / cap) * 100)) : 0
   const over = used >= cap
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>
-        <span>{icon} {label}</span>
-        <span style={{ color: over ? '#ef4444' : '#1a1a1a' }}>{used} / {cap}</span>
+    <div style={{ background: '#fff', border: '1px solid #d7deec', borderRadius: 12, padding: '11px 10px', textAlign: 'center' }}>
+      <div style={{ fontSize: 17, lineHeight: 1 }}>{icon}</div>
+      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: over ? '#ef4444' : '#1e2b55', marginTop: 5 }}>
+        {used}<span style={{ fontSize: 13, color: '#9aa3ba', fontWeight: 800 }}> / {cap}</span>
       </div>
-      <div style={{ height: 8, background: '#f0eae0', borderRadius: 50, overflow: 'hidden' }}>
+      <div style={{ height: 6, background: '#f0eae0', borderRadius: 50, overflow: 'hidden', margin: '6px 2px 0' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: over ? '#ef4444' : color, transition: 'width 0.3s' }} />
       </div>
+      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#7a8299', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 6 }}>{label}</div>
     </div>
   )
 }
