@@ -196,6 +196,11 @@ export const bannersRouter = router({
       const slot = await getSlot(ctx.prisma, input.position)
       if (slot && !slot.active) return []
       if (slot?.pages?.length && (!input.page || !slot.pages.includes(input.page))) return []
+      // On a category page the slot reports its specific category slug (e.g.
+      // "motors"). A banner can target that exact category OR every category via
+      // the generic "category" key — so for category slots we match either.
+      const isCategoryPos = input.position.startsWith('category')
+      const pageKeys = input.page ? (isCategoryPos ? [input.page, 'category'] : [input.page]) : []
       return ctx.prisma.banner.findMany({
         where: {
           position: input.position as never,
@@ -206,7 +211,7 @@ export const bannersRouter = router({
             // Page targeting: a category slug (pageTarget), or multi-page site-wide
             // targeting (pages[]). Empty pages[] = every page for the position.
             input.page
-              ? { OR: [{ pageTarget: input.page }, { pageTarget: null, pages: { isEmpty: true } }, { pageTarget: null, pages: { has: input.page } }] }
+              ? { OR: [{ pageTarget: input.page }, { pageTarget: null, pages: { isEmpty: true } }, { pageTarget: null, pages: { hasSome: pageKeys } }] }
               : { pageTarget: null, pages: { isEmpty: true } },
             { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
             { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },

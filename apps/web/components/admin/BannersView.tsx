@@ -2,7 +2,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
 import ImageUploadField from './ImageUploadField'
-import { BANNER_PAGE_OPTIONS } from '@/lib/bannerPages'
+import { BANNER_PAGE_OPTIONS, BANNER_CATEGORY_OPTIONS, BANNER_CATEGORY_SLUGS } from '@/lib/bannerPages'
 import { BANNER_ASPECTS, recommendedSize } from '@/components/marketplace/BannerSlot'
 
 // The recommended upload size for a placement, e.g. "2000 × 400 px · 5/1".
@@ -154,13 +154,41 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
               <div style={{ gridColumn: '1/-1' }}>
                 <Field label="Show on pages (none ticked = every page)">
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px' }}>
-                    {BANNER_PAGE_OPTIONS.map(([key, label]) => (
+                    {BANNER_PAGE_OPTIONS.map(([key, label]) => {
+                      const checked = key === 'category'
+                        ? (form.pages.includes('category') || form.pages.some(p => BANNER_CATEGORY_SLUGS.includes(p)))
+                        : form.pages.includes(key)
+                      return (
                       <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#444', cursor: 'pointer' }}>
-                        <input type="checkbox" checked={form.pages.includes(key)} onChange={e => setForm(f => ({ ...f, pages: e.target.checked ? [...f.pages, key] : f.pages.filter(p => p !== key) }))} />
+                        <input type="checkbox" checked={checked} onChange={e => setForm(f => {
+                          if (key === 'category') {
+                            const rest = f.pages.filter(p => p !== 'category' && !BANNER_CATEGORY_SLUGS.includes(p))
+                            return { ...f, pages: e.target.checked ? [...rest, 'category'] : rest }
+                          }
+                          return { ...f, pages: e.target.checked ? [...f.pages, key] : f.pages.filter(p => p !== key) }
+                        })} />
                         {label}
                       </label>
-                    ))}
+                      )
+                    })}
                   </div>
+                  {(form.pages.includes('category') || form.pages.some(p => BANNER_CATEGORY_SLUGS.includes(p))) && (
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed #e6ddcf' }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: '#c2410c', marginBottom: 6 }}>Which categories? (none = all category pages)</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px' }}>
+                        {BANNER_CATEGORY_OPTIONS.map(([slug, label]) => (
+                          <label key={slug} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#444', cursor: 'pointer' }}>
+                            <input type="checkbox" checked={form.pages.includes(slug)} onChange={e => setForm(f => {
+                              // Picking a specific category drops the generic key.
+                              const base = f.pages.filter(p => p !== 'category')
+                              return { ...f, pages: e.target.checked ? [...base, slug] : base.filter(p => p !== slug) }
+                            })} />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </Field>
               </div>
             )}
@@ -221,16 +249,63 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
                         style={pageChip(!b.pages?.length)}
                       >All pages</button>
                       {BANNER_PAGE_OPTIONS.map(([key, lab]) => {
-                        const on = !!b.pages?.includes(key)
+                        // "Category pages" is on if the generic key OR any specific
+                        // category slug is targeted.
+                        const on = key === 'category'
+                          ? (!!b.pages?.includes('category') || (b.pages ?? []).some(p => BANNER_CATEGORY_SLUGS.includes(p)))
+                          : !!b.pages?.includes(key)
                         return (
                           <button
                             key={key}
-                            onClick={() => savePages(b, on ? (b.pages ?? []).filter(p => p !== key) : [...(b.pages ?? []), key])}
+                            onClick={() => {
+                              if (key === 'category') {
+                                // Toggle the whole category target off, or on = all categories.
+                                const rest = (b.pages ?? []).filter(p => p !== 'category' && !BANNER_CATEGORY_SLUGS.includes(p))
+                                savePages(b, on ? rest : [...rest, 'category'])
+                              } else {
+                                savePages(b, on ? (b.pages ?? []).filter(p => p !== key) : [...(b.pages ?? []), key])
+                              }
+                            }}
                             style={pageChip(on)}
                           >{on ? '✓ ' : ''}{lab}</button>
                         )
                       })}
                     </div>
+
+                    {/* Drill-down: which category pages exactly. Shown once
+                        "Category pages" is targeted. "All categories" = the generic
+                        key; picking specific categories targets just those slugs. */}
+                    {(b.pages?.includes('category') || (b.pages ?? []).some(p => BANNER_CATEGORY_SLUGS.includes(p))) && (() => {
+                      const specific = (b.pages ?? []).filter(p => BANNER_CATEGORY_SLUGS.includes(p))
+                      const allCats = !specific.length
+                      return (
+                        <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed #e6ddcf' }}>
+                          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, fontWeight: 800, color: '#c2410c', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>
+                            Which categories — {allCats ? 'all category pages' : `${specific.length} selected`}
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                            <button
+                              onClick={() => savePages(b, [...(b.pages ?? []).filter(p => p !== 'category' && !BANNER_CATEGORY_SLUGS.includes(p)), 'category'])}
+                              style={pageChip(allCats)}
+                            >{allCats ? '✓ ' : ''}All categories</button>
+                            {BANNER_CATEGORY_OPTIONS.map(([slug, lab]) => {
+                              const on = specific.includes(slug)
+                              return (
+                                <button
+                                  key={slug}
+                                  onClick={() => {
+                                    // Selecting a specific category drops the generic key.
+                                    const base = (b.pages ?? []).filter(p => p !== 'category')
+                                    savePages(b, on ? base.filter(p => p !== slug) : [...base, slug])
+                                  }}
+                                  style={pageChip(on)}
+                                >{on ? '✓ ' : ''}{lab}</button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })()}
                   </div>
                 )}
                 {b.approved === false && !b.isTest ? (
