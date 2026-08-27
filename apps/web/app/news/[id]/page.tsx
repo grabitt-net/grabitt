@@ -1,5 +1,6 @@
 'use client'
-import { use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import InfoPage from '@/components/marketplace/InfoPage'
 import { createLooseTrpcClient } from '@/lib/trpc'
@@ -7,8 +8,8 @@ import { createLooseTrpcClient } from '@/lib/trpc'
 // A single News article — public reader.
 type Post = { id: string; title: string; body: string; category: string; emoji: string; imageUrl: string | null; createdAt: string }
 
-export default function NewsArticlePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function NewsArticlePage() {
+  const id = String(useParams()?.id ?? '')
   const [post, setPost] = useState<Post | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'notfound'>('loading')
   useEffect(() => {
