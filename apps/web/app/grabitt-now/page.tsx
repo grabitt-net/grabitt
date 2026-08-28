@@ -116,7 +116,7 @@ function Inner() {
         <div style={{
           position: 'relative', overflow: 'hidden', borderRadius: 20,
           background: 'linear-gradient(135deg, var(--orange) 0%, var(--orange2) 100%)',
-          padding: 'clamp(22px, 4vw, 40px) clamp(18px, 4vw, 36px)', textAlign: 'center',
+          padding: 'clamp(11px, 2vw, 20px) clamp(18px, 4vw, 36px)', textAlign: 'center',
           boxShadow: '0 8px 26px rgba(245,84,10,0.18)',
         }}>
           <div aria-hidden style={{ position: 'absolute', right: -30, top: -30, width: 170, height: 170, background: 'rgba(255,255,255,0.10)', borderRadius: '50%' }} />

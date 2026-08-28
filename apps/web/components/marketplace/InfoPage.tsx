@@ -85,7 +85,7 @@ export default function InfoPage({ title, intro, pills, hero, topbarTitle, child
           <div style={{
             position: 'relative', overflow: 'hidden', borderRadius: 20,
             background: hero ? '#1a1a1a' : 'linear-gradient(135deg, var(--orange) 0%, var(--orange2) 100%)',
-            padding: 'clamp(28px, 5vw, 52px) clamp(18px, 4vw, 40px)',
+            padding: 'clamp(14px, 2.5vw, 26px) clamp(18px, 4vw, 40px)',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
             boxShadow: '0 8px 26px rgba(245,84,10,0.18)',
           }}>
@@ -97,7 +97,7 @@ export default function InfoPage({ title, intro, pills, hero, topbarTitle, child
             <div style={{ position: 'relative', zIndex: 1, width: '100%' }}>
               <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(26px, 5vw, 42px)', fontWeight: 900, color: '#fff', lineHeight: 1.12, margin: '0 auto', maxWidth: 820, textShadow: hero ? '0 2px 12px rgba(0,0,0,0.5)' : 'none' }}>{title}</h1>
               {intro && (
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15.5, lineHeight: 1.65, color: 'rgba(255,255,255,0.95)', maxWidth: 700, margin: '12px auto 0', textShadow: hero ? '0 1px 8px rgba(0,0,0,0.5)' : 'none' }}>{intro}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, lineHeight: 1.5, color: 'rgba(255,255,255,0.95)', maxWidth: 700, margin: '7px auto 0', textShadow: hero ? '0 1px 8px rgba(0,0,0,0.5)' : 'none' }}>{intro}</div>
               )}
               {pills && pills.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', margin: '16px auto 0', maxWidth: 780 }}>

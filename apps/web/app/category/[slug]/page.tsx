@@ -127,7 +127,7 @@ export default function CategoryPage() {
         <div style={{
           position: 'relative', overflow: 'hidden', borderRadius: 20,
           background: 'linear-gradient(135deg, var(--orange) 0%, var(--orange2) 100%)',
-          padding: 'clamp(22px, 4vw, 40px) clamp(18px, 4vw, 36px)',
+          padding: 'clamp(11px, 2vw, 20px) clamp(18px, 4vw, 36px)',
           textAlign: 'center', boxShadow: '0 8px 26px rgba(245,84,10,0.18)',
         }}>
           <div aria-hidden style={{ position: 'absolute', right: -30, top: -30, width: 170, height: 170, background: 'rgba(255,255,255,0.10)', borderRadius: '50%' }} />
@@ -136,8 +136,8 @@ export default function CategoryPage() {
             <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(22px, 4.4vw, 34px)', fontWeight: 700, color: '#fff', lineHeight: 1.15, margin: 0 }}>{label}</h1>
             {CATEGORY_DESC[slug] && (
               <>
-                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(14px, 2.2vw, 17px)', fontWeight: 700, color: '#fff', margin: '10px auto 0', maxWidth: 720 }}>{CATEGORY_DESC[slug].title}</div>
-                <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, lineHeight: 1.6, color: 'rgba(255,255,255,0.95)', maxWidth: 720, margin: '8px auto 0' }}>{CATEGORY_DESC[slug].body}</p>
+                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(14px, 2.2vw, 17px)', fontWeight: 700, color: '#fff', margin: '6px auto 0', maxWidth: 720 }}>{CATEGORY_DESC[slug].title}</div>
+                <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, lineHeight: 1.45, color: 'rgba(255,255,255,0.95)', maxWidth: 720, margin: '4px auto 0' }}>{CATEGORY_DESC[slug].body}</p>
               </>
             )}
           </div>
