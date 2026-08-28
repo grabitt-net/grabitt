@@ -84,7 +84,7 @@ export default function InfoPage({ title, intro, pills, hero, topbarTitle, child
         <div style={{ maxWidth: 1000, margin: '18px auto 6px', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
           <div style={{
             position: 'relative', overflow: 'hidden', borderRadius: 20,
-            background: hero ? '#1a1a1a' : 'linear-gradient(135deg, var(--orange) 0%, var(--orange2) 100%)',
+            background: hero ? '#1a1a1a' : 'linear-gradient(135deg, #FF8A4D 0%, #FFB07A 100%)',
             padding: 'clamp(14px, 2.5vw, 26px) clamp(18px, 4vw, 40px)',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
             boxShadow: '0 8px 26px rgba(245,84,10,0.18)',

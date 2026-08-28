@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { router, publicProcedure, execProcedure } from '../trpc'
-import { extractHashtags } from '../lib/hashtags'
 
 // Community content — editorial posts (island tips, economy write-ups, guides)
 // shown on the homepage. Public reads; admin (exec) manages.
@@ -42,11 +41,17 @@ export const communityRouter = router({
       imageUrl: z.string().url().nullable().optional(),
       published: z.boolean().default(true),
       sortOrder: z.number().int().default(0),
+      // Explicit tags typed by the editor (with or without a leading #). Merged
+      // with any #hashtags found in the title/body.
+      tags: z.array(z.string().max(40)).max(30).optional(),
     }))
     .mutation(({ ctx, input }) => {
-      const { id, ...data } = input
-      // Extract #hashtags from the title + body so posts are searchable/discoverable.
-      const tags = extractHashtags(data.title, data.body)
+      const { id, tags: explicit, ...data } = input
+      // Tags are entered by the editor — normalise (strip #, lowercase, dedupe).
+      const seen = new Set<string>()
+      const tags = (explicit ?? [])
+        .map(t => t.trim().replace(/^#/, '').toLowerCase())
+        .filter(t => t && (seen.has(t) ? false : (seen.add(t), true)))
       return id
         ? ctx.prisma.communityPost.update({ where: { id }, data: { ...data, tags } })
         : ctx.prisma.communityPost.create({ data: { ...data, tags } as typeof data & { title: string; excerpt: string; body: string } })

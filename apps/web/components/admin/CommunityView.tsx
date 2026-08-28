@@ -6,7 +6,7 @@ import ImageUploadField from './ImageUploadField'
 
 interface Post {
   id: string; title: string; excerpt: string; body: string; category: string
-  emoji: string; imageUrl: string | null; published: boolean; sortOrder: number
+  emoji: string; imageUrl: string | null; published: boolean; sortOrder: number; tags?: string[]
 }
 
 const CATEGORIES = ['Guide', 'Island Tips', 'Economy', 'Selling', 'Safety', 'News']
@@ -14,7 +14,7 @@ const NEWS_CATEGORIES = ['Announcements', 'Island News', 'Features', 'Updates']
 const ECONOMIC_CATEGORIES = ['Money Saving', 'Smart Buying', 'Island Life', 'Budgeting', 'Guides']
 const EVENT_CATEGORIES = ['Markets', 'Music & Nightlife', 'Family', 'Food & Drink', 'Community', 'Sport']
 const EMOJIS = ['📰', '🏷️', '📊', '🛡️', '💼', '🌴', '💡', '🛒', '📈', '✨']
-const EMPTY = { title: '', excerpt: '', body: '', category: 'Guide', emoji: '📰', imageUrl: '', published: true, sortOrder: 0 }
+const EMPTY = { title: '', excerpt: '', body: '', category: 'Guide', emoji: '📰', imageUrl: '', published: true, sortOrder: 0, tags: '' }
 
 type Section = 'guide' | 'news' | 'economic' | 'events'
 // Per-section labels + categories, so one editor drives Guides, News and
@@ -43,7 +43,7 @@ export default function CommunityView({ section = 'guide' }: { section?: Section
 
   function openNew() { setForm({ ...EMPTY, category: cfg.defaultCat, sortOrder: posts.length + 1 }); setEditing('new') }
   function openEdit(p: Post) {
-    setForm({ title: p.title, excerpt: p.excerpt, body: p.body, category: p.category, emoji: p.emoji, imageUrl: p.imageUrl ?? '', published: p.published, sortOrder: p.sortOrder })
+    setForm({ title: p.title, excerpt: p.excerpt, body: p.body, category: p.category, emoji: p.emoji, imageUrl: p.imageUrl ?? '', published: p.published, sortOrder: p.sortOrder, tags: (p.tags ?? []).map(t => `#${t}`).join(' ') })
     setEditing(p.id)
   }
 
@@ -62,6 +62,7 @@ export default function CommunityView({ section = 'guide' }: { section?: Section
         imageUrl: form.imageUrl.trim() || null,
         published: form.published,
         sortOrder: Number(form.sortOrder) || 0,
+        tags: form.tags.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean),
       })
       setEditing(null); setForm({ ...EMPTY }); await load()
     } finally { setSaving(false) }
@@ -113,6 +114,10 @@ export default function CommunityView({ section = 'guide' }: { section?: Section
               <ImageUploadField label="Cover image (optional)" kind="banner" value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} />
             </div>
             <Field label="Sort order"><input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: Number(e.target.value) }))} style={inp} /></Field>
+            <div style={{ gridColumn: '1/-1' }}>
+              <Field label="Tags / hashtags"><input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="#launch #canaries #update — space or comma separated" style={inp} /></Field>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', marginTop: 4 }}>Make the post discoverable — these become clickable #tags linking to /tag.</div>
+            </div>
           </div>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', cursor: 'pointer' }}>
             <input type="checkbox" checked={form.published} onChange={e => setForm(f => ({ ...f, published: e.target.checked }))} /> Published (visible on the site)

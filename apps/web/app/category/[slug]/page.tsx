@@ -126,7 +126,7 @@ export default function CategoryPage() {
       <div style={{ maxWidth: 1000, margin: '14px auto 6px', padding: '0 14px', width: '100%', boxSizing: 'border-box' }}>
         <div style={{
           position: 'relative', overflow: 'hidden', borderRadius: 20,
-          background: 'linear-gradient(135deg, var(--orange) 0%, var(--orange2) 100%)',
+          background: 'linear-gradient(135deg, #FF8A4D 0%, #FFB07A 100%)',
           padding: 'clamp(11px, 2vw, 20px) clamp(18px, 4vw, 36px)',
           textAlign: 'center', boxShadow: '0 8px 26px rgba(245,84,10,0.18)',
         }}>
