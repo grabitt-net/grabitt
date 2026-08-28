@@ -22,10 +22,15 @@ async function sendSetPasswordEmail(admin: any, email: string, origin: string, n
     const { data, error } = await admin.auth.admin.generateLink({
       type: 'recovery',
       email,
-      options: { redirectTo: `${origin}/auth/callback?next=/account` },
+      options: { redirectTo: `${origin}/auth/callback?next=/auth/set-password` },
     })
-    const link = (data as { properties?: { action_link?: string } } | null)?.properties?.action_link
-    if (error || !link) return false
+    // Build a link through our own callback using the hashed token (the pattern
+    // this app already verifies for email confirmations) rather than Supabase's
+    // hosted action_link — so the session is established server-side via cookies
+    // and the user lands on the set-password page ready to go.
+    const hashed = (data as { properties?: { hashed_token?: string } } | null)?.properties?.hashed_token
+    if (error || !hashed) return false
+    const link = `${origin}/auth/callback?token_hash=${encodeURIComponent(hashed)}&type=recovery&next=${encodeURIComponent('/auth/set-password')}`
     const subject = welcome ? 'Welcome to Grabitt — set your password' : 'Set your Grabitt password'
     const html = `
       <div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#1a1a1a">
