@@ -184,7 +184,7 @@ body {
    Post a job, List a property…) so they read as one professional system that
    matches the dashboard. Components live in components/marketplace/FormKit.tsx.
    ── */
-.gform { max-width: 660px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.gform { max-width: 880px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
 .gform-section {
   background: var(--cream);
   border: 1px solid var(--line);
@@ -270,18 +270,28 @@ select.gform-control {
 }
 .gform-back:hover { border-color: #cfd6e2; }
 
-/* ── Form kit: tabbed sections ── */
+/* ── Form kit: tabbed sections (underline tabs, fill the width, no scroll) ── */
 .gform-tabs {
-  display: flex; gap: 7px; overflow-x: auto; padding: 2px 0 4px;
-  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  display: flex; border-bottom: 1.5px solid var(--line); margin-bottom: 2px;
 }
-.gform-tabs::-webkit-scrollbar { display: none; }
 .gform-tab {
-  flex: 0 0 auto; border: 1px solid var(--line); background: var(--cream); color: var(--ink-2);
-  border-radius: 999px; padding: 9px 15px; font-family: var(--font-ui); font-size: 12.5px; font-weight: 700;
-  cursor: pointer; white-space: nowrap; transition: background .12s, color .12s, border-color .12s;
+  flex: 1 1 0; min-width: 0; text-align: center;
+  border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1.5px;
+  padding: 12px 8px; font-family: var(--font-ui); font-size: 13px; font-weight: 700;
+  color: var(--ink-2); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: color .12s, border-color .12s;
 }
-.gform-tab:hover { border-color: #cfd6e2; }
-.gform-tab--on { background: var(--orange); color: #fff; border-color: var(--orange); }
-.gform-tab__n { opacity: .6; margin-right: 5px; font-weight: 800; }
-.gform-tab--on .gform-tab__n { opacity: .85; }
+.gform-tab:hover { color: var(--dark); }
+.gform-tab--on { color: var(--orange); border-bottom-color: var(--orange); }
+.gform-tab__n {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%; margin-right: 6px;
+  background: var(--line); color: var(--ink-2); font-size: 10.5px; font-weight: 800; vertical-align: middle;
+}
+.gform-tab--on .gform-tab__n { background: var(--orange); color: #fff; }
+/* Narrow screens: let the tab row wrap to two lines rather than overflow. */
+@media (max-width: 560px) {
+  .gform-tabs { flex-wrap: wrap; border-bottom: none; gap: 6px; }
+  .gform-tab { flex: 1 1 30%; border: 1px solid var(--line); border-radius: var(--radius-sm); margin-bottom: 0; padding: 9px 6px; }
+  .gform-tab--on { border-color: var(--orange); background: var(--sand); }
+}
