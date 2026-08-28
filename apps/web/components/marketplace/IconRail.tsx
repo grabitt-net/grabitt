@@ -45,7 +45,7 @@ export default function IconRail() {
               : { lineHeight: 1, color: 'var(--dark)' }}>
               <Icon name={item.icon} size={item.highlight ? 18 : 20} />
             </span>
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 8, fontWeight: item.highlight ? 900 : 800, color: item.highlight ? 'var(--orange)' : '#7a6a55', lineHeight: 1.05, textAlign: 'center', whiteSpace: 'nowrap' }}>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 8, fontWeight: item.highlight ? 900 : 800, color: item.highlight ? 'var(--orange)' : '#1a1a1a', lineHeight: 1.05, textAlign: 'center', whiteSpace: 'nowrap' }}>
               {t(item.label)}
             </span>
             {item.badge !== undefined && (

@@ -61,9 +61,10 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
       )}
 
       {/* Search — grows to fill */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 50, padding: '9px 8px 9px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
+      <div className="tb-searchbar" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 50, padding: '9px 8px 9px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
         <span style={{ color: '#1a1a1a', display: 'flex' }}><Icon name="search" size={18} /></span>
         <input
+          className="tb-search"
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') search() }}
@@ -86,14 +87,14 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
           <button onClick={() => { if (typeof window !== 'undefined' && window.history.length > 1) router.back(); else router.push(backFallback ?? '/') }} title={t('Back')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 8px', color: 'var(--dark)' }}>
             <Icon name="arrowLeft" size={21} />
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#7a6a55' }}>{t('Back')}</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#1a1a1a' }}>{t('Back')}</span>
           </button>
         )}
         {actions.map(a => (
           <button key={a.label} onClick={() => a.href ? router.push(a.href) : a.panel === 'profile' ? router.push('/account') : openPanel(a.panel)} title={a.label}
             style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 8px', color: 'var(--dark)' }}>
             <Icon name={a.icon} size={21} />
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#7a6a55' }}>{t(a.label)}</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#1a1a1a' }}>{t(a.label)}</span>
             {a.badge !== undefined && (
               <span style={{ position: 'absolute', top: 0, right: 2, background: 'var(--orange)', color: '#fff', fontSize: 8, fontWeight: 900, minWidth: 14, height: 14, borderRadius: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
                 {a.badge > 99 ? '99+' : a.badge}

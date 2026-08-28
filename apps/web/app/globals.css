@@ -207,14 +207,14 @@ body {
 
 .gform-control {
   width: 100%; box-sizing: border-box;
-  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  border: 1px solid #C4CCDB; border-radius: var(--radius-sm);
   padding: 11px 13px; background: var(--cream);
   font-family: var(--font-ui); font-size: 14px; color: var(--dark);
   outline: none; transition: border-color .15s, box-shadow .15s;
   -webkit-appearance: none; appearance: none;
 }
 .gform-control::placeholder { color: var(--ink-3); }
-.gform-control:hover { border-color: #cfd6e2; }
+.gform-control:hover { border-color: #aab4c6; }
 .gform-control:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(245,84,10,0.14); }
 textarea.gform-control { resize: vertical; min-height: 92px; line-height: 1.5; }
 select.gform-control {
@@ -296,3 +296,9 @@ select.gform-control {
   .gform-tab { flex: 1 1 30%; border: 1px solid var(--line); border-radius: var(--radius-sm); margin-bottom: 0; padding: 9px 6px; }
   .gform-tab--on { border-color: var(--orange); background: #FFF3EE; }
 }
+
+/* ── Search bar focus: the global orange focus-visible outline looks like a red
+   box around the rounded search pill. Suppress it on the search input and show
+   a soft rounded ring on the pill instead. ── */
+.tb-search:focus, .tb-search:focus-visible { outline: none !important; box-shadow: none !important; }
+.tb-searchbar:focus-within { box-shadow: 0 0 0 2px rgba(245,84,10,0.28), 0 2px 8px rgba(0,0,0,0.10); }

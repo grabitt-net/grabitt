@@ -96,23 +96,24 @@ export default function Topbar({ title, back, backFallback }: { title?: string; 
           <button onClick={scrollToFooter} aria-label="Go to menu"
             style={{ flexShrink: 0, cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}>
             <Logo height={30} />
-            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: title ? 14 : 9, fontWeight: 700, color: title ? 'var(--dark)' : '#7a6a55', marginTop: 2, whiteSpace: 'nowrap', textAlign: title ? 'center' : 'left' }}>
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: title ? 14 : 9, fontWeight: 700, color: title ? 'var(--dark)' : '#1a1a1a', marginTop: 2, whiteSpace: 'nowrap', textAlign: title ? 'center' : 'left' }}>
               {title || t('Your Everything, Local')}
             </div>
           </button>
         ) : (
           <Link href="/" style={{ flexShrink: 0, cursor: 'pointer', textDecoration: 'none' }}>
             <Logo height={30} />
-            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: title ? 14 : 9, fontWeight: 700, color: title ? 'var(--dark)' : '#7a6a55', marginTop: 2, whiteSpace: 'nowrap', textAlign: title ? 'center' : 'left' }}>
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: title ? 14 : 9, fontWeight: 700, color: title ? 'var(--dark)' : '#1a1a1a', marginTop: 2, whiteSpace: 'nowrap', textAlign: title ? 'center' : 'left' }}>
               {title || t('Your Everything, Local')}
             </div>
           </Link>
         )}
 
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginLeft: 8, minWidth: 0, maxWidth: '62%' }}>
-          <div style={{ flex: 1, background: '#fff', borderRadius: 50, display: 'flex', alignItems: 'center', padding: '7px 5px 7px 11px', gap: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: 0 }}>
+          <div className="tb-searchbar" style={{ flex: 1, background: '#fff', borderRadius: 50, display: 'flex', alignItems: 'center', padding: '7px 5px 7px 11px', gap: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: 0 }}>
             <span style={{ flexShrink: 0, color: '#1a1a1a', display: 'flex' }}><Icon name="search" size={15} /></span>
             <input
+              className="tb-search"
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSearch() }}
