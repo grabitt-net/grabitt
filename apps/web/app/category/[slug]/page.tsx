@@ -143,21 +143,22 @@ export default function CategoryPage() {
           overlaid. Categories without artwork keep the plain orange header. */}
       <div style={{ maxWidth: 1000, margin: '14px auto 6px', padding: '0 14px', width: '100%', boxSizing: 'border-box' }}>
         {CATEGORY_HERO[slug] ? (
-          <>
-            <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 20, aspectRatio: '3.4 / 1', minHeight: 128, boxShadow: '0 8px 26px rgba(0,0,0,0.15)' }}>
-              <img src={CATEGORY_HERO[slug]} alt={label} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.60) 0%, rgba(0,0,0,0.22) 52%, rgba(0,0,0,0) 100%)' }} />
-              <div style={{ position: 'absolute', left: 'clamp(16px, 4vw, 36px)', right: 16, bottom: 'clamp(14px, 3vw, 26px)', zIndex: 1 }}>
-                <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(23px, 4.6vw, 38px)', fontWeight: 700, color: '#fff', lineHeight: 1.08, margin: 0, textShadow: '0 2px 14px rgba(0,0,0,0.55)' }}>{label}</h1>
-                {CATEGORY_DESC[slug] && (
-                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(13px, 2vw, 16px)', fontWeight: 700, color: 'rgba(255,255,255,0.96)', marginTop: 5, maxWidth: 620, textShadow: '0 1px 10px rgba(0,0,0,0.55)' }}>{CATEGORY_DESC[slug].title}</div>
-                )}
-              </div>
+          // Split hero: the round category artwork shown WHOLE beside the title,
+          // so the square illustration is never messily cropped into a strip.
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(14px, 3.5vw, 30px)', background: 'linear-gradient(135deg, var(--sand) 0%, #FFE9DC 100%)', border: '1px solid var(--sand2)', borderRadius: 20, padding: 'clamp(16px, 3.2vw, 26px) clamp(18px, 3.6vw, 30px)', boxShadow: '0 6px 22px rgba(245,84,10,0.10)' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(22px, 4.4vw, 34px)', fontWeight: 700, color: 'var(--dark)', lineHeight: 1.12, margin: 0 }}>{label}</h1>
+              {CATEGORY_DESC[slug] && (
+                <>
+                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(13px, 2vw, 16px)', fontWeight: 700, color: 'var(--terra)', marginTop: 6 }}>{CATEGORY_DESC[slug].title}</div>
+                  <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-2)', margin: '6px 0 0', maxWidth: 560 }}>{CATEGORY_DESC[slug].body}</p>
+                </>
+              )}
             </div>
-            {CATEGORY_DESC[slug] && (
-              <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, lineHeight: 1.5, color: '#6b5f50', maxWidth: 760, margin: '10px auto 0', textAlign: 'center' }}>{CATEGORY_DESC[slug].body}</p>
-            )}
-          </>
+            <div style={{ flexShrink: 0, width: 'clamp(88px, 24vw, 150px)', aspectRatio: '1 / 1', borderRadius: '50%', overflow: 'hidden', border: '4px solid #fff', boxShadow: '0 8px 22px rgba(15,23,42,0.16)' }}>
+              <img src={CATEGORY_HERO[slug]} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            </div>
+          </div>
         ) : (
           <div style={{
             position: 'relative', overflow: 'hidden', borderRadius: 20,
