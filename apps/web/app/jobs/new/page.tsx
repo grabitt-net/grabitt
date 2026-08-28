@@ -13,6 +13,7 @@ import PromoField from '@/components/marketplace/PromoField'
 import { JOBS_PRICING } from '@grabitt/design-tokens'
 import { GC_TOWNS } from '@/lib/gcTowns'
 import { JOB_SECTORS, JOB_LANGUAGES } from '@/lib/jobCategories'
+import { Section, Row, Field, Input, Textarea, Select, Pill, Check, FormError, SubmitButton } from '@/components/marketplace/FormKit'
 
 // Experience-required buckets — same vocabulary as the candidate profile; the
 // value is the lower-bound months stored on the advert for auto-matching.
@@ -147,7 +148,7 @@ export default function PostJobPage() {
 
   return (
     <PanelProvider>
-    <main className="app-shell" style={{ background: '#f7f4ee', minHeight: '100dvh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
+    <main className="app-shell" style={{ background: 'var(--bg)', minHeight: '100dvh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title="Post a Job" />
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <Link href="/jobs" style={{ textDecoration: 'none', fontSize: 22, color: 'var(--orange)', fontWeight: 700 }}>‹</Link>
@@ -167,133 +168,119 @@ export default function PostJobPage() {
       )}
 
       {gate === 'ok' && (
-      <form onSubmit={submit} style={{ maxWidth: 640, margin: '0 auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <form onSubmit={submit} className="gform">
         <Section title="The role">
-          <Field label="Job title *"><input value={f.jobTitle} onChange={e => set('jobTitle', e.target.value)} placeholder="e.g. Bar Staff" style={inp} /></Field>
+          <Field label="Job title" required><Input value={f.jobTitle} onChange={e => set('jobTitle', e.target.value)} placeholder="e.g. Bar Staff" /></Field>
+          <Field label="Employer name" required help="🔒 Your name is not shown on the advert. Candidates see the establishment type below, and learn who you are only when you invite them to interview."><Input value={f.company} onChange={e => set('company', e.target.value)} placeholder="e.g. The Irish Rover" /></Field>
           <Row>
-            <Field label="Employer name *"><input value={f.company} onChange={e => set('company', e.target.value)} placeholder="e.g. The Irish Rover" style={inp} /></Field>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888', marginTop: -6, marginBottom: 10, lineHeight: 1.5 }}>
-              🔒 Your name is not shown on the advert. Candidates see the establishment type below, and learn who you are only when you invite them to interview.
-            </div>
-            <Field label="Establishment type *"><input value={f.establishmentType} onChange={e => set('establishmentType', e.target.value)} placeholder="e.g. Beach bar, 4-star hotel, Family restaurant" style={inp} /></Field>
+            <Field label="Establishment type" required><Input value={f.establishmentType} onChange={e => set('establishmentType', e.target.value)} placeholder="e.g. Beach bar, 4-star hotel" /></Field>
             <Field label="Category / sector">
-              <select value={f.sector} onChange={e => { set('sector', e.target.value); setRoles([]) }} style={sel}>
+              <Select value={f.sector} onChange={e => { set('sector', e.target.value); setRoles([]) }}>
                 <option value="">Select…</option>{JOB_SECTORS.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-              </select>
+              </Select>
             </Field>
           </Row>
           <Row>
             <Field label="Role type">
-              <select value={f.type} onChange={e => set('type', e.target.value)} style={sel}>{TYPES.map(([l, v]) => <option key={v} value={v}>{l}</option>)}</select>
+              <Select value={f.type} onChange={e => set('type', e.target.value)}>{TYPES.map(([l, v]) => <option key={v} value={v}>{l}</option>)}</Select>
             </Field>
-            <Field label="Hours of operation"><input value={f.hours} onChange={e => set('hours', e.target.value)} placeholder="e.g. Mon–Fri 9:00–17:00" style={inp} /></Field>
+            <Field label="Hours of operation"><Input value={f.hours} onChange={e => set('hours', e.target.value)} placeholder="e.g. Mon–Fri 9:00–17:00" /></Field>
           </Row>
-          <label style={chk}><input type="checkbox" checked={f.remote} onChange={e => set('remote', e.target.checked)} /> Remote / work from home</label>
+          <Check label="Remote / work from home" checked={f.remote} onChange={v => set('remote', v)} />
         </Section>
 
         {/* Candidate matching — captured against the same taxonomy as jobseeker
             profiles, so we can auto-match this advert to people looking for work. */}
-        <Section title="Candidate matching">
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 10, lineHeight: 1.5 }}>
-            Tell us the exact role(s), experience and languages you need. We use this to match your advert to suitable candidates (and to power employer searches).
-          </div>
+        <Section title="Candidate matching" sub="Tell us the exact role(s), experience and languages you need. We use this to match your advert to suitable candidates (and to power employer searches).">
           {f.sector ? (
             <Field label="Role(s) this advert covers">
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                {sectorJobs.map(r => {
-                  const on = roles.includes(r)
-                  return <button key={r} type="button" onClick={() => toggleRole(r)} style={pill(on)}>{r}</button>
-                })}
+                {sectorJobs.map(r => <Pill key={r} on={roles.includes(r)} onClick={() => toggleRole(r)}>{r}</Pill>)}
               </div>
             </Field>
           ) : (
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#b45309', marginBottom: 10 }}>Pick a category / sector above to choose the specific roles.</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--terra)' }}>Pick a category / sector above to choose the specific roles.</div>
           )}
           <Field label="Minimum experience required">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
               {EXP_REQUIRED.map(([lbl, m]) => (
-                <button key={lbl} type="button" onClick={() => setExpMonths(expMonths === m ? null : m)} style={pill(expMonths === m)}>{lbl}</button>
+                <Pill key={lbl} on={expMonths === m} onClick={() => setExpMonths(expMonths === m ? null : m)}>{lbl}</Pill>
               ))}
             </div>
           </Field>
           <Field label="Languages required">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-              {JOB_LANGUAGES.map(([, label]) => {
-                const on = languages.includes(label)
-                return <button key={label} type="button" onClick={() => toggleLang(label)} style={pill(on)}>{label}</button>
-              })}
+              {JOB_LANGUAGES.map(([, label]) => (
+                <Pill key={label} on={languages.includes(label)} onClick={() => toggleLang(label)}>{label}</Pill>
+              ))}
             </div>
           </Field>
         </Section>
 
-        <Section title="Location">
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 4 }}>Give the job&apos;s address — this is where the work is, not your profile address.</div>
-          <Field label="Location (town / area) *"><select value={f.location} onChange={e => set('location', e.target.value)} style={inp}><option value="">Select a town…</option>{GC_TOWNS.map(t => <option key={t} value={t}>{t}</option>)}</select></Field>
-          <Field label="Full address (shown with a map on the listing)"><input value={f.address} onChange={e => set('address', e.target.value)} placeholder="Street, number, postcode, town" style={inp} /></Field>
-          <div>
-            <label style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: '#999', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>Pin the exact location on the map</label>
+        <Section title="Location" sub="Give the job's address — this is where the work is, not your profile address.">
+          <Field label="Location (town / area)" required><Select value={f.location} onChange={e => set('location', e.target.value)}><option value="">Select a town…</option>{GC_TOWNS.map(t => <option key={t} value={t}>{t}</option>)}</Select></Field>
+          <Field label="Full address (shown with a map on the listing)"><Input value={f.address} onChange={e => set('address', e.target.value)} placeholder="Street, number, postcode, town" /></Field>
+          <Field label="Pin the exact location on the map" help={coords ? `📍 Pinned at ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : 'Tap the map to drop a pin where the job is based.'}>
             <MapPicker value={coords} onChange={setCoords} />
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 6 }}>{coords ? `📍 Pinned at ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : 'Tap the map to drop a pin where the job is based.'}</div>
-          </div>
+          </Field>
         </Section>
 
         <Section title="Pay">
           <Row>
-            <Field label="Salary from (€)"><input value={f.salaryMin} onChange={e => set('salaryMin', e.target.value)} inputMode="numeric" placeholder="1200" style={inp} /></Field>
-            <Field label="Salary to (€)"><input value={f.salaryMax} onChange={e => set('salaryMax', e.target.value)} inputMode="numeric" placeholder="1400" style={inp} /></Field>
+            <Field label="Salary from (€)"><Input value={f.salaryMin} onChange={e => set('salaryMin', e.target.value)} inputMode="numeric" placeholder="1200" /></Field>
+            <Field label="Salary to (€)"><Input value={f.salaryMax} onChange={e => set('salaryMax', e.target.value)} inputMode="numeric" placeholder="1400" /></Field>
             <Field label="Per">
-              <select value={f.salaryPeriod} onChange={e => set('salaryPeriod', e.target.value)} style={sel}>
+              <Select value={f.salaryPeriod} onChange={e => set('salaryPeriod', e.target.value)}>
                 <option value="month">month</option><option value="year">year</option><option value="hour">hour</option>
-              </select>
+              </Select>
             </Field>
           </Row>
           <Row>
             <Field label="Payments / year">
-              <select value={f.payments} onChange={e => set('payments', e.target.value)} style={sel}>
+              <Select value={f.payments} onChange={e => set('payments', e.target.value)}>
                 <option value="">—</option><option value="12">12 payments</option><option value="14">14 payments</option>
-              </select>
+              </Select>
             </Field>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end', paddingBottom: 8 }}>
-              <label style={chk}><input type="checkbox" checked={f.overtime} onChange={e => set('overtime', e.target.checked)} /> Overtime</label>
-              <label style={chk}><input type="checkbox" checked={f.tips} onChange={e => set('tips', e.target.checked)} /> Tips</label>
-            </div>
+            <Field label="Extras">
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingTop: 4 }}>
+                <Check label="Overtime" checked={f.overtime} onChange={v => set('overtime', v)} />
+                <Check label="Tips" checked={f.tips} onChange={v => set('tips', v)} />
+              </div>
+            </Field>
           </Row>
         </Section>
 
         <Section title="Details">
-          <Field label="Expected start date"><input type="date" value={f.startDate} onChange={e => set('startDate', e.target.value)} style={inp} /></Field>
-          <Field label="Description"><textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the role, responsibilities and requirements…" style={{ ...inp, resize: 'vertical' }} /></Field>
+          <Field label="Expected start date"><Input type="date" value={f.startDate} onChange={e => set('startDate', e.target.value)} /></Field>
+          <Field label="Description"><Textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the role, responsibilities and requirements…" /></Field>
         </Section>
 
-        <Section title="Screening questions">
-          <div style={{ fontSize: 12, color: '#777', fontFamily: 'var(--font-ui)', marginTop: -4, marginBottom: 4 }}>Optional. Ask candidates specific questions they answer when applying.</div>
+        <Section title="Screening questions" sub="Optional. Ask candidates specific questions they answer when applying.">
           {questions.map(q => (
-            <div key={q.id} style={{ border: '1px solid #e5dccd', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div key={q.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg)' }}>
               <div style={{ display: 'flex', gap: 8 }}>
-                <input value={q.label} onChange={e => updateQ(q.id, { label: e.target.value })} placeholder="Question, e.g. Do you have a driving licence?" style={{ ...inp, flex: 1 }} />
-                <button type="button" onClick={() => removeQ(q.id)} style={{ background: '#fff', border: '1px solid #e5dccd', borderRadius: 8, padding: '0 12px', color: '#c00', cursor: 'pointer', fontSize: 15 }}>✕</button>
+                <Input value={q.label} onChange={e => updateQ(q.id, { label: e.target.value })} placeholder="Question, e.g. Do you have a driving licence?" style={{ flex: 1 }} />
+                <button type="button" onClick={() => removeQ(q.id)} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: '0 12px', color: 'var(--danger)', cursor: 'pointer', fontSize: 15 }}>✕</button>
               </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                <select value={q.type} onChange={e => updateQ(q.id, { type: e.target.value as JobQuestionType })} style={{ ...inp, width: 'auto' }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Select value={q.type} onChange={e => updateQ(q.id, { type: e.target.value as JobQuestionType })} style={{ width: 'auto' }}>
                   {(Object.keys(QUESTION_TYPE_LABEL) as JobQuestionType[]).map(t => <option key={t} value={t}>{QUESTION_TYPE_LABEL[t]}</option>)}
-                </select>
-                <label style={chk}><input type="checkbox" checked={q.required} onChange={e => updateQ(q.id, { required: e.target.checked })} /> Required</label>
+                </Select>
+                <Check label="Required" checked={q.required} onChange={v => updateQ(q.id, { required: v })} />
               </div>
               {q.type === 'choice' && (
-                <input value={(q.options ?? []).join(', ')} onChange={e => updateQ(q.id, { options: e.target.value.split(',').map(s => s.trim()) })} placeholder="Options, comma separated" style={inp} />
+                <Input value={(q.options ?? []).join(', ')} onChange={e => updateQ(q.id, { options: e.target.value.split(',').map(s => s.trim()) })} placeholder="Options, comma separated" />
               )}
             </div>
           ))}
-          <button type="button" onClick={addQ} style={{ background: '#fff', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 10, padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ Add a question</button>
+          <button type="button" onClick={addQ} style={{ background: 'var(--cream)', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 'var(--radius-sm)', padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ Add a question</button>
         </Section>
 
-        {error && <div style={{ background: '#fff0f0', border: '1px solid #ffcdd2', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#c62828', fontFamily: 'var(--font-ui)' }}>{error}</div>}
+        <FormError>{error}</FormError>
 
         <PromoField kind="job" amountCents={JOBS_PRICING.perJobCents} onApplied={setAppliedPromo} />
 
-        <button type="submit" disabled={saving} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
-          {saving ? 'Posting…' : 'Post Job →'}
-        </button>
+        <SubmitButton type="submit" disabled={saving}>{saving ? 'Posting…' : 'Post Job →'}</SubmitButton>
       </form>
       )}
       <PanelHost />
@@ -321,27 +308,3 @@ function BusinessGate() {
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '16px 16px 18px', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
-      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>{title}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{children}</div>
-    </div>
-  )
-}
-function Row({ children }: { children: React.ReactNode }) {
-  return <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{children}</div>
-}
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ flex: 1, minWidth: 140 }}>
-      <label style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: '#999', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{label}</label>
-      {children}
-    </div>
-  )
-}
-
-const inp: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 8, padding: '9px 11px', fontFamily: 'var(--font-ui)', fontSize: 13, boxSizing: 'border-box', background: '#fff', outline: 'none' }
-const sel: React.CSSProperties = { ...inp, cursor: 'pointer', fontWeight: 700 }
-const chk: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 700, color: '#555', cursor: 'pointer' }
-const pill = (on: boolean): React.CSSProperties => ({ border: `1.5px solid ${on ? 'var(--orange)' : '#e5dccd'}`, background: on ? '#FFF3EE' : '#fff', color: on ? 'var(--orange)' : '#555', borderRadius: 999, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 })
