@@ -194,6 +194,9 @@ export const crmRouter = router({
       idVerified: z.boolean().optional(),
       addressVerified: z.boolean().optional(),
       credits: z.number().int().min(0).max(1_000_000).optional(),
+      // Fee override: a fixed sale-fee % for this account, or null to clear it
+      // and fall back to the level's standard fee.
+      feeOverridePct: z.number().min(0).max(100).nullable().optional(),
       // Suspension: pass a date to suspend, or null to lift.
       suspendedUntil: z.string().datetime().nullable().optional(),
       suspendedReason: z.string().max(300).nullable().optional(),
