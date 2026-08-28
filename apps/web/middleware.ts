@@ -81,8 +81,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect logged-in users away from the auth page
-  if (user && AUTH_ROUTES.some(r => path.startsWith(r))) {
+  // Redirect logged-in users away from the auth page — EXCEPT the set-password
+  // page, which is reached from an invite/recovery link that (by design) has
+  // already signed the person in; they still need to choose a password there.
+  if (user && AUTH_ROUTES.some(r => path.startsWith(r)) && !path.startsWith('/auth/set-password')) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
