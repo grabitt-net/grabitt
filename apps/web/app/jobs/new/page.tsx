@@ -13,7 +13,7 @@ import PromoField from '@/components/marketplace/PromoField'
 import { JOBS_PRICING } from '@grabitt/design-tokens'
 import { GC_TOWNS } from '@/lib/gcTowns'
 import { JOB_SECTORS, JOB_LANGUAGES } from '@/lib/jobCategories'
-import { Section, Row, Field, Input, Textarea, Select, Pill, Check, FormError, StepBar, StepNav } from '@/components/marketplace/FormKit'
+import { Section, Row, Field, Input, Textarea, Select, Pill, Check, FormError, StepTabs, SubmitButton } from '@/components/marketplace/FormKit'
 
 // Experience-required buckets — same vocabulary as the candidate profile; the
 // value is the lower-bound months stored on the advert for auto-matching.
@@ -87,31 +87,23 @@ export default function PostJobPage() {
   const updateQ = (id: string, patch: Partial<JobQuestion>) => setQuestions(qs => qs.map(q => q.id === id ? { ...q, ...patch } : q))
   const removeQ = (id: string) => setQuestions(qs => qs.filter(q => q.id !== id))
 
-  // Steps of the wizard — validate() returns an error string to block Continue,
-  // or null to advance. Content is built below in `stepContent`.
-  const STEP_TITLES = ['The role', 'Candidate matching', 'Location', 'Pay', 'Details', 'Screening & payment']
+  // Tabs — each part of the advert is a tab you can move between freely.
+  const STEP_TITLES = ['The role', 'Candidate matching', 'Location', 'Pay', 'Details', 'Screening']
   const [step, setStep] = useState(0)
-  const isLast = step === STEP_TITLES.length - 1
-  const stepError = (): string | null => {
-    if (step === 0 && (!f.jobTitle.trim() || !f.company.trim() || !f.establishmentType.trim())) return 'Job title, employer and establishment type are required.'
-    if (step === 2 && !f.location.trim()) return 'Please choose the job location.'
-    return null
-  }
+  const goTab = (i: number) => { setError(''); setStep(i); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+
   function onFormSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
-    const err = stepError()
-    if (err) { setError(err); return }
-    if (!isLast) { setStep(s => s + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
     postJob()
   }
-  const back = () => { setError(''); setStep(s => Math.max(0, s - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }
 
   async function postJob() {
     setError('')
-    if (!f.jobTitle.trim() || !f.company.trim() || !f.establishmentType.trim() || !f.location.trim()) {
-      setError('Job title, employer and location are required.'); setStep(0); return
+    // Validate required fields and jump to the tab that needs attention.
+    if (!f.jobTitle.trim() || !f.company.trim() || !f.establishmentType.trim()) {
+      setError('Job title, employer and establishment type are required.'); goTab(0); return
     }
+    if (!f.location.trim()) { setError('Please choose the job location.'); goTab(2); return }
     setSaving(true)
     try {
       let token = getAuthToken()
@@ -188,7 +180,7 @@ export default function PostJobPage() {
 
       {gate === 'ok' && (
       <form onSubmit={onFormSubmit} className="gform">
-        <StepBar current={step + 1} total={STEP_TITLES.length} title={STEP_TITLES[step]} />
+        <StepTabs steps={STEP_TITLES} current={step} onSelect={goTab} />
         {step === 0 && <Section title="The role">
           <Field label="Job title" required><Input value={f.jobTitle} onChange={e => set('jobTitle', e.target.value)} placeholder="e.g. Bar Staff" /></Field>
           <Field label="Employer name" required help="🔒 Your name is not shown on the advert. Candidates see the establishment type below, and learn who you are only when you invite them to interview."><Input value={f.company} onChange={e => set('company', e.target.value)} placeholder="e.g. The Irish Rover" /></Field>
@@ -275,7 +267,7 @@ export default function PostJobPage() {
           <Field label="Description"><Textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the role, responsibilities and requirements…" /></Field>
         </Section>}
 
-        {step === 5 && <><Section title="Screening questions" sub="Optional. Ask candidates specific questions they answer when applying.">
+        {step === 5 && <Section title="Screening questions" sub="Optional. Ask candidates specific questions they answer when applying.">
           {questions.map(q => (
             <div key={q.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg)' }}>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -294,13 +286,12 @@ export default function PostJobPage() {
             </div>
           ))}
           <button type="button" onClick={addQ} style={{ background: 'var(--cream)', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 'var(--radius-sm)', padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ Add a question</button>
-        </Section>
+        </Section>}
+
+        {/* Persistent footer — promo + submit are available from any tab. */}
         <PromoField kind="job" amountCents={JOBS_PRICING.perJobCents} onApplied={setAppliedPromo} />
-        </>}
-
         <FormError>{error}</FormError>
-
-        <StepNav isFirst={step === 0} isLast={isLast} onBack={back} submitting={saving} submitLabel="Post Job" nextLabel="Continue" />
+        <SubmitButton type="submit" disabled={saving}>{saving ? 'Posting…' : 'Post Job →'}</SubmitButton>
       </form>
       )}
       <PanelHost />

@@ -269,3 +269,19 @@ select.gform-control {
   transition: border-color .12s;
 }
 .gform-back:hover { border-color: #cfd6e2; }
+
+/* ── Form kit: tabbed sections ── */
+.gform-tabs {
+  display: flex; gap: 7px; overflow-x: auto; padding: 2px 0 4px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.gform-tabs::-webkit-scrollbar { display: none; }
+.gform-tab {
+  flex: 0 0 auto; border: 1px solid var(--line); background: var(--cream); color: var(--ink-2);
+  border-radius: 999px; padding: 9px 15px; font-family: var(--font-ui); font-size: 12.5px; font-weight: 700;
+  cursor: pointer; white-space: nowrap; transition: background .12s, color .12s, border-color .12s;
+}
+.gform-tab:hover { border-color: #cfd6e2; }
+.gform-tab--on { background: var(--orange); color: #fff; border-color: var(--orange); }
+.gform-tab__n { opacity: .6; margin-right: 5px; font-weight: 800; }
+.gform-tab--on .gform-tab__n { opacity: .85; }

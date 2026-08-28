@@ -63,6 +63,20 @@ export function SubmitButton({ children, ...rest }: React.ButtonHTMLAttributes<H
   return <button {...rest} className={`gform-submit ${rest.className ?? ''}`}>{children}</button>
 }
 
+// Tabbed section navigation — click any tab to jump to that part of the form.
+export function StepTabs({ steps, current, onSelect }: { steps: string[]; current: number; onSelect: (i: number) => void }) {
+  return (
+    <div className="gform-tabs" role="tablist">
+      {steps.map((s, i) => (
+        <button key={s} type="button" role="tab" aria-selected={i === current} onClick={() => onSelect(i)}
+          className={`gform-tab ${i === current ? 'gform-tab--on' : ''}`}>
+          <span className="gform-tab__n">{i + 1}</span>{s}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // Stepped-wizard progress bar. `current` is the 1-based active step.
 export function StepBar({ current, total, title }: { current: number; total: number; title?: string }) {
   const pct = Math.round((current / total) * 100)
