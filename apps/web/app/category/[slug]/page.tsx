@@ -36,6 +36,24 @@ const CATEGORY_DESC: Record<string, { title: string; body: string }> = {
   hobbies_crafts: { title: 'Feed your passion for less.', body: "Art supplies, instruments, model kits, craft materials and more — whatever your hobby, stock up affordably or sell the kit you're no longer using. Start something new, clear out the old, and let your creativity loose." },
 }
 
+// The category hero image (the same artwork used for the round homepage tiles),
+// shown oblong at the top of each category page. Slugs without an image fall
+// back to the plain header. Keep in sync with /public/categories.
+const CATEGORY_HERO: Record<string, string> = {
+  home_garden: '/categories/home-garden.jpg',
+  fashion: '/categories/fashion.jpg',
+  sport: '/categories/sport.jpg',
+  gaming: '/categories/gaming.jpg',
+  electronics: '/categories/electronics.jpg',
+  gift_ideas: '/categories/gift-ideas.jpg',
+  kids_baby: '/categories/kids-baby.jpg',
+  health_fitness: '/categories/health-beauty.jpg',
+  retro_vintage: '/categories/retro.jpg',
+  handy_help: '/categories/handy-help.jpg',
+  pet_shop: '/categories/pet-supplies.jpg',
+  hobbies_crafts: '/categories/hobbies-crafts.jpg',
+}
+
 const SUBCATS: Record<string, string[]> = {
   // Exact subcategories from the V20 prototype's deptConfig, each with an 'All'
   // pill prepended. Departments the prototype didn't define keep a sensible set.
@@ -121,27 +139,45 @@ export default function CategoryPage() {
       {/* Category Sponsor — the fixed top banner for this category (1 advertiser) */}
       <BannerSlot position="category" page={slug} aspect="5 / 1" />
 
-      {/* Orange hero — the category name and its description, centred on the same
-          orange box used by the footer/info pages. */}
+      {/* Category hero — an oblong crop of the category artwork with the name
+          overlaid. Categories without artwork keep the plain orange header. */}
       <div style={{ maxWidth: 1000, margin: '14px auto 6px', padding: '0 14px', width: '100%', boxSizing: 'border-box' }}>
-        <div style={{
-          position: 'relative', overflow: 'hidden', borderRadius: 20,
-          background: 'linear-gradient(135deg, #FF8A4D 0%, #FFB07A 100%)',
-          padding: 'clamp(11px, 2vw, 20px) clamp(18px, 4vw, 36px)',
-          textAlign: 'center', boxShadow: '0 8px 26px rgba(245,84,10,0.18)',
-        }}>
-          <div aria-hidden style={{ position: 'absolute', right: -30, top: -30, width: 170, height: 170, background: 'rgba(255,255,255,0.10)', borderRadius: '50%' }} />
-          <div aria-hidden style={{ position: 'absolute', left: -20, bottom: -40, width: 150, height: 150, background: 'rgba(255,255,255,0.08)', borderRadius: '50%' }} />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(22px, 4.4vw, 34px)', fontWeight: 700, color: '#fff', lineHeight: 1.15, margin: 0 }}>{label}</h1>
+        {CATEGORY_HERO[slug] ? (
+          <>
+            <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 20, aspectRatio: '3.4 / 1', minHeight: 128, boxShadow: '0 8px 26px rgba(0,0,0,0.15)' }}>
+              <img src={CATEGORY_HERO[slug]} alt={label} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.60) 0%, rgba(0,0,0,0.22) 52%, rgba(0,0,0,0) 100%)' }} />
+              <div style={{ position: 'absolute', left: 'clamp(16px, 4vw, 36px)', right: 16, bottom: 'clamp(14px, 3vw, 26px)', zIndex: 1 }}>
+                <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(23px, 4.6vw, 38px)', fontWeight: 700, color: '#fff', lineHeight: 1.08, margin: 0, textShadow: '0 2px 14px rgba(0,0,0,0.55)' }}>{label}</h1>
+                {CATEGORY_DESC[slug] && (
+                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(13px, 2vw, 16px)', fontWeight: 700, color: 'rgba(255,255,255,0.96)', marginTop: 5, maxWidth: 620, textShadow: '0 1px 10px rgba(0,0,0,0.55)' }}>{CATEGORY_DESC[slug].title}</div>
+                )}
+              </div>
+            </div>
             {CATEGORY_DESC[slug] && (
-              <>
-                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(14px, 2.2vw, 17px)', fontWeight: 700, color: '#fff', margin: '6px auto 0', maxWidth: 720 }}>{CATEGORY_DESC[slug].title}</div>
-                <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, lineHeight: 1.45, color: 'rgba(255,255,255,0.95)', maxWidth: 720, margin: '4px auto 0' }}>{CATEGORY_DESC[slug].body}</p>
-              </>
+              <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, lineHeight: 1.5, color: '#6b5f50', maxWidth: 760, margin: '10px auto 0', textAlign: 'center' }}>{CATEGORY_DESC[slug].body}</p>
             )}
+          </>
+        ) : (
+          <div style={{
+            position: 'relative', overflow: 'hidden', borderRadius: 20,
+            background: 'linear-gradient(135deg, #FF8A4D 0%, #FFB07A 100%)',
+            padding: 'clamp(11px, 2vw, 20px) clamp(18px, 4vw, 36px)',
+            textAlign: 'center', boxShadow: '0 8px 26px rgba(245,84,10,0.18)',
+          }}>
+            <div aria-hidden style={{ position: 'absolute', right: -30, top: -30, width: 170, height: 170, background: 'rgba(255,255,255,0.10)', borderRadius: '50%' }} />
+            <div aria-hidden style={{ position: 'absolute', left: -20, bottom: -40, width: 150, height: 150, background: 'rgba(255,255,255,0.08)', borderRadius: '50%' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(22px, 4.4vw, 34px)', fontWeight: 700, color: '#fff', lineHeight: 1.15, margin: 0 }}>{label}</h1>
+              {CATEGORY_DESC[slug] && (
+                <>
+                  <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(14px, 2.2vw, 17px)', fontWeight: 700, color: '#fff', margin: '6px auto 0', maxWidth: 720 }}>{CATEGORY_DESC[slug].title}</div>
+                  <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, lineHeight: 1.45, color: 'rgba(255,255,255,0.95)', maxWidth: 720, margin: '4px auto 0' }}>{CATEGORY_DESC[slug].body}</p>
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <header style={{ background: 'var(--sand)', padding: '14px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
