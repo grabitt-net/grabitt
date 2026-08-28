@@ -231,7 +231,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
                 <button onClick={() => save()} disabled={saving} style={{ flex: 1, background: '#fff', color: '#555', border: '1.5px solid #e5dccd', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{saving ? 'Saving…' : 'Save draft'}</button>
                 {f.published
                   ? <button onClick={() => save(false)} disabled={saving} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Unpublish</button>
-                  : <button onClick={() => save(true)} disabled={saving || !verified} style={{ flex: 1, background: verified ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: verified ? 'pointer' : 'not-allowed' }}>Publish shop</button>}
+                  : <button onClick={() => save(true)} disabled={saving || !verified} title={verified ? 'Make your shop live' : 'Your business must be verified before the shop can go live'} style={{ flex: 1, background: verified ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: verified ? 'pointer' : 'not-allowed' }}>{verified ? 'Publish shop' : '🔒 Verify to publish'}</button>}
               </div>
             </>
           )}
