@@ -194,6 +194,7 @@ function AddBusinessModal({ execToken, onClose, onCreated }: { execToken: string
   const [displayName, setDisplayName] = useState('')
   const [businessName, setBusinessName] = useState('')
   const [grade, setGrade] = useState('dealer')
+  const [feeOverride, setFeeOverride] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
@@ -206,6 +207,7 @@ function AddBusinessModal({ execToken, onClose, onCreated }: { execToken: string
         email: email.trim(), displayName: displayName.trim(),
         grade, isBusiness: true,
         ...(businessName.trim() && { businessName: businessName.trim() }),
+        ...(feeOverride.trim() !== '' && { feeOverridePct: Number(feeOverride) }),
       })
       toast('✓ Business account created — an invite email was sent.')
       onCreated()
@@ -232,6 +234,8 @@ function AddBusinessModal({ execToken, onClose, onCreated }: { execToken: string
           <option value="trader">Business Plus (Trader)</option>
           <option value="pro">Business Pro (Pro)</option>
         </select>
+        <label style={lbl}>Fee override %<span style={{ color: '#bbb', fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}> — optional, blank = the level’s standard fee</span></label>
+        <input value={feeOverride} onChange={e => setFeeOverride(e.target.value)} inputMode="decimal" placeholder="e.g. 5" style={inp} />
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
           <button onClick={onClose} style={{ border: '1.5px solid #e5e7eb', background: '#fff', borderRadius: 8, padding: '8px 16px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
           <button onClick={submit} disabled={busy} style={{ border: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 8, padding: '8px 18px', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>{busy ? 'Creating…' : 'Create business'}</button>

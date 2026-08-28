@@ -198,7 +198,7 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
 // emails them a link to set their own password (we never set one for them).
 function CreateMemberModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const api = useCrmApi()
-  const [f, setF] = useState({ email: '', displayName: '', grade: 'grabber', isBusiness: false, phone: '', businessName: '' })
+  const [f, setF] = useState({ email: '', displayName: '', grade: 'grabber', isBusiness: false, phone: '', businessName: '', feeOverride: '' })
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [done, setDone] = useState('')
@@ -215,6 +215,7 @@ function CreateMemberModal({ onClose, onCreated }: { onClose: () => void; onCrea
         isBusiness: f.isBusiness,
         ...(f.phone.trim() && { phone: f.phone.trim() }),
         ...(f.businessName.trim() && { businessName: f.businessName.trim() }),
+        ...(f.isBusiness && f.feeOverride.trim() !== '' && { feeOverridePct: Number(f.feeOverride) }),
       })
       setDone(r.email ?? f.email.trim())
       onCreated()
@@ -246,14 +247,26 @@ function CreateMemberModal({ onClose, onCreated }: { onClose: () => void; onCrea
               <L>Email *</L><input value={f.email} onChange={e => set('email', e.target.value)} type="email" placeholder="member@example.com" style={inp} />
               <L>Full name *</L><input value={f.displayName} onChange={e => set('displayName', e.target.value)} placeholder="Jane Doe" style={inp} />
               <L>Phone</L><input value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="+34 600 000 000" style={inp} />
-              <L>Grade</L>
-              <select value={f.grade} onChange={e => set('grade', e.target.value)} style={inp}>
-                {GRADES.map(g => <option key={g} value={g}>{g[0].toUpperCase() + g.slice(1)}</option>)}
-              </select>
+              {!f.isBusiness && (<>
+                <L>Grade</L>
+                <select value={f.grade} onChange={e => set('grade', e.target.value)} style={inp}>
+                  {GRADES.map(g => <option key={g} value={g}>{g[0].toUpperCase() + g.slice(1)}</option>)}
+                </select>
+              </>)}
               <div style={{ marginTop: 10 }}>
-                <Check label="Business account" checked={f.isBusiness} onChange={v => set('isBusiness', v)} />
+                <Check label="Business account" checked={f.isBusiness} onChange={v => setF(p => ({ ...p, isBusiness: v, grade: v ? (p.grade === 'grabber' ? 'dealer' : p.grade) : p.grade }))} />
               </div>
-              {f.isBusiness && (<><L>Business name</L><input value={f.businessName} onChange={e => set('businessName', e.target.value)} placeholder="Acme Estates" style={inp} /></>)}
+              {f.isBusiness && (<>
+                <L>Business name</L><input value={f.businessName} onChange={e => set('businessName', e.target.value)} placeholder="Acme Estates" style={inp} />
+                <L>Business level</L>
+                <select value={f.grade === 'grabber' ? 'dealer' : f.grade} onChange={e => set('grade', e.target.value)} style={inp}>
+                  <option value="dealer">Business (Dealer)</option>
+                  <option value="trader">Business Plus (Trader)</option>
+                  <option value="pro">Business Pro (Pro)</option>
+                </select>
+                <L>Fee override % <span style={{ color: '#bbb', fontWeight: 600 }}>— optional, blank = the level’s standard fee</span></L>
+                <input value={f.feeOverride} onChange={e => set('feeOverride', e.target.value)} inputMode="decimal" placeholder="e.g. 5" style={inp} />
+              </>)}
 
               <button onClick={create} disabled={busy || !f.email.trim() || !f.displayName.trim()} style={{ ...primary, width: '100%', marginTop: 16, opacity: busy ? 0.7 : 1 }}>
                 {busy ? 'Inviting…' : 'Create & send invite'}

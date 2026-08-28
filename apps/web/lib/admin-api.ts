@@ -309,7 +309,7 @@ export function makeCrmApi(execToken: string) {
       | { action: 'change_email'; userId: string; email: string }
       | { action: 'reset_password'; userId: string }
       | { action: 'set_admin'; userId: string; isAdmin: boolean }
-      | { action: 'create_member'; email: string; displayName: string; grade?: string; isBusiness?: boolean; phone?: string; businessName?: string }
+      | { action: 'create_member'; email: string; displayName: string; grade?: string; isBusiness?: boolean; phone?: string; businessName?: string; feeOverridePct?: number | null }
     ) => {
       const res = await fetch('/api/admin/user-auth', {
         method: 'POST',

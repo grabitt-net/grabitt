@@ -69,6 +69,8 @@ export async function POST(req: Request) {
             return grade ? { grade } : {}
           })()),
           ...(typeof body.isBusiness === 'boolean' ? { isBusiness: body.isBusiness } : {}),
+          ...(body.feeOverridePct !== undefined && body.feeOverridePct !== null && body.feeOverridePct !== ''
+            ? { feeOverridePct: Number(body.feeOverridePct) } : {}),
           ...(body.phone ? { phone: String(body.phone).trim() } : {}),
           ...(body.businessName ? { businessName: String(body.businessName).trim() } : {}),
         },
