@@ -13,7 +13,7 @@ import PromoField from '@/components/marketplace/PromoField'
 import { JOBS_PRICING } from '@grabitt/design-tokens'
 import { GC_TOWNS } from '@/lib/gcTowns'
 import { JOB_SECTORS, JOB_LANGUAGES } from '@/lib/jobCategories'
-import { Section, Row, Field, Input, Textarea, Select, Pill, Check, FormError, SubmitButton } from '@/components/marketplace/FormKit'
+import { Section, Row, Field, Input, Textarea, Select, Pill, Check, FormError, StepBar, StepNav } from '@/components/marketplace/FormKit'
 
 // Experience-required buckets — same vocabulary as the candidate profile; the
 // value is the lower-bound months stored on the advert for auto-matching.
@@ -87,11 +87,30 @@ export default function PostJobPage() {
   const updateQ = (id: string, patch: Partial<JobQuestion>) => setQuestions(qs => qs.map(q => q.id === id ? { ...q, ...patch } : q))
   const removeQ = (id: string) => setQuestions(qs => qs.filter(q => q.id !== id))
 
-  async function submit(e: React.FormEvent) {
+  // Steps of the wizard — validate() returns an error string to block Continue,
+  // or null to advance. Content is built below in `stepContent`.
+  const STEP_TITLES = ['The role', 'Candidate matching', 'Location', 'Pay', 'Details', 'Screening & payment']
+  const [step, setStep] = useState(0)
+  const isLast = step === STEP_TITLES.length - 1
+  const stepError = (): string | null => {
+    if (step === 0 && (!f.jobTitle.trim() || !f.company.trim() || !f.establishmentType.trim())) return 'Job title, employer and establishment type are required.'
+    if (step === 2 && !f.location.trim()) return 'Please choose the job location.'
+    return null
+  }
+  function onFormSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    const err = stepError()
+    if (err) { setError(err); return }
+    if (!isLast) { setStep(s => s + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
+    postJob()
+  }
+  const back = () => { setError(''); setStep(s => Math.max(0, s - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+
+  async function postJob() {
+    setError('')
     if (!f.jobTitle.trim() || !f.company.trim() || !f.establishmentType.trim() || !f.location.trim()) {
-      setError('Job title, employer and location are required.'); return
+      setError('Job title, employer and location are required.'); setStep(0); return
     }
     setSaving(true)
     try {
@@ -168,8 +187,9 @@ export default function PostJobPage() {
       )}
 
       {gate === 'ok' && (
-      <form onSubmit={submit} className="gform">
-        <Section title="The role">
+      <form onSubmit={onFormSubmit} className="gform">
+        <StepBar current={step + 1} total={STEP_TITLES.length} title={STEP_TITLES[step]} />
+        {step === 0 && <Section title="The role">
           <Field label="Job title" required><Input value={f.jobTitle} onChange={e => set('jobTitle', e.target.value)} placeholder="e.g. Bar Staff" /></Field>
           <Field label="Employer name" required help="🔒 Your name is not shown on the advert. Candidates see the establishment type below, and learn who you are only when you invite them to interview."><Input value={f.company} onChange={e => set('company', e.target.value)} placeholder="e.g. The Irish Rover" /></Field>
           <Row>
@@ -187,11 +207,11 @@ export default function PostJobPage() {
             <Field label="Hours of operation"><Input value={f.hours} onChange={e => set('hours', e.target.value)} placeholder="e.g. Mon–Fri 9:00–17:00" /></Field>
           </Row>
           <Check label="Remote / work from home" checked={f.remote} onChange={v => set('remote', v)} />
-        </Section>
+        </Section>}
 
         {/* Candidate matching — captured against the same taxonomy as jobseeker
             profiles, so we can auto-match this advert to people looking for work. */}
-        <Section title="Candidate matching" sub="Tell us the exact role(s), experience and languages you need. We use this to match your advert to suitable candidates (and to power employer searches).">
+        {step === 1 && <Section title="Candidate matching" sub="Tell us the exact role(s), experience and languages you need. We use this to match your advert to suitable candidates (and to power employer searches).">
           {f.sector ? (
             <Field label="Role(s) this advert covers">
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
@@ -215,17 +235,17 @@ export default function PostJobPage() {
               ))}
             </div>
           </Field>
-        </Section>
+        </Section>}
 
-        <Section title="Location" sub="Give the job's address — this is where the work is, not your profile address.">
+        {step === 2 && <Section title="Location" sub="Give the job's address — this is where the work is, not your profile address.">
           <Field label="Location (town / area)" required><Select value={f.location} onChange={e => set('location', e.target.value)}><option value="">Select a town…</option>{GC_TOWNS.map(t => <option key={t} value={t}>{t}</option>)}</Select></Field>
           <Field label="Full address (shown with a map on the listing)"><Input value={f.address} onChange={e => set('address', e.target.value)} placeholder="Street, number, postcode, town" /></Field>
           <Field label="Pin the exact location on the map" help={coords ? `📍 Pinned at ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : 'Tap the map to drop a pin where the job is based.'}>
             <MapPicker value={coords} onChange={setCoords} />
           </Field>
-        </Section>
+        </Section>}
 
-        <Section title="Pay">
+        {step === 3 && <Section title="Pay">
           <Row>
             <Field label="Salary from (€)"><Input value={f.salaryMin} onChange={e => set('salaryMin', e.target.value)} inputMode="numeric" placeholder="1200" /></Field>
             <Field label="Salary to (€)"><Input value={f.salaryMax} onChange={e => set('salaryMax', e.target.value)} inputMode="numeric" placeholder="1400" /></Field>
@@ -248,14 +268,14 @@ export default function PostJobPage() {
               </div>
             </Field>
           </Row>
-        </Section>
+        </Section>}
 
-        <Section title="Details">
+        {step === 4 && <Section title="Details">
           <Field label="Expected start date"><Input type="date" value={f.startDate} onChange={e => set('startDate', e.target.value)} /></Field>
           <Field label="Description"><Textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the role, responsibilities and requirements…" /></Field>
-        </Section>
+        </Section>}
 
-        <Section title="Screening questions" sub="Optional. Ask candidates specific questions they answer when applying.">
+        {step === 5 && <><Section title="Screening questions" sub="Optional. Ask candidates specific questions they answer when applying.">
           {questions.map(q => (
             <div key={q.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg)' }}>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -275,12 +295,12 @@ export default function PostJobPage() {
           ))}
           <button type="button" onClick={addQ} style={{ background: 'var(--cream)', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 'var(--radius-sm)', padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ Add a question</button>
         </Section>
+        <PromoField kind="job" amountCents={JOBS_PRICING.perJobCents} onApplied={setAppliedPromo} />
+        </>}
 
         <FormError>{error}</FormError>
 
-        <PromoField kind="job" amountCents={JOBS_PRICING.perJobCents} onApplied={setAppliedPromo} />
-
-        <SubmitButton type="submit" disabled={saving}>{saving ? 'Posting…' : 'Post Job →'}</SubmitButton>
+        <StepNav isFirst={step === 0} isLast={isLast} onBack={back} submitting={saving} submitLabel="Post Job" nextLabel="Continue" />
       </form>
       )}
       <PanelHost />

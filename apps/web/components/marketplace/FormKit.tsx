@@ -62,3 +62,33 @@ export function FormError({ children }: { children: React.ReactNode }) {
 export function SubmitButton({ children, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button {...rest} className={`gform-submit ${rest.className ?? ''}`}>{children}</button>
 }
+
+// Stepped-wizard progress bar. `current` is the 1-based active step.
+export function StepBar({ current, total, title }: { current: number; total: number; title?: string }) {
+  const pct = Math.round((current / total) * 100)
+  return (
+    <div className="gform-stepbar">
+      <div className="gform-stepbar__meta">
+        <span>Step <b>{current}</b> of {total}{title ? <> · {title}</> : null}</span>
+        <span>{pct}%</span>
+      </div>
+      <div className="gform-stepbar__track"><div className="gform-stepbar__fill" style={{ width: `${pct}%` }} /></div>
+    </div>
+  )
+}
+
+// Back / Continue (or final submit) row. The whole form is one <form> whose
+// submit both advances a step and, on the last step, does the real submit — so
+// Enter works too. Pass isLast + submitLabel for the final action.
+export function StepNav({ isFirst, isLast, onBack, submitting, submitLabel = 'Submit', nextLabel = 'Continue' }: {
+  isFirst: boolean; isLast: boolean; onBack: () => void; submitting?: boolean; submitLabel?: string; nextLabel?: string
+}) {
+  return (
+    <div className="gform-stepnav">
+      {!isFirst && <button type="button" className="gform-back" onClick={onBack}>← Back</button>}
+      <button type="submit" className="gform-submit gform-next" disabled={submitting}>
+        {isLast ? (submitting ? '…' : submitLabel) : `${nextLabel} →`}
+      </button>
+    </div>
+  )
+}

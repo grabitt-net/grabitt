@@ -250,3 +250,22 @@ select.gform-control {
 }
 .gform-submit:hover { filter: brightness(1.04); }
 .gform-submit:disabled { opacity: .6; cursor: default; }
+
+/* ── Form kit: stepped wizard ── */
+.gform-stepbar { margin-bottom: 2px; }
+.gform-stepbar__meta {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--font-ui); font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 8px;
+}
+.gform-stepbar__meta b { color: var(--dark); }
+.gform-stepbar__track { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.gform-stepbar__fill { height: 100%; background: linear-gradient(90deg, var(--orange), var(--orange2)); border-radius: 999px; transition: width .25s ease; }
+.gform-stepnav { display: flex; gap: 10px; align-items: stretch; }
+.gform-next { flex: 1; }
+.gform-back {
+  background: var(--cream); border: 1px solid var(--line); color: var(--ink-2);
+  border-radius: var(--radius); padding: 0 20px;
+  font-family: var(--font-ui); font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: border-color .12s;
+}
+.gform-back:hover { border-color: #cfd6e2; }
