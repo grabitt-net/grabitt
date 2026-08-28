@@ -39,6 +39,7 @@ export default function BusinessView({ execToken, onOpenMember }: {
   const [bizMembers, setBizMembers] = useState<BizMember[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [err, setErr] = useState('')
+  const [showAdd, setShowAdd] = useState(false)
 
   const load = useCallback(async () => {
     setErr('')
@@ -83,12 +84,17 @@ export default function BusinessView({ execToken, onOpenMember }: {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
         <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{tab === 'businesses' ? 'Business accounts' : 'Business verification'}</h2>
+        {tab === 'businesses' && (
+          <button onClick={() => setShowAdd(true)} style={{ border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', background: 'var(--orange)', color: '#fff' }}>+ Add business</button>
+        )}
         <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
           {TABS.map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{ border: '1px solid #ddd', borderRadius: 8, padding: '6px 12px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', background: tab === id ? '#1a1a1a' : '#fff', color: tab === id ? '#fff' : '#555' }}>{label}</button>
           ))}
         </div>
       </div>
+
+      {showAdd && <AddBusinessModal execToken={execToken} onClose={() => setShowAdd(false)} onCreated={() => { setShowAdd(false); setTab('businesses'); load() }} />}
 
       {err && <div style={{ background: '#fff5f5', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 8, padding: '9px 12px', fontSize: 12.5, marginBottom: 12 }}>{err}</div>}
 
@@ -177,6 +183,60 @@ export default function BusinessView({ execToken, onOpenMember }: {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+// Create a brand-new business account (invites the person + seeds a business
+// User row). Grade defaults to Dealer (the Business tier); admins can bump it.
+function AddBusinessModal({ execToken, onClose, onCreated }: { execToken: string; onClose: () => void; onCreated: () => void }) {
+  const [email, setEmail] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [businessName, setBusinessName] = useState('')
+  const [grade, setGrade] = useState('dealer')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+
+  const submit = async () => {
+    if (!email.trim() || !displayName.trim()) { setErr('Email and contact name are required.'); return }
+    setBusy(true); setErr('')
+    try {
+      await makeCrmApi(execToken).memberAuthAction({
+        action: 'create_member',
+        email: email.trim(), displayName: displayName.trim(),
+        grade, isBusiness: true,
+        ...(businessName.trim() && { businessName: businessName.trim() }),
+      })
+      toast('✓ Business account created — an invite email was sent.')
+      onCreated()
+    } catch (e) { setErr(e instanceof Error ? e.message : 'Could not create the account.') } finally { setBusy(false) }
+  }
+
+  const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '9px 11px', fontFamily: 'Nunito, sans-serif', fontSize: 13, marginBottom: 10, outline: 'none' }
+  const lbl: React.CSSProperties = { display: 'block', fontSize: 10.5, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99997, padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 22, width: '100%', maxWidth: 440 }}>
+        <h3 style={{ fontFamily: 'Comfortaa, sans-serif', fontSize: 17, fontWeight: 700, margin: '0 0 14px' }}>Add a business account</h3>
+        {err && <div style={{ background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 11px', fontSize: 12, marginBottom: 12 }}>{err}</div>}
+        <label style={lbl}>Business name</label>
+        <input value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="Acme Estates" style={inp} />
+        <label style={lbl}>Contact name</label>
+        <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Jane Doe" style={inp} />
+        <label style={lbl}>Email</label>
+        <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="owner@acme.com" style={inp} />
+        <label style={lbl}>Starting level</label>
+        <select value={grade} onChange={e => setGrade(e.target.value)} style={inp}>
+          <option value="dealer">Business (Dealer)</option>
+          <option value="trader">Business Plus (Trader)</option>
+          <option value="pro">Business Pro (Pro)</option>
+        </select>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
+          <button onClick={onClose} style={{ border: '1.5px solid #e5e7eb', background: '#fff', borderRadius: 8, padding: '8px 16px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={submit} disabled={busy} style={{ border: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 8, padding: '8px 18px', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>{busy ? 'Creating…' : 'Create business'}</button>
+        </div>
+      </div>
     </div>
   )
 }
