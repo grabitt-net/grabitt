@@ -4,11 +4,44 @@ import { prisma } from 'server/src/db'
 import { verifyExecJwt } from 'server/src/middleware/auth'
 import { writeAudit } from 'server/src/routers/crm'
 import { serviceKeyProblem } from '@/lib/supabaseServiceKey'
+import { sendEmail } from 'server/src/lib/notify'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+
+// Supabase's own auth emails (invite / recovery) only send when SMTP is
+// configured on the project, so for a custom domain they can silently fail.
+// We instead generate the set-password link ourselves and deliver it through
+// the app's Resend pipeline (noreply@grabitt.net) — the same channel every
+// other Grabitt email uses. Returns true if the branded email was sent.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function sendSetPasswordEmail(admin: any, email: string, origin: string, name: string, welcome: boolean): Promise<boolean> {
+  try {
+    const { data, error } = await admin.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: { redirectTo: `${origin}/auth/callback?next=/account` },
+    })
+    const link = (data as { properties?: { action_link?: string } } | null)?.properties?.action_link
+    if (error || !link) return false
+    const subject = welcome ? 'Welcome to Grabitt — set your password' : 'Set your Grabitt password'
+    const html = `
+      <div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#1a1a1a">
+        <h2 style="color:#f5540a">Welcome to Grabitt${name ? `, ${name}` : ''} 👋</h2>
+        <p>${welcome ? 'An account has been created for you on Grabitt, the Canary Islands marketplace.' : 'You asked to set a new password for your Grabitt account.'}</p>
+        <p>Click the button below to set your password and sign in:</p>
+        <p style="margin:24px 0">
+          <a href="${link}" style="background:#f5540a;color:#fff;text-decoration:none;font-weight:bold;padding:12px 26px;border-radius:999px;display:inline-block">Set my password</a>
+        </p>
+        <p style="font-size:12px;color:#888">If the button doesn't work, copy this link into your browser:<br>${link}</p>
+        <p style="font-size:12px;color:#888">If you weren't expecting this, you can ignore this email.</p>
+      </div>`
+    await sendEmail(email, subject, html)
+    return true
+  } catch { return false }
+}
 
 // Exec-only auth actions on a member. These can't live in the tRPC routers
 // because they touch Supabase Auth (the identity), not just our User table:
@@ -76,8 +109,12 @@ export async function POST(req: Request) {
         },
         select: { id: true, email: true, displayName: true },
       })
-      await writeAudit(prisma, actor.id, created.id, 'member_created', { email: addr, invited: true })
-      return NextResponse.json({ ok: true, ...created, invited: true })
+      // Deliver the set-password link via our own Resend pipeline (Supabase's
+      // invite email is unreliable without project SMTP). Falls back silently to
+      // the Supabase invite already triggered above.
+      const emailed = await sendSetPasswordEmail(admin, addr, origin, displayName, true)
+      await writeAudit(prisma, actor.id, created.id, 'member_created', { email: addr, invited: true, emailed })
+      return NextResponse.json({ ok: true, ...created, invited: true, emailed })
     } catch (e) {
       // Don't leave an orphaned auth identity behind if our row failed.
       await admin.auth.admin.deleteUser(data.user.id).catch(() => {})
@@ -91,13 +128,25 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
   if (action === 'reset_password') {
-    // Sends a recovery email to the member — the admin never sets/sees a password.
+    // Prefer our own Resend delivery (reliable, branded). Only if the service
+    // key is present can we generate the link; otherwise fall back to Supabase's
+    // built-in recovery email via the anon client.
+    const keyProblem = serviceKeyProblem(url, serviceKey)
+    if (!keyProblem && serviceKey) {
+      const admin = createSupabaseAdmin(url, serviceKey)
+      const emailed = await sendSetPasswordEmail(admin, user.email, origin, '', false)
+      if (emailed) {
+        await writeAudit(prisma, actor.id, userId, 'password_reset_sent', { to: user.email, via: 'resend' })
+        return NextResponse.json({ ok: true, sentTo: user.email })
+      }
+    }
+    // Fallback: Supabase's own recovery email (needs project SMTP to actually send).
     const anon = createSupabaseAdmin(url, anonKey)
     const { error } = await anon.auth.resetPasswordForEmail(user.email, {
       redirectTo: `${origin}/auth/callback?next=/account`,
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    await writeAudit(prisma, actor.id, userId, 'password_reset_sent', { to: user.email })
+    await writeAudit(prisma, actor.id, userId, 'password_reset_sent', { to: user.email, via: 'supabase' })
     return NextResponse.json({ ok: true, sentTo: user.email })
   }
 
