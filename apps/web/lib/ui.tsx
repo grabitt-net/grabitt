@@ -46,7 +46,7 @@ export function UiHost() {
   return (
     <>
       {/* Toasts — polite live region, never steal focus */}
-      <div aria-live="polite" aria-atomic="false" style={{ position: 'fixed', left: 0, right: 0, bottom: 18, zIndex: 900, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none', padding: '0 12px' }}>
+      <div aria-live="polite" aria-atomic="false" style={{ position: 'fixed', left: 0, right: 0, bottom: 18, zIndex: 1000001, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none', padding: '0 12px' }}>
         {toasts.map(t => {
           const c = t.type === 'error' ? '#DC2626' : t.type === 'success' ? '#16A34A' : '#0F172A'
           return (
@@ -63,7 +63,7 @@ export function UiHost() {
 
       {/* Confirm modal */}
       {dialog && (
-        <div onClick={() => close(false)} style={{ position: 'fixed', inset: 0, zIndex: 950, background: 'rgba(15,23,42,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div onClick={() => close(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000000, background: 'rgba(15,23,42,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" style={{ background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', width: '100%', maxWidth: 400, padding: 22, animation: 'dialogIn 0.2s ease' }}>
             {dialog.opts.title && <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--dark)', marginBottom: 6 }}>{dialog.opts.title}</div>}
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.55, marginBottom: 20 }}>{dialog.opts.message}</div>

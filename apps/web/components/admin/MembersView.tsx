@@ -14,7 +14,7 @@ const accountLevel = (m: { isBusiness: boolean; businessLight?: boolean; grade: 
 // verification, credits, suspension, plus email change & password reset
 // (which go through Supabase Auth via /api/admin/user-auth).
 
-interface Member {
+export interface Member {
   id: string
   displayName: string
   email: string
@@ -271,7 +271,7 @@ function CreateMemberModal({ onClose, onCreated }: { onClose: () => void; onCrea
   )
 }
 
-function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: () => void; onSaved: () => void }) {
+export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: () => void; onSaved: () => void }) {
   const api = useCrmApi()
   const [view, setView] = useState<'activity' | 'manage'>('activity')
   const [f, setF] = useState({

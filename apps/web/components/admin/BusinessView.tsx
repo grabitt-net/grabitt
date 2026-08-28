@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { toast, confirmDialog } from '@/lib/ui'
 import { makeCrmApi } from '@/lib/admin-api'
+import { MemberDrawer, type Member } from './MembersView'
 
 // The business verification review queue. Applications arrive with the seller's
 // registered details and documents; a reviewer opens each document, then
@@ -30,9 +31,9 @@ type BizMember = {
   next: { label: string; needSales: number; needRating: number } | null
 }
 
-export default function BusinessView({ execToken, onOpenMember }: {
+export default function BusinessView({ execToken, members = [] }: {
   execToken: string
-  onOpenMember?: (userId: string) => void
+  members?: Member[]
 }) {
   const [tab, setTab] = useState('businesses')
   const [rows, setRows] = useState<Application[] | null>(null)
@@ -40,6 +41,36 @@ export default function BusinessView({ execToken, onOpenMember }: {
   const [busy, setBusy] = useState<string | null>(null)
   const [err, setErr] = useState('')
   const [showAdd, setShowAdd] = useState(false)
+  // Open the full member drawer in-place (staying on the Business menu) using
+  // the complete member record from the shared members list.
+  const [selected, setSelected] = useState<Member | null>(null)
+  const [rowBusy, setRowBusy] = useState<string | null>(null)
+  const byId = (id: string) => members.find(m => m.id === id) ?? null
+  const isSuspended = (m: Member | null) => !!m?.suspendedUntil && new Date(m.suspendedUntil) > new Date()
+
+  const openMember = (id: string) => { const m = byId(id); if (m) setSelected(m); else toast('Member details are still loading — try again in a moment.') }
+
+  const quickSuspend = async (id: string) => {
+    const m = byId(id); if (!m) return
+    if (isSuspended(m)) {
+      setRowBusy(id)
+      try { await makeCrmApi(execToken).updateMember({ userId: id, suspendedUntil: null, suspendedReason: null }); toast('✓ Reactivated'); load() }
+      catch (e) { toast(e instanceof Error ? e.message : 'Could not update') } finally { setRowBusy(null) }
+    } else {
+      if (!(await confirmDialog({ message: `Suspend ${m.email}? They won't be able to use their account until reactivated.`, confirmLabel: 'Suspend', danger: true }))) return
+      setRowBusy(id)
+      try { await makeCrmApi(execToken).updateMember({ userId: id, suspendedUntil: new Date('2099-12-31T00:00:00.000Z').toISOString(), suspendedReason: 'Suspended by admin' }); toast('✓ Suspended'); load() }
+      catch (e) { toast(e instanceof Error ? e.message : 'Could not update') } finally { setRowBusy(null) }
+    }
+  }
+
+  const quickReset = async (id: string) => {
+    const m = byId(id); if (!m) return
+    if (!(await confirmDialog({ message: `Send a password-reset email to ${m.email}?`, confirmLabel: 'Send' }))) return
+    setRowBusy(id)
+    try { await makeCrmApi(execToken).memberAuthAction({ action: 'reset_password', userId: id }); toast(`✓ Reset email sent to ${m.email}`) }
+    catch (e) { toast(e instanceof Error ? e.message : 'Could not send') } finally { setRowBusy(null) }
+  }
 
   const load = useCallback(async () => {
     setErr('')
@@ -95,6 +126,7 @@ export default function BusinessView({ execToken, onOpenMember }: {
       </div>
 
       {showAdd && <AddBusinessModal execToken={execToken} onClose={() => setShowAdd(false)} onCreated={() => { setShowAdd(false); setTab('businesses'); load() }} />}
+      {selected && <MemberDrawer member={selected} onClose={() => setSelected(null)} onSaved={() => load()} />}
 
       {err && <div style={{ background: '#fff5f5', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 8, padding: '9px 12px', fontSize: 12.5, marginBottom: 12 }}>{err}</div>}
 
@@ -128,7 +160,15 @@ export default function BusinessView({ execToken, onOpenMember }: {
                           </div>
                         ) : <span style={{ color: '#16a34a', fontWeight: 800, fontSize: 11 }}>Top level ✓</span>}
                       </td>
-                      <td style={{ padding: '10px 14px' }}><button onClick={() => onOpenMember?.(b.id)} style={{ background: '#eef4ff', color: '#2563eb', border: 'none', borderRadius: 7, padding: '5px 11px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Open</button></td>
+                      <td style={{ padding: '10px 14px' }}>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <button onClick={() => openMember(b.id)} style={rowBtn('#eef4ff', '#2563eb')}>Edit</button>
+                          {isSuspended(byId(b.id))
+                            ? <button onClick={() => quickSuspend(b.id)} disabled={rowBusy === b.id} style={rowBtn('#f0faf4', '#16a34a')}>{rowBusy === b.id ? '…' : 'Reactivate'}</button>
+                            : <button onClick={() => quickSuspend(b.id)} disabled={rowBusy === b.id} style={rowBtn('#fef2f2', '#ef4444')}>{rowBusy === b.id ? '…' : 'Suspend'}</button>}
+                          <button onClick={() => quickReset(b.id)} disabled={rowBusy === b.id} style={rowBtn('#fff7ed', '#b45309')} title="Send a password-reset / account email">Reset</button>
+                        </div>
+                      </td>
                     </tr>
                   )
                 })}
@@ -146,7 +186,7 @@ export default function BusinessView({ execToken, onOpenMember }: {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <div style={{ fontSize: 15, fontWeight: 800, color: '#1a1a1a' }}>{a.legalName || a.user.businessName || a.user.displayName}</div>
-                  <button onClick={() => onOpenMember?.(a.user.id)} style={{ background: 'none', border: 'none', padding: 0, color: '#1B6CA8', fontSize: 12, cursor: onOpenMember ? 'pointer' : 'default' }}>
+                  <button onClick={() => openMember(a.user.id)} style={{ background: 'none', border: 'none', padding: 0, color: '#1B6CA8', fontSize: 12, cursor: 'pointer' }}>
                     {a.user.displayName} · {a.user.email}
                   </button>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 8, fontSize: 12, color: '#555' }}>
@@ -244,6 +284,8 @@ function AddBusinessModal({ execToken, onClose, onCreated }: { execToken: string
     </div>
   )
 }
+
+const rowBtn = (bg: string, fg: string): React.CSSProperties => ({ background: bg, color: fg, border: 'none', borderRadius: 7, padding: '5px 11px', fontSize: 11, fontWeight: 800, cursor: 'pointer' })
 
 function DocChip({ label, present, href }: { label: string; present: boolean; href: string }) {
   if (!present) return <span style={{ background: '#f5f5f5', color: '#bbb', borderRadius: 50, padding: '5px 12px', fontSize: 11.5, fontWeight: 700 }}>{label}: none</span>

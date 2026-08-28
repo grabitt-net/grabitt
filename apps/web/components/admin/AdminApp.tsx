@@ -212,7 +212,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'forecast'   && <ForecastView  contacts={contacts} orders={orders} />}
                 {view === 'members'    && <MembersView   members={members} focusUserId={focusMemberId} />}
                 {view === 'candidates' && <CandidatesView execToken={execToken} onOpenMember={(id) => { setFocusMemberId(id); setView('members') }} />}
-                {view === 'business'   && <BusinessView   execToken={execToken} onOpenMember={(id) => { setFocusMemberId(id); setView('members') }} />}
+                {view === 'business'   && <BusinessView   execToken={execToken} members={members} />}
                 {view === 'discounts'  && <DiscountsView />}
                 {view === 'disputes'   && <DisputesView  disputes={disputes} onUpdate={setDisputes} />}
                 {view === 'reports'    && <ReportsView   onCountChange={setReportsOpen} />}
