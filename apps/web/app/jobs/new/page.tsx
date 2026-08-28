@@ -291,7 +291,7 @@ export default function PostJobPage() {
         {/* Persistent footer — promo + submit are available from any tab. */}
         <PromoField kind="job" amountCents={JOBS_PRICING.perJobCents} onApplied={setAppliedPromo} />
         <FormError>{error}</FormError>
-        <SubmitButton type="submit" disabled={saving}>{saving ? 'Posting…' : 'Post Job →'}</SubmitButton>
+        <SubmitButton type="submit" disabled={saving}>{saving ? 'Posting…' : 'Post Job'}</SubmitButton>
       </form>
       )}
       <PanelHost />
@@ -312,8 +312,8 @@ function BusinessGate() {
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 18 }}>
           Job adverts can only be posted from a Grabitt Business account. Sign up as a business to post jobs, manage applicants and access your Employer Dashboard.
         </div>
-        <button onClick={() => openPanel('business')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Sign up as a business →</button>
-        <Link href="/jobs" style={{ display: 'inline-block', marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#888', textDecoration: 'none' }}>← Back to jobs</Link>
+        <button onClick={() => openPanel('business')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Sign up as a business</button>
+        <Link href="/jobs" style={{ display: 'inline-block', marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#888', textDecoration: 'none' }}>Back to jobs</Link>
       </div>
     </div>
   )

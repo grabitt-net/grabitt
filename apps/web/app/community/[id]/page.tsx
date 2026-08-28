@@ -39,7 +39,7 @@ export default function CommunityPostPage() {
       <Topbar title="Grabitt Guides" back />
       <QuickActions />
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '18px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
-        <Link href="/community" style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--orange)', textDecoration: 'none', fontWeight: 700 }}>‹ Grabitt Guides</Link>
+        <Link href="/community" style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--orange)', textDecoration: 'none', fontWeight: 700 }}>Grabitt Guides</Link>
         {state === 'loading' && <div style={{ marginTop: 30, color: '#888', fontFamily: 'var(--font-comfortaa)' }}>Loading…</div>}
         {state === 'notfound' && <div style={{ marginTop: 30, color: '#888', fontFamily: 'var(--font-comfortaa)' }}>Article not found.</div>}
         {state === 'ready' && post && (

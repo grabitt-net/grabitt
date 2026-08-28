@@ -48,7 +48,7 @@ export default function SponsorshipContent({ showIntro = true }: { showIntro?: b
         </div>
       ))}
 
-      <a href="mailto:ads@grabitt.net?subject=Grabitt%20Sponsorship%20enquiry" style={{ display: 'block', boxSizing: 'border-box', textAlign: 'center', textDecoration: 'none', width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 6 }}>Enquire about sponsorship →</a>
+      <a href="mailto:ads@grabitt.net?subject=Grabitt%20Sponsorship%20enquiry" style={{ display: 'block', boxSizing: 'border-box', textAlign: 'center', textDecoration: 'none', width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginTop: 6 }}>Enquire about sponsorship</a>
       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 8 }}>
         Our team will confirm availability and set you up: ads@grabitt.net
       </div>

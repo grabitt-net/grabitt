@@ -6,7 +6,7 @@ export default function TermsPage() {
   return (
     <main className="app-shell" style={wrap}>
       <div style={card}>
-        <Link href="/" style={back}>‹ Back to Grabitt</Link>
+        <Link href="/" style={back}>Back to Grabitt</Link>
         <h1 style={h1}>Terms of Service</h1>
         <p style={muted}>Last updated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
 

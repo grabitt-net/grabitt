@@ -58,7 +58,7 @@ export default function GrabitMap({ points, centre, radiusKm }: { points: Grabit
           <div style="font-weight:800;font-size:13px;color:#1a1a1a">${escapeHtml(p.title)}</div>
           <div style="font-size:11px;color:#666;margin:2px 0">${escapeHtml(p.location)} · ends ${escapeHtml(p.ends)}</div>
           <div style="font-weight:800;font-size:13px;color:var(--orange)">${escapeHtml(p.price)}</div>
-          <a href="/listings/${p.id}" style="display:inline-block;margin-top:6px;font-size:11px;font-weight:800;color:var(--orange)">View offer ›</a>
+          <a href="/listings/${p.id}" style="display:inline-block;margin-top:6px;font-size:11px;font-weight:800;color:var(--orange)">View offer</a>
         </div>`,
       )
       markers.push(m)

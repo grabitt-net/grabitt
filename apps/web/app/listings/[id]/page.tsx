@@ -467,7 +467,7 @@ function ListingInner() {
                   )}
                 </div>
                 <div style={{ fontSize: 10.5, color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontWeight: 700, marginTop: 1 }}>
-                  {seller?.avgRating ? `★ ${seller.avgRating} ${t('ratings')} ›` : t('New on Grabitt')}
+                  {seller?.avgRating ? `★ ${seller.avgRating} ${t('ratings')}` : t('New on Grabitt')}
                 </div>
               </div>
             </div>
@@ -597,7 +597,7 @@ function ListingInner() {
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.title}</div>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)' }}>€{Number(s.price).toLocaleString()}</div>
                   </div>
-                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--orange)', flexShrink: 0 }}>View ›</span>
+                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--orange)', flexShrink: 0 }}>View</span>
                 </Link>
               ))}
             </div>

@@ -348,7 +348,7 @@ export default function NewPropertyPage() {
         <PromoField kind="property" amountCents={PROPERTY_PRICING.privateExtraListingCents} onApplied={setAppliedPromo} />
 
         <button type="submit" disabled={saving} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
-          {saving ? 'Listing…' : 'List Property →'}
+          {saving ? 'Listing…' : 'List Property'}
         </button>
       </form>
       )}
@@ -369,8 +369,8 @@ function BusinessGate() {
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 18 }}>
           Property can only be listed from a Grabitt Business account. Sign up as a business to list properties, manage enquiries and reach buyers across the island.
         </div>
-        <button onClick={() => openPanel('business')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Sign up as a business →</button>
-        <Link href="/property" style={{ display: 'inline-block', marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#888', textDecoration: 'none' }}>← Back to property</Link>
+        <button onClick={() => openPanel('business')} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Sign up as a business</button>
+        <Link href="/property" style={{ display: 'inline-block', marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#888', textDecoration: 'none' }}>Back to property</Link>
       </div>
     </div>
   )
@@ -407,12 +407,12 @@ function PlanGate() {
             </div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', margin: '4px 0 12px' }}>{p.blurb}</div>
             <button onClick={() => choose(p.id)} disabled={!!busy} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>
-              {busy === p.id ? 'Starting…' : `Choose ${p.name} →`}
+              {busy === p.id ? 'Starting…' : `Choose ${p.name}`}
             </button>
           </div>
         ))}
       </div>
-      <Link href="/property" style={{ display: 'block', textAlign: 'center', marginTop: 14, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#888', textDecoration: 'none' }}>← Back to property</Link>
+      <Link href="/property" style={{ display: 'block', textAlign: 'center', marginTop: 14, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#888', textDecoration: 'none' }}>Back to property</Link>
     </div>
   )
 }

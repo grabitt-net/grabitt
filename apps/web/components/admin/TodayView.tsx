@@ -101,7 +101,7 @@ export default function TodayView({ contacts, members, disputes, orders, reports
         <div style={card}>
           <div style={{ ...cardHead, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>Newest members</span>
-            <button onClick={() => onNavigate('members')} style={{ background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>See all →</button>
+            <button onClick={() => onNavigate('members')} style={{ background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>See all</button>
           </div>
           {recentMembers.length === 0 ? (
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#aaa', padding: '18px 0', textAlign: 'center' }}>No members yet.</div>

@@ -414,7 +414,7 @@ function CourierTrackingForm({ transactionId, title, onClose }: { transactionId:
       {error && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{error}</div>}
       <button onClick={submit} disabled={saving || !carrier.trim() || trackingNumber.trim().length < 3}
         style={{ width: '100%', background: (saving || !carrier.trim() || trackingNumber.trim().length < 3) ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
-        {saving ? '⏳ Submitting…' : 'Submit tracking →'}
+        {saving ? '⏳ Submitting…' : 'Submit tracking'}
       </button>
     </ActionPanel>
   )
@@ -3784,7 +3784,7 @@ function PanelBody() {
           {/* Footer nav */}
           <div style={{ padding: '12px 16px 24px', borderTop: '1px solid #f0f0f0', flexShrink: 0, display: 'flex', gap: 10 }}>
             {step !== 'photos' && (
-              <button onClick={() => setStep(STEPS[Math.max(stepIdx - 1, 0)])} style={{ flex: 1, background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, cursor: 'pointer' }}>← Back</button>
+              <button onClick={() => setStep(STEPS[Math.max(stepIdx - 1, 0)])} style={{ flex: 1, background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, cursor: 'pointer' }}>Back</button>
             )}
             {step === 'preview' ? (
               <button
@@ -3868,7 +3868,7 @@ function PanelBody() {
                 }
                 style={{ flex: 2, background: (step === 'photos' && photos.length < 4) || (step === 'details' && (!title.trim() || !dept || !condition)) || (step === 'price' && !freeItem && !price) ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
               >
-                {step === 'photos' ? (photos.length >= 4 ? `${t('Continue')} · ${photos.length} 📷 →` : `${t('Add at least 4 photos')} (${photos.length}/4)`) : `${t('Continue')} →`}
+                {step === 'photos' ? (photos.length >= 4 ? `${t('Continue')} · ${photos.length} 📷` : `${t('Add at least 4 photos')} (${photos.length}/4)`) : `${t('Continue')}`}
               </button>
             )}
           </div>
@@ -4163,7 +4163,7 @@ function PanelBody() {
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1 }}>Recent messages</span>
-                    <button onClick={() => openPanel('messages')} style={{ background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>See all →</button>
+                    <button onClick={() => openPanel('messages')} style={{ background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>See all</button>
                   </div>
                   {threads.slice(0, 3).map((t: any) => {
                     const other = t.participants?.find((p: any) => p.userId !== meId)?.user
@@ -4214,7 +4214,7 @@ function PanelBody() {
               {payout?.payoutsEnabled ? (
                 <button onClick={openPayoutDashboard} disabled={payoutBusy} style={{ width: '100%', background: '#fff', color: 'var(--sage)', border: '1.5px solid var(--sage)', borderRadius: 12, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Manage payouts ↗</button>
               ) : (
-                <button onClick={setupPayouts} disabled={payoutBusy} style={{ width: '100%', background: payoutBusy ? '#ccc' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: 12, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{payoutBusy ? '⏳ Opening…' : (payout?.connected ? 'Finish payout setup →' : 'Set up payouts →')}</button>
+                <button onClick={setupPayouts} disabled={payoutBusy} style={{ width: '100%', background: payoutBusy ? '#ccc' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: 12, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{payoutBusy ? '⏳ Opening…' : (payout?.connected ? 'Finish payout setup' : 'Set up payouts')}</button>
               )}
             </div>
 
@@ -4743,7 +4743,7 @@ function PanelBody() {
                   <div style={{ marginTop: 2 }}>{badge(vs.phone)}</div>
                 </div>
                 {!vs.phone && phoneStep === 'idle' && (
-                  <button onClick={() => { setPhoneInput(vs.phoneNumber ?? ''); setPhoneStep('entering') }} style={verifyBtn}>Verify →</button>
+                  <button onClick={() => { setPhoneInput(vs.phoneNumber ?? ''); setPhoneStep('entering') }} style={verifyBtn}>Verify</button>
                 )}
               </div>
               {!vs.phone && phoneStep === 'entering' && (
@@ -4769,7 +4769,7 @@ function PanelBody() {
                 </div>
                 {state === 'none' && (
                   <label style={{ ...verifyBtn, display: 'inline-block', opacity: docBusy === kind ? 0.6 : 1 }}>
-                    {docBusy === kind ? 'Uploading…' : 'Upload →'}
+                    {docBusy === kind ? 'Uploading…' : 'Upload'}
                     <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} disabled={docBusy === kind}
                       onChange={e => { const f = e.target.files?.[0]; if (f) uploadDoc(kind, f) }} />
                   </label>

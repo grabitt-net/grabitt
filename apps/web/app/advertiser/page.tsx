@@ -59,7 +59,7 @@ function Inner() {
           <Card>
             <H>Sign in to advertise</H>
             <p style={sub}>Create an advertiser login (or sign in) to book banners and manage your directory listing.</p>
-            <button onClick={() => openPanel('login')} style={cta}>Sign in / Register →</button>
+            <button onClick={() => openPanel('login')} style={cta}>Sign in / Register</button>
           </Card>
         )}
 
@@ -67,7 +67,7 @@ function Inner() {
           <Card>
             <H>You already have a business account</H>
             <p style={sub}>Businesses book banners and manage advertising from the business dashboard.</p>
-            <Link href="/account?tab=business" style={{ ...cta, display: 'block', textAlign: 'center', textDecoration: 'none' }}>Go to Business dashboard →</Link>
+            <Link href="/account?tab=business" style={{ ...cta, display: 'block', textAlign: 'center', textDecoration: 'none' }}>Go to Business dashboard</Link>
           </Card>
         )}
 
@@ -97,7 +97,7 @@ function JoinCard({ onDone }: { onDone: () => void }) {
       <p style={sub}>Advertiser accounts buy advertising and a directory entry only — no selling. Enter your business name to get started.</p>
       <input value={name} onChange={e => setName(e.target.value)} placeholder="Your business name" style={inp} />
       {err && <div style={errStyle}>{err}</div>}
-      <Button block size="lg" onClick={join} disabled={busy || name.trim().length < 2} iconRight="arrowRight" style={{ marginTop: 10 }}>{busy ? 'Setting up…' : 'Create advertiser account'}</Button>
+      <Button block size="lg" onClick={join} disabled={busy || name.trim().length < 2} style={{ marginTop: 10 }}>{busy ? 'Setting up…' : 'Create advertiser account'}</Button>
     </Card>
   )
 }
@@ -165,7 +165,7 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
                 ? 'Your business details are with our team for review — your listing will appear once approved.'
                 : 'Your listing is hidden — add your business details and subscribe below to appear in the directory.'}
         </div>
-        {mine.listing && mine.live && <Link href={`/directory/${mine.listing.id}`} style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, color: 'var(--orange)', textDecoration: 'none' }}>View ›</Link>}
+        {mine.listing && mine.live && <Link href={`/directory/${mine.listing.id}`} style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, color: 'var(--orange)', textDecoration: 'none' }}>View</Link>}
       </div>
         )
       })()}
@@ -203,7 +203,7 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
       <Card>
         <H>Your banners</H>
         <p style={sub}>Book a banner from the shared advertising calendar. Your banner links to your directory listing.</p>
-        <Link href="/advertise" style={{ ...cta, display: 'block', textAlign: 'center', textDecoration: 'none', marginBottom: 12 }}>🎯 Book a banner →</Link>
+        <Link href="/advertise" style={{ ...cta, display: 'block', textAlign: 'center', textDecoration: 'none', marginBottom: 12 }}>🎯 Book a banner</Link>
         {bookings === null ? <Muted>Loading…</Muted> : bookings.length === 0 ? <Muted>No banners booked yet.</Muted> : bookings.map(b => (
           <div key={b.id} style={{ borderTop: '1px solid #f4efe8', padding: '10px 2px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

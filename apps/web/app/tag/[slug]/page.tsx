@@ -38,7 +38,7 @@ export default function TagPage() {
         <div style={{ textAlign: 'center', padding: 50, fontFamily: 'var(--font-ui)', color: '#888' }}>
           <div style={{ fontSize: 40, marginBottom: 10 }}>🔍</div>
           <div style={{ fontSize: 15, fontWeight: 800 }}>Nothing tagged #{slug} yet</div>
-          <div style={{ marginTop: 14 }}><Link href="/" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>Browse Grabitt →</Link></div>
+          <div style={{ marginTop: 14 }}><Link href="/" style={{ color: 'var(--orange)', fontWeight: 800, textDecoration: 'none' }}>Browse Grabitt</Link></div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>

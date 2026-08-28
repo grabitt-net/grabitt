@@ -360,7 +360,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                 ))}
               </div>
 
-              <button onClick={() => setMode('choose')} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginTop: 14 }}>← Back</button>
+              <button onClick={() => setMode('choose')} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginTop: 14 }}>Back</button>
             </>
           ) : (
             <>
@@ -464,7 +464,7 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
                 </>
               )}
 
-              <button onClick={() => { setMatchCount(null); setCandidates([]) }} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 10 }}>← Choose another advert</button>
+              <button onClick={() => { setMatchCount(null); setCandidates([]) }} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 10 }}>Choose another advert</button>
               <div style={{ textAlign: 'center', fontSize: 10, color: '#666', fontFamily: 'var(--font-ui)' }}>Secure payment via Stripe · Each unlock is linked to your live job advert · Must be a registered employer</div>
             </>
           )}

@@ -90,7 +90,7 @@ export default function DisputesView({ disputes: initial, onUpdate }: Props) {
                 <div style={{ fontSize: 11, color: '#888', fontFamily: 'var(--font-ui)' }}>
                   {d.raisedBy?.displayName ?? d.raisedBy?.email ?? 'Unknown'}
                   {' · '}{new Date(d.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                  {' · '}<span style={{ color: 'var(--orange)', fontWeight: 800 }}>View →</span>
+                  {' · '}<span style={{ color: 'var(--orange)', fontWeight: 800 }}>View</span>
                 </div>
               </div>
             </div>

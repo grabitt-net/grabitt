@@ -148,7 +148,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
               {shareUrl && (
                 <div style={{ background: '#f8f9fa', borderRadius: 10, padding: '9px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shareUrl}</span>
-                  <a href={`/shop/${f.slug}`} target="_blank" rel="noreferrer" style={{ flexShrink: 0, color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>Preview →</a>
+                  <a href={`/shop/${f.slug}`} target="_blank" rel="noreferrer" style={{ flexShrink: 0, color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>Preview</a>
                 </div>
               )}
 

@@ -99,9 +99,9 @@ export function StepNav({ isFirst, isLast, onBack, submitting, submitLabel = 'Su
 }) {
   return (
     <div className="gform-stepnav">
-      {!isFirst && <button type="button" className="gform-back" onClick={onBack}>← Back</button>}
+      {!isFirst && <button type="button" className="gform-back" onClick={onBack}>Back</button>}
       <button type="submit" className="gform-submit gform-next" disabled={submitting}>
-        {isLast ? (submitting ? '…' : submitLabel) : `${nextLabel} →`}
+        {isLast ? (submitting ? '…' : submitLabel) : nextLabel}
       </button>
     </div>
   )

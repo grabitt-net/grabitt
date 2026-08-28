@@ -68,7 +68,7 @@ export default function EmployerDashboardContent() {
             {remaining > 0 ? `+ Post a Job (${remaining} free)` : '+ Post a Job'}
           </div>
         </a>
-        <div onClick={() => openPanel('verifyMe')} style={{ marginTop: 8, textAlign: 'center', fontSize: 10, color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-ui)', fontWeight: 700, cursor: 'pointer' }}>🏢 Company details &amp; verification →</div>
+        <div onClick={() => openPanel('verifyMe')} style={{ marginTop: 8, textAlign: 'center', fontSize: 10, color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-ui)', fontWeight: 700, cursor: 'pointer' }}>🏢 Company details &amp; verification</div>
       </div>
 
       {/* Messages */}
@@ -79,7 +79,7 @@ export default function EmployerDashboardContent() {
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#1a1a1a' }}>Messages</div>
             <div style={{ fontSize: 10, color: '#555', fontFamily: 'var(--font-ui)' }}>Candidate enquiries &amp; contact Grabitt</div>
           </div>
-          <div style={{ color: ORANGE, fontWeight: 800, fontSize: 11, fontFamily: 'var(--font-ui)' }}>Open →</div>
+          <div style={{ color: ORANGE, fontWeight: 800, fontSize: 11, fontFamily: 'var(--font-ui)' }}>Open</div>
         </div>
       </a>
 
@@ -90,7 +90,7 @@ export default function EmployerDashboardContent() {
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#1a1a1a' }}>Find Staff</div>
           <div style={{ fontSize: 10, color: '#555', fontFamily: 'var(--font-ui)' }}>Search candidates &amp; unlock profiles</div>
         </div>
-        <div style={{ color: ORANGE, fontWeight: 800, fontSize: 11, fontFamily: 'var(--font-ui)' }}>Open →</div>
+        <div style={{ color: ORANGE, fontWeight: 800, fontSize: 11, fontFamily: 'var(--font-ui)' }}>Open</div>
       </div>
 
       {/* Share prompt */}

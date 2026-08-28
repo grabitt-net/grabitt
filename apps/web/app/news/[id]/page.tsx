@@ -36,7 +36,7 @@ export default function NewsArticlePage() {
               ))}
             </div>
           )}
-          <div style={{ marginTop: 28 }}><Link href="/news" style={{ color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontWeight: 800, textDecoration: 'none' }}>← Back to News</Link></div>
+          <div style={{ marginTop: 28 }}><Link href="/news" style={{ color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontWeight: 800, textDecoration: 'none' }}>Back to News</Link></div>
         </div>
       )}
     </InfoPage>

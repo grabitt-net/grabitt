@@ -68,7 +68,7 @@ export default function EconomicLiving() {
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '14px 16px', textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: '#16a34a' }}>💡 Thanks! Your tip has been sent for review</div>
           <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#4a7c59', marginTop: 4 }}>Good tips get featured in Economic Living.</div>
-          <button onClick={() => setState('idle')} style={{ background: 'none', border: 'none', color: '#16a34a', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', marginTop: 8 }}>Send another →</button>
+          <button onClick={() => setState('idle')} style={{ background: 'none', border: 'none', color: '#16a34a', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', marginTop: 8 }}>Send another</button>
         </div>
       ) : !open ? (
         <button onClick={() => setOpen(true)} style={btn}>💬 Suggest a money-saving tip</button>
@@ -85,7 +85,7 @@ export default function EconomicLiving() {
           </div>
           {error && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#ef4444', marginTop: 8 }}>{error}</div>}
           <button onClick={send} disabled={state === 'sending'} style={{ ...btn, marginTop: 10, opacity: state === 'sending' ? 0.7 : 1 }}>
-            {state === 'sending' ? 'Sending…' : 'Send Tip →'}
+            {state === 'sending' ? 'Sending…' : 'Send Tip'}
           </button>
           <button onClick={() => { setOpen(false); setError('') }} style={{ width: '100%', background: 'none', border: 'none', color: '#888', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', marginTop: 8 }}>Cancel</button>
         </div>

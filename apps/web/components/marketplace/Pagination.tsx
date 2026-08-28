@@ -26,7 +26,7 @@ export default function Pagination({ page, totalPages, onChange }: { page: numbe
       {nums.map(n => btn(n, n, false, n === page))}
       {to < totalPages - 1 && dots('r')}
       {to < totalPages && btn(totalPages, totalPages, false, page === totalPages)}
-      {btn('Next ›', page + 1, page >= totalPages)}
+      {btn('Next', page + 1, page >= totalPages)}
     </div>
   )
 }

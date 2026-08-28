@@ -133,13 +133,13 @@ export default function EshotsView() {
                       <td style={td}><span style={pill(e.status === 'sent' ? '#16a34a' : e.status === 'sending' ? '#f59e0b' : e.status === 'failed' ? '#ef4444' : e.status === 'scheduled' ? '#2563eb' : '#888')}>{e.status}</span></td>
                       <td style={td}>
                         {e.sentAt
-                          ? <button onClick={() => setDetail(e)} style={linkBtn}>Results →</button>
+                          ? <button onClick={() => setDetail(e)} style={linkBtn}>Results</button>
                           : e.status === 'scheduled'
                             ? <div style={{ display: 'flex', gap: 10 }}>
-                                <button onClick={() => { setEditing(e); setTab('compose') }} style={linkBtn}>Edit →</button>
+                                <button onClick={() => { setEditing(e); setTab('compose') }} style={linkBtn}>Edit</button>
                                 <button onClick={async () => { if (await confirmDialog({ title: 'Cancel schedule?', message: `"${e.subject}" will go back to draft and won’t send automatically.`, confirmLabel: 'Unschedule' })) { await api.unscheduleEshot(e.id); load() } }} style={{ ...linkBtn, color: '#ef4444' }}>Unschedule</button>
                               </div>
-                            : <button onClick={() => { setEditing(e); setTab('compose') }} style={linkBtn}>Edit →</button>}
+                            : <button onClick={() => { setEditing(e); setTab('compose') }} style={linkBtn}>Edit</button>}
                       </td>
                     </tr>
                   ))}

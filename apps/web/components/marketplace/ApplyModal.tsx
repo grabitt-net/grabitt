@@ -224,7 +224,7 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
                       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#555' }}>{strengths.join(' · ')}</div>
                     </div>
                   )}
-                  <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 7, color: ORANGE, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800 }}>Edit work profile →</a>
+                  <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 7, color: ORANGE, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800 }}>Edit work profile</a>
                 </div>
               )}
 
@@ -323,7 +323,7 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
         </div>
 
         <div style={{ padding: '12px 18px 18px', borderTop: '1px solid #f0f0f0' }}>
-          <button onClick={submit} disabled={submitting || !loaded} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1 }}>{submitting ? 'Sending…' : 'Send application →'}</button>
+          <button onClick={submit} disabled={submitting || !loaded} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1 }}>{submitting ? 'Sending…' : 'Send application'}</button>
         </div>
       </div>
     </div>

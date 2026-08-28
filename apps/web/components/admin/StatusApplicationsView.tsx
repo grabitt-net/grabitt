@@ -55,7 +55,7 @@ export default function StatusApplicationsView() {
               <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', padding: '3px 9px', borderRadius: 50, background: a.status === 'approved' ? '#dcfce7' : a.status === 'rejected' ? '#fee2e2' : '#fef9c3', color: a.status === 'approved' ? '#16a34a' : a.status === 'rejected' ? '#ef4444' : '#a16207' }}>{a.status}</span>
             </div>
             {a.details && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#555', marginTop: 8, background: '#f9f7f2', borderRadius: 8, padding: '8px 10px' }}><b>Details:</b> {a.details}</div>}
-            {a.evidenceUrl && <a href={a.evidenceUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 6, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, color: 'var(--orange)' }}>📎 View evidence →</a>}
+            {a.evidenceUrl && <a href={a.evidenceUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 6, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, color: 'var(--orange)' }}>📎 View evidence</a>}
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#aaa', marginTop: 6 }}>{m.blurb}</div>
             {a.status === 'pending' && (
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>

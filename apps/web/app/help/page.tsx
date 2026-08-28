@@ -111,7 +111,7 @@ function Inner() {
         ) : currentTopic ? (
           /* ── One category's articles ── */
           <div>
-            <Crumb onClick={() => setCatId(null)}>← All topics</Crumb>
+            <Crumb onClick={() => setCatId(null)}>All topics</Crumb>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '2px 0 14px' }}>
               <span style={{ fontSize: 30 }}>{currentTopic.icon}</span>
               <span>
@@ -131,7 +131,7 @@ function Inner() {
                 <span style={{ fontSize: 30 }}>{t.icon}</span>
                 <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 15.5, fontWeight: 900, color: 'var(--dark)' }}>{t.title}</span>
                 <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 12, color: '#888', lineHeight: 1.45 }}>{t.blurb}</span>
-                <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: 'var(--orange)', marginTop: 2 }}>{t.articles.length} article{t.articles.length === 1 ? '' : 's'} ›</span>
+                <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: 'var(--orange)', marginTop: 2 }}>{t.articles.length} article{t.articles.length === 1 ? '' : 's'}</span>
               </button>
             ))}
           </div>

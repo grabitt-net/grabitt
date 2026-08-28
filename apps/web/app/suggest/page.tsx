@@ -65,7 +65,7 @@ export default function SuggestPage() {
             <div style={{ fontSize: 34, marginBottom: 8 }}>✅</div>
             <div style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 900, color: 'var(--dark)', marginBottom: 6 }}>Thank you!</div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, color: '#3a3a3a', lineHeight: 1.6 }}>Your message has reached the team, and a copy is in your inbox. We usually act on things straight away — please allow up to 24 hours.</div>
-            <button onClick={() => setDone(false)} style={{ marginTop: 14, background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Send another →</button>
+            <button onClick={() => setDone(false)} style={{ marginTop: 14, background: 'none', border: 'none', color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Send another</button>
           </div>
         ) : (
           <>

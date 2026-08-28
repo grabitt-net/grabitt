@@ -32,7 +32,7 @@ export default function DirectoryListingPage() {
         <Topbar title="Business Directory" />
         <QuickActions />
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 14px' }}>
-          <Link href="/directory" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#1a1a1a', textDecoration: 'none' }}>‹ Directory</Link>
+          <Link href="/directory" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#1a1a1a', textDecoration: 'none' }}>Directory</Link>
 
           {state === 'loading' && <div style={{ padding: 50, textAlign: 'center', fontFamily: 'var(--font-nunito)', color: '#1a1a1a' }}>Loading…</div>}
           {state === 'unavailable' && (

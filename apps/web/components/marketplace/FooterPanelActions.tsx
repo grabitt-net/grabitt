@@ -77,7 +77,7 @@ function BoostForm() {
 
 export default function FooterPanelActions({ panelKey, onOpen }: { panelKey: string; onOpen: (id: PanelId, data?: Record<string, unknown>) => void }) {
   if (panelKey === 'suggest') {
-    return <div style={{ marginTop: 6 }}><MessageForm type="suggestion" placeholder="Your idea…" buttonText="Send Suggestion →" done="💡 Suggestion sent — thank you!" withEmail /></div>
+    return <div style={{ marginTop: 6 }}><MessageForm type="suggestion" placeholder="Your idea…" buttonText="Send Suggestion" done="💡 Suggestion sent — thank you!" withEmail /></div>
   }
   if (panelKey === 'pricing') {
     return <div style={{ marginTop: 12, borderTop: '1px solid #f0ebe4', paddingTop: 14 }}>
@@ -96,7 +96,7 @@ export default function FooterPanelActions({ panelKey, onOpen }: { panelKey: str
   if (panelKey === 'contact') {
     return <div style={{ marginTop: 12, borderTop: '1px solid #f0ebe4', paddingTop: 14 }}>
       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: '#1a1a1a', marginBottom: 8 }}>Send us a message</div>
-      <MessageForm type="contact" placeholder="How can we help?" buttonText="Send Message →" done="✅ Message sent — we'll be in touch." withEmail />
+      <MessageForm type="contact" placeholder="How can we help?" buttonText="Send Message" done="✅ Message sent — we'll be in touch." withEmail />
     </div>
   }
   return null

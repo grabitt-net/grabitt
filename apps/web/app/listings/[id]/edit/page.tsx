@@ -287,7 +287,7 @@ function EditInner() {
   if (state === 'sold') return shell(
     <div style={msg}>
       {t('A sold listing can no longer be edited.')}<br />
-      <Link href={`/listings/${id}`} style={{ color: 'var(--orange)', fontWeight: 800 }}>{t('View')} ›</Link>
+      <Link href={`/listings/${id}`} style={{ color: 'var(--orange)', fontWeight: 800 }}>{t('View')}</Link>
     </div>
   )
 
@@ -295,7 +295,7 @@ function EditInner() {
     <div style={{ maxWidth: 640, margin: '0 auto', padding: '16px 14px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>✏️ {t('Edit listing')}</span>
-        <Link href={`/listings/${id}`} style={{ marginLeft: 'auto', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#1a1a1a' }}>‹ {t('Back')}</Link>
+        <Link href={`/listings/${id}`} style={{ marginLeft: 'auto', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#1a1a1a' }}>{t('Back')}</Link>
       </div>
 
       {status === 'removed' && (

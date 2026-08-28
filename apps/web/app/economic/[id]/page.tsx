@@ -28,7 +28,7 @@ export default function EconomicArticlePage() {
       ) : (
         <div style={{ maxWidth: 680, margin: '0 auto' }}>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15.5, lineHeight: 1.75, color: '#2a2a2a', whiteSpace: 'pre-wrap' }}>{post.body}</div>
-          <div style={{ marginTop: 28 }}><Link href="/economic" style={{ color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontWeight: 800, textDecoration: 'none' }}>← Back to Economic Living</Link></div>
+          <div style={{ marginTop: 28 }}><Link href="/economic" style={{ color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontWeight: 800, textDecoration: 'none' }}>Back to Economic Living</Link></div>
         </div>
       )}
     </InfoPage>
