@@ -107,6 +107,9 @@ export async function POST(req: Request) {
             return grade ? { grade } : {}
           })()),
           ...(typeof body.isBusiness === 'boolean' ? { isBusiness: body.isBusiness } : {}),
+          // An admin-created business is trusted — verify it on creation so it can
+          // publish its storefront without going through the document review flow.
+          ...(body.isBusiness ? { businessVerified: true } : {}),
           ...(body.feeOverridePct !== undefined && body.feeOverridePct !== null && body.feeOverridePct !== ''
             ? { feeOverridePct: Number(body.feeOverridePct) } : {}),
           ...(body.phone ? { phone: String(body.phone).trim() } : {}),
