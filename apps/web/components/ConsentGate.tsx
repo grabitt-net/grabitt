@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { getAuthToken, trpcAuthed } from '@/lib/authToken'
 
 // Blocking first-login consent flow. When a signed-in user hasn't yet accepted
@@ -9,6 +10,7 @@ import { getAuthToken, trpcAuthed } from '@/lib/authToken'
 type Status = { gdprAccepted: boolean; withdrawalWaiverAccepted: boolean; deleted: boolean }
 
 export default function ConsentGate() {
+  const pathname = usePathname()
   const [status, setStatus] = useState<Status | null>(null)
   const [busy, setBusy] = useState(false)
   const [checked, setChecked] = useState(false)
@@ -41,6 +43,10 @@ export default function ConsentGate() {
     return () => { stop = true; window.removeEventListener('grabitt-auth', h) }
   }, [refresh])
 
+  // Never block the auth flow itself — an invited/reset member is signed in by
+  // their email link and must set a password on /auth/set-password FIRST; the
+  // consent modals appear afterwards once they reach the app.
+  if (pathname?.startsWith('/auth')) return null
   if (!status || status.deleted) return null
   if (status.gdprAccepted && status.withdrawalWaiverAccepted) return null
 
