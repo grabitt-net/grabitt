@@ -69,7 +69,10 @@ export async function POST(req: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  const origin = new URL(req.url).origin
+  // Prefer the canonical public domain for links we email out, so invite /
+  // reset links point at www.grabitt.net rather than the Vercel origin the
+  // admin happens to be on. Falls back to the request origin locally.
+  const origin = (process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin).replace(/\/$/, '')
 
   // ── Create a member ────────────────────────────────────────────────────────
   if (action === 'create_member') {
