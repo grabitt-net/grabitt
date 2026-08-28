@@ -435,7 +435,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
                     {shown.map(c => (
                       <div key={c.ref} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, overflow: 'hidden' }}>
-                        <Link href={`/listings/${c.ref}`} style={{ textDecoration: 'none' }}>
+                        <Link href={seg === 'draft' ? `/listings/${c.ref}/edit` : `/listings/${c.ref}`} style={{ textDecoration: 'none' }}>
                           <div style={{ paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
                             {c.image ? <img src={c.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{c.emoji}</div>}
                           </div>
@@ -444,7 +444,12 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>{c.price}</div>
                           </div>
                         </Link>
-                        {seg !== 'sold' && <Link href={`/listings/${c.ref}/edit`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', borderTop: '1px solid #f3ede4', padding: '7px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#1a1a1a' }}>{t('Edit')}</Link>}
+                        {seg === 'draft' ? (
+                          <div style={{ display: 'flex', borderTop: '1px solid #f3ede4' }}>
+                            <Link href={`/listings/${c.ref}/edit`} style={{ flex: 1, textAlign: 'center', textDecoration: 'none', padding: '7px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: 'var(--orange)' }}>{t('Resume')}</Link>
+                            <button onClick={async () => { if (!(await confirmDialog({ message: t('Delete this draft?'), confirmLabel: t('Delete'), danger: true }))) return; try { await (trpcAuthed() as any).listings.deleteDraft.mutate({ id: c.ref }); setListings(prev => (prev ?? []).filter((x: any) => x.id !== c.ref)) } catch {} }} style={{ flexShrink: 0, background: 'none', border: 'none', borderLeft: '1px solid #f3ede4', padding: '7px 12px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#ef4444', cursor: 'pointer' }}>{t('Delete')}</button>
+                          </div>
+                        ) : seg !== 'sold' && <Link href={`/listings/${c.ref}/edit`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', borderTop: '1px solid #f3ede4', padding: '7px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#1a1a1a' }}>{t('Edit')}</Link>}
                       </div>
                     ))}
                   </div>

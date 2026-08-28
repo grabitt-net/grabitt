@@ -543,12 +543,17 @@ function EditInner() {
       </button>
 
       <div style={{ marginTop: 10 }}>
-        {status === 'removed' ? (
+        {status === 'draft' ? (<>
+          <button onClick={() => changeStatus('active')} disabled={busy} style={{ ...secondary, color: '#16a34a', borderColor: '#16a34a' }}>{t('Publish listing')}</button>
+          <div style={hint}>{t('Save your changes first, then publish to make this draft live on the marketplace.')}</div>
+        </>) : status === 'removed' ? (
           <button onClick={() => changeStatus('active')} disabled={busy} style={secondary}>{t('Relist this item')}</button>
         ) : (
+          <>
           <button onClick={() => changeStatus('removed')} disabled={busy} style={{ ...secondary, color: '#ef4444', borderColor: '#ef4444' }}>{t('Unlist this item')}</button>
+          <div style={hint}>{t('Unlisting hides it from the marketplace. Your sales history is kept.')}</div>
+          </>
         )}
-        <div style={hint}>{t('Unlisting hides it from the marketplace. Your sales history is kept.')}</div>
       </div>
     </div>
   )

@@ -3781,6 +3781,47 @@ function PanelBody() {
             )}
           </div>
 
+          {/* Save to drafts — keep an unfinished listing in My Listings to resume later. */}
+          {(title.trim() || desc.trim() || photos.length > 0) && (
+            <div style={{ padding: '0 16px', flexShrink: 0 }}>
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={async () => {
+                  setUploading(true)
+                  try {
+                    const draftListingId = crypto.randomUUID()
+                    const imageUrls = photoFiles.length > 0
+                      ? await Promise.all(photoFiles.map(f => compressAndUpload(f, listingPhotoPath(draftListingId))))
+                      : photos.filter(u => /^https?:/.test(u))
+                    const D: Record<string, string> = { 'Electronics':'electronics','Fashion':'fashion','Home & Garden':'home_garden','Sport & Leisure':'sport','Sport':'sport','Retro & Vintage':'retro_vintage','Gaming':'gaming','Pet Supplies':'pet_shop','Motors':'motors','Kids & Baby':'kids_baby','Handy Help':'handy_help','Jobs':'jobs','Property':'property','Services':'services','Collectables':'collectables','Gift Ideas':'gift_ideas','Health & Fitness':'health_fitness','Food Store':'food_store','Hobbies & Crafts':'hobbies_crafts','Other':'other' }
+                    const C: Record<string, string> = { 'New':'new','Like New':'like_new','Very Good':'very_good','Good':'good','Fair':'fair','For Parts':'spares','Spares':'spares' }
+                    const client = await getTrpcClient()
+                    await client.listings.saveDraft.mutate({
+                      ...(title.trim() ? { title: title.trim() } : {}),
+                      ...(desc.trim() ? { description: desc.trim() } : {}),
+                      price: freeItem ? 0 : (parseFloat(price) || 0),
+                      ...(dept ? { department: D[dept] ?? 'other' } : {}),
+                      ...(condition ? { condition: C[condition] ?? 'good' } : {}),
+                      ...(brand.trim() ? { brand: brand.trim() } : {}),
+                      ...(colour.trim() ? { colour: colour.trim() } : {}),
+                      ...(size.trim() ? { size: size.trim() } : {}),
+                      ...(imageUrls.length ? { images: imageUrls } : {}),
+                      location: town,
+                      ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
+                      stock: Math.max(1, Math.min(999, parseInt(stock) || 1)),
+                      ...(Object.keys(attrs).length ? { attributes: attrs } : {}),
+                    })
+                    toast('Saved to your drafts — finish it any time from My Listings.')
+                    closePanel()
+                  } catch (e) { toast((e as Error).message || 'Could not save draft') }
+                  finally { setUploading(false) }
+                }}
+                style={{ width: '100%', background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 12, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, cursor: uploading ? 'default' : 'pointer', opacity: uploading ? 0.6 : 1 }}
+              >💾 Save to drafts</button>
+            </div>
+          )}
+
           {/* Footer nav */}
           <div style={{ padding: '12px 16px 24px', borderTop: '1px solid #f0f0f0', flexShrink: 0, display: 'flex', gap: 10 }}>
             {step !== 'photos' && (

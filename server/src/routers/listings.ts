@@ -199,6 +199,82 @@ export const listingsRouter = router({
 
   // The current user's own listings across all statuses (for the account hub —
   // segmented into Active / Sold / Drafts client-side).
+  // Save an in-progress item listing as a draft the seller can finish later.
+  // Permissive: any field may be blank. Creates a draft, or updates an existing
+  // one when draftId is given. No allowance check, no payment — drafts are private.
+  saveDraft: protectedProcedure
+    .input(z.object({
+      draftId: z.string().optional(),
+      title: z.string().max(100).optional(),
+      description: z.string().max(2000).optional(),
+      price: z.number().min(0).optional(),
+      department: z.string().max(40).optional(),
+      condition: z.string().max(40).optional(),
+      brand: z.string().max(60).optional(),
+      colour: z.string().max(40).optional(),
+      size: z.string().max(40).optional(),
+      images: z.array(z.string().url()).max(8).optional(),
+      location: z.string().max(100).optional(),
+      lat: z.number().optional(),
+      lng: z.number().optional(),
+      stock: z.number().int().min(1).max(999).optional(),
+      deliveryFee: z.number().min(0).optional(),
+      attributes: z.record(z.string()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { draftId, ...rest } = input
+      const cleanTitle = rest.title?.trim() || 'Untitled draft'
+      if (draftId) {
+        const existing = await ctx.prisma.listing.findFirst({ where: { id: draftId, sellerId: ctx.user.id }, select: { id: true } })
+        if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Draft not found' })
+        const data: Record<string, unknown> = { status: 'draft', title: cleanTitle }
+        for (const [k, v] of Object.entries(rest)) if (v !== undefined && k !== 'title') data[k] = v
+        await ctx.prisma.listing.update({ where: { id: draftId }, data: data as never })
+        return { id: draftId }
+      }
+      const created = await ctx.prisma.listing.create({
+        data: {
+          sellerId: ctx.user.id,
+          title: cleanTitle,
+          description: rest.description ?? '',
+          price: rest.price ?? 0,
+          department: (rest.department ?? 'other') as never,
+          condition: (rest.condition ?? 'good') as never,
+          images: rest.images ?? [],
+          location: rest.location ?? '',
+          ...(rest.brand ? { brand: rest.brand } : {}),
+          ...(rest.colour ? { colour: rest.colour } : {}),
+          ...(rest.size ? { size: rest.size } : {}),
+          ...(rest.lat != null ? { lat: rest.lat } : {}),
+          ...(rest.lng != null ? { lng: rest.lng } : {}),
+          ...(rest.stock != null ? { stock: rest.stock } : {}),
+          ...(rest.deliveryFee != null ? { deliveryFee: rest.deliveryFee } : {}),
+          ...(rest.attributes ? { attributes: rest.attributes } : {}),
+          status: 'draft',
+        },
+      })
+      return { id: created.id }
+    }),
+
+  // Full draft record for the owner, to prefill the create form when resuming.
+  draftById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const d = await ctx.prisma.listing.findFirst({ where: { id: input.id, sellerId: ctx.user.id, status: 'draft' } })
+      if (!d) throw new TRPCError({ code: 'NOT_FOUND', message: 'Draft not found' })
+      return d
+    }),
+
+  // Delete a draft the seller no longer wants (only their own, only drafts).
+  deleteDraft: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const d = await ctx.prisma.listing.findFirst({ where: { id: input.id, sellerId: ctx.user.id, status: 'draft' }, select: { id: true } })
+      if (!d) throw new TRPCError({ code: 'NOT_FOUND', message: 'Draft not found' })
+      await ctx.prisma.listing.delete({ where: { id: input.id } })
+      return { ok: true as const }
+    }),
+
   mine: protectedProcedure.query(({ ctx }) =>
     ctx.prisma.listing.findMany({
       where: { sellerId: ctx.user.id },
