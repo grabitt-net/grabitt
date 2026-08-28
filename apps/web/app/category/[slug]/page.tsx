@@ -149,12 +149,12 @@ export default function CategoryPage() {
             subcategory is visible at once (nothing cut off). Small screens
             flow to a few rows; wide screens fit on one. On the Handy Help
             lander the "Place an ad" button sits in line with the pills. */}
-        {(subcats.length > 1 || slug === 'handy_help') && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 5 }}>
-            {subcats.map(sub => <Chip key={sub} active={activeSub === sub} onClick={() => setActiveSub(sub)}>{sub}</Chip>)}
-            {slug === 'handy_help' && <span style={{ marginLeft: 'auto' }}><PlaceHandyAdButton /></span>}
-          </div>
-        )}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 5 }}>
+          {subcats.length > 1 && subcats.map(sub => <Chip key={sub} active={activeSub === sub} onClick={() => setActiveSub(sub)}>{sub}</Chip>)}
+          <span style={{ marginLeft: 'auto' }}>
+            {slug === 'handy_help' ? <PlaceHandyAdButton /> : <PlaceListingButton category={SELL_DEPT[slug]} />}
+          </span>
+        </div>
       </header>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>
@@ -231,6 +231,29 @@ function PlaceHandyAdButton() {
       display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--orange)', color: '#fff',
       border: 'none', borderRadius: 999, padding: '6px 13px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap',
     }}>🔧 Place an ad</button>
+  )
+}
+
+// Map a category slug → the exact department label the add-a-listing form uses,
+// so the picker pre-selects it (and it never mis-saves as "Other"). Slugs the
+// sell form doesn't offer (Gift Ideas, Health, Food, Grab It Now, Jobs,
+// Property) are left out — the button still opens the form, just unfilled.
+const SELL_DEPT: Record<string, string> = {
+  electronics: 'Electronics', fashion: 'Fashion', home_garden: 'Home & Garden', sport: 'Sport & Leisure',
+  retro_vintage: 'Retro & Vintage', gaming: 'Gaming', pet_shop: 'Pet Supplies', motors: 'Motors',
+  kids_baby: 'Kids & Baby', handy_help: 'Handy Help', hobbies_crafts: 'Hobbies & Crafts',
+  services: 'Services', collectables: 'Collectables',
+}
+
+// Same pill as Handy Help's "Place an ad", but opens the add-a-listing flow
+// pre-set to this category page's department (when the form supports it).
+function PlaceListingButton({ category }: { category?: string }) {
+  const { openPanel } = usePanel()
+  return (
+    <button onClick={() => openPanel('createListing', category ? { category } : undefined)} style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--orange)', color: '#fff',
+      border: 'none', borderRadius: 999, padding: '6px 13px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap',
+    }}>➕ List an item</button>
   )
 }
 
