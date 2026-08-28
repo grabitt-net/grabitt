@@ -7,6 +7,7 @@ import { enforceBusinessListingAllowance } from '../lib/businessLimits'
 import { LISTING_CAPS, GRADE_THRESHOLDS, PRICES, BUSINESS_LIGHT, HANDY_PRICING } from '@grabitt/design-tokens'
 import { getStripe } from '../lib/stripe'
 import { validateDiscount, recordRedemption } from '../lib/discounts'
+import { extractHashtags } from '../lib/hashtags'
 
 // Fallback shown on a job advert when the employer hasn't set an establishment
 // type — never their name.
@@ -43,16 +44,23 @@ async function awardReferral(
 // description. Strips punctuation, drops stop-words and short tokens, dedupes.
 const STOP_WORDS = new Set(['the','and','for','with','this','that','your','you','are','has','have','from','was','will','can','all','new','used','one','two','our','out','get','not','but','they','use','very','good','great','perfect','condition','sale','selling','includes','included','comes','like'])
 export function autoTags(title: string, description: string): string[] {
-  const words = `${title} ${description}`
+  const raw = `${title} ${description}`
+  const seen = new Set<string>()
+  const tags: string[] = []
+  // Explicit #hashtags always win — capture them (before punctuation is stripped)
+  // so a deliberate tag is never dropped by the derived-keyword cap below.
+  for (const h of extractHashtags(raw)) {
+    if (!seen.has(h)) { seen.add(h); tags.push(h) }
+  }
+  const words = raw
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
     .filter(w => w.length >= 3 && !STOP_WORDS.has(w) && !/^\d+$/.test(w))
-  const seen = new Set<string>()
-  const tags: string[] = []
+  let derived = 0
   for (const w of words) {
-    if (!seen.has(w)) { seen.add(w); tags.push(w) }
-    if (tags.length >= 8) break
+    if (!seen.has(w)) { seen.add(w); tags.push(w); derived++ }
+    if (derived >= 8) break
   }
   return tags
 }

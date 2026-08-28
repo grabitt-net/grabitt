@@ -9,6 +9,7 @@ import { DEPT_LABEL, COND_LABEL, deptEmoji } from '@/lib/listingMap'
 import { featureIcon, featureLabel } from '@/lib/propertyFeatures'
 import { t } from '@/lib/i18n'
 import { pushView } from '@/lib/recentViews'
+import { renderWithHashtags } from '@/lib/hashtags'
 import { PRICES } from '@grabitt/design-tokens'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import MessageButton from '@/components/marketplace/MessageButton'
@@ -537,7 +538,7 @@ function ListingInner() {
         {listing.description && (
           <div style={cardBox}>
             <div style={sectionTitle}>{t('Description')}</div>
-            <p style={{ fontSize: 13, color: '#444', lineHeight: 1.6, fontFamily: 'var(--font-comfortaa)', whiteSpace: 'pre-wrap' }}>{listing.description}</p>
+            <p style={{ fontSize: 13, color: '#444', lineHeight: 1.6, fontFamily: 'var(--font-comfortaa)', whiteSpace: 'pre-wrap' }}>{renderWithHashtags(listing.description)}</p>
           </div>
         )}
 

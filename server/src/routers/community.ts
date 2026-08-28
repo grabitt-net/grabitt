@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { router, publicProcedure, execProcedure } from '../trpc'
+import { extractHashtags } from '../lib/hashtags'
 
 // Community content — editorial posts (island tips, economy write-ups, guides)
 // shown on the homepage. Public reads; admin (exec) manages.
@@ -44,9 +45,24 @@ export const communityRouter = router({
     }))
     .mutation(({ ctx, input }) => {
       const { id, ...data } = input
+      // Extract #hashtags from the title + body so posts are searchable/discoverable.
+      const tags = extractHashtags(data.title, data.body)
       return id
-        ? ctx.prisma.communityPost.update({ where: { id }, data })
-        : ctx.prisma.communityPost.create({ data: data as typeof data & { title: string; excerpt: string; body: string } })
+        ? ctx.prisma.communityPost.update({ where: { id }, data: { ...data, tags } })
+        : ctx.prisma.communityPost.create({ data: { ...data, tags } as typeof data & { title: string; excerpt: string; body: string } })
+    }),
+
+  // Public: posts carrying a given hashtag (or whose body still mentions it) —
+  // powers the unified #tag discovery page alongside item results.
+  byTag: publicProcedure
+    .input(z.object({ tag: z.string().min(1).max(40), limit: z.number().int().min(1).max(50).default(30) }))
+    .query(({ ctx, input }) => {
+      const tag = input.tag.toLowerCase().replace(/^#/, '')
+      return ctx.prisma.communityPost.findMany({
+        where: { published: true, OR: [{ tags: { has: tag } }, { body: { contains: `#${tag}`, mode: 'insensitive' } }] },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+        take: input.limit,
+      })
     }),
 
   remove: execProcedure
