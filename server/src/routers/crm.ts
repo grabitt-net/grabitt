@@ -206,6 +206,15 @@ export const crmRouter = router({
         data.suspendedUntil = suspendedUntil ? new Date(suspendedUntil) : null
         data.suspendedAt = suspendedUntil ? new Date() : null
       }
+      // Converting a personal account to a FULL business: floor the grade to at
+      // least Dealer so it maps to a valid business tier (mirrors signup, where a
+      // grabber becomes a Dealer). Only when not explicitly setting a grade here.
+      if (data.isBusiness === true && data.grade === undefined) {
+        const cur = await ctx.prisma.user.findUnique({ where: { id: userId }, select: { grade: true } })
+        if (cur?.grade === 'grabber') data.grade = 'dealer'
+      } else if (data.isBusiness === true && data.grade === 'grabber') {
+        data.grade = 'dealer'
+      }
       if (Object.keys(data).length === 0) return { ok: true }
 
       const updated = await ctx.prisma.user.update({ where: { id: userId }, data })

@@ -61,7 +61,13 @@ export async function POST(req: Request) {
           supabaseId: data.user.id,
           email: addr,
           displayName,
-          ...(body.grade ? { grade: body.grade } : {}),
+          // A full business account needs a valid business tier — floor the grade
+          // to Dealer when creating a business without an explicit higher grade.
+          ...((() => {
+            const g = body.grade || (body.isBusiness ? 'dealer' : undefined)
+            const grade = body.isBusiness && (!g || g === 'grabber') ? 'dealer' : g
+            return grade ? { grade } : {}
+          })()),
           ...(typeof body.isBusiness === 'boolean' ? { isBusiness: body.isBusiness } : {}),
           ...(body.phone ? { phone: String(body.phone).trim() } : {}),
           ...(body.businessName ? { businessName: String(body.businessName).trim() } : {}),
