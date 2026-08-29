@@ -275,9 +275,11 @@ select.gform-control {
 }
 .gform-back:hover { border-color: #cfd6e2; }
 
-/* ── Form kit: tabbed sections (underline tabs, fill the width, no scroll) ── */
+/* ── Form kit: tabbed sections (white bar, separators, orange underline) ── */
 .gform-tabs {
-  display: flex; border-bottom: 1.5px solid var(--line); margin-bottom: 2px;
+  display: flex; background: var(--cream);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 4px;
 }
 .gform-tab {
   flex: 1 1 0; min-width: 0;
