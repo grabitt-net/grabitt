@@ -181,7 +181,7 @@ export default function PostJobPage() {
       {gate === 'ok' && (
       <form onSubmit={onFormSubmit} className="gform">
         <StepTabs steps={STEP_TITLES} current={step} onSelect={goTab} />
-        {step === 0 && <Section title="The role">
+        {step === 0 && <Section title="The role" icon="briefcase">
           <Field label="Job title" required><Input value={f.jobTitle} onChange={e => set('jobTitle', e.target.value)} placeholder="e.g. Bar Staff" /></Field>
           <Field label="Employer name" required help="🔒 Your name is not shown on the advert. Candidates see the establishment type below, and learn who you are only when you invite them to interview."><Input value={f.company} onChange={e => set('company', e.target.value)} placeholder="e.g. The Irish Rover" /></Field>
           <Row>
@@ -203,7 +203,7 @@ export default function PostJobPage() {
 
         {/* Candidate matching — captured against the same taxonomy as jobseeker
             profiles, so we can auto-match this advert to people looking for work. */}
-        {step === 1 && <Section title="Candidate matching" sub="Tell us the exact role(s), experience and languages you need. We use this to match your advert to suitable candidates (and to power employer searches).">
+        {step === 1 && <Section icon="user" title="Candidate matching" sub="Tell us the exact role(s), experience and languages you need. We use this to match your advert to suitable candidates (and to power employer searches).">
           {f.sector ? (
             <Field label="Role(s) this advert covers">
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
@@ -229,7 +229,7 @@ export default function PostJobPage() {
           </Field>
         </Section>}
 
-        {step === 2 && <Section title="Location" sub="Give the job's address — this is where the work is, not your profile address.">
+        {step === 2 && <Section icon="mapPin" title="Location" sub="Give the job's address — this is where the work is, not your profile address.">
           <Field label="Location (town / area)" required><Select value={f.location} onChange={e => set('location', e.target.value)}><option value="">Select a town…</option>{GC_TOWNS.map(t => <option key={t} value={t}>{t}</option>)}</Select></Field>
           <Field label="Full address (shown with a map on the listing)"><Input value={f.address} onChange={e => set('address', e.target.value)} placeholder="Street, number, postcode, town" /></Field>
           <Field label="Pin the exact location on the map" help={coords ? `📍 Pinned at ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : 'Tap the map to drop a pin where the job is based.'}>
@@ -237,7 +237,7 @@ export default function PostJobPage() {
           </Field>
         </Section>}
 
-        {step === 3 && <Section title="Pay">
+        {step === 3 && <Section title="Pay" icon="coins">
           <Row>
             <Field label="Salary from (€)"><Input value={f.salaryMin} onChange={e => set('salaryMin', e.target.value)} inputMode="numeric" placeholder="1200" /></Field>
             <Field label="Salary to (€)"><Input value={f.salaryMax} onChange={e => set('salaryMax', e.target.value)} inputMode="numeric" placeholder="1400" /></Field>
@@ -262,12 +262,12 @@ export default function PostJobPage() {
           </Row>
         </Section>}
 
-        {step === 4 && <Section title="Details">
+        {step === 4 && <Section title="Details" icon="file">
           <Field label="Expected start date"><Input type="date" value={f.startDate} onChange={e => set('startDate', e.target.value)} /></Field>
           <Field label="Description"><Textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the role, responsibilities and requirements…" /></Field>
         </Section>}
 
-        {step === 5 && <Section title="Screening questions" sub="Optional. Ask candidates specific questions they answer when applying.">
+        {step === 5 && <Section icon="clipboard" title="Screening questions" sub="Optional. Ask candidates specific questions they answer when applying.">
           {questions.map(q => (
             <div key={q.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg)' }}>
               <div style={{ display: 'flex', gap: 8 }}>

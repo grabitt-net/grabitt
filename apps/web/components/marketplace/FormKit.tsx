@@ -1,15 +1,19 @@
 import React from 'react'
+import Icon, { type IconName } from './Icon'
 
 // Shared, token-based building blocks for the public create/list forms so they
 // all read as one professional system (matching the dashboard). Styling lives
 // in globals.css under ".gform*". Prefer these over ad-hoc inline inputs.
 
-export function Section({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
+export function Section({ title, sub, icon, children }: { title: string; sub?: string; icon?: IconName; children: React.ReactNode }) {
   return (
     <div className="gform-section">
       <div className="gform-section__head">
-        <h3 className="gform-section__title">{title}</h3>
-        {sub && <div className="gform-section__sub">{sub}</div>}
+        {icon && <span className="gform-section__icon"><Icon name={icon} size={20} strokeWidth={2} /></span>}
+        <div style={{ minWidth: 0 }}>
+          <h3 className="gform-section__title">{title}</h3>
+          {sub && <div className="gform-section__sub">{sub}</div>}
+        </div>
       </div>
       <div className="gform-section__body">{children}</div>
     </div>
