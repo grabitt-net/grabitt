@@ -14,7 +14,7 @@ type Banner = { id: string; title: string; imageUrl: string; linkUrl: string | n
 type Position =
   | 'home_top' | 'home_mid' | 'home_hero' | 'category' | 'category_top' | 'category_infeed' | 'category_footer'
   | 'search_top' | 'search_footer' | 'sticky_bottom' | 'similar_items' | 'seller_dashboard' | 'user_dashboard'
-  | 'checkout' | 'jobs' | 'sponsor_top' | 'sponsor_footer' | 'messages' | 'notifications'
+  | 'checkout' | 'jobs' | 'property' | 'sponsor_top' | 'sponsor_footer' | 'messages' | 'notifications'
 
 // CMS-driven banner slot. Renders the active banners for a given position
 // (managed from the admin Banners view). Rotates if more than one. Every view
@@ -35,7 +35,7 @@ export const BANNER_ASPECTS: Record<string, string> = {
   category: '5 / 1', category_top: '5 / 1', category_infeed: '7 / 1', category_footer: '6 / 1',
   search_top: '5 / 1', search_footer: '6 / 1', sticky_bottom: '6 / 1',
   similar_items: '5 / 1', seller_dashboard: '6 / 1', user_dashboard: '6 / 1',
-  checkout: '6 / 1', jobs: '5 / 1', sponsor_top: '4.5 / 1', sponsor_footer: '4.5 / 1',
+  checkout: '6 / 1', jobs: '5 / 1', property: '5 / 1', sponsor_top: '4.5 / 1', sponsor_footer: '4.5 / 1',
   messages: '6 / 1', notifications: '5 / 1',
 }
 

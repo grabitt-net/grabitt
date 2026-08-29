@@ -9,6 +9,7 @@ import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import PageHero from '@/components/marketplace/PageHero'
+import BannerSlot from '@/components/marketplace/BannerSlot'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import { geocodeGC } from '@/lib/gcGeo'
@@ -121,6 +122,10 @@ export default function PropertyPage() {
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title="Property" />
       <QuickActions belowPromo={<PageHero title="Property" tagline="Find your place in the sun." body="Homes to buy, rent and holiday across the Canary Islands — list your property, or find your next one." />} />
+
+      {/* Sellable property banner — sits above the search options */}
+      <BannerSlot position="property" aspect="5 / 1" />
+
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 16, fontWeight: 700, color: 'var(--dark)', marginBottom: 3 }}>Find your place in the sun.</div>
         <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: '#1a1a1a', lineHeight: 1.55, margin: '0 0 12px', maxWidth: 760 }}>

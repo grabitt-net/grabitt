@@ -98,6 +98,10 @@ export default function JobsPage() {
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title="Recruitment" />
       <QuickActions belowPromo={<PageHero title="Recruitment" tagline="Island jobs, island talent." body="Browse vacancies across the Canary Islands and apply in a couple of taps — or post a role and hire from the community." />} />
+
+      {/* Sellable recruitment banner — sits above the search options */}
+      <BannerSlot position="jobs" aspect="5 / 1" />
+
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <form onSubmit={e => { e.preventDefault(); run() }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {/* Compact search + filters on one line to free up a banner slot */}
@@ -162,9 +166,6 @@ export default function JobsPage() {
           </div>
         )}
       </header>
-
-      {/* Sellable recruitment banner — renders only when an active banner exists */}
-      <BannerSlot position="jobs" aspect="5 / 1" />
 
       {/* Count + view toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>

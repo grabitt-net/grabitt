@@ -1617,6 +1617,7 @@ enum BannerPosition {
   user_dashboard
   checkout
   jobs
+  property
   sponsor_top
   sponsor_footer
   messages
