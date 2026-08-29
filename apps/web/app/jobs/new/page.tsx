@@ -7,6 +7,7 @@ import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
+import Footer from '@/components/marketplace/Footer'
 import type { JobQuestion, JobQuestionType } from '@/lib/jobQuestions'
 import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
 import { GC_TOWNS } from '@/lib/gcTowns'
@@ -289,6 +290,7 @@ export default function PostJobPage() {
         <SubmitButton type="submit" disabled={saving}>{saving ? 'Posting…' : 'Post Job'}</SubmitButton>
       </form>
       )}
+      <Footer />
       <PanelHost />
     </main>
     </PanelProvider>

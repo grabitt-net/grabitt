@@ -1,12 +1,17 @@
 import Link from 'next/link'
+import { PanelProvider } from '@/context/PanelContext'
+import Topbar from '@/components/marketplace/Topbar'
+import Footer from '@/components/marketplace/Footer'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 
 export const metadata = { title: 'Terms of Service — Grabitt' }
 
 export default function TermsPage() {
   return (
+    <PanelProvider>
     <main className="app-shell" style={wrap}>
+      <Topbar title="Terms" back backFallback="/" />
       <div style={card}>
-        <Link href="/" style={back}>Back to Grabitt</Link>
         <h1 style={h1}>Terms of Service</h1>
         <p style={muted}>Last updated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
 
@@ -130,7 +135,10 @@ export default function TermsPage() {
 
         <p style={{ ...muted, marginTop: 28 }}>See also our <Link href="/privacy" style={a}>Privacy Policy</Link>.</p>
       </div>
+      <Footer />
+      <PanelHost />
     </main>
+    </PanelProvider>
   )
 }
 

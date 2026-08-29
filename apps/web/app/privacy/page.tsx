@@ -1,10 +1,16 @@
 import Link from 'next/link'
+import { PanelProvider } from '@/context/PanelContext'
+import Topbar from '@/components/marketplace/Topbar'
+import Footer from '@/components/marketplace/Footer'
+import PanelHost from '@/components/marketplace/PanelHostLazy'
 
 export const metadata = { title: 'Privacy Policy — Grabitt' }
 
 export default function PrivacyPage() {
   return (
+    <PanelProvider>
     <main className="app-shell" style={wrap}>
+      <Topbar title="Privacy Policy" back backFallback="/" />
       <div style={card}>
         <Link href="/" style={back}>Back to Grabitt</Link>
         <h1 style={h1}>Privacy Policy</h1>
@@ -120,7 +126,10 @@ export default function PrivacyPage() {
 
         <p style={{ ...muted, marginTop: 28 }}>See also our <Link href="/terms" style={a}>Terms of Service</Link>.</p>
       </div>
+      <Footer />
+      <PanelHost />
     </main>
+    </PanelProvider>
   )
 }
 
