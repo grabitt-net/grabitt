@@ -435,7 +435,7 @@ export const jobsRouter = router({
       // Only Business accounts may post job adverts.
       const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, email: true, stripeCustomerId: true } })
       if (!me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A Business account is required to post jobs' })
-      // Beyond the tier's monthly free allowance, a job advert is €39 (14 days).
+      // Beyond the tier's monthly free allowance, a job advert is €29 (14 days).
       // The listing is created hidden until the fee is paid; the webhook publishes
       // it. Within allowance, it publishes immediately.
       let fee = await overflowFeeCents(ctx.prisma, ctx.user.id, 'jobs', JOBS_PRICING.perJobCents)
@@ -484,7 +484,7 @@ export const jobsRouter = router({
       // Within the free allowance — published straight away.
       if (fee === 0) return created
 
-      // Over allowance — take the €39 fee, then the webhook flips the listing to
+      // Over allowance — take the €29 fee, then the webhook flips the listing to
       // active (kind: listing_publish).
       const session = await getStripe().checkout.sessions.create({
         mode: 'payment',
