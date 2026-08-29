@@ -9,8 +9,6 @@ import Topbar from '@/components/marketplace/Topbar'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import type { JobQuestion, JobQuestionType } from '@/lib/jobQuestions'
 import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
-import PromoField from '@/components/marketplace/PromoField'
-import { JOBS_PRICING } from '@grabitt/design-tokens'
 import { GC_TOWNS } from '@/lib/gcTowns'
 import { JOB_SECTORS, JOB_LANGUAGES } from '@/lib/jobCategories'
 import { Section, Row, Field, Input, Textarea, Select, Pill, Check, FormError, StepTabs, SubmitButton } from '@/components/marketplace/FormKit'
@@ -42,7 +40,6 @@ export default function PostJobPage() {
   const toggleLang = (l: string) => setLanguages(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountCents: number } | null>(null)
   const [questions, setQuestions] = useState<JobQuestion[]>([])
   // Only business accounts may post jobs.
   const [gate, setGate] = useState<'checking' | 'ok' | 'needbusiness'>('checking')
@@ -143,7 +140,6 @@ export default function PostJobPage() {
               ...(q.type === 'choice' ? { options: (q.options ?? []).filter(Boolean) } : {}),
             })),
         } : {}),
-        ...(appliedPromo ? { discountCode: appliedPromo.code } : {}),
       })
       try { localStorage.removeItem(JOB_DRAFT_KEY) } catch {}
       // Beyond the free allowance a job is €39 — go pay, then the webhook
@@ -289,7 +285,6 @@ export default function PostJobPage() {
         </Section>}
 
         {/* Persistent footer — promo + submit are available from any tab. */}
-        <PromoField kind="job" amountCents={JOBS_PRICING.perJobCents} onApplied={setAppliedPromo} />
         <FormError>{error}</FormError>
         <SubmitButton type="submit" disabled={saving}>{saving ? 'Posting…' : 'Post Job'}</SubmitButton>
       </form>
