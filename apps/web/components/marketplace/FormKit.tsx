@@ -68,13 +68,17 @@ export function SubmitButton({ children, ...rest }: React.ButtonHTMLAttributes<H
 }
 
 // Tabbed section navigation — click any tab to jump to that part of the form.
-export function StepTabs({ steps, current, onSelect }: { steps: string[]; current: number; onSelect: (i: number) => void }) {
+// Optional per-tab icons render above the label (falls back to a number badge).
+export function StepTabs({ steps, current, onSelect, icons }: { steps: string[]; current: number; onSelect: (i: number) => void; icons?: IconName[] }) {
   return (
     <div className="gform-tabs" role="tablist">
       {steps.map((s, i) => (
         <button key={s} type="button" role="tab" aria-selected={i === current} onClick={() => onSelect(i)}
           className={`gform-tab ${i === current ? 'gform-tab--on' : ''}`}>
-          <span className="gform-tab__n">{i + 1}</span>{s}
+          {icons?.[i]
+            ? <span className="gform-tab__ic"><Icon name={icons[i]} size={18} strokeWidth={2} /></span>
+            : <span className="gform-tab__n">{i + 1}</span>}
+          <span className="gform-tab__lbl">{s}</span>
         </button>
       ))}
     </div>
