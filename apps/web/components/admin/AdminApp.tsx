@@ -62,7 +62,7 @@ const COMMANDS: Command[] = [
   { id: 'reports', label: 'Reports', icon: '🚨', group: 'Marketplace', keywords: 'moderation' },
   { id: 'homepage', label: 'Homepage', icon: '🖼️', group: 'Content' },
   { id: 'banners', label: 'Banners', icon: '🎯', group: 'Content', keywords: 'ads sponsor' },
-  { id: 'community', label: 'Guides', icon: '📰', group: 'Content' },
+  { id: 'community', label: 'Grabitt Guides', icon: '📰', group: 'Content', keywords: 'guides blog articles homepage' },
   { id: 'news', label: 'News', icon: '🗞️', group: 'Content', keywords: 'blog articles' },
   { id: 'economic', label: 'Economic Living', icon: '💡', group: 'Content', keywords: 'economic living money saving articles' },
   { id: 'events', label: 'Events', icon: '📅', group: 'Content', keywords: 'events whats on listings calendar' },
