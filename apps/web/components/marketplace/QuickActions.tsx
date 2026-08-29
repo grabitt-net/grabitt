@@ -15,7 +15,7 @@ export default function QuickActions() {
   const page = bannerPageKey(usePathname())
 
   const actions: { label: string; icon: IconName; action: () => void }[] = [
-    { label: 'Recruitment', icon: 'briefcase', action: () => router.push('/recruitment') },
+    { label: 'Recruitment', icon: 'briefcase', action: () => router.push('/jobs') },
     { label: 'Property', icon: 'building', action: () => router.push('/property') },
     // Sponsorship now lives inside the For Business page.
     { label: 'For Business', icon: 'star', action: () => router.push('/for-business') },

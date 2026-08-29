@@ -68,10 +68,10 @@ export default function PricingPage() {
       </Section>
 
       <Section title="For Business">
-        <PriceRow name="Post a Job" price="€29 per listing" note="Paid business accounts only" term="Live for 14 days" href="/recruitment" cta="Post a job">
+        <PriceRow name="Post a Job" price="€29 per listing" note="Paid business accounts only" term="Live for 14 days" href="/jobs" cta="Post a job">
           Need some superstars to add to your team? Place an ad on Grabitt which enables you to filter and manage the candidates real time. You can buy job listings in bulk or pay per listing.
         </PriceRow>
-        <PriceRow name="Recruitment Database Search" price="Optional extra" note="Needs a live job advert" href="/recruitment" cta="Post a job">
+        <PriceRow name="Recruitment Database Search" price="Optional extra" note="Needs a live job advert" href="/jobs" cta="Post a job">
           An optional add-on that speeds up your recruitment — available only to businesses with a live, paid-for job advert. Enter your criteria, click search, and it brings up already-registered candidates who match, so you don&apos;t wait for applications to arrive. Unlocking a candidate&apos;s CV and contact details is charged per candidate and tied to the job advert you&apos;re hiring for. A full recruitment advert still gives much broader coverage for candidates not yet a member.
         </PriceRow>
         <PriceRow name="Handy Help" price="€9.99 to place · €2.99 to reply" note="Business Lite & Directory" term="Live for 30 days" href="/handy" cta="Open Handy Help">

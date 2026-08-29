@@ -120,8 +120,10 @@ export default function JobsPage() {
               <option value="soonest">Starting soonest</option>
             </select>
             {/* Seeker + employer CTAs sit on the filter line, pushed to the right */}
-            <SeekerCta />
-            <Link href="/jobs/new" style={{ background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 14px', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>+ Post a Job</Link>
+            <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+              <SeekerCta />
+              <Link href="/jobs/new" style={{ background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 14px', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>+ Post a Job</Link>
+            </span>
           </div>
 
           {showAdvanced && (

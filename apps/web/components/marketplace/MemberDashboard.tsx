@@ -274,7 +274,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             {/* Business hub: staff required (recruit). Personal: looking-for-work toggle. */}
             {effBiz ? (
               <HubNavRow icon="wrench" label={t('Staff required')} value={
-                <button onClick={() => router.push('/recruitment')} style={navLinkBtn}>{t('Recruit')}</button>} />
+                <button onClick={() => router.push('/jobs')} style={navLinkBtn}>{t('Recruit')}</button>} />
             ) : !me?.isBusiness ? (
               <HubNavRow icon="wrench" label={t('Work required')} value={
                 <button onClick={toggleOpenToWork} style={{ ...navLinkBtn, color: me?.openToWork ? '#16a34a' : '#6a5a48' }}>
@@ -367,7 +367,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                   ? ['🧰', t('Offer a service'), () => openPanel('handyPost' as PanelId, { kind: 'offer' })]
                   : ['🙋', t('Request a service'), () => openPanel('handyPost' as PanelId, { kind: 'request' })],
                 ...(effBiz ? [
-                  ['💼', t('Recruit'), () => router.push('/recruitment')],
+                  ['💼', t('Recruit'), () => router.push('/jobs')],
                   ['🏠', t('Property'), () => router.push('/property/new')],
                   ['📣', t('Buy banners'), () => router.push('/advertise')],
                   ['⚡', t('Grabitt now'), () => router.push('/grabitt-now')],
