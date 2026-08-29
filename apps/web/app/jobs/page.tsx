@@ -8,6 +8,7 @@ import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
+import PageHero from '@/components/marketplace/PageHero'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import BannerSlot from '@/components/marketplace/BannerSlot'
@@ -96,7 +97,7 @@ export default function JobsPage() {
     <PanelProvider>
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title="Recruitment" />
-      <QuickActions />
+      <QuickActions belowPromo={<PageHero title="Recruitment" tagline="Island jobs, island talent." body="Browse vacancies across the Canary Islands and apply in a couple of taps — or post a role and hire from the community." />} />
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <form onSubmit={e => { e.preventDefault(); run() }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {/* Compact search + filters on one line to free up a banner slot */}

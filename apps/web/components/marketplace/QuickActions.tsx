@@ -9,7 +9,7 @@ import Icon, { type IconName } from './Icon'
 // Persistent quick-actions bar — Sponsorship / Recruitment / Property / For
 // Business. Rendered under the header on every main page. Find Work + Find Staff
 // are consolidated into the Recruitment page; For Business points at /for-business.
-export default function QuickActions() {
+export default function QuickActions({ belowPromo }: { belowPromo?: React.ReactNode } = {}) {
   const { openPanel } = usePanel()
   const router = useRouter()
   const page = bannerPageKey(usePathname())
@@ -57,7 +57,11 @@ export default function QuickActions() {
         <Icon name="zap" size={19} strokeWidth={2} />
       </button>
 
-      {/* Sponsor banner — every page, below the Grabitt Now promo. Renders
+      {/* Optional page hero (category / recruitment / property) sits directly
+          below the Grabitt NOW button, full width, above the paid banners. */}
+      {belowPromo && <div style={{ margin: '0 -14px' }}>{belowPromo}</div>}
+
+      {/* Sponsor banner — every page, below the hero / Grabitt Now promo. Renders
           nothing when no sponsor banner is active. */}
       <div style={{ margin: '0 -14px' }}><BannerSlot position="sponsor_top" page={page} aspect="4.5 / 1" /></div>
     </section>
