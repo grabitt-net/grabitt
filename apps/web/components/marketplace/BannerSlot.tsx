@@ -80,7 +80,7 @@ export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius 
     if (!preview || !slotOn) return null
     return (
       <div style={{ padding: padded ? '14px 14px 0' : 0 }}>
-        <div style={{ width: '100%', aspectRatio: aspect, borderRadius: radius, border: '2px dashed var(--orange2)', background: 'repeating-linear-gradient(45deg,#fff7ed,#fff7ed 12px,#ffedd5 12px,#ffedd5 24px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', padding: 6 }}>
+        <div style={{ width: '100%', aspectRatio: aspect, maxHeight: 250, borderRadius: radius, border: '2px dashed var(--orange2)', background: 'repeating-linear-gradient(45deg,#fff7ed,#fff7ed 12px,#ffedd5 12px,#ffedd5 24px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', padding: 6 }}>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: '#c2410c', textTransform: 'uppercase', letterSpacing: 0.6 }}>Banner slot</span>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: '#9a3412' }}>{slotLabel(position)}{page ? ` · ${page}` : ''}</span>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 700, color: '#b45309' }}>Admin → Banners → Slots &amp; pricing · id: {position}</span>
@@ -108,7 +108,7 @@ export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius 
   }
 
   const inner = (
-    <div style={{ position: 'relative', width: '100%', aspectRatio: aspect, borderRadius: radius, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', background: '#f5f0e8' }}>
+    <div style={{ position: 'relative', width: '100%', aspectRatio: aspect, maxHeight: 250, borderRadius: radius, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', background: '#f5f0e8' }}>
       <img src={b.imageUrl} alt={b.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
       {banners.length > 1 && (
         <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
