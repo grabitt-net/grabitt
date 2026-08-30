@@ -67,7 +67,7 @@ export default function SellerCentre() {
   return (
     <div id="seller-centre" style={cardBox}>
       {/* Sponsored banner at the top of the seller dashboard */}
-      <BannerSlot position="seller_dashboard" aspect="6 / 1" label="Seller dashboard" padded={false} />
+      <BannerSlot position="seller_dashboard" aspect="4.5 / 1" label="Seller dashboard" padded={false} />
       {/* Current level */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <div style={{ width: 46, height: 46, borderRadius: '50%', background: g.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, flexShrink: 0 }}>{g.name[0]}</div>

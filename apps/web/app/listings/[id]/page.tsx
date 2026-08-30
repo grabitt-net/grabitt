@@ -581,7 +581,7 @@ function ListingInner() {
         </div>
 
         {/* Sponsored slot among similar items */}
-        <BannerSlot position="similar_items" aspect="5 / 1" label="Similar-items sponsored" />
+        <BannerSlot position="similar_items" aspect="4.5 / 1" label="Similar-items sponsored" />
 
         {/* You might also like */}
         {similar.length > 0 && (

@@ -30,13 +30,15 @@ type Position =
 // The aspect ratio each slot renders at (mirrors the `aspect` prop passed at
 // every usage site). Central so the admin editor can show advertisers the exact
 // recommended image size per placement.
+// One standard banner size across the whole site (matches the news/sponsor
+// strip). Every slot renders at 4.5:1.
 export const BANNER_ASPECTS: Record<string, string> = {
-  home_top: '5 / 1', home_mid: '3.4 / 1', home_hero: '3.4 / 1',
-  category: '5 / 1', category_top: '5 / 1', category_infeed: '7 / 1', category_footer: '6 / 1',
-  search_top: '5 / 1', search_footer: '6 / 1', sticky_bottom: '6 / 1',
-  similar_items: '5 / 1', seller_dashboard: '6 / 1', user_dashboard: '6 / 1',
-  checkout: '6 / 1', jobs: '5 / 1', property: '5 / 1', sponsor_top: '4.5 / 1', sponsor_footer: '4.5 / 1',
-  messages: '6 / 1', notifications: '5 / 1',
+  home_top: '4.5 / 1', home_mid: '4.5 / 1', home_hero: '4.5 / 1',
+  category: '4.5 / 1', category_top: '4.5 / 1', category_infeed: '4.5 / 1', category_footer: '4.5 / 1',
+  search_top: '4.5 / 1', search_footer: '4.5 / 1', sticky_bottom: '4.5 / 1',
+  similar_items: '4.5 / 1', seller_dashboard: '4.5 / 1', user_dashboard: '4.5 / 1',
+  checkout: '4.5 / 1', jobs: '4.5 / 1', property: '4.5 / 1', sponsor_top: '4.5 / 1', sponsor_footer: '4.5 / 1',
+  messages: '4.5 / 1', notifications: '4.5 / 1',
 }
 
 const REC_WIDTH = 2000
@@ -47,7 +49,7 @@ export function recommendedSize(aspect: string): { w: number; h: number; label: 
   return { w: REC_WIDTH, h, label: `${REC_WIDTH} × ${h} px` }
 }
 
-export default function BannerSlot({ position, page, aspect = '3.4 / 1', radius = 16, padded = true, label }: { position: Position; page?: string; aspect?: string; radius?: number; padded?: boolean; label?: string }) {
+export default function BannerSlot({ position, page, aspect = '4.5 / 1', radius = 16, padded = true, label }: { position: Position; page?: string; aspect?: string; radius?: number; padded?: boolean; label?: string }) {
   const [banners, setBanners] = useState<Banner[]>([])
   const [preview, setPreview] = useState(false)
   // Whether this slot is switched on for the current page (admin On/Off + pages).

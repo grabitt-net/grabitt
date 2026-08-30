@@ -469,7 +469,7 @@ function PanelBody() {
     return (
       <ActionPanel title="🔔 Notifications" onClose={closePanel}>
         {/* Featured Sponsor slot — click-tracked, shows only when a banner is active */}
-        <div style={{ margin: '-4px 0 12px' }}><BannerSlot position="notifications" aspect="5 / 1" padded={false} /></div>
+        <div style={{ margin: '-4px 0 12px' }}><BannerSlot position="notifications" aspect="4.5 / 1" padded={false} /></div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
             {TABS.map(t => (
@@ -1471,7 +1471,7 @@ function PanelBody() {
               Checkout {fmt(subtotal)} →
             </button>
             {/* Non-intrusive sponsored slot — below the checkout CTA, never blocks the flow */}
-            <BannerSlot position="checkout" aspect="6 / 1" label="Checkout" padded={false} />
+            <BannerSlot position="checkout" aspect="4.5 / 1" label="Checkout" padded={false} />
           </>
         )}
       </ActionPanel>

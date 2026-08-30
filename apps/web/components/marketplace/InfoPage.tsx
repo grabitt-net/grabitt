@@ -64,20 +64,19 @@ export function Band({ heading, children, image, imageAlt, reverse, tint }: {
   )
 }
 
-export default function InfoPage({ title, intro, pills, hero, topbarTitle, bannerAspect, children }: {
+export default function InfoPage({ title, intro, pills, hero, topbarTitle, children }: {
   title: string
   intro?: ReactNode
   pills?: string[]
   hero?: string        // optional hero image/video-poster URL
   topbarTitle?: string
-  bannerAspect?: string  // override the top sponsor banner aspect (default 4.5/1)
   children: ReactNode
 }) {
   return (
     <PanelProvider>
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
         <Topbar title={topbarTitle || title} back backFallback="/" />
-        <QuickActions sponsorAspect={bannerAspect} />
+        <QuickActions />
 
         {/* Hero header — the orange banner is the background for the page title,
             subheading and pills, all centred on it. A real hero image (when
