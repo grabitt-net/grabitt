@@ -31,6 +31,7 @@ export default function NewsPage() {
     <InfoPage
       title="Grabitt News"
       topbarTitle="News"
+      bannerAspect="5 / 1"
       intro="The latest from Grabitt and the Canary Islands — updates, announcements, features, and what's on near you."
     >
       {/* News / Events tabs */}
