@@ -18,6 +18,7 @@ import StripePayment from './StripePayment'
 import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
 import PromoField from './PromoField'
+import { Input as FkInput, Textarea as FkTextarea, Select as FkSelect } from './FormKit'
 import SeekerProfilePanel from './SeekerProfilePanel'
 import SignInFirst from './SignInFirst'
 import BusinessVerifyPanel from './BusinessVerifyPanel'
@@ -3540,7 +3541,7 @@ function PanelBody() {
               <>
                 <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '14px 14px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Title')} *</div>
-                  <input value={title} onChange={e => setTitle(e.target.value)} placeholder='e.g. "iPhone 14 Pro — Unlocked, 256GB"' style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                  <FkInput value={title} onChange={e => setTitle(e.target.value)} placeholder='e.g. "iPhone 14 Pro — Unlocked, 256GB"' />
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa', marginTop: 3 }}>{title.length}/80</div>
                 </div>
 
@@ -3566,9 +3567,9 @@ function PanelBody() {
                 <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '14px 14px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Model / Brand')}, {t('Colour')} &amp; {t('Size')}</div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <input value={brand} onChange={e => setBrand(e.target.value)} placeholder={t('Model / Brand')} style={{ flex: 1, minWidth: 0, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
-                    <input value={colour} onChange={e => setColour(e.target.value)} placeholder={t('Colour')} style={{ flex: 1, minWidth: 0, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
-                    <input value={size} onChange={e => setSize(e.target.value)} placeholder={t('Size')} style={{ flex: 1, minWidth: 0, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                    <FkInput value={brand} onChange={e => setBrand(e.target.value)} placeholder={t('Model / Brand')} style={{ flex: 1, minWidth: 0 }} />
+                    <FkInput value={colour} onChange={e => setColour(e.target.value)} placeholder={t('Colour')} style={{ flex: 1, minWidth: 0 }} />
+                    <FkInput value={size} onChange={e => setSize(e.target.value)} placeholder={t('Size')} style={{ flex: 1, minWidth: 0 }} />
                   </div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginTop: 5 }}>{t('Optional — buyers filter and search on these.')}</div>
                 </div>
@@ -3603,14 +3604,14 @@ function PanelBody() {
 
                 <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '14px 14px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>Description</div>
-                  <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder='Describe the item — include any defects, accessories included, reason for selling...' rows={4} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', resize: 'none', boxSizing: 'border-box' }} />
+                  <FkTextarea value={desc} onChange={e => setDesc(e.target.value)} placeholder='Describe the item — include any defects, accessories included, reason for selling...' rows={4} />
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Location')}</div>
-                  <select value={town} onChange={e => setTown(e.target.value)} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+                  <FkSelect value={town} onChange={e => setTown(e.target.value)}>
                     {TOWNS.map(t => <option key={t}>{t}</option>)}
-                  </select>
+                  </FkSelect>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', cursor: 'pointer', marginTop: 10 }}>
                     <input type="checkbox" checked={showMap} onChange={e => setShowMap(e.target.checked)} /> {t('Pin the exact location on a map')}
                   </label>
@@ -5111,7 +5112,6 @@ function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; i
   }
 
   const cardStyle: React.CSSProperties = { background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '13px 14px 15px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }
-  const inputStyle: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px', fontFamily: 'var(--font-ui)', fontSize: 14, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }
   const lbl: React.CSSProperties = { fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 6, display: 'block' }
 
   if (posted) {
@@ -5146,21 +5146,21 @@ function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; i
 
       <div style={cardStyle}>
         <label style={lbl}>{isRequest ? 'What do you need?' : 'Your service'} *</label>
-        <input value={title} onChange={e => setTitle(e.target.value)} placeholder={isRequest ? 'e.g. Need a plumber for a leaking tap' : 'e.g. Reliable plumber — 15 yrs experience'} maxLength={100} style={inputStyle} />
+        <FkInput value={title} onChange={e => setTitle(e.target.value)} placeholder={isRequest ? 'e.g. Need a plumber for a leaking tap' : 'e.g. Reliable plumber — 15 yrs experience'} maxLength={100} />
       </div>
 
       <div style={cardStyle}>
         <label style={lbl}>Details *</label>
-        <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder={isRequest ? 'When you need it, where, and any details that help.' : 'What you offer, areas covered, experience, availability.'} maxLength={2000} style={{ ...inputStyle, resize: 'vertical' }} />
+        <FkTextarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder={isRequest ? 'When you need it, where, and any details that help.' : 'What you offer, areas covered, experience, availability.'} maxLength={2000} />
       </div>
 
       <div style={cardStyle}>
         <label style={lbl}>Location</label>
-        <select value={town} onChange={e => setTown(e.target.value)} style={inputStyle}>
+        <FkSelect value={town} onChange={e => setTown(e.target.value)}>
           {HANDY_TOWNS.map(tn => <option key={tn} value={tn}>{tn}</option>)}
-        </select>
+        </FkSelect>
         <label style={{ ...lbl, marginTop: 12 }}>{isRequest ? 'Budget (optional)' : 'From price / rate (optional)'}</label>
-        <input value={budget} onChange={e => setBudget(e.target.value.replace(/[^0-9.]/g, ''))} inputMode="decimal" placeholder="€ — leave blank if not sure" style={inputStyle} />
+        <FkInput value={budget} onChange={e => setBudget(e.target.value.replace(/[^0-9.]/g, ''))} inputMode="decimal" placeholder="€ — leave blank if not sure" />
       </div>
 
       <div style={cardStyle}>
