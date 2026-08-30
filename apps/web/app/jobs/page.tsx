@@ -4,7 +4,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { geocodeGC } from '@/lib/gcGeo'
-import { PanelProvider, usePanel } from '@/context/PanelContext'
+import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
@@ -126,7 +126,6 @@ export default function JobsPage() {
             </select>
             {/* Seeker + employer CTAs sit on the filter line, pushed to the right */}
             <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-              <SeekerCta />
               <Link href="/jobs/new" style={{ background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 14px', textDecoration: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>+ Post a Job</Link>
             </span>
           </div>
@@ -226,15 +225,6 @@ export default function JobsPage() {
       <PanelHost />
     </main>
     </PanelProvider>
-  )
-}
-
-// "List yourself for work" — opens the seeker profile editor. Must live inside
-// PanelProvider (JobsPage renders the provider, so it can't call usePanel itself).
-function SeekerCta() {
-  const { openPanel } = usePanel()
-  return (
-    <button onClick={() => openPanel('seekerProfile')} style={{ marginLeft: 'auto', border: '1.5px solid var(--orange)', background: '#fff', color: 'var(--orange)', borderRadius: 50, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>🙋 Find me work</button>
   )
 }
 
