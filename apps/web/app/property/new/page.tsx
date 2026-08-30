@@ -13,6 +13,8 @@ import AddressAutocomplete from '@/components/marketplace/AddressAutocomplete'
 import { PROPERTY_FEATURES } from '@/lib/propertyFeatures'
 import PromoField from '@/components/marketplace/PromoField'
 import { PROPERTY_PRICING } from '@grabitt/design-tokens'
+import { Section, Row, Field, Input, Textarea, Select, Check, FormError, StepTabs, SubmitButton } from '@/components/marketplace/FormKit'
+import type { IconName } from '@/components/marketplace/Icon'
 
 const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
 
@@ -99,11 +101,17 @@ export default function NewPropertyPage() {
     })()
   }, [router])
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault()
+  // Tabs — each part of the advert is a tab you can move between freely.
+  const STEP_TITLES = ['Property', 'Details', 'Features', 'Agent', 'Location']
+  const STEP_ICONS: IconName[] = ['home', 'file', 'sparkle', 'user', 'mapPin']
+  const [step, setStep] = useState(0)
+  const goTab = (i: number) => { setError(''); setStep(i); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  function onFormSubmit(e: React.FormEvent) { e.preventDefault(); doSubmit() }
+
+  async function doSubmit() {
     setError('')
     if (!f.title.trim() || !f.location.trim() || !f.price) {
-      setError('Title, location and price are required.'); return
+      setError('Title, address and price are required.'); goTab(0); return
     }
     setSaving(true)
     try {
@@ -174,7 +182,7 @@ export default function NewPropertyPage() {
 
   return (
     <PanelProvider>
-    <main className="app-shell" style={{ background: '#f7f4ee', minHeight: '100dvh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
+    <main className="app-shell" style={{ background: '#E4E7EE', minHeight: '100dvh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title="List a Property" />
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <Link href="/property" style={{ textDecoration: 'none', fontSize: 22, color: 'var(--orange)', fontWeight: 700 }}>‹</Link>
@@ -195,162 +203,152 @@ export default function NewPropertyPage() {
       )}
 
       {gate === 'ok' && (
-      <form onSubmit={submit} style={{ maxWidth: 640, margin: '0 auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <form onSubmit={onFormSubmit} className="gform">
+        <StepTabs steps={STEP_TITLES} icons={STEP_ICONS} current={step} onSelect={goTab} />
         {allowance && (
           <div style={{ background: '#f0fdf4', border: '1px solid #c8e6c9', borderRadius: 12, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#2e7d32', fontWeight: 700 }}>
             🏠 {allowance.remaining} of {allowance.allowance} listings remaining on your plan · new listings go live once approved by our team.
           </div>
         )}
-        <Section title="The property">
-          <Field label="Listing title *"><input value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. 2-bed apartment with sea view" style={inp} /></Field>
+
+        {step === 0 && <Section title="The property">
+          <Field label="Listing title" required><Input value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. 2-bed apartment with sea view" /></Field>
           <Row>
-            <Field label="Listing type *">
-              <select value={f.type} onChange={e => set('type', e.target.value)} style={sel}>
+            <Field label="Listing type" required>
+              <Select value={f.type} onChange={e => set('type', e.target.value)}>
                 {TYPES.map(([label, v]) => <option key={v} value={v}>{label}</option>)}
-              </select>
+              </Select>
             </Field>
-            <Field label={f.type === 'rent' || f.type === 'holiday' ? 'Price (€/month) *' : 'Price (€) *'}>
-              <input value={f.price} onChange={e => set('price', e.target.value)} inputMode="numeric" placeholder="e.g. 250000" style={inp} />
+            <Field label={f.type === 'rent' || f.type === 'holiday' ? 'Price (€/month)' : 'Price (€)'} required>
+              <Input value={f.price} onChange={e => set('price', e.target.value)} inputMode="numeric" placeholder="e.g. 250000" />
             </Field>
           </Row>
           <Row>
-            <Field label="Property reference"><input value={f.reference} onChange={e => set('reference', e.target.value)} placeholder="e.g. REF001, HP-2024-001" style={inp} /></Field>
-            <Field label="Community / urbanisation"><input value={f.community} onChange={e => set('community', e.target.value)} placeholder="e.g. Playa Honda" style={inp} /></Field>
+            <Field label="Property reference"><Input value={f.reference} onChange={e => set('reference', e.target.value)} placeholder="e.g. REF001, HP-2024-001" /></Field>
+            <Field label="Community / urbanisation"><Input value={f.community} onChange={e => set('community', e.target.value)} placeholder="e.g. Playa Honda" /></Field>
           </Row>
-          <Field label="Address *">
+          <Field label="Address" required help={f.location ? `📍 Town: ${f.location}${coords ? ' · map pin set' : ''}` : 'Pick an address to set the town and map pin.'}>
             <AddressAutocomplete
               value={f.address || f.location}
               onChange={v => setF(prev => ({ ...prev, address: v }))}
               onSelect={pick => { setF(prev => ({ ...prev, address: pick.address, location: pick.city || prev.location })); if (pick.lat && pick.lng) setCoords({ lat: pick.lat, lng: pick.lng }) }}
               placeholder="Start typing the address — town & map pin fill automatically"
             />
-            <div style={{ fontSize: 11, color: '#888', fontFamily: 'var(--font-ui)', marginTop: 4 }}>
-              {f.location ? `📍 Town: ${f.location}${coords ? ' · map pin set' : ''}` : 'Pick an address to set the town and map pin.'}
-            </div>
           </Field>
-        </Section>
+        </Section>}
 
+        {step === 1 && <>
         <Section title="Details">
           <Row>
-            <Field label="Bedrooms"><input value={f.bedrooms} onChange={e => set('bedrooms', e.target.value)} inputMode="numeric" placeholder="2" style={inp} /></Field>
-            <Field label="Bathrooms"><input value={f.bathrooms} onChange={e => set('bathrooms', e.target.value)} inputMode="numeric" placeholder="1" style={inp} /></Field>
-            <Field label="Total area (m²)"><input value={f.m2} onChange={e => set('m2', e.target.value)} inputMode="numeric" placeholder="85" style={inp} /></Field>
+            <Field label="Bedrooms"><Input value={f.bedrooms} onChange={e => set('bedrooms', e.target.value)} inputMode="numeric" placeholder="2" /></Field>
+            <Field label="Bathrooms"><Input value={f.bathrooms} onChange={e => set('bathrooms', e.target.value)} inputMode="numeric" placeholder="1" /></Field>
+            <Field label="Total area (m²)"><Input value={f.m2} onChange={e => set('m2', e.target.value)} inputMode="numeric" placeholder="85" /></Field>
           </Row>
           <Row>
-            <Field label="Covered area (m²)"><input value={f.coveredM2} onChange={e => set('coveredM2', e.target.value)} inputMode="numeric" placeholder="e.g. 90" style={inp} /></Field>
-            <Field label="Land / plot area (m²)"><input value={f.landM2} onChange={e => set('landM2', e.target.value)} inputMode="numeric" placeholder="e.g. 350" style={inp} /></Field>
+            <Field label="Covered area (m²)"><Input value={f.coveredM2} onChange={e => set('coveredM2', e.target.value)} inputMode="numeric" placeholder="e.g. 90" /></Field>
+            <Field label="Land / plot area (m²)"><Input value={f.landM2} onChange={e => set('landM2', e.target.value)} inputMode="numeric" placeholder="e.g. 350" /></Field>
           </Row>
           <Row>
-            <Field label="Floor"><input value={f.floor} onChange={e => set('floor', e.target.value)} inputMode="numeric" placeholder="e.g. 3" style={inp} /></Field>
+            <Field label="Floor"><Input value={f.floor} onChange={e => set('floor', e.target.value)} inputMode="numeric" placeholder="e.g. 3" /></Field>
             <Field label="Energy rating">
-              <select value={f.energyRating} onChange={e => set('energyRating', e.target.value)} style={sel}>
+              <Select value={f.energyRating} onChange={e => set('energyRating', e.target.value)}>
                 <option value="">—</option>{ENERGY.map(x => <option key={x} value={x}>{x}</option>)}
-              </select>
+              </Select>
             </Field>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end', paddingBottom: 8 }}>
-              <label style={chk}><input type="checkbox" checked={f.hasPool} onChange={e => set('hasPool', e.target.checked)} /> Pool</label>
-              <label style={chk}><input type="checkbox" checked={f.hasGarage} onChange={e => set('hasGarage', e.target.checked)} /> Garage</label>
-            </div>
+            <Field label="Extras">
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingTop: 4 }}>
+                <Check label="Pool" checked={f.hasPool} onChange={v => set('hasPool', v)} />
+                <Check label="Garage" checked={f.hasGarage} onChange={v => set('hasGarage', v)} />
+              </div>
+            </Field>
           </Row>
-          <Field label="Description"><textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the property, condition, features and what's nearby…" style={{ ...inp, resize: 'vertical' }} /></Field>
+          <Field label="Description"><Textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the property, condition, features and what's nearby…" /></Field>
         </Section>
 
-        {/* Rental terms — only for lettings. Holiday lets must show a licence. */}
         {(f.type === 'rent' || f.type === 'holiday') && (
           <Section title="Rental terms">
             <Row>
               <Field label="Duration">
-                <select value={f.rentalTerm} onChange={e => set('rentalTerm', e.target.value)} style={sel}>
+                <Select value={f.rentalTerm} onChange={e => set('rentalTerm', e.target.value)}>
                   <option value="">—</option>
                   <option value="short_term">Short-term</option>
                   <option value="long_term">Long-term</option>
                   <option value="holiday">Holiday rental</option>
-                </select>
+                </Select>
               </Field>
               {(f.type === 'holiday' || f.rentalTerm === 'holiday') && (
-                <Field label="Tourist licence no. *"><input value={f.touristLicence} onChange={e => set('touristLicence', e.target.value)} placeholder="e.g. VV-35-xxxxx" style={inp} /></Field>
+                <Field label="Tourist licence no." required help="Holiday rentals in the Canary Islands require a Vivienda Vacacional (VV) licence — its number must be shown on the advert."><Input value={f.touristLicence} onChange={e => set('touristLicence', e.target.value)} placeholder="e.g. VV-35-xxxxx" /></Field>
               )}
             </Row>
-            {(f.type === 'holiday' || f.rentalTerm === 'holiday') && (
-              <div style={{ fontSize: 11, color: '#9a6a30', fontFamily: 'var(--font-ui)' }}>Holiday rentals in the Canary Islands require a Vivienda Vacacional (VV) licence — its number must be shown on the advert.</div>
-            )}
           </Section>
         )}
 
-        {/* Extended portal details */}
         <Section title="More details">
           <Row>
-            <Field label="Plot size (m²)"><input value={f.plotM2} onChange={e => set('plotM2', e.target.value)} inputMode="numeric" placeholder="e.g. 350" style={inp} /></Field>
-            <Field label="Terrace (m²)"><input value={f.terraceM2} onChange={e => set('terraceM2', e.target.value)} inputMode="numeric" placeholder="e.g. 20" style={inp} /></Field>
-            <Field label="Year built"><input value={f.yearBuilt} onChange={e => set('yearBuilt', e.target.value)} inputMode="numeric" placeholder="e.g. 2005" style={inp} /></Field>
+            <Field label="Plot size (m²)"><Input value={f.plotM2} onChange={e => set('plotM2', e.target.value)} inputMode="numeric" placeholder="e.g. 350" /></Field>
+            <Field label="Terrace (m²)"><Input value={f.terraceM2} onChange={e => set('terraceM2', e.target.value)} inputMode="numeric" placeholder="e.g. 20" /></Field>
+            <Field label="Year built"><Input value={f.yearBuilt} onChange={e => set('yearBuilt', e.target.value)} inputMode="numeric" placeholder="e.g. 2005" /></Field>
           </Row>
           <Row>
             <Field label="Furnished">
-              <select value={f.furnished} onChange={e => set('furnished', e.target.value)} style={sel}>
+              <Select value={f.furnished} onChange={e => set('furnished', e.target.value)}>
                 <option value="">—</option>
                 <option value="furnished">Furnished</option>
                 <option value="part_furnished">Part-furnished</option>
                 <option value="unfurnished">Unfurnished</option>
-              </select>
+              </Select>
             </Field>
             <Field label="Condition">
-              <select value={f.condition} onChange={e => set('condition', e.target.value)} style={sel}>
+              <Select value={f.condition} onChange={e => set('condition', e.target.value)}>
                 <option value="">—</option>
                 <option value="new">New / recently built</option>
                 <option value="good">Good</option>
                 <option value="needs_reform">Needs reform</option>
-              </select>
+              </Select>
             </Field>
-            <Field label="Community fees (€/mo)"><input value={f.communityFees} onChange={e => set('communityFees', e.target.value)} inputMode="numeric" placeholder="e.g. 60" style={inp} /></Field>
+            <Field label="Community fees (€/mo)"><Input value={f.communityFees} onChange={e => set('communityFees', e.target.value)} inputMode="numeric" placeholder="e.g. 60" /></Field>
           </Row>
           <Row>
-            <Field label="Orientation"><input value={f.orientation} onChange={e => set('orientation', e.target.value)} placeholder="e.g. South-West" style={inp} /></Field>
-            <Field label="Views"><input value={f.views} onChange={e => set('views', e.target.value)} placeholder="e.g. Sea, Mountain" style={inp} /></Field>
+            <Field label="Orientation"><Input value={f.orientation} onChange={e => set('orientation', e.target.value)} placeholder="e.g. South-West" /></Field>
+            <Field label="Views"><Input value={f.views} onChange={e => set('views', e.target.value)} placeholder="e.g. Sea, Mountain" /></Field>
           </Row>
         </Section>
 
-        <Section title="Distances (to nearest, in metres)">
+        <Section title="Distances" sub="To the nearest, in metres.">
           <Row>
-            <Field label="Local shops"><input value={f.distShops} onChange={e => set('distShops', e.target.value)} inputMode="numeric" placeholder="0" style={inp} /></Field>
-            <Field label="Local schools"><input value={f.distSchools} onChange={e => set('distSchools', e.target.value)} inputMode="numeric" placeholder="0" style={inp} /></Field>
-          </Row>
-          <Row>
-            <Field label="Nearest beach"><input value={f.distBeach} onChange={e => set('distBeach', e.target.value)} inputMode="numeric" placeholder="0" style={inp} /></Field>
-            <Field label="Nearest town"><input value={f.distTown} onChange={e => set('distTown', e.target.value)} inputMode="numeric" placeholder="0" style={inp} /></Field>
+            <Field label="Local shops"><Input value={f.distShops} onChange={e => set('distShops', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
+            <Field label="Local schools"><Input value={f.distSchools} onChange={e => set('distSchools', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
+            <Field label="Nearest beach"><Input value={f.distBeach} onChange={e => set('distBeach', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
+            <Field label="Nearest town"><Input value={f.distTown} onChange={e => set('distTown', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
           </Row>
         </Section>
+        </>}
 
-        <Section title="Features & amenities">
+        {step === 2 && <Section title="Features & amenities">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 6 }}>
             {PROPERTY_FEATURES.map(feat => (
-              <label key={feat.slug} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 700, color: '#555', cursor: 'pointer', padding: '4px 0' }}>
-                <input type="checkbox" checked={features.includes(feat.slug)} onChange={() => toggleFeature(feat.slug)} /> {feat.icon} {feat.label}
+              <label key={feat.slug} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 600, color: 'var(--ink-2)', cursor: 'pointer', padding: '4px 0' }}>
+                <input type="checkbox" checked={features.includes(feat.slug)} onChange={() => toggleFeature(feat.slug)} style={{ accentColor: 'var(--orange)' }} /> {feat.icon} {feat.label}
               </label>
             ))}
           </div>
-        </Section>
+        </Section>}
 
-        <Section title="Agent contact (shown on your listings)">
-          <div style={{ fontSize: 12, color: '#777', fontFamily: 'var(--font-ui)', marginTop: -4 }}>Buyers can reach you directly on these. Saved to your agent profile and applied to every property you list.</div>
-          <Field label="Agency name"><input value={agent.agencyName} onChange={e => setAg('agencyName', e.target.value)} placeholder="e.g. Canary Coast Properties" style={inp} /></Field>
+        {step === 3 && <Section title="Agent contact" sub="Shown on your listings. Buyers reach you directly on these — saved to your agent profile and applied to every property you list.">
+          <Field label="Agency name"><Input value={agent.agencyName} onChange={e => setAg('agencyName', e.target.value)} placeholder="e.g. Canary Coast Properties" /></Field>
           <Row>
-            <Field label="WhatsApp number"><input value={agent.agentWhatsapp} onChange={e => setAg('agentWhatsapp', e.target.value)} inputMode="tel" placeholder="e.g. +34 600 123 456" style={inp} /></Field>
-            <Field label="Contact email"><input value={agent.agentEmail} onChange={e => setAg('agentEmail', e.target.value)} inputMode="email" placeholder="you@agency.com" style={inp} /></Field>
+            <Field label="WhatsApp number"><Input value={agent.agentWhatsapp} onChange={e => setAg('agentWhatsapp', e.target.value)} inputMode="tel" placeholder="e.g. +34 600 123 456" /></Field>
+            <Field label="Contact email"><Input value={agent.agentEmail} onChange={e => setAg('agentEmail', e.target.value)} inputMode="email" placeholder="you@agency.com" /></Field>
           </Row>
-        </Section>
+        </Section>}
 
-        <Section title="Location on the map">
-          <div style={{ fontSize: 12, color: '#777', fontFamily: 'var(--font-ui)', marginTop: -4 }}>Drag the pin to the property&apos;s exact location (optional).</div>
+        {step === 4 && <Section title="Location on the map" sub="Drag the pin to the property's exact location (optional).">
           <MapPicker value={coords} onChange={setCoords} />
-        </Section>
-
-        {error && <div style={{ background: '#fff0f0', border: '1px solid #ffcdd2', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#c62828', fontFamily: 'var(--font-ui)' }}>{error}</div>}
+        </Section>}
 
         <PromoField kind="property" amountCents={PROPERTY_PRICING.privateExtraListingCents} onApplied={setAppliedPromo} />
-
-        <button type="submit" disabled={saving} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
-          {saving ? 'Listing…' : 'List Property'}
-        </button>
+        <FormError>{error}</FormError>
+        <SubmitButton type="submit" disabled={saving}>{saving ? 'Listing…' : 'List Property'}</SubmitButton>
       </form>
       )}
       <Footer />
@@ -419,26 +417,3 @@ function PlanGate() {
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '16px 16px 18px', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
-      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>{title}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{children}</div>
-    </div>
-  )
-}
-function Row({ children }: { children: React.ReactNode }) {
-  return <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{children}</div>
-}
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ flex: 1, minWidth: 140 }}>
-      <label style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: '#999', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{label}</label>
-      {children}
-    </div>
-  )
-}
-
-const inp: React.CSSProperties = { width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 8, padding: '9px 11px', fontFamily: 'var(--font-ui)', fontSize: 13, boxSizing: 'border-box', background: '#fff', outline: 'none' }
-const sel: React.CSSProperties = { ...inp, cursor: 'pointer', fontWeight: 700 }
-const chk: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 700, color: '#555', cursor: 'pointer' }
