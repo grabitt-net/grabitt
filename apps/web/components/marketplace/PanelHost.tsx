@@ -18,7 +18,7 @@ import StripePayment from './StripePayment'
 import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
 import PromoField from './PromoField'
-import { Input as FkInput, Textarea as FkTextarea, Select as FkSelect } from './FormKit'
+import { Input as FkInput, Textarea as FkTextarea, Select as FkSelect, StepTabs as FkStepTabs } from './FormKit'
 import SeekerProfilePanel from './SeekerProfilePanel'
 import SignInFirst from './SignInFirst'
 import BusinessVerifyPanel from './BusinessVerifyPanel'
@@ -3411,7 +3411,6 @@ function PanelBody() {
 
     const STEPS = ['photos','details','price','preview'] as const
     const stepIdx = STEPS.indexOf(step as typeof STEPS[number])
-    const progress = stepIdx >= 0 ? ((stepIdx + 1) / STEPS.length) * 100 : 100
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files || []).slice(0, 8 - photos.length)
@@ -3460,20 +3459,13 @@ function PanelBody() {
 
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 0', flexShrink: 0 }}>
-            <div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>
-                {step === 'photos' ? `📷 ${t('Add photos')}` : step === 'details' ? `📝 ${t('Item details')}` : step === 'price' ? `💰 ${t('Price & options')}` : `👁 ${t('Preview')}`}
-              </div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 1 }}>
-                Step {Math.max(stepIdx + 1, 1)} of {STEPS.length}
-              </div>
-            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>{t('Sell an item')}</div>
             <button onClick={closePanel} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
           </div>
 
-          {/* Progress bar */}
-          <div style={{ height: 3, background: '#f0f0f0', margin: '10px 16px 0', borderRadius: 2, flexShrink: 0 }}>
-            <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg,var(--orange),var(--orange2))', borderRadius: 2, transition: 'width 0.3s' }} />
+          {/* Step tabs — matches the recruitment / property forms */}
+          <div style={{ padding: '12px 16px 0', flexShrink: 0 }}>
+            <FkStepTabs steps={[t('Photos'), t('Details'), t('Price'), t('Review')]} icons={['tag', 'file', 'coins', 'eye']} current={Math.max(stepIdx, 0)} onSelect={i => setStep(STEPS[i])} />
           </div>
 
           <div style={{ overflowY: 'auto', flex: 1, padding: '16px 16px 0' }}>
