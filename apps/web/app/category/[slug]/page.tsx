@@ -11,7 +11,6 @@ import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import BannerSlot from '@/components/marketplace/BannerSlot'
 import PageHero from '@/components/marketplace/PageHero'
-import HomeGardenHero from '@/components/marketplace/HomeGardenHero'
 import Pagination from '@/components/marketplace/Pagination'
 import Place from '@/components/marketplace/Place'
 import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
@@ -130,11 +129,7 @@ export default function CategoryPage() {
     <PanelProvider>
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title={label} />
-      <QuickActions belowPromo={
-        slug === 'home_garden'
-          ? <HomeGardenHero image={CATEGORY_HERO[slug] || undefined} />
-          : <PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={CATEGORY_HERO[slug] || undefined} />
-      } />
+      <QuickActions belowPromo={<PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={CATEGORY_HERO[slug] || undefined} />} />
 
       {/* Sold banner placements — the paid category sponsor banner, below the hero */}
       <BannerSlot position="category" page={slug} aspect="1053 / 163" />
