@@ -3348,7 +3348,10 @@ function PanelBody() {
     const CONDITIONS = ['New','Like New','Very Good','Good','Fair','For Parts']
     const TOWNS = ['Las Palmas','Maspalomas','Playa del Inglés','Puerto Rico','Arucas','Telde','Santa Lucía','Ingenio','Agüimes','Gáldar','Mogán','San Bartolomé de Tirajana','Vecindario','Tejeda','Other']
 
-    const [step, setStep] = useState<'photos'|'details'|'price'|'preview'|'done'>(prefillCat ? 'details' : 'photos')
+    // Always start on Photos — even when a category is prefilled — so the guided
+    // flow never skips the images step. (A prefilled category still pre-selects
+    // the department on the Details step.)
+    const [step, setStep] = useState<'photos'|'details'|'price'|'preview'|'done'>('photos')
     const [photos, setPhotos] = useState<string[]>([])   // data URLs for preview
     const [photoFiles, setPhotoFiles] = useState<File[]>([])
     const [title, setTitle] = useState('')
@@ -3458,7 +3461,11 @@ function PanelBody() {
 
           {/* Step tabs — matches the recruitment / property forms */}
           <div style={{ padding: '12px 16px 0', flexShrink: 0 }}>
-            <FkStepTabs steps={[t('Photos'), t('Details'), t('Price'), t('Review')]} icons={['tag', 'file', 'coins', 'eye']} current={Math.max(stepIdx, 0)} onSelect={i => setStep(STEPS[i])} />
+            <FkStepTabs steps={[t('Photos'), t('Details'), t('Price'), t('Review')]} icons={['tag', 'file', 'coins', 'eye']} current={Math.max(stepIdx, 0)} onSelect={i => {
+              // Can't jump past Photos until at least 4 are added.
+              if (STEPS[i] !== 'photos' && photos.length < 4) return
+              setStep(STEPS[i])
+            }} />
           </div>
 
           <div style={{ overflowY: 'auto', flex: 1, padding: '16px 16px 0' }}>
