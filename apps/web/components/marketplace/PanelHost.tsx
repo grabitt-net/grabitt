@@ -942,18 +942,21 @@ function PanelBody() {
     // CSV bulk import hidden for now (reintroduce later via NEXT_PUBLIC_CSV_IMPORT=1).
     const CSV_IMPORT_ENABLED = process.env.NEXT_PUBLIC_CSV_IMPORT === '1'
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [sellMe, setSellMe] = useState<{ isBusiness: boolean } | null>(null)
+    const [sellMe, setSellMe] = useState<{ isBusiness: boolean; isAgent: boolean } | null>(null)
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => { getTrpcClient().then(c => c.users.me.query()).then((u: any) => setSellMe({ isBusiness: !!u?.isBusiness })).catch(() => setSellMe({ isBusiness: false })) }, [])
-    // One card per listing type, laid out in a row. Jobs are a Business-only
-    // feature, so personal accounts don't see "Post a job". Property is shown to
-    // everyone (personal accounts list under their own personal allowance).
-    const TYPES: { icon: string; title: string; desc: string; accent: string; tint: string; action: () => void }[] = [
-      { icon: '🏡', title: 'Sell an item', desc: 'Furniture, tech & more', accent: 'var(--orange)', tint: '#FFF3EE', action: () => openPanel('createListing') },
-      ...(sellMe?.isBusiness ? [{ icon: '💼', title: 'Post a job', desc: 'Find staff fast', accent: '#2193b0', tint: '#e8f6fb', action: () => { closePanel(); window.location.href = '/jobs/new' } }] : []),
-      { icon: '🏠', title: 'List a property', desc: 'Rent or sell a home', accent: '#0f9d76', tint: '#e6f7f1', action: () => { closePanel(); window.location.href = '/property/new' } },
-      { icon: '🔧', title: 'Offer a service', desc: 'Advertise in Handy Help', accent: '#8b5cf6', tint: '#f1ecfe', action: () => openPanel('handyPost', { kind: 'offer' }) },
-    ]
+    useEffect(() => { getTrpcClient().then(c => c.users.me.query()).then((u: any) => setSellMe({ isBusiness: !!u?.isBusiness, isAgent: !!u?.isPropertyAgent })).catch(() => setSellMe({ isBusiness: false, isAgent: false })) }, [])
+    const propertyCard = { icon: '🏠', title: 'List a property', desc: 'Rent or sell a home', accent: '#0f9d76', tint: '#e6f7f1', action: () => { closePanel(); window.location.href = '/property/new' } }
+    // One card per listing type, laid out in a row. Property agents are a
+    // dedicated profile — they list property only. Jobs are Business-only, so
+    // personal accounts don't see "Post a job". Property is shown to everyone.
+    const TYPES: { icon: string; title: string; desc: string; accent: string; tint: string; action: () => void }[] = sellMe?.isAgent
+      ? [propertyCard]
+      : [
+          { icon: '🏡', title: 'Sell an item', desc: 'Furniture, tech & more', accent: 'var(--orange)', tint: '#FFF3EE', action: () => openPanel('createListing') },
+          ...(sellMe?.isBusiness ? [{ icon: '💼', title: 'Post a job', desc: 'Find staff fast', accent: '#2193b0', tint: '#e8f6fb', action: () => { closePanel(); window.location.href = '/jobs/new' } }] : []),
+          propertyCard,
+          { icon: '🔧', title: 'Offer a service', desc: 'Advertise in Handy Help', accent: '#8b5cf6', tint: '#f1ecfe', action: () => openPanel('handyPost', { kind: 'offer' }) },
+        ]
     const card: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, background: '#fff', border: '1px solid #eef0f4', borderRadius: 16, padding: '16px 8px', cursor: 'pointer', boxShadow: '0 2px 10px rgba(30,43,85,0.06)' }
     return (
       <ActionPanel title="Sell on Grabitt" onClose={closePanel}>

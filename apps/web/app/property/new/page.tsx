@@ -53,6 +53,8 @@ export default function NewPropertyPage() {
   // Agent contact profile — saved to the user and shown on every property they
   // list, so buyers can reach them by WhatsApp / email directly.
   const [agent, setAgent] = useState({ agencyName: '', agentWhatsapp: '', agentEmail: '' })
+  // The Agent contact tab only exists for property-agent accounts.
+  const [isAgent, setIsAgent] = useState(false)
 
   // Auto-save draft — never lose a half-written property advert. Saved to the
   // browser; offered back on return; cleared once the property is posted.
@@ -89,6 +91,7 @@ export default function NewPropertyPage() {
           (trpcAuthed() as any).property.myAllowance.query(),
         ])
         setAllowance(allow)
+        setIsAgent(!!me?.isPropertyAgent)
         // Anyone can advertise property now (private or business). Beyond the
         // free allowance the listing is €39, taken at submit.
         setGate('ok')
@@ -101,10 +104,19 @@ export default function NewPropertyPage() {
     })()
   }, [router])
 
-  // Tabs — each part of the advert is a tab you can move between freely.
-  const STEP_TITLES = ['Property', 'Details', 'Features', 'Agent', 'Location']
-  const STEP_ICONS: IconName[] = ['home', 'file', 'sparkle', 'user', 'mapPin']
+  // Tabs — each part of the advert is a tab you can move between freely. The
+  // Agent tab is only present for property-agent accounts.
+  const STEPS: { key: string; title: string; icon: IconName }[] = [
+    { key: 'property', title: 'Property', icon: 'home' },
+    { key: 'details', title: 'Details', icon: 'file' },
+    { key: 'features', title: 'Features', icon: 'sparkle' },
+    ...(isAgent ? [{ key: 'agent', title: 'Agent', icon: 'user' as IconName }] : []),
+    { key: 'location', title: 'Location', icon: 'mapPin' },
+  ]
+  const STEP_TITLES = STEPS.map(s => s.title)
+  const STEP_ICONS: IconName[] = STEPS.map(s => s.icon)
   const [step, setStep] = useState(0)
+  const cur = STEPS[Math.min(step, STEPS.length - 1)]?.key ?? 'property'
   const goTab = (i: number) => { setError(''); setStep(i); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   function onFormSubmit(e: React.FormEvent) { e.preventDefault(); doSubmit() }
 
@@ -119,16 +131,18 @@ export default function NewPropertyPage() {
       if (!token) token = await refreshAuthToken()
       if (!token) { router.push('/auth?next=/property/new'); return }
 
-      // Save the agent's contact profile so it shows on this (and future)
-      // property listings. Best-effort — never block the listing on it.
-      try {
-        await trpcAuthed().users.updateAgentProfile.mutate({
-          isPropertyAgent: true,
-          agencyName: agent.agencyName.trim() || null,
-          agentWhatsapp: agent.agentWhatsapp.trim() || null,
-          agentEmail: agent.agentEmail.trim() || null,
-        })
-      } catch { /* non-fatal */ }
+      // Save the agent's contact profile (agents only) so it shows on this and
+      // future property listings. Best-effort — never block the listing on it,
+      // and never flip a personal account into an agent from here.
+      if (isAgent) {
+        try {
+          await trpcAuthed().users.updateAgentProfile.mutate({
+            agencyName: agent.agencyName.trim() || null,
+            agentWhatsapp: agent.agentWhatsapp.trim() || null,
+            agentEmail: agent.agentEmail.trim() || null,
+          })
+        } catch { /* non-fatal */ }
+      }
 
       const listing: any = await trpcAuthed().property.create.mutate({
         title: f.title.trim(),
@@ -213,7 +227,7 @@ export default function NewPropertyPage() {
           </div>
         )}
 
-        {step === 0 && <Section title="The property">
+        {cur === 'property' && <Section title="The property">
           <Field label="Listing title" required><Input value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. 2-bed apartment with sea view" /></Field>
           <Row>
             <Field label="Listing type" required>
@@ -239,7 +253,7 @@ export default function NewPropertyPage() {
           </Field>
         </Section>}
 
-        {step === 1 && <>
+        {cur === 'details' && <>
         <Section title="Details">
           <Row>
             <Field label="Bedrooms"><Input value={f.bedrooms} onChange={e => set('bedrooms', e.target.value)} inputMode="numeric" placeholder="2" /></Field>
@@ -326,7 +340,7 @@ export default function NewPropertyPage() {
         </Section>
         </>}
 
-        {step === 2 && <Section title="Features & amenities">
+        {cur === 'features' && <Section title="Features & amenities">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 6 }}>
             {PROPERTY_FEATURES.map(feat => (
               <label key={feat.slug} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 600, color: 'var(--ink-2)', cursor: 'pointer', padding: '4px 0' }}>
@@ -336,7 +350,7 @@ export default function NewPropertyPage() {
           </div>
         </Section>}
 
-        {step === 3 && <Section title="Agent contact" sub="Shown on your listings. Buyers reach you directly on these — saved to your agent profile and applied to every property you list.">
+        {cur === 'agent' && <Section title="Agent contact" sub="Shown on your listings. Buyers reach you directly on these — saved to your agent profile and applied to every property you list.">
           <Field label="Agency name"><Input value={agent.agencyName} onChange={e => setAg('agencyName', e.target.value)} placeholder="e.g. Canary Coast Properties" /></Field>
           <Row>
             <Field label="WhatsApp number"><Input value={agent.agentWhatsapp} onChange={e => setAg('agentWhatsapp', e.target.value)} inputMode="tel" placeholder="e.g. +34 600 123 456" /></Field>
@@ -344,7 +358,7 @@ export default function NewPropertyPage() {
           </Row>
         </Section>}
 
-        {step === 4 && <Section title="Location on the map" sub="Drag the pin to the property's exact location (optional).">
+        {cur === 'location' && <Section title="Location on the map" sub="Drag the pin to the property's exact location (optional).">
           <MapPicker value={coords} onChange={setCoords} />
         </Section>}
 

@@ -182,8 +182,9 @@ export const handyRouter = router({
     .mutation(async ({ ctx, input }) => {
       const me = await ctx.prisma.user.findUniqueOrThrow({
         where: { id: ctx.user.id },
-        select: { isBusiness: true, businessLight: true, email: true, stripeCustomerId: true },
+        select: { isBusiness: true, businessLight: true, isPropertyAgent: true, email: true, stripeCustomerId: true },
       })
+      if (me.isPropertyAgent) throw new TRPCError({ code: 'FORBIDDEN', message: 'Property agent accounts can only list property.' })
       const business = me.isBusiness || me.businessLight
       // Only a business "offer" advert is charged; personal requests are free.
       const paid = business && input.kind === 'offer'

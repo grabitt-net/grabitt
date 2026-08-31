@@ -283,6 +283,8 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
     isBusiness: member.isBusiness,
     businessLight: member.businessLight,
     businessVerified: member.businessVerified,
+    isPropertyAgent: !!(member as any).isPropertyAgent,
+    propertyListingAllowance: String((member as any).propertyListingAllowance ?? 0),
     isVerified: member.isVerified,
     emailVerified: member.emailVerified,
     phoneVerified: member.phoneVerified,
@@ -315,6 +317,8 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
         isBusiness: f.isBusiness,
         businessLight: f.businessLight,
         businessVerified: f.businessVerified,
+        isPropertyAgent: f.isPropertyAgent,
+        propertyListingAllowance: Math.max(0, parseInt(f.propertyListingAllowance) || 0),
         isVerified: f.isVerified,
         emailVerified: f.emailVerified,
         phoneVerified: f.phoneVerified,
@@ -432,7 +436,13 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
                     <Check label="Business account (full)" checked={f.isBusiness} onChange={v => setF(p => ({ ...p, isBusiness: v, grade: v && p.grade === 'grabber' ? 'dealer' : p.grade }))} />
                     <Check label="Business Light (starter plan)" checked={f.businessLight} onChange={v => set('businessLight', v)} />
                   </>)}
+              {/* Property agent — a dedicated profile that can list property only. */}
+              <Check label="Property agent (property only)" checked={f.isPropertyAgent} onChange={v => set('isPropertyAgent', v)} />
             </div>
+            {f.isPropertyAgent && (<>
+              <L>Property listing allowance <span style={{ color: '#bbb', fontWeight: 600 }}>— active property listings included (fees &amp; limits TBD)</span></L>
+              <input value={f.propertyListingAllowance} onChange={e => set('propertyListingAllowance', e.target.value)} inputMode="numeric" placeholder="e.g. 15" style={inp} />
+            </>)}
             <L>Fee override (%) <span style={{ color: '#bbb', fontWeight: 600 }}>— leave blank to use the level&apos;s standard fee</span></L>
             <input value={feeOverride} onChange={e => setFeeOverride(e.target.value)} inputMode="decimal" placeholder="e.g. 3" style={inp} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 6, lineHeight: 1.5 }}>

@@ -522,6 +522,12 @@ export const listingsRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Advertiser accounts cannot sell — you can buy advertising and a directory listing only.' })
       }
 
+      // Property agent accounts are a dedicated profile that can list property
+      // only — never items, jobs or services.
+      if (user.isPropertyAgent) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Property agent accounts can only list property.' })
+      }
+
       // A business sells as the business. Without a business name we'd have to
       // fall back to their personal name, which is what this prevents.
       if (missingBusinessName(user)) {

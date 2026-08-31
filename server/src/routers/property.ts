@@ -57,11 +57,12 @@ export const propertyRouter = router({
       // free allowance depends on the account: private users get 1/month; a
       // Business account gets its tier allowance (plus any property-agent plan
       // top-up). Beyond the free allowance each listing is €39.
-      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, grade: true, propertyListingAllowance: true, email: true, stripeCustomerId: true } })
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, isPropertyAgent: true, grade: true, propertyListingAllowance: true, email: true, stripeCustomerId: true } })
 
       const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      // Business allowance = tier cap (+ any agent-plan allowance); private = 1/mo.
-      const freeAllowance = me.isBusiness
+      // Business / agent allowance = tier cap (+ any agent-plan allowance);
+      // private = 1/mo.
+      const freeAllowance = (me.isBusiness || me.isPropertyAgent)
         ? businessTierForGrade(me.grade).caps.property + (me.propertyListingAllowance ?? 0)
         : PROPERTY_PRICING.privateFreePerMonth
       const usedThisMonth = await ctx.prisma.listing.count({
@@ -267,8 +268,8 @@ export const propertyRouter = router({
   // The signed-in agent's plan allowance and how much of it is in use (active +
   // pending listings). Drives the "list a property" gate and usage display.
   myAllowance: protectedProcedure.query(async ({ ctx }) => {
-    const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { propertyListingAllowance: true, isBusiness: true, grade: true } })
-    if (me.isBusiness) {
+    const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { propertyListingAllowance: true, isBusiness: true, isPropertyAgent: true, grade: true } })
+    if (me.isBusiness || me.isPropertyAgent) {
       // Business/agent: tier cap (+ any agent-plan top-up), measured by active +
       // pending listings.
       const allowance = businessTierForGrade(me.grade).caps.property + (me.propertyListingAllowance ?? 0)

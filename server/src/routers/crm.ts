@@ -188,6 +188,9 @@ export const crmRouter = router({
       isBusiness: z.boolean().optional(),
       businessLight: z.boolean().optional(),
       businessVerified: z.boolean().optional(),
+      // Property agent: a dedicated account that lists property only.
+      isPropertyAgent: z.boolean().optional(),
+      propertyListingAllowance: z.number().int().min(0).max(1000).optional(),
       isVerified: z.boolean().optional(),
       emailVerified: z.boolean().optional(),
       phoneVerified: z.boolean().optional(),
