@@ -49,7 +49,7 @@ export default function NewPropertyPage() {
   // Agents need a Business account AND a property-agent plan with remaining
   // allowance before they can list.
   const [gate, setGate] = useState<'checking' | 'ok' | 'needbusiness' | 'needplan'>('checking')
-  const [allowance, setAllowance] = useState<{ allowance: number; inUse: number; remaining: number } | null>(null)
+  const [allowance, setAllowance] = useState<{ allowance: number; inUse: number; remaining: number; isBusiness?: boolean } | null>(null)
   // Agent contact profile — saved to the user and shown on every property they
   // list, so buyers can reach them by WhatsApp / email directly.
   const [agent, setAgent] = useState({ agencyName: '', agentWhatsapp: '', agentEmail: '' })
@@ -207,7 +207,9 @@ export default function NewPropertyPage() {
         <StepTabs steps={STEP_TITLES} icons={STEP_ICONS} current={step} onSelect={goTab} />
         {allowance && (
           <div style={{ background: '#f0fdf4', border: '1px solid #c8e6c9', borderRadius: 12, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#2e7d32', fontWeight: 700 }}>
-            🏠 {allowance.remaining} of {allowance.allowance} listings remaining on your plan · new listings go live once approved by our team.
+            {allowance.isBusiness
+              ? `🏠 ${allowance.remaining} of ${allowance.allowance} listings remaining on your plan · new listings go live once approved by our team.`
+              : `🏠 ${allowance.remaining} of ${allowance.allowance} free property listing${allowance.allowance === 1 ? '' : 's'} left this month · extra listings are €39. New listings go live once approved.`}
           </div>
         )}
 

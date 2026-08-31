@@ -267,11 +267,25 @@ export const propertyRouter = router({
   // The signed-in agent's plan allowance and how much of it is in use (active +
   // pending listings). Drives the "list a property" gate and usage display.
   myAllowance: protectedProcedure.query(async ({ ctx }) => {
-    const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { propertyListingAllowance: true, isBusiness: true } })
-    const inUse = await ctx.prisma.listing.count({
-      where: { sellerId: ctx.user.id, department: 'property', status: { in: ['active', 'draft'] } },
+    const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { propertyListingAllowance: true, isBusiness: true, grade: true } })
+    if (me.isBusiness) {
+      // Business/agent: tier cap (+ any agent-plan top-up), measured by active +
+      // pending listings.
+      const allowance = businessTierForGrade(me.grade).caps.property + (me.propertyListingAllowance ?? 0)
+      const inUse = await ctx.prisma.listing.count({
+        where: { sellerId: ctx.user.id, department: 'property', status: { in: ['active', 'draft'] } },
+      })
+      return { allowance, inUse, isBusiness: true, remaining: Math.max(0, allowance - inUse) }
+    }
+    // Personal accounts are treated individually: their own free allowance of
+    // 1 property listing per calendar month, then €39 each. (Never the business
+    // allowance — that's a separate account.)
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    const usedThisMonth = await ctx.prisma.listing.count({
+      where: { sellerId: ctx.user.id, department: 'property', createdAt: { gte: monthStart } },
     })
-    return { allowance: me.propertyListingAllowance, inUse, isBusiness: me.isBusiness, remaining: Math.max(0, me.propertyListingAllowance - inUse) }
+    const allowance = PROPERTY_PRICING.privateFreePerMonth
+    return { allowance, inUse: usedThisMonth, isBusiness: false, remaining: Math.max(0, allowance - usedThisMonth) }
   }),
 
   // Admin approval — a property goes live only once an admin approves it.
