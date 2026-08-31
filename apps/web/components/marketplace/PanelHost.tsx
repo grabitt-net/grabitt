@@ -4198,7 +4198,7 @@ function PanelBody() {
                     const unread = !!last && last.senderId !== meId && !last.readAt
                     const preview = last ? (last.blocked ? '⚠️ Message hidden' : (last.senderId === meId ? 'You: ' : '') + last.body) : 'Start chatting…'
                     return (
-                      <div key={t.id} onClick={() => { window.location.href = `/messages/${t.id}` }} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f5f5f5', cursor: 'pointer' }}>
+                      <div key={t.id} onClick={() => { window.location.href = `/account?section=messages&thread=${t.id}` }} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f5f5f5', cursor: 'pointer' }}>
                         <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-ui)', fontWeight: 900, fontSize: 15, flexShrink: 0 }}>{(other?.displayName ?? '?')[0]?.toUpperCase()}</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: unread ? 900 : 700, color: 'var(--dark)' }}>{other?.displayName ?? 'Grabitt user'}</div>

@@ -48,8 +48,8 @@ export default function RewardsCard() {
       listing: () => openPanel('sell'),
       browse: () => router.push('/'),
       shop: () => router.push('/'),
-      chat: () => router.push('/messages/team'),
-      message: () => router.push('/messages/team'),
+      chat: () => router.push('/account?section=messages&thread=team'),
+      message: () => router.push('/account?section=messages&thread=team'),
       help: () => openPanel('help'),
     }
     actions[k]?.()

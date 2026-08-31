@@ -430,7 +430,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             /* Advertising banner on top, then the full inbox (list + preview),
                all in one rounded container. */
             <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
-              {me?.id && <InboxClient me={me.id} alertUnread={0} />}
+              {me?.id && <InboxClient me={me.id} alertUnread={0} initial={params.get('thread')} />}
             </div>
           )}
 

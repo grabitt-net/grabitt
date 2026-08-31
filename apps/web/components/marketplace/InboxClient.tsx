@@ -43,13 +43,17 @@ function ChannelHeader({ emoji, bg, title, sub, onBack }: { emoji: string; bg: s
   )
 }
 
-export default function InboxClient({ me, alertUnread }: { me: string; alertUnread: number }) {
+// `initial` opens a specific conversation on mount — a thread id, or the pinned
+// 'team' / 'alerts' channels — so deep links resolve inside the hub inbox.
+export default function InboxClient({ me, alertUnread, initial }: { me: string; alertUnread: number; initial?: string | null }) {
   const [threads, setThreads] = useState<Thread[]>([])
   const [loaded, setLoaded] = useState(false)
-  const [selected, setSelected] = useState<string | null>(null)
+  const [selected, setSelected] = useState<string | null>(initial ?? null)
   const [alerts, setAlerts] = useState<Alert[] | null>(null)
   const [seenAlerts, setSeenAlerts] = useState(false)
   const unreadAlerts = seenAlerts ? 0 : alertUnread
+  // If we deep-linked straight to Alerts, load them on mount.
+  useEffect(() => { if (initial === 'alerts') openAlerts() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const load = useCallback(async () => {
     let token = getAuthToken()
