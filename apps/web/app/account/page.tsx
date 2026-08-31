@@ -67,6 +67,11 @@ function AccountInner() {
   // the account page to hunt for it.
   const params = useSearchParams()
   const focusOffer = params.get('offer')
+  // The business↔personal view preference persists in localStorage, so the
+  // header reflects it even when the Account link carries no ?view= query.
+  const [viewPref, setViewPref] = useState<string | null>(null)
+  useEffect(() => { try { setViewPref(localStorage.getItem('grabitt_account_view')) } catch {} }, [])
+  const personalView = (params.get('view') ?? viewPref) === 'personal'
   // ?tab=recruitment — how the Employers entry points land here.
   const wantTab = params.get('tab')
   const focusRef = useRef<HTMLDivElement | null>(null)
@@ -262,7 +267,7 @@ function AccountInner() {
 
   return (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <Topbar title={me?.isBusiness && params.get('view') !== 'personal' ? 'Business Hub' : 'My Hub'} />
+      <Topbar title={me?.isBusiness && !personalView ? 'Business Hub' : 'My Hub'} />
       <QuickActions />
       {needsBizOnboarding && <BusinessOnboardingModal onDone={() => load()} />}
 

@@ -82,9 +82,14 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const params = useSearchParams()
   const { openPanel } = usePanel()
   // Business users can flip their hub to a personal view (and back). The choice
-  // is persisted in the URL (?view=personal) so it survives a refresh and the
-  // header can reflect it. effBiz = "show the business hub".
-  const [personalView, setPersonalView] = useState(() => params.get('view') === 'personal')
+  // persists in localStorage AND the URL (?view=personal), so it survives a
+  // refresh AND navigating away and back to /account (where the link carries no
+  // query). effBiz = "show the business hub".
+  const [personalView, setPersonalView] = useState(() => {
+    if (params.get('view') === 'personal') return true
+    if (params.get('view') === 'business') return false
+    try { return localStorage.getItem('grabitt_account_view') === 'personal' } catch { return false }
+  })
   // Property agents never get the business chrome even if their account also
   // carries a business flag — they're a property-only profile.
   const effBiz = !!me?.isBusiness && !personalView && !me?.isPropertyAgent
@@ -94,7 +99,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const isAgent = !!me?.isPropertyAgent
   // Land on the account's own home — Business Centre for business, the My Hub
   // overview for everyone else — rather than dropping straight into Messages.
-  const [section, setSection] = useState<SectionId>(params.get('view') === 'personal' ? 'hub' : me?.isPropertyAgent ? 'agent' : me?.isBusiness ? 'business' : me?.memberStatus === 'charity' ? 'charity' : 'hub')
+  const [section, setSection] = useState<SectionId>(personalView ? 'hub' : me?.isPropertyAgent ? 'agent' : me?.isBusiness ? 'business' : me?.memberStatus === 'charity' ? 'charity' : 'hub')
   // `me` loads async, so the initial default above can be wrong (defaults to
   // 'hub' before we know it's a business account). Set the landing section once,
   // when `me` first resolves — Business Centre for business, My Hub otherwise —
@@ -107,8 +112,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     if (s && SECTION_IDS.has(s)) { setSection(s as SectionId); didInitSection.current = true; return }
     if (me && !didInitSection.current) {
       didInitSection.current = true
-      const personal = params.get('view') === 'personal'
-      setSection(personal ? 'hub' : me.isPropertyAgent ? 'agent' : me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'hub')
+      setSection(personalView ? 'hub' : me.isPropertyAgent ? 'agent' : me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'hub')
     }
   }, [params, me])
   const [seg, setSeg] = useState<Seg>('active')
@@ -312,7 +316,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                 <button onClick={() => {
                   const goPersonal = !personalView
                   setPersonalView(goPersonal); setSection(goPersonal ? 'hub' : 'business'); didInitSection.current = true
-                  // Persist the choice so a refresh keeps it and the header reflects it.
+                  // Persist the choice so it survives a refresh AND navigating away
+                  // and back to /account (where the link carries no query).
+                  try { localStorage.setItem('grabitt_account_view', goPersonal ? 'personal' : 'business') } catch {}
                   const sp = new URLSearchParams(Array.from(params.entries()))
                   sp.delete('section')
                   if (goPersonal) sp.set('view', 'personal'); else sp.delete('view')
