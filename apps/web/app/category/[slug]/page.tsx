@@ -111,10 +111,20 @@ export default function CategoryPage() {
 
   // In-feed banner cadence — an admin-set number of listing rows (~4 cards each).
   const [infeedEvery, setInfeedEvery] = useState(3)
+  // Whether the in-feed sponsor slot actually has something to show on this page
+  // (a live banner, or preview mode for admins). We only break the grid when it
+  // does — otherwise the full-width wrapper would occupy an empty grid cell and
+  // leave a gap, pushing the trailing cards onto a short line.
+  const [infeedActive, setInfeedActive] = useState(false)
   useEffect(() => {
-    createLooseTrpcClient().banners.infeedConfig.query()
+    const c = createLooseTrpcClient()
+    c.banners.infeedConfig.query()
       .then(d => setInfeedEvery((d as { everyRows?: number })?.everyRows ?? 3)).catch(() => {})
-  }, [])
+    Promise.all([
+      c.banners.active.query({ position: 'category_infeed', page: slug }).then(d => (d as unknown[])?.length > 0).catch(() => false),
+      c.banners.previewMode.query().then(d => !!(d as { on?: boolean })?.on).catch(() => false),
+    ]).then(([hasBanner, preview]) => setInfeedActive(hasBanner || preview))
+  }, [slug])
 
   // Free-text + subcategory filtering happens client-side over the fetched set.
   // There is no real "subcategory" column, so a pill matches when any of its
@@ -170,7 +180,7 @@ export default function CategoryPage() {
           const img = Array.isArray(l.images) ? l.images[0] : null
           // A full-width in-feed sponsor banner after every `infeedEvery` rows
           // (~4 cards per row), so it breaks the grid at a natural cadence.
-          const rowBreak = infeedEvery > 0 && i > 0 && i % (infeedEvery * 4) === 0
+          const rowBreak = infeedActive && infeedEvery > 0 && i > 0 && i % (infeedEvery * 4) === 0
           return (
             <Fragment key={l.id}>
               {rowBreak && (
