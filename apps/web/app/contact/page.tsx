@@ -101,7 +101,7 @@ export default function ContactPage() {
     >
       <div style={{ display: 'grid', gap: 12, marginBottom: 22 }}>
         <LinkTile href="/help" icon="lifebuoy" label="Live chat" sub="Click Help anywhere on the site to jump into our live chat." />
-        <LinkTile href="/messages" icon="message" label="Message Centre" sub="Send us a message in your Message Centre." />
+        <LinkTile href="/account?section=messages" icon="message" label="Message Centre" sub="Send us a message in your Message Centre." />
       </div>
 
       <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(19px, 2.6vw, 24px)', fontWeight: 900, color: 'var(--dark)', margin: '0 0 12px' }}>Drop us an email</h2>

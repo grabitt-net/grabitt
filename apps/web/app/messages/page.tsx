@@ -1,44 +1,10 @@
-import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
-import Footer from '@/components/marketplace/Footer'
-import SiteHeader from '@/components/marketplace/SiteHeader'
-import BannerSlot from '@/components/marketplace/BannerSlot'
-import InboxClient from '@/components/marketplace/InboxClient'
-import { prisma } from 'server/src/db'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// The Messages centre. Auth and the alert count are resolved here; the inbox
-// itself is a client component so selecting a conversation swaps the right pane
-// instead of navigating away from the list.
-export default async function MessagesPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth')
-
-  const me = await prisma.user.findUnique({ where: { supabaseId: user.id }, select: { id: true } })
-  if (!me) redirect('/auth')
-
-  // Listing alerts (price drops, saved-search / wishlist matches, expiring) are
-  // surfaced in a dedicated "Grabitt Alerts" channel, separate from chats.
-  const ALERT_KINDS = ['price_drop', 'wish_matched', 'listing_expiring'] as const
-  const alertUnread = await prisma.notification.count({
-    where: { userId: me.id, kind: { in: ALERT_KINDS as unknown as never[] }, readAt: null },
-  })
-
-  return (
-    <main className="app-shell" style={{ background: '#f5f2ec', minHeight: '100vh', display: 'flex', flexDirection: 'column', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <SiteHeader title="Messages" />
-
-      {/* Sponsor banner area — Message Centre slot (click-tracked) */}
-      <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto' }}>
-        <BannerSlot position="messages" aspect="1053 / 163" />
-      </div>
-
-      <InboxClient me={me.id} alertUnread={alertUnread} />
-
-      <Footer />
-    </main>
-  )
+// The standalone Messages centre has moved into the account hub. Anyone landing
+// on /messages is forwarded to the hub's Message Centre.
+export default function MessagesPage() {
+  redirect('/account?section=messages')
 }

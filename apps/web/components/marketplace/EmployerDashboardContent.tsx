@@ -72,7 +72,7 @@ export default function EmployerDashboardContent() {
       </div>
 
       {/* Messages */}
-      <a href="/messages" style={{ textDecoration: 'none' }}>
+      <a href="/account?section=messages" style={{ textDecoration: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#FFF3EE', border: '1px solid #FFD4C0', borderRadius: 12, padding: 12, marginBottom: 14, cursor: 'pointer' }}>
           <div style={{ fontSize: 22 }}>📨</div>
           <div style={{ flex: 1 }}>

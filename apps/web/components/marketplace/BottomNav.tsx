@@ -6,7 +6,7 @@ const navItems = [
   { icon: '🏠', label: 'Home', href: '/' },
   { icon: '🔍', label: 'Search', href: '/listings' },
   { icon: '➕', label: 'Sell', href: '/listings/new', primary: true },
-  { icon: '💬', label: 'Messages', href: '/messages' },
+  { icon: '💬', label: 'Messages', href: '/account?section=messages' },
   { icon: '👤', label: 'Profile', href: '/profile' },
 ]
 

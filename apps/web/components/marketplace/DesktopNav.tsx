@@ -33,11 +33,11 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
     else window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
   }
 
-  // Messages is a real page (the Messages centre), not a panel — see IconRail.
+  // Messages opens the Message Centre inside the account hub.
   const actions: { icon: IconName; label: string; panel: PanelId; href?: string; badge?: number }[] = [
     { icon: 'bell', label: 'Alerts', panel: 'alerts', badge: unreadCount > 0 ? unreadCount : undefined },
     { icon: 'heart', label: 'Saved', panel: 'favourites', href: '/favourites' },
-    { icon: 'message', label: 'Messages', panel: 'messages', href: '/messages' },
+    { icon: 'message', label: 'Messages', panel: 'messages', href: '/account?section=messages' },
     { icon: 'newspaper', label: 'News', panel: 'help', href: '/news' },
     { icon: loggedIn ? 'user' : 'login', label: loggedIn ? 'Account' : 'Login', panel: loggedIn ? 'profile' : 'login' },
     { icon: 'lifebuoy', label: 'Help', panel: 'help', href: '/help' },

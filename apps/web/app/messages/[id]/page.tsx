@@ -21,7 +21,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
     include: { participants: { include: { user: { select: { id: true, displayName: true } } } } },
   })
   if (!thread) notFound()
-  if (!thread.participants.some(p => p.userId === me.id)) redirect('/messages')
+  if (!thread.participants.some(p => p.userId === me.id)) redirect('/account?section=messages')
 
   const other = thread.participants.find(p => p.userId !== me.id)?.user
   const listing = await prisma.listing.findUnique({
@@ -52,7 +52,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
         borderBottom: '1.5px solid var(--sand2)',
         display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
       }}>
-        <Link href="/messages" style={{ fontSize: 22, textDecoration: 'none', color: 'var(--dark)' }}>←</Link>
+        <Link href="/account?section=messages" style={{ fontSize: 22, textDecoration: 'none', color: 'var(--dark)' }}>←</Link>
         <div style={{
           width: 36, height: 36, borderRadius: '50%', background: 'var(--orange)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',

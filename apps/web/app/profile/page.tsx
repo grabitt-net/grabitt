@@ -98,7 +98,7 @@ export default async function ProfilePage() {
           { icon: '📦', label: 'My Listings', href: '/listings?mine=true' },
           { icon: '🛒', label: 'My Orders', href: '/orders' },
           { icon: '❤️', label: 'Favourites', href: '/favourites' },
-          { icon: '💬', label: 'Messages', href: '/messages' },
+          { icon: '💬', label: 'Messages', href: '/account?section=messages' },
           { icon: '⚙️', label: 'Settings', href: '/settings' },
         ].map(item => (
           <a key={item.href} href={item.href} style={{
