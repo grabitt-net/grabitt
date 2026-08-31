@@ -80,15 +80,16 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const router = useRouter()
   const params = useSearchParams()
   const { openPanel } = usePanel()
-  // Business users can flip their hub to a personal view (and back). effBiz is
-  // "show the business hub" — used for all layout decisions below.
-  const [personalView, setPersonalView] = useState(false)
+  // Business users can flip their hub to a personal view (and back). The choice
+  // is persisted in the URL (?view=personal) so it survives a refresh and the
+  // header can reflect it. effBiz = "show the business hub".
+  const [personalView, setPersonalView] = useState(() => params.get('view') === 'personal')
   const effBiz = !!me?.isBusiness && !personalView
   // Charity accounts get a Charity Hub in place of the personal "My Hub" landing.
   const isCharity = me?.memberStatus === 'charity' && !me?.isBusiness
   // Land on the account's own home — Business Centre for business, the My Hub
   // overview for everyone else — rather than dropping straight into Messages.
-  const [section, setSection] = useState<SectionId>(me?.isBusiness ? 'business' : me?.memberStatus === 'charity' ? 'charity' : 'hub')
+  const [section, setSection] = useState<SectionId>(params.get('view') === 'personal' ? 'hub' : me?.isBusiness ? 'business' : me?.memberStatus === 'charity' ? 'charity' : 'hub')
   // `me` loads async, so the initial default above can be wrong (defaults to
   // 'hub' before we know it's a business account). Set the landing section once,
   // when `me` first resolves — Business Centre for business, My Hub otherwise —
@@ -101,7 +102,8 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     if (s && SECTION_IDS.has(s)) { setSection(s as SectionId); didInitSection.current = true; return }
     if (me && !didInitSection.current) {
       didInitSection.current = true
-      setSection(me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'hub')
+      const personal = params.get('view') === 'personal'
+      setSection(personal ? 'hub' : me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'hub')
     }
   }, [params, me])
   const [seg, setSeg] = useState<Seg>('active')
@@ -297,7 +299,15 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             {me?.isBusiness ? (
               /* Switch easily between the business and personal profile. */
               <HubNavRow icon="briefcase" label={effBiz ? t('Personal account') : t('Business account')} last={!effBiz} value={
-                <button onClick={() => { const goPersonal = !personalView; setPersonalView(goPersonal); setSection(goPersonal ? 'hub' : 'business'); didInitSection.current = true }} style={navLinkBtn}>{t('Switch')}</button>} />
+                <button onClick={() => {
+                  const goPersonal = !personalView
+                  setPersonalView(goPersonal); setSection(goPersonal ? 'hub' : 'business'); didInitSection.current = true
+                  // Persist the choice so a refresh keeps it and the header reflects it.
+                  const sp = new URLSearchParams(Array.from(params.entries()))
+                  sp.delete('section')
+                  if (goPersonal) sp.set('view', 'personal'); else sp.delete('view')
+                  router.replace(`/account${sp.toString() ? `?${sp.toString()}` : ''}`)
+                }} style={navLinkBtn}>{t('Switch')}</button>} />
             ) : (
               <HubNavRow icon="briefcase" label={t('Business acc')} last value={
                 <button onClick={() => router.push('/for-business')} style={navLinkBtn}>{t('Add / Upgrade')}</button>} />
