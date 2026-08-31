@@ -148,6 +148,11 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     c.business.tierStatus.query().then((d: any) => { if (d?.isBusiness) setBizTier(d.label) }).catch(() => {})
     c.business.myStorefront.query().then((d: any) => setStorefront(d?.shop ?? null)).catch(() => {})
   }, [me?.isBusiness])
+  // Personal level + monthly listing allowance (shown on the personal hub).
+  const [allowance, setAllowance] = useState<AllowanceData | null>(null)
+  useEffect(() => {
+    (trpcAuthed() as any).users.myAllowance.query().then((d: AllowanceData) => setAllowance(d)).catch(() => {})
+  }, [me?.id])
   // Recently viewed lives in localStorage — read after mount to avoid a
   // server/client hydration mismatch.
   const [recent, setRecent] = useState<RecentCard[]>([])
@@ -390,6 +395,11 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           )}
           {/* Advertising banner at the top of every menu section. */}
           <BannerSlot position="user_dashboard" aspect="1053 / 163" label="Dashboard" padded={false} />
+
+          {/* Personal hub: your level, progress to the next level, and this
+              month's listing allowance (the personal equivalent of the Business
+              Centre's tier card). */}
+          {!effBiz && allowance && !hubView && <PersonalLevelCard d={allowance} />}
 
           {section === 'hub' && hubView && <HubListView hubKey={hubView} title={hubTitle} />}
 
@@ -1140,5 +1150,88 @@ function AdminCentre({ me, onReload, payout, setupPayouts, openPanel, goInterest
 
       {/* Account deletion lives under Privacy & GDPR. */}
     </>
+  )
+}
+
+// ── Personal level & allowance card ──────────────────────────────────────────
+type AllowanceData = {
+  grade: string; isBusiness: boolean
+  cap: number | null; used: number; remaining: number | null; resetsAt: string
+  salesCount: number; avgRating: number | null
+  nextGrade: string | null; nextCap: number | null
+  salesToNext: number; nextSalesTarget: number | null; nextRatingTarget: number | null
+}
+
+const GRADE_META: Record<string, { label: string; icon: string; color: string }> = {
+  grabber: { label: 'Grabber', icon: '🟠', color: 'var(--orange)' },
+  dealer:  { label: 'Dealer',  icon: '🥈', color: '#f59e0b' },
+  trader:  { label: 'Trader',  icon: '🥇', color: '#3b82f6' },
+  pro:     { label: 'Pro',     icon: '💎', color: '#7c3aed' },
+}
+
+// The personal equivalent of the Business Centre's tier card: current level,
+// progress toward the next level, and this month's listing allowance.
+function PersonalLevelCard({ d }: { d: AllowanceData }) {
+  const g = GRADE_META[d.grade] ?? GRADE_META.grabber
+  const next = d.nextGrade ? GRADE_META[d.nextGrade] : null
+  const salesPct = d.nextSalesTarget ? Math.min(100, (d.salesCount / d.nextSalesTarget) * 100) : 100
+  const allowPct = d.cap ? Math.min(100, (d.used / d.cap) * 100) : 0
+  const resets = new Date(d.resetsAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }
+  return (
+    <div style={{ display: 'grid', gap: 14, gridTemplateColumns: '1fr' }}>
+      {/* Current level + progress */}
+      <div style={{ ...card, background: `linear-gradient(135deg, ${g.color}14, #ffffff 60%)` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <span style={{ width: 46, height: 46, borderRadius: '50%', background: `${g.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{g.icon}</span>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 0.6 }}>{t('Your level')}</div>
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: 19, fontWeight: 800, color: g.color }}>{t(g.label)}</div>
+          </div>
+          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 800, color: 'var(--dark)' }}>{d.salesCount}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#888' }}>{t('sales')}</div>
+          </div>
+        </div>
+        {next ? (
+          <>
+            <div style={{ height: 9, borderRadius: 5, background: '#f0e6d8', overflow: 'hidden', marginBottom: 6 }}>
+              <div style={{ height: '100%', width: `${salesPct}%`, background: g.color, borderRadius: 5 }} />
+            </div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#5a5142' }}>
+              {d.salesToNext > 0
+                ? t('{n} more sales to reach {g}').replace('{n}', String(d.salesToNext)).replace('{g}', t(next.label))
+                : t('Sales target for {g} met — keep your rating up!').replace('{g}', t(next.label))}
+              {d.nextRatingTarget != null && <span style={{ color: '#888' }}> · {t('needs {r}★').replace('{r}', String(d.nextRatingTarget))}</span>}
+            </div>
+          </>
+        ) : (
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: g.color }}>{t('Top level reached — unlimited listings 🎉')}</div>
+        )}
+      </div>
+
+      {/* This month's listing allowance */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+          <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 0.6 }}>{t('Listing allowance')}</span>
+          <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>
+            {d.cap === null ? t('Unlimited') : `${d.used} / ${d.cap}`}
+          </span>
+        </div>
+        {d.cap !== null && (
+          <div style={{ height: 9, borderRadius: 5, background: '#f0e6d8', overflow: 'hidden', marginBottom: 7 }}>
+            <div style={{ height: '100%', width: `${allowPct}%`, background: d.remaining === 0 ? '#ef4444' : 'var(--orange)', borderRadius: 5 }} />
+          </div>
+        )}
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#777' }}>
+          {d.cap === null
+            ? t('Your level lets you list as much as you like.')
+            : d.remaining === 0
+              ? t('Allowance used — resets on {d}.').replace('{d}', resets)
+              : t('{n} free listings left this month · resets {d}.').replace('{n}', String(d.remaining)).replace('{d}', resets)}
+          {next && d.nextCap != null && <span style={{ color: '#aaa' }}> · {t('{g} unlocks {c}/mo').replace('{g}', t(next.label)).replace('{c}', String(d.nextCap))}</span>}
+        </div>
+      </div>
+    </div>
   )
 }

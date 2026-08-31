@@ -4,7 +4,7 @@ import { getStripe } from '../lib/stripe'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { makeReferralCode } from './auth'
-import { PRICES, LISTING_CAPS } from '@grabitt/design-tokens'
+import { PRICES, LISTING_CAPS, GRADE_THRESHOLDS } from '@grabitt/design-tokens'
 import { sendSms } from '../lib/notify'
 import { createHash } from 'node:crypto'
 
@@ -25,7 +25,7 @@ export const usersRouter = router({
   myAllowance: protectedProcedure.query(async ({ ctx }) => {
     const user = await ctx.prisma.user.findUniqueOrThrow({
       where: { id: ctx.user.id },
-      select: { grade: true, isBusiness: true },
+      select: { grade: true, isBusiness: true, salesCount: true, avgRating: true },
     })
     const rawCap = LISTING_CAPS[user.grade as keyof typeof LISTING_CAPS] ?? LISTING_CAPS.grabber
     const cap = rawCap === Infinity ? null : rawCap
@@ -34,9 +34,16 @@ export const usersRouter = router({
     const used = await ctx.prisma.listing.count({
       where: { sellerId: ctx.user.id, createdAt: { gte: monthStart } },
     })
-    // First of next month — when the allowance resets.
     const resetsAt = new Date(monthStart)
     resetsAt.setMonth(resetsAt.getMonth() + 1)
+
+    // Progress toward the next personal grade (grabber → dealer → trader → pro).
+    const ORDER = ['grabber', 'dealer', 'trader', 'pro'] as const
+    const idx = Math.max(0, ORDER.indexOf(user.grade as typeof ORDER[number]))
+    const nextGrade = idx < ORDER.length - 1 ? ORDER[idx + 1] : null
+    const th = nextGrade ? GRADE_THRESHOLDS[nextGrade as keyof typeof GRADE_THRESHOLDS] : null
+    const sales = user.salesCount ?? 0
+
     return {
       grade: user.grade,
       isBusiness: user.isBusiness,
@@ -44,6 +51,14 @@ export const usersRouter = router({
       used,
       remaining: cap === null ? null : Math.max(0, cap - used),
       resetsAt: resetsAt.toISOString(),
+      // Progression
+      salesCount: sales,
+      avgRating: user.avgRating != null ? Number(user.avgRating) : null,
+      nextGrade,                                      // null = top grade (Pro)
+      nextCap: nextGrade ? (LISTING_CAPS[nextGrade as keyof typeof LISTING_CAPS] === Infinity ? null : LISTING_CAPS[nextGrade as keyof typeof LISTING_CAPS]) : null,
+      salesToNext: th ? Math.max(0, th.sales - sales) : 0,
+      nextSalesTarget: th ? th.sales : null,
+      nextRatingTarget: th ? th.rating : null,
     }
   }),
 
