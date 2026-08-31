@@ -50,8 +50,7 @@ export default function Footer() {
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="shield" size={14} strokeWidth={2} style={{ color: 'var(--success)' }} /> Every payment protected by the Grabitt Guarantee · Local to the Canaries</span>
         </div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 8 }}>
-          © {new Date().getFullYear()} Grabitt. All rights reserved. ·{' '}
-          <a href="/admin" style={{ color: '#1a1a1a', textDecoration: 'none' }}>Executive Suite</a>
+          © {new Date().getFullYear()} Grabitt. All rights reserved.
         </div>
       </div>
     </footer>
