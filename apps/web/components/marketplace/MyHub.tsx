@@ -101,6 +101,14 @@ export default function MyHub({ me, onReload }: { me: any; onReload: () => void 
     setHubView(key); setHubTitle(title)
   }
 
+  // Personal monthly listing allowance (grade-based). Business accounts see
+  // their allowance in the Business Centre instead.
+  const [allowance, setAllowance] = useState<{ cap: number | null; used: number; remaining: number | null; resetsAt: string } | null>(null)
+  useEffect(() => {
+    if (me?.isBusiness) { setAllowance(null); return }
+    trpcAuthed().users.myAllowance.query().then(setAllowance).catch(() => {})
+  }, [me?.isBusiness, me?.id])
+
   const avatarInput = useRef<HTMLInputElement>(null)
   const [avatarBusy, setAvatarBusy] = useState(false)
   const onPickAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,6 +176,28 @@ export default function MyHub({ me, onReload }: { me: any; onReload: () => void 
               <button onClick={() => router.push(me?.isBusiness ? '/account?tab=business' : '/for-business')} style={navLinkBtn}>
                 {me?.isBusiness ? t('Open') : t('Add / Upgrade')}
               </button>} />
+            {allowance && !me?.isBusiness && (
+              <div style={{ marginTop: 12, background: '#fff', borderRadius: 12, padding: '11px 12px' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 7 }}>
+                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#6a5a48', textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('Listing allowance')}</span>
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>
+                    {allowance.cap === null ? t('Unlimited') : `${allowance.used} / ${allowance.cap}`}
+                  </span>
+                </div>
+                {allowance.cap !== null && (
+                  <div style={{ height: 7, borderRadius: 4, background: '#f0e6d8', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${Math.min(100, (allowance.used / allowance.cap) * 100)}%`, background: allowance.remaining === 0 ? '#ef4444' : 'var(--orange)', borderRadius: 4 }} />
+                  </div>
+                )}
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: '#8a6d3b', marginTop: 6 }}>
+                  {allowance.cap === null
+                    ? t('Your grade lets you list as much as you like.')
+                    : allowance.remaining === 0
+                      ? t('Allowance used — resets on {d}.').replace('{d}', new Date(allowance.resetsAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))
+                      : t('{n} free listings left this month.').replace('{n}', String(allowance.remaining))}
+                </div>
+              </div>
+            )}
             <button onClick={logout} style={{ marginTop: 12, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 10, padding: '9px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
               <Icon name="login" size={14} strokeWidth={2.4} /> {t('Log out')}
             </button>

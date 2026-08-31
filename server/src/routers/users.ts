@@ -4,7 +4,7 @@ import { getStripe } from '../lib/stripe'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { makeReferralCode } from './auth'
-import { PRICES } from '@grabitt/design-tokens'
+import { PRICES, LISTING_CAPS } from '@grabitt/design-tokens'
 import { sendSms } from '../lib/notify'
 import { createHash } from 'node:crypto'
 
@@ -18,6 +18,34 @@ export const usersRouter = router({
   me: protectedProcedure.query(({ ctx }) =>
     ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
   ),
+
+  // A personal account's monthly free listing allowance, for the dashboard.
+  // Grade-based: grabber 10, dealer 50, trader 200, pro unlimited. (Business
+  // accounts run on their tier allowance, shown in the Business Centre.)
+  myAllowance: protectedProcedure.query(async ({ ctx }) => {
+    const user = await ctx.prisma.user.findUniqueOrThrow({
+      where: { id: ctx.user.id },
+      select: { grade: true, isBusiness: true },
+    })
+    const rawCap = LISTING_CAPS[user.grade as keyof typeof LISTING_CAPS] ?? LISTING_CAPS.grabber
+    const cap = rawCap === Infinity ? null : rawCap
+    const monthStart = new Date()
+    monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
+    const used = await ctx.prisma.listing.count({
+      where: { sellerId: ctx.user.id, createdAt: { gte: monthStart } },
+    })
+    // First of next month — when the allowance resets.
+    const resetsAt = new Date(monthStart)
+    resetsAt.setMonth(resetsAt.getMonth() + 1)
+    return {
+      grade: user.grade,
+      isBusiness: user.isBusiness,
+      cap,                                            // null = unlimited (Pro)
+      used,
+      remaining: cap === null ? null : Math.max(0, cap - used),
+      resetsAt: resetsAt.toISOString(),
+    }
+  }),
 
   // Business Light — the free entry business tier (8% fee, €0.99 per item
   // listing, no free allowance). No payment: just flags the account. A full
