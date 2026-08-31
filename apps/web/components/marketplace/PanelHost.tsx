@@ -941,47 +941,40 @@ function PanelBody() {
   if (panel.id === 'sell') {
     // CSV bulk import hidden for now (reintroduce later via NEXT_PUBLIC_CSV_IMPORT=1).
     const CSV_IMPORT_ENABLED = process.env.NEXT_PUBLIC_CSV_IMPORT === '1'
-    // Compact tile cards (per Steve): icon + short label + one-line explanation,
-    // no wide arrow buttons.
-    const tile: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 7, background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '16px 10px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }
-    const iconTile: React.CSSProperties = { width: 44, height: 44, borderRadius: '50%', background: '#FFF3EE', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }
+    // One card per listing type, laid out four-in-a-row. Each carries its own
+    // accent colour for a cleaner, more designed chooser. (Business/Charity
+    // sign-up upsells were removed from here — not relevant to listing.)
+    const TYPES: { icon: string; title: string; desc: string; accent: string; tint: string; action: () => void }[] = [
+      { icon: '🏡', title: 'Sell an item', desc: 'Furniture, tech & more', accent: 'var(--orange)', tint: '#FFF3EE', action: () => openPanel('createListing') },
+      { icon: '💼', title: 'Post a job', desc: 'Find staff fast', accent: '#2193b0', tint: '#e8f6fb', action: () => { closePanel(); window.location.href = '/jobs/new' } },
+      { icon: '🏠', title: 'List a property', desc: 'Rent or sell a home', accent: '#0f9d76', tint: '#e6f7f1', action: () => { closePanel(); window.location.href = '/property/new' } },
+      { icon: '🔧', title: 'Offer a service', desc: 'Advertise in Handy Help', accent: '#8b5cf6', tint: '#f1ecfe', action: () => openPanel('handyPost', { kind: 'offer' }) },
+    ]
+    const card: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, background: '#fff', border: '1px solid #eef0f4', borderRadius: 16, padding: '16px 8px', cursor: 'pointer', boxShadow: '0 2px 10px rgba(30,43,85,0.06)' }
     return (
       <ActionPanel title="Sell on Grabitt" onClose={closePanel}>
-        <div style={{ textAlign: 'center', marginBottom: 14 }}>
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 2 }}>What would you like to list?</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888' }}>Fees from 2.5% · Secure Stripe payments</div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {([['🏡','Sell an item','Furniture, tech & more', () => openPanel('createListing')],['💼','Post a job','Find staff fast', () => { closePanel(); window.location.href = '/jobs/new' }],['🏠','List a property','Rent or sell a home', () => { closePanel(); window.location.href = '/property/new' }],['🔧','Offer a service','Advertise in Handy Help', () => openPanel('handyPost', { kind: 'offer' })]] as [string,string,string,()=>void][]).map(([icon, title, desc, action], i) => (
-            <button key={i} onClick={action} style={tile}>
-              <span style={iconTile}>{icon}</span>
-              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{title}</span>
-              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>{desc}</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8 }}>
+          {TYPES.map((c, i) => (
+            <button key={i} onClick={c.action} style={card}>
+              <span style={{ width: 46, height: 46, borderRadius: '50%', background: c.tint, color: c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{c.icon}</span>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.2 }}>{c.title}</span>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', lineHeight: 1.3 }}>{c.desc}</span>
             </button>
           ))}
-          {CSV_IMPORT_ENABLED && (
-            <button onClick={() => { closePanel(); window.location.href = '/sell/import' }} style={tile}>
-              <span style={iconTile}>📄</span>
-              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Bulk import</span>
-              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>Upload a CSV · Business</span>
-            </button>
-          )}
         </div>
 
-        {/* Sign-up upsells — Business and Charity / Blue Light / Student, side by side */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
-          <button onClick={() => openPanel('business')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 5, background: '#FFF9F5', border: '1.5px solid var(--orange)', borderRadius: 14, padding: '13px 10px', cursor: 'pointer' }}>
-            <span style={{ ...iconTile, width: 34, height: 34, fontSize: 17 }}>🏢</span>
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>Sign up as a Business</span>
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', lineHeight: 1.3 }}>Storefront &amp; lower fees · 14 days free</span>
+        {CSV_IMPORT_ENABLED && (
+          <button onClick={() => { closePanel(); window.location.href = '/sell/import' }} style={{ ...card, flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 10, padding: '12px 14px' }}>
+            <span style={{ fontSize: 18 }}>📄</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>Bulk import</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Upload a CSV · Business</span>
           </button>
-          <button onClick={() => { closePanel(); window.location.href = '/account?section=addbiz&apply=charity' }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 5, background: '#fff', border: '1.5px solid #eef0f4', borderRadius: 14, padding: '13px 10px', cursor: 'pointer' }}>
-            <span style={{ ...iconTile, width: 34, height: 34, fontSize: 17, background: '#fdeaf0', color: '#e11d74' }}>❤️</span>
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>Charity</span>
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', lineHeight: 1.3 }}>Set up a verified charity profile — free</span>
-          </button>
-        </div>
+        )}
       </ActionPanel>
     )
   }
