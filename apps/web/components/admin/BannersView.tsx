@@ -23,7 +23,6 @@ const POSITIONS: [string, string][] = [
   ['home_top', 'Homepage hero (top)'],
   ['home_mid', 'Homepage — mid feed'],
   ['category', 'Category — top banner (Category Sponsor)'],
-  ['category_infeed', 'Category — in-feed (between rows)'],
   ['category_footer', 'Category — bottom banner'],
   ['search_top', 'Search — top banner'],
   ['search_footer', 'Search — bottom banner'],
@@ -53,7 +52,6 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
   const [slots, setSlots] = useState<Slot[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [testMode, setTestMode] = useState(false)
-  const [infeedRows, setInfeedRows] = useState(3)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ ...EMPTY })
   const [editId, setEditId] = useState<string | null>(null)
@@ -76,7 +74,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
     setBanners(rows)
   }).catch(() => {})
   const loadSlots = () => api.bannerCatalog().then(s => setSlots((s ?? []) as Slot[])).catch(() => {})
-  const loadConfig = () => api.bannerConfig().then((c: { testMode?: boolean; infeedEveryRows?: number }) => { setTestMode(!!c?.testMode); setInfeedRows(c?.infeedEveryRows ?? 3) }).catch(() => {})
+  const loadConfig = () => api.bannerConfig().then((c: { testMode?: boolean }) => { setTestMode(!!c?.testMode) }).catch(() => {})
   const loadBookings = () => api.bannerBookings().then(b => setBookings((b ?? []) as Booking[])).catch(() => {})
 
   useEffect(() => { load(); loadSlots(); loadConfig(); loadBookings() }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -111,7 +109,6 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
   async function setApproved(b: Banner, approved: boolean) { await api.approveBanner(b.id, approved); load() }
 
   async function toggleTestMode() { const next = !testMode; setTestMode(next); await api.saveBannerConfig({ testMode: next }); }
-  async function saveInfeed(n: number) { setInfeedRows(n); await api.saveBannerConfig({ infeedEveryRows: n }) }
   async function saveSlot(id: string, patch: { monthlyCents?: number; cap?: number; active?: boolean; pages?: string[] }) {
     setSlots(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s))
     await api.saveBannerConfig({ slots: { [id]: patch } })
@@ -338,11 +335,6 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
 
       {tab === 'pricing' && (
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderBottom: '1px solid #f0ece5', flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555' }}>In-feed banner every</span>
-            <input type="number" min={1} max={20} value={infeedRows} onChange={e => saveInfeed(Math.max(1, Number(e.target.value) || 1))} style={{ ...inp, width: 64 }} />
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555' }}>listing rows (category views)</span>
-          </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-ui)', fontSize: 12.5 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: '#999', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>

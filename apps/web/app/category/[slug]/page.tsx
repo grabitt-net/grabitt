@@ -1,5 +1,5 @@
 'use client'
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createLooseTrpcClient } from '@/lib/trpc'
@@ -111,22 +111,6 @@ export default function CategoryPage() {
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
 
   // In-feed banner cadence — an admin-set number of listing rows (~4 cards each).
-  const [infeedEvery, setInfeedEvery] = useState(3)
-  // Whether the in-feed sponsor slot actually has something to show on this page
-  // (a live banner, or preview mode for admins). We only break the grid when it
-  // does — otherwise the full-width wrapper would occupy an empty grid cell and
-  // leave a gap, pushing the trailing cards onto a short line.
-  const [infeedActive, setInfeedActive] = useState(false)
-  useEffect(() => {
-    const c = createLooseTrpcClient()
-    c.banners.infeedConfig.query()
-      .then(d => setInfeedEvery((d as { everyRows?: number })?.everyRows ?? 3)).catch(() => {})
-    Promise.all([
-      c.banners.active.query({ position: 'category_infeed', page: slug }).then(d => (d as unknown[])?.length > 0).catch(() => false),
-      c.banners.previewMode.query().then(d => !!(d as { on?: boolean })?.on).catch(() => false),
-    ]).then(([hasBanner, preview]) => setInfeedActive(hasBanner || preview))
-  }, [slug])
-
   // Free-text + subcategory filtering happens client-side over the fetched set.
   // There is no real "subcategory" column, so a pill matches when any of its
   // meaningful words appears in the listing's title, description or auto-tags.
@@ -181,19 +165,10 @@ export default function CategoryPage() {
       </div>
 
       <div className="category-grid">
-        {filtered.map((l, i) => {
+        {filtered.map((l) => {
           const img = Array.isArray(l.images) ? l.images[0] : null
-          // A full-width in-feed sponsor banner after every `infeedEvery` rows
-          // (~4 cards per row), so it breaks the grid at a natural cadence.
-          const rowBreak = infeedActive && infeedEvery > 0 && i > 0 && i % (infeedEvery * 4) === 0
           return (
-            <Fragment key={l.id}>
-              {rowBreak && (
-                <div style={{ gridColumn: '1/-1' }}>
-                  <BannerSlot position="category_infeed" page={slug} aspect="1053 / 163" label="Category — in-feed" padded={false} />
-                </div>
-              )}
-              <Link href={`/listings/${l.id}`} style={{ textDecoration: 'none' }}>
+              <Link key={l.id} href={`/listings/${l.id}`} style={{ textDecoration: 'none' }}>
                 <div className="product-card" style={card}>
                   <div style={{ width: '100%', paddingTop: '72%', position: 'relative', background: 'var(--sand)' }}>
                     {img
@@ -207,7 +182,6 @@ export default function CategoryPage() {
                   </div>
                 </div>
               </Link>
-            </Fragment>
           )
         })}
         {!loading && filtered.length === 0 && (
