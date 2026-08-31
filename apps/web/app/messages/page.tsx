@@ -33,7 +33,7 @@ export default async function MessagesPage() {
 
       {/* Sponsor banner area — Message Centre slot (click-tracked) */}
       <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto' }}>
-        <BannerSlot position="messages" aspect="4.5 / 1" />
+        <BannerSlot position="messages" aspect="1053 / 163" />
       </div>
 
       <InboxClient me={me.id} alertUnread={alertUnread} />

@@ -8,7 +8,7 @@ import { BANNER_ASPECTS, recommendedSize } from '@/components/marketplace/Banner
 // The exact upload size for a placement, e.g. "2000 × 444 px · 4.5/1". Design
 // the banner to this and it fills the slot edge-to-edge with no cropping.
 const sizeHint = (position: string) => {
-  const aspect = BANNER_ASPECTS[position] ?? '4.5 / 1'
+  const aspect = BANNER_ASPECTS[position] ?? '1053 / 163'
   return `${recommendedSize(aspect).label} · ${aspect.replace(/\s/g, '')}`
 }
 

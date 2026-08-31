@@ -30,7 +30,7 @@ export default function Footer() {
     <>
     {/* Sponsor banner — every page, above the footer. Renders nothing when no
         sponsor banner is active. */}
-    <BannerSlot position="sponsor_footer" page={bannerPageKey(pathname)} aspect="4.5 / 1" />
+    <BannerSlot position="sponsor_footer" page={bannerPageKey(pathname)} aspect="1053 / 163" />
     <footer style={{ background: 'var(--sand, #F5ECD7)', borderTop: '1px solid var(--sand2, #e8dcc0)', marginTop: 28, padding: '32px 20px 24px' }}>
       {/* All 5 heading columns stay on one row (never 4 + 1), spread evenly
           across the full page width and centred. */}

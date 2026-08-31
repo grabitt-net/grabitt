@@ -63,7 +63,7 @@ export default function QuickActions({ belowPromo }: { belowPromo?: React.ReactN
 
       {/* Sponsor banner — every page, below the hero / Grabitt Now promo. Renders
           nothing when no sponsor banner is active. */}
-      <div style={{ margin: '0 -14px' }}><BannerSlot position="sponsor_top" page={page} aspect="4.5 / 1" /></div>
+      <div style={{ margin: '0 -14px' }}><BannerSlot position="sponsor_top" page={page} aspect="1053 / 163" /></div>
     </section>
   )
 }

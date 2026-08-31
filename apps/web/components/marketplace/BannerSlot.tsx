@@ -33,15 +33,17 @@ type Position =
 // One standard banner size across the whole site (matches the news/sponsor
 // strip). Every slot renders at 4.5:1.
 export const BANNER_ASPECTS: Record<string, string> = {
-  home_top: '4.5 / 1', home_mid: '4.5 / 1', home_hero: '4.5 / 1',
-  category: '4.5 / 1', category_top: '4.5 / 1', category_infeed: '4.5 / 1', category_footer: '4.5 / 1',
-  search_top: '4.5 / 1', search_footer: '4.5 / 1', sticky_bottom: '4.5 / 1',
-  similar_items: '4.5 / 1', seller_dashboard: '4.5 / 1', user_dashboard: '4.5 / 1',
-  checkout: '4.5 / 1', jobs: '4.5 / 1', property: '4.5 / 1', sponsor_top: '4.5 / 1', sponsor_footer: '4.5 / 1',
-  messages: '4.5 / 1', notifications: '4.5 / 1',
+  home_top: '1053 / 163', home_mid: '1053 / 163', home_hero: '1053 / 163',
+  category: '1053 / 163', category_top: '1053 / 163', category_infeed: '1053 / 163', category_footer: '1053 / 163',
+  search_top: '1053 / 163', search_footer: '1053 / 163', sticky_bottom: '1053 / 163',
+  similar_items: '1053 / 163', seller_dashboard: '1053 / 163', user_dashboard: '1053 / 163',
+  checkout: '1053 / 163', jobs: '1053 / 163', property: '1053 / 163', sponsor_top: '1053 / 163', sponsor_footer: '1053 / 163',
+  messages: '1053 / 163', notifications: '1053 / 163',
 }
 
-const REC_WIDTH = 2000
+// The exact banner canvas: 1053 × 163 px (6.46:1). Design to this and it fills
+// every slot edge-to-edge with no cropping.
+const REC_WIDTH = 1053
 export function recommendedSize(aspect: string): { w: number; h: number; label: string } {
   const [wR, hR] = aspect.split('/').map(s => parseFloat(s.trim()))
   const ratio = wR && hR ? wR / hR : 3.4
@@ -49,7 +51,7 @@ export function recommendedSize(aspect: string): { w: number; h: number; label: 
   return { w: REC_WIDTH, h, label: `${REC_WIDTH} × ${h} px` }
 }
 
-export default function BannerSlot({ position, page, aspect = '4.5 / 1', radius = 16, padded = true, label }: { position: Position; page?: string; aspect?: string; radius?: number; padded?: boolean; label?: string }) {
+export default function BannerSlot({ position, page, aspect = '1053 / 163', radius = 16, padded = true, label }: { position: Position; page?: string; aspect?: string; radius?: number; padded?: boolean; label?: string }) {
   const [banners, setBanners] = useState<Banner[]>([])
   const [preview, setPreview] = useState(false)
   // Whether this slot is switched on for the current page (admin On/Off + pages).
@@ -82,7 +84,7 @@ export default function BannerSlot({ position, page, aspect = '4.5 / 1', radius 
     if (!preview || !slotOn) return null
     return (
       <div style={{ padding: padded ? '14px 14px 0' : 0 }}>
-        <div style={{ width: '100%', aspectRatio: aspect, maxHeight: 250, borderRadius: radius, border: '2px dashed var(--orange2)', background: 'repeating-linear-gradient(45deg,#fff7ed,#fff7ed 12px,#ffedd5 12px,#ffedd5 24px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', padding: 6 }}>
+        <div style={{ width: '100%', aspectRatio: aspect, borderRadius: radius, border: '2px dashed var(--orange2)', background: 'repeating-linear-gradient(45deg,#fff7ed,#fff7ed 12px,#ffedd5 12px,#ffedd5 24px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', padding: 6 }}>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: '#c2410c', textTransform: 'uppercase', letterSpacing: 0.6 }}>Banner slot</span>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: '#9a3412' }}>{slotLabel(position)}{page ? ` · ${page}` : ''}</span>
           <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 700, color: '#b45309' }}>Admin → Banners → Slots &amp; pricing · id: {position}</span>

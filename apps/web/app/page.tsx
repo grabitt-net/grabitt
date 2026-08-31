@@ -18,7 +18,7 @@ export default function HomePage() {
         <Topbar />
         <QuickActions />
         {/* Homepage hero — the most prominent sponsor slot */}
-        <BannerSlot position="home_top" aspect="4.5 / 1" label="Homepage hero" />
+        <BannerSlot position="home_top" aspect="1053 / 163" label="Homepage hero" />
         <HomeSections />
         <Footer />
         <CartFab />

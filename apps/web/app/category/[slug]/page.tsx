@@ -138,7 +138,7 @@ export default function CategoryPage() {
       <QuickActions belowPromo={<PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={CATEGORY_HERO[slug] || undefined} />} />
 
       {/* Sold banner placements — the paid category sponsor banner, below the hero */}
-      <BannerSlot position="category" page={slug} aspect="4.5 / 1" />
+      <BannerSlot position="category" page={slug} aspect="1053 / 163" />
 
 
       <header style={{ background: 'var(--sand)', padding: '14px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
@@ -175,7 +175,7 @@ export default function CategoryPage() {
             <Fragment key={l.id}>
               {rowBreak && (
                 <div style={{ gridColumn: '1/-1' }}>
-                  <BannerSlot position="category_infeed" page={slug} aspect="4.5 / 1" label="Category — in-feed" padded={false} />
+                  <BannerSlot position="category_infeed" page={slug} aspect="1053 / 163" label="Category — in-feed" padded={false} />
                 </div>
               )}
               <Link href={`/listings/${l.id}`} style={{ textDecoration: 'none' }}>
@@ -204,7 +204,7 @@ export default function CategoryPage() {
       </div>
 
       {/* Category — bottom banner (rotating Featured Partners for this page) */}
-      <BannerSlot position="category_footer" page={slug} aspect="4.5 / 1" label="Category — bottom" />
+      <BannerSlot position="category_footer" page={slug} aspect="1053 / 163" label="Category — bottom" />
 
       {!loading && totalPages > 1 && (
         <Pagination page={page} totalPages={totalPages} onChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />

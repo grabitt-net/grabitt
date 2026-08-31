@@ -100,7 +100,7 @@ export default function JobsPage() {
       <QuickActions belowPromo={<PageHero title="Recruitment" tagline="Island jobs, island talent." body="Browse vacancies across the Canary Islands and apply in a couple of taps — or post a role and hire from the community." />} />
 
       {/* Sellable recruitment banner — sits above the search options */}
-      <BannerSlot position="jobs" aspect="4.5 / 1" />
+      <BannerSlot position="jobs" aspect="1053 / 163" />
 
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <form onSubmit={e => { e.preventDefault(); run() }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

@@ -124,7 +124,7 @@ export default function PropertyPage() {
       <QuickActions belowPromo={<PageHero title="Property" tagline="Find your place in the sun." body="Buying, selling, renting, or letting — your next home or investment is right here on the islands. Browse houses, apartments and holiday lets across the Canaries, or list your own property to reach local buyers and tenants directly. No jargon, no faff — just island living made simple." />} />
 
       {/* Sellable property banner — sits above the search options */}
-      <BannerSlot position="property" aspect="4.5 / 1" />
+      <BannerSlot position="property" aspect="1053 / 163" />
 
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         {/* Type tabs + List-a-property on one line — pills scroll, button stays put */}

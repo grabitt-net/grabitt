@@ -85,7 +85,7 @@ function SearchInner() {
       <Topbar title={heading} />
       <QuickActions />
 
-      <BannerSlot position="search_top" aspect="4.5 / 1" label="Search — top" />
+      <BannerSlot position="search_top" aspect="1053 / 163" label="Search — top" />
 
       <header style={{ background: 'var(--sand)', padding: '12px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -151,7 +151,7 @@ function SearchInner() {
       )}
 
       {/* Search — bottom banner (rotating) */}
-      <BannerSlot position="search_footer" aspect="4.5 / 1" label="Search — bottom" />
+      <BannerSlot position="search_footer" aspect="1053 / 163" label="Search — bottom" />
 
       <Footer />
       <CartFab />

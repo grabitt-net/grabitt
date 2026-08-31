@@ -381,7 +381,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             </div>
           )}
           {/* Advertising banner at the top of every menu section. */}
-          <BannerSlot position="user_dashboard" aspect="4.5 / 1" label="Dashboard" padded={false} />
+          <BannerSlot position="user_dashboard" aspect="1053 / 163" label="Dashboard" padded={false} />
 
           {section === 'hub' && hubView && <HubListView hubKey={hubView} title={hubTitle} />}
 
