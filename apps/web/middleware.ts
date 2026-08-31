@@ -3,9 +3,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 // Next.js only runs a file literally named `middleware.ts`. This refreshes the
 // Supabase session on every request and syncs the auth cookies so Server
-// Components (e.g. /admin, /messages, /profile) can read a valid session —
+// Components (e.g. /admin, /account, /profile) can read a valid session —
 // without it, getUser() returns null server-side and those pages redirect away.
-const PROTECTED_ROUTES = ['/profile', '/messages', '/listings/new', '/orders']
+const PROTECTED_ROUTES = ['/profile', '/listings/new', '/orders']
 const ADMIN_ROUTES = ['/admin']
 const AUTH_ROUTES = ['/auth']
 
