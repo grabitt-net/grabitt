@@ -3352,8 +3352,12 @@ function PanelBody() {
     // flow never skips the images step. (A prefilled category still pre-selects
     // the department on the Details step.)
     const [step, setStep] = useState<'photos'|'details'|'price'|'delivery'|'upgrades'|'preview'|'done'>('photos')
-    const [photos, setPhotos] = useState<string[]>([])   // data URLs for preview
-    const [photoFiles, setPhotoFiles] = useState<File[]>([])
+    // Photos are uploaded to storage the moment they're added, so `photos` holds
+    // their permanent https URLs — which means they persist in the saved draft
+    // and come back on resume (no re-adding needed).
+    const [photos, setPhotos] = useState<string[]>([])
+    const [photoBusy, setPhotoBusy] = useState(0)
+    const [draftListingId] = useState(() => crypto.randomUUID())
     const [title, setTitle] = useState('')
     const [dept, setDept] = useState(prefillCat)
     const [condition, setCondition] = useState('')
@@ -3387,17 +3391,17 @@ function PanelBody() {
     // (Photos are re-added on resume.) Cleared once the listing goes live.
     const DRAFT_KEY = 'grabitt_listing_draft'
     const [draftFound, setDraftFound] = useState<Record<string, unknown> | null>(null)
-    const draftBody = JSON.stringify({ title, dept, condition, desc, price, brand, colour, size, attrs, stock, town, offersDelivery, deliveryMethod, deliveryFee, autoAcceptMin, grabItNow, featured })
+    const draftBody = JSON.stringify({ title, dept, condition, desc, price, brand, colour, size, attrs, stock, town, offersDelivery, deliveryMethod, deliveryFee, autoAcceptMin, grabItNow, featured, photos })
     // Auto-save the draft continuously as you go — the moment there's anything
-    // worth keeping (any typed field, chosen options, delivery or upgrades),
-    // not only once a title is entered. (Photos are re-added on resume.)
-    const draftHasContent = !!(title.trim() || desc.trim() || price.trim() || brand.trim() || colour.trim() || size.trim() || Object.keys(attrs).length || offersDelivery || grabItNow || featured)
+    // worth keeping (photos, any typed field, chosen options, delivery or
+    // upgrades). Photos are already https URLs, so they save and come back too.
+    const draftHasContent = !!(photos.length || title.trim() || desc.trim() || price.trim() || brand.trim() || colour.trim() || size.trim() || Object.keys(attrs).length || offersDelivery || grabItNow || featured)
     useEffect(() => {
       if (step === 'done') { try { localStorage.removeItem(DRAFT_KEY) } catch {} ; return }
       if (draftHasContent) { try { localStorage.setItem(DRAFT_KEY, draftBody) } catch {} }
     }, [draftBody, step, draftHasContent])
     useEffect(() => {
-      try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const d = JSON.parse(raw); if (d && (d.title || d.desc || d.price || d.brand || (d.attrs && Object.keys(d.attrs).length) || d.offersDelivery || d.grabItNow || d.featured)) setDraftFound(d) } } catch {}
+      try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const d = JSON.parse(raw); if (d && (d.title || d.desc || d.price || d.brand || (d.photos && d.photos.length) || (d.attrs && Object.keys(d.attrs).length) || d.offersDelivery || d.grabItNow || d.featured)) setDraftFound(d) } } catch {}
     }, [])
     const restoreDraft = () => {
       const d = draftFound; if (!d) return
@@ -3406,6 +3410,7 @@ function PanelBody() {
       setAttrs((d.attrs as Record<string, string>) || {}); setStock((d.stock as string) || '1'); setTown((d.town as string) || 'Las Palmas')
       setOffersDelivery(!!d.offersDelivery); setDeliveryMethod((d.deliveryMethod as 'courier' | 'in_person') || 'courier'); setDeliveryFee((d.deliveryFee as string) || ''); setAutoAcceptMin((d.autoAcceptMin as string) || '')
       setGrabItNow(!!d.grabItNow); setFeatured(!!d.featured)
+      setPhotos(Array.isArray(d.photos) ? (d.photos as string[]).filter(u => /^https?:/.test(u)) : [])
       setStep('details'); setDraftFound(null)
     }
     const discardDraft = () => { try { localStorage.removeItem(DRAFT_KEY) } catch {} ; setDraftFound(null) }
@@ -3413,14 +3418,19 @@ function PanelBody() {
     const STEPS = ['photos','details','price','delivery','upgrades','preview'] as const
     const stepIdx = STEPS.indexOf(step as typeof STEPS[number])
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files || []).slice(0, 8 - photos.length)
-      setPhotoFiles(prev => [...prev, ...files])
-      files.forEach(file => {
-        const reader = new FileReader()
-        reader.onload = ev => setPhotos(prev => [...prev, ev.target!.result as string])
-        reader.readAsDataURL(file)
-      })
+      e.target.value = ''  // allow re-selecting the same file
+      if (!files.length) return
+      // Upload each straight away so it's saved with the draft (and never lost).
+      setPhotoBusy(n => n + files.length)
+      for (const file of files) {
+        try {
+          const url = await compressAndUpload(file, listingPhotoPath(draftListingId))
+          setPhotos(prev => [...prev, url])
+        } catch { toast('Could not upload a photo — please try again.') }
+        finally { setPhotoBusy(n => Math.max(0, n - 1)) }
+      }
     }
 
     // Offer to resume a saved draft when Sell first opens and nothing's typed yet.
@@ -3509,8 +3519,8 @@ function PanelBody() {
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed #e0d8d0', borderRadius: 16, padding: 24, cursor: 'pointer', background: '#faf7f4' }}>
                     <Logo height={40} style={{ margin: '0 auto 14px' }} />
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>Add 4–8 photos</div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>Tap to choose from your device · 4 minimum</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>{photoBusy > 0 ? `Uploading ${photoBusy} photo${photoBusy === 1 ? '' : 's'}…` : 'Add 4–8 photos'}</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{photoBusy > 0 ? 'Saved to your draft as they upload.' : 'Tap to choose from your device · 4 minimum'}</div>
                     <input type="file" accept="image/*" multiple onChange={handleFileChange} style={{ display: 'none' }} />
                   </label>
                 </div>
@@ -3808,10 +3818,8 @@ function PanelBody() {
                 onClick={async () => {
                   setUploading(true)
                   try {
-                    const draftListingId = crypto.randomUUID()
-                    const imageUrls = photoFiles.length > 0
-                      ? await Promise.all(photoFiles.map(f => compressAndUpload(f, listingPhotoPath(draftListingId))))
-                      : photos.filter(u => /^https?:/.test(u))
+                    // Photos are already uploaded (https URLs) as they were added.
+                    const imageUrls = photos.filter(u => /^https?:/.test(u))
                     const D: Record<string, string> = { 'Electronics':'electronics','Fashion':'fashion','Home & Garden':'home_garden','Sport & Leisure':'sport','Sport':'sport','Retro & Vintage':'retro_vintage','Gaming':'gaming','Pet Supplies':'pet_shop','Motors':'motors','Kids & Baby':'kids_baby','Handy Help':'handy_help','Jobs':'jobs','Property':'property','Services':'services','Collectables':'collectables','Gift Ideas':'gift_ideas','Health & Fitness':'health_fitness','Food Store':'food_store','Hobbies & Crafts':'hobbies_crafts','Other':'other' }
                     const C: Record<string, string> = { 'New':'new','Like New':'like_new','Very Good':'very_good','Good':'good','Fair':'fair','For Parts':'spares','Spares':'spares' }
                     const client = await getTrpcClient()
@@ -3850,10 +3858,9 @@ function PanelBody() {
                 onClick={async () => {
                   setUploading(true)
                   try {
-                    const listingId = crypto.randomUUID()
-                    const imageUrls = photoFiles.length > 0
-                      ? await Promise.all(photoFiles.map(f => compressAndUpload(f, listingPhotoPath(listingId))))
-                      : ['https://placehold.co/800x600/f5f0e8/9E8F7A?text=No+photo']
+                    // Photos were uploaded as they were added — use their URLs.
+                    const imageUrls = photos.filter(u => /^https?:/.test(u))
+                    if (!imageUrls.length) { toast('Please add at least one photo.'); setUploading(false); return }
                     // Map UI labels to the exact Prisma enum values (invalid
                     // values silently fail create, so the listing never saves).
                     const DEPT_MAP: Record<string, string> = {
