@@ -403,20 +403,42 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
           </Card>
 
           <Card title="Account level">
-            <L>Grade</L>
-            <select value={f.grade} onChange={e => set('grade', e.target.value)} style={inp}>
-              {GRADES.map(g => <option key={g} value={g}>{g[0].toUpperCase() + g.slice(1)}</option>)}
-            </select>
+            {f.isBusiness ? (
+              // Already a business account — show the BUSINESS levels (mapped onto
+              // the underlying grade), not the personal grades, and don't re-offer
+              // the account-type toggles.
+              <>
+                <L>Business level</L>
+                <select value={f.grade === 'grabber' ? 'dealer' : f.grade} onChange={e => set('grade', e.target.value)} style={inp}>
+                  <option value="dealer">Business (Dealer)</option>
+                  <option value="trader">Business Plus (Trader)</option>
+                  <option value="pro">Business Pro (Pro)</option>
+                </select>
+              </>
+            ) : (
+              <>
+                <L>Grade</L>
+                <select value={f.grade} onChange={e => set('grade', e.target.value)} style={inp}>
+                  {GRADES.map(g => <option key={g} value={g}>{g[0].toUpperCase() + g.slice(1)}</option>)}
+                </select>
+              </>
+            )}
             <L>Credits</L><input value={f.credits} onChange={e => set('credits', e.target.value)} inputMode="numeric" style={inp} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-              <Check label="Business account (full)" checked={f.isBusiness} onChange={v => set('isBusiness', v ? true : false)} />
-              <Check label="Business Light (starter plan)" checked={f.businessLight} onChange={v => set('businessLight', v)} />
-              <Check label="Business verified (shield)" checked={f.businessVerified} onChange={v => set('businessVerified', v)} />
+              {f.isBusiness
+                ? <Check label="Business verified (shield)" checked={f.businessVerified} onChange={v => set('businessVerified', v)} />
+                : (<>
+                    {/* Personal account — offer conversion to a business plan. */}
+                    <Check label="Business account (full)" checked={f.isBusiness} onChange={v => setF(p => ({ ...p, isBusiness: v, grade: v && p.grade === 'grabber' ? 'dealer' : p.grade }))} />
+                    <Check label="Business Light (starter plan)" checked={f.businessLight} onChange={v => set('businessLight', v)} />
+                  </>)}
             </div>
             <L>Fee override (%) <span style={{ color: '#bbb', fontWeight: 600 }}>— leave blank to use the level&apos;s standard fee</span></L>
             <input value={feeOverride} onChange={e => setFeeOverride(e.target.value)} inputMode="decimal" placeholder="e.g. 3" style={inp} />
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 6, lineHeight: 1.5 }}>
-              Personal = neither ticked. <strong>Business Light</strong> is the starter plan (limited allowance). <strong>Business account</strong> is the full plan; its tier &amp; caps come from the Grade (Dealer = Business, Trader = Plus, Pro = Pro). The fee override and everything above save with <strong>Save details</strong> below.
+              {f.isBusiness
+                ? <>Business tier &amp; monthly caps come from the level above (Business = Dealer, Plus = Trader, Pro = Pro). Save with <strong>Save details</strong> below.</>
+                : <>Personal = neither ticked. <strong>Business Light</strong> is the starter plan (limited allowance). <strong>Business account</strong> is the full plan. Save with <strong>Save details</strong> below.</>}
             </div>
           </Card>
 
