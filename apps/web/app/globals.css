@@ -328,14 +328,23 @@ select.gform-control {
 }
 .rte__area:empty::before { content: attr(data-placeholder); color: var(--ink-3); }
 .rte__area:focus { box-shadow: inset 0 0 0 2px rgba(245,84,10,0.14); }
-.rte__area ul, .rte__area ol { margin: 8px 0 8px 22px; }
+/* Explicit list styling — the app reset strips markers, so restore disc/decimal
+   and use padding (not margin) so the bullet/number never gets clipped. */
+.rte__area ul { list-style: disc outside; margin: 8px 0; padding-left: 26px; }
+.rte__area ol { list-style: decimal outside; margin: 8px 0; padding-left: 26px; }
+.rte__area li { margin: 3px 0; }
+.rte__area h2 { font-size: 20px; font-weight: 800; line-height: 1.25; margin: 14px 0 6px; }
+.rte__area h3 { font-size: 16px; font-weight: 800; line-height: 1.3; margin: 12px 0 6px; }
 .rte__area a { color: var(--orange); text-decoration: underline; }
 
 /* ── Rendered article body (guides / news / events) ── */
 .article-body { font-family: var(--font-ui); font-size: 15.5px; line-height: 1.75; color: #2a2a2a; }
 .article-body p { margin: 0 0 14px; }
-.article-body ul, .article-body ol { margin: 8px 0 14px 22px; }
+.article-body ul { list-style: disc outside; margin: 8px 0 14px; padding-left: 26px; }
+.article-body ol { list-style: decimal outside; margin: 8px 0 14px; padding-left: 26px; }
 .article-body li { margin: 4px 0; }
+.article-body h2 { font-size: 22px; font-weight: 800; line-height: 1.25; margin: 20px 0 8px; }
+.article-body h3 { font-size: 18px; font-weight: 800; line-height: 1.3; margin: 16px 0 6px; }
 .article-body a { color: var(--orange); text-decoration: underline; font-weight: 700; }
 .article-body b, .article-body strong { font-weight: 800; }
 

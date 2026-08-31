@@ -23,7 +23,16 @@ export default function RichTextEditor({ value, onChange, placeholder }: {
 
   const exec = (cmd: string, arg?: string) => {
     ref.current?.focus()
+    // Emit real tags (<b>, <i>…) rather than inline style attributes.
+    try { document.execCommand('styleWithCSS', false, 'false') } catch { /* not supported everywhere */ }
     document.execCommand(cmd, false, arg)
+    onChange(ref.current?.innerHTML || '')
+  }
+  // formatBlock needs the tag wrapped in <…> on some engines; toggling a heading
+  // that's already applied drops back to a normal paragraph.
+  const block = (tag: string) => {
+    ref.current?.focus()
+    document.execCommand('formatBlock', false, `<${tag}>`)
     onChange(ref.current?.innerHTML || '')
   }
   const addLink = () => {
@@ -42,15 +51,19 @@ export default function RichTextEditor({ value, onChange, placeholder }: {
   return (
     <div className="rte">
       <div className="rte__bar">
+        <Btn onClick={() => block('h2')} title="Big heading">H1</Btn>
+        <Btn onClick={() => block('h3')} title="Small heading">H2</Btn>
+        <Btn onClick={() => block('p')} title="Normal text">¶</Btn>
+        <span className="rte__sep" />
         <Btn cmd="bold" title="Bold"><b>B</b></Btn>
         <Btn cmd="italic" title="Italic"><i>I</i></Btn>
         <Btn cmd="underline" title="Underline"><u>U</u></Btn>
         <span className="rte__sep" />
-        <Btn cmd="insertUnorderedList" title="Bulleted list">• List</Btn>
-        <Btn cmd="insertOrderedList" title="Numbered list">1. List</Btn>
+        <Btn cmd="insertUnorderedList" title="Bulleted list">List item</Btn>
+        <Btn cmd="insertOrderedList" title="Numbered list">Numbered list</Btn>
         <span className="rte__sep" />
         <Btn onClick={addLink} title="Insert link">🔗 Link</Btn>
-        <Btn cmd="removeFormat" title="Clear formatting">✕ Clear</Btn>
+        <Btn cmd="removeFormat" title="Clear formatting">Clear</Btn>
       </div>
       <div
         ref={ref}

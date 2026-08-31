@@ -3,13 +3,10 @@ import { Fragment, useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
 import ImageUploadField from './ImageUploadField'
 import { BANNER_PAGE_OPTIONS, BANNER_CATEGORY_OPTIONS, BANNER_CATEGORY_SLUGS } from '@/lib/bannerPages'
-import { BANNER_ASPECTS, recommendedSize } from '@/components/marketplace/BannerSlot'
 
-// The recommended upload size for a placement, e.g. "2000 × 400 px · 5/1".
-const sizeHint = (position: string) => {
-  const aspect = BANNER_ASPECTS[position] ?? '3.4 / 1'
-  return `${recommendedSize(aspect).label} · ${aspect.replace(/\s/g, '')}`
-}
+// Banners are shown uncropped (up to 250px tall), so the exact ratio is up to
+// the advertiser — we just recommend a sharp, landscape source.
+const sizeHint = (_position: string) => 'landscape · ~1600px wide'
 
 // Every sellable/placeable banner position, with a friendly label. Order groups
 // them by area so the admin reads them like a map of the site.
@@ -146,7 +143,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
                 {POSITIONS.map(([v, l]) => <option key={v} value={v}>{l} · {sizeHint(v)}</option>)}
               </select>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 700, color: 'var(--orange)', marginTop: 5 }}>
-                📐 Recommended image: {sizeHint(form.position)} — one image, no separate mobile/desktop versions (it scales to every screen).
+                📐 Upload any landscape banner ({sizeHint(form.position)}). It&apos;s shown in full — never cropped — up to 250px tall, and scales to every screen. One image, no separate mobile/desktop versions.
               </div>
             </Field>
             <Field label="Page target (optional — for category slots, e.g. motors)"><input value={form.pageTarget} onChange={e => setForm(f => ({ ...f, pageTarget: e.target.value }))} placeholder="blank = site-wide" style={inp} /></Field>
