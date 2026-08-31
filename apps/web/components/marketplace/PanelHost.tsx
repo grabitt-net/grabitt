@@ -5113,7 +5113,7 @@ function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; i
           <div style={{ fontSize: 44, marginBottom: 10 }}>✅</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 6 }}>{isRequest ? 'Your request is live' : 'Your advert is live'}</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#666', lineHeight: 1.6, marginBottom: 18 }}>
-            It runs for 7 days. {isRequest ? 'Providers can respond — their details appear once you accept.' : 'People needing help can find and contact you.'}
+            It runs for 30 days. {isRequest ? 'Providers can respond — their details appear once you accept.' : 'People needing help can find and contact you.'}
           </div>
           <button onClick={() => { closePanel(); window.location.href = '/handy' }} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>View Handy Help</button>
         </div>
@@ -5132,8 +5132,8 @@ function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; i
 
       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.55, marginBottom: 12 }}>
         {isRequest
-          ? 'Describe the help you need — it’s free. Businesses can respond, and their details stay private until you accept.'
-          : 'Advertise the service your business provides across the Canaries. Business adverts are €9.99 for 7 days.'}
+          ? 'Describe the help you need — it’s free. Your details stay private, and businesses that respond stay hidden until you accept.'
+          : 'Advertise the service your business provides across the Canaries. Business adverts are €9.99 for 30 days.'}
       </div>
 
       <div style={cardStyle}>

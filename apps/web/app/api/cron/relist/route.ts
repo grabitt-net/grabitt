@@ -109,7 +109,7 @@ export async function GET(req: Request) {
   }
 
   // ── Handy Help lifecycle ───────────────────────────────────────────────────
-  // A post runs 7 days. At 7 days, if still active and not yet asked, we send
+  // A post runs 30 days. At 30 days, if still active and not yet asked, we send
   // the poster a message + email: "do you still need help?". If they reply yes
   // (handy.confirmStillNeeded) the post relists; if they reply no, or don't
   // reply within the grace window, it drops off here.
@@ -119,7 +119,7 @@ export async function GET(req: Request) {
   let handyAsked = 0
   let handyDropped = 0
 
-  // 1) Ask: 7 days old, still active, not yet prompted.
+  // 1) Ask: 30 days old, still active, not yet prompted.
   for (;;) {
     const due = await prisma.listing.findMany({
       where: { department: 'handy_help', status: 'active', handyAskedAt: null, createdAt: { lt: askCutoff } },

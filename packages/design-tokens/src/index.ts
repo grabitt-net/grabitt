@@ -106,10 +106,10 @@ export const HANDY_PRICING = {
   personalPostFree: true,
   businessPlaceCents: 999,   // €9.99 for a business to place a Handy Help advert
   businessUnlockCents: 299,  // €2.99 for a business to unlock a listing to reply
-  // A post runs for 7 days. At 7 days we ask the poster to confirm they still
-  // need help: "yes" relists for another 7 days, "no" or no reply within the
+  // A post runs for 30 days. At 30 days we ask the poster to confirm they still
+  // need help: "yes" relists for another 30 days, "no" or no reply within the
   // grace window drops the post off.
-  validityDays: 7,
+  validityDays: 30,
   confirmGraceDays: 3,
 } as const
 
