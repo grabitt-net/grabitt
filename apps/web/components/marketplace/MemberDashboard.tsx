@@ -18,6 +18,7 @@ import InboxClient from './InboxClient'
 import BannerSlot from './BannerSlot'
 import BusinessCentre from './BusinessCentre'
 import CharityCentre from './CharityCentre'
+import AgentCentre from './AgentCentre'
 import AgentProfileCard from './AgentProfileCard'
 import JobCategories from './JobCategories'
 import { deptEmoji, toPanelItem } from '@/lib/listingMap'
@@ -30,7 +31,7 @@ import { t } from '@/lib/i18n'
 // snapshot · dashboard pills) over an 8-section left menu that swaps the right
 // panel. It sits BELOW the existing header + Grabitt NOW promo.
 
-type SectionId = 'business' | 'charity' | 'messages' | 'employment' | 'aboutme' | 'listings' | 'disputes' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'gdpr' | 'suggest' | 'hub'
+type SectionId = 'business' | 'charity' | 'agent' | 'messages' | 'employment' | 'aboutme' | 'listings' | 'disputes' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'gdpr' | 'suggest' | 'hub'
 type Seg = 'active' | 'sold' | 'draft' | 'buying'
 
 const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
@@ -74,7 +75,7 @@ const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', bor
 const primaryBtn: React.CSSProperties = { background: '#fff', color: 'var(--orange)', border: '2px solid #111', borderRadius: 12, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }
 function Muted({ children }: { children: React.ReactNode }) { return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '16px 0', textAlign: 'center' }}>{children}</div> }
 
-const SECTION_IDS = new Set<string>(['business', 'charity', 'messages', 'employment', 'aboutme', 'listings', 'disputes', 'admin', 'saved', 'recommended', 'recent', 'loyalty', 'addbiz', 'activity', 'gdpr'])
+const SECTION_IDS = new Set<string>(['business', 'charity', 'agent', 'messages', 'employment', 'aboutme', 'listings', 'disputes', 'admin', 'saved', 'recommended', 'recent', 'loyalty', 'addbiz', 'activity', 'gdpr'])
 
 export default function MemberDashboard({ me, onReload }: { me: any; onReload: () => void }) {
   const router = useRouter()
@@ -84,12 +85,16 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   // is persisted in the URL (?view=personal) so it survives a refresh and the
   // header can reflect it. effBiz = "show the business hub".
   const [personalView, setPersonalView] = useState(() => params.get('view') === 'personal')
-  const effBiz = !!me?.isBusiness && !personalView
+  // Property agents never get the business chrome even if their account also
+  // carries a business flag — they're a property-only profile.
+  const effBiz = !!me?.isBusiness && !personalView && !me?.isPropertyAgent
   // Charity accounts get a Charity Hub in place of the personal "My Hub" landing.
   const isCharity = me?.memberStatus === 'charity' && !me?.isBusiness
+  // Property agents get an Agent Hub (they list property only).
+  const isAgent = !!me?.isPropertyAgent
   // Land on the account's own home — Business Centre for business, the My Hub
   // overview for everyone else — rather than dropping straight into Messages.
-  const [section, setSection] = useState<SectionId>(params.get('view') === 'personal' ? 'hub' : me?.isBusiness ? 'business' : me?.memberStatus === 'charity' ? 'charity' : 'hub')
+  const [section, setSection] = useState<SectionId>(params.get('view') === 'personal' ? 'hub' : me?.isPropertyAgent ? 'agent' : me?.isBusiness ? 'business' : me?.memberStatus === 'charity' ? 'charity' : 'hub')
   // `me` loads async, so the initial default above can be wrong (defaults to
   // 'hub' before we know it's a business account). Set the landing section once,
   // when `me` first resolves — Business Centre for business, My Hub otherwise —
@@ -103,7 +108,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     if (me && !didInitSection.current) {
       didInitSection.current = true
       const personal = params.get('view') === 'personal'
-      setSection(personal ? 'hub' : me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'hub')
+      setSection(personal ? 'hub' : me.isPropertyAgent ? 'agent' : me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'hub')
     }
   }, [params, me])
   const [seg, setSeg] = useState<Seg>('active')
@@ -111,7 +116,12 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
   // Business accounts get a Business Centre section (and no "add business"); the
   // rest of the menu is shared with personal accounts.
-  const sections: { id: SectionId; label: string; icon: IconName }[] = effBiz
+  const sections: { id: SectionId; label: string; icon: IconName }[] = isAgent
+    // Property agents list property only — a focused menu: Agent Hub, Messages,
+    // Trading (their property listings), plus the shared account tools.
+    ? [{ id: 'agent' as SectionId, label: 'Agent Hub', icon: 'home' as IconName },
+       ...SECTIONS.filter(s => !['addbiz', 'employment'].includes(s.id))]
+    : effBiz
     ? [{ id: 'business', label: 'Business Centre', icon: 'building' },
        // Business hub: no "add business", no personal "About Me" (handled in the
        // Business Centre) and no separate Admin Centre (folded into Business
@@ -253,7 +263,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       {/* Title with flanking rules */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '10px 0 42px' }}>
         <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
-        <span style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 900, color: '#1e2b55', letterSpacing: 3 }}>{effBiz ? t('BUSINESS HUB') : t('MY HUB')}</span>
+        <span style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 900, color: '#1e2b55', letterSpacing: 3 }}>{isAgent ? t('AGENT HUB') : effBiz ? t('BUSINESS HUB') : t('MY HUB')}</span>
         <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
       </div>
 
@@ -409,7 +419,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           {/* Personal hub: your level, progress to the next level, and this
               month's listing allowance (the personal equivalent of the Business
               Centre's tier card). */}
-          {!effBiz && allowance && !hubView && <PersonalLevelCard d={allowance} />}
+          {!effBiz && !isAgent && allowance && !hubView && <PersonalLevelCard d={allowance} />}
 
           {section === 'hub' && hubView && <HubListView hubKey={hubView} title={hubTitle} />}
 
@@ -417,6 +427,11 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             <BusinessCentre businessVerified={me?.businessVerified} />
             {/* Admin Centre folded into the Business Centre (bank/payouts, profile,
                 verification, account) — no separate menu item on the business hub. */}
+            <AdminCentre me={me} onReload={onReload} payout={payout} setupPayouts={setupPayouts} openPanel={openPanel} goInterests={() => setSection('employment')} />
+          </>)}
+
+          {section === 'agent' && isAgent && (<>
+            <AgentCentre />
             <AdminCentre me={me} onReload={onReload} payout={payout} setupPayouts={setupPayouts} openPanel={openPanel} goInterests={() => setSection('employment')} />
           </>)}
 
