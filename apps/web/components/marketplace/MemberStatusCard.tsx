@@ -1,6 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { trpcAuthed } from '@/lib/authToken'
+import { uploadVerificationDoc } from '@/lib/storage'
 import { MEMBER_STATUSES, MEMBER_STATUS_IDS } from '@grabitt/design-tokens'
 import { t } from '@/lib/i18n'
 
@@ -17,9 +18,27 @@ export default function MemberStatusCard() {
   const [evidence, setEvidence] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [docName, setDocName] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uid, setUid] = useState<string | null>(null)
 
   const load = () => trpcAuthed().status.mine.query().then(d => setMine(d as unknown as Mine)).catch(() => {})
-  useEffect(() => { load() }, [])
+  useEffect(() => { load(); trpcAuthed().users.me.query().then((u: any) => setUid(u?.id ?? null)).catch(() => {}) }, [])
+
+  // Upload a proof document (charity registration certificate etc.) to the
+  // private verification bucket; the returned path is stored as the evidence.
+  const onPickDoc = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (e.target) e.target.value = ''
+    if (!file || !uid) return
+    setUploading(true); setMsg('')
+    try {
+      const path = await uploadVerificationDoc(file, uid, 'registration')
+      setEvidence(path); setDocName(file.name)
+    } catch (err: any) { setMsg(err?.message ? String(err.message) : 'Could not upload document') }
+    finally { setUploading(false) }
+  }
   // Deep-link ?apply=charity (from the Sell popup's Charity card) pre-opens that
   // application straight away.
   useEffect(() => {
@@ -34,7 +53,7 @@ export default function MemberStatusCard() {
     try {
       await trpcAuthed().status.applyFor.mutate({ kind: applyFor as never, ...(details.trim() ? { details: details.trim() } : {}), ...(evidence.trim() ? { evidenceUrl: evidence.trim() } : {}) })
       setMsg('✓ Application submitted — we’ll review it shortly.')
-      setApplyFor(null); setDetails(''); setEvidence(''); load()
+      setApplyFor(null); setDetails(''); setEvidence(''); setDocName(''); load()
     } catch (e: any) { setMsg(e?.message ? String(e.message) : 'Could not submit') }
     finally { setBusy(false) }
   }
@@ -79,8 +98,18 @@ export default function MemberStatusCard() {
                 <div style={{ marginTop: 10, borderTop: '1px solid #f4efe8', paddingTop: 10 }}>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888', marginBottom: 5 }}>{t('Evidence needed')}: {s.evidence}</div>
                   <input value={details} onChange={e => setDetails(e.target.value)} placeholder={id === 'charity' ? t('Charity name & registration number') : id === 'student' ? t('Institution & course') : t('Employer / service')} style={field} />
-                  <input value={evidence} onChange={e => setEvidence(e.target.value)} placeholder={t('Link to evidence (optional) — e.g. a photo of your ID')} style={field} />
-                  <button onClick={submit} disabled={busy} style={{ marginTop: 4, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: busy ? 'wait' : 'pointer' }}>{busy ? t('Submitting…') : t('Submit application')}</button>
+                  {id === 'charity' && (
+                    <div style={{ marginBottom: 8 }}>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#666', marginBottom: 4 }}>{t('Proof of charity registration')} <span style={{ color: '#ef4444' }}>*</span></div>
+                      <input ref={fileRef} type="file" accept="image/*,application/pdf" onChange={onPickDoc} style={{ display: 'none' }} />
+                      <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} style={{ width: '100%', border: '1.5px dashed #d8c9b4', background: '#fffdf9', borderRadius: 10, padding: '11px 12px', cursor: uploading ? 'wait' : 'pointer', color: docName ? '#16a34a' : '#8a7a63', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>
+                        {uploading ? t('Uploading…') : docName ? `✓ ${docName}` : t('⬆️ Upload registration certificate (PDF or photo)')}
+                      </button>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, color: '#aaa', marginTop: 3 }}>{t('Stored privately — only seen by our review team. We approve charities manually.')}</div>
+                    </div>
+                  )}
+                  {id !== 'charity' && <input value={evidence} onChange={e => setEvidence(e.target.value)} placeholder={t('Link to evidence (optional) — e.g. a photo of your ID')} style={field} />}
+                  <button onClick={submit} disabled={busy || (id === 'charity' && !evidence)} style={{ marginTop: 4, background: (id === 'charity' && !evidence) ? '#d8c9b4' : 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: busy ? 'wait' : (id === 'charity' && !evidence) ? 'not-allowed' : 'pointer' }}>{busy ? t('Submitting…') : (id === 'charity' && !evidence) ? t('Upload proof to submit') : t('Submit application')}</button>
                 </div>
               )}
             </div>

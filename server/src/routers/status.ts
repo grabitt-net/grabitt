@@ -23,7 +23,9 @@ export const statusRouter = router({
     .input(z.object({
       kind: z.enum(MEMBER_STATUS_IDS as [string, ...string[]]),
       details: z.string().max(300).optional(),
-      evidenceUrl: z.string().url().max(500).optional(),
+      // Either an external link, or a storage path to an uploaded document in the
+      // private `verification` bucket (charity proof of registration).
+      evidenceUrl: z.string().max(500).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const existing = await ctx.prisma.statusApplication.findFirst({ where: { userId: ctx.user.id, kind: input.kind, status: 'pending' } })
