@@ -3351,7 +3351,7 @@ function PanelBody() {
     // Always start on Photos — even when a category is prefilled — so the guided
     // flow never skips the images step. (A prefilled category still pre-selects
     // the department on the Details step.)
-    const [step, setStep] = useState<'photos'|'details'|'price'|'preview'|'done'>('photos')
+    const [step, setStep] = useState<'photos'|'details'|'price'|'delivery'|'upgrades'|'preview'|'done'>('photos')
     const [photos, setPhotos] = useState<string[]>([])   // data URLs for preview
     const [photoFiles, setPhotoFiles] = useState<File[]>([])
     const [title, setTitle] = useState('')
@@ -3387,13 +3387,17 @@ function PanelBody() {
     // (Photos are re-added on resume.) Cleared once the listing goes live.
     const DRAFT_KEY = 'grabitt_listing_draft'
     const [draftFound, setDraftFound] = useState<Record<string, unknown> | null>(null)
-    const draftBody = JSON.stringify({ title, dept, condition, desc, price, brand, colour, size, attrs, stock, town, offersDelivery, deliveryMethod, deliveryFee, autoAcceptMin })
+    const draftBody = JSON.stringify({ title, dept, condition, desc, price, brand, colour, size, attrs, stock, town, offersDelivery, deliveryMethod, deliveryFee, autoAcceptMin, grabItNow, featured })
+    // Auto-save the draft continuously as you go — the moment there's anything
+    // worth keeping (any typed field, chosen options, delivery or upgrades),
+    // not only once a title is entered. (Photos are re-added on resume.)
+    const draftHasContent = !!(title.trim() || desc.trim() || price.trim() || brand.trim() || colour.trim() || size.trim() || Object.keys(attrs).length || offersDelivery || grabItNow || featured)
     useEffect(() => {
       if (step === 'done') { try { localStorage.removeItem(DRAFT_KEY) } catch {} ; return }
-      if (title.trim() || desc.trim() || price.trim()) { try { localStorage.setItem(DRAFT_KEY, draftBody) } catch {} }
-    }, [draftBody, step])
+      if (draftHasContent) { try { localStorage.setItem(DRAFT_KEY, draftBody) } catch {} }
+    }, [draftBody, step, draftHasContent])
     useEffect(() => {
-      try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const d = JSON.parse(raw); if (d && (d.title || d.desc || d.price)) setDraftFound(d) } } catch {}
+      try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const d = JSON.parse(raw); if (d && (d.title || d.desc || d.price || d.brand || (d.attrs && Object.keys(d.attrs).length) || d.offersDelivery || d.grabItNow || d.featured)) setDraftFound(d) } } catch {}
     }, [])
     const restoreDraft = () => {
       const d = draftFound; if (!d) return
@@ -3401,11 +3405,12 @@ function PanelBody() {
       setDesc((d.desc as string) || ''); setPrice((d.price as string) || ''); setBrand((d.brand as string) || ''); setColour((d.colour as string) || ''); setSize((d.size as string) || '')
       setAttrs((d.attrs as Record<string, string>) || {}); setStock((d.stock as string) || '1'); setTown((d.town as string) || 'Las Palmas')
       setOffersDelivery(!!d.offersDelivery); setDeliveryMethod((d.deliveryMethod as 'courier' | 'in_person') || 'courier'); setDeliveryFee((d.deliveryFee as string) || ''); setAutoAcceptMin((d.autoAcceptMin as string) || '')
+      setGrabItNow(!!d.grabItNow); setFeatured(!!d.featured)
       setStep('details'); setDraftFound(null)
     }
     const discardDraft = () => { try { localStorage.removeItem(DRAFT_KEY) } catch {} ; setDraftFound(null) }
 
-    const STEPS = ['photos','details','price','preview'] as const
+    const STEPS = ['photos','details','price','delivery','upgrades','preview'] as const
     const stepIdx = STEPS.indexOf(step as typeof STEPS[number])
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -3449,8 +3454,10 @@ function PanelBody() {
       </ActionPanel>
     )
 
+    // Persistent: clicking the backdrop does NOT close the listing form, so a
+    // stray click never loses a half-made listing. Use the ✕ button to close.
     return (
-      <div onClick={closePanel} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }}>
+      <div className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }}>
         <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
 
           {/* Header */}
@@ -3461,7 +3468,7 @@ function PanelBody() {
 
           {/* Step tabs — matches the recruitment / property forms */}
           <div style={{ padding: '12px 16px 0', flexShrink: 0 }}>
-            <FkStepTabs steps={[t('Photos'), t('Details'), t('Price'), t('Review')]} icons={['tag', 'file', 'coins', 'eye']} current={Math.max(stepIdx, 0)} onSelect={i => {
+            <FkStepTabs steps={[t('Photos'), t('Details'), t('Price'), t('Delivery'), t('Upgrades'), t('Review')]} icons={['tag', 'file', 'coins', 'truck', 'sparkle', 'eye']} current={Math.max(stepIdx, 0)} onSelect={i => {
               // Can't jump past Photos until at least 4 are added.
               if (STEPS[i] !== 'photos' && photos.length < 4) return
               setStep(STEPS[i])
@@ -3663,17 +3670,45 @@ function PanelBody() {
 
                 {!freeItem && <MultibuyEditor value={multibuyTiers} onChange={setMultibuyTiers} />}
 
-                {/* Delivery option */}
+                {/* Fee explainer */}
+                {price && parseFloat(price) > 0 && (
+                  <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 12, marginBottom: 12 }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 4 }}>If it sells at this price, you&apos;ll receive</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#999', marginBottom: 8, lineHeight: 1.45 }}>Listing is free — there&apos;s nothing to pay now. We only take our commission from the sale, and only once it sells.</div>
+                    {[['Sale price', `€${parseFloat(price).toFixed(2)}`],['Our commission (8%)', `-€${(parseFloat(price) * 0.08).toFixed(2)}`],['You receive', `€${(parseFloat(price) * 0.92).toFixed(2)}`]].map(([l, v], i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderTop: i === 2 ? '1px solid #ece3d7' : 'none', marginTop: i === 2 ? 4 : 0, paddingTop: i === 2 ? 6 : 3 }}>
+                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: i === 2 ? 800 : 400, color: i === 2 ? 'var(--dark)' : '#555' }}>{l}</span>
+                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: i === 2 ? 13 : 11, fontWeight: 900, color: i === 2 ? 'var(--sage)' : '#555' }}>{v}</span>
+                      </div>
+                    ))}
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, color: '#aaa', marginTop: 6 }}>Grabber grade · your commission falls as you level up.</div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── Step 4: Delivery ── */}
+            {step === 'delivery' && (
+              <>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5, marginBottom: 12 }}>How will the buyer receive this item?</div>
+                {/* Collection only */}
+                <div onClick={() => setOffersDelivery(false)} style={{ display: 'flex', gap: 12, background: !offersDelivery ? '#FFF3EE' : '#faf7f4', border: `1.5px solid ${!offersDelivery ? 'var(--orange)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10, cursor: 'pointer', alignItems: 'center' }}>
+                  <div style={{ fontSize: 26, flexShrink: 0 }}>🤝</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Collection only</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Buyer collects in person or you meet locally. Funds release when you confirm handover with a QR / code.</div>
+                  </div>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${!offersDelivery ? 'var(--orange)' : '#ccc'}`, background: !offersDelivery ? 'var(--orange)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{!offersDelivery && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}</div>
+                </div>
+                {/* Offer delivery */}
                 <div style={{ background: '#faf7f4', border: `1.5px solid ${offersDelivery ? 'var(--ocean)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
-                  <div onClick={() => setOffersDelivery(v => !v)} style={{ display: 'flex', gap: 12, cursor: 'pointer', alignItems: 'center' }}>
+                  <div onClick={() => setOffersDelivery(true)} style={{ display: 'flex', gap: 12, cursor: 'pointer', alignItems: 'center' }}>
                     <div style={{ fontSize: 26, flexShrink: 0 }}>🚚</div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Offer delivery</div>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Let buyers choose delivery at checkout. Leave the fee at €0 for free delivery.</div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Also let buyers choose delivery at checkout. Leave the fee at €0 for free delivery.</div>
                     </div>
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${offersDelivery ? 'var(--ocean)' : '#ccc'}`, background: offersDelivery ? 'var(--ocean)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {offersDelivery && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}
-                    </div>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${offersDelivery ? 'var(--ocean)' : '#ccc'}`, background: offersDelivery ? 'var(--ocean)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{offersDelivery && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}</div>
                   </div>
                   {offersDelivery && (
                     <div style={{ marginTop: 12 }}>
@@ -3696,7 +3731,13 @@ function PanelBody() {
                     </div>
                   )}
                 </div>
+              </>
+            )}
 
+            {/* ── Step 5: Upgrades ── */}
+            {step === 'upgrades' && (
+              <>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5, marginBottom: 12 }}>Optional paid boosts to help your item sell faster. You can skip these and publish for free.</div>
                 {/* Grab It Now */}
                 <div onClick={() => setGrabItNow(v => !v)} style={{ display: 'flex', gap: 12, background: grabItNow ? '#FFF3EE' : '#faf7f4', border: `1.5px solid ${grabItNow ? 'var(--orange)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10, cursor: 'pointer', alignItems: 'flex-start' }}>
                   <div style={{ fontSize: 26, flexShrink: 0 }}>⚡</div>
@@ -3711,7 +3752,6 @@ function PanelBody() {
                     {grabItNow && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}
                   </div>
                 </div>
-
                 {/* Featured */}
                 <div onClick={() => setFeatured(v => !v)} style={{ display: 'flex', gap: 12, background: featured ? '#f0fdf4' : '#faf7f4', border: `1.5px solid ${featured ? 'var(--sage)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 16, cursor: 'pointer', alignItems: 'flex-start' }}>
                   <div style={{ fontSize: 26, flexShrink: 0 }}>👀</div>
@@ -3726,25 +3766,10 @@ function PanelBody() {
                     {featured && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}
                   </div>
                 </div>
-
-                {/* Fee explainer */}
-                {price && parseFloat(price) > 0 && (
-                  <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 12, marginBottom: 12 }}>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 4 }}>If it sells at this price, you&apos;ll receive</div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#999', marginBottom: 8, lineHeight: 1.45 }}>Listing is free — there&apos;s nothing to pay now. We only take our commission from the sale, and only once it sells.</div>
-                    {[['Sale price', `€${parseFloat(price).toFixed(2)}`],['Our commission (8%)', `-€${(parseFloat(price) * 0.08).toFixed(2)}`],['You receive', `€${(parseFloat(price) * 0.92).toFixed(2)}`]].map(([l, v], i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderTop: i === 2 ? '1px solid #ece3d7' : 'none', marginTop: i === 2 ? 4 : 0, paddingTop: i === 2 ? 6 : 3 }}>
-                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: i === 2 ? 800 : 400, color: i === 2 ? 'var(--dark)' : '#555' }}>{l}</span>
-                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: i === 2 ? 13 : 11, fontWeight: 900, color: i === 2 ? 'var(--sage)' : '#555' }}>{v}</span>
-                      </div>
-                    ))}
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, color: '#aaa', marginTop: 6 }}>Grabber grade · your commission falls as you level up.</div>
-                  </div>
-                )}
               </>
             )}
 
-            {/* ── Step 4: Preview ── */}
+            {/* ── Step 6: Review ── */}
             {step === 'preview' && (
               <>
                 {/* Thumbnail */}
