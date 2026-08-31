@@ -941,12 +941,16 @@ function PanelBody() {
   if (panel.id === 'sell') {
     // CSV bulk import hidden for now (reintroduce later via NEXT_PUBLIC_CSV_IMPORT=1).
     const CSV_IMPORT_ENABLED = process.env.NEXT_PUBLIC_CSV_IMPORT === '1'
-    // One card per listing type, laid out four-in-a-row. Each carries its own
-    // accent colour for a cleaner, more designed chooser. (Business/Charity
-    // sign-up upsells were removed from here — not relevant to listing.)
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [sellMe, setSellMe] = useState<{ isBusiness: boolean } | null>(null)
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => { getTrpcClient().then(c => c.users.me.query()).then((u: any) => setSellMe({ isBusiness: !!u?.isBusiness })).catch(() => setSellMe({ isBusiness: false })) }, [])
+    // One card per listing type, laid out in a row. Jobs are a Business-only
+    // feature, so personal accounts don't see "Post a job". Property is shown to
+    // everyone (personal accounts list under their own personal allowance).
     const TYPES: { icon: string; title: string; desc: string; accent: string; tint: string; action: () => void }[] = [
       { icon: '🏡', title: 'Sell an item', desc: 'Furniture, tech & more', accent: 'var(--orange)', tint: '#FFF3EE', action: () => openPanel('createListing') },
-      { icon: '💼', title: 'Post a job', desc: 'Find staff fast', accent: '#2193b0', tint: '#e8f6fb', action: () => { closePanel(); window.location.href = '/jobs/new' } },
+      ...(sellMe?.isBusiness ? [{ icon: '💼', title: 'Post a job', desc: 'Find staff fast', accent: '#2193b0', tint: '#e8f6fb', action: () => { closePanel(); window.location.href = '/jobs/new' } }] : []),
       { icon: '🏠', title: 'List a property', desc: 'Rent or sell a home', accent: '#0f9d76', tint: '#e6f7f1', action: () => { closePanel(); window.location.href = '/property/new' } },
       { icon: '🔧', title: 'Offer a service', desc: 'Advertise in Handy Help', accent: '#8b5cf6', tint: '#f1ecfe', action: () => openPanel('handyPost', { kind: 'offer' }) },
     ]
@@ -958,7 +962,7 @@ function PanelBody() {
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888' }}>Fees from 2.5% · Secure Stripe payments</div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${TYPES.length}, minmax(0, 1fr))`, gap: 8 }}>
           {TYPES.map((c, i) => (
             <button key={i} onClick={c.action} style={card}>
               <span style={{ width: 46, height: 46, borderRadius: '50%', background: c.tint, color: c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{c.icon}</span>
