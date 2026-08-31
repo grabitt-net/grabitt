@@ -109,9 +109,13 @@ export default function BannerSlot({ position, page, aspect = '4.5 / 1', radius 
     } catch { if (b.linkUrl) window.location.href = b.linkUrl }
   }
 
+  // Show the WHOLE uploaded banner — never crop it. We only bound it (full slot
+  // width, max 250px tall) and centre it, so whatever aspect ratio the advertiser
+  // supplies is displayed intact. (Forcing a fixed aspect + object-fit:cover used
+  // to crop the sides of any banner that wasn't exactly the slot ratio.)
   const inner = (
-    <div style={{ position: 'relative', width: '100%', aspectRatio: aspect, maxHeight: 250, borderRadius: radius, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', background: '#f5f0e8' }}>
-      <img src={b.imageUrl} alt={b.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+    <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', borderRadius: radius, overflow: 'hidden' }}>
+      <img src={b.imageUrl} alt={b.title} style={{ display: 'block', maxWidth: '100%', maxHeight: 250, width: 'auto', height: 'auto', borderRadius: radius, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
       {banners.length > 1 && (
         <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
           {banners.map((_, i) => (
