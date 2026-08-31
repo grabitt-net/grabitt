@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { renderArticleBody } from '@/lib/hashtags'
 import InfoPage from '@/components/marketplace/InfoPage'
 import { createLooseTrpcClient } from '@/lib/trpc'
 
@@ -27,7 +28,7 @@ export default function EconomicArticlePage() {
         <div style={{ textAlign: 'center', padding: 50, fontFamily: 'var(--font-ui)', color: '#aaa' }}>Loading…</div>
       ) : (
         <div style={{ maxWidth: 680, margin: '0 auto' }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15.5, lineHeight: 1.75, color: '#2a2a2a', whiteSpace: 'pre-wrap' }}>{post.body}</div>
+          {renderArticleBody(post.body)}
           <div style={{ marginTop: 28 }}><Link href="/economic" style={{ color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontWeight: 800, textDecoration: 'none' }}>Back to Economic Living</Link></div>
         </div>
       )}

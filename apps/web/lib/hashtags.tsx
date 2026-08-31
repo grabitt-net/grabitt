@@ -6,6 +6,26 @@ import Link from 'next/link'
 // is preserved verbatim, including line breaks (the caller sets white-space).
 const HASHTAG = /#([\p{L}\p{N}_]{2,30})/gu
 
+// Render a CMS article body. New posts are HTML (from the rich-text editor);
+// legacy posts are plain text. HTML is lightly sanitised (script/style/on*/js:
+// stripped — authors are exec-only) and hashtags in its text are linkified.
+const HTMLISH = /<\/?[a-z][\s\S]*>/i
+export function renderArticleBody(body: string | null | undefined): React.ReactNode {
+  if (!body) return null
+  if (!HTMLISH.test(body)) {
+    return <div className="article-body" style={{ whiteSpace: 'pre-wrap' }}>{renderWithHashtags(body)}</div>
+  }
+  const safe = body
+    .replace(/<\s*(script|style)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
+    .replace(/javascript:/gi, '')
+    .split(/(<[^>]+>)/)
+    .map((seg, i) => (i % 2 === 1 ? seg : seg.replace(HASHTAG, (_m, w) => `<a href="/tag/${encodeURIComponent(String(w).toLowerCase())}">#${w}</a>`)))
+    .join('')
+  return <div className="article-body" dangerouslySetInnerHTML={{ __html: safe }} />
+}
+
 export function renderWithHashtags(text: string | null | undefined): React.ReactNode {
   if (!text) return text ?? null
   const out: React.ReactNode[] = []

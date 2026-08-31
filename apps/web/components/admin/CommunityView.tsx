@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { confirmDialog } from '@/lib/ui'
 import { useCrmApi } from './AdminApp'
 import ImageUploadField from './ImageUploadField'
+import RichTextEditor from './RichTextEditor'
 
 interface Post {
   id: string; title: string; excerpt: string; body: string; category: string
@@ -108,15 +109,15 @@ export default function CommunityView({ section = 'guide' }: { section?: Section
               <textarea value={form.excerpt} onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))} rows={2} style={{ ...inp, resize: 'vertical' }} />
             </Field></div>
             <div style={{ gridColumn: '1/-1' }}><Field label="Body (full article)">
-              <textarea value={form.body} onChange={e => setForm(f => ({ ...f, body: e.target.value }))} rows={8} style={{ ...inp, resize: 'vertical' }} />
+              <RichTextEditor value={form.body} onChange={html => setForm(f => ({ ...f, body: html }))} placeholder="Write the article — use the toolbar for bold, lists and links…" />
             </Field></div>
             <div style={{ gridColumn: '1/-1' }}>
               <ImageUploadField label="Cover image (optional)" kind="banner" value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} />
             </div>
             <Field label="Sort order"><input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: Number(e.target.value) }))} style={inp} /></Field>
             <div style={{ gridColumn: '1/-1' }}>
-              <Field label="Tags / hashtags"><input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="#launch #canaries #update — space or comma separated" style={inp} /></Field>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', marginTop: 4 }}>Make the post discoverable — these become clickable #tags linking to /tag.</div>
+              <Field label="Tags / hashtags"><TagInput value={form.tags} onChange={v => setForm(f => ({ ...f, tags: v }))} /></Field>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', marginTop: 4 }}>Type a word and press Enter (or comma) to add a #tag. These become clickable #tags linking to /tag.</div>
             </div>
           </div>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', cursor: 'pointer' }}>
@@ -155,6 +156,37 @@ export default function CommunityView({ section = 'guide' }: { section?: Section
 }
 
 const inp: React.CSSProperties = { width: '100%', padding: '7px 10px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontFamily: 'var(--font-ui)', fontSize: 12, boxSizing: 'border-box' }
+// Chip-style hashtag input. Stores a space-separated string of bare tags (no #);
+// each word becomes a #chip. Type + Enter/comma to add, Backspace to remove.
+function TagInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const tags = value.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean)
+  const [draft, setDraft] = useState('')
+  const add = (raw: string) => {
+    const t = raw.replace(/^#/, '').trim().toLowerCase().replace(/[^\p{L}\p{N}_]/gu, '')
+    if (t && !tags.includes(t)) onChange([...tags, t].join(' '))
+    setDraft('')
+  }
+  const remove = (t: string) => onChange(tags.filter(x => x !== t).join(' '))
+  return (
+    <div className="tagin">
+      {tags.map(t => (
+        <span key={t} className="tagin__chip">#{t}<button type="button" className="tagin__x" onClick={() => remove(t)} aria-label={`Remove ${t}`}>×</button></span>
+      ))}
+      <input
+        className="tagin__input"
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add(draft) }
+          else if (e.key === 'Backspace' && !draft && tags.length) remove(tags[tags.length - 1])
+        }}
+        onBlur={() => { if (draft.trim()) add(draft) }}
+        placeholder={tags.length ? 'Add another…' : '#launch #canaries…'}
+      />
+    </div>
+  )
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>

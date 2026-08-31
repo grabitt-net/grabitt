@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { renderArticleBody } from '@/lib/hashtags'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken } from '@/lib/authToken'
 import { PanelProvider } from '@/context/PanelContext'
@@ -50,7 +51,7 @@ export default function CommunityPostPage() {
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>{post.category}</div>
             <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 28, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.2, margin: '0 0 14px' }}>{post.title}</h1>
             <p style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 15, color: '#5a4d3a', lineHeight: 1.5, fontWeight: 700, marginBottom: 20 }}>{post.excerpt}</p>
-            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 14.5, color: '#444', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{post.body}</div>
+            {renderArticleBody(post.body)}
           </article>
         )}
       </div>

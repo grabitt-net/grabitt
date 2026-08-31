@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import InfoPage from '@/components/marketplace/InfoPage'
 import { createLooseTrpcClient } from '@/lib/trpc'
-import { renderWithHashtags } from '@/lib/hashtags'
+import { renderArticleBody } from '@/lib/hashtags'
 
 // A single News article — public reader.
 type Post = { id: string; title: string; body: string; category: string; emoji: string; imageUrl: string | null; createdAt: string; tags?: string[] }
@@ -28,7 +28,7 @@ export default function NewsArticlePage() {
         <div style={{ textAlign: 'center', padding: 50, fontFamily: 'var(--font-ui)', color: '#aaa' }}>Loading…</div>
       ) : (
         <div style={{ maxWidth: 680, margin: '0 auto' }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15.5, lineHeight: 1.75, color: '#2a2a2a', whiteSpace: 'pre-wrap' }}>{renderWithHashtags(post.body)}</div>
+          {renderArticleBody(post.body)}
           {post.tags && post.tags.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 22 }}>
               {post.tags.map(tag => (
