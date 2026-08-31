@@ -11,6 +11,11 @@ const sizeHint = (position: string) => {
   const aspect = BANNER_ASPECTS[position] ?? '1053 / 163'
   return `${recommendedSize(aspect).label} · ${aspect.replace(/\s/g, '')}`
 }
+// Exact pixel target for the uploader's dimension check.
+const expectSize = (position: string) => {
+  const { w, h } = recommendedSize(BANNER_ASPECTS[position] ?? '1053 / 163')
+  return { w, h }
+}
 
 // Every sellable/placeable banner position, with a friendly label. Order groups
 // them by area so the admin reads them like a map of the site.
@@ -194,7 +199,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
               </div>
             )}
             <div />
-            <div style={{ gridColumn: '1/-1' }}><ImageUploadField label={`Banner image (${sizeHint(form.position)})`} kind="banner" value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} /></div>
+            <div style={{ gridColumn: '1/-1' }}><ImageUploadField label={`Banner image (${sizeHint(form.position)})`} kind="banner" expect={expectSize(form.position)} value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} /></div>
             <div style={{ gridColumn: '1/-1' }}><Field label="Link URL (optional)"><input value={form.linkUrl} onChange={e => setForm(f => ({ ...f, linkUrl: e.target.value }))} placeholder="https://… or /listings" style={inp} /></Field></div>
             <Field label="Start date"><input type="date" value={form.startsAt} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value }))} style={inp} /></Field>
             <Field label="End date"><input type="date" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))} style={inp} /></Field>
