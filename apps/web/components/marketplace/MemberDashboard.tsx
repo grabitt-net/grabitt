@@ -1250,7 +1250,7 @@ function PersonalLevelCard({ d }: { d: AllowanceData }) {
           </div>
         </div>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#5a6b8c', marginTop: 8, lineHeight: 1.5 }}>
-          {t('The item-sale fee. Property and job listings are never charged a sales fee.')}
+          {t('The item-sale fee. Property listings are never charged a sales fee.')}
         </div>
 
         {/* Rating + sales */}
@@ -1301,9 +1301,10 @@ function PersonalLevelCard({ d }: { d: AllowanceData }) {
       {/* Monthly listing allowance */}
       <div style={card}>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: '#1e2b55', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>{t('This month’s listing allowance')}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        {/* Personal accounts: Items + Property only. Jobs are Business-only, so
+            they're not shown here. */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
           <AllowCard label={t('Items')} icon="🛍️" used={d.usage.items} cap={d.caps.items} color="var(--orange)" />
-          <AllowCard label={t('Job adverts')} icon="💼" used={d.usage.jobs} cap={d.caps.jobs} color="#3b82f6" />
           <AllowCard label={t('Property')} icon="🏠" used={d.usage.property} cap={d.caps.property} color="#0f766e" />
         </div>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#7a8299', marginTop: 10, lineHeight: 1.5 }}>
