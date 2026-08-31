@@ -234,7 +234,7 @@ function PlaceListingButton({ category }: { category?: string }) {
     <button onClick={() => openPanel('createListing', category ? { category } : undefined)} style={{
       display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--orange)', color: '#fff',
       border: 'none', borderRadius: 999, padding: '6px 13px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap',
-    }}>➕ List an item</button>
+    }}>List an item</button>
   )
 }
 
