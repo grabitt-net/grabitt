@@ -474,6 +474,11 @@ model User {
   // whether they hold the Founding Member badge.
   memberStatus       String?
   statusDiscountPct  Decimal?  @db.Decimal(5, 2)
+  // Charity accounts (memberStatus == 'charity') get a storefront like a business
+  // plus these registration details, captured in their Charity Hub.
+  charityRegName     String?
+  charityRegNo       String?
+  charityCountry     String?
   // Admin per-account fee override (absolute item-sale fee %, e.g. 3.00). When
   // set it replaces the grade fee as the base; discounts still apply on top.
   feeOverridePct     Decimal?  @db.Decimal(5, 2)

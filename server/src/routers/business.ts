@@ -94,6 +94,7 @@ export type PendingVerification = {
 export type MyStorefront = {
   shop: StorefrontPublic['shop'] | null
   isBusiness: boolean; businessVerified: boolean; businessName: string | null
+  memberStatus: string | null
 }
 
 export const businessRouter = router({
@@ -245,7 +246,7 @@ export const businessRouter = router({
   myStorefront: protectedProcedure.query(async ({ ctx }): Promise<MyStorefront> => {
     const [shop, user] = await Promise.all([
       ctx.prisma.storefront.findUnique({ where: { userId: ctx.user.id } }),
-      ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, businessVerified: true, businessName: true } }),
+      ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, businessVerified: true, businessName: true, memberStatus: true } }),
     ])
     return { shop: shop as unknown as MyStorefront['shop'], ...user }
   }),
@@ -269,10 +270,11 @@ export const businessRouter = router({
     .mutation(async ({ ctx, input }): Promise<{ ok: true }> => {
       const user = await ctx.prisma.user.findUniqueOrThrow({
         where: { id: ctx.user.id },
-        select: { isBusiness: true, businessName: true },
+        select: { isBusiness: true, businessName: true, memberStatus: true, charityRegName: true },
       })
-      if (!user.isBusiness) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'A storefront is a Business account feature' })
+      // Charity accounts get a storefront on the same footing as a business.
+      if (!user.isBusiness && user.memberStatus !== 'charity') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'A storefront is a Business or Charity account feature' })
       }
 
       const { slug, ...rest } = input
@@ -296,10 +298,11 @@ export const businessRouter = router({
         return { ok: true as const }
       }
 
-      // First save: derive a free address from the business name.
-      let candidate = slugify(slug || user.businessName || 'shop')
+      // First save: derive a free address from the business/charity name.
+      const baseName = user.businessName || user.charityRegName || 'shop'
+      let candidate = slugify(slug || baseName)
       for (let n = 2; await ctx.prisma.storefront.findUnique({ where: { slug: candidate } }); n++) {
-        candidate = `${slugify(slug || user.businessName || 'shop')}-${n}`
+        candidate = `${slugify(slug || baseName)}-${n}`
       }
       await ctx.prisma.storefront.create({ data: { userId: ctx.user.id, slug: candidate, ...data } })
       return { ok: true as const }

@@ -36,6 +36,7 @@ import { accountLevelsRouter } from './routers/accountLevels'
 import { sponsorshipRouter } from './routers/sponsorship'
 import { discountsRouter } from './routers/discounts'
 import { execTasksRouter } from './routers/execTasks'
+import { charityRouter } from './routers/charity'
 
 export const appRouter = router({
   auth: authRouter,
@@ -44,6 +45,7 @@ export const appRouter = router({
   follow: followRouter,
   seekers: seekersRouter,
   business: businessRouter,
+  charity: charityRouter,
   transactions: transactionsRouter,
   offers: offersRouter,
   messages: messagesRouter,

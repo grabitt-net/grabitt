@@ -17,6 +17,7 @@ import AffiliateCard from './AffiliateCard'
 import InboxClient from './InboxClient'
 import BannerSlot from './BannerSlot'
 import BusinessCentre from './BusinessCentre'
+import CharityCentre from './CharityCentre'
 import AgentProfileCard from './AgentProfileCard'
 import JobCategories from './JobCategories'
 import { deptEmoji, toPanelItem } from '@/lib/listingMap'
@@ -29,7 +30,7 @@ import { t } from '@/lib/i18n'
 // snapshot · dashboard pills) over an 8-section left menu that swaps the right
 // panel. It sits BELOW the existing header + Grabitt NOW promo.
 
-type SectionId = 'business' | 'messages' | 'employment' | 'aboutme' | 'listings' | 'disputes' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'gdpr' | 'suggest' | 'hub'
+type SectionId = 'business' | 'charity' | 'messages' | 'employment' | 'aboutme' | 'listings' | 'disputes' | 'admin' | 'saved' | 'recommended' | 'recent' | 'loyalty' | 'addbiz' | 'activity' | 'gdpr' | 'suggest' | 'hub'
 type Seg = 'active' | 'sold' | 'draft' | 'buying'
 
 const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
@@ -73,7 +74,7 @@ const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', bor
 const primaryBtn: React.CSSProperties = { background: '#fff', color: 'var(--orange)', border: '2px solid #111', borderRadius: 12, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }
 function Muted({ children }: { children: React.ReactNode }) { return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '16px 0', textAlign: 'center' }}>{children}</div> }
 
-const SECTION_IDS = new Set<string>(['business', 'messages', 'employment', 'aboutme', 'listings', 'disputes', 'admin', 'saved', 'recommended', 'recent', 'loyalty', 'addbiz', 'activity', 'gdpr'])
+const SECTION_IDS = new Set<string>(['business', 'charity', 'messages', 'employment', 'aboutme', 'listings', 'disputes', 'admin', 'saved', 'recommended', 'recent', 'loyalty', 'addbiz', 'activity', 'gdpr'])
 
 export default function MemberDashboard({ me, onReload }: { me: any; onReload: () => void }) {
   const router = useRouter()
@@ -83,9 +84,11 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   // "show the business hub" — used for all layout decisions below.
   const [personalView, setPersonalView] = useState(false)
   const effBiz = !!me?.isBusiness && !personalView
+  // Charity accounts get a Charity Hub in place of the personal "My Hub" landing.
+  const isCharity = me?.memberStatus === 'charity' && !me?.isBusiness
   // Land on the account's own home — Business Centre for business, the My Hub
   // overview for everyone else — rather than dropping straight into Messages.
-  const [section, setSection] = useState<SectionId>(me?.isBusiness ? 'business' : 'hub')
+  const [section, setSection] = useState<SectionId>(me?.isBusiness ? 'business' : me?.memberStatus === 'charity' ? 'charity' : 'hub')
   // `me` loads async, so the initial default above can be wrong (defaults to
   // 'hub' before we know it's a business account). Set the landing section once,
   // when `me` first resolves — Business Centre for business, My Hub otherwise —
@@ -98,7 +101,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     if (s && SECTION_IDS.has(s)) { setSection(s as SectionId); didInitSection.current = true; return }
     if (me && !didInitSection.current) {
       didInitSection.current = true
-      setSection(me.isBusiness ? 'business' : 'hub')
+      setSection(me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'hub')
     }
   }, [params, me])
   const [seg, setSeg] = useState<Seg>('active')
@@ -112,7 +115,12 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
        // Business Centre) and no separate Admin Centre (folded into Business
        // Centre). "Employment & CV" becomes the employer recruiting view.
        ...SECTIONS.filter(s => !['addbiz', 'aboutme', 'admin'].includes(s.id)).map(s => s.id === 'employment' ? { ...s, label: 'Recruitment' } : s)]
-    : SECTIONS
+    : isCharity
+      // Charity accounts land on their Charity Hub; keep "add business/charity"
+      // out since they're already set up.
+      ? [{ id: 'charity' as SectionId, label: 'Charity Hub', icon: 'heart' as IconName },
+         ...SECTIONS.filter(s => s.id !== 'addbiz')]
+      : SECTIONS
 
   // Clicking a My Hub card opens its list in the panel below.
   const [hubView, setHubView] = useState<MetricKey | null>(null)
@@ -389,6 +397,12 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             <BusinessCentre businessVerified={me?.businessVerified} />
             {/* Admin Centre folded into the Business Centre (bank/payouts, profile,
                 verification, account) — no separate menu item on the business hub. */}
+            <AdminCentre me={me} onReload={onReload} payout={payout} setupPayouts={setupPayouts} openPanel={openPanel} goInterests={() => setSection('employment')} />
+          </>)}
+
+          {section === 'charity' && isCharity && (<>
+            <CharityCentre />
+            {/* Charities manage their bank/payouts & profile in the Admin Centre too. */}
             <AdminCentre me={me} onReload={onReload} payout={payout} setupPayouts={setupPayouts} openPanel={openPanel} goInterests={() => setSection('employment')} />
           </>)}
 

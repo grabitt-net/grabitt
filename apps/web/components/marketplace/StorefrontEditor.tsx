@@ -50,9 +50,11 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
       trpcAuthed().business.myStorefront.query().catch(() => null),
       trpcAuthed().listings.mine.query().catch(() => []),
     ]).then(([s, listings]) => {
-      const res = s as { shop: Shop | null; isBusiness: boolean; businessVerified: boolean; businessName: string | null } | null
-      setIsBiz(!!res?.isBusiness)
-      setVerified(!!res?.businessVerified)
+      const res = s as { shop: Shop | null; isBusiness: boolean; businessVerified: boolean; businessName: string | null; memberStatus?: string | null } | null
+      // Charity accounts get a storefront on the same footing as a business.
+      setIsBiz(!!res?.isBusiness || res?.memberStatus === 'charity')
+      // A charity is verified by admin approval, so it can publish straight away.
+      setVerified(!!res?.businessVerified || res?.memberStatus === 'charity')
       setMine((listings as MyListing[]) ?? [])
       if (res?.shop) {
         setShop(res.shop)
