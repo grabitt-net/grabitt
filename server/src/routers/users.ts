@@ -4,7 +4,7 @@ import { getStripe } from '../lib/stripe'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { makeReferralCode } from './auth'
-import { PRICES, LISTING_CAPS, GRADE_THRESHOLDS } from '@grabitt/design-tokens'
+import { PRICES, LISTING_CAPS, GRADE_THRESHOLDS, FEE_RATES, PROPERTY_PRICING } from '@grabitt/design-tokens'
 import { sendSms } from '../lib/notify'
 import { createHash } from 'node:crypto'
 
@@ -27,38 +27,42 @@ export const usersRouter = router({
       where: { id: ctx.user.id },
       select: { grade: true, isBusiness: true, salesCount: true, avgRating: true },
     })
-    const rawCap = LISTING_CAPS[user.grade as keyof typeof LISTING_CAPS] ?? LISTING_CAPS.grabber
-    const cap = rawCap === Infinity ? null : rawCap
-    const monthStart = new Date()
-    monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
-    const used = await ctx.prisma.listing.count({
-      where: { sellerId: ctx.user.id, createdAt: { gte: monthStart } },
-    })
-    const resetsAt = new Date(monthStart)
-    resetsAt.setMonth(resetsAt.getMonth() + 1)
-
-    // Progress toward the next personal grade (grabber → dealer → trader → pro).
     const ORDER = ['grabber', 'dealer', 'trader', 'pro'] as const
-    const idx = Math.max(0, ORDER.indexOf(user.grade as typeof ORDER[number]))
+    const LABELS: Record<string, string> = { grabber: 'Grabber', dealer: 'Dealer', trader: 'Trader', pro: 'Pro' }
+    const grade = (ORDER.includes(user.grade as typeof ORDER[number]) ? user.grade : 'grabber') as typeof ORDER[number]
+
+    const rawCap = LISTING_CAPS[grade]
+    const itemCap = rawCap === Infinity ? null : rawCap
+
+    const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
+    const resetsAt = new Date(monthStart); resetsAt.setMonth(resetsAt.getMonth() + 1)
+    const [itemsUsed, propertyUsed] = await Promise.all([
+      // Items = everything except property/jobs (jobs aren't available to
+      // personal accounts anyway).
+      ctx.prisma.listing.count({ where: { sellerId: ctx.user.id, createdAt: { gte: monthStart }, department: { notIn: ['property', 'jobs'] } } }),
+      ctx.prisma.listing.count({ where: { sellerId: ctx.user.id, createdAt: { gte: monthStart }, department: 'property' } }),
+    ])
+
+    const idx = ORDER.indexOf(grade)
     const nextGrade = idx < ORDER.length - 1 ? ORDER[idx + 1] : null
     const th = nextGrade ? GRADE_THRESHOLDS[nextGrade as keyof typeof GRADE_THRESHOLDS] : null
     const sales = user.salesCount ?? 0
 
     return {
-      grade: user.grade,
+      grade,
+      gradeLabel: LABELS[grade],
       isBusiness: user.isBusiness,
-      cap,                                            // null = unlimited (Pro)
-      used,
-      remaining: cap === null ? null : Math.max(0, cap - used),
-      resetsAt: resetsAt.toISOString(),
-      // Progression
+      feePct: FEE_RATES[grade] * 100,
+      rating: user.avgRating != null ? Number(user.avgRating) : null,
       salesCount: sales,
-      avgRating: user.avgRating != null ? Number(user.avgRating) : null,
-      nextGrade,                                      // null = top grade (Pro)
-      nextCap: nextGrade ? (LISTING_CAPS[nextGrade as keyof typeof LISTING_CAPS] === Infinity ? null : LISTING_CAPS[nextGrade as keyof typeof LISTING_CAPS]) : null,
-      salesToNext: th ? Math.max(0, th.sales - sales) : 0,
-      nextSalesTarget: th ? th.sales : null,
-      nextRatingTarget: th ? th.rating : null,
+      // Personal free monthly caps: grade-based items, no jobs (business-only),
+      // 1 property. null = unlimited.
+      caps: { items: itemCap, jobs: 0, property: PROPERTY_PRICING.privateFreePerMonth },
+      usage: { items: itemsUsed, jobs: 0, property: propertyUsed },
+      resetsAt: resetsAt.toISOString(),
+      // The full grade ladder with fees, for the level indicator.
+      ladder: ORDER.map(g => ({ grade: g, label: LABELS[g], feePct: FEE_RATES[g] * 100 })),
+      next: nextGrade && th ? { grade: nextGrade, label: LABELS[nextGrade], feePct: FEE_RATES[nextGrade] * 100, needSales: th.sales, needRating: th.rating } : null,
     }
   }),
 

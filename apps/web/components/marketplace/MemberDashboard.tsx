@@ -1185,82 +1185,129 @@ function AdminCentre({ me, onReload, payout, setupPayouts, openPanel, goInterest
 }
 
 // ── Personal level & allowance card ──────────────────────────────────────────
+// Mirrors the Business Centre's tier + allowance card, for personal accounts:
+// grade, item-sale fee, rating & sales, the Grabber→Pro ladder, progress to the
+// next grade, and this month's Items / Job / Property allowance.
 type AllowanceData = {
-  grade: string; isBusiness: boolean
-  cap: number | null; used: number; remaining: number | null; resetsAt: string
-  salesCount: number; avgRating: number | null
-  nextGrade: string | null; nextCap: number | null
-  salesToNext: number; nextSalesTarget: number | null; nextRatingTarget: number | null
+  grade: string; gradeLabel: string; isBusiness: boolean; feePct: number
+  rating: number | null; salesCount: number
+  caps: { items: number | null; jobs: number; property: number }
+  usage: { items: number; jobs: number; property: number }
+  resetsAt: string
+  ladder: { grade: string; label: string; feePct: number }[]
+  next: { grade: string; label: string; feePct: number; needSales: number; needRating: number } | null
 }
 
-const GRADE_META: Record<string, { label: string; icon: string; color: string }> = {
-  grabber: { label: 'Grabber', icon: '🟠', color: 'var(--orange)' },
-  dealer:  { label: 'Dealer',  icon: '🥈', color: '#f59e0b' },
-  trader:  { label: 'Trader',  icon: '🥇', color: '#3b82f6' },
-  pro:     { label: 'Pro',     icon: '💎', color: '#7c3aed' },
-}
+const TIER_C: Record<string, string> = { grabber: 'var(--orange)', dealer: '#f59e0b', trader: '#3b82f6', pro: '#7c3aed' }
+const fmtPct = (p: number) => (p % 1 ? p.toFixed(1) : String(p)) + '%'
 
-// The personal equivalent of the Business Centre's tier card: current level,
-// progress toward the next level, and this month's listing allowance.
-function PersonalLevelCard({ d }: { d: AllowanceData }) {
-  const g = GRADE_META[d.grade] ?? GRADE_META.grabber
-  const next = d.nextGrade ? GRADE_META[d.nextGrade] : null
-  const salesPct = d.nextSalesTarget ? Math.min(100, (d.salesCount / d.nextSalesTarget) * 100) : 100
-  const allowPct = d.cap ? Math.min(100, (d.used / d.cap) * 100) : 0
-  const resets = new Date(d.resetsAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-  const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }
+function Crit({ label, have, need, decimals }: { label: string; have: number; need: number; decimals?: boolean }) {
+  const pct = need > 0 ? Math.min(100, (have / need) * 100) : 100
+  const fmt = (n: number) => decimals ? n.toFixed(1) : String(n)
   return (
-    <div style={{ display: 'grid', gap: 14, gridTemplateColumns: '1fr' }}>
-      {/* Current level + progress */}
-      <div style={{ ...card, background: `linear-gradient(135deg, ${g.color}14, #ffffff 60%)` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-          <span style={{ width: 46, height: 46, borderRadius: '50%', background: `${g.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{g.icon}</span>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 0.6 }}>{t('Your level')}</div>
-            <div style={{ fontFamily: 'var(--font-body)', fontSize: 19, fontWeight: 800, color: g.color }}>{t(g.label)}</div>
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--dark)' }}>{label}</span>
+        <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--dark)' }}>{fmt(have)} / {fmt(need)}</span>
+      </div>
+      <div style={{ height: 8, borderRadius: 4, background: '#eee7db', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: pct >= 100 ? '#16a34a' : 'var(--orange)', borderRadius: 4 }} />
+      </div>
+    </div>
+  )
+}
+
+function AllowCard({ label, icon, used, cap, color }: { label: string; icon: string; used: number; cap: number | null; color: string }) {
+  const pct = cap && cap > 0 ? Math.min(100, (used / cap) * 100) : 0
+  return (
+    <div style={{ background: '#fff', border: '1px solid #d7deec', borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
+      <div style={{ fontSize: 18, marginBottom: 2 }}>{icon}</div>
+      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: '#1e2b55' }}>{used} <span style={{ color: '#9aa3ba', fontSize: 12 }}>/ {cap === null ? '∞' : cap}</span></div>
+      <div style={{ height: 6, borderRadius: 3, background: '#eef0f4', overflow: 'hidden', margin: '6px 4px' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 3 }} />
+      </div>
+      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: '#7a8299', textTransform: 'uppercase', letterSpacing: 0.4 }}>{label}</div>
+    </div>
+  )
+}
+
+function PersonalLevelCard({ d }: { d: AllowanceData }) {
+  const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16 }
+  const resets = new Date(d.resetsAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Level + fee */}
+      <div style={{ ...card, background: '#eef3fc', border: '1.5px solid #d7deec' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ width: 46, height: 46, borderRadius: 12, background: '#1e2b55', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Icon name="user" size={24} strokeWidth={2} /></div>
+          <div style={{ flex: 1, minWidth: 140 }}>
+            <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 19, fontWeight: 700, color: '#1e2b55' }}>{t(d.gradeLabel)}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#5a6b8c' }}>{t('Your level')}</div>
           </div>
-          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-            <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 800, color: 'var(--dark)' }}>{d.salesCount}</div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#888' }}>{t('sales')}</div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--orange)' }}>{fmtPct(d.feePct)}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#7a8299', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('fee on item sales')}</div>
           </div>
         </div>
-        {next ? (
-          <>
-            <div style={{ height: 9, borderRadius: 5, background: '#f0e6d8', overflow: 'hidden', marginBottom: 6 }}>
-              <div style={{ height: '100%', width: `${salesPct}%`, background: g.color, borderRadius: 5 }} />
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#5a6b8c', marginTop: 8, lineHeight: 1.5 }}>
+          {t('The item-sale fee. Property and job listings are never charged a sales fee.')}
+        </div>
+
+        {/* Rating + sales */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+          <div style={{ flex: 1, background: '#fff', border: '1px solid #d7deec', borderRadius: 12, padding: '11px 12px', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: '#1e2b55' }}>{d.rating != null ? `★ ${d.rating.toFixed(1)}` : '★ —'}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#7a8299', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('rating')}</div>
+          </div>
+          <div style={{ flex: 1, background: '#fff', border: '1px solid #d7deec', borderRadius: 12, padding: '11px 12px', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: '#1e2b55' }}>{d.salesCount}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#7a8299', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('sales')}</div>
+          </div>
+        </div>
+
+        {/* Ladder */}
+        <div style={{ display: 'flex', gap: 6, marginTop: 14 }}>
+          {d.ladder.map((tier, i) => {
+            const on = tier.grade === d.grade
+            const reached = i <= d.ladder.findIndex(x => x.grade === d.grade)
+            return (
+              <div key={tier.grade} style={{ flex: 1, textAlign: 'center', background: on ? '#eef3fc' : reached ? `${TIER_C[tier.grade]}22` : '#f5f0e8', border: on ? '1.5px solid var(--orange)' : '1.5px solid transparent', borderRadius: 10, padding: '9px 4px' }}>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: on ? '#1e2b55' : reached ? TIER_C[tier.grade] : '#b7ab98' }}>{t(tier.label)}</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: on ? '#5a6b8c' : '#a99', marginTop: 2 }}>{fmtPct(tier.feePct)}</div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Progress to next */}
+        {d.next ? (
+          <div style={{ marginTop: 14, background: '#fff', border: '1px solid #d7deec', borderRadius: 12, padding: 12 }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>
+              {t('Climb to')} {t(d.next.label)} — {fmtPct(d.next.feePct)} {t('fee')}
             </div>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#5a5142' }}>
-              {d.salesToNext > 0
-                ? t('{n} more sales to reach {g}').replace('{n}', String(d.salesToNext)).replace('{g}', t(next.label))
-                : t('Sales target for {g} met — keep your rating up!').replace('{g}', t(next.label))}
-              {d.nextRatingTarget != null && <span style={{ color: '#888' }}> · {t('needs {r}★').replace('{r}', String(d.nextRatingTarget))}</span>}
+            <Crit label={t('Sales (last 90 days)')} have={d.salesCount} need={d.next.needSales} />
+            <Crit label={t('Average rating')} have={d.rating ?? 0} need={d.next.needRating} decimals />
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#1a1a1a', marginTop: 8, lineHeight: 1.5 }}>
+              {t('Levels are earned on a rolling 90-day basis — keep your numbers up to hold your level. If they slip, your level drops automatically.')}
             </div>
-          </>
+          </div>
         ) : (
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: g.color }}>{t('Top level reached — unlimited listings 🎉')}</div>
+          <div style={{ marginTop: 14, background: '#fff', border: '1px solid #d7deec', borderRadius: 12, padding: 12 }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--dark)' }}>{t('Top level reached 🎉')}</div>
+          </div>
         )}
       </div>
 
-      {/* This month's listing allowance */}
+      {/* Monthly listing allowance */}
       <div style={card}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 0.6 }}>{t('Listing allowance')}</span>
-          <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 800, color: 'var(--dark)' }}>
-            {d.cap === null ? t('Unlimited') : `${d.used} / ${d.cap}`}
-          </span>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: '#1e2b55', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>{t('This month’s listing allowance')}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          <AllowCard label={t('Items')} icon="🛍️" used={d.usage.items} cap={d.caps.items} color="var(--orange)" />
+          <AllowCard label={t('Job adverts')} icon="💼" used={d.usage.jobs} cap={d.caps.jobs} color="#3b82f6" />
+          <AllowCard label={t('Property')} icon="🏠" used={d.usage.property} cap={d.caps.property} color="#0f766e" />
         </div>
-        {d.cap !== null && (
-          <div style={{ height: 9, borderRadius: 5, background: '#f0e6d8', overflow: 'hidden', marginBottom: 7 }}>
-            <div style={{ height: '100%', width: `${allowPct}%`, background: d.remaining === 0 ? '#ef4444' : 'var(--orange)', borderRadius: 5 }} />
-          </div>
-        )}
-        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#777' }}>
-          {d.cap === null
-            ? t('Your level lets you list as much as you like.')
-            : d.remaining === 0
-              ? t('Allowance used — resets on {d}.').replace('{d}', resets)
-              : t('{n} free listings left this month · resets {d}.').replace('{n}', String(d.remaining)).replace('{d}', resets)}
-          {next && d.nextCap != null && <span style={{ color: '#aaa' }}> · {t('{g} unlocks {c}/mo').replace('{g}', t(next.label)).replace('{c}', String(d.nextCap))}</span>}
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#7a8299', marginTop: 10, lineHeight: 1.5 }}>
+          {t('Allowances reset on the 1st of each month ({d}). Once you hit a cap, extra listings are simply charged per listing.').replace('{d}', resets)}
         </div>
       </div>
     </div>
