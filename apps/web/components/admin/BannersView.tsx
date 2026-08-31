@@ -3,10 +3,14 @@ import { Fragment, useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
 import ImageUploadField from './ImageUploadField'
 import { BANNER_PAGE_OPTIONS, BANNER_CATEGORY_OPTIONS, BANNER_CATEGORY_SLUGS } from '@/lib/bannerPages'
+import { BANNER_ASPECTS, recommendedSize } from '@/components/marketplace/BannerSlot'
 
-// Banners are shown uncropped (up to 250px tall), so the exact ratio is up to
-// the advertiser — we just recommend a sharp, landscape source.
-const sizeHint = (_position: string) => 'landscape · ~1600px wide'
+// The exact upload size for a placement, e.g. "2000 × 444 px · 4.5/1". Design
+// the banner to this and it fills the slot edge-to-edge with no cropping.
+const sizeHint = (position: string) => {
+  const aspect = BANNER_ASPECTS[position] ?? '4.5 / 1'
+  return `${recommendedSize(aspect).label} · ${aspect.replace(/\s/g, '')}`
+}
 
 // Every sellable/placeable banner position, with a friendly label. Order groups
 // them by area so the admin reads them like a map of the site.
@@ -143,7 +147,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
                 {POSITIONS.map(([v, l]) => <option key={v} value={v}>{l} · {sizeHint(v)}</option>)}
               </select>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 700, color: 'var(--orange)', marginTop: 5 }}>
-                📐 Upload any landscape banner ({sizeHint(form.position)}). It&apos;s shown in full — never cropped — up to 250px tall, and scales to every screen. One image, no separate mobile/desktop versions.
+                📐 Design your banner to exactly {sizeHint(form.position)} and it fills the slot edge-to-edge with no cropping. One image, no separate mobile/desktop versions (it scales to every screen).
               </div>
             </Field>
             <Field label="Page target (optional — for category slots, e.g. motors)"><input value={form.pageTarget} onChange={e => setForm(f => ({ ...f, pageTarget: e.target.value }))} placeholder="blank = site-wide" style={inp} /></Field>
