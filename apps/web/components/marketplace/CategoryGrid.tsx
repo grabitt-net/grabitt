@@ -75,6 +75,10 @@ export default function CategoryGrid() {
         {categories.map(cat => {
           const showImg = cat.img && !failed[cat.name]
           const isActive = active === cat.name
+          // Handy Help is trialled as a full-width RECTANGULAR banner tile (so
+          // Steve can compare it against the round tiles). The rest stay round.
+          const rect = cat.name === 'Handy Help'
+          const radius = rect ? 16 : '50%'
           return (
             <button
               key={cat.name}
@@ -83,7 +87,8 @@ export default function CategoryGrid() {
               className="cat-card"
               style={{
                 position: 'relative', border: 'none', padding: 0, cursor: 'pointer',
-                borderRadius: '50%', overflow: 'hidden', aspectRatio: '1 / 1', background: '#f6f1e6',
+                borderRadius: radius, overflow: 'hidden', background: '#f6f1e6',
+                ...(rect ? { gridColumn: '1 / -1', aspectRatio: '3 / 2', maxHeight: 300 } : { aspectRatio: '1 / 1' }),
                 boxShadow: isActive ? '0 0 0 3px rgba(245,84,10,0.55)' : '0 2px 8px rgba(0,0,0,0.12)',
                 outline: '1px solid #e8ddc7', outlineOffset: -1,
                 transition: 'transform .15s ease, box-shadow .15s ease',
@@ -95,7 +100,7 @@ export default function CategoryGrid() {
                     alt={cat.name}
                     loading="lazy"
                     onError={() => setFailed(f => ({ ...f, [cat.name]: true }))}
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: radius }}
                   />
                 : <Placeholder name={cat.name} />}
             </button>
