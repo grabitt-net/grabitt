@@ -90,16 +90,16 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     if (params.get('view') === 'business') return false
     try { return localStorage.getItem('grabitt_account_view') === 'personal' } catch { return false }
   })
-  // Property agents never get the business chrome even if their account also
-  // carries a business flag — they're a property-only profile.
-  const effBiz = !!me?.isBusiness && !personalView && !me?.isPropertyAgent
+  const effBiz = !!me?.isBusiness && !personalView
   // Charity accounts get a Charity Hub in place of the personal "My Hub" landing.
   const isCharity = me?.memberStatus === 'charity' && !me?.isBusiness
-  // Property agents get an Agent Hub (they list property only).
-  const isAgent = !!me?.isPropertyAgent
+  // A property agent is a standalone, non-business profile (they list property
+  // only). A business account that merely carries the agent flag (e.g. from an
+  // agent plan) is NOT treated as an agent here — it stays a business account.
+  const isAgent = !!me?.isPropertyAgent && !me?.isBusiness
   // Land on the account's own home — Business Centre for business, the My Hub
   // overview for everyone else — rather than dropping straight into Messages.
-  const [section, setSection] = useState<SectionId>(personalView ? 'hub' : me?.isPropertyAgent ? 'agent' : me?.isBusiness ? 'business' : me?.memberStatus === 'charity' ? 'charity' : 'hub')
+  const [section, setSection] = useState<SectionId>(personalView ? 'hub' : (me?.isPropertyAgent && !me?.isBusiness) ? 'agent' : me?.isBusiness ? 'business' : me?.memberStatus === 'charity' ? 'charity' : 'hub')
   // `me` loads async, so the initial default above can be wrong (defaults to
   // 'hub' before we know it's a business account). Set the landing section once,
   // when `me` first resolves — Business Centre for business, My Hub otherwise —
@@ -112,7 +112,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     if (s && SECTION_IDS.has(s)) { setSection(s as SectionId); didInitSection.current = true; return }
     if (me && !didInitSection.current) {
       didInitSection.current = true
-      setSection(personalView ? 'hub' : me.isPropertyAgent ? 'agent' : me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'hub')
+      setSection(personalView ? 'hub' : (me.isPropertyAgent && !me.isBusiness) ? 'agent' : me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'hub')
     }
   }, [params, me])
   const [seg, setSeg] = useState<Seg>('active')

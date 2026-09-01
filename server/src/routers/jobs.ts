@@ -434,7 +434,7 @@ export const jobsRouter = router({
     .mutation(async ({ ctx, input }) => {
       // Only Business accounts may post job adverts.
       const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, isPropertyAgent: true, email: true, stripeCustomerId: true } })
-      if (me.isPropertyAgent) throw new TRPCError({ code: 'FORBIDDEN', message: 'Property agent accounts can only list property.' })
+      if (me.isPropertyAgent && !me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'Property agent accounts can only list property.' })
       if (!me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A Business account is required to post jobs' })
       // Beyond the tier's monthly free allowance, a job advert is €29 (14 days).
       // The listing is created hidden until the fee is paid; the webhook publishes

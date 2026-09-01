@@ -522,9 +522,9 @@ export const listingsRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Advertiser accounts cannot sell — you can buy advertising and a directory listing only.' })
       }
 
-      // Property agent accounts are a dedicated profile that can list property
-      // only — never items, jobs or services.
-      if (user.isPropertyAgent) {
+      // Standalone property-agent accounts list property only. (A business
+      // account that also carries the agent flag is unaffected.)
+      if (user.isPropertyAgent && !user.isBusiness) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Property agent accounts can only list property.' })
       }
 

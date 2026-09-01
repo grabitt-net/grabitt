@@ -10,15 +10,21 @@ import AgentProfileCard from './AgentProfileCard'
 // lists property only. Shows the property allowance, a shortcut to list a
 // property, and the agent's public contact details. Only rendered for agents.
 type Allowance = { allowance: number; inUse: number; remaining: number; isBusiness?: boolean }
+type MyListing = { id: string; title: string; price: number; location?: string | null; status: string; images?: string[]; department: string }
 
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: 16, marginBottom: 14 }
 
 export default function AgentCentre() {
   const router = useRouter()
   const [allow, setAllow] = useState<Allowance | null>(null)
+  const [props, setProps] = useState<MyListing[] | null>(null)
 
   useEffect(() => {
-    (trpcAuthed() as any).property.myAllowance.query().then((a: Allowance) => setAllow(a)).catch(() => {})
+    (trpcAuthed() as any).property.myAllowance.query().then((a: Allowance) => setAllow(a)).catch(() => {});
+    // The agent only sees the properties they have listed.
+    (trpcAuthed() as any).listings.mine.query()
+      .then((rows: MyListing[]) => setProps((rows ?? []).filter(r => r.department === 'property')))
+      .catch(() => setProps([]))
   }, [])
 
   return (
@@ -49,9 +55,33 @@ export default function AgentCentre() {
         )}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button onClick={() => router.push('/property/new')} style={{ background: 'linear-gradient(135deg,#2557b5,#3f7ae0)', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="home" size={15} /> {t('List a property')}</button>
-          <button onClick={() => router.push('/property')} style={{ background: '#fff', color: '#2557b5', border: '1.5px solid #cdddf7', borderRadius: 12, padding: '10px 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>{t('View property board')}</button>
         </div>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#999', marginTop: 8 }}>{t('Fees and plan limits are being finalised — your allowance is set by our team for now.')}</div>
+      </div>
+
+      {/* The agent's own property listings — the only ones they can see here. */}
+      <div style={card}>
+        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#1e3a72', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>{t('My property listings')}{props ? ` · ${props.length}` : ''}</div>
+        {props === null ? (
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#999' }}>{t('Loading…')}</div>
+        ) : props.length === 0 ? (
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#999' }}>{t('No properties yet — tap “List a property” to add your first.')}</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {props.map(p => (
+              <div key={p.id} onClick={() => router.push(`/listings/${p.id}`)} style={{ display: 'flex', gap: 10, alignItems: 'center', border: '1px solid #eef0f4', borderRadius: 12, padding: 10, cursor: 'pointer' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 8, background: '#f5f0e8', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {p.images?.[0] ? <img src={p.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏠'}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>📍 {p.location ?? 'Canary Islands'} · €{Number(p.price).toLocaleString()}</div>
+                </div>
+                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', padding: '3px 8px', borderRadius: 50, background: p.status === 'active' ? '#dcfce7' : '#f0f0f0', color: p.status === 'active' ? '#16a34a' : '#888' }}>{p.status === 'active' ? t('Live') : p.status === 'draft' ? t('Pending') : p.status}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Public agent contact details */}

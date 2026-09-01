@@ -91,7 +91,7 @@ export default function NewPropertyPage() {
           (trpcAuthed() as any).property.myAllowance.query(),
         ])
         setAllowance(allow)
-        setIsAgent(!!me?.isPropertyAgent)
+        setIsAgent(!!me?.isPropertyAgent && !me?.isBusiness)
         // Anyone can advertise property now (private or business). Beyond the
         // free allowance the listing is €39, taken at submit.
         setGate('ok')

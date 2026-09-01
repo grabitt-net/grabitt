@@ -184,7 +184,7 @@ export const handyRouter = router({
         where: { id: ctx.user.id },
         select: { isBusiness: true, businessLight: true, isPropertyAgent: true, email: true, stripeCustomerId: true },
       })
-      if (me.isPropertyAgent) throw new TRPCError({ code: 'FORBIDDEN', message: 'Property agent accounts can only list property.' })
+      if (me.isPropertyAgent && !me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'Property agent accounts can only list property.' })
       const business = me.isBusiness || me.businessLight
       // Only a business "offer" advert is charged; personal requests are free.
       const paid = business && input.kind === 'offer'
