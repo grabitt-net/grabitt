@@ -50,7 +50,7 @@ const CATEGORY_HERO: Record<string, string> = {
   kids_baby: '/categories/kids-baby.jpg',
   health_fitness: '/categories/health-beauty.jpg',
   retro_vintage: '/categories/retro.jpg',
-  handy_help: '/categories/handy-help.jpg',
+  handy_help: '/categories/handy-help-v2.jpg',
   pet_shop: '/categories/pet-supplies.jpg',
   hobbies_crafts: '/categories/hobbies-crafts.jpg',
 }

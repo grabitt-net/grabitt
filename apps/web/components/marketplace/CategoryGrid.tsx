@@ -23,7 +23,7 @@ const DEFAULT_CATEGORIES: Cat[] = [
   { name: 'Kids & Baby', img: '/categories/kids-baby.jpg' },
   { name: 'Health, Fitness & Diet', img: '/categories/health-beauty.jpg' },
   { name: 'Retro & Vintage', img: '/categories/retro.jpg' },
-  { name: 'Handy Help', img: '/categories/handy-help.jpg' },
+  { name: 'Handy Help', img: '/categories/handy-help-v2.jpg' },
   { name: 'Pet Supplies', img: '/categories/pet-supplies.jpg' },
   { name: 'Hobbies & Crafts', img: '/categories/hobbies-crafts.jpg' },
 ]
