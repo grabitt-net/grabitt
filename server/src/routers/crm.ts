@@ -221,11 +221,55 @@ export const crmRouter = router({
       } else if (data.isBusiness === true && data.grade === 'grabber') {
         data.grade = 'dealer'
       }
+      // Property agent is a standalone profile — mutually exclusive with the
+      // business flags. Turning one on turns the other(s) off.
+      if (data.isPropertyAgent === true) {
+        data.isBusiness = false
+        data.businessLight = false
+        data.agentStatus = 'approved'
+      } else if (data.isBusiness === true || data.businessLight === true) {
+        data.isPropertyAgent = false
+      }
       if (Object.keys(data).length === 0) return { ok: true }
 
       const updated = await ctx.prisma.user.update({ where: { id: userId }, data })
       await writeAudit(ctx.prisma, ctx.execUser.id, userId, 'member_update', { fields: Object.keys(data) })
       return { ok: true, id: updated.id }
+    }),
+
+  // ── Property-agent applications (self-signup review queue) ──────────────────
+  agentApplicants: execProcedure
+    .input(z.object({ status: z.enum(['pending', 'approved', 'rejected', 'all']).default('pending') }).optional())
+    .query(({ ctx, input }) =>
+      ctx.prisma.user.findMany({
+        where: input?.status && input.status !== 'all' ? { agentStatus: input.status } : { agentStatus: { not: null } },
+        orderBy: { updatedAt: 'desc' },
+        select: { id: true, displayName: true, email: true, agencyName: true, agentWhatsapp: true, agentEmail: true, agentStatus: true, isPropertyAgent: true, isBusiness: true, createdAt: true },
+      })
+    ),
+
+  reviewAgent: execProcedure
+    .input(z.object({ userId: z.string().uuid(), decision: z.enum(['approved', 'rejected']) }))
+    .mutation(async ({ ctx, input }) => {
+      const approve = input.decision === 'approved'
+      await ctx.prisma.user.update({
+        where: { id: input.userId },
+        // Approving grants the standalone agent profile (never a business).
+        data: approve
+          ? { isPropertyAgent: true, isBusiness: false, businessLight: false, agentStatus: 'approved' }
+          : { isPropertyAgent: false, agentStatus: 'rejected' },
+      })
+      await ctx.prisma.notification.create({
+        data: {
+          userId: input.userId,
+          kind: 'system',
+          title: approve ? '✅ Your agent account is approved' : 'Your agent application',
+          body: approve ? 'You can now list property from your Agent Hub.' : 'We couldn’t approve your property-agent application at this time. Contact support if you think this is a mistake.',
+          actionUrl: '/account',
+        },
+      })
+      await writeAudit(ctx.prisma, ctx.execUser.id, input.userId, 'agent_review', { decision: input.decision })
+      return { ok: true }
     }),
 
   // Business members list — for the admin Business menu. Shows each business's

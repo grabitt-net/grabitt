@@ -508,6 +508,9 @@ model User {
   // email, agency) are shown on their property listings so buyers can reach them
   // directly. Separate from the phone above, which is escrow-gated.
   isPropertyAgent    Boolean   @default(false)
+  // Agent self-signup review state: null (never applied) | 'pending' | 'approved'
+  // | 'rejected'. Approval by an admin flips isPropertyAgent on.
+  agentStatus        String?
   agencyName         String?
   agentWhatsapp      String?
   agentEmail         String?

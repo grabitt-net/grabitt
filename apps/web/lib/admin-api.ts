@@ -266,6 +266,12 @@ export function makeCrmApi(execToken: string) {
     updateMember: (data: Record<string, unknown>) =>
       rpc<any>('crm.updateMember', 'mutation', data, execToken),
 
+    // Property-agent applications (self-signup review queue)
+    agentApplicants: (status: 'pending' | 'approved' | 'rejected' | 'all' = 'pending') =>
+      rpc<any[]>('crm.agentApplicants', 'query', { status }, execToken),
+    reviewAgent: (userId: string, decision: 'approved' | 'rejected') =>
+      rpc<any>('crm.reviewAgent', 'mutation', { userId, decision }, execToken),
+
     // Audit trail — who did what, to whom
     auditTrail: (targetUserId?: string) =>
       rpc<any[]>('crm.auditTrail', 'query', { targetUserId, limit: 100 }, execToken),

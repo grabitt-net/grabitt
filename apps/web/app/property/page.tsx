@@ -12,6 +12,7 @@ import PageHero from '@/components/marketplace/PageHero'
 import BannerSlot from '@/components/marketplace/BannerSlot'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
+import AgentSignup from '@/components/marketplace/AgentSignup'
 import { geocodeGC } from '@/lib/gcGeo'
 import { FILTERABLE_FEATURES, featureIcon, featureLabel } from '@/lib/propertyFeatures'
 import type { PropertyPoint } from '@/components/marketplace/PropertyMap'
@@ -138,7 +139,8 @@ export default function PropertyPage() {
               }}>{t.label}</button>
             ))}
           </div>
-          <Link href="/property/new" style={{ flexShrink: 0, textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>+ List a Property</Link>
+          <AgentSignup />
+          <Link href="/property/new" style={{ flexShrink: 0, textDecoration: 'none', background: 'var(--orange)', color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>List a Property</Link>
         </div>
 
         {/* Compact search — everything on one wrapping line */}

@@ -436,8 +436,9 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
                     <Check label="Business account (full)" checked={f.isBusiness} onChange={v => setF(p => ({ ...p, isBusiness: v, grade: v && p.grade === 'grabber' ? 'dealer' : p.grade }))} />
                     <Check label="Business Light (starter plan)" checked={f.businessLight} onChange={v => set('businessLight', v)} />
                   </>)}
-              {/* Property agent — a dedicated profile that can list property only. */}
-              <Check label="Property agent (property only)" checked={f.isPropertyAgent} onChange={v => set('isPropertyAgent', v)} />
+              {/* Property agent — a dedicated profile that can list property only.
+                  Mutually exclusive with the business flags. */}
+              <Check label="Property agent (property only)" checked={f.isPropertyAgent} onChange={v => setF(p => ({ ...p, isPropertyAgent: v, ...(v ? { isBusiness: false, businessLight: false } : {}) }))} />
             </div>
             {f.isPropertyAgent && (<>
               <L>Property listing allowance <span style={{ color: '#bbb', fontWeight: 600 }}>— active property listings included (fees &amp; limits TBD)</span></L>

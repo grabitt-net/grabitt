@@ -31,6 +31,7 @@ import TodayView from './TodayView'
 import RewardsView from './RewardsView'
 import PlannerView from './PlannerView'
 import StatusApplicationsView from './StatusApplicationsView'
+import PropertyAgentsView from './PropertyAgentsView'
 import AffiliatesView from './AffiliatesView'
 import LevelsView from './LevelsView'
 import SponsorshipView from './SponsorshipView'
@@ -55,6 +56,7 @@ const COMMANDS: Command[] = [
   { id: 'contacts', label: 'Contacts', icon: '📇', group: 'People' },
   { id: 'pipeline', label: 'Prospects', icon: '🤞', group: 'People', keywords: 'crm deals' },
   { id: 'statusapps', label: 'Status applications', icon: '🎓', group: 'People', keywords: 'student blue light charity discount verify' },
+  { id: 'propertyagents', label: 'Property Agents', icon: '🏠', group: 'People', keywords: 'agent estate property signup approve authorise review' },
   { id: 'affiliates', label: 'Affiliates', icon: '🔗', group: 'People', keywords: 'referral founding payout stripe rate' },
   { id: 'jobs', label: 'Jobs', icon: '💼', group: 'Marketplace' },
   { id: 'property', label: 'Property', icon: '🏠', group: 'Marketplace', keywords: 'approvals' },
@@ -90,7 +92,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'news' | 'economic' | 'events' | 'help' | 'support' | 'discounts' | 'rewards' | 'planner' | 'statusapps' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'news' | 'economic' | 'events' | 'help' | 'support' | 'discounts' | 'rewards' | 'planner' | 'statusapps' | 'propertyagents' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -240,6 +242,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'rewards'    && <RewardsView />}
                 {view === 'planner'    && <PlannerView />}
                 {view === 'statusapps' && <StatusApplicationsView />}
+                {view === 'propertyagents' && <PropertyAgentsView />}
                 {view === 'affiliates' && <AffiliatesView />}
                 {view === 'levels'     && <LevelsView />}
                 {view === 'sponsorship' && <SponsorshipView />}

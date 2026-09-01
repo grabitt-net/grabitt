@@ -553,6 +553,31 @@ export const usersRouter = router({
 
   // Property-agent profile. When enabled, the agent's WhatsApp/email/agency are
   // shown on their property listings so buyers can contact them directly.
+  // Self-signup as a property agent — requests the standalone agent profile,
+  // pending manual admin review. Grants nothing yet; an admin authorises it.
+  applyAsAgent: protectedProcedure
+    .input(z.object({
+      agencyName: z.string().max(120).optional(),
+      agentWhatsapp: z.string().max(40).optional(),
+      agentEmail: z.string().email().max(120).optional().or(z.literal('')),
+    }))
+    .mutation(async ({ ctx, input }): Promise<{ ok: true }> => {
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, isPropertyAgent: true, agentStatus: true } })
+      if (me.isBusiness) throw new TRPCError({ code: 'BAD_REQUEST', message: 'A business account cannot also be a property agent. Agent accounts are separate.' })
+      if (me.isPropertyAgent) throw new TRPCError({ code: 'BAD_REQUEST', message: 'You are already a property agent.' })
+      if (me.agentStatus === 'pending') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Your agent application is already under review.' })
+      await ctx.prisma.user.update({
+        where: { id: ctx.user.id },
+        data: {
+          agentStatus: 'pending',
+          ...(input.agencyName ? { agencyName: input.agencyName.trim() } : {}),
+          ...(input.agentWhatsapp ? { agentWhatsapp: input.agentWhatsapp.trim() } : {}),
+          ...(input.agentEmail ? { agentEmail: (input.agentEmail as string).trim() } : {}),
+        },
+      })
+      return { ok: true as const }
+    }),
+
   updateAgentProfile: protectedProcedure
     .input(z.object({
       isPropertyAgent: z.boolean().optional(),
