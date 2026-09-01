@@ -505,7 +505,12 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                             <Link href={`/listings/${c.ref}/edit`} style={{ flex: 1, textAlign: 'center', textDecoration: 'none', padding: '7px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: 'var(--orange)' }}>{t('Resume')}</Link>
                             <button onClick={async () => { if (!(await confirmDialog({ message: t('Delete this draft?'), confirmLabel: t('Delete'), danger: true }))) return; try { await (trpcAuthed() as any).listings.deleteDraft.mutate({ id: c.ref }); setListings(prev => (prev ?? []).filter((x: any) => x.id !== c.ref)) } catch {} }} style={{ flexShrink: 0, background: 'none', border: 'none', borderLeft: '1px solid #f3ede4', padding: '7px 12px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#ef4444', cursor: 'pointer' }}>{t('Delete')}</button>
                           </div>
-                        ) : seg !== 'sold' && <Link href={`/listings/${c.ref}/edit`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', borderTop: '1px solid #f3ede4', padding: '7px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#1a1a1a' }}>{t('Edit')}</Link>}
+                        ) : (
+                          <div style={{ display: 'flex', borderTop: '1px solid #f3ede4' }}>
+                            {seg !== 'sold' && <Link href={`/listings/${c.ref}/edit`} style={{ flex: 1, textAlign: 'center', textDecoration: 'none', padding: '7px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#1a1a1a' }}>{t('Edit')}</Link>}
+                            <button onClick={async () => { if (!(await confirmDialog({ message: t('Delete this listing? This can’t be undone.'), confirmLabel: t('Delete'), danger: true }))) return; try { await (trpcAuthed() as any).listings.deleteListing.mutate({ id: c.ref }); setListings(prev => (prev ?? []).filter((x: any) => x.id !== c.ref)) } catch {} }} style={{ flex: seg === 'sold' ? 1 : '0 0 auto', textAlign: 'center', background: 'none', border: 'none', borderLeft: seg !== 'sold' ? '1px solid #f3ede4' : 'none', padding: '7px 12px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, color: '#ef4444', cursor: 'pointer' }}>{t('Delete')}</button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

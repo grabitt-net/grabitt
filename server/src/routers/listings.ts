@@ -275,6 +275,33 @@ export const listingsRouter = router({
       return { ok: true as const }
     }),
 
+  // Permanently delete one of the seller's own listings (housekeeping). If the
+  // listing has sale history we must keep the records, so it's removed from sale
+  // instead (status 'removed'); otherwise it's hard-deleted along with its
+  // offers, watches, cart entries and reports.
+  deleteListing: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }): Promise<{ ok: true; hardDeleted: boolean }> => {
+      const l = await ctx.prisma.listing.findFirst({ where: { id: input.id, sellerId: ctx.user.id }, select: { id: true } })
+      if (!l) throw new TRPCError({ code: 'NOT_FOUND', message: 'Listing not found' })
+      const txCount = await ctx.prisma.transaction.count({ where: { listingId: l.id } })
+      if (txCount > 0) {
+        // Preserve sale history — just take it off the marketplace.
+        await ctx.prisma.cartItem.deleteMany({ where: { listingId: l.id } })
+        await ctx.prisma.listing.update({ where: { id: l.id }, data: { status: 'removed' } })
+        return { ok: true as const, hardDeleted: false }
+      }
+      await ctx.prisma.$transaction([
+        ctx.prisma.offer.deleteMany({ where: { listingId: l.id } }),
+        ctx.prisma.wishlistItem.deleteMany({ where: { listingId: l.id } }),
+        ctx.prisma.cartItem.deleteMany({ where: { listingId: l.id } }),
+        ctx.prisma.report.deleteMany({ where: { listingId: l.id } }),
+        ctx.prisma.handyProposal.deleteMany({ where: { listingId: l.id } }),
+        ctx.prisma.listing.delete({ where: { id: l.id } }),
+      ])
+      return { ok: true as const, hardDeleted: true }
+    }),
+
   mine: protectedProcedure.query(({ ctx }) =>
     ctx.prisma.listing.findMany({
       where: { sellerId: ctx.user.id },
