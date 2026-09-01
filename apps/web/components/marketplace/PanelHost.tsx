@@ -10,6 +10,7 @@ import { useChat } from '@/hooks/useChat'
 import { useNotifications, kindIcon, kindTab, relativeTime } from '@/hooks/useNotifications'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
 import { createTrpcClient, createLooseTrpcClient } from '@/lib/trpc'
+import { AGENTS_ENABLED } from '@/lib/flags'
 import { createClient } from '@/lib/supabase'
 import { getAuthToken, refreshAuthToken, setAuthToken } from '@/lib/authToken'
 import { compressAndUpload, listingPhotoPath, uploadDisputeEvidence } from '@/lib/storage'
@@ -944,7 +945,7 @@ function PanelBody() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [sellMe, setSellMe] = useState<{ isBusiness: boolean; isAgent: boolean } | null>(null)
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => { getTrpcClient().then(c => c.users.me.query()).then((u: any) => setSellMe({ isBusiness: !!u?.isBusiness, isAgent: !!u?.isPropertyAgent && !u?.isBusiness })).catch(() => setSellMe({ isBusiness: false, isAgent: false })) }, [])
+    useEffect(() => { getTrpcClient().then(c => c.users.me.query()).then((u: any) => setSellMe({ isBusiness: !!u?.isBusiness, isAgent: AGENTS_ENABLED && !!u?.isPropertyAgent && !u?.isBusiness })).catch(() => setSellMe({ isBusiness: false, isAgent: false })) }, [])
     const propertyCard = { icon: '🏠', title: 'List a property', desc: 'Rent or sell a home', accent: '#0f9d76', tint: '#e6f7f1', action: () => { closePanel(); window.location.href = '/property/new' } }
     // One card per listing type, laid out in a row. Property agents are a
     // dedicated profile — they list property only. Jobs are Business-only, so

@@ -32,6 +32,7 @@ import RewardsView from './RewardsView'
 import PlannerView from './PlannerView'
 import StatusApplicationsView from './StatusApplicationsView'
 import PropertyAgentsView from './PropertyAgentsView'
+import { AGENTS_ENABLED } from '@/lib/flags'
 import AffiliatesView from './AffiliatesView'
 import LevelsView from './LevelsView'
 import SponsorshipView from './SponsorshipView'
@@ -251,7 +252,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
           </main>
         </div>
       </div>
-      <CommandPalette commands={COMMANDS} onRun={setView} open={paletteOpen} setOpen={setPaletteOpen} />
+      <CommandPalette commands={COMMANDS.filter(c => AGENTS_ENABLED || c.id !== 'propertyagents')} onRun={setView} open={paletteOpen} setOpen={setPaletteOpen} />
     </CrmApiContext.Provider>
   )
 }

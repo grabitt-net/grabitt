@@ -13,6 +13,7 @@ import AddressAutocomplete from '@/components/marketplace/AddressAutocomplete'
 import { PROPERTY_FEATURES } from '@/lib/propertyFeatures'
 import PromoField from '@/components/marketplace/PromoField'
 import { PROPERTY_PRICING } from '@grabitt/design-tokens'
+import { AGENTS_ENABLED } from '@/lib/flags'
 import { Section, Row, Field, Input, Textarea, Select, Check, FormError, StepTabs, SubmitButton } from '@/components/marketplace/FormKit'
 import type { IconName } from '@/components/marketplace/Icon'
 
@@ -91,7 +92,7 @@ export default function NewPropertyPage() {
           (trpcAuthed() as any).property.myAllowance.query(),
         ])
         setAllowance(allow)
-        setIsAgent(!!me?.isPropertyAgent && !me?.isBusiness)
+        setIsAgent(AGENTS_ENABLED && !!me?.isPropertyAgent && !me?.isBusiness)
         // Anyone can advertise property now (private or business). Beyond the
         // free allowance the listing is €39, taken at submit.
         setGate('ok')

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
+import { AGENTS_ENABLED } from '@/lib/flags'
 
 // "Agent Signup" on the Property page. Lets a member apply for a standalone
 // property-agent profile (property-only). Applications are reviewed and
@@ -18,6 +19,7 @@ export default function AgentSignup() {
   const [err, setErr] = useState('')
 
   const load = async () => {
+    if (!AGENTS_ENABLED) { setMe(null); return }
     let token = getAuthToken()
     if (!token) token = await refreshAuthToken()
     if (!token) { setMe(null); return }

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import type { View } from './AdminApp'
+import { AGENTS_ENABLED } from '@/lib/flags'
 
 // Collapsible, grouped navigation. Each section expands/collapses so the rail
 // stays short and scannable instead of one long wall of icons. Groups follow
@@ -39,6 +40,7 @@ const SECTIONS: Section[] = [
       { icon: '🏢', label: 'Business', id: 'business' },
       { icon: '🙋', label: 'Candidates', id: 'candidates' },
       { icon: '🎓', label: 'Applications', id: 'statusapps' },
+      ...(AGENTS_ENABLED ? [{ icon: '🏠', label: 'Property Agents', id: 'propertyagents' as View }] : []),
       { icon: '🎁', label: 'Rewards', id: 'rewards' },
     ],
   },
