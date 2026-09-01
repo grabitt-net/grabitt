@@ -6,7 +6,18 @@ import { createLooseTrpcClient } from '@/lib/trpc'
 
 // News & Events — Grabitt's blog + local events. Public. Both are CommunityPost
 // rows (section = "news" / "events"), created in the Executive Suite.
-type Post = { id: string; title: string; excerpt: string; category: string; emoji: string; imageUrl: string | null; createdAt: string; eventDate?: string | null }
+type Post = { id: string; title: string; excerpt: string; category: string; emoji: string; imageUrl: string | null; createdAt: string; eventDate?: string | null; eventEndDate?: string | null; eventUrl?: string | null }
+
+// Format an event's date, spanning start→end for multi-day events.
+function eventWhen(start: string, end?: string | null): string {
+  const s = new Date(start)
+  const sFmt = s.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+  if (!end) return `${sFmt}, ${s.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+  const e = new Date(end)
+  const sameDay = s.toDateString() === e.toDateString()
+  if (sameDay) return `${sFmt}, ${s.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}–${e.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+  return `${sFmt} – ${e.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`
+}
 
 const NEWS_CATS = ['All', 'Announcements', 'Island News', 'Features', 'Updates']
 const EVENT_CATS = ['All', 'Markets', 'Music & Nightlife', 'Family', 'Food & Drink', 'Community', 'Sport']
@@ -143,7 +154,7 @@ export default function NewsPage() {
                 </div>
                 <div style={{ padding: '13px 15px 15px' }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, fontWeight: 800, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 5 }}>{p.category} · {isEvents && p.eventDate
-                    ? new Date(p.eventDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                    ? eventWhen(p.eventDate, p.eventEndDate)
                     : new Date(p.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
                   <div style={{ fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 800, color: 'var(--dark)', lineHeight: 1.3, marginBottom: 6 }}>{p.title}</div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#555', lineHeight: 1.5 }}>{p.excerpt}</div>

@@ -7,7 +7,17 @@ import { createLooseTrpcClient } from '@/lib/trpc'
 import { renderArticleBody } from '@/lib/hashtags'
 
 // A single News article — public reader.
-type Post = { id: string; title: string; body: string; category: string; emoji: string; imageUrl: string | null; createdAt: string; tags?: string[] }
+type Post = { id: string; title: string; body: string; category: string; emoji: string; imageUrl: string | null; createdAt: string; tags?: string[]; eventDate?: string | null; eventEndDate?: string | null; eventUrl?: string | null }
+
+function eventWhen(start: string, end?: string | null): string {
+  const s = new Date(start)
+  const sFmt = s.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+  const time = (d: Date) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  if (!end) return `${sFmt} · ${time(s)}`
+  const e = new Date(end)
+  if (s.toDateString() === e.toDateString()) return `${sFmt} · ${time(s)}–${time(e)}`
+  return `${sFmt} — ${e.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}`
+}
 
 export default function NewsArticlePage() {
   const id = String(useParams()?.id ?? '')
@@ -28,6 +38,12 @@ export default function NewsArticlePage() {
         <div style={{ textAlign: 'center', padding: 50, fontFamily: 'var(--font-ui)', color: '#aaa' }}>Loading…</div>
       ) : (
         <div style={{ maxWidth: 680, margin: '0 auto' }}>
+          {post.eventDate && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 14, padding: '12px 16px', marginBottom: 18 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: '#9a3412' }}>📅 {eventWhen(post.eventDate, post.eventEndDate)}</div>
+              {post.eventUrl && <a href={post.eventUrl} target="_blank" rel="noreferrer noopener" style={{ marginLeft: 'auto', background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, padding: '8px 16px', borderRadius: 999, textDecoration: 'none' }}>Tickets / more info</a>}
+            </div>
+          )}
           {renderArticleBody(post.body)}
           {post.tags && post.tags.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 22 }}>

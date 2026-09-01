@@ -282,9 +282,13 @@ model CommunityPost {
   imageUrl   String?
   published  Boolean  @default(true)
   sortOrder  Int      @default(0)
-  // For events (section = "events"): when the event takes place. Powers the
-  // date filtering on the public Events tab. Null for non-event posts.
-  eventDate  DateTime?
+  // For events (section = "events"): when the event takes place. eventDate is
+  // the START; eventEndDate is the END for multi-day events (null = single day).
+  // eventUrl is an optional link (tickets / more info). Powers the date filter
+  // on the public Events tab. Null for non-event posts.
+  eventDate    DateTime?
+  eventEndDate DateTime?
+  eventUrl     String?
   tags       String[] @default([])        // #hashtags extracted from title + body, for search & discovery
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

@@ -16,9 +16,16 @@ export const communityRouter = router({
     }).optional())
     .query(({ ctx, input }) => {
       const isEvents = input?.section === 'events'
-      const dateFilter = isEvents && (input?.from || input?.to)
-        ? { eventDate: { ...(input?.from ? { gte: new Date(input.from) } : {}), ...(input?.to ? { lte: new Date(input.to) } : {}) } }
-        : {}
+      // An event OVERLAPS the selected window if it starts on/before the window
+      // end AND finishes on/after the window start. Single-day events (no end)
+      // are treated as ending on their start date.
+      const overlap: any[] = []
+      if (isEvents && input?.to) overlap.push({ eventDate: { lte: new Date(input.to) } })
+      if (isEvents && input?.from) {
+        const from = new Date(input.from)
+        overlap.push({ OR: [{ eventEndDate: { gte: from } }, { AND: [{ eventEndDate: null }, { eventDate: { gte: from } }] }] })
+      }
+      const dateFilter = overlap.length ? { AND: overlap } : {}
       return ctx.prisma.communityPost.findMany({
         where: { published: true, ...(input?.section ? { section: input.section } : {}), ...dateFilter },
         // Events sort by when they happen (soonest first); everything else by the
@@ -54,23 +61,29 @@ export const communityRouter = router({
       imageUrl: z.string().url().nullable().optional(),
       published: z.boolean().default(true),
       sortOrder: z.number().int().default(0),
-      // Event date (events section). ISO string or null.
+      // Event dates (events section). ISO strings or null. eventDate = start,
+      // eventEndDate = end (multi-day). eventUrl = optional link.
       eventDate: z.string().datetime().nullable().optional(),
+      eventEndDate: z.string().datetime().nullable().optional(),
+      eventUrl: z.string().url().max(500).nullable().optional().or(z.literal('')),
       // Explicit tags typed by the editor (with or without a leading #). Merged
       // with any #hashtags found in the title/body.
       tags: z.array(z.string().max(40)).max(30).optional(),
     }))
     .mutation(({ ctx, input }) => {
-      const { id, tags: explicit, eventDate, ...data } = input
+      const { id, tags: explicit, eventDate, eventEndDate, eventUrl, ...data } = input
       // Tags are entered by the editor — normalise (strip #, lowercase, dedupe).
       const seen = new Set<string>()
       const tags = (explicit ?? [])
         .map(t => t.trim().replace(/^#/, '').toLowerCase())
         .filter(t => t && (seen.has(t) ? false : (seen.add(t), true)))
-      const ev: { eventDate?: Date | null } = eventDate !== undefined ? { eventDate: eventDate ? new Date(eventDate) : null } : {}
+      const ev: { eventDate?: Date | null; eventEndDate?: Date | null; eventUrl?: string | null } = {}
+      if (eventDate !== undefined) ev.eventDate = eventDate ? new Date(eventDate) : null
+      if (eventEndDate !== undefined) ev.eventEndDate = eventEndDate ? new Date(eventEndDate) : null
+      if (eventUrl !== undefined) ev.eventUrl = eventUrl ? String(eventUrl) : null
       return id
         ? ctx.prisma.communityPost.update({ where: { id }, data: { ...data, ...ev, tags } })
-        : ctx.prisma.communityPost.create({ data: { ...data, ...ev, tags } as typeof data & { title: string; excerpt: string; body: string; eventDate?: Date | null } })
+        : ctx.prisma.communityPost.create({ data: { ...data, ...ev, tags } as typeof data & { title: string; excerpt: string; body: string; eventDate?: Date | null; eventEndDate?: Date | null; eventUrl?: string | null } })
     }),
 
   // Public: posts carrying a given hashtag (or whose body still mentions it) —
