@@ -6,14 +6,27 @@ import { router, publicProcedure, execProcedure } from '../trpc'
 export const communityRouter = router({
   // Public: published posts for a section (guide = Grabitt Guides, news = News).
   list: publicProcedure
-    .input(z.object({ limit: z.number().int().min(1).max(30).default(12), section: z.enum(['guide', 'news', 'economic', 'events']).optional() }).optional())
-    .query(({ ctx, input }) =>
-      ctx.prisma.communityPost.findMany({
-        where: { published: true, ...(input?.section ? { section: input.section } : {}) },
-        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+    .input(z.object({
+      limit: z.number().int().min(1).max(100).default(12),
+      section: z.enum(['guide', 'news', 'economic', 'events']).optional(),
+      // Event-date range filter (ISO). Used by the Events tab's date selector;
+      // only applied to the events section.
+      from: z.string().datetime().optional(),
+      to: z.string().datetime().optional(),
+    }).optional())
+    .query(({ ctx, input }) => {
+      const isEvents = input?.section === 'events'
+      const dateFilter = isEvents && (input?.from || input?.to)
+        ? { eventDate: { ...(input?.from ? { gte: new Date(input.from) } : {}), ...(input?.to ? { lte: new Date(input.to) } : {}) } }
+        : {}
+      return ctx.prisma.communityPost.findMany({
+        where: { published: true, ...(input?.section ? { section: input.section } : {}), ...dateFilter },
+        // Events sort by when they happen (soonest first); everything else by the
+        // editor's order then newest.
+        orderBy: isEvents ? [{ eventDate: 'asc' }, { createdAt: 'desc' }] : [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
         take: input?.limit ?? 12,
       })
-    ),
+    }),
 
   // Public: a single post for the reader view.
   byId: publicProcedure
@@ -41,20 +54,23 @@ export const communityRouter = router({
       imageUrl: z.string().url().nullable().optional(),
       published: z.boolean().default(true),
       sortOrder: z.number().int().default(0),
+      // Event date (events section). ISO string or null.
+      eventDate: z.string().datetime().nullable().optional(),
       // Explicit tags typed by the editor (with or without a leading #). Merged
       // with any #hashtags found in the title/body.
       tags: z.array(z.string().max(40)).max(30).optional(),
     }))
     .mutation(({ ctx, input }) => {
-      const { id, tags: explicit, ...data } = input
+      const { id, tags: explicit, eventDate, ...data } = input
       // Tags are entered by the editor — normalise (strip #, lowercase, dedupe).
       const seen = new Set<string>()
       const tags = (explicit ?? [])
         .map(t => t.trim().replace(/^#/, '').toLowerCase())
         .filter(t => t && (seen.has(t) ? false : (seen.add(t), true)))
+      const ev: { eventDate?: Date | null } = eventDate !== undefined ? { eventDate: eventDate ? new Date(eventDate) : null } : {}
       return id
-        ? ctx.prisma.communityPost.update({ where: { id }, data: { ...data, tags } })
-        : ctx.prisma.communityPost.create({ data: { ...data, tags } as typeof data & { title: string; excerpt: string; body: string } })
+        ? ctx.prisma.communityPost.update({ where: { id }, data: { ...data, ...ev, tags } })
+        : ctx.prisma.communityPost.create({ data: { ...data, ...ev, tags } as typeof data & { title: string; excerpt: string; body: string; eventDate?: Date | null } })
     }),
 
   // Public: posts carrying a given hashtag (or whose body still mentions it) —

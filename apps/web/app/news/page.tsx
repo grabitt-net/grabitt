@@ -6,26 +6,57 @@ import { createLooseTrpcClient } from '@/lib/trpc'
 
 // News & Events — Grabitt's blog + local events. Public. Both are CommunityPost
 // rows (section = "news" / "events"), created in the Executive Suite.
-type Post = { id: string; title: string; excerpt: string; category: string; emoji: string; imageUrl: string | null; createdAt: string }
+type Post = { id: string; title: string; excerpt: string; category: string; emoji: string; imageUrl: string | null; createdAt: string; eventDate?: string | null }
 
 const NEWS_CATS = ['All', 'Announcements', 'Island News', 'Features', 'Updates']
 const EVENT_CATS = ['All', 'Markets', 'Music & Nightlife', 'Family', 'Food & Drink', 'Community', 'Sport']
+
+// Compute a [from, to] ISO range for the events date filter.
+type RangeMode = 'all' | 'week' | 'month' | 'year' | 'pick' | 'custom'
+function computeRange(mode: RangeMode, pick: { m: number; y: number }, custom: { from: string; to: string }): { from?: string; to?: string } {
+  const now = new Date()
+  const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x }
+  const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23, 59, 59, 999); return x }
+  if (mode === 'week') {
+    const d = startOfDay(now); const day = (d.getDay() + 6) % 7 // Mon=0
+    const from = new Date(d); from.setDate(d.getDate() - day)
+    const to = endOfDay(new Date(from)); to.setDate(from.getDate() + 6)
+    return { from: from.toISOString(), to: to.toISOString() }
+  }
+  if (mode === 'month') return { from: startOfDay(new Date(now.getFullYear(), now.getMonth(), 1)).toISOString(), to: endOfDay(new Date(now.getFullYear(), now.getMonth() + 1, 0)).toISOString() }
+  if (mode === 'year') return { from: startOfDay(new Date(now.getFullYear(), 0, 1)).toISOString(), to: endOfDay(new Date(now.getFullYear(), 11, 31)).toISOString() }
+  if (mode === 'pick') return { from: startOfDay(new Date(pick.y, pick.m, 1)).toISOString(), to: endOfDay(new Date(pick.y, pick.m + 1, 0)).toISOString() }
+  if (mode === 'custom') return { from: custom.from ? startOfDay(new Date(custom.from)).toISOString() : undefined, to: custom.to ? endOfDay(new Date(custom.to)).toISOString() : undefined }
+  return {}
+}
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const dateInp: React.CSSProperties = { border: '1.5px solid #e5dccd', borderRadius: 10, padding: '7px 10px', fontFamily: 'var(--font-ui)', fontSize: 13, background: '#fff', color: 'var(--dark)', outline: 'none' }
+const dateLbl: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#666' }
 
 export default function NewsPage() {
   const [tab, setTab] = useState<'news' | 'events'>('news')
   const [posts, setPosts] = useState<Post[] | null>(null)
   const [cat, setCat] = useState('All')
   const [showForm, setShowForm] = useState(false)
+  // Events date selector.
+  const now = new Date()
+  const [dateMode, setDateMode] = useState<RangeMode>('all')
+  const [pick, setPick] = useState({ m: now.getMonth(), y: now.getFullYear() })
+  const [custom, setCustom] = useState({ from: '', to: '' })
+
+  const isEvents = tab === 'events'
+  const range = isEvents ? computeRange(dateMode, pick, custom) : {}
 
   useEffect(() => {
-    setPosts(null); setCat('All')
-    createLooseTrpcClient().community.list.query({ limit: 30, section: tab })
+    setPosts(null)
+    createLooseTrpcClient().community.list.query({ limit: 100, section: tab, ...(range.from ? { from: range.from } : {}), ...(range.to ? { to: range.to } : {}) })
       .then(p => setPosts(p as Post[])).catch(() => setPosts([]))
-  }, [tab])
+  }, [tab, range.from, range.to]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { setCat('All') }, [tab])
 
   const cats = tab === 'events' ? EVENT_CATS : NEWS_CATS
   const shown = posts && cat !== 'All' ? posts.filter(p => p.category === cat) : posts
-  const isEvents = tab === 'events'
 
   return (
     <InfoPage
@@ -52,6 +83,39 @@ export default function NewsPage() {
         </div>
       )}
 
+      {/* Events date selector — presets, month/year picker, or a custom range. */}
+      {isEvents && (
+        <div style={{ maxWidth: 640, margin: '0 auto 16px', background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, padding: '12px 14px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginBottom: 10 }}>
+            {([['all', 'All upcoming'], ['week', 'This week'], ['month', 'This month'], ['year', 'This year'], ['pick', 'Pick month'], ['custom', 'Date range']] as [RangeMode, string][]).map(([m, label]) => {
+              const on = dateMode === m
+              return (
+                <button key={m} onClick={() => setDateMode(m)} style={{
+                  border: `1.5px solid ${on ? 'var(--orange)' : '#e5dccd'}`, background: on ? 'var(--orange)' : '#fff', color: on ? '#fff' : 'var(--dark)',
+                  borderRadius: 999, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                }}>{label}</button>
+              )
+            })}
+          </div>
+          {dateMode === 'pick' && (
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+              <select value={pick.m} onChange={e => setPick(p => ({ ...p, m: Number(e.target.value) }))} style={dateInp}>
+                {MONTHS.map((mn, i) => <option key={mn} value={i}>{mn}</option>)}
+              </select>
+              <select value={pick.y} onChange={e => setPick(p => ({ ...p, y: Number(e.target.value) }))} style={dateInp}>
+                {Array.from({ length: 4 }, (_, i) => now.getFullYear() + i).map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+          )}
+          {dateMode === 'custom' && (
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+              <label style={dateLbl}>From <input type="date" value={custom.from} onChange={e => setCustom(c => ({ ...c, from: e.target.value }))} style={dateInp} /></label>
+              <label style={dateLbl}>To <input type="date" value={custom.to} onChange={e => setCustom(c => ({ ...c, to: e.target.value }))} style={dateInp} /></label>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Category filters */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 18 }}>
         {cats.map(c => {
@@ -68,7 +132,7 @@ export default function NewsPage() {
       {shown === null ? (
         <div style={{ textAlign: 'center', padding: 50, fontFamily: 'var(--font-ui)', color: '#aaa' }}>Loading…</div>
       ) : shown.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 50, fontFamily: 'var(--font-ui)', color: '#aaa' }}>{cat === 'All' ? (isEvents ? 'No events listed yet — check back soon.' : 'No news yet — check back soon.') : `No ${cat} ${isEvents ? 'events' : 'articles'} yet.`}</div>
+        <div style={{ textAlign: 'center', padding: 50, fontFamily: 'var(--font-ui)', color: '#aaa' }}>{isEvents && dateMode !== 'all' ? 'No events in the selected dates — try a wider range.' : cat === 'All' ? (isEvents ? 'No events listed yet — check back soon.' : 'No news yet — check back soon.') : `No ${cat} ${isEvents ? 'events' : 'articles'} yet.`}</div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 14 }}>
           {shown.map(p => (
@@ -78,7 +142,9 @@ export default function NewsPage() {
                   {p.imageUrl ? <img src={p.imageUrl} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 48 }}>{p.emoji}</span>}
                 </div>
                 <div style={{ padding: '13px 15px 15px' }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, fontWeight: 800, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 5 }}>{p.category} · {new Date(p.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, fontWeight: 800, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 5 }}>{p.category} · {isEvents && p.eventDate
+                    ? new Date(p.eventDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                    : new Date(p.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
                   <div style={{ fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 800, color: 'var(--dark)', lineHeight: 1.3, marginBottom: 6 }}>{p.title}</div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#555', lineHeight: 1.5 }}>{p.excerpt}</div>
                 </div>

@@ -8,6 +8,7 @@ import RichTextEditor from './RichTextEditor'
 interface Post {
   id: string; title: string; excerpt: string; body: string; category: string
   emoji: string; imageUrl: string | null; published: boolean; sortOrder: number; tags?: string[]
+  eventDate?: string | null
 }
 
 const CATEGORIES = ['Guide', 'Island Tips', 'Economy', 'Selling', 'Safety', 'News']
@@ -15,7 +16,7 @@ const NEWS_CATEGORIES = ['Announcements', 'Island News', 'Features', 'Updates']
 const ECONOMIC_CATEGORIES = ['Money Saving', 'Smart Buying', 'Island Life', 'Budgeting', 'Guides']
 const EVENT_CATEGORIES = ['Markets', 'Music & Nightlife', 'Family', 'Food & Drink', 'Community', 'Sport']
 const EMOJIS = ['📰', '🏷️', '📊', '🛡️', '💼', '🌴', '💡', '🛒', '📈', '✨']
-const EMPTY = { title: '', excerpt: '', body: '', category: 'Guide', emoji: '📰', imageUrl: '', published: true, sortOrder: 0, tags: '' }
+const EMPTY = { title: '', excerpt: '', body: '', category: 'Guide', emoji: '📰', imageUrl: '', published: true, sortOrder: 0, tags: '', eventDate: '' }
 
 type Section = 'guide' | 'news' | 'economic' | 'events'
 // Per-section labels + categories, so one editor drives Guides, News and
@@ -44,7 +45,7 @@ export default function CommunityView({ section = 'guide' }: { section?: Section
 
   function openNew() { setForm({ ...EMPTY, category: cfg.defaultCat, sortOrder: posts.length + 1 }); setEditing('new') }
   function openEdit(p: Post) {
-    setForm({ title: p.title, excerpt: p.excerpt, body: p.body, category: p.category, emoji: p.emoji, imageUrl: p.imageUrl ?? '', published: p.published, sortOrder: p.sortOrder, tags: (p.tags ?? []).map(t => `#${t}`).join(' ') })
+    setForm({ title: p.title, excerpt: p.excerpt, body: p.body, category: p.category, emoji: p.emoji, imageUrl: p.imageUrl ?? '', published: p.published, sortOrder: p.sortOrder, tags: (p.tags ?? []).map(t => `#${t}`).join(' '), eventDate: p.eventDate ? p.eventDate.slice(0, 16) : '' })
     setEditing(p.id)
   }
 
@@ -64,6 +65,7 @@ export default function CommunityView({ section = 'guide' }: { section?: Section
         published: form.published,
         sortOrder: Number(form.sortOrder) || 0,
         tags: form.tags.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean),
+        ...(section === 'events' ? { eventDate: form.eventDate ? new Date(form.eventDate).toISOString() : null } : {}),
       })
       setEditing(null); setForm({ ...EMPTY }); await load()
     } finally { setSaving(false) }
@@ -114,6 +116,9 @@ export default function CommunityView({ section = 'guide' }: { section?: Section
             <div style={{ gridColumn: '1/-1' }}>
               <ImageUploadField label="Cover image (optional)" kind="banner" value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} />
             </div>
+            {section === 'events' && (
+              <Field label="Event date & time"><input type="datetime-local" value={form.eventDate} onChange={e => setForm(f => ({ ...f, eventDate: e.target.value }))} style={inp} /></Field>
+            )}
             <Field label="Sort order"><input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: Number(e.target.value) }))} style={inp} /></Field>
             <div style={{ gridColumn: '1/-1' }}>
               <Field label="Tags / hashtags"><TagInput value={form.tags} onChange={v => setForm(f => ({ ...f, tags: v }))} /></Field>
