@@ -129,7 +129,7 @@ export default function CategoryPage() {
     <PanelProvider>
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title={label} />
-      <QuickActions belowPromo={<PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={CATEGORY_HERO[slug] || undefined} />} />
+      <QuickActions belowPromo={<PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={CATEGORY_HERO[slug] || undefined} bg={CATEGORY_HERO[slug] || undefined} />} />
 
       {/* Sold banner placements — the paid category sponsor banner, below the hero */}
       <BannerSlot position="category" page={slug} aspect="1053 / 163" />
