@@ -21,9 +21,9 @@ export default function CommunityStrip() {
         <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>📰 {t('Grabitt Guides')}</h2>
         <Link href="/community" style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--orange)', textDecoration: 'none', background: '#FFF3EE', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px' }}>{t('See all')}</Link>
       </div>
-      <div style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none', gap: 10, padding: '0 14px 4px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, padding: '0 14px 4px' }}>
         {posts.map(p => (
-          <Link key={p.id} href={`/community/${p.id}`} style={{ flex: '0 0 240px', textDecoration: 'none' }}>
+          <Link key={p.id} href={`/community/${p.id}`} style={{ textDecoration: 'none' }}>
             <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', height: '100%' }}>
               <div style={{ height: 96, background: 'linear-gradient(135deg,#e8dfd0,#f5f0e8)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                 {p.imageUrl ? <img src={p.imageUrl} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 40 }}>{p.emoji}</span>}
