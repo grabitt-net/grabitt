@@ -27,6 +27,7 @@ import PropertyView from './PropertyView'
 import AuditTrailView from './AuditTrailView'
 import ComplianceView from './ComplianceView'
 import HomepageView from './HomepageView'
+import CategoriesView from './CategoriesView'
 import TodayView from './TodayView'
 import RewardsView from './RewardsView'
 import PlannerView from './PlannerView'
@@ -64,6 +65,7 @@ const COMMANDS: Command[] = [
   { id: 'disputes', label: 'Disputes', icon: '⚖️', group: 'Marketplace' },
   { id: 'reports', label: 'Reports', icon: '🚨', group: 'Marketplace', keywords: 'moderation' },
   { id: 'homepage', label: 'Homepage', icon: '🖼️', group: 'Content' },
+  { id: 'categories', label: 'Categories', icon: '🗂️', group: 'Content', keywords: 'category tiles departments add delete background' },
   { id: 'banners', label: 'Banners', icon: '🎯', group: 'Content', keywords: 'ads sponsor' },
   { id: 'community', label: 'Grabitt Guides', icon: '📰', group: 'Content', keywords: 'guides blog articles homepage' },
   { id: 'news', label: 'News', icon: '🗞️', group: 'Content', keywords: 'blog articles' },
@@ -93,7 +95,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'community' | 'news' | 'economic' | 'events' | 'help' | 'support' | 'discounts' | 'rewards' | 'planner' | 'statusapps' | 'propertyagents' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'categories' | 'community' | 'news' | 'economic' | 'events' | 'help' | 'support' | 'discounts' | 'rewards' | 'planner' | 'statusapps' | 'propertyagents' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -234,6 +236,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'audit'      && <AuditTrailView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'compliance' && <ComplianceView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'homepage'   && <HomepageView onEditBanners={(pos) => { setBannerPosition(pos); setView('banners') }} />}
+                {view === 'categories' && <CategoriesView />}
                 {view === 'community'  && <CommunityView section="guide" />}
                 {view === 'news'       && <CommunityView section="news" />}
                 {view === 'economic'   && <CommunityView section="economic" />}

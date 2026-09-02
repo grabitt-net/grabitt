@@ -62,7 +62,11 @@ model HomeSection {
 model HomeCategory {
   id        String  @id @default(uuid())
   name      String  @unique
-  img       String?
+  // The department (enum slug) this tile maps to — used to route to the category
+  // page and to move ads when a category is deleted.
+  department String?
+  img       String?   // round tile / icon artwork
+  bgImage   String?   // faded background artwork behind the category page header
   enabled   Boolean @default(true)
   sortOrder Int
 

@@ -102,81 +102,10 @@ export default function HomepageView({ onEditBanners }: { onEditBanners: (positi
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#999', marginTop: 10 }}>
             Use <strong>✎ Edit content</strong> to change the hero slider &amp; banner images/links. Other sections fill automatically from live data.
           </div>
-
-          <CategoriesEditor />
-        </div>
-      )}
-    </div>
-  )
-}
-
-type Cat = { name: string; img: string | null; enabled: boolean; sortOrder: number }
-
-// Reorder / show-hide the homepage category tiles (the circular department grid).
-function CategoriesEditor() {
-  const api = useCrmApi()
-  const [cats, setCats] = useState<Cat[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [dirty, setDirty] = useState(false)
-  const [saved, setSaved] = useState(false)
-
-  useEffect(() => {
-    api.homeCategories()
-      .then(d => setCats(((d ?? []) as Cat[]).sort((a, b) => a.sortOrder - b.sortOrder)))
-      .catch(() => setCats([]))
-      .finally(() => setLoading(false))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const move = (i: number, dir: -1 | 1) => {
-    const j = i + dir
-    if (j < 0 || j >= cats.length) return
-    const next = [...cats]
-    ;[next[i], next[j]] = [next[j], next[i]]
-    setCats(next); setDirty(true); setSaved(false)
-  }
-  const toggle = (i: number) => {
-    setCats(cats.map((c, idx) => idx === i ? { ...c, enabled: !c.enabled } : c)); setDirty(true); setSaved(false)
-  }
-  const save = async () => {
-    setSaving(true)
-    try {
-      await api.saveHomeCategories(cats.map((c, i) => ({ name: c.name, enabled: c.enabled, sortOrder: i })))
-      setDirty(false); setSaved(true); setTimeout(() => setSaved(false), 2500)
-    } finally { setSaving(false) }
-  }
-
-  return (
-    <div style={{ marginTop: 26 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div>
-          <h3 style={{ fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 800, color: 'var(--dark)' }}><span style={{ color: 'var(--orange)' }}>Category tiles</span></h3>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888' }}>Reorder and show/hide the circular category grid on the homepage.</div>
-        </div>
-        <button onClick={save} disabled={!dirty || saving} style={{ background: !dirty || saving ? '#e5e7eb' : 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 20px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: !dirty || saving ? 'default' : 'pointer' }}>
-          {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save order'}
-        </button>
-      </div>
-
-      {loading ? (
-        <div style={{ padding: 24, textAlign: 'center', color: '#bbb', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Loading…</div>
-      ) : (
-        cats.map((c, i) => (
-          <div key={c.name} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: '10px 14px', marginBottom: 8, opacity: c.enabled ? 1 : 0.6 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <button onClick={() => move(i, -1)} disabled={i === 0} style={arrow(i === 0)}>▲</button>
-              <button onClick={() => move(i, 1)} disabled={i === cats.length - 1} style={arrow(i === cats.length - 1)}>▼</button>
-            </div>
-            <div style={{ width: 22, textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#bbb' }}>{i + 1}</div>
-            <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', background: '#f6f1e6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>
-              {c.img ? <img src={c.img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏷️'}
-            </div>
-            <div style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)' }}>{c.name}</div>
-            <button onClick={() => toggle(i)} style={{ background: c.enabled ? '#f0faf4' : '#f5f5f5', color: c.enabled ? '#16a34a' : '#aaa', border: 'none', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>
-              {c.enabled ? '● Visible' : '○ Hidden'}
-            </button>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', marginTop: 14, background: '#faf8f4', border: '1px solid #efe9df', borderRadius: 10, padding: '9px 12px' }}>
+            🗂️ Category tiles are now managed under <strong>Categories</strong> (add, amend, delete, reorder, icons &amp; header backgrounds).
           </div>
-        ))
+        </div>
       )}
     </div>
   )

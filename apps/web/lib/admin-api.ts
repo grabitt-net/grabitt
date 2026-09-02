@@ -125,6 +125,10 @@ export function makeCrmApi(execToken: string) {
     homeCategories: () => rpc<any[]>('homepage.allCategories', 'query', undefined, execToken),
     saveHomeCategories: (categories: { name: string; enabled: boolean; sortOrder: number }[]) =>
       rpc<any>('homepage.saveCategories', 'mutation', { categories }, execToken),
+    upsertCategory: (data: { id?: string; name: string; department: string; img?: string | null; bgImage?: string | null; enabled?: boolean }) =>
+      rpc<any>('homepage.upsertCategory', 'mutation', data, execToken),
+    deleteCategory: (id: string, moveTo: string) =>
+      rpc<any>('homepage.deleteCategory', 'mutation', { id, moveTo }, execToken),
 
     // Parallax hero slides
     heroSlides: () => rpc<any[]>('homepage.allHeroSlides', 'query', undefined, execToken),

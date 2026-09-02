@@ -40,10 +40,49 @@ export const homepageRouter = router({
     ctx.prisma.homeCategory.findMany({ where: { enabled: true }, orderBy: { sortOrder: 'asc' }, select: { name: true, img: true } })
   ),
 
+  // Public: header artwork for one category page (by department slug).
+  categoryHeader: publicProcedure
+    .input(z.object({ department: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const c = await ctx.prisma.homeCategory.findFirst({ where: { department: input.department }, select: { name: true, img: true, bgImage: true } })
+      return c ?? null
+    }),
+
   // Exec: the full tile list for the admin editor.
   allCategories: execProcedure.query(({ ctx }) =>
     ctx.prisma.homeCategory.findMany({ orderBy: { sortOrder: 'asc' } })
   ),
+
+  // Exec: create or amend a category (name, department, icon, background, on/off).
+  upsertCategory: execProcedure
+    .input(z.object({
+      id: z.string().optional(),
+      name: z.string().min(2).max(60),
+      department: z.string().max(40),
+      img: z.string().max(500).nullable().optional(),
+      bgImage: z.string().max(500).nullable().optional(),
+      enabled: z.boolean().default(true),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input
+      if (id) { await ctx.prisma.homeCategory.update({ where: { id }, data }); return { ok: true } }
+      const max = await ctx.prisma.homeCategory.aggregate({ _max: { sortOrder: true } })
+      await ctx.prisma.homeCategory.create({ data: { ...data, sortOrder: (max._max.sortOrder ?? 0) + 1 } })
+      return { ok: true }
+    }),
+
+  // Exec: delete a category. Any listings in it are moved to `moveTo` first so no
+  // ads are orphaned.
+  deleteCategory: execProcedure
+    .input(z.object({ id: z.string(), moveTo: z.string().max(40) }))
+    .mutation(async ({ ctx, input }) => {
+      const cat = await ctx.prisma.homeCategory.findUniqueOrThrow({ where: { id: input.id }, select: { department: true } })
+      if (cat.department && cat.department !== input.moveTo) {
+        await ctx.prisma.listing.updateMany({ where: { department: cat.department as never }, data: { department: input.moveTo as never } })
+      }
+      await ctx.prisma.homeCategory.delete({ where: { id: input.id } })
+      return { ok: true }
+    }),
 
   // Exec: persist the reordered / toggled tiles.
   saveCategories: execProcedure

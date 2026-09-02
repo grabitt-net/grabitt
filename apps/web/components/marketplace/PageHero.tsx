@@ -27,8 +27,8 @@ export default function PageHero({ title, tagline, body, image, bg }: {
           <>
             {/* Faint tile artwork filling the header, with a light wash over it so
                 the title, tagline and icon stay clearly readable. */}
-            <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: `url(${bg})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.18 }} />
-            <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(255,245,238,0.78), rgba(255,233,220,0.7))' }} />
+            <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: `url(${bg})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.45 }} />
+            <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(255,245,238,0.62), rgba(255,233,220,0.5))' }} />
           </>
         )}
         <div style={{ position: 'relative', zIndex: 2, flex: 1, minWidth: 0 }}>

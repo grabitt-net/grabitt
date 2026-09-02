@@ -87,6 +87,13 @@ export default function CategoryPage() {
 
   const [activeSub, setActiveSub] = useState('All')
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
+  // Admin-managed header artwork for this category (round icon + faded bg).
+  const [hdr, setHdr] = useState<{ img: string | null; bgImage: string | null } | null>(null)
+  useEffect(() => {
+    if (!slug) return
+    createLooseTrpcClient().homepage.categoryHeader.query({ department: slug })
+      .then(h => setHdr(h as { img: string | null; bgImage: string | null } | null)).catch(() => {})
+  }, [slug])
   const [items, setItems] = useState<DbListing[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -129,7 +136,7 @@ export default function CategoryPage() {
     <PanelProvider>
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title={label} />
-      <QuickActions belowPromo={<PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={CATEGORY_HERO[slug] || undefined} bg={CATEGORY_HERO[slug] || undefined} />} />
+      <QuickActions belowPromo={<PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={hdr?.img || CATEGORY_HERO[slug] || undefined} bg={hdr?.bgImage || undefined} />} />
 
       {/* Sold banner placements — the paid category sponsor banner, below the hero */}
       <BannerSlot position="category" page={slug} aspect="1053 / 163" />
