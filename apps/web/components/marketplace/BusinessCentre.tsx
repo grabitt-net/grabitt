@@ -50,6 +50,9 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
   const { openPanel } = usePanel()
   const [data, setData] = useState<TierStatus | null>(null)
   const [postings, setPostings] = useState<Postings | null>(null)
+  // The business's public storefront, for the shareable link.
+  const [shop, setShop] = useState<{ slug: string; published?: boolean } | null>(null)
+  const [copied, setCopied] = useState(false)
   // Active one-off sponsorship placements (bought via the basket).
   const [sponsorships, setSponsorships] = useState<{ id: string; addonId: string; endsAt: string; pageTarget: string | null; hasCreative: boolean; needsPageBanner: boolean }[] | null>(null)
   const [creativeFor, setCreativeFor] = useState<string | null>(null)
@@ -91,6 +94,9 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
       .catch(() => {})
     trpcAuthed().business.myPostings.query()
       .then(d => setPostings(d as unknown as Postings))
+      .catch(() => {})
+    ;(trpcAuthed() as any).business.myStorefront.query()
+      .then((d: any) => setShop(d?.shop ?? null))
       .catch(() => {})
     trpcAuthed().sponsorship.mine.query()
       .then((d: any) => setSponsorships(d ?? []))
@@ -175,6 +181,42 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
                 .replace('{s}', String(BUSINESS_TIERS.pro.criteria.sales90d)).replace('{r}', String(BUSINESS_TIERS.pro.criteria.rating))}
             </div>
           </div>
+        )}
+      </div>
+
+      {/* ── Your storefront — shareable link ── */}
+      <div style={{ ...card }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <Icon name="building" size={16} />
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)' }}>{t('Your storefront')}</span>
+        </div>
+        {shop?.slug ? (() => {
+          const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.grabitt.net'
+          const url = `${origin}/shop/${shop.slug}`
+          return (
+            <>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', marginBottom: 10 }}>
+                {t('Share this link with friends and customers to send them straight to your shop.')}
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input readOnly value={url} onFocus={e => e.currentTarget.select()} style={{ flex: 1, minWidth: 180, border: '1px solid #d7deec', borderRadius: 10, padding: '9px 11px', fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#1e2b55', background: '#f7f9fd' }} />
+                <button onClick={async () => { try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1800) } catch { /* clipboard blocked */ } }} style={{ background: copied ? 'var(--sage)' : 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{copied ? t('Copied ✓') : t('Copy link')}</button>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                <button onClick={() => router.push(`/shop/${shop.slug}`)} style={miniBtn}>{t('View shop')}</button>
+                <button onClick={() => openPanel('storefrontEdit')} style={miniBtn}>{t('Edit storefront')}</button>
+                {typeof navigator !== 'undefined' && 'share' in navigator && (
+                  <button onClick={() => (navigator as any).share({ title: t('Visit my shop on Grabitt'), url }).catch(() => {})} style={miniBtn}>{t('Share…')}</button>
+                )}
+              </div>
+              {shop.published === false && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#a16207', marginTop: 8 }}>{t('Your shop isn’t published yet — publish it in the editor so the link goes live.')}</div>}
+            </>
+          )
+        })() : (
+          <>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#777', marginBottom: 10 }}>{t('Set up your storefront to get a shareable shop link.')}</div>
+            <button onClick={() => openPanel('storefrontEdit')} style={{ ...miniBtn, background: 'var(--orange)', color: '#fff', border: 'none' }}>{t('Set up storefront')}</button>
+          </>
         )}
       </div>
 
