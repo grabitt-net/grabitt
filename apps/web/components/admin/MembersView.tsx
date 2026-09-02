@@ -348,6 +348,20 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
     } catch (e) { fail(e) } finally { setBusy('') }
   }
 
+  const impersonate = async () => {
+    if (!(await confirmDialog({ message: `Log in as ${member.displayName || member.email}?\n\nYou'll act as this member (make changes on their behalf). A banner lets you exit back to the admin panel. This is recorded in the audit trail.`, confirmLabel: 'Log in as member', danger: true }))) return
+    setBusy('impersonate'); setErr('')
+    try {
+      const r = await api.impersonate(member.id)
+      // Switch the browser's consumer session to the member. Exiting restores
+      // the admin's own session (re-minted from the untouched Supabase login).
+      localStorage.setItem('grabitt_jwt', r.token)
+      localStorage.setItem('grabitt_uid', r.userId)
+      localStorage.setItem('grabitt_impersonating', r.displayName || 'member')
+      window.location.href = '/account'
+    } catch (e) { fail(e); setBusy('') }
+  }
+
   const setAdmin = async (grant: boolean) => {
     const warn = grant
       ? `Grant ADMIN access to ${member.email}?\n\nThey will get the full executive suite: every member's details, listings, financials, and the ability to change accounts.`
@@ -501,6 +515,11 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
             <button onClick={resetPassword} disabled={!!busy} style={{ ...secondary, width: '100%', marginTop: 10 }}>
               {busy === 'password' ? 'Sending…' : '🔑 Send password reset email'}
             </button>
+            {!member.isAdmin && (
+              <button onClick={impersonate} disabled={!!busy} style={{ width: '100%', marginTop: 10, background: '#1e2b55', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>
+                {busy === 'impersonate' ? 'Logging in…' : '🕵️ Log in as this member'}
+              </button>
+            )}
           </Card>
 
           <Card title="Admin access">

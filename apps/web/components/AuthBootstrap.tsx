@@ -18,6 +18,13 @@ export default function AuthBootstrap() {
     let cancelled = false
 
     async function sync() {
+      // While an admin is impersonating a member, leave the member's token/uid
+      // in place — don't re-provision or overwrite identity from the admin's
+      // Supabase session.
+      if (typeof window !== 'undefined' && localStorage.getItem('grabitt_impersonating')) {
+        window.dispatchEvent(new Event('grabitt-auth'))
+        return
+      }
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {

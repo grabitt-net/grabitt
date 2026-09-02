@@ -266,6 +266,10 @@ export function makeCrmApi(execToken: string) {
     updateMember: (data: Record<string, unknown>) =>
       rpc<any>('crm.updateMember', 'mutation', data, execToken),
 
+    // Impersonation — mint a consumer token to act as a member
+    impersonate: (userId: string) =>
+      rpc<{ token: string; userId: string; displayName: string }>('crm.impersonate', 'mutation', { userId }, execToken),
+
     // Property-agent applications (self-signup review queue)
     agentApplicants: (status: 'pending' | 'approved' | 'rejected' | 'all' = 'pending') =>
       rpc<any[]>('crm.agentApplicants', 'query', { status }, execToken),

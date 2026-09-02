@@ -19,6 +19,12 @@ export function setAuthToken(token: string | null) {
 // Fetches (and stores) a fresh app JWT from the current Supabase session.
 // Returns the token, or null if the user isn't authenticated / not provisioned.
 export async function refreshAuthToken(): Promise<string | null> {
+  // While an admin is impersonating a member, the app JWT is the member's token.
+  // Never re-mint from /api/auth/token here — that reads the admin's Supabase
+  // session and would clobber the impersonation. Keep the member token as-is.
+  if (typeof window !== 'undefined' && localStorage.getItem('grabitt_impersonating')) {
+    return getAuthToken()
+  }
   try {
     const res = await fetch('/api/auth/token', { method: 'POST' })
     if (!res.ok) return null

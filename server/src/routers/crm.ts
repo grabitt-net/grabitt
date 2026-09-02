@@ -4,6 +4,7 @@ import { router, execProcedure, publicProcedure, protectedProcedure } from '../t
 import type { PrismaClient, Prisma } from '@prisma/client'
 import { notifyUser } from '../lib/notify'
 import { businessTierForGrade, BUSINESS_TIERS, BUSINESS_TIER_ORDER } from '@grabitt/design-tokens'
+import { signConsumerJwt } from '../middleware/auth'
 
 // Records a privileged action against the acting admin. Best-effort: an audit
 // failure must never break the action the admin actually asked for.
@@ -235,6 +236,21 @@ export const crmRouter = router({
       const updated = await ctx.prisma.user.update({ where: { id: userId }, data })
       await writeAudit(ctx.prisma, ctx.execUser.id, userId, 'member_update', { fields: Object.keys(data) })
       return { ok: true, id: updated.id }
+    }),
+
+  // Impersonate a member: mint a consumer app token for them so an admin can
+  // log into their account and make changes on their behalf. Audited. The
+  // account owner isn't signed out — the admin's browser just carries the
+  // member's token until they exit impersonation.
+  impersonate: execProcedure
+    .input(z.object({ userId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }): Promise<{ token: string; userId: string; displayName: string }> => {
+      const u = await ctx.prisma.user.findUnique({ where: { id: input.userId }, select: { id: true, grade: true, displayName: true, deletedAt: true } })
+      if (!u) throw new TRPCError({ code: 'NOT_FOUND', message: 'Member not found' })
+      if (u.deletedAt) throw new TRPCError({ code: 'BAD_REQUEST', message: 'This account has been deleted.' })
+      const token = signConsumerJwt({ id: u.id, grade: u.grade })
+      await writeAudit(ctx.prisma, ctx.execUser.id, u.id, 'impersonate', {})
+      return { token, userId: u.id, displayName: u.displayName ?? 'member' }
     }),
 
   // ── Property-agent applications (self-signup review queue) ──────────────────
