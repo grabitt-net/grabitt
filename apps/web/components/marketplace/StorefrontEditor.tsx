@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { trpcAuthed } from '@/lib/authToken'
-import { uploadDisputeEvidence } from '@/lib/storage'
+import { compressAndUpload, cmsImagePath } from '@/lib/storage'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
 
 // The business storefront editor. A shop is more than a bio: a layout template,
@@ -109,10 +109,10 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
     if (!file || !uid) return
     setUploadingBanner(true)
     try {
-      // Banners go in the same private-then-signed bucket as other uploads; the
-      // preview URL is what we store and render.
-      const { previewUrl } = await uploadDisputeEvidence(file, uid)
-      if (previewUrl) set('bannerUrl', previewUrl)
+      // The banner is public storefront artwork — store a permanent public URL
+      // (compressed) rather than an expiring signed URL from a private bucket.
+      const url = await compressAndUpload(file, cmsImagePath('storefront'))
+      set('bannerUrl', url)
     } catch (e) { setErr(e instanceof Error ? e.message : 'Upload failed') }
     finally { setUploadingBanner(false) }
   }
