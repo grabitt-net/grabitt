@@ -73,11 +73,17 @@ export default function CategoryGrid() {
     <section className="dept-grid-wrap" style={{ paddingTop: 16 }}>
       <div className="dept-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, padding: '0 12px' }}>
         {categories.map(cat => {
-          const showImg = cat.img && !failed[cat.name]
+          // ── TEMPORARY TEST (for Steve) ──────────────────────────────────────
+          // Force EVERY tile to the recently-uploaded rectangular artwork so he
+          // can see how the whole grid would look rectangular. Revert by deleting
+          // these two lines (restores per-category images + round tiles).
+          const TEST_RECT_ALL = true
+          const img = TEST_RECT_ALL ? '/categories/handy-help-v2.jpg' : cat.img
+          const showImg = img && !failed[cat.name]
           const isActive = active === cat.name
           // Handy Help is trialled as a full-width RECTANGULAR banner tile (so
           // Steve can compare it against the round tiles). The rest stay round.
-          const rect = cat.name === 'Handy Help'
+          const rect = TEST_RECT_ALL || cat.name === 'Handy Help'
           const radius = rect ? 16 : '50%'
           return (
             <button
@@ -96,7 +102,7 @@ export default function CategoryGrid() {
             >
               {showImg
                 ? <img
-                    src={cat.img ?? undefined}
+                    src={img ?? undefined}
                     alt={cat.name}
                     loading="lazy"
                     onError={() => setFailed(f => ({ ...f, [cat.name]: true }))}
