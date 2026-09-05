@@ -94,7 +94,7 @@ export default function CategoryGrid() {
               style={{
                 position: 'relative', border: 'none', padding: 0, cursor: 'pointer',
                 borderRadius: radius, overflow: 'hidden', background: '#f6f1e6',
-                aspectRatio: '1 / 1',
+                aspectRatio: rect ? '3 / 2' : '1 / 1',
                 boxShadow: isActive ? '0 0 0 3px rgba(245,84,10,0.55)' : '0 2px 8px rgba(0,0,0,0.12)',
                 outline: '1px solid #e8ddc7', outlineOffset: -1,
                 transition: 'transform .15s ease, box-shadow .15s ease',
