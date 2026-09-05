@@ -73,17 +73,12 @@ export default function CategoryGrid() {
     <section className="dept-grid-wrap" style={{ paddingTop: 16 }}>
       <div className="dept-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, padding: '0 12px' }}>
         {categories.map(cat => {
-          // ── TEMPORARY TEST (for Steve) ──────────────────────────────────────
-          // Force EVERY tile to the recently-uploaded rectangular artwork so he
-          // can see how the whole grid would look rectangular. Revert by deleting
-          // these two lines (restores per-category images + round tiles).
-          const TEST_RECT_ALL = true
-          const img = TEST_RECT_ALL ? '/categories/handy-help-v2.jpg' : cat.img
+          const img = cat.img
           const showImg = img && !failed[cat.name]
           const isActive = active === cat.name
-          // Handy Help is trialled as a full-width RECTANGULAR banner tile (so
-          // Steve can compare it against the round tiles). The rest stay round.
-          const rect = TEST_RECT_ALL || cat.name === 'Handy Help'
+          // All category tiles now use the RECTANGULAR (3:2) format Steve signed
+          // off on — each keeps its own artwork, laid out 4 to a row.
+          const rect = true
           const radius = rect ? 16 : '50%'
           return (
             <button

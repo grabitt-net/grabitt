@@ -138,8 +138,13 @@ export default function CategoryPage() {
       <Topbar title={label} />
       <QuickActions belowPromo={<PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={hdr?.img || CATEGORY_HERO[slug] || undefined} bg={hdr?.bgImage || undefined} />} />
 
-      {/* Sold banner placements — the paid category sponsor banner, below the hero */}
-      <BannerSlot position="category" page={slug} aspect="1053 / 163" />
+      {/* Sold banner placements — the paid category sponsor banner, below the hero.
+          Constrained to the SAME centred 1000px footprint as the hero above it so
+          the two line up (a 1053×163 creative at this width is ~155px tall, matching
+          the hero height — no cropping). */}
+      <div style={{ maxWidth: 1000, margin: '10px auto 0', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
+        <BannerSlot position="category" page={slug} aspect="1053 / 163" padded={false} />
+      </div>
 
 
       <header style={{ background: 'var(--sand)', padding: '14px 14px', borderBottom: '1.5px solid var(--sand2)' }}>
@@ -195,7 +200,9 @@ export default function CategoryPage() {
       </div>
 
       {/* Category — bottom banner (rotating Featured Partners for this page) */}
-      <BannerSlot position="category_footer" page={slug} aspect="1053 / 163" label="Category — bottom" />
+      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
+        <BannerSlot position="category_footer" page={slug} aspect="1053 / 163" padded={false} label="Category — bottom" />
+      </div>
 
       {!loading && totalPages > 1 && (
         <Pagination page={page} totalPages={totalPages} onChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />

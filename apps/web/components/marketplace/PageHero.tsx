@@ -14,13 +14,18 @@ export default function PageHero({ title, tagline, body, image, bg }: {
   bg?: string | null
 }) {
   return (
-    <div style={{ padding: '12px 14px 4px' }}>
+    // Same centred footprint as the News page header (InfoPage): max-width 1000,
+    // centred with side gutters — NOT full-bleed — so every category/section hero
+    // is the same size as the News header, and the paid banner beneath it (also
+    // constrained to this width) lines up to a matching height.
+    <div style={{ maxWidth: 1000, margin: '18px auto 6px', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
       <div style={{
         position: 'relative', overflow: 'hidden',
-        display: 'flex', alignItems: 'center', gap: 'clamp(14px, 3.5vw, 30px)',
+        display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 24px)',
         background: 'linear-gradient(135deg, var(--sand) 0%, #FFE9DC 100%)',
         border: '1px solid var(--sand2)', borderRadius: 20,
-        padding: 'clamp(16px, 3.2vw, 26px) clamp(18px, 3.6vw, 30px)',
+        // Compacted so the hero reads as the same tidy height as the News header.
+        padding: 'clamp(12px, 2.2vw, 20px) clamp(16px, 3.2vw, 30px)',
         boxShadow: '0 6px 22px rgba(245,84,10,0.10)',
       }}>
         {bg && (
@@ -32,12 +37,12 @@ export default function PageHero({ title, tagline, body, image, bg }: {
           </>
         )}
         <div style={{ position: 'relative', zIndex: 2, flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(22px, 4.4vw, 34px)', fontWeight: 700, color: 'var(--dark)', lineHeight: 1.12, margin: 0 }}>{title}</h1>
-          {tagline && <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(13px, 2vw, 16px)', fontWeight: 700, color: 'var(--terra)', marginTop: 6 }}>{tagline}</div>}
-          {body && <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-2)', margin: '6px 0 0', maxWidth: 620 }}>{body}</p>}
+          <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(19px, 3.6vw, 27px)', fontWeight: 700, color: 'var(--dark)', lineHeight: 1.1, margin: 0 }}>{title}</h1>
+          {tagline && <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(12px, 1.8vw, 15px)', fontWeight: 700, color: 'var(--terra)', marginTop: 4 }}>{tagline}</div>}
+          {body && <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, lineHeight: 1.4, color: 'var(--ink-2)', margin: '4px 0 0', maxWidth: 620 }}>{body}</p>}
         </div>
         {image && (
-          <div style={{ position: 'relative', zIndex: 2, flexShrink: 0, width: 'clamp(88px, 22vw, 150px)', aspectRatio: '1 / 1', borderRadius: '50%', overflow: 'hidden', border: '4px solid #fff', boxShadow: '0 8px 22px rgba(15,23,42,0.16)' }}>
+          <div style={{ position: 'relative', zIndex: 2, flexShrink: 0, width: 'clamp(78px, 15vw, 116px)', aspectRatio: '1 / 1', borderRadius: '50%', overflow: 'hidden', border: '4px solid #fff', boxShadow: '0 8px 22px rgba(15,23,42,0.16)' }}>
             <img src={image} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
         )}
