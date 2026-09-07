@@ -140,10 +140,10 @@ export default function CategoryPage() {
         {/* Extra full-width hero banner — Home & Garden page ONLY, sits above the
             standard category hero. Shown whole (no crop) at its ~2.34:1 ratio. */}
         {slug === 'home_garden' && (
-          <div style={{ padding: '12px 14px 0', textAlign: 'center' }}>
-            {/* Height capped (scales with screen) so this band matches the
-                standard category hero below it; shown whole, no cropping. */}
-            <img src="/categories/home-garden-hero.jpg" alt="Home & Garden" style={{ display: 'inline-block', width: 'auto', maxWidth: '100%', height: 'auto', maxHeight: 'clamp(120px, 20vw, 190px)', borderRadius: 16 }} />
+          <div style={{ padding: '12px 14px 0' }}>
+            {/* Full-width wide banner (~5:1). Shown whole edge-to-edge; the
+                short banner shape means it sits at roughly the hero band height. */}
+            <img src="/categories/home-garden-hero.jpg" alt="Home & Garden" style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />
           </div>
         )}
         <PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={hdr?.img || CATEGORY_HERO[slug] || undefined} bg={hdr?.bgImage || undefined} />
