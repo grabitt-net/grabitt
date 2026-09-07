@@ -136,7 +136,16 @@ export default function CategoryPage() {
     <PanelProvider>
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title={label} />
-      <QuickActions belowPromo={<PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={hdr?.img || CATEGORY_HERO[slug] || undefined} bg={hdr?.bgImage || undefined} />} />
+      <QuickActions belowPromo={<>
+        {/* Extra full-width hero banner — Home & Garden page ONLY, sits above the
+            standard category hero. Shown whole (no crop) at its ~2.34:1 ratio. */}
+        {slug === 'home_garden' && (
+          <div style={{ padding: '12px 14px 0' }}>
+            <img src="/categories/home-garden-hero.jpg" alt="Home & Garden" style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />
+          </div>
+        )}
+        <PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={hdr?.img || CATEGORY_HERO[slug] || undefined} bg={hdr?.bgImage || undefined} />
+      </>} />
 
       {/* Sold banner placements — the paid category sponsor banner, below the hero.
           Constrained to the SAME centred 1000px footprint as the hero above it so
