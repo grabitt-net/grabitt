@@ -44,7 +44,7 @@ export const homepageRouter = router({
   categoryHeader: publicProcedure
     .input(z.object({ department: z.string() }))
     .query(async ({ ctx, input }) => {
-      const c = await ctx.prisma.homeCategory.findFirst({ where: { department: input.department }, select: { name: true, img: true, bgImage: true } })
+      const c = await ctx.prisma.homeCategory.findFirst({ where: { department: input.department }, select: { name: true, img: true, bgImage: true, heroBanner: true } })
       return c ?? null
     }),
 
@@ -61,6 +61,7 @@ export const homepageRouter = router({
       department: z.string().max(40),
       img: z.string().max(500).nullable().optional(),
       bgImage: z.string().max(500).nullable().optional(),
+      heroBanner: z.string().max(500).nullable().optional(),
       enabled: z.boolean().default(true),
     }))
     .mutation(async ({ ctx, input }) => {

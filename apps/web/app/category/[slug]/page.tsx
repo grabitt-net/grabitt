@@ -10,7 +10,6 @@ import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import BannerSlot from '@/components/marketplace/BannerSlot'
-import PageHero from '@/components/marketplace/PageHero'
 import Pagination from '@/components/marketplace/Pagination'
 import Place from '@/components/marketplace/Place'
 import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
@@ -35,24 +34,6 @@ const CATEGORY_DESC: Record<string, { title: string; body: string }> = {
   handy_help: { title: 'Need a hand? Find it here.', body: 'Your local classifieds for domestic and personal help — builders, joiners, electricians, plumbers, cleaners, gardeners, lawyers, dentists, doctors, nurses and more. Whatever the job, big or small, connect with trusted local people ready to help. Problem solved, the island way.' },
   pet_shop: { title: 'Everything for your best friend.', body: "Beds, bowls, toys, tanks and treats — spoil your pets for less, or sell on the supplies they no longer use. Great gear for happy pets, all from fellow island animal lovers. Because they deserve the best (for a bit less)." },
   hobbies_crafts: { title: 'Feed your passion for less.', body: "Art supplies, instruments, model kits, craft materials and more — whatever your hobby, stock up affordably or sell the kit you're no longer using. Start something new, clear out the old, and let your creativity loose." },
-}
-
-// The category hero image (the same artwork used for the round homepage tiles),
-// shown oblong at the top of each category page. Slugs without an image fall
-// back to the plain header. Keep in sync with /public/categories.
-const CATEGORY_HERO: Record<string, string> = {
-  home_garden: '/categories/home-garden.jpg',
-  fashion: '/categories/fashion.jpg',
-  sport: '/categories/sport.jpg',
-  gaming: '/categories/gaming.jpg',
-  electronics: '/categories/electronics.jpg',
-  gift_ideas: '/categories/gift-ideas.jpg',
-  kids_baby: '/categories/kids-baby.jpg',
-  health_fitness: '/categories/health-beauty.jpg',
-  retro_vintage: '/categories/retro.jpg',
-  handy_help: '/categories/handy-help-v2.jpg',
-  pet_shop: '/categories/pet-supplies.jpg',
-  hobbies_crafts: '/categories/hobbies-crafts.jpg',
 }
 
 const SUBCATS: Record<string, string[]> = {
@@ -87,12 +68,12 @@ export default function CategoryPage() {
 
   const [activeSub, setActiveSub] = useState('All')
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
-  // Admin-managed header artwork for this category (round icon + faded bg).
-  const [hdr, setHdr] = useState<{ img: string | null; bgImage: string | null } | null>(null)
+  // Admin-managed header artwork for this category (the wide hero banner).
+  const [hdr, setHdr] = useState<{ img: string | null; bgImage: string | null; heroBanner: string | null } | null>(null)
   useEffect(() => {
     if (!slug) return
     createLooseTrpcClient().homepage.categoryHeader.query({ department: slug })
-      .then(h => setHdr(h as { img: string | null; bgImage: string | null } | null)).catch(() => {})
+      .then(h => setHdr(h as { img: string | null; bgImage: string | null; heroBanner: string | null } | null)).catch(() => {})
   }, [slug])
   const [items, setItems] = useState<DbListing[]>([])
   const [loading, setLoading] = useState(true)
@@ -136,18 +117,9 @@ export default function CategoryPage() {
     <PanelProvider>
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title={label} />
-      <QuickActions belowPromo={<>
-        {/* Extra full-width hero banner — Home & Garden page ONLY, sits above the
-            standard category hero. Shown whole (no crop) at its ~2.34:1 ratio. */}
-        {slug === 'home_garden' && (
-          <div style={{ padding: '12px 14px 0' }}>
-            {/* Full-width wide banner (~5:1). Shown whole edge-to-edge; the
-                short banner shape means it sits at roughly the hero band height. */}
-            <img src="/categories/home-garden-hero.jpg" alt="Home & Garden" style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />
-          </div>
-        )}
-        <PageHero title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} image={hdr?.img || CATEGORY_HERO[slug] || undefined} bg={hdr?.bgImage || undefined} />
-      </>} />
+      <QuickActions belowPromo={
+        <CategoryHero banner={hdr?.heroBanner || null} title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} />
+      } />
 
       {/* Sold banner placements — the paid category sponsor banner, below the hero.
           Constrained to the SAME centred 1000px footprint as the hero above it so
@@ -224,6 +196,25 @@ export default function CategoryPage() {
       <PanelHost />
     </main>
     </PanelProvider>
+  )
+}
+
+// Category page hero: a wide banner (uploaded per-category in the Categories
+// admin) shown full-width, with the category's title + tagline + description
+// below it. The old round-icon header has been retired. When a category has no
+// banner set yet, just the text block shows.
+function CategoryHero({ banner, title, tagline, body }: { banner: string | null; title: string; tagline?: string; body?: string }) {
+  return (
+    <div style={{ padding: '12px 14px 4px' }}>
+      {banner && (
+        <img src={banner} alt={title} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />
+      )}
+      <div style={{ padding: banner ? '12px 4px 0' : '4px' }}>
+        <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(20px, 3.8vw, 30px)', fontWeight: 700, color: 'var(--dark)', lineHeight: 1.12, margin: 0 }}>{title}</h1>
+        {tagline && <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(13px, 2vw, 16px)', fontWeight: 700, color: 'var(--terra)', marginTop: 5 }}>{tagline}</div>}
+        {body && <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, lineHeight: 1.55, color: 'var(--ink-2)', margin: '6px 0 0', maxWidth: 760 }}>{body}</p>}
+      </div>
+    </div>
   )
 }
 

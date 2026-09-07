@@ -67,6 +67,7 @@ model HomeCategory {
   department String?
   img       String?   // round tile / icon artwork
   bgImage   String?   // faded background artwork behind the category page header
+  heroBanner String?  // wide banner shown as the category-page hero (replaces icon)
   enabled   Boolean @default(true)
   sortOrder Int
 
