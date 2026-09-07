@@ -17,25 +17,6 @@ import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
 // A department/category now opens its own page (matching /jobs and /property)
 // instead of the old modal. Same site shell (Topbar + app-shell + Footer) with
 // the category search inputs on top and the listing grid below.
-// Per-category description shown above the subcategory pills. Copy supplied by
-// Steve per category — add entries keyed by department slug as they arrive.
-// Department page intros — Steve's lander copy, used verbatim. Headline + body
-// sit under the page title, above the subcategory pills.
-const CATEGORY_DESC: Record<string, { title: string; body: string }> = {
-  home_garden: { title: 'Make your space feel like home.', body: "Sofas, tables, tools, plants and everything in between — kit out your home and garden for less, or sell the pieces you've outgrown. One person's clear-out is another's perfect find. Refresh your space, free up a room, and pocket some cash while you're at it." },
-  fashion: { title: 'Look good, spend less, sell smart.', body: "Refresh your wardrobe without the price tag — or turn last season's finds into cash. From everyday staples to standout pieces, buy pre-loved fashion near you and give great clothes a second life. Clear out the closet, make some space, and stay stylish for less." },
-  sport: { title: 'Get out, get active, get a bargain.', body: "Bikes, boards, boots and gear for every sport under the Canarian sun. Whether you're kitting out for a new hobby or selling the gear gathering dust in the garage, it's all here. Buy smart, sell easy, and get back out there." },
-  gaming: { title: 'Level up for less.', body: "Consoles, games, controllers and collectibles — grab your next gaming fix without paying full price, or cash in the kit you've finished with. Trade up, clear the shelf, and keep playing. Game on!" },
-  electronics: { title: 'Tech that works for you — and your wallet.', body: "Phones, laptops, TVs, gadgets and more, all from people near you. Upgrade for less, or sell your old tech and turn it into cash instead of clutter. Smart buys, quick sells, no drama." },
-  gift_ideas: { title: 'The perfect gift is closer than you think.', body: "Stuck for ideas? Browse thoughtful, unique and budget-friendly gifts for every occasion, all sourced locally. Find something special, support island sellers, and make someone's day — without blowing the budget." },
-  kids_baby: { title: 'Big savings for little ones.', body: "Kids grow fast — and so does the pile of stuff they've outgrown! Grab prams, toys, clothes and gear for a fraction of the price, or sell on what your little ones no longer need. Save money, free up space, and pass it on." },
-  health_fitness: { title: 'Look after yourself for less.', body: "Skincare, haircare, wellness and beauty finds to help you feel your best. Discover great products from local sellers, or pass on the bits that weren't for you. Treat yourself, save a little, and glow on." },
-  retro_vintage: { title: "Old soul? You'll love it here.", body: "Timeless furniture, vintage finds and mid-century treasures with real character. Hunt down that one-of-a-kind piece, or sell the classics you're ready to part with to someone who'll cherish them. History, style, and a great deal — all in one." },
-  handy_help: { title: 'Need a hand? Find it here.', body: 'Your local classifieds for domestic and personal help — builders, joiners, electricians, plumbers, cleaners, gardeners, lawyers, dentists, doctors, nurses and more. Whatever the job, big or small, connect with trusted local people ready to help. Problem solved, the island way.' },
-  pet_shop: { title: 'Everything for your best friend.', body: "Beds, bowls, toys, tanks and treats — spoil your pets for less, or sell on the supplies they no longer use. Great gear for happy pets, all from fellow island animal lovers. Because they deserve the best (for a bit less)." },
-  hobbies_crafts: { title: 'Feed your passion for less.', body: "Art supplies, instruments, model kits, craft materials and more — whatever your hobby, stock up affordably or sell the kit you're no longer using. Start something new, clear out the old, and let your creativity loose." },
-}
-
 const SUBCATS: Record<string, string[]> = {
   // Exact subcategories from the V20 prototype's deptConfig, each with an 'All'
   // pill prepended. Departments the prototype didn't define keep a sensible set.
@@ -118,7 +99,7 @@ export default function CategoryPage() {
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title={label} />
       <QuickActions belowPromo={
-        <CategoryHero banner={hdr?.heroBanner || null} title={label} tagline={CATEGORY_DESC[slug]?.title} body={CATEGORY_DESC[slug]?.body} />
+        <CategoryHero banner={hdr?.heroBanner || null} title={label} />
       } />
 
       {/* Sold banner placements — the paid category sponsor banner, below the hero.
@@ -200,20 +181,13 @@ export default function CategoryPage() {
 }
 
 // Category page hero: a wide banner (uploaded per-category in the Categories
-// admin) shown full-width, with the category's title + tagline + description
-// below it. The old round-icon header has been retired. When a category has no
-// banner set yet, just the text block shows.
-function CategoryHero({ banner, title, tagline, body }: { banner: string | null; title: string; tagline?: string; body?: string }) {
+// admin) shown full-width. The old round-icon + text header has been retired —
+// the banner carries the branding. Renders nothing until a banner is set.
+function CategoryHero({ banner, title }: { banner: string | null; title: string }) {
+  if (!banner) return null
   return (
     <div style={{ padding: '12px 14px 4px' }}>
-      {banner && (
-        <img src={banner} alt={title} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />
-      )}
-      <div style={{ padding: banner ? '12px 4px 0' : '4px' }}>
-        <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(20px, 3.8vw, 30px)', fontWeight: 700, color: 'var(--dark)', lineHeight: 1.12, margin: 0 }}>{title}</h1>
-        {tagline && <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 'clamp(13px, 2vw, 16px)', fontWeight: 700, color: 'var(--terra)', marginTop: 5 }}>{tagline}</div>}
-        {body && <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, lineHeight: 1.55, color: 'var(--ink-2)', margin: '6px 0 0', maxWidth: 760 }}>{body}</p>}
-      </div>
+      <img src={banner} alt={title} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />
     </div>
   )
 }
