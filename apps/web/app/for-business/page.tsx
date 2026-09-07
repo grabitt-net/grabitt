@@ -8,6 +8,7 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
+import { HeroBanner } from '@/components/marketplace/PageHero'
 import { BUSINESS_TIERS, BUSINESS_TIER_ORDER, BLAST_BUNDLES } from '@grabitt/design-tokens'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { t } from '@/lib/i18n'
@@ -70,6 +71,12 @@ const ADDON_COPY: Record<string, string> = {
 function EmployersInner() {
   const { openPanel } = usePanel()
   const [gate, setGate] = useState<Gate>('loading')
+  // Admin-managed hero banner for this page (set in the Categories admin).
+  const [heroBanner, setHeroBanner] = useState<string | null>(null)
+  useEffect(() => {
+    createLooseTrpcClient().homepage.categoryHeader.query({ department: 'business' })
+      .then(h => setHeroBanner((h as { heroBanner?: string | null } | null)?.heroBanner ?? null)).catch(() => {})
+  }, [])
   // Sponsorship basket: addonId -> chosen months (absent = not in basket).
   const [basket, setBasket] = useState<Record<string, number>>({})
   const [pageFor, setPageFor] = useState<Record<string, string>>({})
@@ -139,7 +146,7 @@ function EmployersInner() {
   return (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title="For Business" />
-      <QuickActions />
+      <QuickActions belowPromo={heroBanner ? <HeroBanner src={heroBanner} alt="For Business" /> : undefined} />
 
       {/* Signed-in business: a button to their dashboard. */}
       {isBiz && (

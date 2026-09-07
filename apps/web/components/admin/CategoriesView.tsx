@@ -14,7 +14,7 @@ const DEPT_OPTIONS = Object.entries(DEPT_LABEL) as [string, string][]
 
 // Non-marketplace pages that also carry a hero banner but are NOT homepage
 // category tiles (they have their own pages). Managed in a separate section.
-const PAGE_DEPTS = ['property', 'jobs']
+const PAGE_DEPTS = ['property', 'jobs', 'business']
 
 export default function CategoriesView() {
   const api = useCrmApi()
