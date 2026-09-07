@@ -76,8 +76,10 @@ export default function CategoryGrid() {
           const img = cat.img
           const showImg = img && !failed[cat.name]
           const isActive = active === cat.name
-          // All category tiles now use the RECTANGULAR (3:2) format Steve signed
-          // off on — each keeps its own artwork, laid out 4 to a row.
+          // All category tiles use the wide landscape banner format Steve signed
+          // off on (~2.35:1 — text left, artwork right). Kept 4 to a row; the
+          // cells scale with screen width. Design backend art to this ratio
+          // (e.g. 1920×816) so it fills the button without cropping.
           const rect = true
           const radius = rect ? 16 : '50%'
           return (
@@ -89,7 +91,7 @@ export default function CategoryGrid() {
               style={{
                 position: 'relative', border: 'none', padding: 0, cursor: 'pointer',
                 borderRadius: radius, overflow: 'hidden', background: '#f6f1e6',
-                aspectRatio: rect ? '3 / 2' : '1 / 1',
+                aspectRatio: rect ? '2.35 / 1' : '1 / 1',
                 boxShadow: isActive ? '0 0 0 3px rgba(245,84,10,0.55)' : '0 2px 8px rgba(0,0,0,0.12)',
                 outline: '1px solid #e8ddc7', outlineOffset: -1,
                 transition: 'transform .15s ease, box-shadow .15s ease',
