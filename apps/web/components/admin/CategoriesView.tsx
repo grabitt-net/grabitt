@@ -106,7 +106,7 @@ function EditModal({ cat, onClose, onSaved, api }: { cat: Cat | null; onClose: (
           {DEPT_OPTIONS.map(([slug, label]) => <option key={slug} value={slug}>{label} ({slug})</option>)}
         </select>
         <div style={{ marginTop: 10 }}><ImageUploadField label="Round tile icon (homepage button)" kind="category" value={img} onChange={setImg} /></div>
-        <div style={{ marginTop: 10 }}><ImageUploadField label="Category page hero banner (wide ~5:1 — shown full-width at the top of the category page)" kind="category" value={heroBanner} onChange={setHeroBanner} /></div>
+        <div style={{ marginTop: 10 }}><ImageUploadField label="Category page hero banner (wide ~5:1 — shown full-width at the top of the category page)" kind="category" value={heroBanner} onChange={setHeroBanner} trim hint="Any white border/padding is trimmed automatically on upload." /></div>
         <div style={{ marginTop: 10 }}><ImageUploadField label="Header background image (legacy — faded behind the header)" kind="category" value={bgImage} onChange={setBgImage} /></div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 700, color: '#555', cursor: 'pointer' }}>
           <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} /> Show on the homepage

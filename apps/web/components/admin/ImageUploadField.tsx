@@ -17,7 +17,7 @@ function readDimensions(file: File): Promise<{ w: number; h: number }> {
 }
 
 export default function ImageUploadField({
-  value, onChange, label, kind = 'homepage', hint, expect,
+  value, onChange, label, kind = 'homepage', hint, expect, trim = false,
 }: {
   value: string
   onChange: (url: string) => void
@@ -28,6 +28,9 @@ export default function ImageUploadField({
   // exact target and warns (loudly) if the shape doesn't match — so a banner that
   // isn't the required size is caught before it goes live and looks cropped.
   expect?: { w: number; h: number }
+  // Auto-trim a uniform white border/padding off the image before upload (used
+  // for category hero banners so a padded export doesn't show empty bands).
+  trim?: boolean
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
@@ -53,7 +56,7 @@ export default function ImageUploadField({
           }
         } catch { /* if we can't read it, let the upload proceed */ }
       }
-      const url = await compressAndUpload(file, cmsImagePath(kind))
+      const url = await compressAndUpload(file, cmsImagePath(kind), { trim })
       onChange(url)
     } catch (err: any) {
       setError(err?.message ?? 'Upload failed. Please try again.')

@@ -9,8 +9,8 @@ export const PHOTOS_BUCKET = 'photos'
  * then uploads to Supabase Storage. Returns the public URL.
  * Photo compression MUST happen before upload — §10.2 security rule.
  */
-export async function compressAndUpload(file: File, path: string): Promise<string> {
-  const blob = await compressImage(file)
+export async function compressAndUpload(file: File, path: string, opts?: { trim?: boolean }): Promise<string> {
+  const blob = await compressImage(file, opts?.trim)
   const client = createClient()
 
   const { error } = await client.storage
@@ -107,24 +107,31 @@ export async function uploadVerificationDoc(file: File, userId: string, kind: 'i
   return path
 }
 
-async function compressImage(file: File): Promise<Blob> {
+async function compressImage(file: File, trim = false): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     const url = URL.createObjectURL(file)
 
     img.onload = () => {
       URL.revokeObjectURL(url)
-      const { width, height } = img
-      const scale = Math.min(1, MAX_DIM / Math.max(width, height))
-      const w = Math.round(width * scale)
-      const h = Math.round(height * scale)
+      // Source crop rectangle — the whole image unless we trim off a uniform
+      // border (e.g. the white padding Canva/ChatGPT leave around a banner).
+      let sx = 0, sy = 0, sw = img.width, sh = img.height
+      if (trim) {
+        const box = contentBounds(img)
+        if (box) { sx = box.x; sy = box.y; sw = box.w; sh = box.h }
+      }
+
+      const scale = Math.min(1, MAX_DIM / Math.max(sw, sh))
+      const w = Math.round(sw * scale)
+      const h = Math.round(sh * scale)
 
       const canvas = document.createElement('canvas')
       canvas.width = w
       canvas.height = h
       const ctx = canvas.getContext('2d')
       if (!ctx) { reject(new Error('Canvas unavailable')); return }
-      ctx.drawImage(img, 0, 0, w, h)
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h)
       canvas.toBlob(
         blob => blob ? resolve(blob) : reject(new Error('Compression failed')),
         'image/jpeg',
@@ -135,4 +142,42 @@ async function compressImage(file: File): Promise<Blob> {
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')) }
     img.src = url
   })
+}
+
+/**
+ * Finds the bounding box of the non-near-white content in an image, so a banner
+ * exported with a white border/padding (common from Canva/ChatGPT) is cropped
+ * tight before upload — otherwise it renders with empty bands above/below.
+ * Returns null if the image is essentially blank (leave it untouched).
+ */
+function contentBounds(img: HTMLImageElement): { x: number; y: number; w: number; h: number } | null {
+  const c = document.createElement('canvas')
+  c.width = img.width; c.height = img.height
+  const ctx = c.getContext('2d', { willReadFrequently: true })
+  if (!ctx) return null
+  ctx.drawImage(img, 0, 0)
+  let data: Uint8ClampedArray
+  try { data = ctx.getImageData(0, 0, c.width, c.height).data } catch { return null }
+
+  const NEAR_WHITE = 245 // treat pixels this light on every channel as background
+  let minX = c.width, minY = c.height, maxX = -1, maxY = -1
+  for (let y = 0; y < c.height; y++) {
+    for (let x = 0; x < c.width; x++) {
+      const i = (y * c.width + x) * 4
+      const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3]
+      const isBg = a < 8 || (r >= NEAR_WHITE && g >= NEAR_WHITE && b >= NEAR_WHITE)
+      if (!isBg) {
+        if (x < minX) minX = x
+        if (x > maxX) maxX = x
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
+      }
+    }
+  }
+  if (maxX < minX || maxY < minY) return null
+  // Small safety padding so we never shave the very edge of the artwork.
+  const pad = 2
+  minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad)
+  maxX = Math.min(c.width - 1, maxX + pad); maxY = Math.min(c.height - 1, maxY + pad)
+  return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 }
 }
