@@ -14,11 +14,9 @@ export default function PageHero({ title, tagline, body, image, bg }: {
   bg?: string | null
 }) {
   return (
-    // Same centred footprint as the News page header (InfoPage): max-width 1000,
-    // centred with side gutters — NOT full-bleed — so every category/section hero
-    // is the same size as the News header, and the paid banner beneath it (also
-    // constrained to this width) lines up to a matching height.
-    <div style={{ maxWidth: 1000, margin: '18px auto 6px', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
+    // Full-width category/section hero. (The paid banner beneath it stays
+    // constrained to a centred 1000px footprint — see the category page.)
+    <div style={{ padding: '12px 14px 4px' }}>
       <div style={{
         position: 'relative', overflow: 'hidden',
         display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 24px)',
