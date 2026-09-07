@@ -1,5 +1,17 @@
 import React from 'react'
 
+// Full-width banner hero — a wide image (uploaded per-page in the Categories
+// admin) shown edge-to-edge. Used on category, Property and Recruitment pages so
+// they share one look. Falls back to <PageHero> when no banner is set.
+export function HeroBanner({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div style={{ padding: '12px 14px 0' }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />
+    </div>
+  )
+}
+
 // Full-width category/section hero: title + tagline + blurb beside the round
 // artwork (shown whole, never cropped). Used on category, Recruitment and
 // Property pages so they share one look. Sits directly below the Grabitt NOW

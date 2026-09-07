@@ -12,13 +12,31 @@ type Cat = { id: string; name: string; department: string | null; img: string | 
 
 const DEPT_OPTIONS = Object.entries(DEPT_LABEL) as [string, string][]
 
+// Non-marketplace pages that also carry a hero banner but are NOT homepage
+// category tiles (they have their own pages). Managed in a separate section.
+const PAGE_DEPTS = ['property', 'jobs']
+
 export default function CategoriesView() {
   const api = useCrmApi()
   const [rows, setRows] = useState<Cat[]>([])
+  const [pageRows, setPageRows] = useState<Cat[]>([])
   const [editing, setEditing] = useState<Cat | 'new' | null>(null)
 
-  const load = () => api.homeCategories().then(r => setRows((r ?? []) as Cat[])).catch(() => {})
+  const load = () => api.homeCategories().then(r => {
+    const all = (r ?? []) as Cat[]
+    setRows(all.filter(c => !PAGE_DEPTS.includes(c.department ?? '')))
+    setPageRows(all.filter(c => PAGE_DEPTS.includes(c.department ?? '')))
+  }).catch(() => {})
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save just the hero banner for a fixed page (Property / Recruitment).
+  const savePageBanner = async (cat: Cat, url: string) => {
+    try {
+      await api.upsertCategory({ id: cat.id, name: cat.name, department: cat.department ?? '', heroBanner: url || null, enabled: false })
+      toast(url ? 'Banner saved.' : 'Banner removed.')
+      load()
+    } catch (e: any) { toast(e?.message ?? 'Could not save') }
+  }
 
   const persistOrder = async (list: Cat[]) => {
     setRows(list)
@@ -70,6 +88,23 @@ export default function CategoriesView() {
           </div>
         ))}
       </div>
+
+      {/* Fixed non-marketplace pages that also take a hero banner (Property,
+          Recruitment). Banner-only — no tile, no department, not on the homepage. */}
+      {pageRows.length > 0 && (
+        <div style={{ marginTop: 26 }}>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>Page hero banners</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 12 }}>The Property and Recruitment pages have their own hero banner (same wide ~5:1 style as the categories). White padding is trimmed automatically.</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {pageRows.map(c => (
+              <div key={c.id} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: 12 }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, color: '#1a1a1a', marginBottom: 8 }}>{c.name}</div>
+                <ImageUploadField label="Hero banner (wide ~5:1)" kind="category" value={c.heroBanner ?? ''} onChange={url => savePageBanner(c, url)} trim hint="Any white border/padding is trimmed automatically on upload." />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {editing && <EditModal cat={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load() }} api={api} />}
     </div>

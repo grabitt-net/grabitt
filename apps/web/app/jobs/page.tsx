@@ -8,7 +8,7 @@ import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
-import PageHero from '@/components/marketplace/PageHero'
+import PageHero, { HeroBanner } from '@/components/marketplace/PageHero'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import BannerSlot from '@/components/marketplace/BannerSlot'
@@ -51,6 +51,12 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true)
   const [mapView, setMapView] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  // Admin-managed hero banner for this page (set in the Categories admin).
+  const [heroBanner, setHeroBanner] = useState<string | null>(null)
+  useEffect(() => {
+    createLooseTrpcClient().homepage.categoryHeader.query({ department: 'jobs' })
+      .then(h => setHeroBanner((h as { heroBanner?: string | null } | null)?.heroBanner ?? null)).catch(() => {})
+  }, [])
 
   const run = useCallback(async () => {
     setLoading(true)
@@ -97,7 +103,9 @@ export default function JobsPage() {
     <PanelProvider>
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title="Recruitment" />
-      <QuickActions belowPromo={<PageHero title="Recruitment" tagline="Island jobs, island talent." body="Browse vacancies across the Canary Islands and apply in a couple of taps — or post a role and hire from the community." />} />
+      <QuickActions belowPromo={heroBanner
+        ? <HeroBanner src={heroBanner} alt="Recruitment" />
+        : <PageHero title="Recruitment" tagline="Island jobs, island talent." body="Browse vacancies across the Canary Islands and apply in a couple of taps — or post a role and hire from the community." />} />
 
       {/* Sellable recruitment banner — sits above the search options */}
       <BannerSlot position="jobs" aspect="1053 / 163" />

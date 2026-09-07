@@ -8,7 +8,7 @@ import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
-import PageHero from '@/components/marketplace/PageHero'
+import PageHero, { HeroBanner } from '@/components/marketplace/PageHero'
 import BannerSlot from '@/components/marketplace/BannerSlot'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
@@ -65,6 +65,12 @@ export default function PropertyPage() {
   const [nearActive, setNearActive] = useState(false)
   const [radius, setRadius] = useState(10)
   const [locating, setLocating] = useState(false)
+  // Admin-managed hero banner for this page (set in the Categories admin).
+  const [heroBanner, setHeroBanner] = useState<string | null>(null)
+  useEffect(() => {
+    createLooseTrpcClient().homepage.categoryHeader.query({ department: 'property' })
+      .then(h => setHeroBanner((h as { heroBanner?: string | null } | null)?.heroBanner ?? null)).catch(() => {})
+  }, [])
 
   const locateMe = useCallback(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return
@@ -121,7 +127,9 @@ export default function PropertyPage() {
     <PanelProvider>
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title="Property" />
-      <QuickActions belowPromo={<PageHero title="Property" tagline="Find your place in the sun." body="Buying, selling, renting, or letting — your next home or investment is right here on the islands. Browse houses, apartments and holiday lets across the Canaries, or list your own property to reach local buyers and tenants directly. No jargon, no faff — just island living made simple." />} />
+      <QuickActions belowPromo={heroBanner
+        ? <HeroBanner src={heroBanner} alt="Property" />
+        : <PageHero title="Property" tagline="Find your place in the sun." body="Buying, selling, renting, or letting — your next home or investment is right here on the islands. Browse houses, apartments and holiday lets across the Canaries, or list your own property to reach local buyers and tenants directly. No jargon, no faff — just island living made simple." />} />
 
       {/* Sellable property banner — sits above the search options */}
       <BannerSlot position="property" aspect="1053 / 163" />
