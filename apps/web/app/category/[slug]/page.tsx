@@ -106,7 +106,7 @@ export default function CategoryPage() {
           Constrained to the SAME centred 1000px footprint as the hero above it so
           the two line up (a 1053×163 creative at this width is ~155px tall, matching
           the hero height — no cropping). */}
-      <div style={{ maxWidth: 1000, margin: '10px auto 0', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: 1000, margin: '6px auto 12px', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
         <BannerSlot position="category" page={slug} aspect="1053 / 163" padded={false} />
       </div>
 
@@ -186,7 +186,7 @@ export default function CategoryPage() {
 function CategoryHero({ banner, title }: { banner: string | null; title: string }) {
   if (!banner) return null
   return (
-    <div style={{ padding: '12px 14px 4px' }}>
+    <div style={{ padding: '12px 14px 0' }}>
       <img src={banner} alt={title} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />
     </div>
   )
