@@ -24,6 +24,7 @@ import SeekerProfilePanel from './SeekerProfilePanel'
 import SignInFirst from './SignInFirst'
 import BusinessVerifyPanel from './BusinessVerifyPanel'
 import BannerSlot from './BannerSlot'
+import PageHeroBanner from './PageHeroBanner'
 import Icon from './Icon'
 import Logo from './Logo'
 import StorefrontEditor from './StorefrontEditor'
@@ -959,6 +960,7 @@ function PanelBody() {
     const card: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, background: '#fff', border: '1px solid #eef0f4', borderRadius: 16, padding: '16px 8px', cursor: 'pointer', boxShadow: '0 2px 10px rgba(30,43,85,0.06)' }
     return (
       <ActionPanel title="Sell on Grabitt" onClose={closePanel}>
+        <PageHeroBanner dept="sell" alt="Sell on Grabitt" maxWidth={640} />
         <div style={{ textAlign: 'center', marginBottom: 16 }}>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 2 }}>What would you like to list?</div>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888' }}>Fees from 2.5% · Secure Stripe payments</div>
@@ -1723,6 +1725,7 @@ function PanelBody() {
 
     return (
       <ActionPanel title="🛡️ My Disputes" onClose={closePanel}>
+        <PageHeroBanner dept="disputes" alt="My Disputes" maxWidth={640} />
         {!loaded ? (
           <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
         ) : disputes.length === 0 ? (
@@ -4725,6 +4728,7 @@ function PanelBody() {
     )
     return (
       <ActionPanel title="🚨 Report" onClose={closePanel}>
+        <PageHeroBanner dept="report" alt="Report a Listing" maxWidth={640} />
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888', marginBottom: 12 }}>Reporting: <strong>{reportTarget}</strong></div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 8 }}>Reason</div>
         {REPORT_REASONS.map(r => (
@@ -5123,6 +5127,7 @@ function SoldPricesPanel({ closePanel, initialQuery, department }: { closePanel:
 
   return (
     <ActionPanel title="📊 Sold Prices" onClose={closePanel}>
+      <PageHeroBanner dept="soldprices" alt="Sold Prices" maxWidth={640} />
       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555', marginBottom: 12, lineHeight: 1.5 }}>
         See what similar items recently sold for{department ? ` in ${department}` : ''}, so you can price with confidence.
       </div>

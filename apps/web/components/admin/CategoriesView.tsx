@@ -17,7 +17,9 @@ const DEPT_OPTIONS = Object.entries(DEPT_LABEL) as [string, string][]
 const PAGE_DEPTS = ['property', 'jobs', 'business', 'news', 'help',
   // Footer pages that also carry an uploadable header banner.
   'about', 'why', 'pricing', 'contact', 'delivery', 'terms', 'guarantee',
-  'scam-centre', 'directory', 'advertise', 'community', 'economic', 'dos', 'suggest']
+  'scam-centre', 'directory', 'advertise', 'community', 'economic', 'dos', 'suggest',
+  // Footer items that open panels rather than dedicated pages.
+  'sell', 'soldprices', 'report', 'disputes']
 
 export default function CategoriesView() {
   const api = useCrmApi()
