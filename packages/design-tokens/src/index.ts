@@ -61,6 +61,8 @@ export const PRICES = {
   // Both referrer and referred earn this when the referred user lists their
   // first item.
   referralBonus: 50,
+  // Loyalty points earned per €1 spent on Grabitt purchases (4 points / €1).
+  pointsPerEuro: 4,
 } as const
 
 // ─────────────────────────────────────────────────────────────────────────────

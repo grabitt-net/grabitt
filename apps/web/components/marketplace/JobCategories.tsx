@@ -260,7 +260,7 @@ export default function JobCategories({ me, onReload, mode }: { me: any; onReloa
           <div style={{ marginBottom: 4 }}>
             <div style={subLabel}>{t('Can employers unlock your contact details?')}</div>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: DARK, lineHeight: 1.5, marginBottom: 6 }}>
-              {t('If an employer views your profile, this lets them spend credits to reveal your name and contact details so they can get in touch.')}
+              {t('If an employer views your profile, this lets them spend loyalty points to reveal your name and contact details so they can get in touch.')}
             </div>
             <YesNo value={about.allowUnlock} onChange={v => patchAbout({ allowUnlock: v })} />
           </div>

@@ -165,7 +165,7 @@ const _para = (text: string) => `<p style="font-size:12px;color:#444;font-family
 const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
   about: { title: 'ℹ️ About Grabitt', body:
     _para("Grabitt is the Canary Islands' first, dedicated, all-in-one marketplace connecting you with your target audience. It brings buyers, sellers, employers, jobseekers, businesses and charities all under one roof to significantly speed up getting what you want and helping each other.") +
-    _para('Based in the Canary Islands, we are constantly expanding and improving Grabitt — feel free to hit us up with ideas to earn free credits!') +
+    _para('Based in the Canary Islands, we are constantly expanding and improving Grabitt — feel free to hit us up with ideas to earn free loyalty points!') +
     '<div style="margin-top:14px;display:flex;flex-direction:column;gap:9px;">' +
     ["Looking for a job or staff? We've got you covered. Search jobs, list jobs, apply and manage applications — it's easy!",
      "A structured, easy way to see what's for sale, who's selling, fast-ending offers, online stores — and convert your treasures into cash!",
@@ -195,7 +195,7 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
       sec('4. Buying & Offers', 'When an offer is accepted you contract directly with the Seller, not Grabitt. You agree to pay the agreed price and collect or receive the item as arranged. Accepted offers, including auto-accepted ones, are binding.') +
       sec('5. Prohibited Items', 'No illegal, stolen or counterfeit goods, weapons, drugs, IP-infringing items, or adult content. Do not harass members, post misleading content, or move transactions off-platform to avoid protections.') +
       sec('6. Payments', 'Payments are processed by our third-party provider. Where Grabitt holds funds, they are released to the Seller once the transaction is confirmed complete. Some services (job listings, featured placements, advertising) carry fees shown before you commit.') +
-      sec('7. Credits & Rewards', 'Credits have no cash value unless stated, cannot be exchanged for cash, and may be subject to verification and expiry. We may withhold or reverse credits obtained through abuse or fraud, and may change the rewards programme at any time.') +
+      sec('7. Loyalty Points & Rewards', 'Loyalty points have no cash value unless stated, cannot be exchanged for cash, and may be subject to verification and expiry. We may withhold or reverse points obtained through abuse or fraud, and may change the rewards programme at any time.') +
       sec('8. Safety', 'We provide safety guidance including the Safety Shield, but you are responsible for your own conduct. Keep communications and payments on Grabitt, meet in safe public places, and report anything suspicious. Grabitt is not a party to member-to-member dealings.') +
       sec('9. Consumer Rights', 'Nothing here removes rights you have under Spanish and EU consumer law that cannot lawfully be excluded. Where a Seller acts as a business selling to a consumer, additional statutory rights may apply.') +
       sec('10. Liability', 'The Platform is provided "as is". To the extent permitted by law, Grabitt is not liable for member-to-member disputes or indirect losses. Nothing limits liability that cannot lawfully be limited.') +
@@ -225,14 +225,14 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
     _head('Jobs & trades', '#2193b0') +
     _priceCard('💼', 'Post a job', '€29', 'One listing (€245 for 10). Applying is free.', '#2193b0') +
     _priceCard('🛠️', 'Advertise a service', '€29/mo', 'Or €79/quarter. For local tradespeople.', '#00b09b') +
-    _priceCard('🔓', 'Handy Help lead', '5 credits', "Unlock a customer's help request.", '#00b09b') +
+    _priceCard('🔓', 'Handy Help lead', '5 points', "Unlock a customer's help request.", '#00b09b') +
     _head('Advertise your business', '#8b5cf6') +
     _priceCard('🖼️', 'Page banners', '€39/mo', 'Across Grabitt pages, with click stats.', '#8b5cf6') +
     /* Email/WhatsApp blasts hidden from customers pending legal review — do not re-enable without sign-off. */
     _priceCard('📒', 'Business directory', '€15/mo', 'From €15/mo · €40/quarter · €150/year.', '#8b5cf6') +
     _head('Extras', '#888') +
     _priceCard('🤝', 'Grabitt Assist', '€99–299', 'We photograph & sell on your behalf.') +
-    _priceCard('🎁', 'Credits', 'FREE', 'Earn by inviting, selling & sharing. Spend on unlocks.') +
+    _priceCard('🎁', 'Loyalty points', 'FREE', 'Earn by inviting, selling & sharing. Spend on unlocks.') +
     '<div style="background:linear-gradient(135deg,#16a34a,#22c55e);border-radius:14px;padding:14px 16px;margin-top:16px;"><div style="font-family:Nunito,sans-serif;font-size:13px;font-weight:900;color:#fff;margin-bottom:3px;">❤️ Charities & new small businesses</div><div style="font-size:11px;color:rgba(255,255,255,0.9);font-family:Comfortaa,sans-serif;line-height:1.5;">We help good causes & startups find their feet — apply for <strong>free listings, up to 10 items a month, no fees at all</strong>.</div></div>' },
   collection: { title: '🚚 Collection & Delivery', body:
     _para('Grabitt is local-first, so most items are handed over in person across the Canary Islands. You and the other person agree how to swap the item and the cash (or release the held payment) — here are your options and how to stay safe.') +
@@ -302,7 +302,7 @@ const FOOTER_CONTENT: Record<string, { title: string; body: string }> = {
       '</div>'
   })() },
   suggest: { title: '💡 Suggest a Feature', body:
-    _para('Got an idea to make Grabitt better? We read every suggestion — good ones can earn free credits!') },
+    _para('Got an idea to make Grabitt better? We read every suggestion — good ones can earn free loyalty points!') },
 }
 
 interface ActionPanelProps {
@@ -523,16 +523,13 @@ function PanelBody() {
   // ── REWARDS ────────────────────────────────────────────────────────────────
   if (panel.id === 'rewards') {
     return (
-      <ActionPanel title="💶 Rewards & Credits" onClose={closePanel}>
+      <ActionPanel title="💶 Rewards & Loyalty Points" onClose={closePanel}>
         <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 16, padding: 20, marginBottom: 16, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 28, fontWeight: 900, color: '#fff' }}>142</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Grabitt Credits</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Grabitt loyalty points</div>
         </div>
-        <button onClick={() => openPanel('buyCredits')} style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 16 }}>
-          🪙 Buy Credits
-        </button>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Earn free credits</div>
-        {[['💶','Refer a friend','Earn 50 credits when they list their first item'],['⭐','Leave a review','Earn 10 credits per review'],['🛒','Make a purchase','Earn 5% back as credits'],['📦','List an item','Earn 5 credits per active listing']].map(([icon, title, desc], i) => (
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Ways to earn points</div>
+        {[['💶','Refer a friend','Earn 50 points when they list their first item'],['⭐','Leave a review','Earn 10 points per review'],['🛒','Make a purchase','Earn 4 points per €1 spent'],['📦','List an item','Earn 5 points per active listing']].map(([icon, title, desc], i) => (
           <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
             <div style={{ fontSize: 24 }}>{icon}</div>
             <div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#1a1a1a' }}>{title as string}</div><div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666' }}>{desc as string}</div></div>
@@ -750,7 +747,7 @@ function PanelBody() {
                 {/* Referral bonus */}
                 <div style={{ background: '#f0fdf4', border: '1px solid var(--sage)', borderRadius: 12, padding: 12, marginBottom: 14, display: 'flex', gap: 10, alignItems: 'center' }}>
                   <span style={{ color: 'var(--sage)', display: 'inline-flex', flexShrink: 0 }}><Icon name="coins" size={20} strokeWidth={2} /></span>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)', fontWeight: 800 }}>You'll get 50 free credits on sign-up!</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)', fontWeight: 800 }}>You'll get 50 free loyalty points on sign-up!</div>
                 </div>
 
                 <button onClick={submitAuth} disabled={loading || !name || !email || password.length < 8} style={{ ...btnPrimary, ...(loading || !name || !email || password.length < 8 ? { color: '#bbb', borderColor: '#e0d8d0' } : {}) }}>
@@ -1520,38 +1517,38 @@ function PanelBody() {
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
           <Logo height={40} style={{ margin: '0 auto 14px' }} />
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Payment received!</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>Your {pack.credits} credits will appear in your balance in a moment.</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>Your {pack.credits} loyalty points will appear in your balance in a moment.</div>
           <button onClick={closePanel} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 28px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Done</button>
         </div>
       </ActionPanel>
     )
 
     return (
-      <ActionPanel title="🪙 Buy Credits" onClose={closePanel}>
+      <ActionPanel title="🪙 Buy loyalty points" onClose={closePanel}>
         <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 14, marginBottom: 16, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 2 }}>Your balance</div>
           <div style={{ fontFamily: 'var(--font-body)', fontSize: 26, fontWeight: 700, color: 'var(--orange)' }}>{balance === null ? '…' : `${balance} 🪙`}</div>
         </div>
         {clientSecret ? (
           <>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555', marginBottom: 12, textAlign: 'center' }}>{pack.credits} credits — €{pack.eur}</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555', marginBottom: 12, textAlign: 'center' }}>{pack.credits} points — €{pack.eur}</div>
             <StripePayment clientSecret={clientSecret} label={`Pay €${pack.eur}`} onSuccess={() => setPaid(true)} />
           </>
         ) : (
           <>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 12 }}>Credits pay for featured listings, Grab It Now and job posts. 20 credits ≈ €1.</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 12 }}>Loyalty points pay for featured listings, Grab It Now and job posts. 20 points ≈ €1.</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
               {PACKS.map(p => (
                 <div key={p.id} onClick={() => setSelected(p.id)} style={{ border: `2px solid ${selected === p.id ? 'var(--orange)' : '#e0d8d0'}`, background: selected === p.id ? '#FFF3EE' : '#fff', borderRadius: 14, padding: 14, cursor: 'pointer', textAlign: 'center' }}>
                   <div style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, color: 'var(--dark)' }}>{p.credits}</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', fontWeight: 800, marginBottom: 6 }}>credits{p.bonus && ` · ${p.bonus}`}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', fontWeight: 800, marginBottom: 6 }}>points{p.bonus && ` · ${p.bonus}`}</div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: 'var(--orange)' }}>€{p.eur}</div>
                 </div>
               ))}
             </div>
             {err && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{err}</div>}
             <button onClick={startBuy} disabled={buying} style={{ width: '100%', background: buying ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
-              {buying ? '⏳ Processing…' : `Buy ${pack.credits} credits — €${pack.eur}`}
+              {buying ? '⏳ Processing…' : `Buy ${pack.credits} points — €${pack.eur}`}
             </button>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#aaa', textAlign: 'center', marginTop: 10 }}>🔒 Secured by Stripe</div>
           </>
@@ -2243,7 +2240,7 @@ function PanelBody() {
     }, [])
 
     const link = ref?.link ?? ''
-    const shareMsg = `Join me on Grabitt — the Canary Islands' local marketplace. Sign up with my link and we both earn 50 credits when you list your first item: ${link}`
+    const shareMsg = `Join me on Grabitt — the Canary Islands' local marketplace. Sign up with my link and we both earn 50 loyalty points when you list your first item: ${link}`
     const copyLink = async () => {
       try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2000); toast('Link copied ✓') }
       catch { toast('Could not copy — long-press to copy') }
@@ -2258,8 +2255,8 @@ function PanelBody() {
       <ActionPanel title="➕ Invite Friends" onClose={closePanel}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <Logo height={40} style={{ margin: '0 auto 14px' }} />
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Earn 50 credits per referral!</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5 }}>Invite friends to Grabitt. When they list their first item, you both earn 50 credits.</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Earn 50 loyalty points per referral!</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5 }}>Invite friends to Grabitt. When they list their first item, you both earn 50 loyalty points.</div>
         </div>
 
         {!loaded ? (
@@ -2273,7 +2270,7 @@ function PanelBody() {
           <>
             {/* Stats */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-              {[['Signed up', ref.joined], ['Listed & paid', ref.credited], ['Credits earned', ref.creditsEarned]].map(([label, val]) => (
+              {[['Signed up', ref.joined], ['Listed & paid', ref.credited], ['Points earned', ref.creditsEarned]].map(([label, val]) => (
                 <div key={label as string} style={{ flex: 1, background: '#fff', border: '1px solid #f0ebe4', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
                   <div style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, color: 'var(--orange)' }}>{val as number}</div>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, color: '#888', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.4 }}>{label as string}</div>

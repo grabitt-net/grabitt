@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { trpcAuthed } from '@/lib/authToken'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { usePanel } from '@/context/PanelContext'
+import { PRICES } from '@grabitt/design-tokens'
 import { t } from '@/lib/i18n'
 
 // Rewards dashboard card: the credits balance, admin-managed ways to earn, and
@@ -76,7 +77,8 @@ export default function RewardsCard() {
         <div style={{ fontSize: 30 }}>🎁</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900 }}>{balance.toLocaleString()}</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, opacity: 0.9, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('reward credits')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, opacity: 0.9, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t('loyalty points')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, opacity: 0.85, marginTop: 2 }}>Earn {PRICES.pointsPerEuro} points per €1 you spend</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900 }}>+{earned.toLocaleString()}</div>
@@ -126,7 +128,7 @@ export default function RewardsCard() {
               <div key={o.id} style={{ border: '1px solid #f0ebe4', borderRadius: 12, padding: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{o.kind === 'fee_reduction' ? '📉' : '🚀'} {o.title}</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }}>{o.costCredits} cr</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)', whiteSpace: 'nowrap' }}>{o.costCredits} pts</div>
                 </div>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#1a1a1a', marginTop: 3, lineHeight: 1.5 }}>{o.description}</div>
                 {pickFor?.id === o.id ? (
@@ -146,7 +148,7 @@ export default function RewardsCard() {
                     disabled={!affordable || busy === o.id}
                     onClick={() => o.kind === 'listing_upgrade' ? setPickFor(o) : redeem(o)}
                     style={{ marginTop: 9, width: '100%', background: affordable ? 'var(--orange)' : '#e6ddce', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 0', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: affordable ? 'pointer' : 'not-allowed' }}>
-                    {busy === o.id ? t('Redeeming…') : affordable ? t('Redeem') : t('Not enough credits')}
+                    {busy === o.id ? t('Redeeming…') : affordable ? t('Redeem') : t('Not enough points')}
                   </button>
                 )}
               </div>

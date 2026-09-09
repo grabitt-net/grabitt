@@ -7,7 +7,7 @@ import QRCode from 'qrcode'
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { router, protectedProcedure, publicProcedure } from '../trpc'
 import { RateTransactionInputSchema } from '@grabitt/types'
-import { FEE_RATES, FUND_RELEASE_AUTO_DAYS, COURIER_RELEASE_HOURS, COURIER_DISPUTE_WINDOW_HOURS } from '@grabitt/design-tokens'
+import { FEE_RATES, FUND_RELEASE_AUTO_DAYS, COURIER_RELEASE_HOURS, COURIER_DISPUTE_WINDOW_HOURS, PRICES } from '@grabitt/design-tokens'
 import { effectiveFeeRate } from '../lib/sellerFee'
 import { getAccountLevels } from '../lib/accountLevels'
 import { trackingUrlFor, CARRIERS } from '../lib/tracking'
@@ -113,6 +113,22 @@ export async function releaseFundsToSeller(
       },
     }),
   ])
+
+  // Loyalty points for the buyer — 4 points per whole € spent on the purchase.
+  try {
+    const row = await prisma.transaction.findUnique({ where: { id: tx.id }, select: { amount: true } })
+    const points = Math.floor(Number(row?.amount ?? 0)) * PRICES.pointsPerEuro
+    if (points > 0) {
+      const buyer = await prisma.user.findUnique({ where: { id: tx.buyerId }, select: { credits: true } })
+      if (buyer) {
+        await prisma.$transaction([
+          prisma.user.update({ where: { id: tx.buyerId }, data: { credits: { increment: points } } }),
+          prisma.creditEvent.create({ data: { userId: tx.buyerId, kind: 'reward_earned', delta: points, balance: buyer.credits + points, note: `Loyalty points — ${PRICES.pointsPerEuro}/€ on "${listing?.title ?? 'your purchase'}"` } }),
+          prisma.notification.create({ data: { userId: tx.buyerId, kind: 'credits_received', title: '⭐ Loyalty points earned', body: `You earned ${points} loyalty points on this purchase.` } }),
+        ])
+      }
+    }
+  } catch { /* points are a bonus — never block fund release on them */ }
 
   return { ok: true, sellerNet: Number(tx.sellerNet) }
 }
