@@ -845,6 +845,9 @@ model Listing {
   lng              Float?
   isFeatured       Boolean          @default(false)
   featuredUntil    DateTime?
+  // Property sponsored boost: while in the future, the advert sorts to the top of
+  // its area's search results (€4.99, 7 days).
+  sponsoredUntil   DateTime?
   grabItNowUntil   DateTime?
   grabItNowWindow  Int?
   grabItNowPrice   Decimal?         @db.Decimal(10, 2)
@@ -1502,6 +1505,9 @@ model PropertyListing {
   listingId    String       @unique
   listing      Listing      @relation(fields: [listingId], references: [id])
   type         PropertyType
+  // Dwelling type: bungalow | flat | villa | townhouse | commercial | warehouse
+  // | bar_restaurant | office | shop | land | other.
+  propertyType String?
   bedrooms     Int?
   bathrooms    Int?
   m2           Decimal?     @db.Decimal(8, 2)

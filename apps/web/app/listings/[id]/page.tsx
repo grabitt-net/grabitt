@@ -623,6 +623,7 @@ function ListingInner() {
               <>
                 <DetailRow label={t('Reference')} value={ref} />
                 <DetailRow label={t('Type')} value={PROP_TYPE[prop.type] ?? prop.type} />
+                {prop.propertyType && <DetailRow label={t('Property type')} value={String(prop.propertyType).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} />}
                 {prop.rentalTerm && <DetailRow label={t('Rental term')} value={({ short_term: 'Short-term', long_term: 'Long-term', holiday: 'Holiday rental' } as Record<string, string>)[prop.rentalTerm] ?? prop.rentalTerm} />}
                 <DetailRow label={t('Bedrooms')} value={prop.bedrooms != null ? String(prop.bedrooms) : ''} />
                 <DetailRow label={t('Bathrooms')} value={prop.bathrooms != null ? String(prop.bathrooms) : ''} />
@@ -640,13 +641,14 @@ function ListingInner() {
                 {prop.energyRating && <DetailRow label={t('Energy rating')} value={prop.energyRating} />}
                 {prop.coveredM2 != null && <DetailRow label={t('Covered area')} value={`${Number(prop.coveredM2)} m²`} />}
                 {prop.landM2 != null && <DetailRow label={t('Land area')} value={`${Number(prop.landM2)} m²`} />}
-                {prop.address && <DetailRow label={t('Address')} value={prop.address} />}
                 {prop.distBeach != null && <DetailRow label={t('To beach')} value={`${prop.distBeach} m`} />}
                 {prop.distShops != null && <DetailRow label={t('To shops')} value={`${prop.distShops} m`} />}
                 {prop.distSchools != null && <DetailRow label={t('To schools')} value={`${prop.distSchools} m`} />}
                 {prop.distTown != null && <DetailRow label={t('To town centre')} value={`${prop.distTown} m`} />}
                 {prop.communityFees != null && <DetailRow label={t('Community fees')} value={`€${prop.communityFees}/mo`} />}
                 {prop.touristLicence && <DetailRow label={t('Tourist licence')} value={prop.touristLicence} />}
+                {/* The exact street address is never shown publicly — only the
+                    town/area (listing.location). */}
                 <DetailRow label={t('Category')} value={DEPT_LABEL[listing.department] ?? listing.department} />
                 {Array.isArray(prop.features) && prop.features.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
@@ -786,10 +788,25 @@ function ListingInner() {
           </div>
         )}
 
-        {/* Location map — use the exact pinned coordinates when set, else the address/town */}
+        {/* Location map. For PROPERTY the exact address/pin is never shown — the
+            map is town/area level only. Jobs use the exact pin/address. */}
         {(() => {
+          const town = (listing.location || '').trim()
+          if (prop) {
+            if (!town) return null
+            return (
+              <div style={cardBox}>
+                <div style={sectionTitle}>{t('Location')}</div>
+                <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: 'var(--ink-2)', marginBottom: 8 }}>{town}</Place>
+                <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #ece3d7' }}>
+                  <iframe title="Area map" src={`https://www.google.com/maps?q=${encodeURIComponent(town + ', Canary Islands')}&z=13&output=embed`} width="100%" height="220" style={{ border: 0, display: 'block' }} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                </div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#999', marginTop: 6 }}>Approximate area — contact the advertiser for the exact address.</div>
+              </div>
+            )
+          }
           const hasPin = listing.lat != null && listing.lng != null
-          const label = (job?.address || listing.location || '').trim()
+          const label = (job?.address || town).trim()
           if (!hasPin && !label) return null
           const q = hasPin ? `${listing.lat},${listing.lng}` : label
           return (

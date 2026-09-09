@@ -18,6 +18,9 @@ export const propertyRouter = router({
       location: z.string().min(1).max(120),
       images: z.array(z.string().url()).max(8).optional(),
       type: z.enum(['sale', 'rent', 'holiday', 'commercial', 'land', 'new_build']),
+      propertyType: z.string().max(40).optional(),
+      // Opt-in €4.99 sponsored boost: top of the area's results for 7 days.
+      sponsored: z.boolean().optional(),
       bedrooms: z.number().int().min(0).max(50).optional(),
       bathrooms: z.number().int().min(0).max(50).optional(),
       m2: z.number().min(0).max(1_000_000).optional(),
@@ -71,6 +74,8 @@ export const propertyRouter = router({
       let fee = usedThisMonth >= freeAllowance ? PROPERTY_PRICING.privateExtraListingCents : 0
       const promo = fee > 0 ? await applyPromo(ctx.prisma, input.discountCode, ctx.user.id, 'property', fee) : { codeId: null, discountCents: 0, meta: {} as Record<string, string> }
       fee -= promo.discountCents
+      // Sponsored boost is an optional add-on (never discounted by a listing promo).
+      if (input.sponsored) fee += PROPERTY_PRICING.sponsoredCents
 
       const created = await ctx.prisma.listing.create({
         data: {
@@ -89,6 +94,7 @@ export const propertyRouter = router({
           propertyListing: {
             create: {
               type: input.type,
+              propertyType: input.propertyType,
               bedrooms: input.bedrooms,
               bathrooms: input.bathrooms,
               m2: input.m2,
@@ -127,12 +133,16 @@ export const propertyRouter = router({
 
       if (fee === 0) return created
 
-      // Over the free allowance — €39 to publish. Webhook flips draft→active.
+      // Over the free allowance (€29) and/or a €4.99 sponsored boost — pay, then
+      // the webhook flips draft→active and applies the sponsored window.
+      const name = input.sponsored
+        ? `Grabitt property advert + 7-day sponsored boost — ${input.title}`
+        : `Grabitt property advert — ${input.title}`
       const session = await getStripe().checkout.sessions.create({
         mode: 'payment',
         ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email }),
-        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name: `Grabitt property advert — ${input.title}` } } }],
-        payment_intent_data: { metadata: { kind: 'listing_publish', listingId: created.id, ...promo.meta } },
+        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name } } }],
+        payment_intent_data: { metadata: { kind: 'listing_publish', listingId: created.id, ...(input.sponsored ? { sponsored: '1' } : {}), ...promo.meta } },
         success_url: `${appUrl()}/listings/${created.id}?published=1`,
         cancel_url: `${appUrl()}/property/new?cancelled=1`,
       })
@@ -369,7 +379,9 @@ export const propertyRouter = router({
           },
         },
         include: { listing: true },
-        orderBy: { createdAt: 'desc' },
+        // Sponsored adverts (paid €4.99 boost) sort to the top of the area's
+        // results while their 7-day window is open; then newest first.
+        orderBy: [{ listing: { sponsoredUntil: { sort: 'desc', nulls: 'last' } } }, { createdAt: 'desc' }],
         skip: (input.page - 1) * 20,
         take: 20,
       })

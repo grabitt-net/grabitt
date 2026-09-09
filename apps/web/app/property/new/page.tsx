@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from '@/lib/ui'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -10,11 +10,13 @@ import Topbar from '@/components/marketplace/Topbar'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import Footer from '@/components/marketplace/Footer'
 import AddressAutocomplete from '@/components/marketplace/AddressAutocomplete'
+import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
+import { autoFillDistances } from '@/lib/nearby'
 import { PROPERTY_FEATURES } from '@/lib/propertyFeatures'
 import PromoField from '@/components/marketplace/PromoField'
 import { PROPERTY_PRICING } from '@grabitt/design-tokens'
 import { AGENTS_ENABLED } from '@/lib/flags'
-import { Section, Row, Field, Input, Textarea, Select, Check, FormError, StepTabs, SubmitButton } from '@/components/marketplace/FormKit'
+import { Section, Row, Field, Input, Textarea, Select, FormError, StepTabs, SubmitButton } from '@/components/marketplace/FormKit'
 import type { IconName } from '@/components/marketplace/Icon'
 
 const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
@@ -25,23 +27,40 @@ const TYPES: [string, string][] = [
   ['For Sale', 'sale'], ['To Let', 'rent'], ['Holiday Let', 'holiday'],
   ['Commercial', 'commercial'], ['Land', 'land'], ['New Build', 'new_build'],
 ]
+// Dwelling / property type (what the place actually is).
+const PROPERTY_TYPES: [string, string][] = [
+  ['Apartment / Flat', 'flat'], ['Bungalow', 'bungalow'], ['House / Villa', 'villa'],
+  ['Townhouse', 'townhouse'], ['Studio', 'studio'], ['Duplex', 'duplex'],
+  ['Commercial space', 'commercial'], ['Office', 'office'], ['Shop', 'shop'],
+  ['Bar / Restaurant', 'bar_restaurant'], ['Warehouse', 'warehouse'], ['Land / Plot', 'land'],
+  ['Garage / Parking', 'garage'], ['Other', 'other'],
+]
 const ENERGY = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+// Bedroom / bathroom dropdown options.
+const BED_OPTS = ['Studio', '1', '2', '3', '4', '5', '6', '7', '8+']
+const BATH_OPTS = ['1', '2', '3', '4', '5', '6+']
 
 export default function NewPropertyPage() {
   const router = useRouter()
   const [f, setF] = useState({
-    title: '', type: 'sale', price: '', location: '', community: '',
+    title: '', type: 'sale', propertyType: '', price: '', location: '',
     bedrooms: '', bathrooms: '', m2: '', floor: '', energyRating: '',
-    hasPool: false, hasGarage: false, description: '',
+    description: '',
     // Rental terms + extended portal details.
     rentalTerm: '', touristLicence: '',
-    plotM2: '', terraceM2: '', furnished: '', orientation: '',
-    yearBuilt: '', communityFees: '', condition: '', views: '',
+    furnished: '', orientation: '',
+    yearBuilt: '', communityFees: '', views: '',
     // Full agent-listing detail.
-    reference: '', address: '', coveredM2: '', landM2: '',
+    reference: '', address: '',
     distShops: '', distSchools: '', distBeach: '', distTown: '',
   })
   const [features, setFeatures] = useState<string[]>([])
+  // Photos (uploaded to storage as they're added) + the €4.99 sponsored add-on.
+  const [draftId] = useState(() => (typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now())))
+  const [photos, setPhotos] = useState<string[]>([])
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [sponsored, setSponsored] = useState(false)
+  const [autoDist, setAutoDist] = useState<'idle' | 'loading' | 'done'>('idle')
   const toggleFeature = (slug: string) => setFeatures(p => p.includes(slug) ? p.filter(x => x !== slug) : [...p, slug])
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [saving, setSaving] = useState(false)
@@ -61,25 +80,66 @@ export default function NewPropertyPage() {
   // browser; offered back on return; cleared once the property is posted.
   const PROP_DRAFT_KEY = 'grabitt_property_draft'
   const [draftFound, setDraftFound] = useState<any | null>(null)
-  const draftBody = JSON.stringify({ f, features })
+  const draftBody = JSON.stringify({ f, features, photos, sponsored })
   useEffect(() => {
-    if (f.title.trim() || f.address.trim() || f.description.trim()) {
+    if (f.title.trim() || f.address.trim() || f.description.trim() || photos.length) {
       try { localStorage.setItem(PROP_DRAFT_KEY, draftBody) } catch {}
     }
-  }, [draftBody, f.title, f.address, f.description])
+  }, [draftBody, f.title, f.address, f.description, photos.length])
   useEffect(() => {
     try { const raw = localStorage.getItem(PROP_DRAFT_KEY); if (raw) { const d = JSON.parse(raw); if (d?.f && (d.f.title || d.f.address)) setDraftFound(d) } } catch {}
   }, [])
   const restoreDraft = () => {
     const d = draftFound; if (!d) return
-    if (d.f) setF(d.f)
+    if (d.f) setF({ ...f, ...d.f })
     if (Array.isArray(d.features)) setFeatures(d.features)
+    if (Array.isArray(d.photos)) setPhotos(d.photos)
+    if (typeof d.sponsored === 'boolean') setSponsored(d.sponsored)
     setDraftFound(null)
   }
   const discardDraft = () => { try { localStorage.removeItem(PROP_DRAFT_KEY) } catch {}; setDraftFound(null) }
 
   const set = (k: string, v: any) => setF(prev => ({ ...prev, [k]: v }))
   const setAg = (k: string, v: string) => setAgent(prev => ({ ...prev, [k]: v }))
+
+  // Photos — compressed + uploaded to storage as they're added (URLs kept in the
+  // draft so they survive a refresh).
+  const addPhotos = async (files: FileList | null) => {
+    if (!files?.length) return
+    setUploadingPhoto(true)
+    try {
+      for (const file of Array.from(files).slice(0, 8 - photos.length)) {
+        if (!file.type.startsWith('image/')) continue
+        const url = await compressAndUpload(file, listingPhotoPath(draftId))
+        setPhotos(p => [...p, url])
+      }
+    } catch { toast('Could not upload a photo. Please try again.') }
+    finally { setUploadingPhoto(false) }
+  }
+  const removePhoto = (url: string) => setPhotos(p => p.filter(x => x !== url))
+
+  // Auto-fill the distance-to fields from the map location (OpenStreetMap).
+  const runAutoDistances = async (silent = false) => {
+    if (!coords) { if (!silent) toast('Pick the address / map pin first.'); return }
+    setAutoDist('loading')
+    const d = await autoFillDistances(coords.lat, coords.lng)
+    setF(prev => ({
+      ...prev,
+      distShops: d.distShops != null ? String(d.distShops) : prev.distShops,
+      distSchools: d.distSchools != null ? String(d.distSchools) : prev.distSchools,
+      distBeach: d.distBeach != null ? String(d.distBeach) : prev.distBeach,
+      distTown: d.distTown != null ? String(d.distTown) : prev.distTown,
+    }))
+    setAutoDist('done')
+  }
+  // Auto-run once when a location is first picked and distances are still blank.
+  const didAutoDist = useRef(false)
+  useEffect(() => {
+    if (coords && !didAutoDist.current && !f.distShops && !f.distSchools && !f.distBeach && !f.distTown) {
+      didAutoDist.current = true
+      runAutoDistances(true)
+    }
+  }, [coords]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     (async () => {
@@ -111,8 +171,9 @@ export default function NewPropertyPage() {
     { key: 'property', title: 'Property', icon: 'home' },
     { key: 'details', title: 'Details', icon: 'file' },
     { key: 'features', title: 'Features', icon: 'sparkle' },
+    { key: 'photos', title: 'Photos', icon: 'star' },
     ...(isAgent ? [{ key: 'agent', title: 'Agent', icon: 'user' as IconName }] : []),
-    { key: 'location', title: 'Location', icon: 'mapPin' },
+    { key: 'upgrades', title: 'Upgrades', icon: 'zap' },
   ]
   const STEP_TITLES = STEPS.map(s => s.title)
   const STEP_ICONS: IconName[] = STEPS.map(s => s.icon)
@@ -145,41 +206,38 @@ export default function NewPropertyPage() {
         } catch { /* non-fatal */ }
       }
 
+      const bedNum = f.bedrooms === 'Studio' ? 0 : (f.bedrooms ? parseInt(f.bedrooms, 10) : undefined)
+      const bathNum = f.bathrooms ? parseInt(f.bathrooms, 10) : undefined
       const listing: any = await trpcAuthed().property.create.mutate({
         title: f.title.trim(),
         price: Number(f.price),
         location: f.location.trim(),
         type: f.type as never,
+        ...(f.propertyType && { propertyType: f.propertyType }),
         ...(f.description.trim() && { description: f.description.trim() }),
-        ...(f.community.trim() && { community: f.community.trim() }),
-        ...(f.bedrooms && { bedrooms: Number(f.bedrooms) }),
-        ...(f.bathrooms && { bathrooms: Number(f.bathrooms) }),
+        ...(bedNum != null && !Number.isNaN(bedNum) && { bedrooms: bedNum }),
+        ...(bathNum != null && !Number.isNaN(bathNum) && { bathrooms: bathNum }),
         ...(f.m2 && { m2: Number(f.m2) }),
         ...(f.floor && { floor: Number(f.floor) }),
         ...(f.energyRating && { energyRating: f.energyRating }),
-        hasPool: f.hasPool,
-        hasGarage: f.hasGarage,
+        ...(photos.length ? { images: photos } : {}),
         ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
         ...(f.rentalTerm && { rentalTerm: f.rentalTerm as never }),
         ...(f.touristLicence.trim() && { touristLicence: f.touristLicence.trim() }),
-        ...(f.plotM2 && { plotM2: Number(f.plotM2) }),
-        ...(f.terraceM2 && { terraceM2: Number(f.terraceM2) }),
         ...(f.furnished && { furnished: f.furnished as never }),
         ...(f.orientation.trim() && { orientation: f.orientation.trim() }),
         ...(f.yearBuilt && { yearBuilt: Number(f.yearBuilt) }),
         ...(f.communityFees && { communityFees: Number(f.communityFees) }),
-        ...(f.condition && { condition: f.condition as never }),
         ...(f.views.trim() && { views: f.views.trim() }),
         ...(f.reference.trim() && { reference: f.reference.trim() }),
         ...(f.address.trim() && { address: f.address.trim() }),
         ...(f.location.trim() && { city: f.location.trim() }),
-        ...(f.coveredM2 && { coveredM2: Number(f.coveredM2) }),
-        ...(f.landM2 && { landM2: Number(f.landM2) }),
         ...(f.distShops && { distShops: Number(f.distShops) }),
         ...(f.distSchools && { distSchools: Number(f.distSchools) }),
         ...(f.distBeach && { distBeach: Number(f.distBeach) }),
         ...(f.distTown && { distTown: Number(f.distTown) }),
         ...(features.length ? { features } : {}),
+        ...(sponsored ? { sponsored: true } : {}),
         ...(appliedPromo ? { discountCode: appliedPromo.code } : {}),
       })
       try { localStorage.removeItem(PROP_DRAFT_KEY) } catch {}
@@ -224,27 +282,32 @@ export default function NewPropertyPage() {
           <div style={{ background: '#f0fdf4', border: '1px solid #c8e6c9', borderRadius: 12, padding: '10px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#2e7d32', fontWeight: 700 }}>
             {allowance.isBusiness
               ? `🏠 ${allowance.remaining} of ${allowance.allowance} listings remaining on your plan · new listings go live once approved by our team.`
-              : `🏠 ${allowance.remaining} of ${allowance.allowance} free property listing${allowance.allowance === 1 ? '' : 's'} left this month · extra listings are €39. New listings go live once approved.`}
+              : `🏠 ${allowance.remaining} of ${allowance.allowance} free property listing${allowance.allowance === 1 ? '' : 's'} left this month · extra listings are €29. New listings go live once approved.`}
           </div>
         )}
 
         {cur === 'property' && <Section title="The property">
           <Field label="Listing title" required><Input value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. 2-bed apartment with sea view" /></Field>
           <Row>
-            <Field label="Listing type" required>
+            <Field label="For sale / to let" required>
               <Select value={f.type} onChange={e => set('type', e.target.value)}>
                 {TYPES.map(([label, v]) => <option key={v} value={v}>{label}</option>)}
               </Select>
             </Field>
-            <Field label={f.type === 'rent' || f.type === 'holiday' ? 'Price (€/month)' : 'Price (€)'} required>
-              <Input value={f.price} onChange={e => set('price', e.target.value)} inputMode="numeric" placeholder="e.g. 250000" />
+            <Field label="Property type" required>
+              <Select value={f.propertyType} onChange={e => set('propertyType', e.target.value)}>
+                <option value="">Choose a type…</option>
+                {PROPERTY_TYPES.map(([label, v]) => <option key={v} value={v}>{label}</option>)}
+              </Select>
             </Field>
           </Row>
           <Row>
+            <Field label={f.type === 'rent' || f.type === 'holiday' ? 'Price (€/month)' : 'Price (€)'} required>
+              <Input value={f.price} onChange={e => set('price', e.target.value)} inputMode="numeric" placeholder="e.g. 250000" />
+            </Field>
             <Field label="Property reference"><Input value={f.reference} onChange={e => set('reference', e.target.value)} placeholder="e.g. REF001, HP-2024-001" /></Field>
-            <Field label="Community / urbanisation"><Input value={f.community} onChange={e => set('community', e.target.value)} placeholder="e.g. Playa Honda" /></Field>
           </Row>
-          <Field label="Address" required help={f.location ? `📍 Town: ${f.location}${coords ? ' · map pin set' : ''}` : 'Pick an address to set the town and map pin.'}>
+          <Field label="Address search" required help={f.location ? `📍 Town: ${f.location}${coords ? ' · map pin set' : ''} · your exact address is never shown publicly` : 'Start typing to find the address — the town & map pin fill in automatically. Your exact address is never shown publicly.'}>
             <AddressAutocomplete
               value={f.address || f.location}
               onChange={v => setF(prev => ({ ...prev, address: v }))}
@@ -252,18 +315,25 @@ export default function NewPropertyPage() {
               placeholder="Start typing the address — town & map pin fill automatically"
             />
           </Field>
+          <Field label="Location on the map" help="Drag the pin to fine-tune. Only the town/area is shown publicly — never the exact pin or address.">
+            <MapPicker value={coords} onChange={setCoords} />
+          </Field>
         </Section>}
 
         {cur === 'details' && <>
         <Section title="Details">
           <Row>
-            <Field label="Bedrooms"><Input value={f.bedrooms} onChange={e => set('bedrooms', e.target.value)} inputMode="numeric" placeholder="2" /></Field>
-            <Field label="Bathrooms"><Input value={f.bathrooms} onChange={e => set('bathrooms', e.target.value)} inputMode="numeric" placeholder="1" /></Field>
+            <Field label="Bedrooms">
+              <Select value={f.bedrooms} onChange={e => set('bedrooms', e.target.value)}>
+                <option value="">—</option>{BED_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
+              </Select>
+            </Field>
+            <Field label="Bathrooms">
+              <Select value={f.bathrooms} onChange={e => set('bathrooms', e.target.value)}>
+                <option value="">—</option>{BATH_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
+              </Select>
+            </Field>
             <Field label="Total area (m²)"><Input value={f.m2} onChange={e => set('m2', e.target.value)} inputMode="numeric" placeholder="85" /></Field>
-          </Row>
-          <Row>
-            <Field label="Covered area (m²)"><Input value={f.coveredM2} onChange={e => set('coveredM2', e.target.value)} inputMode="numeric" placeholder="e.g. 90" /></Field>
-            <Field label="Land / plot area (m²)"><Input value={f.landM2} onChange={e => set('landM2', e.target.value)} inputMode="numeric" placeholder="e.g. 350" /></Field>
           </Row>
           <Row>
             <Field label="Floor"><Input value={f.floor} onChange={e => set('floor', e.target.value)} inputMode="numeric" placeholder="e.g. 3" /></Field>
@@ -272,14 +342,22 @@ export default function NewPropertyPage() {
                 <option value="">—</option>{ENERGY.map(x => <option key={x} value={x}>{x}</option>)}
               </Select>
             </Field>
-            <Field label="Extras">
-              <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingTop: 4 }}>
-                <Check label="Pool" checked={f.hasPool} onChange={v => set('hasPool', v)} />
-                <Check label="Garage" checked={f.hasGarage} onChange={v => set('hasGarage', v)} />
-              </div>
-            </Field>
+            <Field label="Year built"><Input value={f.yearBuilt} onChange={e => set('yearBuilt', e.target.value)} inputMode="numeric" placeholder="e.g. 2005" /></Field>
           </Row>
-          <Field label="Description"><Textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the property, condition, features and what's nearby…" /></Field>
+          <Row>
+            <Field label="Furnished">
+              <Select value={f.furnished} onChange={e => set('furnished', e.target.value)}>
+                <option value="">—</option>
+                <option value="furnished">Furnished</option>
+                <option value="part_furnished">Part-furnished</option>
+                <option value="unfurnished">Unfurnished</option>
+              </Select>
+            </Field>
+            <Field label="Community fees (€/mo)"><Input value={f.communityFees} onChange={e => set('communityFees', e.target.value)} inputMode="numeric" placeholder="e.g. 60" /></Field>
+            <Field label="Orientation"><Input value={f.orientation} onChange={e => set('orientation', e.target.value)} placeholder="e.g. South-West" /></Field>
+          </Row>
+          <Field label="Views"><Input value={f.views} onChange={e => set('views', e.target.value)} placeholder="e.g. Sea, Mountain" /></Field>
+          <Field label="Description"><Textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the property, its condition, features and what's nearby…" /></Field>
         </Section>
 
         {(f.type === 'rent' || f.type === 'holiday') && (
@@ -300,43 +378,18 @@ export default function NewPropertyPage() {
           </Section>
         )}
 
-        <Section title="More details">
+        <Section title="Distances" sub="Metres to the nearest — auto-filled from the map location, and editable.">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <button type="button" onClick={() => runAutoDistances()} disabled={autoDist === 'loading' || !coords}
+              style={{ background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 999, padding: '7px 14px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: coords ? 'pointer' : 'default', opacity: coords ? 1 : 0.5 }}>
+              {autoDist === 'loading' ? 'Finding…' : '📍 Auto-fill from map'}
+            </button>
+          </div>
           <Row>
-            <Field label="Plot size (m²)"><Input value={f.plotM2} onChange={e => set('plotM2', e.target.value)} inputMode="numeric" placeholder="e.g. 350" /></Field>
-            <Field label="Terrace (m²)"><Input value={f.terraceM2} onChange={e => set('terraceM2', e.target.value)} inputMode="numeric" placeholder="e.g. 20" /></Field>
-            <Field label="Year built"><Input value={f.yearBuilt} onChange={e => set('yearBuilt', e.target.value)} inputMode="numeric" placeholder="e.g. 2005" /></Field>
-          </Row>
-          <Row>
-            <Field label="Furnished">
-              <Select value={f.furnished} onChange={e => set('furnished', e.target.value)}>
-                <option value="">—</option>
-                <option value="furnished">Furnished</option>
-                <option value="part_furnished">Part-furnished</option>
-                <option value="unfurnished">Unfurnished</option>
-              </Select>
-            </Field>
-            <Field label="Condition">
-              <Select value={f.condition} onChange={e => set('condition', e.target.value)}>
-                <option value="">—</option>
-                <option value="new">New / recently built</option>
-                <option value="good">Good</option>
-                <option value="needs_reform">Needs reform</option>
-              </Select>
-            </Field>
-            <Field label="Community fees (€/mo)"><Input value={f.communityFees} onChange={e => set('communityFees', e.target.value)} inputMode="numeric" placeholder="e.g. 60" /></Field>
-          </Row>
-          <Row>
-            <Field label="Orientation"><Input value={f.orientation} onChange={e => set('orientation', e.target.value)} placeholder="e.g. South-West" /></Field>
-            <Field label="Views"><Input value={f.views} onChange={e => set('views', e.target.value)} placeholder="e.g. Sea, Mountain" /></Field>
-          </Row>
-        </Section>
-
-        <Section title="Distances" sub="To the nearest, in metres.">
-          <Row>
-            <Field label="Local shops"><Input value={f.distShops} onChange={e => set('distShops', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
-            <Field label="Local schools"><Input value={f.distSchools} onChange={e => set('distSchools', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
-            <Field label="Nearest beach"><Input value={f.distBeach} onChange={e => set('distBeach', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
-            <Field label="Nearest town"><Input value={f.distTown} onChange={e => set('distTown', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
+            <Field label="Local shops (m)"><Input value={f.distShops} onChange={e => set('distShops', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
+            <Field label="Local schools (m)"><Input value={f.distSchools} onChange={e => set('distSchools', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
+            <Field label="Nearest beach (m)"><Input value={f.distBeach} onChange={e => set('distBeach', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
+            <Field label="Nearest town (m)"><Input value={f.distTown} onChange={e => set('distTown', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
           </Row>
         </Section>
         </>}
@@ -359,8 +412,38 @@ export default function NewPropertyPage() {
           </Row>
         </Section>}
 
-        {cur === 'location' && <Section title="Location on the map" sub="Drag the pin to the property's exact location (optional).">
-          <MapPicker value={coords} onChange={setCoords} />
+        {cur === 'photos' && <Section title="Photos" sub="Add up to 8 photos. They're saved to your draft automatically as you add them.">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 10 }}>
+            {photos.map(url => (
+              <div key={url} style={{ position: 'relative', aspectRatio: '1 / 1', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5dccd', background: 'var(--sand)' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <button type="button" onClick={() => removePhoto(url)} aria-label="Remove photo" style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', fontSize: 13, fontWeight: 900, lineHeight: 1 }}>×</button>
+              </div>
+            ))}
+            {photos.length < 8 && (
+              <label style={{ aspectRatio: '1 / 1', borderRadius: 12, border: '1.5px dashed #d8c9b4', background: '#fffdf9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: uploadingPhoto ? 'default' : 'pointer', color: '#8a7a63', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, textAlign: 'center', padding: 8 }}>
+                {uploadingPhoto ? 'Uploading…' : <>⬆️<br />Add photo</>}
+                <input type="file" accept="image/*" multiple onChange={e => { addPhotos(e.target.files); e.target.value = '' }} style={{ display: 'none' }} disabled={uploadingPhoto} />
+              </label>
+            )}
+          </div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#999', marginTop: 8 }}>Your progress is saved to drafts automatically — you can close this and finish later.</div>
+        </Section>}
+
+        {cur === 'upgrades' && <Section title="Listing upgrades" sub="Optional — boost your advert's visibility.">
+          <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: sponsored ? '#FFF8F4' : '#fff', border: `1.5px solid ${sponsored ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 14, padding: '14px 16px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={sponsored} onChange={e => setSponsored(e.target.checked)} style={{ accentColor: 'var(--orange)', marginTop: 3, width: 18, height: 18 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>⚡ Sponsored listing</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--orange)' }}>+€{(PROPERTY_PRICING.sponsoredCents / 100).toFixed(2)}</div>
+              </div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#666', lineHeight: 1.55, marginTop: 4 }}>
+                Puts your property at the <strong>top of the search results for its area</strong> for <strong>{PROPERTY_PRICING.sponsoredDays} days</strong>. Charged once with your listing — the boost starts when the advert goes live.
+              </div>
+            </div>
+          </label>
         </Section>}
 
         <PromoField kind="property" amountCents={PROPERTY_PRICING.privateExtraListingCents} onApplied={setAppliedPromo} />
