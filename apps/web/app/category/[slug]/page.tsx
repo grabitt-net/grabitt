@@ -13,39 +13,18 @@ import BannerSlot from '@/components/marketplace/BannerSlot'
 import Pagination from '@/components/marketplace/Pagination'
 import Place from '@/components/marketplace/Place'
 import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
+import { subcategoriesForSlug } from '@/lib/subcategories'
 
 // A department/category now opens its own page (matching /jobs and /property)
 // instead of the old modal. Same site shell (Topbar + app-shell + Footer) with
 // the category search inputs on top and the listing grid below.
-const SUBCATS: Record<string, string[]> = {
-  // Exact subcategories from the V20 prototype's deptConfig, each with an 'All'
-  // pill prepended. Departments the prototype didn't define keep a sensible set.
-  'Electronics':            ['All', 'Phones', 'Laptops & Mac', 'TVs', 'Cameras', 'Audio', 'Gaming', 'Tablets', 'Accessories'],
-  'Fashion':                ['All', 'Womens Clothing', 'Mens Clothing', 'Shoes', 'Bags', 'Jewellery', 'Kids Fashion', 'Vintage', 'Accessories', 'Sportswear', 'Fancy Dress', 'Uniforms'],
-  'Home & Garden':          ['All', 'Soft Furnishings', 'Furniture', 'Wall Art', 'Ceramics', 'Home Office', 'Lighting', 'Kitchenware', 'Kitchen Electricals', 'Household Electricals', 'Dining Utensils', 'Bathroom', 'Flooring', 'Bedroom', 'Plants', 'Garden Furniture', 'Garden Equipment'],
-  'Sport':                  ['All', 'Cycling', 'Water Sports', 'Football', 'Golf', 'Gym & Fitness', 'Running', 'Tennis', 'Winter Sports', 'Volleyball', 'Sportswear', 'Basketball'],
-  'Gaming':                 ['All', 'PlayStation', 'Xbox', 'Nintendo', 'PC Gaming', 'Board Games', 'Trading Cards', 'Instruments', 'Drones'],
-  'Food Store':             ['All', 'Wine & Spirits', 'International Food', 'Coffee & Tea', 'Organic', 'BBQ', 'Cheese', 'Craft Beer', 'Oils & Sauces'],
-  'Gift Ideas':             ['All', 'Jewellery', 'Watches', 'Art', 'Candles & Scents', 'Gift Boxes', 'Ceramics', 'Handmade', 'Crystals'],
-  'Kids & Baby':            ['All', 'Toys', 'Baby Gear', 'Kids Bikes', 'Clothes 0-3', 'Clothes 4-12', 'Books', 'School Supplies', 'Games'],
-  'Health, Fitness & Diet': ['All', 'Skincare', 'Vitamins', 'Fitness', 'Equipment', 'Massage', 'Yoga', 'Dental', 'Optical', 'Hair Care', 'Beauty', 'Muscle Care'],
-  'Retro & Vintage':        ['All', 'Mid Century', 'Funky Stuff!', 'Vintage Clothing', 'Antiques', 'Furniture', 'Electrical', 'Kitchenware', 'Ceramics', 'Glassware', 'Records', 'Office'],
-  'Handy Help':             ['All', 'Plumbers', 'Carpenter', 'Sewing', 'Metalwork', 'Gardening', 'Cleaning', 'Roofing', 'Electrics', 'Building', 'Windows & Doors', 'Car Repair', 'Removals & Storage', 'Translation Services', 'Personal Assist'],
-  'Pet Supplies':               ['All', 'Dog Food', 'Cat Food', 'Toys', 'Bedding', 'Collars', 'Treats', 'Accessories', 'Fish tanks'],
-  // Not defined in the prototype — kept from the earlier build.
-  'Grab It Now':            ['All', 'Electronics', 'Furniture', 'Fashion', 'Sport', 'Other'],
-  'Hobbies & Crafts':       ['All', 'Wool & Yarn', 'Fabric & Sewing', 'Art Supplies', 'Model Making', 'Scrapbooking', 'Beads & Jewellery', 'Tools'],
-  'Motors':                 ['All', 'Cars', 'Motorbikes', 'Scooters', 'Vans', 'Parts', 'Accessories', 'Bicycles'],
-  'Collectables':           ['All', 'Coins', 'Stamps', 'Trading Cards', 'Memorabilia', 'Antiques', 'Art', 'Militaria'],
-  'Services':               ['All', 'Tuition', 'Beauty', 'Events', 'Photography', 'Design', 'Repairs'],
-}
-
 export default function CategoryPage() {
   const params = useParams()
   const slug = String(params?.slug ?? '')
   const label = DEPT_LABEL[slug] ?? 'Listings'
   const emoji = deptEmoji(slug)
-  const subcats = SUBCATS[label] ?? ['All']
+  // Subcategory filter pills — the department's fixed list with "All" prepended.
+  const subcats = ['All', ...subcategoriesForSlug(slug)]
 
   const [activeSub, setActiveSub] = useState('All')
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
@@ -78,19 +57,17 @@ export default function CategoryPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
 
-  // In-feed banner cadence — an admin-set number of listing rows (~4 cards each).
-  // Free-text + subcategory filtering happens client-side over the fetched set.
-  // There is no real "subcategory" column, so a pill matches when any of its
-  // meaningful words appears in the listing's title, description or auto-tags.
+  // Subcategory filtering happens client-side over the fetched set. New listings
+  // carry a real `subcategory`, so a pill matches that exactly; older listings
+  // without one fall back to a keyword match on title/description/tags.
   const filtered = useMemo(() => {
-    const subWords = activeSub !== 'All'
-      ? activeSub.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length >= 3)
-      : []
+    if (activeSub === 'All') return items
+    const subWords = activeSub.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length >= 3)
     return items.filter(l => {
-      const li = l as DbListing & { description?: string; tags?: string[] }
+      const li = l as DbListing & { description?: string; tags?: string[]; subcategory?: string | null }
+      if (li.subcategory) return li.subcategory === activeSub
       const haystack = [li.title, li.description, ...(li.tags ?? [])].join(' ').toLowerCase()
-      if (subWords.length && !subWords.some(w => haystack.includes(w))) return false
-      return true
+      return subWords.length ? subWords.some(w => haystack.includes(w)) : true
     })
   }, [items, activeSub])
 

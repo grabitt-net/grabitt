@@ -36,6 +36,7 @@ import dynamic from 'next/dynamic'
 // Leaflet needs window — load the map pin-picker client-only.
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false })
 import { toPanelItem, DEPT_ENUM, type DbListing } from '@/lib/listingMap'
+import { subcategoriesForSlug } from '@/lib/subcategories'
 
 // Protected tRPC calls must use our CONSUMER app JWT (verified with JWT_SECRET),
 // NOT the Supabase access_token (signed with a different secret, which the
@@ -3352,7 +3353,8 @@ function PanelBody() {
   if (panel.id === 'createListing') {
     const prefillCat = (panel.data?.category as string) || ''
 
-    const DEPTS = ['Electronics','Fashion','Home & Garden','Sport & Leisure','Retro & Vintage','Gaming','Pet Supplies','Motors','Kids & Baby','Handy Help','Hobbies & Crafts','Jobs','Property','Services','Collectables','Other']
+    const DEPTS = ['Electronics','Fashion','Home & Garden','Sport & Leisure','Retro & Vintage','Gaming','Pet Supplies','Motors','Kids & Baby','Handy Help','Hobbies & Crafts','Jobs','Property','Collectables','Other']
+    const LABEL_TO_SLUG: Record<string, string> = { 'Electronics':'electronics','Fashion':'fashion','Home & Garden':'home_garden','Sport & Leisure':'sport','Sport':'sport','Retro & Vintage':'retro_vintage','Gaming':'gaming','Pet Supplies':'pet_shop','Motors':'motors','Kids & Baby':'kids_baby','Handy Help':'handy_help','Jobs':'jobs','Property':'property','Collectables':'collectables','Gift Ideas':'gift_ideas','Health & Fitness':'health_fitness','Food Store':'food_store','Hobbies & Crafts':'hobbies_crafts','Other':'other' }
     const CONDITIONS = ['New','Like New','Very Good','Good','Fair','For Parts']
     const TOWNS = ['Las Palmas','Maspalomas','Playa del Inglés','Puerto Rico','Arucas','Telde','Santa Lucía','Ingenio','Agüimes','Gáldar','Mogán','San Bartolomé de Tirajana','Vecindario','Tejeda','Other']
 
@@ -3368,6 +3370,8 @@ function PanelBody() {
     const [draftListingId] = useState(() => crypto.randomUUID())
     const [title, setTitle] = useState('')
     const [dept, setDept] = useState(prefillCat)
+    // Specific subcategory within the chosen department (from its fixed list).
+    const [subcat, setSubcat] = useState('')
     // Additional categories the item is also listed in. Primary + 1 extra are
     // free; each further one costs €0.99. Never includes the primary dept.
     const [extraDepts, setExtraDepts] = useState<string[]>([])
@@ -3569,15 +3573,31 @@ function PanelBody() {
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Department')} *</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                     {DEPTS.map(d => (
-                      <button key={d} onClick={() => { setDept(d); setExtraDepts(prev => prev.filter(x => x !== d)) }} style={{ background: dept === d ? '#FFF3EE' : '#fff', color: dept === d ? 'var(--orange)' : '#555', border: `1.5px solid ${dept === d ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{d}</button>
+                      <button key={d} onClick={() => { setDept(d); setSubcat(''); setExtraDepts(prev => prev.filter(x => x !== d)) }} style={{ background: dept === d ? '#FFF3EE' : '#fff', color: dept === d ? 'var(--orange)' : '#555', border: `1.5px solid ${dept === d ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{d}</button>
                     ))}
                   </div>
+
+                  {/* Subcategory — the specific type within the chosen department. */}
+                  {(() => {
+                    const subs = subcategoriesForSlug(LABEL_TO_SLUG[dept] ?? '')
+                    if (!subs.length) return null
+                    return (
+                      <div style={{ marginTop: 14, borderTop: '1px dashed #eee', paddingTop: 12 }}>
+                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>Subcategory <span style={{ fontWeight: 600, color: '#888' }}>(helps buyers find it)</span></div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                          {subs.map(s => (
+                            <button key={s} onClick={() => setSubcat(prev => prev === s ? '' : s)} style={{ background: subcat === s ? '#FFF3EE' : '#fff', color: subcat === s ? 'var(--orange)' : '#555', border: `1.5px solid ${subcat === s ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{s}</button>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })()}
 
                   {/* Also list in — extra categories. Primary + 1 extra are free;
                       each further category costs €0.99. Special one-off pages
                       (Jobs / Property / Handy Help) can't be cross-listed into. */}
                   {(() => {
-                    const EXCLUDE = ['Jobs', 'Property', 'Handy Help']
+                    const EXCLUDE = ['Jobs', 'Property', 'Handy Help', 'Services']
                     const options = DEPTS.filter(d => d !== dept && !EXCLUDE.includes(d))
                     const paid = Math.max(0, extraDepts.length - 1)
                     const cost = (paid * 0.99).toFixed(2)
@@ -3868,6 +3888,7 @@ function PanelBody() {
                       ...(desc.trim() ? { description: desc.trim() } : {}),
                       price: freeItem ? 0 : (parseFloat(price) || 0),
                       ...(dept ? { department: D[dept] ?? 'other' } : {}),
+                      ...(subcat ? { subcategory: subcat } : {}),
                       ...(condition ? { condition: C[condition] ?? 'good' } : {}),
                       ...(brand.trim() ? { brand: brand.trim() } : {}),
                       ...(colour.trim() ? { colour: colour.trim() } : {}),
@@ -3923,6 +3944,7 @@ function PanelBody() {
                       price: freeItem ? 0 : parseFloat(price) || 0,
                       department: (DEPT_MAP[dept] ?? 'other') as Parameters<typeof client.listings.create.mutate>[0]['department'],
                       ...(extraDepts.length ? { extraDepartments: extraDepts.map(d => DEPT_MAP[d]).filter(Boolean) } : {}),
+                      ...(subcat ? { subcategory: subcat } : {}),
                       condition: (COND_MAP[condition] ?? 'good') as Parameters<typeof client.listings.create.mutate>[0]['condition'],
                       ...(brand.trim() ? { brand: brand.trim() } : {}),
                       ...(colour.trim() ? { colour: colour.trim() } : {}),

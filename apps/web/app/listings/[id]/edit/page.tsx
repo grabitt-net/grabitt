@@ -8,6 +8,7 @@ import { createLooseTrpcClient } from '@/lib/trpc'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
 import dynamic from 'next/dynamic'
 import { COND_LABEL, DEPT_LABEL } from '@/lib/listingMap'
+import { subcategoriesForSlug } from '@/lib/subcategories'
 import type { JobQuestion, JobQuestionType } from '@/lib/jobQuestions'
 import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
 
@@ -57,6 +58,7 @@ function EditInner() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   // Item-only
   const [department, setDepartment] = useState('other')
+  const [subcategory, setSubcategory] = useState('')
   // Extra categories the item also appears in (primary + 1 extra free, then
   // €0.99 each). `paidExtras` is what's already stored/paid, to price only NEW
   // chargeable categories.
@@ -125,6 +127,7 @@ function EditInner() {
       setImages(Array.isArray(l.images) ? l.images : [])
       setCoords(l.lat != null && l.lng != null ? { lat: l.lat, lng: l.lng } : null)
       setDepartment(l.department ?? 'other')
+      setSubcategory(l.subcategory ?? '')
       { const ex = Array.isArray(l.extraDepartments) ? (l.extraDepartments as string[]) : []; setExtraDepts(ex); setPaidExtras(ex) }
       setFreeItem(Number(l.price ?? 0) === 0)
       setAutoAcceptMin(l.autoAcceptMin != null ? String(Number(l.autoAcceptMin)) : '')
@@ -247,6 +250,7 @@ function EditInner() {
           description: description.trim(),
           price: freeItem ? 0 : Number(price) || 0,
           department,
+          subcategory: subcategory || null,
           condition,
           brand: brand.trim() || null,
           colour: colour.trim() || null,
@@ -342,15 +346,34 @@ function EditInner() {
         {kind === 'item' && (
           <>
             <label style={lbl}>{t('Department')}</label>
-            <select value={department} onChange={e => { setDepartment(e.target.value); setExtraDepts(prev => prev.filter(x => x !== e.target.value)) }} style={field}>
-              {Object.entries(DEPT_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            <select value={department} onChange={e => { setDepartment(e.target.value); setSubcategory(''); setExtraDepts(prev => prev.filter(x => x !== e.target.value)) }} style={field}>
+              {Object.entries(DEPT_LABEL).filter(([k]) => k !== 'services').map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
+
+            {/* Subcategory — the specific type within the chosen department. */}
+            {(() => {
+              const subs = subcategoriesForSlug(department)
+              if (!subs.length) return null
+              return (
+                <>
+                  <label style={lbl}>Subcategory</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 8 }}>
+                    {subs.map(s => {
+                      const on = subcategory === s
+                      return (
+                        <button type="button" key={s} onClick={() => setSubcategory(prev => prev === s ? '' : s)} style={{ background: on ? '#FFF3EE' : '#fff', color: on ? 'var(--orange)' : '#555', border: `1.5px solid ${on ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{s}</button>
+                      )
+                    })}
+                  </div>
+                </>
+              )
+            })()}
 
             {/* Also list in — extra categories. Primary + 1 extra free; each
                 further category €0.99. Adding a new chargeable one takes you to
                 checkout on Save; removing is free. */}
             {(() => {
-              const NON_CROSS = ['jobs', 'property', 'grab_it_now', 'handy_help']
+              const NON_CROSS = ['jobs', 'property', 'grab_it_now', 'handy_help', 'services']
               const options = Object.entries(DEPT_LABEL).filter(([k]) => k !== department && !NON_CROSS.includes(k))
               const paidNow = Math.max(0, extraDepts.length - 1)
               const alreadyPaid = Math.max(0, paidExtras.length - 1)
