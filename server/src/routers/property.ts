@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
 import { getStripe } from '../lib/stripe'
 import { businessTierForGrade, PROPERTY_PRICING } from '@grabitt/design-tokens'
-import { applyPromo } from '../lib/discounts'
+import { validateDiscount, recordRedemption } from '../lib/discounts'
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
@@ -72,11 +72,20 @@ export const propertyRouter = router({
         where: { sellerId: ctx.user.id, department: 'property', createdAt: { gte: monthStart } },
       })
       // Total = the listing fee (over the free allowance) + the optional €4.99
-      // sponsored boost. A discount code applies to the whole total.
+      // sponsored boost. A discount code applies to the whole total; a 100%-off
+      // code (total €0) publishes for free and bypasses Stripe entirely.
       const listingFee = usedThisMonth >= freeAllowance ? PROPERTY_PRICING.privateExtraListingCents : 0
-      let fee = listingFee + (input.sponsored ? PROPERTY_PRICING.sponsoredCents : 0)
-      const promo = fee > 0 ? await applyPromo(ctx.prisma, input.discountCode, ctx.user.id, 'property', fee) : { codeId: null, discountCents: 0, meta: {} as Record<string, string> }
-      fee -= promo.discountCents
+      const baseTotal = listingFee + (input.sponsored ? PROPERTY_PRICING.sponsoredCents : 0)
+      let fee = baseTotal
+      let discountCents = 0
+      let discountCodeId: string | null = null
+      if (baseTotal > 0 && input.discountCode) {
+        const dr = await validateDiscount(ctx.prisma, { code: input.discountCode, userId: ctx.user.id, kind: 'property', category: 'property', amountCents: baseTotal })
+        if (!dr.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: dr.reason })
+        discountCents = dr.discountCents
+        discountCodeId = dr.codeId
+        fee = Math.max(0, baseTotal - discountCents)
+      }
 
       const created = await ctx.prisma.listing.create({
         data: {
@@ -89,6 +98,10 @@ export const propertyRouter = router({
           // Within allowance: live straight away. Over allowance: held as a draft
           // until the €39 fee is paid (webhook publishes it).
           status: fee > 0 ? 'draft' : 'active',
+          // Free publish (within allowance or a 100%-off code) that still bought
+          // the sponsored boost: open the 7-day window now. Paid flows get it in
+          // the webhook after payment.
+          ...(fee <= 0 && input.sponsored ? { sponsoredUntil: new Date(Date.now() + PROPERTY_PRICING.sponsoredDays * 24 * 60 * 60 * 1000) } : {}),
           images: input.images ?? [],
           location: input.location,
           ...(input.lat != null && input.lng != null ? { lat: input.lat, lng: input.lng } : {}),
@@ -132,7 +145,15 @@ export const propertyRouter = router({
         include: { propertyListing: true },
       })
 
-      if (fee === 0) return created
+      // Nothing to charge (within allowance, or a 100%-off code) — it's already
+      // live; record the redemption and skip Stripe entirely (Stripe rejects
+      // amounts under €0.50, so a €0 total must never reach it).
+      if (fee <= 0) {
+        if (discountCodeId) {
+          await recordRedemption(ctx.prisma, { codeId: discountCodeId, userId: ctx.user.id, appliedTo: 'property', originalCents: baseTotal, discountCents }).catch(() => {})
+        }
+        return created
+      }
 
       // Over the free allowance (€29) and/or a €4.99 sponsored boost — pay, then
       // the webhook flips draft→active and applies the sponsored window.
@@ -143,7 +164,11 @@ export const propertyRouter = router({
         mode: 'payment',
         ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email }),
         line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name } } }],
-        payment_intent_data: { metadata: { kind: 'listing_publish', listingId: created.id, ...(input.sponsored ? { sponsored: '1' } : {}), ...promo.meta } },
+        payment_intent_data: { metadata: {
+          kind: 'listing_publish', listingId: created.id,
+          ...(input.sponsored ? { sponsored: '1' } : {}),
+          ...(discountCodeId ? { discountCodeId, discountUserId: ctx.user.id, discountCents: String(discountCents), originalCents: String(baseTotal) } : {}),
+        } },
         success_url: `${appUrl()}/listings/${created.id}?published=1`,
         cancel_url: `${appUrl()}/property/new?cancelled=1`,
       })
