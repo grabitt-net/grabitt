@@ -64,8 +64,12 @@ export default function CategoryPage() {
     if (activeSub === 'All') return items
     const subWords = activeSub.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length >= 3)
     return items.filter(l => {
-      const li = l as DbListing & { description?: string; tags?: string[]; subcategory?: string | null }
-      if (li.subcategory) return li.subcategory === activeSub
+      const li = l as DbListing & { description?: string; tags?: string[]; subcategory?: string | null; department?: string; subcategories?: Record<string, string> | null }
+      // The subcategory relevant to THIS category page: the per-department map
+      // entry, falling back to the legacy primary subcategory when this is the
+      // listing's primary department.
+      const sub = li.subcategories?.[slug] ?? (li.department === slug ? li.subcategory : null)
+      if (sub) return sub === activeSub
       const haystack = [li.title, li.description, ...(li.tags ?? [])].join(' ').toLowerCase()
       return subWords.length ? subWords.some(w => haystack.includes(w)) : true
     })

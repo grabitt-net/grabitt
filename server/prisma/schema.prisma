@@ -824,8 +824,12 @@ model Listing {
   // plus one extra are free (2 categories); each further category costs €0.99.
   extraDepartments Department[]     @default([])
   // Specific subcategory within the primary department (e.g. "Laptops & Mac"
-  // under Electronics). Free-text kept in sync with the department's fixed list.
+  // under Electronics). Mirrors subcategories[primary] for backwards-compat.
   subcategory      String?
+  // Per-category subcategory map { departmentSlug: subcategory } covering the
+  // primary AND every extra category, so each category the listing appears in
+  // can carry its own subcategory.
+  subcategories    Json?
   condition        ListingCondition
   // Item facts shown in the listing's Details panel (all optional — blank ones
   // render as "—", exactly as the template does).

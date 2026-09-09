@@ -59,6 +59,8 @@ function EditInner() {
   // Item-only
   const [department, setDepartment] = useState('other')
   const [subcategory, setSubcategory] = useState('')
+  // Subcategory per extra category, keyed by department slug.
+  const [extraSubcats, setExtraSubcats] = useState<Record<string, string>>({})
   // Extra categories the item also appears in (primary + 1 extra free, then
   // €0.99 each). `paidExtras` is what's already stored/paid, to price only NEW
   // chargeable categories.
@@ -128,6 +130,7 @@ function EditInner() {
       setCoords(l.lat != null && l.lng != null ? { lat: l.lat, lng: l.lng } : null)
       setDepartment(l.department ?? 'other')
       setSubcategory(l.subcategory ?? '')
+      setExtraSubcats((l.subcategories && typeof l.subcategories === 'object') ? (l.subcategories as Record<string, string>) : {})
       { const ex = Array.isArray(l.extraDepartments) ? (l.extraDepartments as string[]) : []; setExtraDepts(ex); setPaidExtras(ex) }
       setFreeItem(Number(l.price ?? 0) === 0)
       setAutoAcceptMin(l.autoAcceptMin != null ? String(Number(l.autoAcceptMin)) : '')
@@ -251,6 +254,13 @@ function EditInner() {
           price: freeItem ? 0 : Number(price) || 0,
           department,
           subcategory: subcategory || null,
+          subcategories: (() => {
+            // Per-category map for the primary + currently-selected extras only.
+            const m: Record<string, string> = {}
+            if (subcategory) m[department] = subcategory
+            for (const k of extraDepts) { const s = extraSubcats[k]; if (s) m[k] = s }
+            return Object.keys(m).length ? m : null
+          })(),
           condition,
           brand: brand.trim() || null,
           colour: colour.trim() || null,
@@ -390,6 +400,24 @@ function EditInner() {
                       )
                     })}
                   </div>
+                  {/* Subcategory picker for each selected extra category. */}
+                  {extraDepts.map(k => {
+                    const subs = subcategoriesForSlug(k)
+                    if (!subs.length) return null
+                    return (
+                      <div key={k} style={{ marginTop: 10 }}>
+                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>{DEPT_LABEL[k] ?? k} subcategory</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {subs.map(s => {
+                            const on = extraSubcats[k] === s
+                            return (
+                              <button type="button" key={s} onClick={() => setExtraSubcats(prev => ({ ...prev, [k]: prev[k] === s ? '' : s }))} style={{ background: on ? '#FFF3EE' : '#fff', color: on ? 'var(--orange)' : '#555', border: `1.5px solid ${on ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 50, padding: '5px 11px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{s}</button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
                   {chargeCount > 0 && (
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, color: 'var(--orange)', marginTop: 8 }}>
                       +€{(chargeCount * 0.99).toFixed(2)} for {chargeCount} new categor{chargeCount === 1 ? 'y' : 'ies'} — you’ll be taken to checkout on Save.

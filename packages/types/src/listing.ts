@@ -47,6 +47,8 @@ export const CreateListingInputSchema = z.object({
   extraDepartments: z.array(z.string().max(40)).max(12).optional(),
   // Specific subcategory within the primary department (from its fixed list).
   subcategory: z.string().max(60).optional(),
+  // Per-category subcategory map { departmentSlug: subcategory } — primary + extras.
+  subcategories: z.record(z.string().max(40), z.string().max(60)).optional(),
   condition: ListingCondition,
   // Item facts for the listing's Details panel — optional, blank shows as "—".
   brand: z.string().max(60).optional(),

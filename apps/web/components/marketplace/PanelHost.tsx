@@ -3375,6 +3375,8 @@ function PanelBody() {
     // Additional categories the item is also listed in. Primary + 1 extra are
     // free; each further one costs €0.99. Never includes the primary dept.
     const [extraDepts, setExtraDepts] = useState<string[]>([])
+    // Subcategory chosen per extra category, keyed by the category label.
+    const [extraSubcats, setExtraSubcats] = useState<Record<string, string>>({})
     const [condition, setCondition] = useState('')
     const [desc, setDesc] = useState('')
     const [price, setPrice] = useState('')
@@ -3613,6 +3615,24 @@ function PanelBody() {
                             )
                           })}
                         </div>
+                        {/* A subcategory picker for each selected extra category. */}
+                        {extraDepts.map(ed => {
+                          const subs = subcategoriesForSlug(LABEL_TO_SLUG[ed] ?? '')
+                          if (!subs.length) return null
+                          return (
+                            <div key={ed} style={{ marginTop: 10 }}>
+                              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>{ed} subcategory</div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                {subs.map(s => {
+                                  const on = extraSubcats[ed] === s
+                                  return (
+                                    <button key={s} onClick={() => setExtraSubcats(prev => ({ ...prev, [ed]: prev[ed] === s ? '' : s }))} style={{ background: on ? '#FFF3EE' : '#fff', color: on ? 'var(--orange)' : '#555', border: `1.5px solid ${on ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 50, padding: '5px 11px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{s}</button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )
+                        })}
                         {extraDepts.length > 0 && (
                           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, color: paid > 0 ? 'var(--orange)' : 'var(--sage)', marginTop: 8 }}>
                             {dept ? 1 : 0} + {extraDepts.length} categories · {paid === 0 ? 'included free' : `€${cost} for ${paid} extra`}
@@ -3945,6 +3965,13 @@ function PanelBody() {
                       department: (DEPT_MAP[dept] ?? 'other') as Parameters<typeof client.listings.create.mutate>[0]['department'],
                       ...(extraDepts.length ? { extraDepartments: extraDepts.map(d => DEPT_MAP[d]).filter(Boolean) } : {}),
                       ...(subcat ? { subcategory: subcat } : {}),
+                      ...(() => {
+                        // Per-category subcategory map { slug: subcat } for primary + extras.
+                        const m: Record<string, string> = {}
+                        if (subcat && DEPT_MAP[dept]) m[DEPT_MAP[dept]] = subcat
+                        for (const ed of extraDepts) { const s = extraSubcats[ed]; if (s && DEPT_MAP[ed]) m[DEPT_MAP[ed]] = s }
+                        return Object.keys(m).length ? { subcategories: m } : {}
+                      })(),
                       condition: (COND_MAP[condition] ?? 'good') as Parameters<typeof client.listings.create.mutate>[0]['condition'],
                       ...(brand.trim() ? { brand: brand.trim() } : {}),
                       ...(colour.trim() ? { colour: colour.trim() } : {}),

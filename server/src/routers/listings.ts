@@ -566,6 +566,15 @@ export const listingsRouter = router({
       const extraDepartments = sanitizeExtraDepts(input.department, rawExtra)
       const categoryFee = paidCountFor(extraDepartments.length) * EXTRA_CATEGORY_CENTS
 
+      // Per-category subcategory map — only keep entries for categories this
+      // listing is actually in (primary + extras). Mirror the primary's into the
+      // legacy `subcategory` column.
+      const allowedDepts = new Set<string>([input.department, ...extraDepartments])
+      const subMap: Record<string, string> = {}
+      for (const [k, v] of Object.entries(input.subcategories ?? {})) if (allowedDepts.has(k) && v) subMap[k] = v
+      const primarySub = input.subcategory || subMap[input.department] || undefined
+      if (primarySub) subMap[input.department] = primarySub
+
       // Advertiser accounts are for buying advertising + a directory entry only —
       // they are not sellers.
       if (user.isAdvertiser) {
@@ -669,6 +678,8 @@ export const listingsRouter = router({
         data: {
           ...input,
           extraDepartments: extraDepartments as never,
+          subcategory: primarySub ?? null,
+          subcategories: Object.keys(subMap).length ? (subMap as never) : undefined,
           // Keywords are drawn from the whole listing, not just the title, so a
           // sparse title still yields several relevant tags.
           tags: autoTags(input.title, [input.description, input.brand, input.colour, input.size, input.department, ...extraDepartments, input.condition, ...Object.values(input.attributes ?? {})].filter(Boolean).join(' ')),
@@ -784,6 +795,7 @@ export const listingsRouter = router({
       price: z.number().min(0).max(9_999_999).optional(),
       department: z.string().optional(),
       subcategory: z.string().max(60).nullable().optional(),
+      subcategories: z.record(z.string().max(40), z.string().max(60)).nullable().optional(),
       condition: z.string().optional(),
       brand: z.string().max(60).nullable().optional(),
       colour: z.string().max(40).nullable().optional(),
