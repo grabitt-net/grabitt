@@ -130,7 +130,6 @@ export default function NewPropertyPage() {
         distShops: d.distShops != null ? String(d.distShops) : prev.distShops,
         distSchools: d.distSchools != null ? String(d.distSchools) : prev.distSchools,
         distBeach: d.distBeach != null ? String(d.distBeach) : prev.distBeach,
-        distTown: d.distTown != null ? String(d.distTown) : prev.distTown,
       }))
       if (!silent && !found) toast('Could not find nearby places automatically — you can enter the distances manually.')
     } catch {
@@ -142,7 +141,7 @@ export default function NewPropertyPage() {
   // Auto-run once when a location is first picked and distances are still blank.
   const didAutoDist = useRef(false)
   useEffect(() => {
-    if (coords && !didAutoDist.current && !f.distShops && !f.distSchools && !f.distBeach && !f.distTown) {
+    if (coords && !didAutoDist.current && !f.distShops && !f.distSchools && !f.distBeach) {
       didAutoDist.current = true
       runAutoDistances(true)
     }
@@ -242,7 +241,6 @@ export default function NewPropertyPage() {
         ...(f.distShops && { distShops: Number(f.distShops) }),
         ...(f.distSchools && { distSchools: Number(f.distSchools) }),
         ...(f.distBeach && { distBeach: Number(f.distBeach) }),
-        ...(f.distTown && { distTown: Number(f.distTown) }),
         ...(features.length ? { features } : {}),
         ...(sponsored ? { sponsored: true } : {}),
         ...(appliedPromo ? { discountCode: appliedPromo.code } : {}),
@@ -256,7 +254,9 @@ export default function NewPropertyPage() {
       const msg = err?.message ?? ''
       if (/UNAUTHORIZED|jwt|token/i.test(msg)) router.push('/auth?next=/property/new')
       else if (/Business account/i.test(msg)) setGate('needbusiness')
-      else setError('Could not list the property. Please check the fields and try again.')
+      // Surface the real reason (validation / payment) so it can be fixed, rather
+      // than a generic message.
+      else setError(msg ? msg.replace(/^[A-Z_]+:\s*/, '') : 'Could not list the property. Please check the fields and try again.')
     } finally { setSaving(false) }
   }
 
@@ -396,7 +396,6 @@ export default function NewPropertyPage() {
             <Field label="Local shops (m)"><Input value={f.distShops} onChange={e => set('distShops', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
             <Field label="Local schools (m)"><Input value={f.distSchools} onChange={e => set('distSchools', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
             <Field label="Nearest beach (m)"><Input value={f.distBeach} onChange={e => set('distBeach', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
-            <Field label="Nearest town (m)"><Input value={f.distTown} onChange={e => set('distTown', e.target.value)} inputMode="numeric" placeholder="0" /></Field>
           </Row>
         </Section>
         </>}

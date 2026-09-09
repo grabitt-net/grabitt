@@ -14,6 +14,7 @@ export default function MapPicker({ value, onChange, height = 260 }: {
   const elRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const markerRef = useRef<L.Marker | null>(null)
+  const placeRef = useRef<((lat: number, lng: number, fire: boolean) => void) | null>(null)
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
 
@@ -33,11 +34,21 @@ export default function MapPicker({ value, onChange, height = 260 }: {
       }
       if (fire) onChangeRef.current({ lat, lng })
     }
+    placeRef.current = place
     if (value) place(value.lat, value.lng, false)
     map.on('click', (e: L.LeafletMouseEvent) => place(e.latlng.lat, e.latlng.lng, true))
 
-    return () => { map.remove(); mapRef.current = null; markerRef.current = null }
+    return () => { map.remove(); mapRef.current = null; markerRef.current = null; placeRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Recentre + move the pin whenever the value changes externally (e.g. after an
+  // address is picked in the search above). Does not fire onChange.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !value || !placeRef.current) return
+    placeRef.current(value.lat, value.lng, false)
+    map.setView([value.lat, value.lng], Math.max(map.getZoom() ?? 14, 15))
+  }, [value?.lat, value?.lng]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div ref={elRef} style={{ width: '100%', height, borderRadius: 12, overflow: 'hidden', border: '1px solid #ece3d7', zIndex: 0 }} />
 }

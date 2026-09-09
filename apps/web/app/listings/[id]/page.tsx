@@ -644,7 +644,6 @@ function ListingInner() {
                 {prop.distBeach != null && <DetailRow label={t('To beach')} value={`${prop.distBeach} m`} />}
                 {prop.distShops != null && <DetailRow label={t('To shops')} value={`${prop.distShops} m`} />}
                 {prop.distSchools != null && <DetailRow label={t('To schools')} value={`${prop.distSchools} m`} />}
-                {prop.distTown != null && <DetailRow label={t('To town centre')} value={`${prop.distTown} m`} />}
                 {prop.communityFees != null && <DetailRow label={t('Community fees')} value={`€${prop.communityFees}/mo`} />}
                 {prop.touristLicence && <DetailRow label={t('Tourist licence')} value={prop.touristLicence} />}
                 {/* The exact street address is never shown publicly — only the
