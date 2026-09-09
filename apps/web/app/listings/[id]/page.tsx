@@ -217,6 +217,262 @@ function ListingInner() {
     finally { setSavingPrice(false) }
   }
 
+  // ── Shared sections (used by both the clean item view and job/property) ──────
+  const galleryCard = (
+    <div style={cardBox}>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 3', borderRadius: 12, overflow: 'hidden', background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 96, border: '1px solid #ece3d7' }}>
+        {heroImg ? <img src={heroImg} alt={listing.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : emoji}
+        {listing.isFeatured && <span style={{ position: 'absolute', top: 10, left: 10, background: 'var(--orange)', color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '3px 9px', borderRadius: 50 }}>⭐ FEATURED</span>}
+        {photos.length > 0 && (
+          <span style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(26,26,26,0.72)', color: '#fff', fontSize: 10.5, fontWeight: 800, fontFamily: 'var(--font-nunito)', padding: '3px 10px', borderRadius: 50 }}>📷 {activePhoto + 1}/{photos.length}</span>
+        )}
+      </div>
+      {photos.length > 1 && (
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingTop: 10 }}>
+          {photos.map((src, i) => (
+            <button key={i} onClick={() => setActivePhoto(i)} style={{ flexShrink: 0, width: 66, height: 66, borderRadius: 10, overflow: 'hidden', border: i === activePhoto ? '2px solid var(--orange)' : '1px solid #ece3d7', background: 'var(--sand)', cursor: 'pointer', padding: 0 }} aria-label={`Photo ${i + 1}`}>
+              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
+  const descriptionCard = listing.description ? (
+    <div style={cardBox}>
+      <div style={sectionTitle}>{t('Description')}</div>
+      <p style={{ fontSize: 13.5, color: '#3a3a3a', lineHeight: 1.65, fontFamily: 'var(--font-comfortaa)', whiteSpace: 'pre-wrap', margin: 0 }}>{renderWithHashtags(listing.description)}</p>
+    </div>
+  ) : null
+
+  const locationCard = (() => {
+    const hasPin = listing.lat != null && listing.lng != null
+    const label = (job?.address || listing.location || '').trim()
+    if (!hasPin && !label) return null
+    const q = hasPin ? `${listing.lat},${listing.lng}` : label
+    return (
+      <div style={cardBox}>
+        <div style={sectionTitle}>{t('Location')}</div>
+        {label && <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 10 }}>{label}</Place>}
+        <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #ece3d7' }}>
+          <iframe title="Location map" src={`https://www.google.com/maps?q=${encodeURIComponent(q)}&z=${hasPin ? 16 : 14}&output=embed`} width="100%" height="220" style={{ border: 0, display: 'block' }} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+        </div>
+      </div>
+    )
+  })()
+
+  const protectionCard = (
+    <div style={{ background: '#f0fdf4', borderRadius: 14, padding: '14px 16px', border: '1px solid #c8e6c9' }}>
+      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#2e7d32', marginBottom: 4 }}>🛡️ Grabitt Buyer Protection</div>
+      <div style={{ fontSize: 12, color: '#555', fontFamily: 'var(--font-nunito)', lineHeight: 1.5 }}>{job ? 'Apply and message safely through Grabitt.' : 'Pay through Grabitt and your money is held in escrow until you confirm handover.'}</div>
+    </div>
+  )
+
+  const similarCard = similar.length > 0 ? (
+    <div style={cardBox}>
+      <div style={sectionTitle}>{t('You might also like')}</div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {similar.map((s, i) => (
+          <Link key={s.id} href={`/listings/${s.id}`} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < similar.length - 1 ? '1px solid #f0ebe4' : 'none', textDecoration: 'none' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--sand)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+              {Array.isArray(s.images) && s.images[0] ? <img src={s.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : deptEmoji(s.department)}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.title}</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)' }}>€{Number(s.price).toLocaleString()}</div>
+            </div>
+            <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--orange)', flexShrink: 0 }}>View</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  ) : null
+
+  // The seller card (shared): who's selling, more from them, keywords.
+  const sellerCard = (
+    <div style={cardBox}>
+      <div style={panelTitle}>{job ? t('Employer') : t('Seller')}</div>
+      <div onClick={() => seller?.id && openPanel('storefront', { sellerId: seller.id })} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: seller?.id ? 'pointer' : 'default' }}>
+        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, color: '#fff', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>
+          {(seller?.tradingName ?? job?.company ?? seller?.displayName ?? '?')[0]?.toUpperCase()}
+        </div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job?.company ?? seller?.tradingName ?? seller?.displayName ?? 'Grabitt User'}</span>
+            {seller?.grade && <span style={{ fontSize: 11 }}>{gradeEmoji[seller.grade]}</span>}
+            {(seller?.isVerified || seller?.businessVerified) && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#dcfce7', color: '#16a34a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50, whiteSpace: 'nowrap' }}>🛡️ {t('Verified')}</span>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--orange)', fontFamily: 'var(--font-nunito)', fontWeight: 700, marginTop: 1 }}>{seller?.avgRating ? `★ ${seller.avgRating} ${t('ratings')}` : t('New on Grabitt')}</div>
+        </div>
+        {seller?.id && <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: 'var(--orange)', flexShrink: 0 }}>{t('Visit shop')}</span>}
+      </div>
+
+      {!job && sellerOther.length > 0 && (
+        <>
+          <div style={subLabel}>{t('More from this seller')}</div>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 3 }}>
+            {sellerOther.map((o: SellerOther) => (
+              <Link key={o.id} href={`/listings/${o.id}`} style={{ flex: '0 0 auto', width: 58, textDecoration: 'none' }}>
+                <div style={{ height: 50, borderRadius: 8, background: 'linear-gradient(145deg,#FFF3EE,#FFE4D6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, overflow: 'hidden' }}>
+                  {Array.isArray(o.images) && o.images[0] ? <img src={o.images[0]} alt={o.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : deptEmoji(o.department)}
+                </div>
+                <div style={{ fontSize: 9.5, fontFamily: 'var(--font-nunito)', fontWeight: 900, color: 'var(--orange)', textAlign: 'center', marginTop: 3 }}>€{Number(o.price).toLocaleString()}</div>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+
+      {keywords.length > 0 && (
+        <>
+          <div style={subLabel}>{t('Keywords')}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+            {keywords.map((k: string) => (
+              <Link key={k} href={`/search?q=${encodeURIComponent(k)}`} style={{ background: '#f2efe9', color: '#666', fontSize: 10, fontFamily: 'var(--font-nunito)', fontWeight: 700, padding: '4px 9px', borderRadius: 50, textDecoration: 'none' }}>{k}</Link>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+
+  // ── CLEAN ITEM VIEW — Shopify-style: gallery + buy box, then clear sections ──
+  if (!job && !prop) {
+    const condLabel = listing.condition ? (COND_LABEL[listing.condition] ?? listing.condition) : ''
+    const facts: [string, string][] = [
+      [t('Condition'), condLabel],
+      [t('Model / Brand'), listing.brand ?? ''],
+      [t('Colour'), listing.colour ?? ''],
+      [t('Size'), listing.size ?? ''],
+      ...(listing.attributes && typeof listing.attributes === 'object' ? Object.entries(listing.attributes as Record<string, string>).filter(([, v]) => v).map(([k, v]) => [t(k), v] as [string, string]) : []),
+      [t('Category'), DEPT_LABEL[listing.department] ?? listing.department],
+      ...(typeof listing.stock === 'number' ? [[t('Availability'), listing.stock > 0 ? `${listing.stock} ${t('in stock')}` : t('Out of stock')] as [string, string]] : []),
+      [t('Reference'), ref],
+    ]
+    return (
+      <main className="app-shell" style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
+        <Topbar title={DEPT_LABEL[listing.department] ?? 'Listing'} back backFallback="/" />
+        <QuickActions />
+
+        <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Top: gallery | buy box (two columns on desktop, stacks on mobile) */}
+          <div className="listing-two-col">
+            {galleryCard}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={cardBox}>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <Chip>{DEPT_LABEL[listing.department] ?? listing.department}</Chip>
+                  {condLabel && <Chip muted>{condLabel}</Chip>}
+                  {isGrabItNow && <Chip>⚡ Grab It Now</Chip>}
+                </div>
+                <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25, margin: 0 }}>{listing.title}</h1>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 28, fontWeight: 900, color: 'var(--orange)', marginTop: 6 }}>{priceLabel}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-2)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                  <Place>{listing.location ?? 'Canary Islands'}</Place> · Ref: {ref}
+                </div>
+
+                {/* Buy / Offer or owner controls */}
+                {isOwner ? (
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => promote('grab_it_now')} style={ownerBtn('primary')}>⚡ Grab It<br />Now · €{PRICES.grabItNow}</button>
+                      <button onClick={() => promote('featured')} style={ownerBtn()}>👀 Feature<br />€{PRICES.featuredPerWeek}/wk</button>
+                      <button onClick={() => { setNewPrice(String(Number(listing.price))); setEditingPrice(v => !v) }} style={ownerBtn()}>✏️ Change<br />price</button>
+                      <Link href={`/listings/${id}/edit`} style={{ ...ownerBtn(), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>✎ Edit<br />listing</Link>
+                    </div>
+                    {editingPrice && (
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                        <span style={{ fontFamily: 'var(--font-nunito)', fontWeight: 900, color: '#555' }}>€</span>
+                        <input type="number" min={0} step="0.01" value={newPrice} onChange={e => setNewPrice(e.target.value)} autoFocus style={{ flex: 1, border: '1.5px solid var(--sand2)', borderRadius: 10, padding: '9px 10px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 800 }} />
+                        <button onClick={saveNewPrice} disabled={savingPrice} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', opacity: savingPrice ? 0.6 : 1 }}>{savingPrice ? '…' : 'Save'}</button>
+                        <button onClick={() => setEditingPrice(false)} style={{ background: 'transparent', color: '#888', border: 'none', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>Cancel</button>
+                      </div>
+                    )}
+                    <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 10.5, color: '#999', textAlign: 'center', marginTop: 8 }}>Lowering the price alerts everyone who saved this item.</div>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <button onClick={() => isGrabItNow ? openPanel('checkout', panelItem) : addToBasket()} disabled={basketBusy} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: '14px', fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, cursor: basketBusy ? 'wait' : 'pointer' }}>{isGrabItNow ? '⚡' : '🛒'} {t('Buy Now')} · {priceLabel}</button>
+                    <button onClick={() => openPanel('makeOffer', panelItem)} style={{ width: '100%', background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 12, padding: '13px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>💰 {t('Make an Offer')}</button>
+                    {basketErr && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#c0392b', textAlign: 'center' }}>{basketErr}</div>}
+                  </div>
+                )}
+
+                {/* Save / Share / Message */}
+                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                  <button onClick={toggleSave} style={miniAction(saved)}><Icon name="heart" size={16} strokeWidth={1.9} style={saved ? { fill: 'currentColor' } : undefined} /> {t('Save')}</button>
+                  <button onClick={() => setShowShare(true)} style={miniAction(false)}><Icon name="share" size={16} strokeWidth={1.9} /> {t('Share')}</button>
+                  {!isOwner && seller?.id && <button onClick={startChat} style={miniAction(false)}><Icon name="message" size={16} strokeWidth={1.9} /> {t('Message')}</button>}
+                </div>
+
+                {/* Delivery options */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 12, paddingTop: 12, borderTop: '1px solid #f0ebe4' }}>
+                  <FulChip on={listing.deliveryMethod === 'courier'} label={t('Post')} />
+                  <FulChip on={listing.deliveryMethod === 'in_person'} label={t('Deliver')} />
+                  <FulChip on={!listing.deliveryMethod} label={t('Collect')} />
+                </div>
+              </div>
+
+              {/* In-demand strip */}
+              <div style={{ background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '10px 12px' }}>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>🔥 In demand</div>
+                <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+                  {[[views, 'views'], [watchers, 'watching'], [wanted, 'wanted']].map(([n, lab], i) => (
+                    <div key={i}>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div>
+                      <div style={{ fontSize: 9.5, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{lab as string}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {descriptionCard}
+
+          {/* Item details */}
+          <div style={cardBox}>
+            <div style={sectionTitle}>{t('Item details')}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 18 }}>
+              {facts.map(([label, value]) => <DetailRow key={label} label={label} value={value} always />)}
+            </div>
+          </div>
+
+          {locationCard}
+          {sellerCard}
+
+          {/* Recently sold comparables */}
+          {comps && (
+            <div style={cardBox}>
+              <div style={sectionTitle}>{t('Recently sold — similar items')}</div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                {[{ k: 'Average', v: comps.avg }, { k: 'Lowest', v: comps.min }, { k: 'Highest', v: comps.max }].map(m => (
+                  <div key={m.k} style={{ flex: 1, background: '#f5f0e8', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#1a1a1a', marginBottom: 3 }}>{m.k}</div>
+                    <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 16, fontWeight: 800, color: 'var(--dark)' }}>€{Number(m.v).toLocaleString()}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {protectionCard}
+          <BannerSlot position="similar_items" aspect="1053 / 163" label="Similar-items sponsored" />
+          {similarCard}
+        </div>
+
+        <Footer />
+        <CartFab />
+        {showMessage && seller?.id && <MessageComposer listingId={id} sellerId={seller.id} title={t('💬 Message')} onClose={() => setShowMessage(false)} />}
+        {showShare && <ShareSheet title={listing.title} price={priceLabel} emoji={emoji} url={shareUrl} onClose={() => setShowShare(false)} />}
+      </main>
+    )
+  }
+
   return (
     <main className="app-shell" style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title={DEPT_LABEL[listing.department] ?? 'Listing'} back backFallback={job ? '/jobs' : prop ? '/property' : '/'} />
@@ -243,57 +499,30 @@ function ListingInner() {
           </div>
         </div>
 
-        {/* Extra photos + In-demand stats share one row. Thumbnails swap the
-            hero image; the In-demand card is enlarged to fill the row height. */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
-          {photos.length > 1 && (
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
-              {photos.map((src, i) => (
-                <button key={i} onClick={() => setActivePhoto(i)} style={{ flexShrink: 0, width: 72, height: 72, borderRadius: 10, overflow: 'hidden', border: i === activePhoto ? '2px solid var(--orange)' : '1px solid #ece3d7', background: 'var(--sand)', cursor: 'pointer', padding: 0 }} aria-label={`Photo ${i + 1}`}>
-                  <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                </button>
-              ))}
-            </div>
-          )}
-          <div style={{ flex: photos.length > 1 ? '0 0 168px' : 1, minWidth: 0, background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '8px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 4 }}>🔥 In demand</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', gap: 6 }}>
-              {[[views, 'views'], [watchers, 'watching'], [wanted, 'wanted']].map(([n, lab], i) => (
-                <div key={i} style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div>
-                  <div style={{ fontSize: 9, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{lab as string}</div>
-                </div>
-              ))}
-            </div>
+        {photos.length > 1 && (
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+            {photos.map((src, i) => (
+              <button key={i} onClick={() => setActivePhoto(i)} style={{ flexShrink: 0, width: 72, height: 72, borderRadius: 10, overflow: 'hidden', border: i === activePhoto ? '2px solid var(--orange)' : '1px solid #ece3d7', background: 'var(--sand)', cursor: 'pointer', padding: 0 }} aria-label={`Photo ${i + 1}`}>
+                <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </button>
+            ))}
           </div>
-        </div>
+        )}
 
-        {/* Title + price, in line with Buy / Offer / In demand */}
+        {/* Title + price */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 240px', minWidth: 0 }}>
-            {(job || prop) && (
-              <div style={{ display: 'flex', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
-                {job && <Chip>{JOB_TYPE[job.type] ?? job.type}</Chip>}
-                {prop && <Chip>{PROP_TYPE[prop.type] ?? prop.type}</Chip>}
-                {job?.remote && <Chip>Remote</Chip>}
-              </div>
-            )}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
+              {job && <Chip>{JOB_TYPE[job.type] ?? job.type}</Chip>}
+              {prop && <Chip>{PROP_TYPE[prop.type] ?? prop.type}</Chip>}
+              {job?.remote && <Chip>Remote</Chip>}
+            </div>
             <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25 }}>{job?.jobTitle ?? listing.title}</h1>
-            {/* Price with location + reference alongside it */}
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginTop: 3 }}>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)' }}>{priceLabel}</div>
               <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 4 }}><Place>{job?.remote ? 'Remote' : (listing.location ?? 'Canary Islands')}</Place> · Ref: {ref}</div>
             </div>
           </div>
-
-          {/* Buy / Offer — on the title's line */}
-          {!isOwner && !job && !prop && (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'stretch', flex: '0 1 auto' }}>
-              <button onClick={() => isGrabItNow ? openPanel('checkout', panelItem) : addToBasket()} disabled={basketBusy} style={{ width: 96, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 6px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: basketBusy ? 'wait' : 'pointer', lineHeight: 1.25 }}>{isGrabItNow ? <>⚡ {t('Buy Now')}</> : <>🛒 {t('Buy Now')}</>}<br /><span style={{ fontSize: 11 }}>{priceLabel}</span></button>
-              <button onClick={() => openPanel('makeOffer', panelItem)} style={{ width: 96, background: '#fff', color: 'var(--orange)', border: '2px solid var(--orange)', borderRadius: 12, padding: '10px 6px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', lineHeight: 1.25 }}>💰 {t('Make')}<br />{t('an Offer')}</button>
-            </div>
-          )}
-          {/* Property: a normal-sized Enquire button on the title/price line */}
           {!isOwner && prop && seller?.id && (
             <div style={{ alignSelf: 'center', flex: '0 0 auto' }}>
               <MessageButton listingId={id} sellerId={seller.id} label={t('Enquire')} primary compact />
@@ -664,7 +893,17 @@ function FulChip({ on, label }: { on: boolean; label: string }) {
   )
 }
 
-const cardBox: React.CSSProperties = { background: '#fff', borderRadius: 14, padding: '12px 12px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }
+const cardBox: React.CSSProperties = { background: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }
+// Owner control button (item buy box).
+function ownerBtn(kind?: 'primary'): React.CSSProperties {
+  return kind === 'primary'
+    ? { flex: 1, minWidth: 0, background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: '9px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, cursor: 'pointer', lineHeight: 1.2 }
+    : { flex: 1, minWidth: 0, background: '#fff', color: '#555', border: '1.5px solid var(--sand2)', borderRadius: 12, padding: '9px 4px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, cursor: 'pointer', lineHeight: 1.2, textAlign: 'center' }
+}
+// Small Save / Share / Message action in the buy box.
+function miniAction(active: boolean): React.CSSProperties {
+  return { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: active ? '#FFF3EE' : '#fff', border: `1px solid ${active ? 'var(--orange)' : 'var(--line)'}`, borderRadius: 10, padding: '9px 6px', cursor: 'pointer', color: active ? 'var(--orange)' : 'var(--ink-2)', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800 }
+}
 const panelTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: 'var(--orange)', marginBottom: 6 }
 const subLabel: React.CSSProperties = { fontSize: 10, fontWeight: 800, color: '#555', fontFamily: 'var(--font-nunito)', margin: '10px 0 4px' }
 const sectionTitle: React.CSSProperties = { fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#555', letterSpacing: 0.2, marginBottom: 10 }
