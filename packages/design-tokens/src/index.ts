@@ -87,15 +87,18 @@ export const RECRUITMENT_PRICING = {
   cvUnlockCents: 499,   // €4.99 to unlock one candidate's CV + contact
 } as const
 
-// Property. Private: 1 free/month, €9 featured boost, €39 per extra listing.
-// Business: €39/listing with the same 5/10 bundles. Advertising only — Grabitt
+// Property. Private: 1 free/month, €29 per extra listing. A €4.99 sponsored boost
+// puts the property at the top of its area's search results for 7 days.
+// Business: €29/listing with the same 5/10 bundles. Advertising only — Grabitt
 // takes no commission or deposit on property.
 export const PROPERTY_PRICING = {
   privateFreePerMonth: 1,
-  privateFeaturedBoostCents: 900,   // €9
-  privateExtraListingCents: 3900,   // €39
-  businessPerListingCents: 3900,    // €39
-  businessBundles: { 5: 17500, 10: 35000 } as Record<number, number>,
+  privateFeaturedBoostCents: 900,   // €9 (legacy boost)
+  sponsoredCents: 499,              // €4.99 — 7-day top-of-area sponsored listing
+  sponsoredDays: 7,
+  privateExtraListingCents: 2900,   // €29
+  businessPerListingCents: 2900,    // €29
+  businessBundles: { 5: 13500, 10: 27000 } as Record<number, number>,
 } as const
 
 // Handy Help — classified section (decided 2026-08). A personal account posts a
