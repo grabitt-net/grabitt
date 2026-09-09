@@ -21,8 +21,21 @@ type Thread = {
 
 type Alert = { id: string; kind: string; title: string; body: string; actionUrl: string | null; readAt: string | null; createdAt: string }
 
-const ALERT_KINDS = ['price_drop', 'wish_matched', 'listing_expiring']
-const ALERT_ICON: Record<string, string> = { price_drop: '📉', wish_matched: '✨', listing_expiring: '⏳' }
+// Alerts are grouped into persistent channels, each pinned at the top of the
+// inbox. An alert is placed in the FIRST category whose `match` returns true, so
+// the catch-all "Other alerts" (last) collects anything not covered above.
+type AlertCat = { key: string; label: string; emoji: string; sub: string; match: (kind: string) => boolean }
+const ALERT_CATS: AlertCat[] = [
+  { key: 'relist', label: 'Relisting alerts', emoji: '🔁', sub: 'Listings due to relist or expire', match: k => ['listing_expiring', 'relist', 'relisted', 'listing_relisted', 'expiring', 'expired'].includes(k) },
+  { key: 'offers', label: 'Offer alerts', emoji: '💰', sub: 'Offers on your items', match: k => k.startsWith('offer') },
+  { key: 'price', label: 'Price drops', emoji: '📉', sub: 'Saved items that dropped in price', match: k => k === 'price_drop' },
+  { key: 'other', label: 'Other alerts', emoji: '🔔', sub: 'Saved-item matches & updates', match: () => true },
+]
+// The three persistent channels always show (even when empty); "other" only when
+// it has something.
+const PERSISTENT_CATS = ['relist', 'offers', 'price']
+const ALERT_ICON: Record<string, string> = { price_drop: '📉', wish_matched: '✨', listing_expiring: '⏳', relist: '🔁', relisted: '🔁' }
+const catFor = (kind: string) => ALERT_CATS.find(c => c.match(kind)) ?? ALERT_CATS[ALERT_CATS.length - 1]
 const TEAM_MESSAGES = [
   "👋 Welcome to Grabitt — the Canary Islands' local marketplace!",
   'Buy and sell safely: payments are held securely until you confirm handover, and our Safety Shield is one tap away any time.',
@@ -45,15 +58,18 @@ function ChannelHeader({ emoji, bg, title, sub, onBack }: { emoji: string; bg: s
 
 // `initial` opens a specific conversation on mount — a thread id, or the pinned
 // 'team' / 'alerts' channels — so deep links resolve inside the hub inbox.
-export default function InboxClient({ me, alertUnread, initial }: { me: string; alertUnread: number; initial?: string | null }) {
+export default function InboxClient({ me, initial }: { me: string; alertUnread?: number; initial?: string | null }) {
   const [threads, setThreads] = useState<Thread[]>([])
   const [loaded, setLoaded] = useState(false)
-  const [selected, setSelected] = useState<string | null>(initial ?? null)
+  // A deep link of 'alerts' opens the first alert channel; a category key
+  // ('alert:offers' etc.) opens that one directly.
+  const [selected, setSelected] = useState<string | null>(initial === 'alerts' ? 'alert:relist' : (initial ?? null))
   const [alerts, setAlerts] = useState<Alert[] | null>(null)
-  const [seenAlerts, setSeenAlerts] = useState(false)
-  const unreadAlerts = seenAlerts ? 0 : alertUnread
-  // If we deep-linked straight to Alerts, load them on mount.
-  useEffect(() => { if (initial === 'alerts') openAlerts() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Group alerts into their channels; compute unread counts per channel.
+  const grouped: Record<string, Alert[]> = {}
+  for (const a of alerts ?? []) (grouped[catFor(a.kind).key] ??= []).push(a)
+  const unreadByCat = (key: string) => (grouped[key] ?? []).filter(a => !a.readAt).length
 
   const load = useCallback(async () => {
     let token = getAuthToken()
@@ -68,6 +84,27 @@ export default function InboxClient({ me, alertUnread, initial }: { me: string; 
 
   useEffect(() => { load() }, [load])
 
+  // Load all notifications up front so the pinned channels show unread counts.
+  useEffect(() => {
+    (async () => {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      if (!token) { setAlerts([]); return }
+      try { setAlerts(await trpcAuthed().notifications.list.query({ unreadOnly: false }) as Alert[]) }
+      catch { setAlerts([]) }
+    })()
+  }, [])
+
+  // Opening an alert channel marks its unread items read.
+  const openAlertCat = async (key: string) => {
+    setSelected('alert:' + key)
+    const unread = (grouped[key] ?? []).filter(a => !a.readAt).map(a => a.id)
+    if (unread.length) {
+      try { await trpcAuthed().notifications.markRead.mutate({ ids: unread }) } catch { /* non-fatal */ }
+      setAlerts(prev => prev ? prev.map(a => unread.includes(a.id) ? { ...a, readAt: new Date().toISOString() } : a) : prev)
+    }
+  }
+
   // Opening a conversation clears its unread state, here and in the list.
   const open = async (id: string) => {
     setSelected(id)
@@ -75,23 +112,6 @@ export default function InboxClient({ me, alertUnread, initial }: { me: string; 
     setThreads(ts => ts.map(t => t.id === id
       ? { ...t, messages: t.messages.map(m => (m.senderId !== me ? { ...m, readAt: new Date().toISOString() } : m)) }
       : t))
-  }
-
-  // Alerts load on demand and are marked read once shown, matching what the
-  // standalone page did.
-  const openAlerts = async () => {
-    setSelected('alerts')
-    if (alerts !== null) return
-    try {
-      const rows = await trpcAuthed().notifications.list.query({ unreadOnly: false }) as Alert[]
-      const mine = rows.filter(a => ALERT_KINDS.includes(a.kind))
-      setAlerts(mine)
-      const unread = mine.filter(a => !a.readAt).map(a => a.id)
-      if (unread.length) {
-        await trpcAuthed().notifications.markRead.mutate({ ids: unread })
-        setSeenAlerts(true)
-      }
-    } catch { setAlerts([]) }
   }
 
   const current = threads.find(t => t.id === selected) ?? null
@@ -108,14 +128,20 @@ export default function InboxClient({ me, alertUnread, initial }: { me: string; 
             <div style={preview}>Questions about buying, selling or safety?</div>
           </div>
         </button>
-        <button onClick={openAlerts} style={{ ...pinned, ...(selected === 'alerts' ? pinnedActive : null) }}>
-          <div style={{ ...avatarCircle, background: '#FFF3EE' }}>🔔</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={nameRow}>Grabitt Alerts</div>
-            <div style={preview}>Price drops & saved-item alerts.</div>
-          </div>
-          {unreadAlerts > 0 && <span style={badge}>{unreadAlerts > 99 ? '99+' : unreadAlerts}</span>}
-        </button>
+        {/* Persistent alert channels — one per alert type, pinned above chats. */}
+        {ALERT_CATS.filter(c => PERSISTENT_CATS.includes(c.key) || (grouped[c.key]?.length ?? 0) > 0).map(c => {
+          const n = unreadByCat(c.key)
+          return (
+            <button key={c.key} onClick={() => openAlertCat(c.key)} style={{ ...pinned, ...(selected === 'alert:' + c.key ? pinnedActive : null) }}>
+              <div style={{ ...avatarCircle, background: '#FFF3EE' }}>{c.emoji}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={nameRow}>{c.label}</div>
+                <div style={preview}>{c.sub}</div>
+              </div>
+              {n > 0 && <span style={badge}>{n > 99 ? '99+' : n}</span>}
+            </button>
+          )
+        })}
 
         {!loaded ? (
           <div style={empty}>Loading…</div>
@@ -171,19 +197,22 @@ export default function InboxClient({ me, alertUnread, initial }: { me: string; 
               </Link>
             </div>
           </>
-        ) : selected === 'alerts' ? (
+        ) : selected?.startsWith('alert:') ? (() => {
+          const cat = ALERT_CATS.find(c => 'alert:' + c.key === selected) ?? ALERT_CATS[0]
+          const list = grouped[cat.key] ?? []
+          return (
           <>
-            <ChannelHeader emoji="🔔" bg="#FFF3EE" title="Grabitt Alerts" sub="Price drops & saved-item alerts" onBack={() => setSelected(null)} />
+            <ChannelHeader emoji={cat.emoji} bg="#FFF3EE" title={cat.label} sub={cat.sub} onBack={() => setSelected(null)} />
             <div style={{ flex: 1, overflowY: 'auto' }}>
               {alerts === null ? (
                 <div style={empty}>Loading…</div>
-              ) : alerts.length === 0 ? (
+              ) : list.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '50px 24px' }}>
-                  <div style={{ fontSize: 40, marginBottom: 10 }}>🔔</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 5 }}>No alerts yet</div>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#888', lineHeight: 1.5 }}>Save items to your favourites and we&apos;ll tell you here when their price drops.</div>
+                  <div style={{ fontSize: 40, marginBottom: 10 }}>{cat.emoji}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 5 }}>No {cat.label.toLowerCase()} yet</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#888', lineHeight: 1.5 }}>{cat.sub}. We&apos;ll post them here as they happen.</div>
                 </div>
-              ) : alerts.map(a => {
+              ) : list.map(a => {
                 const inner = (
                   <>
                     <div style={{ width: 40, height: 40, borderRadius: 12, background: '#FFF3EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19, flexShrink: 0 }}>{ALERT_ICON[a.kind] ?? '🔔'}</div>
@@ -202,7 +231,8 @@ export default function InboxClient({ me, alertUnread, initial }: { me: string; 
               })}
             </div>
           </>
-        ) : !current ? (
+          )
+        })() : !current ? (
           <div style={{ margin: 'auto', textAlign: 'center', padding: 40, fontFamily: 'var(--font-nunito)', color: '#bbb' }}>
             <div style={{ fontSize: 44, marginBottom: 10 }}>✉️</div>
             <div style={{ fontSize: 15, fontWeight: 800 }}>Select a conversation</div>
