@@ -72,7 +72,7 @@ export default function CategoryGrid() {
   }
 
   return (
-    <section className="dept-grid-wrap" style={{ paddingTop: 16 }}>
+    <section className="dept-grid-wrap" style={{ paddingTop: 16, marginTop: 30 }}>
       <div className="dept-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, padding: '0 12px' }}>
         {categories.map(cat => {
           const img = cat.img
