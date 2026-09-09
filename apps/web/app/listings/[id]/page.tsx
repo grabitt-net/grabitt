@@ -339,6 +339,147 @@ function ListingInner() {
     </div>
   )
 
+  // ── CLEAN PROPERTY VIEW — same gallery + info-box + sections flow as items ──
+  if (prop) {
+    const prettify = (s?: string | null) => s ? String(s).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''
+    const FURN: Record<string, string> = { furnished: 'Furnished', part_furnished: 'Part-furnished', unfurnished: 'Unfurnished' }
+    const RTERM: Record<string, string> = { short_term: 'Short-term', long_term: 'Long-term', holiday: 'Holiday rental' }
+    const facts: [string, string][] = [
+      [t('Type'), PROP_TYPE[prop.type] ?? prop.type],
+      [t('Property type'), prettify(prop.propertyType)],
+      [t('Bedrooms'), prop.bedrooms != null ? String(prop.bedrooms) : ''],
+      [t('Bathrooms'), prop.bathrooms != null ? String(prop.bathrooms) : ''],
+      [t('Build size'), prop.m2 != null ? `${Number(prop.m2)} m²` : ''],
+      [t('Floor'), prop.floor != null ? String(prop.floor) : ''],
+      [t('Furnished'), prop.furnished ? (FURN[prop.furnished] ?? prop.furnished) : ''],
+      [t('Orientation'), prop.orientation ?? ''],
+      [t('Views'), prop.views ?? ''],
+      [t('Year built'), prop.yearBuilt != null ? String(prop.yearBuilt) : ''],
+      [t('Energy rating'), prop.energyRating ?? ''],
+      [t('Community fees'), prop.communityFees != null ? `€${prop.communityFees}/mo` : ''],
+      [t('Rental term'), prop.rentalTerm ? (RTERM[prop.rentalTerm] ?? prop.rentalTerm) : ''],
+      [t('Tourist licence'), prop.touristLicence ?? ''],
+      [t('To beach'), prop.distBeach != null ? `${prop.distBeach} m` : ''],
+      [t('To shops'), prop.distShops != null ? `${prop.distShops} m` : ''],
+      [t('To schools'), prop.distSchools != null ? `${prop.distSchools} m` : ''],
+      [t('Reference'), ref],
+    ].filter(([, v]) => v) as [string, string][]
+    const town = (listing.location || '').trim()
+    return (
+      <main className="app-shell" style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
+        <Topbar title={DEPT_LABEL[listing.department] ?? 'Property'} back backFallback="/property" />
+        <QuickActions />
+
+        <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="listing-two-col">
+            {galleryCard}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={cardBox}>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+                  <Chip>{PROP_TYPE[prop.type] ?? prop.type}</Chip>
+                  {prop.propertyType && <Chip muted>{prettify(prop.propertyType)}</Chip>}
+                  {listing.sponsoredUntil && new Date(listing.sponsoredUntil) > new Date() && <Chip>⚡ Sponsored</Chip>}
+                </div>
+                <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25, margin: 0 }}>{listing.title}</h1>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 28, fontWeight: 900, color: 'var(--orange)', marginTop: 6 }}>{priceLabel}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-2)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                  <Place>{town || 'Canary Islands'}</Place> · Ref: {ref}
+                </div>
+
+                {/* Quick facts row (beds / baths / size) */}
+                {(prop.bedrooms != null || prop.bathrooms != null || prop.m2 != null) && (
+                  <div style={{ display: 'flex', gap: 16, marginTop: 12, paddingTop: 12, borderTop: '1px solid #f0ebe4', flexWrap: 'wrap' }}>
+                    {prop.bedrooms != null && <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)' }}>🛏️ {prop.bedrooms} bed</span>}
+                    {prop.bathrooms != null && <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)' }}>🛁 {prop.bathrooms} bath</span>}
+                    {prop.m2 != null && <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)' }}>📐 {Number(prop.m2)} m²</span>}
+                  </div>
+                )}
+
+                {/* Enquire / owner actions */}
+                {isOwner ? (
+                  <div style={{ marginTop: 12 }}>
+                    <Link href={`/listings/${id}/edit`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', background: '#fff', color: '#555', border: '1.5px solid var(--sand2)', borderRadius: 12, padding: '13px', fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900 }}>✎ {t('Edit property listing')}</Link>
+                  </div>
+                ) : seller?.id ? (
+                  <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {isRent
+                      ? <TenantEnquireButton listingId={id} sellerId={seller.id} />
+                      : <MessageButton listingId={id} sellerId={seller.id} label={t('Enquire')} primary />}
+                    {(seller.agentWhatsapp || seller.agentEmail) && (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {seller.agentWhatsapp && <a href={`https://wa.me/${seller.agentWhatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', background: '#25D366', color: '#fff', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900 }}>💬 {t('WhatsApp')}</a>}
+                        {seller.agentEmail && <a href={`mailto:${seller.agentEmail}?subject=${encodeURIComponent(`Enquiry: ${listing.title}`)}`} style={{ flex: 1, textAlign: 'center', textDecoration: 'none', background: '#fff', color: 'var(--orange)', border: '1.5px solid var(--orange)', borderRadius: 12, padding: '11px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900 }}>✉️ {t('Email')}</a>}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+
+                {/* Save / Share / Message */}
+                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                  <button onClick={toggleSave} style={miniAction(saved)}><Icon name="heart" size={16} strokeWidth={1.9} style={saved ? { fill: 'currentColor' } : undefined} /> {t('Save')}</button>
+                  <button onClick={() => setShowShare(true)} style={miniAction(false)}><Icon name="share" size={16} strokeWidth={1.9} /> {t('Share')}</button>
+                  {!isOwner && seller?.id && <button onClick={startChat} style={miniAction(false)}><Icon name="message" size={16} strokeWidth={1.9} /> {t('Message')}</button>}
+                </div>
+              </div>
+
+              {/* In-demand strip */}
+              <div style={{ background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '10px 12px' }}>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>🔥 In demand</div>
+                <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+                  {[[views, 'views'], [watchers, 'watching']].map(([n, lab], i) => (
+                    <div key={i}>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div>
+                      <div style={{ fontSize: 9.5, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{lab as string}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {descriptionCard}
+
+          {/* Property details */}
+          <div style={cardBox}>
+            <div style={sectionTitle}>{t('Property details')}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 18 }}>
+              {facts.map(([label, value]) => <DetailRow key={label} label={label} value={value} always />)}
+            </div>
+            {Array.isArray(prop.features) && prop.features.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                {prop.features.map((ft: string) => (
+                  <span key={ft} style={{ background: '#f5efe6', color: '#1a1a1a', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 50 }}>{featureIcon(ft)} {featureLabel(ft)}</span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Location — town/area only (exact address never shown) */}
+          {town && (
+            <div style={cardBox}>
+              <div style={sectionTitle}>{t('Location')}</div>
+              <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 10 }}>{town}</Place>
+              <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #ece3d7' }}>
+                <iframe title="Area map" src={`https://www.google.com/maps?q=${encodeURIComponent(town + ', Canary Islands')}&z=13&output=embed`} width="100%" height="220" style={{ border: 0, display: 'block' }} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+              </div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#999', marginTop: 6 }}>Approximate area — contact the advertiser for the exact address.</div>
+            </div>
+          )}
+
+          {sellerCard}
+          <BannerSlot position="similar_items" aspect="1053 / 163" label="Similar-items sponsored" />
+          {similarCard}
+        </div>
+
+        <Footer />
+        <CartFab />
+        {showMessage && seller?.id && <MessageComposer listingId={id} sellerId={seller.id} title={t('💬 Message')} onClose={() => setShowMessage(false)} />}
+        {showShare && <ShareSheet title={listing.title} price={priceLabel} emoji={emoji} url={shareUrl} onClose={() => setShowShare(false)} />}
+      </main>
+    )
+  }
+
   // ── CLEAN ITEM VIEW — Shopify-style: gallery + buy box, then clear sections ──
   if (!job && !prop) {
     const condLabel = listing.condition ? (COND_LABEL[listing.condition] ?? listing.condition) : ''
