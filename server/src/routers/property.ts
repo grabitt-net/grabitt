@@ -71,11 +71,12 @@ export const propertyRouter = router({
       const usedThisMonth = await ctx.prisma.listing.count({
         where: { sellerId: ctx.user.id, department: 'property', createdAt: { gte: monthStart } },
       })
-      let fee = usedThisMonth >= freeAllowance ? PROPERTY_PRICING.privateExtraListingCents : 0
+      // Total = the listing fee (over the free allowance) + the optional €4.99
+      // sponsored boost. A discount code applies to the whole total.
+      const listingFee = usedThisMonth >= freeAllowance ? PROPERTY_PRICING.privateExtraListingCents : 0
+      let fee = listingFee + (input.sponsored ? PROPERTY_PRICING.sponsoredCents : 0)
       const promo = fee > 0 ? await applyPromo(ctx.prisma, input.discountCode, ctx.user.id, 'property', fee) : { codeId: null, discountCents: 0, meta: {} as Record<string, string> }
       fee -= promo.discountCents
-      // Sponsored boost is an optional add-on (never discounted by a listing promo).
-      if (input.sponsored) fee += PROPERTY_PRICING.sponsoredCents
 
       const created = await ctx.prisma.listing.create({
         data: {

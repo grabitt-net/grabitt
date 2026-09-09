@@ -455,7 +455,7 @@ export default function NewPropertyPage() {
           {/* Discount code — applied here so it's taken off before checkout. */}
           <div style={{ marginTop: 14 }}>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 6 }}>Have a discount code?</div>
-            <PromoField kind="property" amountCents={PROPERTY_PRICING.privateExtraListingCents} onApplied={setAppliedPromo} />
+            <PromoField kind="property" amountCents={PROPERTY_PRICING.privateExtraListingCents + (sponsored ? PROPERTY_PRICING.sponsoredCents : 0)} onApplied={setAppliedPromo} />
           </div>
         </Section>}
 
