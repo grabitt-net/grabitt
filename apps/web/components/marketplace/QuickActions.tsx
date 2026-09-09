@@ -31,7 +31,7 @@ export default function QuickActions({ belowPromo }: { belowPromo?: React.ReactN
             style={{
               // Match the trust-badge cards (TrustStrip): white card, soft border
               // + shadow, an icon tile on the left with a bold label beside it.
-              display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, textAlign: 'center',
               background: '#fff', border: '1px solid #ece3d7', borderRadius: 14,
               boxShadow: '0 1px 3px rgba(0,0,0,0.05)', padding: '12px 14px',
               cursor: 'pointer', width: '100%',
