@@ -243,7 +243,9 @@ export const crmRouter = router({
   // account owner isn't signed out — the admin's browser just carries the
   // member's token until they exit impersonation.
   impersonate: execProcedure
-    .input(z.object({ userId: z.string().uuid() }))
+    // Not .uuid(): some accounts (seeded/legacy) have non-UUID ids, and the
+    // lookup below works with any id string.
+    .input(z.object({ userId: z.string().min(1) }))
     .mutation(async ({ ctx, input }): Promise<{ token: string; userId: string; displayName: string }> => {
       const u = await ctx.prisma.user.findUnique({ where: { id: input.userId }, select: { id: true, grade: true, displayName: true, deletedAt: true } })
       if (!u) throw new TRPCError({ code: 'NOT_FOUND', message: 'Member not found' })
