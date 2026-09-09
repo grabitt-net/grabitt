@@ -37,7 +37,7 @@ export const homepageRouter = router({
   // ── Homepage category tiles ─────────────────────────────────────────────────
   // Public: enabled tiles in admin order (the homepage grid renders from this).
   categories: publicProcedure.query(({ ctx }) =>
-    ctx.prisma.homeCategory.findMany({ where: { enabled: true }, orderBy: { sortOrder: 'asc' }, select: { name: true, img: true } })
+    ctx.prisma.homeCategory.findMany({ where: { enabled: true }, orderBy: { sortOrder: 'asc' }, select: { name: true, img: true, department: true } })
   ),
 
   // Public: header artwork for one category page (by department slug).

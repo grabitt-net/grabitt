@@ -9,7 +9,7 @@ import { DEPT_ENUM } from '@/lib/listingMap'
 // image, cream ground, sage brush stroke + heart). Categories he hasn't supplied
 // art for yet get a matching circular placeholder so the whole grid reads as one
 // set — swap in a real image at /public/categories when it arrives.
-type Cat = { name: string; img?: string | null }
+type Cat = { name: string; img?: string | null; department?: string | null }
 
 // Default order — also the fallback if the admin-controlled list can't be
 // fetched, and the seed shape for the HomeCategory table.
@@ -60,11 +60,13 @@ export default function CategoryGrid() {
 
   const handleTap = (cat: Cat) => {
     setActive(cat.name)
+    // Route by the category's stored department slug (survives renames); fall
+    // back to matching the display name for any legacy tile without one.
+    const slug = cat.department || DEPT_ENUM[cat.name]
     // Jobs and Property have dedicated full pages with advanced search.
-    if (cat.name === 'Jobs') return void router.push('/jobs')
-    if (cat.name === 'Property') return void router.push('/property')
-    if (cat.name === 'Grab It Now') return void router.push('/grabitt-now')
-    const slug = DEPT_ENUM[cat.name]
+    if (slug === 'jobs') return void router.push('/jobs')
+    if (slug === 'property') return void router.push('/property')
+    if (slug === 'grab_it_now') return void router.push('/grabitt-now')
     if (slug) router.push(`/category/${slug}`)
     else openPanel('dept', { name: cat.name })
   }
