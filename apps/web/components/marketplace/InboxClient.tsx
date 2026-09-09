@@ -24,18 +24,23 @@ type Alert = { id: string; kind: string; title: string; body: string; actionUrl:
 // Alerts are grouped into persistent channels, each pinned at the top of the
 // inbox. An alert is placed in the FIRST category whose `match` returns true, so
 // the catch-all "Other alerts" (last) collects anything not covered above.
-type AlertCat = { key: string; label: string; emoji: string; sub: string; match: (kind: string) => boolean }
+// An alert is placed in the FIRST category whose `match` returns true. Matching
+// looks at both the notification `kind` AND its text, so relist/expiry notices
+// posted under a generic kind (e.g. 'system') still land in Relisting.
+type AlertCat = { key: string; label: string; emoji: string; sub: string; match: (a: Alert) => boolean }
+const txt = (a: Alert) => `${a.title} ${a.body}`.toLowerCase()
+const RELIST_KINDS = ['listing_expiring', 'relist', 'relisted', 'listing_relisted', 'expiring', 'expired']
 const ALERT_CATS: AlertCat[] = [
-  { key: 'relist', label: 'Relisting alerts', emoji: '🔁', sub: 'Listings due to relist or expire', match: k => ['listing_expiring', 'relist', 'relisted', 'listing_relisted', 'expiring', 'expired'].includes(k) },
-  { key: 'offers', label: 'Offer alerts', emoji: '💰', sub: 'Offers on your items', match: k => k.startsWith('offer') },
-  { key: 'price', label: 'Price drops', emoji: '📉', sub: 'Saved items that dropped in price', match: k => k === 'price_drop' },
+  { key: 'relist', label: 'Relisting alerts', emoji: '🔁', sub: 'Listings due to relist or expire', match: a => RELIST_KINDS.includes(a.kind) || /relist|expir/.test(txt(a)) },
+  { key: 'offers', label: 'Offer alerts', emoji: '💰', sub: 'Offers on your items', match: a => a.kind.startsWith('offer') || /\boffer\b/.test(txt(a)) },
+  { key: 'price', label: 'Price drops', emoji: '📉', sub: 'Saved items that dropped in price', match: a => a.kind === 'price_drop' || /price drop|price dropped|now cheaper|reduced/.test(txt(a)) },
   { key: 'other', label: 'Other alerts', emoji: '🔔', sub: 'Saved-item matches & updates', match: () => true },
 ]
 // The three persistent channels always show (even when empty); "other" only when
 // it has something.
 const PERSISTENT_CATS = ['relist', 'offers', 'price']
 const ALERT_ICON: Record<string, string> = { price_drop: '📉', wish_matched: '✨', listing_expiring: '⏳', relist: '🔁', relisted: '🔁' }
-const catFor = (kind: string) => ALERT_CATS.find(c => c.match(kind)) ?? ALERT_CATS[ALERT_CATS.length - 1]
+const catFor = (a: Alert) => ALERT_CATS.find(c => c.match(a)) ?? ALERT_CATS[ALERT_CATS.length - 1]
 const TEAM_MESSAGES = [
   "👋 Welcome to Grabitt — the Canary Islands' local marketplace!",
   'Buy and sell safely: payments are held securely until you confirm handover, and our Safety Shield is one tap away any time.',
@@ -68,7 +73,7 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
 
   // Group alerts into their channels; compute unread counts per channel.
   const grouped: Record<string, Alert[]> = {}
-  for (const a of alerts ?? []) (grouped[catFor(a.kind).key] ??= []).push(a)
+  for (const a of alerts ?? []) (grouped[catFor(a).key] ??= []).push(a)
   const unreadByCat = (key: string) => (grouped[key] ?? []).filter(a => !a.readAt).length
 
   const load = useCallback(async () => {
