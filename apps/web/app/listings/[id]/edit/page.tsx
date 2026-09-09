@@ -57,6 +57,11 @@ function EditInner() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   // Item-only
   const [department, setDepartment] = useState('other')
+  // Extra categories the item also appears in (primary + 1 extra free, then
+  // €0.99 each). `paidExtras` is what's already stored/paid, to price only NEW
+  // chargeable categories.
+  const [extraDepts, setExtraDepts] = useState<string[]>([])
+  const [paidExtras, setPaidExtras] = useState<string[]>([])
   const [freeItem, setFreeItem] = useState(false)
   const [autoAcceptMin, setAutoAcceptMin] = useState('')
   const [multibuyTiers, setMultibuyTiers] = useState<MultibuyTier[]>([])
@@ -120,6 +125,7 @@ function EditInner() {
       setImages(Array.isArray(l.images) ? l.images : [])
       setCoords(l.lat != null && l.lng != null ? { lat: l.lat, lng: l.lng } : null)
       setDepartment(l.department ?? 'other')
+      { const ex = Array.isArray(l.extraDepartments) ? (l.extraDepartments as string[]) : []; setExtraDepts(ex); setPaidExtras(ex) }
       setFreeItem(Number(l.price ?? 0) === 0)
       setAutoAcceptMin(l.autoAcceptMin != null ? String(Number(l.autoAcceptMin)) : '')
       setMultibuyTiers(Array.isArray(l.multibuyTiers) ? l.multibuyTiers : [])
@@ -256,6 +262,10 @@ function EditInner() {
           lat: coords?.lat ?? null,
           lng: coords?.lng ?? null,
         })
+        // Categories: apply free changes, or send to checkout for new paid ones.
+        // Only the categories change requires payment; the rest is already saved.
+        const cat: any = await c.listings.setCategories.mutate({ listingId: id, extraDepartments: extraDepts })
+        if (cat?.pendingPayment && cat?.checkoutUrl) { window.location.href = cat.checkoutUrl; return }
       }
       setSaved(true)
       setTimeout(() => router.push(`/listings/${id}`), 700)
@@ -332,9 +342,40 @@ function EditInner() {
         {kind === 'item' && (
           <>
             <label style={lbl}>{t('Department')}</label>
-            <select value={department} onChange={e => setDepartment(e.target.value)} style={field}>
+            <select value={department} onChange={e => { setDepartment(e.target.value); setExtraDepts(prev => prev.filter(x => x !== e.target.value)) }} style={field}>
               {Object.entries(DEPT_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
+
+            {/* Also list in — extra categories. Primary + 1 extra free; each
+                further category €0.99. Adding a new chargeable one takes you to
+                checkout on Save; removing is free. */}
+            {(() => {
+              const NON_CROSS = ['jobs', 'property', 'grab_it_now', 'handy_help']
+              const options = Object.entries(DEPT_LABEL).filter(([k]) => k !== department && !NON_CROSS.includes(k))
+              const paidNow = Math.max(0, extraDepts.length - 1)
+              const alreadyPaid = Math.max(0, paidExtras.length - 1)
+              const chargeCount = Math.max(0, paidNow - alreadyPaid)
+              return (
+                <div style={{ marginTop: 4, marginBottom: 8 }}>
+                  <label style={lbl}>Also list in <span style={{ fontWeight: 500, color: '#888' }}>(optional)</span></label>
+                  <div style={{ ...hint, marginTop: 0, marginBottom: 8 }}>Shows in up to <strong>2 categories free</strong> (this department + 1 more). Each additional category is <strong>€0.99</strong>.</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                    {options.map(([k, v]) => {
+                      const on = extraDepts.includes(k)
+                      return (
+                        <button type="button" key={k} onClick={() => setExtraDepts(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k])} style={{ background: on ? '#eefaf0' : '#fff', color: on ? 'var(--sage)' : '#555', border: `1.5px solid ${on ? 'var(--sage)' : '#e5dccd'}`, borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{on ? '✓ ' : '+ '}{v}</button>
+                      )
+                    })}
+                  </div>
+                  {chargeCount > 0 && (
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, color: 'var(--orange)', marginTop: 8 }}>
+                      +€{(chargeCount * 0.99).toFixed(2)} for {chargeCount} new categor{chargeCount === 1 ? 'y' : 'ies'} — you’ll be taken to checkout on Save.
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
             <label style={lbl}>{t('Condition')}</label>
             <select value={condition} onChange={e => setCondition(e.target.value)} style={field}>
               {Object.entries(COND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}

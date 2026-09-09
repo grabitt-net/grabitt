@@ -278,6 +278,11 @@ export async function handleStripeEvent(event: Stripe.Event) {
         await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active', createdAt: new Date(), bumpedAt: new Date() } }).catch(() => {})
         // (Promo redemption, if any, is recorded by the generic block above.)
       }
+      // Extra categories on an existing listing — apply the paid target set now.
+      if (pi.metadata?.kind === 'listing_categories' && pi.metadata.listingId) {
+        const extras = (pi.metadata.extraDepartments || '').split(',').map(s => s.trim()).filter(Boolean)
+        await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { extraDepartments: extras as never } }).catch(() => {})
+      }
       // Handy Help — a business paid €2.99 to unlock a post; create their
       // proposal now (idempotent per listing+responder) and notify the poster.
       if (pi.metadata?.kind === 'handy_unlock' && pi.metadata.listingId && pi.metadata.responderId) {

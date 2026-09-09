@@ -17,6 +17,21 @@ function genericEstablishment(sector?: string | null): string {
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
+// Multi-category pricing: a listing's primary department + 1 extra are free
+// (2 categories); each further category costs €0.99.
+const EXTRA_CATEGORY_CENTS = 99
+const VALID_DEPTS = new Set(['home_garden','jobs','fashion','sport','gaming','electronics','gift_ideas','kids_baby','property','health_fitness','food_store','retro_vintage','grab_it_now','handy_help','pet_shop','motors','services','collectables','other','hobbies_crafts'])
+// One-off pages with their own flows — can't be cross-listed into.
+const NON_CROSS_DEPTS = new Set(['jobs','property','grab_it_now','handy_help'])
+
+// Clean an extra-categories list: valid departments only, no duplicates, never
+// the primary department, and never a one-off page.
+function sanitizeExtraDepts(primary: string, raw?: string[] | null): string[] {
+  return Array.from(new Set((raw ?? []).filter(d => VALID_DEPTS.has(d) && d !== primary && !NON_CROSS_DEPTS.has(d))))
+}
+// How many of the given total categories are chargeable (beyond the 2 free).
+const paidCountFor = (extraCount: number) => Math.max(0, extraCount - 1) // primary + 1 extra free
+
 // Credit both the referred user and their referrer, once, and mark it done so it
 // can never fire twice. Each side gets a CreditEvent with the running balance.
 async function awardReferral(
@@ -545,15 +560,9 @@ export const listingsRouter = router({
 
       // Extra categories: a listing may appear in more than its primary
       // department. The primary + one extra are free (2 categories); each further
-      // category costs €0.99. The special one-off pages (Jobs / Property / Grab It
-      // Now / Handy Help) are their own flows and can't be cross-listed into.
-      const EXTRA_CATEGORY_CENTS = 99
-      const VALID_DEPTS = new Set(['home_garden','jobs','fashion','sport','gaming','electronics','gift_ideas','kids_baby','property','health_fitness','food_store','retro_vintage','grab_it_now','handy_help','pet_shop','motors','services','collectables','other','hobbies_crafts'])
-      const NON_CROSS = new Set(['jobs','property','grab_it_now','handy_help'])
-      const extraDepartments = Array.from(new Set((rawExtra ?? [])
-        .filter(d => VALID_DEPTS.has(d) && d !== input.department && !NON_CROSS.has(d))))
-      const paidCategories = Math.max(0, extraDepartments.length - 1) // primary + 1 extra are free
-      const categoryFee = paidCategories * EXTRA_CATEGORY_CENTS
+      // category costs €0.99 (see sanitizeExtraDepts / paidCountFor).
+      const extraDepartments = sanitizeExtraDepts(input.department, rawExtra)
+      const categoryFee = paidCountFor(extraDepartments.length) * EXTRA_CATEGORY_CENTS
 
       // Advertiser accounts are for buying advertising + a directory entry only —
       // they are not sellers.
@@ -839,6 +848,45 @@ export const listingsRouter = router({
         await notifyPriceDrop(ctx.prisma, updated, oldPrice, Number(updated.price))
       }
       return { ok: true, id: updated.id }
+    }),
+
+  // Change which categories a listing appears in. Primary + 1 extra are free;
+  // each further category costs €0.99. Removing categories, or staying within
+  // the free/already-paid count, applies immediately. Adding a NEW chargeable
+  // category returns a Stripe checkout URL and the change is applied by the
+  // webhook on payment (so you never pay without the categories going live).
+  setCategories: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid(), extraDepartments: z.array(z.string().max(40)).max(12) }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUniqueOrThrow({ where: { id: input.listingId } })
+      if (listing.sellerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the seller can edit this listing' })
+      if (listing.status === 'sold') throw new TRPCError({ code: 'BAD_REQUEST', message: 'A sold listing can no longer be edited.' })
+
+      const target = sanitizeExtraDepts(listing.department, input.extraDepartments)
+      const already = sanitizeExtraDepts(listing.department, listing.extraDepartments as string[])
+      // Only charge for chargeable categories added beyond what's already paid.
+      const chargeCount = Math.max(0, paidCountFor(target.length) - paidCountFor(already.length))
+      const fee = chargeCount * EXTRA_CATEGORY_CENTS
+
+      if (fee === 0) {
+        await ctx.prisma.listing.update({ where: { id: listing.id }, data: { extraDepartments: target as never } })
+        return { ok: true, id: listing.id, applied: true }
+      }
+
+      const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { email: true, stripeCustomerId: true } })
+      const session = await getStripe().checkout.sessions.create({
+        mode: 'payment',
+        ...(user.stripeCustomerId ? { customer: user.stripeCustomerId } : { customer_email: user.email }),
+        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name: `Extra ${chargeCount === 1 ? 'category' : 'categories'} — ${listing.title}` } } }],
+        payment_intent_data: { metadata: {
+          kind: 'listing_categories', listingId: listing.id,
+          // The full target extra-category list to apply on payment.
+          extraDepartments: target.join(','),
+        } },
+        success_url: `${APP_URL}/listings/${listing.id}?categories=1`,
+        cancel_url: `${APP_URL}/listings/${listing.id}?cancelled=1`,
+      })
+      return { ok: true, id: listing.id, applied: false, pendingPayment: true, checkoutUrl: session.url }
     }),
 
   // Take a listing down or put it back up. Soft — the row is kept so orders,
