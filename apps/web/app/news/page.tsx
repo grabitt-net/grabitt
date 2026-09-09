@@ -57,6 +57,12 @@ export default function NewsPage() {
 
   const isEvents = tab === 'events'
   const range = isEvents ? computeRange(dateMode, pick, custom) : {}
+  // Admin-set header banner for the News page (Categories → Page hero banners).
+  const [banner, setBanner] = useState<string | null>(null)
+  useEffect(() => {
+    createLooseTrpcClient().homepage.categoryHeader.query({ department: 'news' })
+      .then(h => setBanner((h as { heroBanner?: string | null } | null)?.heroBanner ?? null)).catch(() => {})
+  }, [])
 
   useEffect(() => {
     setPosts(null)
@@ -73,6 +79,7 @@ export default function NewsPage() {
     <InfoPage
       title="Grabitt News"
       topbarTitle="News"
+      banner={banner}
       intro="The latest from Grabitt and the Canary Islands — updates, announcements, features, and what's on near you."
     >
       {/* News / Events tabs */}

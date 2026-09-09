@@ -63,6 +63,10 @@ body {
    present as centered modals rather than full-width bottom sheets. */
 .app-shell { width: 100%; max-width: 520px; margin: 0 auto; position: relative; }
 
+/* Homepage carousel cards (Featured / Just listed) — subtle lift on hover. */
+.mini-card { transition: transform .15s ease, box-shadow .15s ease; }
+.mini-card:hover { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(0,0,0,0.12); }
+
 .panel-overlay { display: flex; flex-direction: column; justify-content: flex-end; }
 .panel-sheet { width: 100%; max-width: 520px; margin: 0 auto; border-radius: 24px 24px 0 0; }
 

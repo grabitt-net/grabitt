@@ -24,6 +24,12 @@ function Inner() {
   // category metadata. Falls back to the built-in content if the DB is empty
   // or unreachable, so the Help Centre is never blank.
   const [allTopics, setAllTopics] = useState<LTopic[]>(HELP_TOPICS)
+  // Admin-set header banner for the Help page (Categories → Page hero banners).
+  const [banner, setBanner] = useState<string | null>(null)
+  useEffect(() => {
+    createLooseTrpcClient().homepage.categoryHeader.query({ department: 'help' })
+      .then(h => setBanner((h as { heroBanner?: string | null } | null)?.heroBanner ?? null)).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const client = createLooseTrpcClient()
@@ -72,6 +78,7 @@ function Inner() {
     <InfoPage
       title="Help Centre"
       topbarTitle="Help Centre"
+      banner={banner}
       intro="Search our guides, ask the assistant, or browse by topic."
       pills={['AI assistant', 'Searchable guides', 'Buyer & seller help', 'Live chat']}
     >

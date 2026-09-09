@@ -64,11 +64,12 @@ export function Band({ heading, children, image, imageAlt, reverse, tint }: {
   )
 }
 
-export default function InfoPage({ title, intro, pills, hero, topbarTitle, children }: {
+export default function InfoPage({ title, intro, pills, hero, banner, topbarTitle, children }: {
   title: string
   intro?: ReactNode
   pills?: string[]
   hero?: string        // optional hero image/video-poster URL
+  banner?: string | null   // admin-set wide header banner (replaces the title band)
   topbarTitle?: string
   children: ReactNode
 }) {
@@ -78,9 +79,17 @@ export default function InfoPage({ title, intro, pills, hero, topbarTitle, child
         <Topbar title={topbarTitle || title} back backFallback="/" />
         <QuickActions />
 
-        {/* Hero header — the orange banner is the background for the page title,
+        {/* Admin-set wide banner (managed in Categories → Page hero banners) takes
+            the place of the title band when present, matching the category pages. */}
+        {banner ? (
+          <div style={{ maxWidth: 1000, margin: '14px auto 6px', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={banner} alt={title} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />
+          </div>
+        ) : (
+        /* Hero header — the orange banner is the background for the page title,
             subheading and pills, all centred on it. A real hero image (when
-            supplied) sits behind a scrim for readability. */}
+            supplied) sits behind a scrim for readability. */
         <div style={{ maxWidth: 1000, margin: '18px auto 6px', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
           <div style={{
             position: 'relative', overflow: 'hidden', borderRadius: 20,
@@ -109,6 +118,7 @@ export default function InfoPage({ title, intro, pills, hero, topbarTitle, child
             </div>
           </div>
         </div>
+        )}
 
         {/* Content bands */}
         <div style={{ maxWidth: 900, margin: '0 auto', padding: '12px 18px 44px', width: '100%', boxSizing: 'border-box' }}>
