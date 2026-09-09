@@ -23,20 +23,24 @@ export default function QuickActions({ belowPromo }: { belowPromo?: React.ReactN
 
   return (
     <section style={{ padding: '12px 14px 4px' }}>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
         {actions.map(a => (
           <button
             key={a.label}
             onClick={a.action}
             style={{
-              flex: '1 1 auto', background: '#fff', color: '#000',
-              border: '1px solid var(--line)', borderRadius: 50,
-              padding: '9px 14px', fontFamily: 'var(--font-ui)', fontSize: 13,
-              fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              // Match the trust-badge cards (TrustStrip): white card, soft border
+              // + shadow, an icon tile on the left with a bold label beside it.
+              display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+              background: '#fff', border: '1px solid #ece3d7', borderRadius: 14,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)', padding: '12px 14px',
+              cursor: 'pointer', width: '100%',
             }}
           >
-            <Icon name={a.icon} size={15} strokeWidth={2} /> {t(a.label)}
+            <span style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 11, background: 'var(--sand)', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name={a.icon} size={21} strokeWidth={2} />
+            </span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)' }}>{t(a.label)}</span>
           </button>
         ))}
       </div>
