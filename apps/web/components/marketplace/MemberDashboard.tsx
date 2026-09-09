@@ -423,10 +423,10 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           {/* Advertising banner at the top of every menu section. */}
           <BannerSlot position="user_dashboard" aspect="1053 / 163" label="Dashboard" padded={false} />
 
-          {/* Personal hub: your level, progress to the next level, and this
-              month's listing allowance (the personal equivalent of the Business
-              Centre's tier card). */}
-          {!effBiz && !isAgent && allowance && !hubView && <PersonalLevelCard d={allowance} />}
+          {/* Your level, progress to the next level, and this month's listing
+              allowance (the personal equivalent of the Business Centre's tier
+              card). Shown on the About Me section only — not on every menu item. */}
+          {section === 'aboutme' && !effBiz && !isAgent && allowance && <PersonalLevelCard d={allowance} />}
 
           {section === 'hub' && hubView && <HubListView hubKey={hubView} title={hubTitle} />}
 
