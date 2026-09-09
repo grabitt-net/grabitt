@@ -14,6 +14,7 @@ type Thread = {
   id: string
   listingId: string
   lastMessageAt: string | null
+  unreadCount?: number
   participants: { userId: string; user: { id: string; displayName: string; avatar: string | null } }[]
   messages: { id: string; senderId: string; body: string; blocked: boolean; readAt: string | null; createdAt: string }[]
   listing: { id: string; title: string; price: unknown; images: string[] } | null
@@ -115,7 +116,7 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
     setSelected(id)
     try { await trpcAuthed().messages.markThreadRead.mutate({ threadId: id }) } catch { /* non-fatal */ }
     setThreads(ts => ts.map(t => t.id === id
-      ? { ...t, messages: t.messages.map(m => (m.senderId !== me ? { ...m, readAt: new Date().toISOString() } : m)) }
+      ? { ...t, unreadCount: 0, messages: t.messages.map(m => (m.senderId !== me ? { ...m, readAt: new Date().toISOString() } : m)) }
       : t))
   }
 
@@ -155,7 +156,8 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
         ) : threads.map(t => {
           const other = otherOf(t)
           const last = t.messages[0]
-          const unread = !!last && last.senderId !== me && !last.readAt
+          const unreadN = t.unreadCount ?? (last && last.senderId !== me && !last.readAt ? 1 : 0)
+          const unread = unreadN > 0
           const active = t.id === selected
           return (
             <button
@@ -181,7 +183,7 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
               </div>
               <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 9.5, color: '#bbb' }}>{shortDate(t.lastMessageAt)}</span>
-                {unread && <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--orange)' }} />}
+                {unreadN > 0 && <span style={badge}>{unreadN > 99 ? '99+' : unreadN}</span>}
               </div>
             </button>
           )

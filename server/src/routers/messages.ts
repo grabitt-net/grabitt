@@ -112,14 +112,33 @@ export const messagesRouter = router({
       select: { id: true, title: true, price: true, images: true },
     })
     const listingById = new Map(listings.map(l => [l.id, l]))
+    // Unread count per thread — messages sent by the other party, not yet read.
+    const unreadRows = threads.length ? await ctx.prisma.message.groupBy({
+      by: ['threadId'],
+      where: { threadId: { in: threads.map(t => t.id) }, senderId: { not: ctx.user.id }, readAt: null },
+      _count: { _all: true },
+    }) : []
+    const unreadByThread = new Map(unreadRows.map(r => [r.threadId, r._count._all]))
     // The inbox preview shows the last message — mask it too, or blocked
     // contact details leak through the preview even though the thread hides them.
     return threads.map(t => ({
       ...t,
+      unreadCount: unreadByThread.get(t.id) ?? 0,
       messages: t.messages.map(m => maskBlocked(m, ctx.user.id)),
       listing: listingById.get(t.listingId) ?? null,
     }))
   }),
+
+  // Total unread messages for the signed-in user (for the nav Alerts badge).
+  unreadCount: protectedProcedure.query(async ({ ctx }) =>
+    ctx.prisma.message.count({
+      where: {
+        thread: { participants: { some: { userId: ctx.user.id } } },
+        senderId: { not: ctx.user.id },
+        readAt: null,
+      },
+    })
+  ),
 
   // Marks every message in a thread NOT sent by the caller as read.
   markThreadRead: protectedProcedure

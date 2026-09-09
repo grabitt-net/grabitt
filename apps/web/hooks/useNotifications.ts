@@ -54,6 +54,7 @@ export function relativeTime(iso: string) {
 // no token is present (logged out) it stays a quiet empty state.
 export function useNotifications(userId: string | null) {
   const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [msgUnread, setMsgUnread] = useState(0)
   const [loading, setLoading] = useState(false)
 
   const fetchAll = useCallback(async () => {
@@ -67,6 +68,8 @@ export function useNotifications(userId: string | null) {
         readAt: r.readAt ? String(r.readAt) : null,
         createdAt: String(r.createdAt),
       })))
+      // Unread chat messages also feed the Alerts badge count.
+      try { setMsgUnread(await trpcAuthed().messages.unreadCount.query() as number) } catch { /* ignore */ }
     } catch { /* unauthenticated or transient — leave state as-is */ }
     finally { setLoading(false) }
   }, [userId])
@@ -84,7 +87,7 @@ export function useNotifications(userId: string | null) {
     try { await trpcAuthed().notifications.markAllRead.mutate() } catch { /* optimistic */ }
   }, [])
 
-  const unreadCount = notifications.filter(n => !n.readAt).length
+  const unreadCount = notifications.filter(n => !n.readAt).length + msgUnread
 
   return { notifications, loading, unreadCount, markRead, markAllRead }
 }
