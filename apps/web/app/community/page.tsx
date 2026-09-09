@@ -30,6 +30,7 @@ export default function CommunityIndexPage() {
     <InfoPage
       title="Grabitt Guides"
       topbarTitle="Grabitt Guides"
+      dept="community"
       intro="Island tips, selling advice and the Canary Islands second-hand economy."
       pills={['Selling tips', 'Island know-how', 'Buyer guides', 'Local economy']}
     >

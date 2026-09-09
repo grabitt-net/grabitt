@@ -73,6 +73,7 @@ export default function WhyPage() {
     <InfoPage
       title="Why Use Grabitt!?"
       topbarTitle="Why Us?"
+      dept="why"
       intro={
         <>
           <p style={{ margin: '0 0 12px' }}>Easy! Take a look at some great ideas below to help you learn how good this site is — and how to use it to your advantage.</p>

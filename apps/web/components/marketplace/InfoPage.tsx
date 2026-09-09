@@ -1,5 +1,7 @@
 'use client'
 import type { ReactNode } from 'react'
+import { useEffect, useState } from 'react'
+import { createLooseTrpcClient } from '@/lib/trpc'
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from './Topbar'
 import QuickActions from './QuickActions'
@@ -64,15 +66,27 @@ export function Band({ heading, children, image, imageAlt, reverse, tint }: {
   )
 }
 
-export default function InfoPage({ title, intro, pills, hero, banner, topbarTitle, children }: {
+export default function InfoPage({ title, intro, pills, hero, banner, dept, topbarTitle, children }: {
   title: string
   intro?: ReactNode
   pills?: string[]
   hero?: string        // optional hero image/video-poster URL
   banner?: string | null   // admin-set wide header banner (replaces the title band)
+  dept?: string        // page key (Categories → Page hero banners) to auto-fetch a banner for
   topbarTitle?: string
   children: ReactNode
 }) {
+  // When a `dept` is given (and no explicit banner passed) fetch the admin-set
+  // header banner for that page from Categories → Page hero banners, so every
+  // footer page inherits the same uploadable header block as the others.
+  const [autoBanner, setAutoBanner] = useState<string | null>(null)
+  useEffect(() => {
+    if (!dept || banner) return
+    createLooseTrpcClient().homepage.categoryHeader.query({ department: dept })
+      .then(h => setAutoBanner((h as { heroBanner?: string | null } | null)?.heroBanner ?? null))
+      .catch(() => {})
+  }, [dept, banner])
+  const effBanner = banner ?? autoBanner
   return (
     <PanelProvider>
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
@@ -81,10 +95,10 @@ export default function InfoPage({ title, intro, pills, hero, banner, topbarTitl
 
         {/* Admin-set wide banner (managed in Categories → Page hero banners) takes
             the place of the title band when present, matching the category pages. */}
-        {banner ? (
+        {effBanner ? (
           <div style={{ maxWidth: 1000, margin: '14px auto 6px', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={banner} alt={title} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />
+            <img src={effBanner} alt={title} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />
           </div>
         ) : (
         /* Hero header — the orange banner is the background for the page title,

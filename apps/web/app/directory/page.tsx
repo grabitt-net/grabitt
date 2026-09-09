@@ -7,6 +7,7 @@ import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
+import PageHeroBanner from '@/components/marketplace/PageHeroBanner'
 import Place from '@/components/marketplace/Place'
 import { createLooseTrpcClient } from '@/lib/trpc'
 
@@ -30,6 +31,7 @@ export default function DirectoryPage() {
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 60, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
         <Topbar title="Business Directory" />
         <QuickActions />
+        <PageHeroBanner dept="directory" alt="Business Directory" maxWidth={960} />
         <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 14px' }}>
           <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.6, marginBottom: 14 }}>
             Local businesses advertising on Grabitt.

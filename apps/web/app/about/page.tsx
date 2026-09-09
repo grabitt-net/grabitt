@@ -7,6 +7,7 @@ export default function AboutPage() {
     <InfoPage
       title="About Grabitt"
       topbarTitle="About Us"
+      dept="about"
       intro="Grabitt IS your local, Everything."
       pills={['Local to the Canaries', 'Secure Escrow', 'Buyer Protection', 'No Fees on Jobs & Property']}
     >

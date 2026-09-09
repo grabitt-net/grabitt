@@ -25,6 +25,7 @@ export default function GuaranteePage() {
     <InfoPage
       title="The Grabitt Guarantee"
       topbarTitle="Grabitt Guarantee"
+      dept="guarantee"
       intro="Every payment on Grabitt is protected. Your money is held safely until you confirm you've received your item — so you can buy and sell with confidence."
       pills={['Payments held securely', 'Confirm at handover', 'Formal disputes', 'Buyer & seller protected']}
     >

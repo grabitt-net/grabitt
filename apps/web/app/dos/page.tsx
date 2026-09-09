@@ -45,6 +45,7 @@ export default function DosPage() {
     <InfoPage
       title="Dos & Don'ts"
       topbarTitle="Dos & Don'ts"
+      dept="dos"
       intro="Grabitt works because we look after each other. Please keep it friendly, honest and safe."
       pills={['Be honest', 'Stay on-platform', 'Respect others', 'Meet safely']}
     >

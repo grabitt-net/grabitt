@@ -5,6 +5,7 @@ import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
+import PageHeroBanner from '@/components/marketplace/PageHeroBanner'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import PromoField from '@/components/marketplace/PromoField'
@@ -27,6 +28,7 @@ export default function AdvertisePage() {
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 60, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
         <Topbar title="Advertise on Grabitt" />
         <QuickActions />
+        <PageHeroBanner dept="advertise" alt="Advertise on Grabitt" />
         <Inner />
         <Footer />
         <PanelHost />

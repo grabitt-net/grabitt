@@ -12,6 +12,7 @@ export default function DeliveryPage() {
     <InfoPage
       title="Delivery & Collection"
       topbarTitle="Delivery"
+      dept="delivery"
       intro="However you hand over — delivered or collected — the buyer confirms at handover to release payment. Here's how it works."
       pills={['Scan at handover', 'Accept or Reject', 'Funds held securely', 'Buyer protected']}
     >

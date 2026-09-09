@@ -43,6 +43,7 @@ export default function PricingPage() {
     <InfoPage
       title="Price Guide"
       topbarTitle="Pricing"
+      dept="pricing"
       intro="Nice clean transparent pricing to help you make good decisions. Here is a list of our pricing!"
       pills={['No Fees to Buy', 'Low Selling Fees', 'No Fees on Jobs to Apply', 'Transparent Pricing']}
     >

@@ -44,6 +44,7 @@ export default function SuggestPage() {
     <InfoPage
       title="Suggest Ideas"
       topbarTitle="Suggest Ideas"
+      dept="suggest"
       intro={
         <>
           <p style={{ margin: '0 0 12px' }}>We&apos;re constantly working to improve this site. We&apos;ll get some things wrong, and we want to be told — so we can put fast fixes in place and keep Grabitt relevant and fully focused on you, the user.</p>

@@ -96,6 +96,7 @@ export default function ContactPage() {
     <InfoPage
       title="Contact Us"
       topbarTitle="Contact"
+      dept="contact"
       intro="Want to reach out with ideas, questions, suggestions, or need a hand? There are plenty of ways to get us:"
       pills={['Live Chat', 'Email', 'Message Centre', 'Instagram · TikTok · X']}
     >

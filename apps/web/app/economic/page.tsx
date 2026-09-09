@@ -25,6 +25,7 @@ export default function EconomicPage() {
     <InfoPage
       title="Economic Living"
       topbarTitle="Economic Living"
+      dept="economic"
       intro="Smart, money-saving living on the Canary Islands — tips, guides and ideas to help you spend less and get more."
     >
       {/* Clickable category filters */}

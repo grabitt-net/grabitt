@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
+import PageHeroBanner from '@/components/marketplace/PageHeroBanner'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 
 export const metadata = { title: 'Terms of Service — Grabitt' }
@@ -11,6 +12,7 @@ export default function TermsPage() {
     <PanelProvider>
     <main className="app-shell" style={wrap}>
       <Topbar title="Terms" back backFallback="/" />
+      <PageHeroBanner dept="terms" alt="Terms of Service" maxWidth={760} />
       <div style={card}>
         <h1 style={h1}>Terms of Service</h1>
         <p style={muted}>Last updated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>

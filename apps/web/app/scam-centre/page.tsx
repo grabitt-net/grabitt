@@ -21,6 +21,7 @@ export default function ScamCentrePage() {
     <InfoPage
       title="Scam Centre"
       topbarTitle="Scam Centre"
+      dept="scam-centre"
       intro="Most scams rely on one thing: getting you off Grabitt and around our protections. Learn the common tricks, spot them early, and stay safe."
       pills={['Spot the tricks', 'Stay on-platform', 'Protected payments', 'Report fast']}
     >
