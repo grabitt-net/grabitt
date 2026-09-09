@@ -8,7 +8,7 @@ export const Department = z.enum([
 ])
 export type Department = z.infer<typeof Department>
 
-export const ListingCondition = z.enum(['new', 'like_new', 'good', 'fair', 'spares'])
+export const ListingCondition = z.enum(['new', 'like_new', 'very_good', 'good', 'fair', 'spares'])
 export type ListingCondition = z.infer<typeof ListingCondition>
 
 export const ListingStatus = z.enum([
