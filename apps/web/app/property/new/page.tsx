@@ -39,6 +39,9 @@ const ENERGY = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 // Bedroom / bathroom dropdown options.
 const BED_OPTS = ['Studio', '1', '2', '3', '4', '5', '6', '7', '8+']
 const BATH_OPTS = ['1', '2', '3', '4', '5', '6+']
+const ORIENTATIONS = ['North', 'North-East', 'East', 'South-East', 'South', 'South-West', 'West', 'North-West']
+const CURRENT_YEAR = new Date().getFullYear()
+const YEARS = Array.from({ length: CURRENT_YEAR - 1899 }, (_, i) => String(CURRENT_YEAR - i))
 
 export default function NewPropertyPage() {
   const router = useRouter()
@@ -349,7 +352,11 @@ export default function NewPropertyPage() {
                 <option value="">—</option>{ENERGY.map(x => <option key={x} value={x}>{x}</option>)}
               </Select>
             </Field>
-            <Field label="Year built"><Input value={f.yearBuilt} onChange={e => set('yearBuilt', e.target.value)} inputMode="numeric" placeholder="e.g. 2005" /></Field>
+            <Field label="Year built">
+              <Select value={f.yearBuilt} onChange={e => set('yearBuilt', e.target.value)}>
+                <option value="">—</option>{YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+              </Select>
+            </Field>
           </Row>
           <Row>
             <Field label="Furnished">
@@ -361,7 +368,11 @@ export default function NewPropertyPage() {
               </Select>
             </Field>
             <Field label="Community fees (€/mo)"><Input value={f.communityFees} onChange={e => set('communityFees', e.target.value)} inputMode="numeric" placeholder="e.g. 60" /></Field>
-            <Field label="Orientation"><Input value={f.orientation} onChange={e => set('orientation', e.target.value)} placeholder="e.g. South-West" /></Field>
+            <Field label="Orientation">
+              <Select value={f.orientation} onChange={e => set('orientation', e.target.value)}>
+                <option value="">—</option>{ORIENTATIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              </Select>
+            </Field>
           </Row>
           <Field label="Views"><Input value={f.views} onChange={e => set('views', e.target.value)} placeholder="e.g. Sea, Mountain" /></Field>
           <Field label="Description"><Textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the property, its condition, features and what's nearby…" /></Field>
