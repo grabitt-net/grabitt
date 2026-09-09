@@ -15,35 +15,54 @@ function haversineM(aLat: number, aLng: number, bLat: number, bLng: number): num
 
 type OverpassEl = { lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> }
 
-export async function autoFillDistances(lat: number, lng: number, signal?: AbortSignal): Promise<Dists> {
+// Overpass has several public endpoints; we try them in order until one answers.
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+]
+
+async function overpass(q: string): Promise<OverpassEl[] | null> {
+  for (const url of OVERPASS_ENDPOINTS) {
+    try {
+      const ctrl = new AbortController()
+      const to = setTimeout(() => ctrl.abort(), 20000)
+      const res = await fetch(url, {
+        method: 'POST', body: 'data=' + encodeURIComponent(q), signal: ctrl.signal,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      })
+      clearTimeout(to)
+      if (!res.ok) continue
+      const data = await res.json() as { elements?: OverpassEl[] }
+      if (Array.isArray(data.elements)) return data.elements
+    } catch { /* try the next endpoint */ }
+  }
+  return null
+}
+
+export async function autoFillDistances(lat: number, lng: number): Promise<Dists> {
   // One combined query; we categorise each returned element by its tags.
   const around = (r: number, f: string) => `node(around:${r},${lat},${lng})${f};way(around:${r},${lat},${lng})${f};`
   const q = `[out:json][timeout:25];(
-    ${around(3000, '[shop~"supermarket|convenience|mall"]')}
-    ${around(5000, '[amenity=school]')}
-    ${around(10000, '[natural=beach]')}
-    ${around(20000, '[place~"town|city"]')}
-  );out center 200;`
-  try {
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST', body: 'data=' + encodeURIComponent(q), signal,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    })
-    if (!res.ok) return {}
-    const data = await res.json() as { elements?: OverpassEl[] }
-    const els = data.elements ?? []
-    let shops = Infinity, schools = Infinity, beach = Infinity, town = Infinity
-    for (const e of els) {
-      const p = e.center ?? (e.lat != null && e.lon != null ? { lat: e.lat, lon: e.lon } : null)
-      if (!p) continue
-      const d = haversineM(lat, lng, p.lat, p.lon)
-      const t = e.tags ?? {}
-      if (t.shop) shops = Math.min(shops, d)
-      else if (t.amenity === 'school') schools = Math.min(schools, d)
-      else if (t.natural === 'beach') beach = Math.min(beach, d)
-      else if (t.place === 'town' || t.place === 'city') town = Math.min(town, d)
-    }
-    const m = (v: number) => (Number.isFinite(v) ? Math.round(v) : undefined)
-    return { distShops: m(shops), distSchools: m(schools), distBeach: m(beach), distTown: m(town) }
-  } catch { return {} }
+    ${around(4000, '[shop~"supermarket|convenience|mall|greengrocer|bakery"]')}
+    ${around(6000, '[amenity=school]')}
+    ${around(15000, '[natural=beach]')}
+    ${around(30000, '[place~"town|city"]')}
+  );out center 300;`
+  const els = await overpass(q)
+  if (!els) return {}
+  let shops = Infinity, schools = Infinity, beach = Infinity, town = Infinity
+  for (const e of els) {
+    const p = e.center ?? (e.lat != null && e.lon != null ? { lat: e.lat, lon: e.lon } : null)
+    if (!p) continue
+    const d = haversineM(lat, lng, p.lat, p.lon)
+    if (d < 5) continue // skip the property's own point
+    const t = e.tags ?? {}
+    if (t.shop) shops = Math.min(shops, d)
+    else if (t.amenity === 'school') schools = Math.min(schools, d)
+    else if (t.natural === 'beach') beach = Math.min(beach, d)
+    else if (t.place === 'town' || t.place === 'city') town = Math.min(town, d)
+  }
+  const m = (v: number) => (Number.isFinite(v) ? Math.round(v) : undefined)
+  return { distShops: m(shops), distSchools: m(schools), distBeach: m(beach), distTown: m(town) }
 }

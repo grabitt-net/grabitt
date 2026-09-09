@@ -122,15 +122,22 @@ export default function NewPropertyPage() {
   const runAutoDistances = async (silent = false) => {
     if (!coords) { if (!silent) toast('Pick the address / map pin first.'); return }
     setAutoDist('loading')
-    const d = await autoFillDistances(coords.lat, coords.lng)
-    setF(prev => ({
-      ...prev,
-      distShops: d.distShops != null ? String(d.distShops) : prev.distShops,
-      distSchools: d.distSchools != null ? String(d.distSchools) : prev.distSchools,
-      distBeach: d.distBeach != null ? String(d.distBeach) : prev.distBeach,
-      distTown: d.distTown != null ? String(d.distTown) : prev.distTown,
-    }))
-    setAutoDist('done')
+    try {
+      const d = await autoFillDistances(coords.lat, coords.lng)
+      const found = [d.distShops, d.distSchools, d.distBeach, d.distTown].some(v => v != null)
+      setF(prev => ({
+        ...prev,
+        distShops: d.distShops != null ? String(d.distShops) : prev.distShops,
+        distSchools: d.distSchools != null ? String(d.distSchools) : prev.distSchools,
+        distBeach: d.distBeach != null ? String(d.distBeach) : prev.distBeach,
+        distTown: d.distTown != null ? String(d.distTown) : prev.distTown,
+      }))
+      if (!silent && !found) toast('Could not find nearby places automatically — you can enter the distances manually.')
+    } catch {
+      if (!silent) toast('Auto-fill is unavailable right now — please enter the distances manually.')
+    } finally {
+      setAutoDist('done')
+    }
   }
   // Auto-run once when a location is first picked and distances are still blank.
   const didAutoDist = useRef(false)
@@ -446,9 +453,19 @@ export default function NewPropertyPage() {
           </label>
         </Section>}
 
-        <PromoField kind="property" amountCents={PROPERTY_PRICING.privateExtraListingCents} onApplied={setAppliedPromo} />
         <FormError>{error}</FormError>
-        <SubmitButton type="submit" disabled={saving}>{saving ? 'Listing…' : 'List Property'}</SubmitButton>
+        {step >= STEPS.length - 1 ? (
+          <>
+            {/* Discount code lives with the payment step only. */}
+            <PromoField kind="property" amountCents={PROPERTY_PRICING.privateExtraListingCents} onApplied={setAppliedPromo} />
+            <SubmitButton type="submit" disabled={saving}>{saving ? 'Listing…' : 'List Property'}</SubmitButton>
+          </>
+        ) : (
+          <button type="button" onClick={() => goTab(step + 1)}
+            style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+            Next
+          </button>
+        )}
       </form>
       )}
       <Footer />
