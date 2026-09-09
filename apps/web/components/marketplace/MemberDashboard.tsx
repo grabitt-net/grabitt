@@ -1004,6 +1004,13 @@ function GdprView() {
   const canDelete = confirmDelete.trim().toUpperCase() === 'DELETE'
   const deleteAccount = async () => {
     if (!canDelete) return
+    // Safety: while impersonating, account deletion would target the ADMIN's own
+    // Supabase session (impersonation only swaps the app JWT), not this member.
+    // Block it and point admins to the proper tool.
+    if (typeof window !== 'undefined' && localStorage.getItem('grabitt_impersonating')) {
+      toast(t("You're viewing this account as an admin. Exit impersonation first — deletion here would affect YOUR admin account, not this member. Use the admin panel to remove a member."))
+      return
+    }
     if (!(await confirmDialog({ title: t('Delete account?'), message: t('This permanently anonymises your account and signs you out. It cannot be undone. Continue?'), confirmLabel: t('Delete'), danger: true }))) return
     setDeleting(true)
     try {
@@ -1093,6 +1100,12 @@ function AdminCentre({ me, onReload, payout, setupPayouts, openPanel, goInterest
 
   const deleteAccount = async () => {
     if (confirmDelete.trim().toUpperCase() !== 'DELETE') return
+    // Safety: while impersonating, this would delete the ADMIN's own account
+    // (the delete route keys off the Supabase session, not the impersonation).
+    if (typeof window !== 'undefined' && localStorage.getItem('grabitt_impersonating')) {
+      toast(t("You're viewing this account as an admin. Exit impersonation first — deletion here would affect YOUR admin account, not this member. Use the admin panel to remove a member."))
+      return
+    }
     if (!(await confirmDialog({ title: t('Delete account?'), message: t('This permanently anonymises your account and signs you out. It cannot be undone. Continue?'), confirmLabel: t('Delete'), danger: true }))) return
     setDeleting(true)
     try {
