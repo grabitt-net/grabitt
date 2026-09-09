@@ -451,15 +451,17 @@ export default function NewPropertyPage() {
               </div>
             </div>
           </label>
+
+          {/* Discount code — applied here so it's taken off before checkout. */}
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 6 }}>Have a discount code?</div>
+            <PromoField kind="property" amountCents={PROPERTY_PRICING.privateExtraListingCents} onApplied={setAppliedPromo} />
+          </div>
         </Section>}
 
         <FormError>{error}</FormError>
         {step >= STEPS.length - 1 ? (
-          <>
-            {/* Discount code lives with the payment step only. */}
-            <PromoField kind="property" amountCents={PROPERTY_PRICING.privateExtraListingCents} onApplied={setAppliedPromo} />
-            <SubmitButton type="submit" disabled={saving}>{saving ? 'Listing…' : 'List Property'}</SubmitButton>
-          </>
+          <SubmitButton type="submit" disabled={saving}>{saving ? 'Listing…' : 'List Property'}</SubmitButton>
         ) : (
           <button type="button" onClick={() => goTab(step + 1)}
             style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
