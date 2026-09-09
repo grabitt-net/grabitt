@@ -540,8 +540,20 @@ export const listingsRouter = router({
   create: protectedProcedure
     .input(CreateListingInputSchema.extend({ discountCode: z.string().max(40).optional() }))
     .mutation(async ({ ctx, input: rawInput }) => {
-      const { discountCode, ...input } = rawInput
+      const { discountCode, extraDepartments: rawExtra, ...input } = rawInput
       const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id } })
+
+      // Extra categories: a listing may appear in more than its primary
+      // department. The primary + one extra are free (2 categories); each further
+      // category costs €0.99. The special one-off pages (Jobs / Property / Grab It
+      // Now / Handy Help) are their own flows and can't be cross-listed into.
+      const EXTRA_CATEGORY_CENTS = 99
+      const VALID_DEPTS = new Set(['home_garden','jobs','fashion','sport','gaming','electronics','gift_ideas','kids_baby','property','health_fitness','food_store','retro_vintage','grab_it_now','handy_help','pet_shop','motors','services','collectables','other','hobbies_crafts'])
+      const NON_CROSS = new Set(['jobs','property','grab_it_now','handy_help'])
+      const extraDepartments = Array.from(new Set((rawExtra ?? [])
+        .filter(d => VALID_DEPTS.has(d) && d !== input.department && !NON_CROSS.has(d))))
+      const paidCategories = Math.max(0, extraDepartments.length - 1) // primary + 1 extra are free
+      const categoryFee = paidCategories * EXTRA_CATEGORY_CENTS
 
       // Advertiser accounts are for buying advertising + a directory entry only —
       // they are not sellers.
@@ -627,6 +639,8 @@ export const listingsRouter = router({
       if (input.department === 'handy_help' && (user.isBusiness || user.businessLight)) {
         fee = HANDY_PRICING.businessPlaceCents
       }
+      // Extra-category charge applies to everyone, on top of any listing fee.
+      fee += categoryFee
 
       // Apply a promo code to the listing fee, if one was entered and valid for
       // this flow + category. A 100%-off code brings the fee to 0 (published for
@@ -643,9 +657,10 @@ export const listingsRouter = router({
       const listing = await ctx.prisma.listing.create({
         data: {
           ...input,
+          extraDepartments: extraDepartments as never,
           // Keywords are drawn from the whole listing, not just the title, so a
           // sparse title still yields several relevant tags.
-          tags: autoTags(input.title, [input.description, input.brand, input.colour, input.size, input.department, input.condition, ...Object.values(input.attributes ?? {})].filter(Boolean).join(' ')),
+          tags: autoTags(input.title, [input.description, input.brand, input.colour, input.size, input.department, ...extraDepartments, input.condition, ...Object.values(input.attributes ?? {})].filter(Boolean).join(' ')),
           sellerId: user.id,
           status: fee > 0 ? 'draft' : 'active',
         },
@@ -716,6 +731,7 @@ export const listingsRouter = router({
           const listing = await ctx.prisma.listing.create({
             data: {
               ...row,
+              extraDepartments: (row.extraDepartments ?? []) as never,
               tags: autoTags(row.title, [row.description, row.brand, row.colour, row.size, row.department, row.condition, ...Object.values(row.attributes ?? {})].filter(Boolean).join(' ')),
               sellerId: user.id,
               status: 'active',
@@ -879,7 +895,9 @@ export const listingsRouter = router({
       const skip = (page - 1) * limit
       const where: Record<string, unknown> = {
         status: 'active',
-        department,
+        // A listing shows in its primary department AND any extra categories it
+        // was cross-listed into.
+        OR: [{ department }, { extraDepartments: { has: department } }],
         ...(subcategory && subcategory !== 'All' && { subcategory }),
       }
       const orderBy = sort === 'price_asc'

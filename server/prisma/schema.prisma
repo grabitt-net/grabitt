@@ -820,6 +820,9 @@ model Listing {
   description      String
   price            Decimal          @db.Decimal(10, 2)
   department       Department
+  // Additional categories this listing also appears in. The primary department
+  // plus one extra are free (2 categories); each further category costs €0.99.
+  extraDepartments Department[]     @default([])
   condition        ListingCondition
   // Item facts shown in the listing's Details panel (all optional — blank ones
   // render as "—", exactly as the template does).

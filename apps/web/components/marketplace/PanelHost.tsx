@@ -3368,6 +3368,9 @@ function PanelBody() {
     const [draftListingId] = useState(() => crypto.randomUUID())
     const [title, setTitle] = useState('')
     const [dept, setDept] = useState(prefillCat)
+    // Additional categories the item is also listed in. Primary + 1 extra are
+    // free; each further one costs €0.99. Never includes the primary dept.
+    const [extraDepts, setExtraDepts] = useState<string[]>([])
     const [condition, setCondition] = useState('')
     const [desc, setDesc] = useState('')
     const [price, setPrice] = useState('')
@@ -3566,9 +3569,38 @@ function PanelBody() {
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Department')} *</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                     {DEPTS.map(d => (
-                      <button key={d} onClick={() => setDept(d)} style={{ background: dept === d ? '#FFF3EE' : '#fff', color: dept === d ? 'var(--orange)' : '#555', border: `1.5px solid ${dept === d ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{d}</button>
+                      <button key={d} onClick={() => { setDept(d); setExtraDepts(prev => prev.filter(x => x !== d)) }} style={{ background: dept === d ? '#FFF3EE' : '#fff', color: dept === d ? 'var(--orange)' : '#555', border: `1.5px solid ${dept === d ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{d}</button>
                     ))}
                   </div>
+
+                  {/* Also list in — extra categories. Primary + 1 extra are free;
+                      each further category costs €0.99. Special one-off pages
+                      (Jobs / Property / Handy Help) can't be cross-listed into. */}
+                  {(() => {
+                    const EXCLUDE = ['Jobs', 'Property', 'Handy Help']
+                    const options = DEPTS.filter(d => d !== dept && !EXCLUDE.includes(d))
+                    const paid = Math.max(0, extraDepts.length - 1)
+                    const cost = (paid * 0.99).toFixed(2)
+                    return (
+                      <div style={{ marginTop: 14, borderTop: '1px dashed #eee', paddingTop: 12 }}>
+                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 3 }}>Also list in <span style={{ fontWeight: 600, color: '#888' }}>(optional)</span></div>
+                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 8 }}>Your item shows in up to <strong>2 categories free</strong> (this department + 1 more). Each additional category is <strong>€0.99</strong>.</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                          {options.map(d => {
+                            const on = extraDepts.includes(d)
+                            return (
+                              <button key={d} onClick={() => setExtraDepts(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])} style={{ background: on ? '#eefaf0' : '#fff', color: on ? 'var(--sage)' : '#555', border: `1.5px solid ${on ? 'var(--sage)' : '#e5dccd'}`, borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{on ? '✓ ' : '+ '}{d}</button>
+                            )
+                          })}
+                        </div>
+                        {extraDepts.length > 0 && (
+                          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, color: paid > 0 ? 'var(--orange)' : 'var(--sage)', marginTop: 8 }}>
+                            {dept ? 1 : 0} + {extraDepts.length} categories · {paid === 0 ? 'included free' : `€${cost} for ${paid} extra`}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
 
                 <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '14px 14px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
@@ -3890,6 +3922,7 @@ function PanelBody() {
                       description: desc.trim(),
                       price: freeItem ? 0 : parseFloat(price) || 0,
                       department: (DEPT_MAP[dept] ?? 'other') as Parameters<typeof client.listings.create.mutate>[0]['department'],
+                      ...(extraDepts.length ? { extraDepartments: extraDepts.map(d => DEPT_MAP[d]).filter(Boolean) } : {}),
                       condition: (COND_MAP[condition] ?? 'good') as Parameters<typeof client.listings.create.mutate>[0]['condition'],
                       ...(brand.trim() ? { brand: brand.trim() } : {}),
                       ...(colour.trim() ? { colour: colour.trim() } : {}),

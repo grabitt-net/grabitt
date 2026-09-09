@@ -42,6 +42,9 @@ export const CreateListingInputSchema = z.object({
   description: z.string().max(2000),
   price: z.number().min(0),
   department: Department,
+  // Additional categories this listing also appears in (the primary department
+  // above is category 1). Category 2 is free; each further one costs €0.99.
+  extraDepartments: z.array(z.string().max(40)).max(12).optional(),
   condition: ListingCondition,
   // Item facts for the listing's Details panel — optional, blank shows as "—".
   brand: z.string().max(60).optional(),
