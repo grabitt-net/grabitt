@@ -14,6 +14,10 @@ import { GC_TOWNS } from '@/lib/gcTowns'
 import { JOB_SECTORS, JOB_LANGUAGES } from '@/lib/jobCategories'
 import { Section, Row, Field, Input, Textarea, Select, Pill, Check, FormError, StepTabs, SubmitButton } from '@/components/marketplace/FormKit'
 import type { IconName } from '@/components/marketplace/Icon'
+import PromoField from '@/components/marketplace/PromoField'
+import { JOBS_PRICING } from '@grabitt/design-tokens'
+
+const eur = (c: number) => `€${(c / 100).toFixed(2)}`
 
 // Experience-required buckets — same vocabulary as the candidate profile; the
 // value is the lower-bound months stored on the advert for auto-matching.
@@ -51,6 +55,7 @@ export default function PostJobPage() {
   const [requirements, setRequirements] = useState<string[]>([])
   // Candidate Matching is a paid add-on offered on the final step.
   const [matchingOptIn, setMatchingOptIn] = useState(false)
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountCents: number } | null>(null)
   const sectorJobs = JOB_SECTORS.find(s => s.name === f.sector)?.jobs ?? []
   const toggleRole = (r: string) => setRoles(p => p.includes(r) ? p.filter(x => x !== r) : [...p, r])
   const toggleLang = (l: string) => setLanguages(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l])
@@ -132,6 +137,17 @@ export default function PostJobPage() {
       if (!token) token = await refreshAuthToken()
       if (!token) { router.push('/auth?next=/jobs/new'); return }
 
+      // If no exact pin/address was given, drop the map pin in the centre of the
+      // selected town so the listing map still shows the right area.
+      let pin = coords
+      if (!pin && !f.address.trim() && f.location.trim()) {
+        try {
+          const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(`${f.location}, Gran Canaria, Canary Islands, Spain`)}`, { headers: { 'Accept': 'application/json' } })
+          const j = await r.json()
+          if (Array.isArray(j) && j[0]?.lat && j[0]?.lon) pin = { lat: Number(j[0].lat), lng: Number(j[0].lon) }
+        } catch { /* non-fatal — listing still lists the town */ }
+      }
+
       const listing: any = await trpcAuthed().jobs.create.mutate({
         jobTitle: f.jobTitle.trim(),
         company: f.company.trim(),
@@ -154,7 +170,9 @@ export default function PostJobPage() {
         remote: f.remote,
         ...(f.hours.trim() && { hours: f.hours.trim() }),
         ...(f.startDate && { startDate: f.startDate }),
-        ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
+        ...(pin ? { lat: pin.lat, lng: pin.lng } : {}),
+        ...(matchingOptIn ? { candidateMatching: true } : {}),
+        ...(appliedPromo?.code ? { discountCode: appliedPromo.code } : {}),
         ...(questions.some(q => q.label.trim()) ? {
           applicationQuestions: questions
             .filter(q => q.label.trim())
@@ -218,7 +236,7 @@ export default function PostJobPage() {
             <Field label="Role type">
               <Select value={f.type} onChange={e => set('type', e.target.value)}>{TYPES.map(([l, v]) => <option key={v} value={v}>{l}</option>)}</Select>
             </Field>
-            <Field label="Hours of operation"><Input value={f.hours} onChange={e => set('hours', e.target.value)} placeholder="e.g. Mon–Fri 9:00–17:00" /></Field>
+            <Field label="Working Hours"><Input value={f.hours} onChange={e => set('hours', e.target.value)} placeholder="e.g. Mon–Fri 9:00–17:00" /></Field>
           </Row>
           <Check label="Remote / work from home" checked={f.remote} onChange={v => set('remote', v)} />
         </Section>}
@@ -316,22 +334,33 @@ export default function PostJobPage() {
           <Field label="Description"><Textarea value={f.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe the role, responsibilities and requirements…" /></Field>
         </Section>}
 
-        {/* Upgrades — the paid Candidate Matching add-on, offered before posting. */}
+        {/* Upgrades — the paid Candidate Matching add-on, charged before go-live. */}
         {step === 6 && <Section title="Upgrades" sub="Optional extras to help you hire faster.">
           <div style={{ border: `2px solid ${matchingOptIn ? 'var(--orange)' : 'var(--line)'}`, background: matchingOptIn ? '#FFF3EE' : 'var(--bg)', borderRadius: 14, padding: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <div style={{ fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 900, color: 'var(--dark)' }}>🎯 Candidate Matching</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--orange)' }}>Paid add-on</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--orange)' }}>{eur(JOBS_PRICING.candidateMatchingCents)}</div>
             </div>
             <p style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, lineHeight: 1.6, color: '#3a3a3a', margin: '8px 0 12px' }}>
-              Don't wait for applications to arrive. Candidate Matching searches Grabitt's registered jobseekers against this advert's requirements and shows you the people who fit — so you can reach out first. Available on any live, paid job advert; unlocking a candidate's full CV and contact details is charged per candidate.
+              Don't wait for applications to arrive. Candidate Matching searches Grabitt's registered jobseekers against this advert's requirements and shows you the people who fit — so you can reach out first. A one-off {eur(JOBS_PRICING.candidateMatchingCents)} for this advert (paid before it goes live, and it only applies to this job). Unlocking a candidate's full CV and contact details is then charged per candidate.
             </p>
-            <Check label="I want Candidate Matching for this advert" checked={matchingOptIn} onChange={setMatchingOptIn} />
-            {matchingOptIn && (
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#8a6d3b', background: '#fff8e6', border: '1px solid #f0e0bd', borderRadius: 10, padding: '9px 12px', marginTop: 10 }}>
-                Great — once your advert is live, open <strong>Find Staff</strong> from your Employer Dashboard to run the match and unlock candidates.
-              </div>
-            )}
+            <Check label={`Add Candidate Matching — ${eur(JOBS_PRICING.candidateMatchingCents)}`} checked={matchingOptIn} onChange={v => { setMatchingOptIn(v); if (!v) setAppliedPromo(null) }} />
+          </div>
+
+          {/* Discount code — held in Grabitt and applied to the total before it's
+              sent to Stripe (a 100%-off code posts the advert free). */}
+          <div style={{ marginTop: 14 }}>
+            <Field label="Discount code (optional)">
+              <PromoField
+                kind="job"
+                category="job"
+                amountCents={matchingOptIn ? JOBS_PRICING.candidateMatchingCents : JOBS_PRICING.perJobCents}
+                onApplied={setAppliedPromo}
+              />
+            </Field>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#8a6d3b', background: '#fff8e6', border: '1px solid #f0e0bd', borderRadius: 10, padding: '9px 12px', marginTop: 8 }}>
+              Your job advert may be free within your monthly business allowance. Any fee — the €{(JOBS_PRICING.perJobCents / 100).toFixed(0)} advert (over allowance) and/or the {eur(JOBS_PRICING.candidateMatchingCents)} Candidate Matching add-on — is calculated at checkout, with your discount taken off before payment. If the total comes to €0 the advert posts straight away with no card needed.
+            </div>
           </div>
         </Section>}
 

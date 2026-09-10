@@ -280,6 +280,10 @@ export async function handleStripeEvent(event: Stripe.Event) {
           ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
           : undefined
         await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active', createdAt: new Date(), bumpedAt: new Date(), ...(sponsoredUntil ? { sponsoredUntil } : {}) } }).catch(() => {})
+        // Candidate Matching add-on (jobs) — enable it on this advert now it's paid.
+        if (pi.metadata.candidateMatching === '1') {
+          await prisma.jobListing.updateMany({ where: { listingId: pi.metadata.listingId }, data: { candidateMatching: true } }).catch(() => {})
+        }
         // (Promo redemption, if any, is recorded by the generic block above.)
       }
       // Extra categories on an existing listing — apply the paid target set now.

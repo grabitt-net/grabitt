@@ -1444,6 +1444,9 @@ model JobListing {
   // Employer-selected job requirements (right to work, driving licence, etc.),
   // shown on the advert and used to set candidate expectations.
   requirements String[]  @default([])
+  // Candidate Matching add-on purchased for this specific advert (paid before
+  // go-live). Enables the employer to run the DB match against this job.
+  candidateMatching Boolean @default(false)
   // Extended job-post details (Post a Job form)
   sector       String?   // job category e.g. Hostelería, Retail, Construction
   address      String?   // full address (also drives the listing map)

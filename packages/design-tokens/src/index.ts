@@ -79,6 +79,9 @@ export const JOBS_PRICING = {
   perJobCents: 2900,
   daysLive: 14,
   bundles: { 5: 13000, 10: 24500 } as Record<number, number>, // provisional: €130 / €245
+  // One-off fee to enable Candidate Matching on a single job advert (paid before
+  // the advert goes live; applies only to that advert). Adjust as needed.
+  candidateMatchingCents: 999, // €9.99
 } as const
 
 // Recruitment database search — an OPTIONAL add-on, available only to a business

@@ -7,7 +7,7 @@ import { overflowFeeCents } from '../lib/businessLimits'
 import { scoreSuitability } from '../lib/suitability'
 import { getStripe } from '../lib/stripe'
 import { JOBS_PRICING } from '@grabitt/design-tokens'
-import { applyPromo } from '../lib/discounts'
+import { validateDiscount, recordRedemption } from '../lib/discounts'
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
@@ -416,6 +416,9 @@ export const jobsRouter = router({
       languages: z.array(z.string().max(40)).max(10).optional(),
       experienceMonths: z.number().int().min(0).max(600).optional(),
       requirements: z.array(z.string().max(80)).max(30).optional(),
+      // Optional paid Candidate Matching add-on for this advert (charged before
+      // the advert goes live).
+      candidateMatching: z.boolean().optional(),
       description: z.string().max(4000).optional(),
       salaryMin: z.number().min(0).optional(),
       salaryMax: z.number().min(0).optional(),
@@ -440,9 +443,22 @@ export const jobsRouter = router({
       // Beyond the tier's monthly free allowance, a job advert is €29 (14 days).
       // The listing is created hidden until the fee is paid; the webhook publishes
       // it. Within allowance, it publishes immediately.
-      let fee = await overflowFeeCents(ctx.prisma, ctx.user.id, 'jobs', JOBS_PRICING.perJobCents)
-      const promo = fee > 0 ? await applyPromo(ctx.prisma, input.discountCode, ctx.user.id, 'job', fee) : { codeId: null, discountCents: 0, meta: {} as Record<string, string> }
-      fee -= promo.discountCents
+      const listingFee = await overflowFeeCents(ctx.prisma, ctx.user.id, 'jobs', JOBS_PRICING.perJobCents)
+      // Total = job advert fee (over the free allowance) + optional Candidate
+      // Matching add-on. A discount code (held in Grabitt, not Stripe) comes off
+      // the whole total before checkout; a €0 total publishes free, bypassing
+      // Stripe entirely.
+      const baseTotal = listingFee + (input.candidateMatching ? JOBS_PRICING.candidateMatchingCents : 0)
+      let fee = baseTotal
+      let discountCents = 0
+      let discountCodeId: string | null = null
+      if (baseTotal > 0 && input.discountCode) {
+        const dr = await validateDiscount(ctx.prisma, { code: input.discountCode, userId: ctx.user.id, kind: 'job', category: 'job', amountCents: baseTotal })
+        if (!dr.ok) throw new TRPCError({ code: 'BAD_REQUEST', message: dr.reason })
+        discountCents = dr.discountCents
+        discountCodeId = dr.codeId
+        fee = Math.max(0, baseTotal - discountCents)
+      }
       const created = await ctx.prisma.listing.create({
         data: {
           sellerId: ctx.user.id,
@@ -471,6 +487,10 @@ export const jobsRouter = router({
               languages: input.languages ?? [],
               experienceMonths: input.experienceMonths,
               requirements: input.requirements ?? [],
+              // Free publish (within allowance or a 100%-off code) that still
+              // bought Candidate Matching: enable it now. Paid flows get it set
+              // by the webhook after payment.
+              candidateMatching: fee <= 0 ? !!input.candidateMatching : false,
               address: input.address,
               hours: input.hours,
               startDate: input.startDate ? new Date(input.startDate) : undefined,
@@ -484,16 +504,29 @@ export const jobsRouter = router({
         include: { jobListing: true },
       })
 
-      // Within the free allowance — published straight away.
-      if (fee === 0) return created
+      // Nothing to charge (within allowance, or a 100%-off code) — it's live
+      // already; record the redemption and skip Stripe (it rejects sub-€0.50).
+      if (fee <= 0) {
+        if (discountCodeId) {
+          await recordRedemption(ctx.prisma, { codeId: discountCodeId, userId: ctx.user.id, appliedTo: 'job', originalCents: baseTotal, discountCents }).catch(() => {})
+        }
+        return created
+      }
 
-      // Over allowance — take the €29 fee, then the webhook flips the listing to
-      // active (kind: listing_publish).
+      // Over allowance and/or Candidate Matching — pay, then the webhook flips
+      // draft→active and enables Candidate Matching on this advert.
+      const name = input.candidateMatching
+        ? `Grabitt job advert + Candidate Matching — ${input.jobTitle} (14 days)`
+        : `Grabitt job advert — ${input.jobTitle} (14 days)`
       const session = await getStripe().checkout.sessions.create({
         mode: 'payment',
         ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email }),
-        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name: `Grabitt job advert — ${input.jobTitle} (14 days)` } } }],
-        payment_intent_data: { metadata: { kind: 'listing_publish', listingId: created.id, ...promo.meta } },
+        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name } } }],
+        payment_intent_data: { metadata: {
+          kind: 'listing_publish', listingId: created.id,
+          ...(input.candidateMatching ? { candidateMatching: '1' } : {}),
+          ...(discountCodeId ? { discountCodeId, discountUserId: ctx.user.id, discountCents: String(discountCents), originalCents: String(baseTotal) } : {}),
+        } },
         success_url: `${appUrl()}/listings/${created.id}?published=1`,
         cancel_url: `${appUrl()}/jobs/new?cancelled=1`,
       })
