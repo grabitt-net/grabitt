@@ -35,7 +35,6 @@ const STAGES: { key: string; label: string; color: string }[] = [
 // Legacy statuses folded onto a column so old applications still appear.
 const FOLD: Record<string, string> = { shortlisted: 'invited', hired: 'accepted', rejected: 'rejected_pre', rejected_post: 'rejected_pre' }
 const colOf = (status: string) => FOLD[status] ?? status
-const FLOW = ['applied', 'viewed', 'invited', 'arranged', 'offer', 'accepted'] // forward order (Rejected is separate)
 
 function expLabel(m: number | null) {
   if (!m) return null
@@ -131,10 +130,6 @@ export default function ApplicantsKanban({ jobId, onClose, openPanel }: { jobId:
                     <div style={{ overflowY: 'auto', padding: 10, display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
                       {cards.length === 0 && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#aaa', textAlign: 'center', padding: '14px 0' }}>—</div>}
                       {cards.map(a => {
-                        const idx = FLOW.indexOf(colOf(a.status))
-                        const canBack = idx > 0
-                        const canFwd = idx >= 0 && idx < FLOW.length - 1
-                        const rejected = colOf(a.status) === 'rejected_pre'
                         return (
                           <div key={a.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', opacity: saving === a.id ? 0.6 : 1 }}>
                             <div onClick={() => { setDetailId(a.id); setNoteDraft(a.employerNote ?? '') }} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
@@ -145,12 +140,12 @@ export default function ApplicantsKanban({ jobId, onClose, openPanel }: { jobId:
                               </div>
                               {a.suitabilityScore != null && <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 900, color: a.suitabilityScore >= 70 ? '#16a34a' : a.suitabilityScore >= 45 ? '#f59e0b' : '#9ca3af' }}>{a.suitabilityScore}</span>}
                             </div>
-                            <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                              <button title="Move back" disabled={!canBack || rejected} onClick={() => move(a, FLOW[idx - 1])} style={miniBtn(canBack && !rejected)}>‹</button>
-                              <button onClick={() => message(a)} title="Message" style={{ ...miniBtn(true), flex: 1 }}>💬</button>
-                              {!rejected && <button onClick={() => move(a, 'rejected_pre')} title="Reject" style={{ ...miniBtn(true), color: '#ef4444' }}>✕</button>}
-                              {rejected && <button onClick={() => move(a, 'applied')} title="Restore" style={{ ...miniBtn(true), color: '#16a34a', flex: 1, fontSize: 10 }}>Restore</button>}
-                              <button title="Move forward" disabled={!canFwd || rejected} onClick={() => move(a, FLOW[idx + 1])} style={miniBtn(canFwd && !rejected)}>›</button>
+                            {/* Jump the candidate straight to any stage. */}
+                            <div style={{ display: 'flex', gap: 6, marginTop: 8, alignItems: 'center' }}>
+                              <select value={colOf(a.status)} onChange={e => move(a, e.target.value)} onClick={e => e.stopPropagation()} style={{ flex: 1, minWidth: 0, border: '1px solid #e5e7eb', borderRadius: 7, padding: '6px 8px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, background: '#fff', color: '#1a1a1a', cursor: 'pointer' }}>
+                                {STAGES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                              </select>
+                              <button onClick={() => message(a)} title="Message candidate" style={miniBtn(true)}>💬</button>
                             </div>
                           </div>
                         )
