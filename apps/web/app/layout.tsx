@@ -59,10 +59,42 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
+// Site-wide structured data so search/AI engines understand the entity and can
+// offer a sitelinks search box. Product-level JSON-LD is added per listing.
+const ORG_JSONLD = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${APP_URL}/#organization`,
+      name: 'Grabitt',
+      url: APP_URL,
+      logo: `${APP_URL}/icon.png`,
+      description: 'The local-first online marketplace for the Canary Islands — buy, sell, hire and discover, with secure escrow and the Grabitt Guarantee.',
+      areaServed: 'Canary Islands',
+      email: 'support@grabitt.net',
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${APP_URL}/#website`,
+      url: APP_URL,
+      name: 'Grabitt',
+      publisher: { '@id': `${APP_URL}/#organization` },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: { '@type': 'EntryPoint', urlTemplate: `${APP_URL}/search?q={search_term_string}` },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  ],
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${sora.variable}`}>
-      <body className="min-h-full"><TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate /><AttributesOnboarding /><ImpersonationBanner />{children}<CookieBanner /><StickyBottomBanner /><UiHost /></CartProvider></ToastProvider></TrpcProvider></body>
+      <body className="min-h-full">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }} />
+        <TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate /><AttributesOnboarding /><ImpersonationBanner />{children}<CookieBanner /><StickyBottomBanner /><UiHost /></CartProvider></ToastProvider></TrpcProvider></body>
     </html>
   )
 }

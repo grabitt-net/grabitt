@@ -40,6 +40,40 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-export default function ListingLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net'
+
+// Product structured data so AI/search engines can read each listing as an
+// offer (name, price, availability, image) and cite/recommend it.
+export default async function ListingLayout({ params, children }: { params: { id: string }; children: React.ReactNode }) {
+  let jsonLd: string | null = null
+  try {
+    const l = await prisma.listing.findUnique({
+      where: { id: params.id },
+      select: { title: true, description: true, price: true, location: true, images: true, status: true },
+    })
+    if (l) {
+      jsonLd = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: l.title,
+        description: (l.description || '').replace(/\s+/g, ' ').trim().slice(0, 500),
+        ...(l.images?.length ? { image: l.images } : {}),
+        offers: {
+          '@type': 'Offer',
+          price: Number(l.price),
+          priceCurrency: 'EUR',
+          availability: l.status === 'active' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+          url: `${APP_URL}/listings/${params.id}`,
+          areaServed: l.location,
+        },
+      })
+    }
+  } catch { /* non-fatal — page still renders */ }
+
+  return (
+    <>
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />}
+      {children}
+    </>
+  )
 }
