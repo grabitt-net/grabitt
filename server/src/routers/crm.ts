@@ -97,6 +97,7 @@ export const crmRouter = router({
           ctx.prisma.jobApplication.deleteMany({ where: { jobListing: { listingId: { in: hardIds } } } }),
           ctx.prisma.jobListing.deleteMany({ where: { listingId: { in: hardIds } } }),
           ctx.prisma.propertyListing.deleteMany({ where: { listingId: { in: hardIds } } }),
+          ctx.prisma.handyListing.deleteMany({ where: { listingId: { in: hardIds } } }),
           ctx.prisma.offer.deleteMany({ where: { listingId: { in: hardIds } } }),
           ctx.prisma.wishlistItem.deleteMany({ where: { listingId: { in: hardIds } } }),
           ctx.prisma.cartItem.deleteMany({ where: { listingId: { in: hardIds } } }),
