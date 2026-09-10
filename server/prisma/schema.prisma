@@ -1441,6 +1441,9 @@ model JobListing {
   roles        String[]  @default([])
   languages    String[]  @default([])
   experienceMonths Int?
+  // Employer-selected job requirements (right to work, driving licence, etc.),
+  // shown on the advert and used to set candidate expectations.
+  requirements String[]  @default([])
   // Extended job-post details (Post a Job form)
   sector       String?   // job category e.g. Hostelería, Retail, Construction
   address      String?   // full address (also drives the listing map)
