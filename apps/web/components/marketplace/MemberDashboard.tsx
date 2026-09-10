@@ -77,7 +77,7 @@ const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', bor
 const primaryBtn: React.CSSProperties = { background: '#fff', color: 'var(--orange)', border: '2px solid #111', borderRadius: 12, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }
 function Muted({ children }: { children: React.ReactNode }) { return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#aaa', padding: '16px 0', textAlign: 'center' }}>{children}</div> }
 
-const SECTION_IDS = new Set<string>(['business', 'charity', 'agent', 'messages', 'employment', 'aboutme', 'listings', 'disputes', 'admin', 'saved', 'recommended', 'recent', 'loyalty', 'addbiz', 'activity', 'gdpr'])
+const SECTION_IDS = new Set<string>(['hub', 'business', 'charity', 'agent', 'messages', 'employment', 'aboutme', 'listings', 'disputes', 'admin', 'saved', 'recommended', 'recent', 'loyalty', 'addbiz', 'activity', 'gdpr'])
 
 export default function MemberDashboard({ me, onReload }: { me: any; onReload: () => void }) {
   const router = useRouter()
@@ -117,6 +117,18 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       setSection(personalView ? 'hub' : (AGENTS_ENABLED && me.isPropertyAgent && !me.isBusiness) ? 'agent' : me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'hub')
     }
   }, [params, me])
+
+  // Keep the URL's ?section= in step with the chosen section so a refresh (or a
+  // shared link) lands back on the same menu item instead of the default. Uses
+  // replaceState so it doesn't add history entries or trigger a re-fetch.
+  useEffect(() => {
+    if (!didInitSection.current || typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('section') !== section) {
+      url.searchParams.set('section', section)
+      window.history.replaceState(null, '', url.toString())
+    }
+  }, [section])
   const [seg, setSeg] = useState<Seg>('active')
   const sortNewest = true // My Listings default to newest-first
 
