@@ -14,12 +14,14 @@ import { JOB_SECTORS, JOB_LANGUAGES, jobKey } from '@/lib/jobCategories'
 const DARK = '#1a1a1a'
 
 // Experience buckets — click pills instead of a free-typed month count.
+// Minimum experience buckets (lower-bound months). Phrased as minimums ("+")
+// with an explicit no-experience option — never "less than".
 const EXP_BUCKETS: { key: string; label: string }[] = [
-  { key: 'lt3m', label: '<3m' },
-  { key: 'lt6m', label: '<6m' },
-  { key: 'lt1y', label: '<1y' },
-  { key: '1to2y', label: '1-2y' },
-  { key: 'gt2y', label: '2+y' },
+  { key: 'lt3m', label: 'No experience' },
+  { key: 'lt6m', label: '3+ months' },
+  { key: 'lt1y', label: '6+ months' },
+  { key: '1to2y', label: '1+ year' },
+  { key: 'gt2y', label: '2+ years' },
 ]
 type Level = 'basic' | 'fluent'
 // Map any legacy stored month count onto the nearest bucket.

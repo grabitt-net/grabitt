@@ -22,7 +22,9 @@ const FEATURED_PER_WEEK_CENTS = Math.round(PRICES.featuredPerWeek * 100)
 
 // Experience-required buckets — same vocabulary as the candidate profile; the
 // value is the lower-bound months stored on the advert for auto-matching.
-const EXP_REQUIRED: [string, number][] = [['<3m', 0], ['<6m', 3], ['<1y', 6], ['1-2y', 12], ['2+y', 24]]
+// Minimum experience the employer requires (lower-bound months stored on the
+// advert). Phrased as a minimum ("+"), with an explicit no-experience option.
+const EXP_REQUIRED: [string, number][] = [['No experience needed', 0], ['3+ months', 3], ['6+ months', 6], ['1+ year', 12], ['2+ years', 24]]
 
 const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
 
