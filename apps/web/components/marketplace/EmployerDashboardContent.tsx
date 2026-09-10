@@ -16,7 +16,8 @@ type App = { id: string; status: string; applicant: string; applicantId: string;
 type Job = { id: string; listingId: string; jobTitle: string; company: string; type: string; listingStatus: string; postedAt: string; image: string | null; candidateMatching?: boolean; applications: App[] }
 
 const TYPE_EMOJI: Record<string, string> = { full_time: '💼', part_time: '🕒', contract: '📄', temporary: '⏳', volunteer: '🤝' }
-const statusBtn = (bg: string, color: string): React.CSSProperties => ({ flex: 1, minWidth: 90, background: bg, color, border: 'none', borderRadius: 50, padding: 7, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' })
+const statusBtn = (bg: string, color: string): React.CSSProperties => ({ flex: 1, minWidth: 100, background: bg, color, border: 'none', borderRadius: 50, padding: 8, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer' })
+const pillBtn: React.CSSProperties = { background: '#fff', color: 'var(--dark)', border: '1px solid #e5dccd', borderRadius: 50, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', textAlign: 'center' }
 
 function daysLeft(postedAt: string) {
   const end = new Date(postedAt).getTime() + JOB_LIFE_DAYS * 86400000
@@ -62,13 +63,13 @@ export default function EmployerDashboardContent() {
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto', padding: 16 }}>
+    <div style={{ width: '100%' }}>
       {/* Header row — just a title and a Post a Job action. Everything else lives
           inside each job card below. */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a' }}>Candidate Management</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 900, color: 'var(--dark)' }}>Candidate Management</div>
         <a href="/jobs/new" style={{ textDecoration: 'none' }}>
-          <div style={{ background: ORANGE, color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>+ Post a Job</div>
+          <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', borderRadius: 50, padding: '9px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 12px rgba(245,84,10,0.22)' }}>+ Post a Job</div>
         </a>
       </div>
 
@@ -104,30 +105,34 @@ export default function EmployerDashboardContent() {
               else { const c = dLeft <= 3 ? '#ef4444' : dLeft <= 7 ? '#f59e0b' : '#22c55e'; chip = <span style={{ background: `${c}1a`, color: c, fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>{dLeft} days left</span> }
 
               return (
-                <div key={j.id} style={{ background: '#f8f9fa', border: '1px solid #1a1a1a', borderRadius: 12, padding: '11px 12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: '#fff', border: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0, overflow: 'hidden' }}>
+                <div key={j.id} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: '14px 16px', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0, overflow: 'hidden' }}>
                       {j.image ? <img src={j.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (TYPE_EMOJI[j.type] ?? '💼')}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.jobTitle}</div>
-                      <div style={{ fontSize: 10, color: '#666', fontFamily: 'var(--font-ui)' }}>{j.applications.length} applicant{j.applications.length === 1 ? '' : 's'} · {chip}{j.candidateMatching ? ' · ' : ''}{j.candidateMatching && <span style={{ color: ORANGE, fontWeight: 800 }}>🎯 Job Match on</span>}</div>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.jobTitle}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 11.5, color: '#777', fontFamily: 'var(--font-nunito)', marginTop: 3 }}>
+                        <span style={{ fontWeight: 800, color: j.applications.length ? 'var(--orange)' : '#999' }}>{j.applications.length} applicant{j.applications.length === 1 ? '' : 's'}</span>
+                        {chip}
+                        {j.candidateMatching && <span style={{ color: 'var(--orange)', fontWeight: 800 }}>🎯 Job Match on</span>}
+                      </div>
                     </div>
                   </div>
-                  <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <button onClick={() => openPanel('applications', { jobId: j.id })} style={{ flex: 1, minWidth: 100, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>📋 Applicants{newCount ? ` (${newCount} new)` : ''}</button>
-                    <a href={`/jobs/new?edit=${j.listingId}`} style={{ flex: 1, minWidth: 70, textDecoration: 'none' }}>
-                      <div style={{ background: '#fff', color: '#1a1a1a', border: '1px solid #1a1a1a', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer', textAlign: 'center' }}>✏️ Edit</div>
+                  <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button onClick={() => openPanel('applications', { jobId: j.id })} style={{ flex: '2 1 140px', background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>📋 Applicants{newCount ? ` (${newCount} new)` : ''}</button>
+                    <a href={`/jobs/new?edit=${j.listingId}`} style={{ flex: '1 1 80px', textDecoration: 'none' }}>
+                      <div style={pillBtn}>✏️ Edit</div>
                     </a>
-                    <button onClick={() => openPanel('jobMessages', { listingId: j.listingId, jobTitle: j.jobTitle })} style={{ flex: 1, minWidth: 70, background: '#fff', color: '#1a1a1a', border: '1px solid #1a1a1a', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>📨 Messages</button>
-                    <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ flex: 1, minWidth: 70, background: ORANGE, color: '#fff', border: 'none', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>📤 Share</button>
+                    <button onClick={() => openPanel('jobMessages', { listingId: j.listingId, jobTitle: j.jobTitle })} style={{ ...pillBtn, flex: '1 1 90px' }}>📨 Messages</button>
+                    <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ ...pillBtn, flex: '1 1 80px' }}>📤 Share</button>
                   </div>
                   {/* Job Match — the paid Candidate Matching add-on, restricted to
                       THIS advert (the search/unlocks can't be reused elsewhere). */}
                   {j.candidateMatching ? (
-                    <button onClick={() => openPanel('findStaff', { jobId: j.id })} style={{ marginTop: 6, width: '100%', background: '#FFF3EE', color: ORANGE, border: '1px solid #FFD4C0', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>🎯 Job Match — search candidates for this job</button>
+                    <button onClick={() => openPanel('findStaff', { jobId: j.id })} style={{ marginTop: 8, width: '100%', background: '#FFF3EE', color: 'var(--orange)', border: '1px solid #FFD4C0', borderRadius: 50, padding: 10, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>🎯 Job Match — search candidates for this job</button>
                   ) : (
-                    <div style={{ marginTop: 6, fontSize: 9.5, color: '#999', fontFamily: 'var(--font-ui)', textAlign: 'center' }}>🎯 Job Match (paid) not added — add it when posting or editing this advert.</div>
+                    <div style={{ marginTop: 8, fontSize: 11, color: '#999', fontFamily: 'var(--font-nunito)', textAlign: 'center' }}>🎯 Job Match (paid) not added — add it when posting or editing this advert.</div>
                   )}
                   {/* Position status controls */}
                   <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>

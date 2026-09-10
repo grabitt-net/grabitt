@@ -102,14 +102,15 @@ export default function ApplicantsKanban({ jobId, onClose, openPanel }: { jobId:
 
   return (
     <div onClick={onClose} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400 }}>
-      <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', inset: 0, background: '#f4f6f8', display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '14px 16px', background: '#fff', borderBottom: '1px solid #e8e8e8', flexShrink: 0 }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job ? job.jobTitle : 'Applicants'}</div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{job ? `${job.applications.length} applicant${job.applications.length === 1 ? '' : 's'}` : ''}</div>
+      <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ position: 'relative', background: '#f4f6f8', height: '85vh', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+        {/* Header with a Back button to the job listings */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: '#fff', borderBottom: '1px solid #e8e8e8', flexShrink: 0 }}>
+          <button onClick={onClose} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#f5f0e8', color: 'var(--dark)', border: 'none', borderRadius: 50, padding: '7px 13px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', flexShrink: 0 }}>‹ Back to jobs</button>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job ? job.jobTitle : 'Applicants'}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>{job ? `${job.applications.length} applicant${job.applications.length === 1 ? '' : 's'}` : ''}</div>
           </div>
-          <button onClick={onClose} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 34, height: 34, fontSize: 16, cursor: 'pointer', flexShrink: 0 }}>✕</button>
+          <button onClick={onClose} aria-label="Close" style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 15, cursor: 'pointer', flexShrink: 0 }}>✕</button>
         </div>
 
         {!loaded ? (
