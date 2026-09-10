@@ -31,16 +31,11 @@ export default function ParallaxHeader() {
   const { openPanel } = usePanel()
   const [slides, setSlides] = useState<Slide[]>([])
   const [idx, setIdx] = useState(0)
-  // Track whether the slides query has resolved, so we don't flash the orange
-  // fallback gradient while it's still loading (only show it once we KNOW there
-  // are no slides). During loading the neutral dark section background shows.
-  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     createLooseTrpcClient().homepage.heroSlides.query()
       .then(d => setSlides((d as unknown as Slide[]) ?? []))
       .catch(() => {})
-      .finally(() => setLoaded(true))
   }, [])
 
   // Slider: rotate through the hero slides.
@@ -60,11 +55,12 @@ export default function ParallaxHeader() {
   const hasText = !!(heading || subheading)
 
   const inner = (
-    <section className="parallax-header" style={{ position: 'relative', width: '100%', overflow: 'hidden', background: 'linear-gradient(135deg,#2a2118,#4a3826)' }}>
-      {/* Background layer (image or gradient) — fixed within the header */}
+    <section className="parallax-header" style={{ position: 'relative', width: '100%', overflow: 'hidden', background: 'linear-gradient(135deg,var(--orange) 0%,var(--orange2) 100%)' }}>
+      {/* Background layer (image over the branded gradient). The gradient shows
+          while slides load, so the hero never flashes a black/dark screen — it
+          looks like a full branded slide until the image paints over it. */}
       <div style={{ position: 'absolute', inset: 0 }}>
         {hasImg && <img src={slide!.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
-        {!hasImg && loaded && <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,var(--orange) 0%,var(--orange2) 100%)' }} />}
       </div>
       {/* Legibility scrim — only when there's text to keep readable */}
       {hasText && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.30), rgba(0,0,0,0.55))' }} />}
