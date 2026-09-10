@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useCrmApi } from './AdminApp'
 import RichTextEditor from './RichTextEditor'
-import { EDITABLE_PAGES } from '@/lib/editablePages'
+import { EDITABLE_PAGES, EDITABLE_PAGE_DEFAULTS } from '@/lib/editablePages'
 import { toast } from '@/lib/ui'
 
 // Admin → Page Content. Steve picks a page and edits its whole-page rich text.
@@ -30,8 +30,10 @@ export default function PageContentView() {
   }
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // When the selected page changes, load its stored copy into the editor.
-  useEffect(() => { setHtml(stored[sel] ?? ''); setDirty(false) }, [sel, stored])
+  // When the selected page changes, load its stored copy into the editor — or,
+  // if nothing's been saved yet, pre-fill with the page's current built-in text
+  // so Steve amends the words already there instead of a blank box.
+  useEffect(() => { setHtml(stored[sel] ?? EDITABLE_PAGE_DEFAULTS[sel] ?? ''); setDirty(false) }, [sel, stored])
 
   const page = useMemo(() => EDITABLE_PAGES.find(p => p.key === sel)!, [sel])
   const hasOverride = !!stored[sel]
@@ -76,7 +78,7 @@ export default function PageContentView() {
         <>
           {!hasOverride && (
             <div style={{ background: '#fff8e6', border: '1px solid #f0e0bd', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#8a6d3b', marginBottom: 10 }}>
-              This page currently uses its original built-in text. Type below and Save to replace it. (The editor starts blank because the built-in copy lives in the app — once you save, your version takes over.)
+              This is the page's current text, loaded for you to edit. Change the wording below and press Save — your version then takes over on the live page. “Reset to built-in” brings the original back at any time.
             </div>
           )}
           <RichTextEditor value={html} onChange={v => { setHtml(v); setDirty(true) }} placeholder="Write this page's content…" />
