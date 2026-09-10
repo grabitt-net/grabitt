@@ -168,7 +168,7 @@ function AdminApplicantsModal({ api, job, onClose }: { api: ReturnType<typeof us
                           {a.currentRole && <div style={{ fontSize: 10.5, color: '#666', marginTop: 2 }}>💼 {a.currentRole}</div>}
                           {a.location && <div style={{ fontSize: 10.5, color: '#666' }}>📍 {a.location}</div>}
                           {a.employerNote && <div style={{ fontSize: 10, color: '#b91c1c', marginTop: 4 }}>📝 {a.employerNote}</div>}
-                          {a.cvUrl && <a href={a.cvUrl} target="_blank" rel="noreferrer" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--orange)' }}>CV ↗</a>}
+                          <a href={`/api/cv-pdf?applicationId=${a.id}`} target="_blank" rel="noreferrer" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--orange)' }}>CV ↗</a>{a.cvUrl && <> · <a href={`/api/cv?applicationId=${a.id}`} target="_blank" rel="noreferrer" style={{ fontSize: 10.5, fontWeight: 800, color: '#555' }}>file</a></>}
                         </div>
                       ))}
                       {cards.length === 0 && <div style={{ fontSize: 10, color: '#bbb', textAlign: 'center' }}>—</div>}

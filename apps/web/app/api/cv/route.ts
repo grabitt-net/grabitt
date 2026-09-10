@@ -25,14 +25,18 @@ export async function GET(req: Request) {
     select: { cvUrl: true, applicantId: true, jobListing: { select: { employerId: true } } },
   })
   if (!app || !app.cvUrl) return NextResponse.json({ error: 'No CV on file' }, { status: 404 })
-  if (me.id !== app.applicantId && me.id !== app.jobListing.employerId) {
-    return NextResponse.json({ error: 'Not authorised' }, { status: 403 })
-  }
-
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!serviceKey) return NextResponse.json({ error: 'CV storage is not configured' }, { status: 500 })
 
   const admin = createSupabaseAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
+
+  // The applicant, the job's employer, or a Grabitt admin (monitoring) may view.
+  let allowed = me.id === app.applicantId || me.id === app.jobListing.employerId
+  if (!allowed) {
+    const { data: prof } = await admin.from('profiles').select('is_admin').eq('id', user.id).maybeSingle()
+    allowed = !!(prof as { is_admin?: boolean } | null)?.is_admin
+  }
+  if (!allowed) return NextResponse.json({ error: 'Not authorised' }, { status: 403 })
   const { data, error } = await admin.storage.from('cvs').createSignedUrl(app.cvUrl, 600)
   if (error || !data?.signedUrl) return NextResponse.json({ error: 'Could not open CV' }, { status: 500 })
 

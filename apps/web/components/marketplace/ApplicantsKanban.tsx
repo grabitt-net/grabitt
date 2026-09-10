@@ -184,7 +184,8 @@ export default function ApplicantsKanban({ jobId, onClose, openPanel }: { jobId:
                 {detail.rightToWork && <D label="Right to work" value={detail.rightToWork} />}
                 {detail.availability && <D label="Availability" value={detail.availability} />}
                 {detail.expectedSalary != null && <D label="Expected salary" value={`€${detail.expectedSalary.toLocaleString()}/mo`} />}
-                {detail.cvUrl && <a href={detail.cvUrl} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: ORANGE }}>📄 View CV</a>}
+                <a href={`/api/cv-pdf?applicationId=${detail.id}`} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: ORANGE }}>📄 View CV</a>
+                {detail.cvUrl && <a href={`/api/cv?applicationId=${detail.id}`} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555' }}>📎 Attached file</a>}
               </div>
               {Object.keys(detail.answers).length > 0 && (
                 <div style={{ marginBottom: 12 }}>
