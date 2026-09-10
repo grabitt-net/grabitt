@@ -130,6 +130,12 @@ export function makeCrmApi(execToken: string) {
     deleteCategory: (id: string, moveTo: string) =>
       rpc<any>('homepage.deleteCategory', 'mutation', { id, moveTo }, execToken),
 
+    // Listings management (Admin → Listings)
+    listingsAdmin: (input: { q?: string; status?: 'all' | 'active' | 'draft' | 'sold' | 'removed'; department?: string; take?: number; skip?: number }) =>
+      rpc<{ rows: any[]; total: number }>('crm.listingsAdmin', 'query', input, execToken),
+    listingsBulk: (ids: string[], action: 'delete' | 'renew' | 'feature' | 'unfeature' | 'activate' | 'remove') =>
+      rpc<any>('crm.listingsBulk', 'mutation', { ids, action }, execToken),
+
     // Editable page copy (Admin → Page Content)
     pageContentAll: () => rpc<{ pageKey: string; html: string; updatedAt: string }[]>('homepage.allPageContent', 'query', undefined, execToken),
     savePageContent: (pageKey: string, html: string) =>

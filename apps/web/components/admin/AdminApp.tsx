@@ -24,6 +24,7 @@ import HelpView from './HelpView'
 import ToolboxView from './ToolboxView'
 import JobsView from './JobsView'
 import PropertyView from './PropertyView'
+import ListingsView from './ListingsView'
 import AuditTrailView from './AuditTrailView'
 import ComplianceView from './ComplianceView'
 import HomepageView from './HomepageView'
@@ -61,6 +62,7 @@ const COMMANDS: Command[] = [
   { id: 'statusapps', label: 'Status applications', icon: '🎓', group: 'People', keywords: 'student blue light charity discount verify' },
   { id: 'propertyagents', label: 'Property Agents', icon: '🏠', group: 'People', keywords: 'agent estate property signup approve authorise review' },
   { id: 'affiliates', label: 'Affiliates', icon: '🔗', group: 'People', keywords: 'referral founding payout stripe rate' },
+  { id: 'listings', label: 'Listings', icon: '🏷️', group: 'Marketplace', keywords: 'items ads all listings bulk delete renew feature manage products' },
   { id: 'jobs', label: 'Jobs', icon: '💼', group: 'Marketplace' },
   { id: 'property', label: 'Property', icon: '🏠', group: 'Marketplace', keywords: 'approvals' },
   { id: 'disputes', label: 'Disputes', icon: '⚖️', group: 'Marketplace' },
@@ -97,7 +99,7 @@ export function useCrmApi() {
   return ctx
 }
 
-export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'audit' | 'compliance' | 'homepage' | 'categories' | 'pagecontent' | 'community' | 'news' | 'economic' | 'events' | 'help' | 'support' | 'discounts' | 'rewards' | 'planner' | 'statusapps' | 'propertyagents' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
+export type View = 'today' | 'funnel' | 'pipeline' | 'contacts' | 'forecast' | 'members' | 'candidates' | 'business' | 'disputes' | 'reports' | 'financials' | 'retention' | 'calendar' | 'todo' | 'messages' | 'emails' | 'banners' | 'toolbox' | 'jobs' | 'property' | 'listings' | 'audit' | 'compliance' | 'homepage' | 'categories' | 'pagecontent' | 'community' | 'news' | 'economic' | 'events' | 'help' | 'support' | 'discounts' | 'rewards' | 'planner' | 'statusapps' | 'propertyagents' | 'affiliates' | 'levels' | 'sponsorship' | 'directory' | 'blasts'
 
 interface Props { execToken: string; execEmail?: string; execRole?: string }
 
@@ -235,6 +237,7 @@ export default function AdminApp({ execToken, execEmail, execRole }: Props) {
                 {view === 'toolbox'    && <ToolboxView />}
                 {view === 'jobs'       && <JobsView />}
                 {view === 'property'   && <PropertyView />}
+                {view === 'listings'   && <ListingsView />}
                 {view === 'audit'      && <AuditTrailView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'compliance' && <ComplianceView onViewMember={(id) => { setFocusMemberId(id); setView('members') }} />}
                 {view === 'homepage'   && <HomepageView onEditBanners={(pos) => { setBannerPosition(pos); setView('banners') }} />}

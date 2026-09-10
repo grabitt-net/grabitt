@@ -27,6 +27,81 @@ export async function writeAudit(
 const MEMBER_PAGE_SIZE = 25
 
 export const crmRouter = router({
+  // ── Admin listings management ───────────────────────────────────────────────
+  // Every listing, filterable, for the admin Listings tab. Includes seller +
+  // counts so the table can show at a glance what each ad is.
+  listingsAdmin: execProcedure
+    .input(z.object({
+      q: z.string().max(120).optional(),
+      status: z.enum(['all', 'active', 'draft', 'sold', 'removed']).default('all'),
+      department: z.string().max(40).optional(),
+      take: z.number().int().min(1).max(500).default(200),
+      skip: z.number().int().min(0).default(0),
+    }))
+    .query(async ({ ctx, input }) => {
+      const where: Prisma.ListingWhereInput = {}
+      if (input.status !== 'all') where.status = input.status as never
+      if (input.department) where.department = input.department as never
+      if (input.q?.trim()) where.title = { contains: input.q.trim(), mode: 'insensitive' }
+      const [rows, total] = await Promise.all([
+        ctx.prisma.listing.findMany({
+          where, orderBy: { createdAt: 'desc' }, take: input.take, skip: input.skip,
+          select: {
+            id: true, title: true, price: true, department: true, status: true,
+            isFeatured: true, sponsoredUntil: true, stock: true, createdAt: true, bumpedAt: true,
+            seller: { select: { id: true, displayName: true, email: true } },
+            _count: { select: { transactions: true } },
+          },
+        }),
+        ctx.prisma.listing.count({ where }),
+      ])
+      return { rows, total }
+    }),
+
+  // Bulk action over selected listing ids. Delete cascades (or soft-removes ads
+  // that have transactions, so paid history is preserved); renew bumps the
+  // freshness clock and resets the relist counter.
+  listingsBulk: execProcedure
+    .input(z.object({
+      ids: z.array(z.string().uuid()).min(1).max(500),
+      action: z.enum(['delete', 'renew', 'feature', 'unfeature', 'activate', 'remove']),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { ids, action } = input
+      if (action === 'renew') {
+        await ctx.prisma.listing.updateMany({ where: { id: { in: ids } }, data: { bumpedAt: new Date(), relistCount: 0 } })
+        return { ok: true, affected: ids.length }
+      }
+      if (action === 'feature' || action === 'unfeature') {
+        await ctx.prisma.listing.updateMany({ where: { id: { in: ids } }, data: { isFeatured: action === 'feature' } })
+        return { ok: true, affected: ids.length }
+      }
+      if (action === 'activate' || action === 'remove') {
+        await ctx.prisma.listing.updateMany({ where: { id: { in: ids } }, data: { status: (action === 'activate' ? 'active' : 'removed') as never } })
+        if (action === 'remove') await ctx.prisma.cartItem.deleteMany({ where: { listingId: { in: ids } } })
+        return { ok: true, affected: ids.length }
+      }
+      // delete: soft-remove any ad with transactions; hard-delete the rest.
+      const withTx = await ctx.prisma.listing.findMany({ where: { id: { in: ids }, transactions: { some: {} } }, select: { id: true } })
+      const softIds = withTx.map(l => l.id)
+      const hardIds = ids.filter(id => !softIds.includes(id))
+      if (softIds.length) {
+        await ctx.prisma.listing.updateMany({ where: { id: { in: softIds } }, data: { status: 'removed' as never } })
+        await ctx.prisma.cartItem.deleteMany({ where: { listingId: { in: softIds } } })
+      }
+      if (hardIds.length) {
+        await ctx.prisma.$transaction([
+          ctx.prisma.offer.deleteMany({ where: { listingId: { in: hardIds } } }),
+          ctx.prisma.wishlistItem.deleteMany({ where: { listingId: { in: hardIds } } }),
+          ctx.prisma.cartItem.deleteMany({ where: { listingId: { in: hardIds } } }),
+          ctx.prisma.report.deleteMany({ where: { listingId: { in: hardIds } } }),
+          ctx.prisma.handyProposal.deleteMany({ where: { listingId: { in: hardIds } } }),
+          ctx.prisma.listing.deleteMany({ where: { id: { in: hardIds } } }),
+        ])
+      }
+      return { ok: true, deleted: hardIds.length, removed: softIds.length }
+    }),
+
   // Public inbound submissions from the footer info panels (suggestions,
   // money-saving tips, free-listings applications, contact) — captured as CRM
   // leads so the exec team receives them in the pipeline.
