@@ -1,21 +1,27 @@
 'use client'
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
+import AddressAutocomplete from '@/components/marketplace/AddressAutocomplete'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { createLooseTrpcClient } from '@/lib/trpc'
+import { compressAndUpload, cmsImagePath } from '@/lib/storage'
+import { BUSINESS_CATEGORIES } from '@/lib/businessCategories'
 import Button from '@/components/ui/Button'
 
-type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null }
+const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
+
+type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null; lat?: number | null; lng?: number | null }
 type Mine = { isAdvertiser: boolean; isBusiness: boolean; listing: Listing | null; live: boolean; paidUntil: string | null; reviewStatus: string | null; adminNote: string | null }
 type Term = { term: 'month' | 'quarter' | 'year'; cents: number; months: number; label: string }
 type Booking = { id: string; position: string; pageTarget: string | null; startsAt: string; endsAt: string; hasCreative: boolean; approved: boolean }
 
-const EMPTY: Listing = { id: '', name: '', category: '', description: '', phone: '', email: '', website: '', logoUrl: '', location: '' }
+const EMPTY: Listing = { id: '', name: '', category: '', description: '', phone: '', email: '', website: '', logoUrl: '', location: '', lat: null, lng: null }
 
 export default function AdvertiserPage() {
   return <PanelProvider><Inner /></PanelProvider>
@@ -104,6 +110,10 @@ function JoinCard({ onDone }: { onDone: () => void }) {
 
 function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
   const [f, setF] = useState<Listing>({ ...EMPTY, ...(mine.listing ?? {}) })
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    mine.listing?.lat != null && mine.listing?.lng != null ? { lat: mine.listing.lat, lng: mine.listing.lng } : null,
+  )
+  const [logoBusy, setLogoBusy] = useState(false)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [bookings, setBookings] = useState<Booking[] | null>(null)
@@ -132,11 +142,21 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
         name: f.name, category: f.category || undefined, description: f.description || undefined,
         phone: f.phone || undefined, email: f.email || undefined, website: f.website || undefined,
         logoUrl: f.logoUrl || undefined, location: f.location || undefined,
+        lat: coords?.lat ?? null, lng: coords?.lng ?? null,
       })
       setMsg('✓ Saved'); onReload()
     } catch (e: any) { setMsg(e?.message ?? 'Could not save') } finally { setBusy(false) }
   }
   const set = (k: keyof Listing, v: string) => setF(p => ({ ...p, [k]: v }))
+
+  const uploadLogo = async (file: File | undefined) => {
+    if (!file) return
+    setLogoBusy(true); setMsg('')
+    try {
+      const url = await compressAndUpload(file, cmsImagePath('directory'))
+      set('logoUrl', url)
+    } catch { setMsg('Could not upload the logo') } finally { setLogoBusy(false) }
+  }
 
   const uploadCreative = async (id: string) => {
     setBkBusy(true); setBkMsg('')
@@ -188,12 +208,41 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
         <H>Your directory listing</H>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <F label="Business name"><input value={f.name} onChange={e => set('name', e.target.value)} style={inp} /></F>
-          <F label="Category"><input value={f.category ?? ''} onChange={e => set('category', e.target.value)} placeholder="e.g. Restaurant" style={inp} /></F>
-          <F label="Location"><input value={f.location ?? ''} onChange={e => set('location', e.target.value)} placeholder="e.g. Las Palmas" style={inp} /></F>
+          <F label="Category">
+            <select value={f.category ?? ''} onChange={e => set('category', e.target.value)} style={inp}>
+              <option value="">Select a category…</option>
+              {BUSINESS_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </F>
           <F label="Phone"><input value={f.phone ?? ''} onChange={e => set('phone', e.target.value)} style={inp} /></F>
           <F label="Email"><input value={f.email ?? ''} onChange={e => set('email', e.target.value)} style={inp} /></F>
-          <F label="Website"><input value={f.website ?? ''} onChange={e => set('website', e.target.value)} placeholder="https://…" style={inp} /></F>
-          <div style={{ gridColumn: '1/-1' }}><F label="Logo image URL"><input value={f.logoUrl ?? ''} onChange={e => set('logoUrl', e.target.value)} placeholder="https://…" style={inp} /></F></div>
+          <F label="Website"><input value={f.website ?? ''} onChange={e => set('website', e.target.value)} placeholder="yourbusiness.com" style={inp} /></F>
+          <div style={{ gridColumn: '1/-1' }}>
+            <F label="Location / address">
+              <AddressAutocomplete
+                value={f.location ?? ''}
+                onChange={v => set('location', v)}
+                onSelect={pick => { set('location', pick.address); setCoords({ lat: pick.lat, lng: pick.lng }) }}
+                placeholder="Start typing your address…"
+              />
+            </F>
+            <div style={{ marginTop: 8 }}>
+              <MapPicker value={coords} onChange={setCoords} height={220} />
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#888', marginTop: 4 }}>{coords ? `📍 Pin set at ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)} — drag it to fine-tune.` : 'Search your address above, or tap the map to drop your pin.'}</div>
+            </div>
+          </div>
+          <div style={{ gridColumn: '1/-1' }}>
+            <F label="Logo">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {f.logoUrl ? <img src={f.logoUrl} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', border: '1px solid #e5dccd' }} /> : <div style={{ width: 56, height: 56, borderRadius: 10, background: '#f5f0e8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🏢</div>}
+                <label style={{ display: 'inline-block', background: '#FFF3EE', color: 'var(--orange)', border: '1.5px solid #FFD9C2', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, cursor: logoBusy ? 'default' : 'pointer' }}>
+                  {logoBusy ? 'Uploading…' : f.logoUrl ? 'Change logo' : 'Upload logo'}
+                  <input type="file" accept="image/*" hidden onChange={e => uploadLogo(e.target.files?.[0])} />
+                </label>
+                {f.logoUrl && <button type="button" onClick={() => set('logoUrl', '')} style={{ background: 'none', border: 'none', color: '#ef4444', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>Remove</button>}
+              </div>
+            </F>
+          </div>
           <div style={{ gridColumn: '1/-1' }}><F label="Description"><textarea value={f.description ?? ''} onChange={e => set('description', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} /></F></div>
         </div>
         {msg && <div style={{ ...errStyle, color: msg.startsWith('✓') ? '#16a34a' : '#ef4444' }}>{msg}</div>}

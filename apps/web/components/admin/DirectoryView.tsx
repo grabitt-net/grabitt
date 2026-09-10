@@ -1,6 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useCrmApi } from './AdminApp'
+import AddressAutocomplete from '@/components/marketplace/AddressAutocomplete'
+import { BUSINESS_CATEGORIES } from '@/lib/businessCategories'
+import { compressAndUpload, cmsImagePath } from '@/lib/storage'
+
+const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { ssr: false })
 
 interface Listing {
   id: string; userId: string; name: string; category: string | null; description: string | null
@@ -133,9 +139,17 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
 // Admin creates a directory listing for an existing member (by their email).
 function CreateListingModal({ api, onClose, onCreated }: { api: ReturnType<typeof useCrmApi>; onClose: () => void; onCreated: () => void }) {
   const [f, setF] = useState({ ownerEmail: '', name: '', category: '', location: '', phone: '', email: '', website: '', logoUrl: '', description: '', paidMonths: 12 })
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [logoBusy, setLogoBusy] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const set = (k: keyof typeof f, v: string | number) => setF(p => ({ ...p, [k]: v }))
+  const uploadLogo = async (file: File | undefined) => {
+    if (!file) return
+    setLogoBusy(true); setErr('')
+    try { set('logoUrl', await compressAndUpload(file, cmsImagePath('directory'))) }
+    catch { setErr('Could not upload the logo.') } finally { setLogoBusy(false) }
+  }
   const create = async () => {
     if (!f.ownerEmail.trim() || !f.name.trim()) { setErr('Owner email and business name are required.'); return }
     setErr(''); setSaving(true)
@@ -143,6 +157,7 @@ function CreateListingModal({ api, onClose, onCreated }: { api: ReturnType<typeo
       await api.createDirectoryListing({
         ownerEmail: f.ownerEmail.trim(), name: f.name.trim(), category: f.category, location: f.location,
         phone: f.phone, email: f.email, website: f.website, logoUrl: f.logoUrl, description: f.description,
+        lat: coords?.lat ?? null, lng: coords?.lng ?? null,
         paidMonths: Number(f.paidMonths) || 0,
       })
       onCreated()
@@ -157,13 +172,36 @@ function CreateListingModal({ api, onClose, onCreated }: { api: ReturnType<typeo
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div style={{ gridColumn: '1/-1' }}><F label="Owner email (member)"><input value={f.ownerEmail} onChange={e => set('ownerEmail', e.target.value)} placeholder="member@example.com" style={inp} /></F></div>
           <F label="Business name"><input value={f.name} onChange={e => set('name', e.target.value)} style={inp} /></F>
-          <F label="Category"><input value={f.category} onChange={e => set('category', e.target.value)} style={inp} /></F>
-          <F label="Location"><input value={f.location} onChange={e => set('location', e.target.value)} style={inp} /></F>
+          <F label="Category">
+            <select value={f.category} onChange={e => set('category', e.target.value)} style={inp}>
+              <option value="">Select a category…</option>
+              {BUSINESS_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </F>
           <F label="Phone"><input value={f.phone} onChange={e => set('phone', e.target.value)} style={inp} /></F>
           <F label="Email"><input value={f.email} onChange={e => set('email', e.target.value)} style={inp} /></F>
-          <F label="Website"><input value={f.website} onChange={e => set('website', e.target.value)} style={inp} /></F>
+          <F label="Website"><input value={f.website} onChange={e => set('website', e.target.value)} placeholder="yourbusiness.com" style={inp} /></F>
           <F label="Paid months"><input type="number" value={f.paidMonths} onChange={e => set('paidMonths', Number(e.target.value))} style={inp} /></F>
-          <div style={{ gridColumn: '1/-1' }}><F label="Logo URL"><input value={f.logoUrl} onChange={e => set('logoUrl', e.target.value)} style={inp} /></F></div>
+          <div style={{ gridColumn: '1/-1' }}>
+            <F label="Location / address">
+              <AddressAutocomplete value={f.location} onChange={v => set('location', v)} onSelect={pick => { set('location', pick.address); setCoords({ lat: pick.lat, lng: pick.lng }) }} placeholder="Start typing the address…" />
+            </F>
+            <div style={{ marginTop: 8 }}>
+              <MapPicker value={coords} onChange={setCoords} height={200} />
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 4 }}>{coords ? `📍 ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : 'Search the address or tap the map to drop a pin.'}</div>
+            </div>
+          </div>
+          <div style={{ gridColumn: '1/-1' }}>
+            <F label="Logo">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {f.logoUrl ? <img src={f.logoUrl} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', border: '1px solid #e5e7eb' }} /> : <div style={{ width: 48, height: 48, borderRadius: 8, background: '#f5f0e8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🏢</div>}
+                <label style={{ display: 'inline-block', background: '#FFF3EE', color: 'var(--orange)', border: '1.5px solid #FFD9C2', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: logoBusy ? 'default' : 'pointer' }}>
+                  {logoBusy ? 'Uploading…' : f.logoUrl ? 'Change logo' : 'Upload logo'}
+                  <input type="file" accept="image/*" hidden onChange={e => uploadLogo(e.target.files?.[0])} />
+                </label>
+              </div>
+            </F>
+          </div>
           <div style={{ gridColumn: '1/-1' }}><F label="Description"><textarea value={f.description} onChange={e => set('description', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} /></F></div>
         </div>
         {err && <div style={{ color: '#c0392b', fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-ui)', marginTop: 10 }}>{err}</div>}

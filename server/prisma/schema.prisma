@@ -245,6 +245,8 @@ model DirectoryListing {
   website     String?
   logoUrl     String?
   location    String?
+  lat         Float?
+  lng         Float?
   // Standalone directory subscription: the listing is visible while paidUntil is
   // in the future. Extended by a directory purchase (monthly/quarterly/yearly).
   paidUntil   DateTime?

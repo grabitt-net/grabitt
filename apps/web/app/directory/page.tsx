@@ -16,15 +16,17 @@ type Listing = { id: string; name: string; category: string | null; description:
 export default function DirectoryPage() {
   const [listings, setListings] = useState<Listing[] | null>(null)
   const [cat, setCat] = useState<string>('All')
+  const [loc, setLoc] = useState<string>('All')
 
   useEffect(() => {
     createLooseTrpcClient().directory.list.query()
       .then(d => setListings(d as unknown as Listing[])).catch(() => setListings([]))
   }, [])
 
-  // Category filter chips, derived from whatever categories advertisers set.
+  // Filters derived from the live listings (business type + location).
   const categories = ['All', ...Array.from(new Set((listings ?? []).map(l => l.category).filter((c): c is string => !!c))).sort()]
-  const shown = (listings ?? []).filter(l => cat === 'All' || l.category === cat)
+  const locations = ['All', ...Array.from(new Set((listings ?? []).map(l => l.location).filter((c): c is string => !!c))).sort()]
+  const shown = (listings ?? []).filter(l => (cat === 'All' || l.category === cat) && (loc === 'All' || l.location === loc))
 
   return (
     <PanelProvider>
@@ -33,21 +35,26 @@ export default function DirectoryPage() {
         <QuickActions />
         <PageHeroBanner dept="directory" alt="Business Directory" maxWidth={960} />
         <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 14px' }}>
-          <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.6, marginBottom: 14 }}>
-            Local businesses advertising on Grabitt.
-          </p>
           {/* Prominent, eye-catching call to action — much larger than the old inline link. */}
           <Link href="/advertiser" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', boxSizing: 'border-box', background: 'linear-gradient(135deg, var(--orange), var(--orange2, #ff8a3d))', color: '#fff', borderRadius: 999, padding: '16px 22px', fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, textDecoration: 'none', boxShadow: '0 6px 18px rgba(245,84,10,0.28)', marginBottom: 18 }}>
             📖 List your business ›
           </Link>
 
-          {categories.length > 2 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-              {categories.map(c => (
-                <button key={c} onClick={() => setCat(c)} style={{ border: `1.5px solid ${cat === c ? 'var(--orange)' : '#e5dccd'}`, background: cat === c ? 'var(--orange)' : '#fff', color: cat === c ? '#fff' : '#555', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer' }}>{c}</button>
-              ))}
-            </div>
-          )}
+          {/* Filters — business type and location. */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
+            <label style={{ flex: '1 1 200px', minWidth: 160 }}>
+              <span style={filterLbl}>Business type</span>
+              <select value={cat} onChange={e => setCat(e.target.value)} style={filterSel}>
+                {categories.map(c => <option key={c} value={c}>{c === 'All' ? 'All business types' : c}</option>)}
+              </select>
+            </label>
+            <label style={{ flex: '1 1 200px', minWidth: 160 }}>
+              <span style={filterLbl}>Location</span>
+              <select value={loc} onChange={e => setLoc(e.target.value)} style={filterSel}>
+                {locations.map(c => <option key={c} value={c}>{c === 'All' ? 'All locations' : c}</option>)}
+              </select>
+            </label>
+          </div>
 
           {listings === null ? (
             <div style={{ padding: 50, textAlign: 'center', fontFamily: 'var(--font-nunito)', color: '#1a1a1a' }}>Loading…</div>
@@ -83,3 +90,6 @@ export default function DirectoryPage() {
     </PanelProvider>
   )
 }
+
+const filterLbl: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 800, color: '#8a6d3b', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }
+const filterSel: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '9px 11px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 700, background: '#fff', color: 'var(--dark)' }

@@ -18,15 +18,26 @@ const DIRECTORY_TERMS = {
 } as const
 export type DirectoryTerm = keyof typeof DIRECTORY_TERMS
 
+// Turn a bare domain into a full URL (https://), leaving valid URLs untouched.
+function normalizeWebsite(v: string | null | undefined): string | null {
+  const s = (v ?? '').trim()
+  if (!s) return null
+  return /^https?:\/\//i.test(s) ? s : `https://${s.replace(/^\/+/, '')}`
+}
+
 const listingInput = z.object({
   name: z.string().min(2).max(80),
   category: z.string().max(60).optional(),
   description: z.string().max(600).optional(),
   phone: z.string().max(40).optional(),
   email: z.string().email().optional().or(z.literal('')),
-  website: z.string().url().optional().or(z.literal('')),
+  // Accept a bare domain (e.g. "grabitt.net") — normalised to a full URL on save
+  // so advertisers don't have to type https:// or www.
+  website: z.string().max(200).optional().or(z.literal('')),
   logoUrl: z.string().url().optional().or(z.literal('')),
-  location: z.string().max(80).optional(),
+  location: z.string().max(120).optional(),
+  lat: z.number().nullable().optional(),
+  lng: z.number().nullable().optional(),
 })
 
 export const directoryRouter = router({
@@ -117,9 +128,11 @@ export const directoryRouter = router({
         description: input.description || null,
         phone: input.phone || null,
         email: input.email || null,
-        website: input.website || null,
+        website: normalizeWebsite(input.website),
         logoUrl: input.logoUrl || null,
         location: input.location || null,
+        lat: input.lat ?? null,
+        lng: input.lng ?? null,
       }
       // Submitting/editing the business info sends it (back) to admin review —
       // it stays hidden until an admin approves. Clear any prior rejection note.
@@ -154,6 +167,7 @@ export const directoryRouter = router({
     .mutation(({ ctx, input }) => {
       const { id, ...rest } = input
       const data = Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, v === '' ? null : v]))
+      if ('website' in data) data.website = normalizeWebsite(data.website as string | null)
       return ctx.prisma.directoryListing.update({ where: { id }, data })
     }),
 
@@ -179,6 +193,7 @@ export const directoryRouter = router({
       const user = await ctx.prisma.user.findUnique({ where: { email: ownerEmail.trim().toLowerCase() }, select: { id: true } })
       if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: 'No member with that email. Create the member first (Members → + New member), then add their directory listing.' })
       const data = Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, v === '' ? null : v]))
+      if ('website' in data) data.website = normalizeWebsite(data.website as string | null)
       const paidUntil = paidMonths > 0 ? new Date(Date.now() + paidMonths * 30 * 86400000) : null
       return ctx.prisma.directoryListing.upsert({
         where: { userId: user.id },
