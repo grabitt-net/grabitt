@@ -673,6 +673,7 @@ export const jobsRouter = router({
       listingStatus: j.listing.status,
       postedAt: j.listing.createdAt,
       image: j.listing.images[0] ?? null,
+      candidateMatching: j.candidateMatching,
       questions: (j.applicationQuestions ?? []) as { id: string; label: string }[],
       applications: j.applications.map(a => {
         const revealed = isRevealed(a.status, a.applicant.id)

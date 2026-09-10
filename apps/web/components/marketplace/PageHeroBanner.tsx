@@ -10,9 +10,14 @@ import { createLooseTrpcClient } from '@/lib/trpc'
 export default function PageHeroBanner({ dept, alt, maxWidth = 1000 }: { dept: string; alt?: string; maxWidth?: number }) {
   const [banner, setBanner] = useState<string | null>(null)
   useEffect(() => {
+    // Clear immediately so switching dept (e.g. business ↔ personal hub) never
+    // leaves the previous page's banner showing while the new one loads.
+    let live = true
+    setBanner(null)
     createLooseTrpcClient().homepage.categoryHeader.query({ department: dept })
-      .then(h => setBanner((h as { heroBanner?: string | null } | null)?.heroBanner ?? null))
+      .then(h => { if (live) setBanner((h as { heroBanner?: string | null } | null)?.heroBanner ?? null) })
       .catch(() => {})
+    return () => { live = false }
   }, [dept])
 
   if (!banner) return null

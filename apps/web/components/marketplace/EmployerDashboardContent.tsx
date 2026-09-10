@@ -14,7 +14,7 @@ const FREE_JOBS = 3          // first 3 job listings are free
 const JOB_LIFE_DAYS = 21     // listings run for 21 days
 
 type App = { id: string; status: string; applicant: string; applicantId: string; coverNote: string | null; employerNote: string | null; createdAt: string }
-type Job = { id: string; listingId: string; jobTitle: string; company: string; type: string; listingStatus: string; postedAt: string; image: string | null; applications: App[] }
+type Job = { id: string; listingId: string; jobTitle: string; company: string; type: string; listingStatus: string; postedAt: string; image: string | null; candidateMatching?: boolean; applications: App[] }
 
 const TYPE_EMOJI: Record<string, string> = { full_time: '💼', part_time: '🕒', contract: '📄', temporary: '⏳', volunteer: '🤝' }
 
@@ -128,16 +128,22 @@ export default function EmployerDashboardContent() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.jobTitle}</div>
-                      <div style={{ fontSize: 10, color: '#666', fontFamily: 'var(--font-ui)' }}>{j.applications.length} applicant{j.applications.length === 1 ? '' : 's'} · {chip}</div>
+                      <div style={{ fontSize: 10, color: '#666', fontFamily: 'var(--font-ui)' }}>{j.applications.length} applicant{j.applications.length === 1 ? '' : 's'} · {chip}{j.candidateMatching ? ' · ' : ''}{j.candidateMatching && <span style={{ color: ORANGE, fontWeight: 800 }}>🎯 Job Match on</span>}</div>
                     </div>
                   </div>
-                  <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
-                    <button onClick={() => openPanel('applications', { jobId: j.id })} style={{ flex: 1, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>📋 Applicants{newCount ? ` (${newCount} new)` : ''}</button>
-                    <a href={`/jobs/new?edit=${j.listingId}`} style={{ flex: 1, textDecoration: 'none' }}>
+                  <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button onClick={() => openPanel('applications', { jobId: j.id })} style={{ flex: 1, minWidth: 100, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>📋 Applicants{newCount ? ` (${newCount} new)` : ''}</button>
+                    <a href={`/jobs/new?edit=${j.listingId}`} style={{ flex: 1, minWidth: 70, textDecoration: 'none' }}>
                       <div style={{ background: '#fff', color: '#1a1a1a', border: '1px solid #1a1a1a', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer', textAlign: 'center' }}>✏️ Edit</div>
                     </a>
-                    <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ flex: 1, background: ORANGE, color: '#fff', border: 'none', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>📤 Share</button>
+                    <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ flex: 1, minWidth: 70, background: ORANGE, color: '#fff', border: 'none', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>📤 Share</button>
                   </div>
+                  {/* Job Match — the paid Candidate Matching add-on for this advert. */}
+                  {j.candidateMatching ? (
+                    <button onClick={() => openPanel('findStaff', { jobId: j.id })} style={{ marginTop: 6, width: '100%', background: '#FFF3EE', color: ORANGE, border: '1px solid #FFD4C0', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>🎯 View Job Match candidates</button>
+                  ) : (
+                    <div style={{ marginTop: 6, fontSize: 9.5, color: '#999', fontFamily: 'var(--font-ui)', textAlign: 'center' }}>Job Match (paid) not added to this advert — add it when posting or editing.</div>
+                  )}
                 </div>
               )
             })}

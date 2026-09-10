@@ -17,6 +17,7 @@ import AffiliateCard from './AffiliateCard'
 import InboxClient from './InboxClient'
 import BannerSlot from './BannerSlot'
 import BusinessCentre from './BusinessCentre'
+import EmployerDashboardContent from './EmployerDashboardContent'
 import CharityCentre from './CharityCentre'
 import AgentCentre from './AgentCentre'
 import { AGENTS_ENABLED } from '@/lib/flags'
@@ -275,15 +276,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
   return (
     <>
-      {/* ── MY HUB ──────────────────────────────────────────────────────────── */}
-      {/* Title with flanking rules */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '10px 0 42px' }}>
-        <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
-        <span style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 900, color: '#1e2b55', letterSpacing: 3 }}>{isAgent ? t('AGENT HUB') : effBiz ? t('BUSINESS HUB') : t('MY HUB')}</span>
-        <span style={{ width: 34, height: 3, borderRadius: 2, background: '#1e2b55' }} />
-      </div>
-
-      <div style={{ position: 'relative', background: '#f4f6fb', borderRadius: 20, padding: '48px 16px 22px', boxShadow: '0 6px 24px rgba(30,43,85,0.07)', border: '1.5px solid #d7deec' }}>
+      {/* The hub title is now the uploadable page header banner on the account
+          page (Admin → Page hero banners), so no text heading here. */}
+      <div style={{ position: 'relative', background: '#f4f6fb', borderRadius: 20, padding: '48px 16px 22px', boxShadow: '0 6px 24px rgba(30,43,85,0.07)', border: '1.5px solid #d7deec', marginTop: 10 }}>
         {/* Dashboard pill — pale orange, matching the profile box */}
         <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#ffe0bb', color: 'var(--orange)', borderRadius: 999, padding: '8px 22px', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 900, letterSpacing: 2 }}>{t('Dashboard')}</div>
 
@@ -469,24 +464,22 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
           {section === 'aboutme' && <AttributesCard />}
 
-          {section === 'employment' && (<>
+          {section === 'employment' && (effBiz ? (
+            /* Business Recruitment = candidate management: each job with its
+               applicants, statuses and the paid Job Match add-on. */
+            <EmployerDashboardContent />
+          ) : (<>
             <div style={card}>
-              {effBiz ? (
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a', lineHeight: 1.5 }}>
-                  {t('Tag the roles you hire for and the experience and languages you need. Post a job advert or search the candidate database from the Recruit pill or the Business Centre.')}
-                </div>
-              ) : (<>
-                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer' }}>
-                  <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{t('I am looking for work')}</span>
-                  <input type="checkbox" checked={!!me?.openToWork} onChange={toggleOpenToWork} style={{ width: 18, height: 18, accentColor: 'var(--orange)' }} />
-                </label>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', marginTop: 8, lineHeight: 1.5 }}>
-                  {t('Your CV is built automatically from the roles, experience and details you add below. Use “Show my CV” to preview what recruiters see.')}
-                </div>
-              </>)}
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer' }}>
+                <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{t('I am looking for work')}</span>
+                <input type="checkbox" checked={!!me?.openToWork} onChange={toggleOpenToWork} style={{ width: 18, height: 18, accentColor: 'var(--orange)' }} />
+              </label>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#1a1a1a', marginTop: 8, lineHeight: 1.5 }}>
+                {t('Your CV is built automatically from the roles, experience and details you add below. Use “Show my CV” to preview what recruiters see.')}
+              </div>
             </div>
-            <JobCategories me={me} onReload={onReload} mode={effBiz ? 'employer' : 'seeker'} />
-          </>)}
+            <JobCategories me={me} onReload={onReload} mode="seeker" />
+          </>))}
 
           {section === 'listings' && (<>
             <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #ece3d7', borderRadius: 50, padding: 5, overflowX: 'auto' }}>
