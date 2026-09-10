@@ -273,6 +273,8 @@ export function makeCrmApi(execToken: string) {
     // Job & property listing oversight
     adminJobs: (status?: string) =>
       rpc<any[]>('jobs.adminList', 'query', { status: status ?? 'all' }, execToken),
+    adminJobApplicants: (jobListingId: string) =>
+      rpc<any>('jobs.adminApplications', 'query', { jobListingId }, execToken),
     adminProperties: (status?: string) =>
       rpc<any[]>('property.adminList', 'query', { status: status ?? 'all' }, execToken),
     approveProperty: (listingId: string) =>

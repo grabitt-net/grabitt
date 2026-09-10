@@ -41,6 +41,7 @@ export default function JobsView() {
   const [filter, setFilter] = useState<typeof FILTERS[number]>('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [viewJob, setViewJob] = useState<AdminJob | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -105,7 +106,7 @@ export default function JobsView() {
                     </td>
                     <td style={td}>{j.location}</td>
                     <td style={td}>{salary(j)}</td>
-                    <td style={{ ...td, fontWeight: 800, color: j.applicants ? 'var(--orange)' : '#bbb' }}>{j.applicants}</td>
+                    <td style={td}>{j.applicants ? <button onClick={() => setViewJob(j)} style={{ background: '#fff3ee', color: 'var(--orange)', border: '1px solid #ffd9c2', borderRadius: 50, padding: '3px 10px', fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>{j.applicants} ›</button> : <span style={{ color: '#bbb', fontWeight: 800 }}>0</span>}</td>
                     <td style={td}>{j.views}</td>
                     <td style={td}>
                       {expired
@@ -122,6 +123,63 @@ export default function JobsView() {
           </table>
         </div>
       )}
+
+      {viewJob && <AdminApplicantsModal api={api} job={viewJob} onClose={() => setViewJob(null)} />}
+    </div>
+  )
+}
+
+// Read-only applicant monitor for one job (admin oversight / security).
+const ADMIN_STAGES: [string, string][] = [
+  ['applied', 'New'], ['viewed', 'Reviewing'], ['invited', 'Invited'], ['arranged', 'Interview'],
+  ['offer', 'Offer'], ['accepted', 'Hired'], ['rejected_pre', 'Rejected'],
+]
+const ADMIN_FOLD: Record<string, string> = { shortlisted: 'invited', hired: 'accepted', rejected: 'rejected_pre', rejected_post: 'rejected_pre' }
+function AdminApplicantsModal({ api, job, onClose }: { api: ReturnType<typeof useCrmApi>; job: AdminJob; onClose: () => void }) {
+  const [data, setData] = useState<any | null>(null)
+  const [err, setErr] = useState('')
+  useEffect(() => { api.adminJobApplicants(job.id).then(setData).catch(() => setErr('Could not load applicants.')) }, [api, job.id])
+  const apps: any[] = data?.applications ?? []
+  const group = (s: string) => apps.filter(a => (ADMIN_FOLD[a.status] ?? a.status) === s)
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 900, maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid #f0ece5' }}>
+          <div>
+            <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>{job.jobTitle} — applicants</div>
+            <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 11, color: '#999' }}>{job.company} · {apps.length} applicant{apps.length === 1 ? '' : 's'} · admin oversight</div>
+          </div>
+          <button onClick={onClose} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer' }}>✕</button>
+        </div>
+        <div style={{ overflow: 'auto', padding: 16 }}>
+          {err ? <div style={{ ...empty, color: '#ef4444' }}>{err}</div> : !data ? <div style={empty}>Loading…</div> : apps.length === 0 ? <div style={empty}>No applicants.</div> : (
+            <div style={{ display: 'flex', gap: 10, overflowX: 'auto' }}>
+              {ADMIN_STAGES.map(([key, label]) => {
+                const cards = group(key)
+                return (
+                  <div key={key} style={{ flex: '0 0 220px', background: '#f8f9fa', borderRadius: 10, padding: 10 }}>
+                    <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 11.5, fontWeight: 900, color: '#555', marginBottom: 8 }}>{label} ({cards.length})</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {cards.map(a => (
+                        <div key={a.id} style={{ background: '#fff', border: '1px solid #eee', borderRadius: 8, padding: 9 }}>
+                          <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, color: '#1a1a1a' }}>{a.fullName || a.applicant}</div>
+                          {a.email && <div style={{ fontSize: 10.5, color: '#888' }}>{a.email}</div>}
+                          {a.phone && <div style={{ fontSize: 10.5, color: '#888' }}>{a.phone}</div>}
+                          {a.currentRole && <div style={{ fontSize: 10.5, color: '#666', marginTop: 2 }}>💼 {a.currentRole}</div>}
+                          {a.location && <div style={{ fontSize: 10.5, color: '#666' }}>📍 {a.location}</div>}
+                          {a.employerNote && <div style={{ fontSize: 10, color: '#b91c1c', marginTop: 4 }}>📝 {a.employerNote}</div>}
+                          {a.cvUrl && <a href={a.cvUrl} target="_blank" rel="noreferrer" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--orange)' }}>CV ↗</a>}
+                        </div>
+                      ))}
+                      {cards.length === 0 && <div style={{ fontSize: 10, color: '#bbb', textAlign: 'center' }}>—</div>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
