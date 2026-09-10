@@ -715,11 +715,16 @@ function ListingInner() {
                   {!isOwner && seller?.id && <button onClick={startChat} style={miniAction(false)}><Icon name="message" size={16} strokeWidth={1.9} /> {t('Message')}</button>}
                 </div>
 
-                {/* Delivery options */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 12, paddingTop: 12, borderTop: '1px solid #f0ebe4' }}>
+                {/* Delivery options + report link */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, marginTop: 12, paddingTop: 12, borderTop: '1px solid #f0ebe4' }}>
                   <FulChip on={listing.deliveryMethod === 'courier'} label={t('Post')} />
                   <FulChip on={listing.deliveryMethod === 'in_person'} label={t('Deliver')} />
                   <FulChip on={!listing.deliveryMethod} label={t('Collect')} />
+                  {!isOwner && (
+                    <button onClick={() => openPanel('report', { title: listing.title, id: listing.id })} style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 700, color: '#9a9a9a' }}>
+                      <Icon name="flag" size={13} strokeWidth={1.9} /> {t('Report')}
+                    </button>
+                  )}
                 </div>
               </div>
 
