@@ -15,6 +15,7 @@ type Thread = {
   listingId: string
   lastMessageAt: string | null
   unreadCount?: number
+  archived?: boolean
   participants: { userId: string; user: { id: string; displayName: string; avatar: string | null } }[]
   messages: { id: string; senderId: string; body: string; blocked: boolean; readAt: string | null; createdAt: string }[]
   listing: { id: string; title: string; price: unknown; images: string[] } | null
@@ -71,6 +72,7 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
   // ('alert:offers' etc.) opens that one directly.
   const [selected, setSelected] = useState<string | null>(initial === 'alerts' ? 'alert:relist' : (initial ?? null))
   const [alerts, setAlerts] = useState<Alert[] | null>(null)
+  const [view, setView] = useState<'inbox' | 'archive'>('inbox')
 
   // Group alerts into their channels; compute unread counts per channel.
   const grouped: Record<string, Alert[]> = {}
@@ -122,20 +124,35 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
 
   const current = threads.find(t => t.id === selected) ?? null
   const otherOf = (t: Thread) => t.participants.find(p => p.userId !== me)?.user
+  const archivedCount = threads.filter(t => t.archived).length
+  const visibleThreads = threads.filter(t => (view === 'archive' ? t.archived : !t.archived))
+
+  // Archive / restore a conversation (moves it between Inbox and Archive).
+  const setArchived = async (id: string, archived: boolean) => {
+    setThreads(ts => ts.map(t => t.id === id ? { ...t, archived } : t))
+    if (selected === id) setSelected(null)
+    try { await trpcAuthed().messages.setArchived.mutate({ threadId: id, archived }) } catch { /* revert on failure */ load() }
+  }
 
   return (
     <div className={`inbox ${selected ? 'inbox--reading' : ''}`}>
       {/* ── Left: conversations ─────────────────────────────────────────── */}
       <aside className="inbox__list">
-        <button onClick={() => setSelected('team')} style={{ ...pinned, ...(selected === 'team' ? pinnedActive : null) }}>
+        {/* Inbox / Archive switch */}
+        <div style={{ display: 'flex', gap: 6, padding: '10px 12px', borderBottom: '1px solid #f0ece5' }}>
+          {(['inbox', 'archive'] as const).map(v => (
+            <button key={v} onClick={() => { setView(v); setSelected(null) }} style={{ flex: 1, border: `1.5px solid ${view === v ? 'var(--orange)' : '#e5dccd'}`, background: view === v ? 'var(--orange)' : '#fff', color: view === v ? '#fff' : '#555', borderRadius: 50, padding: '7px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{v === 'inbox' ? 'Inbox' : `Archive${archivedCount ? ` (${archivedCount})` : ''}`}</button>
+          ))}
+        </div>
+        {view === 'inbox' && <button onClick={() => setSelected('team')} style={{ ...pinned, ...(selected === 'team' ? pinnedActive : null) }}>
           <div style={{ ...avatarCircle, background: 'linear-gradient(135deg,var(--orange),var(--orange2))' }}>💬</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={nameRow}>Grabitt Team</div>
             <div style={preview}>Questions about buying, selling or safety?</div>
           </div>
-        </button>
+        </button>}
         {/* Persistent alert channels — one per alert type, pinned above chats. */}
-        {ALERT_CATS.filter(c => PERSISTENT_CATS.includes(c.key) || (grouped[c.key]?.length ?? 0) > 0).map(c => {
+        {view === 'inbox' && ALERT_CATS.filter(c => PERSISTENT_CATS.includes(c.key) || (grouped[c.key]?.length ?? 0) > 0).map(c => {
           const n = unreadByCat(c.key)
           return (
             <button key={c.key} onClick={() => openAlertCat(c.key)} style={{ ...pinned, ...(selected === 'alert:' + c.key ? pinnedActive : null) }}>
@@ -151,9 +168,9 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
 
         {!loaded ? (
           <div style={empty}>Loading…</div>
-        ) : threads.length === 0 ? (
-          <div style={empty}>No conversations yet — message a seller from any listing.</div>
-        ) : threads.map(t => {
+        ) : visibleThreads.length === 0 ? (
+          <div style={empty}>{view === 'archive' ? 'No archived conversations.' : 'No conversations yet — message a seller from any listing.'}</div>
+        ) : visibleThreads.map(t => {
           const other = otherOf(t)
           const last = t.messages[0]
           const unreadN = t.unreadCount ?? (last && last.senderId !== me && !last.readAt ? 1 : 0)
@@ -184,6 +201,7 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
               <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 9.5, color: '#bbb' }}>{shortDate(t.lastMessageAt)}</span>
                 {unreadN > 0 && <span style={badge}>{unreadN > 99 ? '99+' : unreadN}</span>}
+                <span role="button" tabIndex={0} title={view === 'archive' ? 'Restore to inbox' : 'Archive'} onClick={e => { e.stopPropagation(); setArchived(t.id, view !== 'archive') }} style={{ fontSize: 13, color: '#bbb', cursor: 'pointer', padding: 2 }}>{view === 'archive' ? '↩️' : '🗄️'}</span>
               </div>
             </button>
           )

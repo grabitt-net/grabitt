@@ -1018,6 +1018,9 @@ model Thread {
 model ThreadParticipant {
   threadId String
   userId   String
+  // Per-user archive flag — archiving moves a thread out of that user's inbox
+  // into their Archive without affecting the other participant.
+  archived Boolean @default(false)
   thread   Thread @relation(fields: [threadId], references: [id])
   user     User   @relation(fields: [userId], references: [id])
 

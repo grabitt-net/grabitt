@@ -136,10 +136,24 @@ export const messagesRouter = router({
     return threads.filter(t => !jobOwnerHidden.has(t.id)).map(t => ({
       ...t,
       unreadCount: unreadByThread.get(t.id) ?? 0,
+      // The caller's own archive flag, so the inbox can split Inbox vs Archive.
+      archived: t.participants.find(p => p.userId === ctx.user.id)?.archived ?? false,
       messages: t.messages.map(m => maskBlocked(m, ctx.user.id)),
       listing: listingById.get(t.listingId) ?? null,
     }))
   }),
+
+  // Archive / unarchive a thread for the caller only (per-user, out of inbox).
+  setArchived: protectedProcedure
+    .input(z.object({ threadId: z.string().min(1), archived: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const res = await ctx.prisma.threadParticipant.updateMany({
+        where: { threadId: input.threadId, userId: ctx.user.id },
+        data: { archived: input.archived },
+      })
+      if (res.count === 0) throw new TRPCError({ code: 'FORBIDDEN' })
+      return { ok: true, archived: input.archived }
+    }),
 
   // Threads for one specific job advert (its listingId) that the caller takes
   // part in — powers the per-job Messages view in Candidate Management, kept
