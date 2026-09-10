@@ -23,6 +23,7 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
   const [jobTitle, setJobTitle] = useState('')
   const [questions, setQuestions] = useState<JobQuestion[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [done, setDone] = useState(false)
   const [hasCv, setHasCv] = useState<boolean | null>(null) // null = still loading
 
   const [f, setF] = useState({
@@ -133,9 +134,30 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
           languageLevels: langs,
         }).catch(() => { /* the application is already in — don't fail on this */ })
       }
-      onApplied()
+      setDone(true)
     } catch (e: any) { toast(e?.message || 'Could not send your application.') }
     finally { setSubmitting(false) }
+  }
+
+  // Confirmation — tell the applicant where to find employer messages.
+  if (done) {
+    return (
+      <div onClick={() => { onApplied(); onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', width: '100%', maxWidth: 440, borderRadius: 20, padding: 26, textAlign: 'center' }}>
+          <div style={{ fontSize: 46, marginBottom: 10 }}>✅</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Application sent!</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, color: '#444', lineHeight: 1.6, marginBottom: 16 }}>
+            Thanks for applying{jobTitle ? ` to ${jobTitle}` : ''}. The employer will contact you and send any updates through <strong>your Grabitt inbox</strong> — check your <strong>Messages</strong> for replies and progress on your application.
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => { onApplied(); onClose() }} style={{ flex: 1, background: '#fff', color: '#555', border: '1.5px solid #e5dccd', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 800, cursor: 'pointer' }}>Done</button>
+            <a href="/account?section=messages" style={{ flex: 1, textDecoration: 'none' }}>
+              <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer' }}>Go to Messages</div>
+            </a>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

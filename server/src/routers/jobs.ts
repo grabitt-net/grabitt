@@ -11,6 +11,23 @@ import { validateDiscount, recordRedemption } from '../lib/discounts'
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
 
+// Get (or create) the message thread between an employer and an applicant for a
+// job's listing, so application updates land in the applicant's Grabitt inbox as
+// a conversation rather than a one-off alert.
+async function jobThreadId(prisma: any, listingId: string, employerId: string, applicantId: string): Promise<string> {
+  const existing = await prisma.thread.findFirst({
+    where: { listingId, AND: [{ participants: { some: { userId: employerId } } }, { participants: { some: { userId: applicantId } } }] },
+    select: { id: true },
+  })
+  if (existing) return existing.id
+  const t = await prisma.thread.create({ data: { listingId, participants: { create: [{ userId: employerId }, { userId: applicantId }] } }, select: { id: true } })
+  return t.id
+}
+async function postJobMessage(prisma: any, threadId: string, senderId: string, body: string) {
+  await prisma.message.create({ data: { threadId, senderId, body } })
+  await prisma.thread.update({ where: { id: threadId }, data: { lastMessageAt: new Date() } })
+}
+
 // Employer-defined screening question shape.
 const questionSchema = z.object({
   id: z.string().min(1).max(40),
@@ -155,6 +172,13 @@ export const jobsRouter = router({
           actionUrl: '/employers',
         },
       })
+      // Open a conversation with the applicant and confirm their application, so
+      // all replies and status updates from the employer arrive in one thread in
+      // their Grabitt inbox (not just as alerts).
+      try {
+        const threadId = await jobThreadId(ctx.prisma, input.listingId, jl.employerId, ctx.user.id)
+        await postJobMessage(ctx.prisma, threadId, jl.employerId, `Thanks for applying to "${jl.jobTitle}". Any updates or replies about your application will appear here in your Grabitt inbox.`)
+      } catch { /* non-fatal — the application is still recorded */ }
       return application
     }),
 
@@ -777,10 +801,14 @@ export const jobsRouter = router({
         rejected_pre: `Your application for "${app.jobListing.jobTitle}" wasn't successful this time.`,
         rejected_post: `Thank you for interviewing for "${app.jobListing.jobTitle}" — you weren't successful this time.`,
       }
+      // Application updates go into the applicant's conversation thread (their
+      // Grabitt inbox), not as a standalone alert — so everything about the role
+      // stays in one place they can reply to.
       if (MESSAGE[input.status]) {
-        await ctx.prisma.notification.create({
-          data: { userId: app.applicantId, kind: 'system', title: '💼 Application update', body: MESSAGE[input.status], actionUrl: `/listings/${app.jobListing.listingId}` },
-        })
+        try {
+          const threadId = await jobThreadId(ctx.prisma, app.jobListing.listingId, app.jobListing.employerId, app.applicantId)
+          await postJobMessage(ctx.prisma, threadId, app.jobListing.employerId, MESSAGE[input.status])
+        } catch { /* non-fatal — status still updated */ }
       }
       return { ok: true, status: input.status }
     }),
