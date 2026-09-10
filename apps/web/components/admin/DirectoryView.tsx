@@ -13,6 +13,7 @@ export default function DirectoryView() {
   const [rows, setRows] = useState<Listing[]>([])
   const [editing, setEditing] = useState<Listing | null>(null)
   const [saving, setSaving] = useState(false)
+  const [creating, setCreating] = useState(false)
 
   const load = () => api.directoryListings().then(d => {
     // Surface listings awaiting review first, then rejected, then the rest.
@@ -48,9 +49,12 @@ export default function DirectoryView() {
 
   return (
     <div>
-      <div style={{ marginBottom: 14 }}>
-        <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>Business</span> Directory</h2>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{rows.length} listing{rows.length === 1 ? '' : 's'} · {liveCount} live · {pendingCount > 0 ? <span style={{ color: '#b45309', fontWeight: 800 }}>{pendingCount} awaiting review</span> : 'none awaiting review'} (a listing shows only while paid and approved).</div>
+      <div style={{ marginBottom: 14, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 20, fontWeight: 700 }}><span style={{ color: 'var(--orange)' }}>Business</span> Directory</h2>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{rows.length} listing{rows.length === 1 ? '' : 's'} · {liveCount} live · {pendingCount > 0 ? <span style={{ color: '#b45309', fontWeight: 800 }}>{pendingCount} awaiting review</span> : 'none awaiting review'} (a listing shows only while paid and approved).</div>
+        </div>
+        <button onClick={() => setCreating(true)} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ New listing</button>
       </div>
 
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
@@ -91,6 +95,8 @@ export default function DirectoryView() {
         </table>
       </div>
 
+      {creating && <CreateListingModal api={api} onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load() }} />}
+
       {editing && (
         <div onClick={() => setEditing(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 520, maxHeight: '88vh', overflowY: 'auto' }}>
@@ -122,4 +128,50 @@ const pill: React.CSSProperties = { padding: '5px 11px', borderRadius: 50, borde
 const inp: React.CSSProperties = { width: '100%', padding: '7px 10px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontFamily: 'var(--font-ui)', fontSize: 12, boxSizing: 'border-box' }
 function F({ label, children }: { label: string; children: React.ReactNode }) {
   return <div><label style={{ display: 'block', fontSize: 9, fontWeight: 800, color: '#aaa', fontFamily: 'var(--font-ui)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>{children}</div>
+}
+
+// Admin creates a directory listing for an existing member (by their email).
+function CreateListingModal({ api, onClose, onCreated }: { api: ReturnType<typeof useCrmApi>; onClose: () => void; onCreated: () => void }) {
+  const [f, setF] = useState({ ownerEmail: '', name: '', category: '', location: '', phone: '', email: '', website: '', logoUrl: '', description: '', paidMonths: 12 })
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState('')
+  const set = (k: keyof typeof f, v: string | number) => setF(p => ({ ...p, [k]: v }))
+  const create = async () => {
+    if (!f.ownerEmail.trim() || !f.name.trim()) { setErr('Owner email and business name are required.'); return }
+    setErr(''); setSaving(true)
+    try {
+      await api.createDirectoryListing({
+        ownerEmail: f.ownerEmail.trim(), name: f.name.trim(), category: f.category, location: f.location,
+        phone: f.phone, email: f.email, website: f.website, logoUrl: f.logoUrl, description: f.description,
+        paidMonths: Number(f.paidMonths) || 0,
+      })
+      onCreated()
+    } catch (e: any) { setErr(e?.message ?? 'Could not create the listing.') }
+    finally { setSaving(false) }
+  }
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 520, maxHeight: '88vh', overflowY: 'auto' }}>
+        <h3 style={{ fontFamily: 'var(--font-ui)', fontWeight: 800, marginBottom: 4 }}>New directory listing</h3>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 12 }}>Attaches to an existing member by email. Create the member first (Members → + New member) if they don&apos;t exist. Admin-created listings are approved automatically.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ gridColumn: '1/-1' }}><F label="Owner email (member)"><input value={f.ownerEmail} onChange={e => set('ownerEmail', e.target.value)} placeholder="member@example.com" style={inp} /></F></div>
+          <F label="Business name"><input value={f.name} onChange={e => set('name', e.target.value)} style={inp} /></F>
+          <F label="Category"><input value={f.category} onChange={e => set('category', e.target.value)} style={inp} /></F>
+          <F label="Location"><input value={f.location} onChange={e => set('location', e.target.value)} style={inp} /></F>
+          <F label="Phone"><input value={f.phone} onChange={e => set('phone', e.target.value)} style={inp} /></F>
+          <F label="Email"><input value={f.email} onChange={e => set('email', e.target.value)} style={inp} /></F>
+          <F label="Website"><input value={f.website} onChange={e => set('website', e.target.value)} style={inp} /></F>
+          <F label="Paid months"><input type="number" value={f.paidMonths} onChange={e => set('paidMonths', Number(e.target.value))} style={inp} /></F>
+          <div style={{ gridColumn: '1/-1' }}><F label="Logo URL"><input value={f.logoUrl} onChange={e => set('logoUrl', e.target.value)} style={inp} /></F></div>
+          <div style={{ gridColumn: '1/-1' }}><F label="Description"><textarea value={f.description} onChange={e => set('description', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} /></F></div>
+        </div>
+        {err && <div style={{ color: '#c0392b', fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-ui)', marginTop: 10 }}>{err}</div>}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 14 }}>
+          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: 50, border: '1.5px solid #e5e7eb', background: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={create} disabled={saving} style={{ padding: '8px 18px', borderRadius: 50, border: 'none', background: 'var(--orange)', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 12, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Creating…' : 'Create listing'}</button>
+        </div>
+      </div>
+    </div>
+  )
 }

@@ -101,6 +101,7 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('banners.cancelBooking', 'mutation', { id }, execToken),
     // Business directory moderation
     directoryListings: () => rpc<any[]>('directory.adminList', 'query', undefined, execToken),
+    createDirectoryListing: (data: Record<string, unknown>) => rpc<any>('directory.adminCreate', 'mutation', data, execToken),
     updateDirectoryListing: (data: Record<string, unknown>) =>
       rpc<any>('directory.adminUpdate', 'mutation', data, execToken),
     removeDirectoryListing: (id: string) =>

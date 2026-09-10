@@ -169,6 +169,24 @@ export const directoryRouter = router({
       })
     ),
 
+  // Admin: create a directory listing on behalf of a member (by their email).
+  // Admin-created listings are trusted, so they're approved immediately; a paid
+  // window is opened (default 12 months) so the listing shows publicly.
+  adminCreate: execProcedure
+    .input(listingInput.extend({ ownerEmail: z.string().email(), paidMonths: z.number().int().min(0).max(36).default(12) }))
+    .mutation(async ({ ctx, input }) => {
+      const { ownerEmail, paidMonths, ...rest } = input
+      const user = await ctx.prisma.user.findUnique({ where: { email: ownerEmail.trim().toLowerCase() }, select: { id: true } })
+      if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: 'No member with that email. Create the member first (Members → + New member), then add their directory listing.' })
+      const data = Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, v === '' ? null : v]))
+      const paidUntil = paidMonths > 0 ? new Date(Date.now() + paidMonths * 30 * 86400000) : null
+      return ctx.prisma.directoryListing.upsert({
+        where: { userId: user.id },
+        update: { ...data, reviewStatus: 'approved', ...(paidUntil ? { paidUntil } : {}) },
+        create: { userId: user.id, ...(data as { name: string }), reviewStatus: 'approved', paidUntil },
+      })
+    }),
+
   // Admin remove a listing entirely.
   adminRemove: execProcedure
     .input(z.object({ id: z.string() }))
