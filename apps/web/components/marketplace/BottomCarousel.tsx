@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import { createLooseTrpcClient } from '@/lib/trpc'
@@ -12,12 +12,18 @@ export default function BottomCarousel() {
   const { openPanel } = usePanel()
   const router = useRouter()
   const [items, setItems] = useState<DbListing[]>([])
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     createLooseTrpcClient().listings.recent.query()
       .then(d => setItems(d as unknown as DbListing[]))
       .catch(() => {})
   }, [])
+
+  // Manual navigation — Just listed does not auto-scroll; the arrows nudge the
+  // strip left/right by roughly one card-and-a-half.
+  const nudge = (dir: -1 | 1) => scrollRef.current?.scrollBy({ left: dir * 200, behavior: 'smooth' })
+  const arrow: React.CSSProperties = { width: 30, height: 30, borderRadius: '50%', background: '#fff', color: 'var(--orange)', border: '1px solid #FFD9C2', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.08)', padding: 0, flexShrink: 0 }
 
   if (items.length === 0) return null
 
@@ -32,8 +38,12 @@ export default function BottomCarousel() {
           >
             See all
           </button>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+            <button aria-label="Scroll left" onClick={() => nudge(-1)} style={arrow}><Icon name="arrowLeft" size={16} /></button>
+            <button aria-label="Scroll right" onClick={() => nudge(1)} style={arrow}><Icon name="arrowRight" size={16} /></button>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6, paddingTop: 2, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+        <div ref={scrollRef} style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6, paddingTop: 2, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
           {items.map(l => {
             const item = toPanelItem(l)
             return (
