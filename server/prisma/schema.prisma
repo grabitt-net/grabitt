@@ -235,8 +235,13 @@ model SponsorshipGrant {
 // NOT sellers and get no automatic listing.
 model DirectoryListing {
   id          String   @id @default(uuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id])
+  // Nullable: admin-created listings that populate the directory start unclaimed
+  // (no owner) until a business owner claims them.
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id])
+  // True for listings the admin created to seed the directory. These show a
+  // "Claim this listing" action until a business owner takes them over.
+  adminCreated Boolean @default(false)
   name        String
   category    String?
   description String?

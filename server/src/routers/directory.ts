@@ -58,7 +58,27 @@ export const directoryRouter = router({
     .query(async ({ ctx, input }) => {
       const listing = await ctx.prisma.directoryListing.findUnique({ where: { id: input.id } })
       if (!listing || !isLive(listing.paidUntil) || listing.reviewStatus !== 'approved') throw new TRPCError({ code: 'NOT_FOUND', message: 'This listing is not currently live.' })
-      return listing
+      // Admin-seeded listings with no owner yet can be claimed by a business.
+      return { ...listing, claimable: listing.adminCreated && !listing.userId }
+    }),
+
+  // A business owner claims an admin-created (unclaimed) listing as their own.
+  // They get a free month; from then on they choose a subscription. Marks them
+  // as an advertiser so they can manage it from the Advertiser Centre.
+  claim: protectedProcedure
+    .input(z.object({ listingId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const l = await ctx.prisma.directoryListing.findUnique({ where: { id: input.listingId }, select: { id: true, userId: true, adminCreated: true, name: true } })
+      if (!l) throw new TRPCError({ code: 'NOT_FOUND', message: 'Listing not found.' })
+      if (l.userId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'This listing has already been claimed.' })
+      const mine = await ctx.prisma.directoryListing.findUnique({ where: { userId: ctx.user.id }, select: { id: true } })
+      if (mine) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Your account already has a directory listing.' })
+      const paidUntil = new Date(Date.now() + 30 * 86400000) // 1 month free from claim
+      await ctx.prisma.$transaction([
+        ctx.prisma.directoryListing.update({ where: { id: l.id }, data: { userId: ctx.user.id, adminCreated: false, reviewStatus: 'approved', paidUntil } }),
+        ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { isAdvertiser: true } }),
+      ])
+      return { ok: true, freeUntil: paidUntil }
     }),
 
   // Prices for the directory subscription terms (public, for the buy UI).
@@ -187,18 +207,27 @@ export const directoryRouter = router({
   // Admin-created listings are trusted, so they're approved immediately; a paid
   // window is opened (default 12 months) so the listing shows publicly.
   adminCreate: execProcedure
-    .input(listingInput.extend({ ownerEmail: z.string().email(), paidMonths: z.number().int().min(0).max(36).default(12) }))
+    .input(listingInput.extend({ ownerEmail: z.string().email().optional().or(z.literal('')), paidMonths: z.number().int().min(0).max(36).default(12) }))
     .mutation(async ({ ctx, input }) => {
       const { ownerEmail, paidMonths, ...rest } = input
-      const user = await ctx.prisma.user.findUnique({ where: { email: ownerEmail.trim().toLowerCase() }, select: { id: true } })
-      if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: 'No member with that email. Create the member first (Members → + New member), then add their directory listing.' })
       const data = Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, v === '' ? null : v]))
       if ('website' in data) data.website = normalizeWebsite(data.website as string | null)
       const paidUntil = paidMonths > 0 ? new Date(Date.now() + paidMonths * 30 * 86400000) : null
-      return ctx.prisma.directoryListing.upsert({
-        where: { userId: user.id },
-        update: { ...data, reviewStatus: 'approved', ...(paidUntil ? { paidUntil } : {}) },
-        create: { userId: user.id, ...(data as { name: string }), reviewStatus: 'approved', paidUntil },
+
+      // With an owner email: attach the listing to that member (their one listing).
+      if (ownerEmail && ownerEmail.trim()) {
+        const user = await ctx.prisma.user.findUnique({ where: { email: ownerEmail.trim().toLowerCase() }, select: { id: true } })
+        if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: 'No member with that email. Leave it blank to create an unclaimed listing, or create the member first.' })
+        return ctx.prisma.directoryListing.upsert({
+          where: { userId: user.id },
+          update: { ...data, adminCreated: false, reviewStatus: 'approved', ...(paidUntil ? { paidUntil } : {}) },
+          create: { userId: user.id, ...(data as { name: string }), adminCreated: false, reviewStatus: 'approved', paidUntil },
+        })
+      }
+
+      // No owner: an unclaimed, admin-seeded listing that a business can claim.
+      return ctx.prisma.directoryListing.create({
+        data: { ...(data as { name: string }), adminCreated: true, reviewStatus: 'approved', paidUntil },
       })
     }),
 

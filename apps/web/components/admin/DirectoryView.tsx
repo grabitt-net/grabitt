@@ -151,7 +151,7 @@ function CreateListingModal({ api, onClose, onCreated }: { api: ReturnType<typeo
     catch { setErr('Could not upload the logo.') } finally { setLogoBusy(false) }
   }
   const create = async () => {
-    if (!f.ownerEmail.trim() || !f.name.trim()) { setErr('Owner email and business name are required.'); return }
+    if (!f.name.trim()) { setErr('Business name is required.'); return }
     setErr(''); setSaving(true)
     try {
       await api.createDirectoryListing({
@@ -168,9 +168,9 @@ function CreateListingModal({ api, onClose, onCreated }: { api: ReturnType<typeo
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 20 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 520, maxHeight: '88vh', overflowY: 'auto' }}>
         <h3 style={{ fontFamily: 'var(--font-ui)', fontWeight: 800, marginBottom: 4 }}>New directory listing</h3>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 12 }}>Attaches to an existing member by email. Create the member first (Members → + New member) if they don&apos;t exist. Admin-created listings are approved automatically.</div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 12 }}>Leave the owner email blank to create an <strong>unclaimed</strong> listing that populates the directory — the business can later claim it (getting 1 month free). Or enter an existing member&apos;s email to attach it to their account. Admin-created listings are approved automatically.</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div style={{ gridColumn: '1/-1' }}><F label="Owner email (member)"><input value={f.ownerEmail} onChange={e => set('ownerEmail', e.target.value)} placeholder="member@example.com" style={inp} /></F></div>
+          <div style={{ gridColumn: '1/-1' }}><F label="Owner email (optional — blank = unclaimed)"><input value={f.ownerEmail} onChange={e => set('ownerEmail', e.target.value)} placeholder="Leave blank to create an unclaimed listing" style={inp} /></F></div>
           <F label="Business name"><input value={f.name} onChange={e => set('name', e.target.value)} style={inp} /></F>
           <F label="Category">
             <select value={f.category} onChange={e => set('category', e.target.value)} style={inp}>

@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
@@ -10,14 +10,18 @@ import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import Place from '@/components/marketplace/Place'
 import { createLooseTrpcClient } from '@/lib/trpc'
+import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 
-type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null }
+type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null; claimable?: boolean }
 
 export default function DirectoryListingPage() {
   const params = useParams()
+  const router = useRouter()
   const id = String(params?.id ?? '')
   const [listing, setListing] = useState<Listing | null>(null)
   const [state, setState] = useState<'loading' | 'ok' | 'unavailable'>('loading')
+  const [claiming, setClaiming] = useState(false)
+  const [claimErr, setClaimErr] = useState('')
 
   useEffect(() => {
     if (!id) return
@@ -25,6 +29,21 @@ export default function DirectoryListingPage() {
       .then(d => { setListing(d as unknown as Listing); setState('ok') })
       .catch(() => setState('unavailable'))
   }, [id])
+
+  const claim = async () => {
+    setClaimErr(''); setClaiming(true)
+    try {
+      let token = getAuthToken()
+      if (!token) token = await refreshAuthToken()
+      // Not signed in — send them to register/sign in, then back here to claim.
+      if (!token) { router.push(`/auth?next=${encodeURIComponent(`/directory/${id}`)}`); return }
+      await trpcAuthed().directory.claim.mutate({ listingId: id })
+      // Claimed — off to the Advertiser Centre to manage it and pick a plan.
+      router.push('/advertiser?claimed=1')
+    } catch (e: any) {
+      setClaimErr(e?.message ?? 'Could not claim this listing.'); setClaiming(false)
+    }
+  }
 
   return (
     <PanelProvider>
@@ -56,6 +75,16 @@ export default function DirectoryListingPage() {
                   {listing.email && <Contact icon="✉️" text={listing.email} href={`mailto:${listing.email}`} />}
                   {listing.website && <Contact icon="🌐" text={listing.website.replace(/^https?:\/\//, '')} href={listing.website} external />}
                 </div>
+
+                {/* Unclaimed (admin-seeded) listing — the business owner can claim it. */}
+                {listing.claimable && (
+                  <div style={{ marginTop: 16, background: '#FFF8F4', border: '1px solid #FFD4C0', borderRadius: 12, padding: 14 }}>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Is this your business?</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#555', lineHeight: 1.6, marginBottom: 10 }}>Claim this listing to manage it yourself. You&apos;ll get <strong>1 month free</strong>, then choose a subscription to keep it live.</div>
+                    {claimErr && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#ef4444', fontWeight: 700, marginBottom: 8 }}>{claimErr}</div>}
+                    <button onClick={claim} disabled={claiming} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: claiming ? 'wait' : 'pointer' }}>{claiming ? 'Claiming…' : '✋ Claim this listing'}</button>
+                  </div>
+                )}
               </div>
             </div>
           )}
