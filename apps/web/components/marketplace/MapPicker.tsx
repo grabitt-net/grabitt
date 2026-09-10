@@ -25,7 +25,10 @@ export default function MapPicker({ value, onChange, height = 260 }: {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 18 }).addTo(map)
     mapRef.current = map
 
-    const icon = L.divIcon({ className: '', html: '<div style="width:28px;height:28px;transform:translate(-50%,-100%);font-size:24px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))">📍</div>', iconSize: [28, 28], iconAnchor: [14, 28] })
+    // Anchor the pin's tip (bottom-centre of the emoji) exactly on the point.
+    // (Leaflet's iconAnchor already positions it — no extra CSS transform, which
+    // previously double-offset the marker away from the real location.)
+    const icon = L.divIcon({ className: '', html: '<div style="font-size:26px;line-height:26px;text-align:center;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))">📍</div>', iconSize: [26, 26], iconAnchor: [13, 26] })
     const place = (lat: number, lng: number, fire: boolean) => {
       if (markerRef.current) markerRef.current.setLatLng([lat, lng])
       else {
