@@ -88,6 +88,16 @@ model HeroSlide {
   @@index([sortOrder])
 }
 
+// Admin-editable page copy. When a row exists for a pageKey, that page renders
+// `html` (a whole-page rich-text body) in place of the built-in copy, so Steve
+// can amend/add/delete text from the CRM without a code change.
+model PageContent {
+  id        String   @id @default(uuid())
+  pageKey   String   @unique
+  html      String
+  updatedAt DateTime @updatedAt @default(now())
+}
+
 // ── Community content ─────────────────────────────────────────────────────────
 // Editorial posts (island tips, economy write-ups, how-to guides) surfaced on the
 // homepage. Admin-managed; readers just view them.

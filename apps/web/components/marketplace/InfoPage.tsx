@@ -92,6 +92,17 @@ export default function InfoPage({ title, intro, pills, hero, banner, dept, topb
       .finally(() => setResolved(true))
   }, [dept, banner])
   const effBanner = banner ?? autoBanner
+
+  // Admin-editable body (Admin → Page Content). When set for this page, it
+  // replaces the built-in copy so Steve can amend/add/delete text himself.
+  const [cmsHtml, setCmsHtml] = useState<string | null>(null)
+  useEffect(() => {
+    if (!dept) return
+    createLooseTrpcClient().homepage.pageContent.query({ pageKey: dept })
+      .then(r => setCmsHtml((r as { html?: string } | null)?.html ?? null))
+      .catch(() => {})
+  }, [dept])
+
   return (
     <PanelProvider>
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
@@ -145,9 +156,11 @@ export default function InfoPage({ title, intro, pills, hero, banner, dept, topb
         </div>
         )}
 
-        {/* Content bands */}
+        {/* Content bands — the admin-set copy replaces the built body when set. */}
         <div style={{ maxWidth: 900, margin: '0 auto', padding: '12px 18px 44px', width: '100%', boxSizing: 'border-box' }}>
-          {children}
+          {cmsHtml
+            ? <div className="cms-prose" dangerouslySetInnerHTML={{ __html: cmsHtml }} />
+            : children}
         </div>
 
         <Footer />

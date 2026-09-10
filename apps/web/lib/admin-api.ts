@@ -130,6 +130,11 @@ export function makeCrmApi(execToken: string) {
     deleteCategory: (id: string, moveTo: string) =>
       rpc<any>('homepage.deleteCategory', 'mutation', { id, moveTo }, execToken),
 
+    // Editable page copy (Admin → Page Content)
+    pageContentAll: () => rpc<{ pageKey: string; html: string; updatedAt: string }[]>('homepage.allPageContent', 'query', undefined, execToken),
+    savePageContent: (pageKey: string, html: string) =>
+      rpc<any>('homepage.upsertPageContent', 'mutation', { pageKey, html }, execToken),
+
     // Parallax hero slides
     heroSlides: () => rpc<any[]>('homepage.allHeroSlides', 'query', undefined, execToken),
     upsertHeroSlide: (data: Record<string, unknown>) =>

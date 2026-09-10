@@ -8,6 +8,31 @@ export const homepageRouter = router({
     ctx.prisma.homeSection.findMany({ orderBy: { sortOrder: 'asc' } })
   ),
 
+  // ── Editable page copy (whole-page rich text, CRM-managed) ──────────────────
+  // Public: the admin-set HTML body for a page, or null to use the built copy.
+  pageContent: publicProcedure
+    .input(z.object({ pageKey: z.string().max(60) }))
+    .query(async ({ ctx, input }) => {
+      const row = await ctx.prisma.pageContent.findUnique({ where: { pageKey: input.pageKey }, select: { html: true } })
+      return row ?? null
+    }),
+
+  // Exec: every stored page body, for the admin editor.
+  allPageContent: execProcedure.query(({ ctx }) =>
+    ctx.prisma.pageContent.findMany({ select: { pageKey: true, html: true, updatedAt: true } })
+  ),
+
+  // Exec: save (or clear) a page's body. Empty html removes the override so the
+  // page falls back to its built-in copy.
+  upsertPageContent: execProcedure
+    .input(z.object({ pageKey: z.string().min(1).max(60), html: z.string().max(200000) }))
+    .mutation(async ({ ctx, input }) => {
+      const html = input.html.trim()
+      if (!html) { await ctx.prisma.pageContent.deleteMany({ where: { pageKey: input.pageKey } }); return { ok: true, cleared: true } }
+      await ctx.prisma.pageContent.upsert({ where: { pageKey: input.pageKey }, update: { html }, create: { pageKey: input.pageKey, html } })
+      return { ok: true }
+    }),
+
   // Exec: full section list for the admin editor.
   sections: execProcedure.query(({ ctx }) =>
     ctx.prisma.homeSection.findMany({ orderBy: { sortOrder: 'asc' } })
