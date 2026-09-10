@@ -10,7 +10,6 @@ import { trpcAuthed } from '@/lib/authToken'
 // via PanelHost, which the page also mounts.
 
 const ORANGE = 'var(--orange)'
-const FREE_JOBS = 3          // first 3 job listings are free
 const JOB_LIFE_DAYS = 21     // listings run for 21 days
 
 type App = { id: string; status: string; applicant: string; applicantId: string; coverNote: string | null; employerNote: string | null; createdAt: string }
@@ -34,10 +33,6 @@ export default function EmployerDashboardContent() {
       .catch(() => setLoaded(true))
   }, [])
 
-  const posted = jobs.length
-  const applicants = jobs.reduce((n, j) => n + j.applications.length, 0)
-  const remaining = Math.max(0, FREE_JOBS - posted)
-
   const shareJobs = async (url: string, title: string) => {
     try {
       if (navigator.share) await navigator.share({ title, url })
@@ -46,69 +41,24 @@ export default function EmployerDashboardContent() {
   }
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
-  const statCard = (n: number, label: string, color: string, bg: string) => (
-    <div style={{ flex: 1, background: bg, borderRadius: 10, padding: 10, textAlign: 'center' }}>
-      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 22, fontWeight: 900, color }}>{n}</div>
-      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontFamily: 'var(--font-ui)' }}>{label}</div>
-    </div>
-  )
-
   return (
     <div style={{ maxWidth: 640, margin: '0 auto', padding: 16 }}>
-      {/* Counter card */}
-      <div style={{ background: 'linear-gradient(135deg,#1a1a1a,#333)', borderRadius: 14, padding: 16, marginBottom: 14 }}>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginBottom: 10 }}>Your Job Listings</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {statCard(posted, 'POSTED', '#fff', 'rgba(255,255,255,0.1)')}
-          {statCard(applicants, 'APPLICANTS', 'var(--orange2)', 'rgba(255,255,255,0.1)')}
-          {statCard(remaining, 'FREE LEFT', '#22c55e', 'rgba(34,197,94,0.18)')}
-        </div>
+      {/* Header row — just a title and a Post a Job action. Everything else lives
+          inside each job card below. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a' }}>Candidate Management</div>
         <a href="/jobs/new" style={{ textDecoration: 'none' }}>
-          <div style={{ marginTop: 12, background: ORANGE, color: '#fff', borderRadius: 50, padding: 10, textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
-            {remaining > 0 ? `+ Post a Job (${remaining} free)` : '+ Post a Job'}
-          </div>
+          <div style={{ background: ORANGE, color: '#fff', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>+ Post a Job</div>
         </a>
-        <div onClick={() => openPanel('verifyMe')} style={{ marginTop: 8, textAlign: 'center', fontSize: 10, color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-ui)', fontWeight: 700, cursor: 'pointer' }}>🏢 Company details &amp; verification</div>
-      </div>
-
-      {/* Messages */}
-      <a href="/account?section=messages" style={{ textDecoration: 'none' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#FFF3EE', border: '1px solid #FFD4C0', borderRadius: 12, padding: 12, marginBottom: 14, cursor: 'pointer' }}>
-          <div style={{ fontSize: 22 }}>📨</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#1a1a1a' }}>Messages</div>
-            <div style={{ fontSize: 10, color: '#555', fontFamily: 'var(--font-ui)' }}>Candidate enquiries &amp; contact Grabitt</div>
-          </div>
-          <div style={{ color: ORANGE, fontWeight: 800, fontSize: 11, fontFamily: 'var(--font-ui)' }}>Open</div>
-        </div>
-      </a>
-
-      {/* Find Staff cross-link */}
-      <div onClick={() => openPanel('findStaff')} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8f9fa', border: '1px solid #eee', borderRadius: 12, padding: 12, marginBottom: 14, cursor: 'pointer' }}>
-        <div style={{ fontSize: 22 }}>🧑‍💼</div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#1a1a1a' }}>Find Staff</div>
-          <div style={{ fontSize: 10, color: '#555', fontFamily: 'var(--font-ui)' }}>Search candidates &amp; unlock profiles</div>
-        </div>
-        <div style={{ color: ORANGE, fontWeight: 800, fontSize: 11, fontFamily: 'var(--font-ui)' }}>Open</div>
-      </div>
-
-      {/* Share prompt */}
-      <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2))', borderRadius: 14, padding: 16, marginBottom: 14, textAlign: 'center' }}>
-        <div style={{ fontSize: 30, marginBottom: 4 }}>📣</div>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#fff', marginBottom: 4 }}>Get more applicants — share your jobs!</div>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.9)', fontFamily: 'var(--font-ui)', marginBottom: 12, lineHeight: 1.5 }}>Listings shared on social reach a wider audience. More eyes means more quality candidates.</div>
-        <button onClick={() => shareJobs(`${origin}/jobs`, 'Jobs on Grabitt')} style={{ width: '100%', background: '#fff', color: ORANGE, border: 'none', borderRadius: 50, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>📤 Share My Jobs</button>
       </div>
 
       {/* Listings */}
       {!loaded ? (
         <div style={{ textAlign: 'center', padding: 24, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
       ) : jobs.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '24px 0', color: '#777', fontFamily: 'var(--font-ui)', fontSize: 12, lineHeight: 1.6 }}>No live job listings yet.<br />Post your first job above 💼</div>
+        <div style={{ textAlign: 'center', padding: '24px 0', color: '#777', fontFamily: 'var(--font-ui)', fontSize: 12, lineHeight: 1.6 }}>No job adverts yet.<br />Post your first job above 💼</div>
       ) : (
         <>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: ORANGE, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>My Listings</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {jobs.map(j => {
               const dLeft = daysLeft(j.postedAt)
@@ -136,13 +86,15 @@ export default function EmployerDashboardContent() {
                     <a href={`/jobs/new?edit=${j.listingId}`} style={{ flex: 1, minWidth: 70, textDecoration: 'none' }}>
                       <div style={{ background: '#fff', color: '#1a1a1a', border: '1px solid #1a1a1a', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer', textAlign: 'center' }}>✏️ Edit</div>
                     </a>
+                    <button onClick={() => openPanel('jobMessages', { listingId: j.listingId, jobTitle: j.jobTitle })} style={{ flex: 1, minWidth: 70, background: '#fff', color: '#1a1a1a', border: '1px solid #1a1a1a', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>📨 Messages</button>
                     <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ flex: 1, minWidth: 70, background: ORANGE, color: '#fff', border: 'none', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>📤 Share</button>
                   </div>
-                  {/* Job Match — the paid Candidate Matching add-on for this advert. */}
+                  {/* Job Match — the paid Candidate Matching add-on, restricted to
+                      THIS advert (the search/unlocks can't be reused elsewhere). */}
                   {j.candidateMatching ? (
-                    <button onClick={() => openPanel('findStaff', { jobId: j.id })} style={{ marginTop: 6, width: '100%', background: '#FFF3EE', color: ORANGE, border: '1px solid #FFD4C0', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>🎯 View Job Match candidates</button>
+                    <button onClick={() => openPanel('findStaff', { jobId: j.id })} style={{ marginTop: 6, width: '100%', background: '#FFF3EE', color: ORANGE, border: '1px solid #FFD4C0', borderRadius: 50, padding: 8, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>🎯 Job Match — search candidates for this job</button>
                   ) : (
-                    <div style={{ marginTop: 6, fontSize: 9.5, color: '#999', fontFamily: 'var(--font-ui)', textAlign: 'center' }}>Job Match (paid) not added to this advert — add it when posting or editing.</div>
+                    <div style={{ marginTop: 6, fontSize: 9.5, color: '#999', fontFamily: 'var(--font-ui)', textAlign: 'center' }}>🎯 Job Match (paid) not added — add it when posting or editing this advert.</div>
                   )}
                 </div>
               )

@@ -779,6 +779,64 @@ function PanelBody() {
     )
   }
 
+  // ── JOB MESSAGES (per advert) ────────────────────────────────────────────────
+  // The candidate conversations for one job advert, reached only from Candidate
+  // Management — kept out of the general inbox so job chat stays with the job.
+  if (panel.id === 'jobMessages') {
+    type ThreadRow = {
+      id: string; listingId: string; lastMessageAt: string | null
+      participants: { userId: string; user: { id: string; displayName: string; avatar: string | null } }[]
+      messages: { id: string; senderId: string; body: string; blocked: boolean; readAt: string | null }[]
+    }
+    const listingId = panel.data?.listingId as string
+    const jobTitle = (panel.data?.jobTitle as string) || 'this job'
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [threads, setThreads] = useState<ThreadRow[]>([])
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [loadingThreads, setLoadingThreads] = useState(true)
+    const me = typeof window !== 'undefined' ? localStorage.getItem('grabitt_uid') : null
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      getTrpcClient()
+        .then(c => (c as any).messages.jobThreads.query({ listingId }))
+        .then((d: unknown) => setThreads(d as ThreadRow[]))
+        .catch(() => setThreads([]))
+        .finally(() => setLoadingThreads(false))
+    }, [listingId])
+
+    return (
+      <ActionPanel title={`📨 Messages — ${jobTitle}`} onClose={closePanel}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 10 }}>Candidate messages for this advert only.</div>
+        {loadingThreads ? (
+          <div style={{ textAlign: 'center', padding: 40, fontFamily: 'var(--font-ui)', fontSize: 13, color: '#aaa' }}>Loading…</div>
+        ) : threads.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#999' }}>No candidate messages yet for this job.</div>
+        ) : threads.map(t => {
+          const other = t.participants.find(p => p.userId !== me)?.user
+          const last = t.messages[0]
+          const unread = !!last && last.senderId !== me && !last.readAt
+          const preview = last ? (last.blocked ? '⚠️ Message hidden' : last.body) : 'Start chatting…'
+          const avatar = other?.avatar || '👤'
+          return (
+            <div key={t.id} onClick={() => openPanel('chatThread', { threadId: t.id, handle: other?.displayName || 'Candidate', listing: jobTitle, avatar, currentUserId: me || '' })}
+              style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #f5f5f5', alignItems: 'center', cursor: 'pointer' }}>
+              <div style={{ width: 44, height: 44, background: '#FFF3EE', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, color: 'var(--orange)', fontFamily: 'var(--font-ui)', flexShrink: 0 }}>
+                {avatar.length <= 2 ? avatar : (other?.displayName?.[0]?.toUpperCase() ?? '?')}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{other?.displayName || 'Candidate'}</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa' }}>{t.lastMessageAt ? relativeTime(String(t.lastMessageAt)) : ''}</span>
+                </div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: unread ? 'var(--dark)' : '#aaa', fontWeight: unread ? 800 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preview}</div>
+              </div>
+            </div>
+          )
+        })}
+      </ActionPanel>
+    )
+  }
+
   // ── MESSAGES ────────────────────────────────────────────────────────────────
   if (panel.id === 'messages') {
     type ThreadRow = {
@@ -1175,7 +1233,7 @@ function PanelBody() {
   }
 
   if (panel.id === 'findStaff') {
-    return <FindStaffPanel onClose={closePanel} openPanel={openPanel} />
+    return <FindStaffPanel onClose={closePanel} openPanel={openPanel} focusJobId={panel.data?.jobId as string | undefined} />
   }
 
   if (panel.id === 'seekerProfile') {

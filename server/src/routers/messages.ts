@@ -109,9 +109,15 @@ export const messagesRouter = router({
     // inbox labels each conversation with are fetched in one extra query.
     const listings = await ctx.prisma.listing.findMany({
       where: { id: { in: [...new Set(threads.map(t => t.listingId))] } },
-      select: { id: true, title: true, price: true, images: true },
+      select: { id: true, title: true, price: true, images: true, department: true, sellerId: true },
     })
     const listingById = new Map(listings.map(l => [l.id, l]))
+    // Job messages are managed inside the employer's Candidate Management area,
+    // not the general inbox — so hide the employer's OWN job threads here. The
+    // candidate still sees them in their inbox.
+    const jobOwnerHidden = new Set(
+      threads.filter(t => { const l = listingById.get(t.listingId); return l?.department === 'jobs' && l.sellerId === ctx.user.id }).map(t => t.id)
+    )
     // Unread count per thread — messages sent by the other party, not yet read.
     const unreadRows = threads.length ? await ctx.prisma.message.groupBy({
       by: ['threadId'],
@@ -121,13 +127,40 @@ export const messagesRouter = router({
     const unreadByThread = new Map(unreadRows.map(r => [r.threadId, r._count._all]))
     // The inbox preview shows the last message — mask it too, or blocked
     // contact details leak through the preview even though the thread hides them.
-    return threads.map(t => ({
+    return threads.filter(t => !jobOwnerHidden.has(t.id)).map(t => ({
       ...t,
       unreadCount: unreadByThread.get(t.id) ?? 0,
       messages: t.messages.map(m => maskBlocked(m, ctx.user.id)),
       listing: listingById.get(t.listingId) ?? null,
     }))
   }),
+
+  // Threads for one specific job advert (its listingId) that the caller takes
+  // part in — powers the per-job Messages view in Candidate Management, kept
+  // separate from the general inbox.
+  jobThreads: protectedProcedure
+    .input(z.object({ listingId: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const threads = await ctx.prisma.thread.findMany({
+        where: { listingId: input.listingId, participants: { some: { userId: ctx.user.id } } },
+        orderBy: { lastMessageAt: 'desc' },
+        include: {
+          participants: { include: { user: { select: { id: true, displayName: true, avatar: true } } } },
+          messages: { take: 1, orderBy: { createdAt: 'desc' } },
+        },
+      })
+      const unreadRows = threads.length ? await ctx.prisma.message.groupBy({
+        by: ['threadId'],
+        where: { threadId: { in: threads.map(t => t.id) }, senderId: { not: ctx.user.id }, readAt: null },
+        _count: { _all: true },
+      }) : []
+      const unreadByThread = new Map(unreadRows.map(r => [r.threadId, r._count._all]))
+      return threads.map(t => ({
+        ...t,
+        unreadCount: unreadByThread.get(t.id) ?? 0,
+        messages: t.messages.map(m => maskBlocked(m, ctx.user.id)),
+      }))
+    }),
 
   // Total unread messages for the signed-in user (for the nav Alerts badge).
   unreadCount: protectedProcedure.query(async ({ ctx }) =>

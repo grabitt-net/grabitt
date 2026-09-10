@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 
 export type PanelId =
-  | 'alerts' | 'saved' | 'rewards' | 'login' | 'messages' | 'sell' | 'help'
+  | 'alerts' | 'saved' | 'rewards' | 'login' | 'messages' | 'jobMessages' | 'sell' | 'help'
   | 'shield' | 'affiliate' | 'dept' | 'near' | 'grabit' | 'sponsors'
   | 'business' | 'businessVerify' | 'footer' | 'menu' | 'justlisted'
   | 'search' | 'savesearch' | 'savedSearches'

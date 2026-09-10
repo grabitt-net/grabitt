@@ -17,9 +17,14 @@ const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function liveJobsOf(prisma: any, employerId: string) {
   const now = new Date()
+  // The candidate database search (Find Staff / Job Match) is the paid Candidate
+  // Matching add-on, bought per advert — so only adverts that purchased it can be
+  // searched against, and each new job needs its own purchase. This gates search
+  // access, the search itself and CV unlocks (all go through this helper).
   return prisma.jobListing.findMany({
     where: {
       employerId,
+      candidateMatching: true,
       OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
       listing: { status: 'active' },
     },

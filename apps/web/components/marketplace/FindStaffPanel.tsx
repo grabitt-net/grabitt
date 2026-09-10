@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast, confirmDialog } from '@/lib/ui'
 import type { PanelId } from '@/context/PanelContext'
 import { trpcAuthed } from '@/lib/authToken'
@@ -165,7 +165,7 @@ type Access = {
   canSearch: boolean; profilesViewed: number
 }
 
-export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => void; openPanel: (id: PanelId, data?: Record<string, unknown>) => void }) {
+export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onClose: () => void; openPanel: (id: PanelId, data?: Record<string, unknown>) => void; focusJobId?: string }) {
   // Find Staff is a Business feature, and the candidate database is an add-on to
   // a live job advert. We check that up front rather than letting someone fill
   // in a search and then refusing them.
@@ -226,6 +226,19 @@ export default function FindStaffPanel({ onClose, openPanel }: { onClose: () => 
 
   const toggleLang = (l: string) => setLangs(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l])
   const toggleAttr = (key: string, o: string) => setAttrs(p => ({ ...p, [key]: p[key].includes(o) ? p[key].filter(x => x !== o) : [...p[key], o] }))
+
+  // Opened from a specific advert's "Job Match" button: jump straight into that
+  // advert's match (and only if it's one that purchased Candidate Matching, i.e.
+  // present in the gated liveJobs list) — locking the search to that job.
+  const autoRan = useRef(false)
+  useEffect(() => {
+    if (autoRan.current || !focusJobId || !access) return
+    if (access.liveJobs.some(j => j.id === focusJobId)) {
+      autoRan.current = true
+      setMode('search')
+      runMatchForJob(focusJobId)
+    }
+  }, [focusJobId, access]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Search the database FOR a chosen advert — the match uses that advert's spec.
   const runMatchForJob = async (jobId: string) => {
