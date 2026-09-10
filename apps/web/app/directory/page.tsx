@@ -10,6 +10,7 @@ import PanelHost from '@/components/marketplace/PanelHostLazy'
 import PageHeroBanner from '@/components/marketplace/PageHeroBanner'
 import Place from '@/components/marketplace/Place'
 import { createLooseTrpcClient } from '@/lib/trpc'
+import { BUSINESS_CATEGORIES } from '@/lib/businessCategories'
 
 type Listing = { id: string; name: string; category: string | null; description: string | null; location: string | null; logoUrl: string | null; website: string | null }
 
@@ -23,8 +24,11 @@ export default function DirectoryPage() {
       .then(d => setListings(d as unknown as Listing[])).catch(() => setListings([]))
   }, [])
 
-  // Filters derived from the live listings (business type + location).
-  const categories = ['All', ...Array.from(new Set((listings ?? []).map(l => l.category).filter((c): c is string => !!c))).sort()]
+  // Business type shows ALL main categories (even empty ones — no-results is fine),
+  // plus any legacy category values present on listings that aren't in the list.
+  const present = Array.from(new Set((listings ?? []).map(l => l.category).filter((c): c is string => !!c)))
+  const extra = present.filter(c => !BUSINESS_CATEGORIES.includes(c)).sort()
+  const categories = ['All', ...BUSINESS_CATEGORIES, ...extra]
   const locations = ['All', ...Array.from(new Set((listings ?? []).map(l => l.location).filter((c): c is string => !!c))).sort()]
   const shown = (listings ?? []).filter(l => (cat === 'All' || l.category === cat) && (loc === 'All' || l.location === loc))
 
