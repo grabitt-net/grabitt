@@ -119,6 +119,17 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const [seg, setSeg] = useState<Seg>('active')
   const sortNewest = true // My Listings default to newest-first
 
+  // When Messages opens (e.g. from the Alerts icon → /account?section=messages),
+  // scroll the inbox into view so the user lands on the messages box, not the
+  // menu above it.
+  const messagesRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (section === 'messages' && me?.id) {
+      const t = setTimeout(() => messagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120)
+      return () => clearTimeout(t)
+    }
+  }, [section, me?.id])
+
   // Business accounts get a Business Centre section (and no "add business"); the
   // rest of the menu is shared with personal accounts.
   const sections: { id: SectionId; label: string; icon: IconName }[] = isAgent
@@ -451,7 +462,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
           {section === 'messages' && (
             /* Advertising banner on top, then the full inbox (list + preview),
                all in one rounded container. */
-            <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+            <div ref={messagesRef} style={{ ...card, padding: 0, overflow: 'hidden', scrollMarginTop: 12 }}>
               {me?.id && <InboxClient me={me.id} alertUnread={0} initial={params.get('thread')} />}
             </div>
           )}
