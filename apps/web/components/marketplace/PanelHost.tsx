@@ -32,6 +32,7 @@ import MultibuyEditor, { type MultibuyTier } from './MultibuyEditor'
 import { attributesFor } from '@/lib/listingAttributes'
 import SponsorshipContent from './SponsorshipContent'
 import ApplicationsBoardPanel from './ApplicationsBoardPanel'
+import ApplicantsKanban from './ApplicantsKanban'
 import dynamic from 'next/dynamic'
 
 // Leaflet needs window — load the map pin-picker client-only.
@@ -1978,7 +1979,12 @@ function PanelBody() {
   }
 
   if (panel.id === 'applications') {
-    return <ApplicationsBoardPanel onClose={closePanel} openPanel={openPanel} focusJobId={panel.data?.jobId as string | undefined} />
+    const jobId = panel.data?.jobId as string | undefined
+    // Single job → the full stage-column applicant board; no job → the legacy
+    // all-jobs list.
+    return jobId
+      ? <ApplicantsKanban jobId={jobId} onClose={closePanel} openPanel={openPanel} />
+      : <ApplicationsBoardPanel onClose={closePanel} openPanel={openPanel} />
   }
 
   // ── SEARCH RESULTS ──────────────────────────────────────────────────────────

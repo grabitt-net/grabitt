@@ -785,6 +785,46 @@ export const jobsRouter = router({
       return { ok: true, status: input.status }
     }),
 
+  // Employer sets a job's overall status: open (active), filled (sold) or removed.
+  setJobStatus: protectedProcedure
+    .input(z.object({ listingId: z.string(), status: z.enum(['active', 'sold', 'removed']) }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUnique({ where: { id: input.listingId }, select: { sellerId: true, department: true } })
+      if (!listing || listing.sellerId !== ctx.user.id || listing.department !== 'jobs') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'That is not your job advert.' })
+      }
+      await ctx.prisma.listing.update({ where: { id: input.listingId }, data: { status: input.status as never } })
+      return { ok: true, status: input.status }
+    }),
+
+  // Exec: one job's applicants with full candidate detail, for admin monitoring.
+  adminApplications: execProcedure
+    .input(z.object({ jobListingId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const jl = await ctx.prisma.jobListing.findUnique({
+        where: { id: input.jobListingId },
+        include: {
+          listing: { select: { id: true, status: true, createdAt: true } },
+          applications: { orderBy: { createdAt: 'desc' }, include: { applicant: { select: { id: true, displayName: true, email: true } } } },
+        },
+      })
+      if (!jl) throw new TRPCError({ code: 'NOT_FOUND' })
+      return {
+        id: jl.id, listingId: jl.listingId, jobTitle: jl.jobTitle, company: jl.company,
+        questions: (jl.applicationQuestions ?? []) as { id: string; label: string }[],
+        applications: jl.applications.map(a => ({
+          id: a.id, status: a.status, coverNote: a.coverNote, employerNote: a.employerNote,
+          applicantId: a.applicant.id, applicant: a.applicant.displayName, createdAt: a.createdAt,
+          // Admin sees full detail for monitoring/security.
+          fullName: a.fullName, email: a.email ?? a.applicant.email, phone: a.phone, location: a.location,
+          rightToWork: a.rightToWork, languages: a.languages, experienceMonths: a.experienceMonths,
+          currentRole: a.currentRole, expectedSalary: a.expectedSalary, availability: a.availability,
+          cvUrl: a.cvUrl, suitabilityScore: a.suitabilityScore,
+          answers: (a.answers ?? {}) as Record<string, string | number | boolean>,
+        })),
+      }
+    }),
+
   // Exec suite: every job listing on the platform, for admin monitoring.
   adminList: execProcedure
     .input(z.object({ status: z.enum(['all', 'active', 'expired']).default('all') }).optional())

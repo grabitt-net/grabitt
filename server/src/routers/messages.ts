@@ -22,10 +22,16 @@ export const messagesRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot message yourself' })
       }
 
+      // Match a thread that already has BOTH people on this listing — so a job
+      // advert can hold a separate conversation per candidate (not one shared
+      // thread keyed only by the employer).
       const existing = await ctx.prisma.thread.findFirst({
         where: {
           listingId: input.listingId,
-          participants: { some: { userId: ctx.user.id } },
+          AND: [
+            { participants: { some: { userId: ctx.user.id } } },
+            { participants: { some: { userId: input.sellerId } } },
+          ],
         },
       })
       if (existing) return existing
