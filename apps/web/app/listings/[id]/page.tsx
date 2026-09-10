@@ -722,7 +722,7 @@ function ListingInner() {
                   <FulChip on={!listing.deliveryMethod} label={t('Collect')} />
                   {!isOwner && (
                     <button onClick={() => openPanel('report', { title: listing.title, id: listing.id })} style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 700, color: '#9a9a9a' }}>
-                      <Icon name="flag" size={13} strokeWidth={1.9} /> {t('Report')}
+                      <Icon name="flag" size={13} strokeWidth={1.9} /> {t('Report this Listing')}
                     </button>
                   )}
                 </div>
