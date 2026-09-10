@@ -11,6 +11,7 @@ import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import BannerSlot from '@/components/marketplace/BannerSlot'
+import PageHeroBanner from '@/components/marketplace/PageHeroBanner'
 import Icon from '@/components/marketplace/Icon'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
@@ -267,8 +268,11 @@ function AccountInner() {
 
   return (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-      <Topbar title={me?.isBusiness && !personalView ? 'Business Hub' : 'My Hub'} />
+      <Topbar />
       <QuickActions />
+      {/* Uploadable page header banner (Admin → Categories → Page hero banners),
+          replacing the old "My Hub"/"Business Hub" title text. */}
+      <PageHeroBanner dept={me?.isBusiness && !personalView ? 'business-hub' : 'hub'} alt={me?.isBusiness && !personalView ? 'Business Hub' : 'My Hub'} />
       {needsBizOnboarding && <BusinessOnboardingModal onDone={() => load()} />}
 
       {/* Both personal and business accounts use the same Member Zone dashboard;
