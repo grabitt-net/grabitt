@@ -279,7 +279,13 @@ export async function handleStripeEvent(event: Stripe.Event) {
         const sponsoredUntil = pi.metadata.sponsored === '1'
           ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
           : undefined
-        await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active', createdAt: new Date(), bumpedAt: new Date(), ...(sponsoredUntil ? { sponsoredUntil } : {}) } }).catch(() => {})
+        // Featured boost bundled into publish (jobs/property) — same rule as
+        // items: appear in the homepage Featured strip for the paid weeks.
+        const featWeeks = Number(pi.metadata.featuredWeeks) || 0
+        const featuredData = featWeeks > 0
+          ? { isFeatured: true, featuredUntil: new Date(Date.now() + featWeeks * 7 * 86400000) }
+          : {}
+        await prisma.listing.update({ where: { id: pi.metadata.listingId }, data: { status: 'active', createdAt: new Date(), bumpedAt: new Date(), ...(sponsoredUntil ? { sponsoredUntil } : {}), ...featuredData } }).catch(() => {})
         // Candidate Matching add-on (jobs) — enable it on this advert now it's paid.
         if (pi.metadata.candidateMatching === '1') {
           await prisma.jobListing.updateMany({ where: { listingId: pi.metadata.listingId }, data: { candidateMatching: true } }).catch(() => {})

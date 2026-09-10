@@ -73,7 +73,13 @@ export const crmRouter = router({
         return { ok: true, affected: ids.length }
       }
       if (action === 'feature' || action === 'unfeature') {
-        await ctx.prisma.listing.updateMany({ where: { id: { in: ids } }, data: { isFeatured: action === 'feature' } })
+        // Feature needs BOTH isFeatured and a future featuredUntil — the public
+        // Featured strip filters on featuredUntil > now, so setting the flag
+        // alone (the old behaviour) never showed. Admin-featuring runs 30 days.
+        const data = action === 'feature'
+          ? { isFeatured: true, featuredUntil: new Date(Date.now() + 30 * 86400000) }
+          : { isFeatured: false, featuredUntil: null }
+        await ctx.prisma.listing.updateMany({ where: { id: { in: ids } }, data })
         return { ok: true, affected: ids.length }
       }
       if (action === 'activate' || action === 'remove') {

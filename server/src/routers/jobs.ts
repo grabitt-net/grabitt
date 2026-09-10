@@ -6,7 +6,7 @@ import { buildCvSnapshot } from '../lib/cvSnapshot'
 import { overflowFeeCents } from '../lib/businessLimits'
 import { scoreSuitability } from '../lib/suitability'
 import { getStripe } from '../lib/stripe'
-import { JOBS_PRICING } from '@grabitt/design-tokens'
+import { JOBS_PRICING, PRICES } from '@grabitt/design-tokens'
 import { validateDiscount, recordRedemption } from '../lib/discounts'
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
@@ -419,6 +419,9 @@ export const jobsRouter = router({
       // Optional paid Candidate Matching add-on for this advert (charged before
       // the advert goes live).
       candidateMatching: z.boolean().optional(),
+      // Optional paid Featured boost (same rule as items: €1.99/week) — puts the
+      // advert in the homepage Featured strip for the chosen number of weeks.
+      featuredWeeks: z.number().int().min(0).max(8).optional(),
       description: z.string().max(4000).optional(),
       salaryMin: z.number().min(0).optional(),
       salaryMax: z.number().min(0).optional(),
@@ -448,7 +451,9 @@ export const jobsRouter = router({
       // Matching add-on. A discount code (held in Grabitt, not Stripe) comes off
       // the whole total before checkout; a €0 total publishes free, bypassing
       // Stripe entirely.
-      const baseTotal = listingFee + (input.candidateMatching ? JOBS_PRICING.candidateMatchingCents : 0)
+      const featuredWeeks = input.featuredWeeks ?? 0
+      const featuredCents = featuredWeeks > 0 ? Math.round(PRICES.featuredPerWeek * featuredWeeks * 100) : 0
+      const baseTotal = listingFee + (input.candidateMatching ? JOBS_PRICING.candidateMatchingCents : 0) + featuredCents
       let fee = baseTotal
       let discountCents = 0
       let discountCodeId: string | null = null
@@ -468,6 +473,9 @@ export const jobsRouter = router({
           department: 'jobs',
           condition: 'good',
           status: fee > 0 ? 'draft' : 'active',
+          // Free publish (within allowance or a 100%-off code) that still bought
+          // the Featured boost: switch it on now. Paid flows get it in the webhook.
+          ...(fee <= 0 && featuredWeeks > 0 ? { isFeatured: true, featuredUntil: new Date(Date.now() + featuredWeeks * 7 * 86400000) } : {}),
           images: input.images ?? [],
           location: input.location,
           ...(input.lat != null && input.lng != null ? { lat: input.lat, lng: input.lng } : {}),
@@ -515,8 +523,9 @@ export const jobsRouter = router({
 
       // Over allowance and/or Candidate Matching — pay, then the webhook flips
       // draft→active and enables Candidate Matching on this advert.
-      const name = input.candidateMatching
-        ? `Grabitt job advert + Candidate Matching — ${input.jobTitle} (14 days)`
+      const extras = [input.candidateMatching && 'Candidate Matching', featuredWeeks > 0 && `Featured ${featuredWeeks}wk`].filter(Boolean).join(' + ')
+      const name = extras
+        ? `Grabitt job advert + ${extras} — ${input.jobTitle} (14 days)`
         : `Grabitt job advert — ${input.jobTitle} (14 days)`
       const session = await getStripe().checkout.sessions.create({
         mode: 'payment',
@@ -525,6 +534,7 @@ export const jobsRouter = router({
         payment_intent_data: { metadata: {
           kind: 'listing_publish', listingId: created.id,
           ...(input.candidateMatching ? { candidateMatching: '1' } : {}),
+          ...(featuredWeeks > 0 ? { featuredWeeks: String(featuredWeeks) } : {}),
           ...(discountCodeId ? { discountCodeId, discountUserId: ctx.user.id, discountCents: String(discountCents), originalCents: String(baseTotal) } : {}),
         } },
         success_url: `${appUrl()}/listings/${created.id}?published=1`,

@@ -14,7 +14,9 @@ import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
 import { autoFillDistances } from '@/lib/nearby'
 import { PROPERTY_FEATURES } from '@/lib/propertyFeatures'
 import PromoField from '@/components/marketplace/PromoField'
-import { PROPERTY_PRICING } from '@grabitt/design-tokens'
+import { PROPERTY_PRICING, PRICES } from '@grabitt/design-tokens'
+
+const FEATURED_PER_WEEK_CENTS = Math.round(PRICES.featuredPerWeek * 100)
 import { AGENTS_ENABLED } from '@/lib/flags'
 import { Section, Row, Field, Input, Textarea, Select, FormError, StepTabs, SubmitButton } from '@/components/marketplace/FormKit'
 import type { IconName } from '@/components/marketplace/Icon'
@@ -63,6 +65,7 @@ export default function NewPropertyPage() {
   const [photos, setPhotos] = useState<string[]>([])
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [sponsored, setSponsored] = useState(false)
+  const [featuredWeeks, setFeaturedWeeks] = useState(0)
   const [autoDist, setAutoDist] = useState<'idle' | 'loading' | 'done'>('idle')
   const toggleFeature = (slug: string) => setFeatures(p => p.includes(slug) ? p.filter(x => x !== slug) : [...p, slug])
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
@@ -246,6 +249,7 @@ export default function NewPropertyPage() {
         ...(f.distBeach && { distBeach: Number(f.distBeach) }),
         ...(features.length ? { features } : {}),
         ...(sponsored ? { sponsored: true } : {}),
+        ...(featuredWeeks > 0 ? { featuredWeeks } : {}),
         ...(appliedPromo ? { discountCode: appliedPromo.code } : {}),
       })
       try { localStorage.removeItem(PROP_DRAFT_KEY) } catch {}
@@ -462,10 +466,30 @@ export default function NewPropertyPage() {
             </div>
           </label>
 
+          {/* Featured boost — same rule as items: €1.99/week in the homepage
+              Featured strip. Charged with the listing, before it goes live. */}
+          <div style={{ background: featuredWeeks > 0 ? '#FFF8F4' : '#fff', border: `1.5px solid ${featuredWeeks > 0 ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 14, padding: '14px 16px', marginTop: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)' }}>⭐ Feature this advert</div>
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--orange)' }}>€{PRICES.featuredPerWeek.toFixed(2)} / week</div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#666', lineHeight: 1.55, margin: '4px 0 10px' }}>
+              Show your property in the <strong>Featured carousel on the homepage</strong>. Choose how many weeks:
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+              {[0, 1, 2, 3, 4].map(w => (
+                <button key={w} type="button" onClick={() => setFeaturedWeeks(w)} style={{ padding: '10px 4px', borderRadius: 12, border: `2px solid ${featuredWeeks === w ? 'var(--orange)' : '#e0d8d0'}`, background: featuredWeeks === w ? '#FFF8F4' : '#fff', cursor: 'pointer', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 800, color: featuredWeeks === w ? 'var(--orange)' : 'var(--dark)' }}>{w === 0 ? 'Off' : `${w}wk`}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 2 }}>{w === 0 ? '—' : `€${(PRICES.featuredPerWeek * w).toFixed(2)}`}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Discount code — applied here so it's taken off before checkout. */}
           <div style={{ marginTop: 14 }}>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 6 }}>Have a discount code?</div>
-            <PromoField kind="property" amountCents={PROPERTY_PRICING.privateExtraListingCents + (sponsored ? PROPERTY_PRICING.sponsoredCents : 0)} onApplied={setAppliedPromo} />
+            <PromoField kind="property" amountCents={PROPERTY_PRICING.privateExtraListingCents + (sponsored ? PROPERTY_PRICING.sponsoredCents : 0) + featuredWeeks * FEATURED_PER_WEEK_CENTS} onApplied={setAppliedPromo} />
           </div>
         </Section>}
 

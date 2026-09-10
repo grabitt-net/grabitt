@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure, execProcedure } from '../trpc'
 import { getStripe } from '../lib/stripe'
-import { businessTierForGrade, PROPERTY_PRICING } from '@grabitt/design-tokens'
+import { businessTierForGrade, PROPERTY_PRICING, PRICES } from '@grabitt/design-tokens'
 import { validateDiscount, recordRedemption } from '../lib/discounts'
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
@@ -21,6 +21,9 @@ export const propertyRouter = router({
       propertyType: z.string().max(40).optional(),
       // Opt-in €4.99 sponsored boost: top of the area's results for 7 days.
       sponsored: z.boolean().optional(),
+      // Optional paid Featured boost (same rule as items: €1.99/week) — puts the
+      // advert in the homepage Featured strip for the chosen number of weeks.
+      featuredWeeks: z.number().int().min(0).max(8).optional(),
       bedrooms: z.number().int().min(0).max(50).optional(),
       bathrooms: z.number().int().min(0).max(50).optional(),
       m2: z.number().min(0).max(1_000_000).optional(),
@@ -75,7 +78,9 @@ export const propertyRouter = router({
       // sponsored boost. A discount code applies to the whole total; a 100%-off
       // code (total €0) publishes for free and bypasses Stripe entirely.
       const listingFee = usedThisMonth >= freeAllowance ? PROPERTY_PRICING.privateExtraListingCents : 0
-      const baseTotal = listingFee + (input.sponsored ? PROPERTY_PRICING.sponsoredCents : 0)
+      const featuredWeeks = input.featuredWeeks ?? 0
+      const featuredCents = featuredWeeks > 0 ? Math.round(PRICES.featuredPerWeek * featuredWeeks * 100) : 0
+      const baseTotal = listingFee + (input.sponsored ? PROPERTY_PRICING.sponsoredCents : 0) + featuredCents
       let fee = baseTotal
       let discountCents = 0
       let discountCodeId: string | null = null
@@ -102,6 +107,7 @@ export const propertyRouter = router({
           // the sponsored boost: open the 7-day window now. Paid flows get it in
           // the webhook after payment.
           ...(fee <= 0 && input.sponsored ? { sponsoredUntil: new Date(Date.now() + PROPERTY_PRICING.sponsoredDays * 24 * 60 * 60 * 1000) } : {}),
+          ...(fee <= 0 && featuredWeeks > 0 ? { isFeatured: true, featuredUntil: new Date(Date.now() + featuredWeeks * 7 * 86400000) } : {}),
           images: input.images ?? [],
           location: input.location,
           ...(input.lat != null && input.lng != null ? { lat: input.lat, lng: input.lng } : {}),
@@ -157,8 +163,9 @@ export const propertyRouter = router({
 
       // Over the free allowance (€29) and/or a €4.99 sponsored boost — pay, then
       // the webhook flips draft→active and applies the sponsored window.
-      const name = input.sponsored
-        ? `Grabitt property advert + 7-day sponsored boost — ${input.title}`
+      const extras = [input.sponsored && '7-day sponsored boost', featuredWeeks > 0 && `Featured ${featuredWeeks}wk`].filter(Boolean).join(' + ')
+      const name = extras
+        ? `Grabitt property advert + ${extras} — ${input.title}`
         : `Grabitt property advert — ${input.title}`
       const session = await getStripe().checkout.sessions.create({
         mode: 'payment',
@@ -167,6 +174,7 @@ export const propertyRouter = router({
         payment_intent_data: { metadata: {
           kind: 'listing_publish', listingId: created.id,
           ...(input.sponsored ? { sponsored: '1' } : {}),
+          ...(featuredWeeks > 0 ? { featuredWeeks: String(featuredWeeks) } : {}),
           ...(discountCodeId ? { discountCodeId, discountUserId: ctx.user.id, discountCents: String(discountCents), originalCents: String(baseTotal) } : {}),
         } },
         success_url: `${appUrl()}/listings/${created.id}?published=1`,

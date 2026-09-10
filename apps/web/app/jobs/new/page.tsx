@@ -15,9 +15,10 @@ import { JOB_SECTORS, JOB_LANGUAGES } from '@/lib/jobCategories'
 import { Section, Row, Field, Input, Textarea, Select, Pill, Check, FormError, StepTabs, SubmitButton } from '@/components/marketplace/FormKit'
 import type { IconName } from '@/components/marketplace/Icon'
 import PromoField from '@/components/marketplace/PromoField'
-import { JOBS_PRICING } from '@grabitt/design-tokens'
+import { JOBS_PRICING, PRICES } from '@grabitt/design-tokens'
 
 const eur = (c: number) => `€${(c / 100).toFixed(2)}`
+const FEATURED_PER_WEEK_CENTS = Math.round(PRICES.featuredPerWeek * 100)
 
 // Experience-required buckets — same vocabulary as the candidate profile; the
 // value is the lower-bound months stored on the advert for auto-matching.
@@ -55,6 +56,7 @@ export default function PostJobPage() {
   const [requirements, setRequirements] = useState<string[]>([])
   // Candidate Matching is a paid add-on offered on the final step.
   const [matchingOptIn, setMatchingOptIn] = useState(false)
+  const [featuredWeeks, setFeaturedWeeks] = useState(0)
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountCents: number } | null>(null)
   const sectorJobs = JOB_SECTORS.find(s => s.name === f.sector)?.jobs ?? []
   const toggleRole = (r: string) => setRoles(p => p.includes(r) ? p.filter(x => x !== r) : [...p, r])
@@ -172,6 +174,7 @@ export default function PostJobPage() {
         ...(f.startDate && { startDate: f.startDate }),
         ...(pin ? { lat: pin.lat, lng: pin.lng } : {}),
         ...(matchingOptIn ? { candidateMatching: true } : {}),
+        ...(featuredWeeks > 0 ? { featuredWeeks } : {}),
         ...(appliedPromo?.code ? { discountCode: appliedPromo.code } : {}),
         ...(questions.some(q => q.label.trim()) ? {
           applicationQuestions: questions
@@ -347,6 +350,26 @@ export default function PostJobPage() {
             <Check label={`Add Candidate Matching — ${eur(JOBS_PRICING.candidateMatchingCents)}`} checked={matchingOptIn} onChange={v => { setMatchingOptIn(v); if (!v) setAppliedPromo(null) }} />
           </div>
 
+          {/* Featured boost — same rule as items: €1.99/week in the homepage
+              Featured strip. Paid before the advert goes live. */}
+          <div style={{ border: `2px solid ${featuredWeeks > 0 ? 'var(--orange)' : 'var(--line)'}`, background: featuredWeeks > 0 ? '#FFF3EE' : 'var(--bg)', borderRadius: 14, padding: 16, marginTop: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 900, color: 'var(--dark)' }}>⭐ Feature this advert</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: 'var(--orange)' }}>{eur(FEATURED_PER_WEEK_CENTS)} / week</div>
+            </div>
+            <p style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, lineHeight: 1.6, color: '#3a3a3a', margin: '8px 0 12px' }}>
+              Show your advert in the Featured carousel on the homepage for more views. Choose how many weeks:
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+              {[0, 1, 2, 3, 4].map(w => (
+                <button key={w} type="button" onClick={() => setFeaturedWeeks(w)} style={{ padding: '10px 4px', borderRadius: 12, border: `2px solid ${featuredWeeks === w ? 'var(--orange)' : '#e0d8d0'}`, background: featuredWeeks === w ? '#FFF3EE' : '#fff', cursor: 'pointer', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 800, color: featuredWeeks === w ? 'var(--orange)' : 'var(--dark)' }}>{w === 0 ? 'Off' : `${w}wk`}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 2 }}>{w === 0 ? '—' : eur(FEATURED_PER_WEEK_CENTS * w)}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Discount code — held in Grabitt and applied to the total before it's
               sent to Stripe (a 100%-off code posts the advert free). */}
           <div style={{ marginTop: 14 }}>
@@ -354,7 +377,7 @@ export default function PostJobPage() {
               <PromoField
                 kind="job"
                 category="job"
-                amountCents={matchingOptIn ? JOBS_PRICING.candidateMatchingCents : JOBS_PRICING.perJobCents}
+                amountCents={(matchingOptIn ? JOBS_PRICING.candidateMatchingCents : JOBS_PRICING.perJobCents) + featuredWeeks * FEATURED_PER_WEEK_CENTS}
                 onApplied={setAppliedPromo}
               />
             </Field>
