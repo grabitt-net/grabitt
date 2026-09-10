@@ -1,14 +1,34 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createLooseTrpcClient } from '@/lib/trpc'
+import { usePanel } from '@/context/PanelContext'
+import { PARAM_TO_PANEL } from './PanelDeepLink'
 
 type Slide = { id: string; heading: string | null; subheading: string | null; imageUrl: string; linkUrl: string | null }
+
+// If a slide's Link URL points at a known panel deep-link (e.g. "/?sell=1",
+// "?sell=1" or just "sell"), return that panel id so clicking the banner opens
+// the popup client-side instead of doing a full navigation. Admin-controlled —
+// nothing about which banner is hardcoded here.
+function panelFromLink(linkUrl: string | null | undefined) {
+  if (!linkUrl) return null
+  const raw = linkUrl.trim()
+  const bare = raw.replace(/^[/?#]+/, '').toLowerCase()
+  if (PARAM_TO_PANEL[bare]) return PARAM_TO_PANEL[bare]
+  const qs = raw.includes('?') ? raw.slice(raw.indexOf('?') + 1) : ''
+  if (qs) {
+    const params = new URLSearchParams(qs)
+    for (const key of Object.keys(PARAM_TO_PANEL)) if (params.has(key)) return PARAM_TO_PANEL[key]
+  }
+  return null
+}
 
 // CMS-driven hero header. Reads the hero slides (managed from Admin → Homepage),
 // so the header image, headline and link are all updatable from the backend.
 // The image is fixed within the header (no parallax movement). Falls back to a
 // branded gradient when no slide is set, so the page never looks empty.
 export default function ParallaxHeader() {
+  const { openPanel } = usePanel()
   const [slides, setSlides] = useState<Slide[]>([])
   const [idx, setIdx] = useState(0)
   // Track whether the slides query has resolved, so we don't flash the orange
@@ -73,6 +93,16 @@ export default function ParallaxHeader() {
       )}
     </section>
   )
+
+  // A link that maps to a panel (e.g. "/?sell=1") opens the popup in-place.
+  const linkPanel = panelFromLink(slide?.linkUrl)
+  if (linkPanel) {
+    return (
+      <div role="button" tabIndex={0} onClick={() => openPanel(linkPanel)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') openPanel(linkPanel) }} style={{ cursor: 'pointer', display: 'block' }}>
+        {inner}
+      </div>
+    )
+  }
 
   if (slide?.linkUrl) {
     return (

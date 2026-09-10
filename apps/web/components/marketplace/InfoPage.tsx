@@ -80,11 +80,16 @@ export default function InfoPage({ title, intro, pills, hero, banner, dept, topb
   // header banner for that page from Categories → Page hero banners, so every
   // footer page inherits the same uploadable header block as the others.
   const [autoBanner, setAutoBanner] = useState<string | null>(null)
+  // Whether we yet know which header to show. When a dept is given we hold the
+  // header until the query resolves, so the orange title band never flashes up
+  // and then gets replaced by the uploaded banner a moment later.
+  const [resolved, setResolved] = useState(!dept || !!banner)
   useEffect(() => {
     if (!dept || banner) return
     createLooseTrpcClient().homepage.categoryHeader.query({ department: dept })
       .then(h => setAutoBanner((h as { heroBanner?: string | null } | null)?.heroBanner ?? null))
       .catch(() => {})
+      .finally(() => setResolved(true))
   }, [dept, banner])
   const effBanner = banner ?? autoBanner
   return (
@@ -95,7 +100,13 @@ export default function InfoPage({ title, intro, pills, hero, banner, dept, topb
 
         {/* Admin-set wide banner (managed in Categories → Page hero banners) takes
             the place of the title band when present, matching the category pages. */}
-        {effBanner ? (
+        {!resolved ? (
+          /* Header undecided — reserve a little space rather than flashing the
+             orange band, which would then be swapped for the uploaded banner. */
+          <div style={{ maxWidth: 1000, margin: '18px auto 6px', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
+            <div style={{ borderRadius: 20, background: 'var(--sand)', height: 96, opacity: 0.5 }} />
+          </div>
+        ) : effBanner ? (
           <div style={{ maxWidth: 1000, margin: '14px auto 6px', padding: '0 18px', width: '100%', boxSizing: 'border-box' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={effBanner} alt={title} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 16 }} />

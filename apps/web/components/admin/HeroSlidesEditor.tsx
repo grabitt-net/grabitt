@@ -68,7 +68,8 @@ export default function HeroSlidesEditor() {
           <Field label="Heading (optional)"><input value={form.heading} onChange={e => setForm(f => ({ ...f, heading: e.target.value }))} style={inp} placeholder="Leave blank for an image-only slide" /></Field>
           <Field label="Subheading (optional)"><input value={form.subheading} onChange={e => setForm(f => ({ ...f, subheading: e.target.value }))} style={inp} placeholder="Buy & sell locally — safely." /></Field>
           <ImageUploadField label="Image" kind="hero" hint="Wide landscape works best." value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} />
-          <Field label="Link URL (optional)"><input value={form.linkUrl} onChange={e => setForm(f => ({ ...f, linkUrl: e.target.value }))} style={inp} placeholder="/listings or https://…" /></Field>
+          <Field label="Link URL (optional)"><input value={form.linkUrl} onChange={e => setForm(f => ({ ...f, linkUrl: e.target.value }))} style={inp} placeholder="/?sell=1 (open Sell popup), /listings or https://…" /></Field>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, color: '#999', marginTop: -4 }}>Tip: use <b>/?sell=1</b> to open the Sell popup, <b>/?help=1</b> for Help, or any page/URL.</div>
           <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>
             <input type="checkbox" checked={form.active} onChange={e => setForm(f => ({ ...f, active: e.target.checked }))} /> Show this slide
           </label>

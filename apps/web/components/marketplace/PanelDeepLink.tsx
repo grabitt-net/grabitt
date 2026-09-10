@@ -6,7 +6,7 @@ import { usePanel, type PanelId } from '@/context/PanelContext'
 // Opens a panel from a URL query, so links like /?help=1 (from the Grabitt Team
 // channel, emails, etc.) actually open the Help Centre instead of just landing
 // on the home page. Add more param → panel mappings here as needed.
-const PARAM_TO_PANEL: Record<string, PanelId> = {
+export const PARAM_TO_PANEL: Record<string, PanelId> = {
   help: 'help',
   sell: 'sell',
   invite: 'invite',
