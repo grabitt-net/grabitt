@@ -29,7 +29,7 @@ export default function DirectoryListingPage() {
   return (
     <PanelProvider>
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 60, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-        <Topbar title="Business Directory" />
+        <Topbar title="Business Directory" back backFallback="/directory" />
         <QuickActions />
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 14px' }}>
           <Link href="/directory" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#1a1a1a', textDecoration: 'none' }}>Directory</Link>
