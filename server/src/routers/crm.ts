@@ -102,6 +102,61 @@ export const crmRouter = router({
       return { ok: true, deleted: hardIds.length, removed: softIds.length }
     }),
 
+  // Full detail of one listing for the admin editor.
+  listingAdminDetail: execProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const l = await ctx.prisma.listing.findUnique({
+        where: { id: input.id },
+        select: {
+          id: true, title: true, description: true, price: true, department: true, subcategory: true,
+          condition: true, brand: true, colour: true, size: true, images: true, location: true,
+          stock: true, deliveryFee: true, deliveryMethod: true, status: true, isFeatured: true,
+          seller: { select: { displayName: true, email: true } },
+        },
+      })
+      if (!l) throw new TRPCError({ code: 'NOT_FOUND', message: 'Listing not found' })
+      return { ...l, price: Number(l.price), deliveryFee: l.deliveryFee == null ? null : Number(l.deliveryFee) }
+    }),
+
+  // Admin edit of any listing — the same core fields the seller can change. Only
+  // the keys sent are updated; search tags are re-derived when the words change.
+  updateListingAdmin: execProcedure
+    .input(z.object({
+      id: z.string().uuid(),
+      title: z.string().min(4).max(100).optional(),
+      description: z.string().max(2000).optional(),
+      price: z.number().min(0).max(9_999_999).optional(),
+      department: z.string().optional(),
+      subcategory: z.string().max(60).nullable().optional(),
+      condition: z.string().optional(),
+      brand: z.string().max(60).nullable().optional(),
+      colour: z.string().max(40).nullable().optional(),
+      size: z.string().max(40).nullable().optional(),
+      images: z.array(z.string().url()).min(1).max(8).optional(),
+      location: z.string().max(100).optional(),
+      stock: z.number().int().min(0).max(999).optional(),
+      deliveryFee: z.number().min(0).nullable().optional(),
+      deliveryMethod: z.enum(['courier', 'in_person']).nullable().optional(),
+      status: z.enum(['active', 'draft', 'removed']).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...fields } = input
+      const listing = await ctx.prisma.listing.findUniqueOrThrow({ where: { id } })
+      const data: Record<string, unknown> = {}
+      for (const [k, v] of Object.entries(fields)) if (v !== undefined) data[k] = v
+      // Re-derive simple search tags when the words change.
+      if (data.title !== undefined || data.description !== undefined) {
+        const words = `${data.title ?? listing.title} ${data.brand ?? listing.brand ?? ''} ${data.colour ?? listing.colour ?? ''} ${data.size ?? listing.size ?? ''} ${data.department ?? listing.department}`
+          .toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2)
+        data.tags = Array.from(new Set(words)).slice(0, 20)
+      }
+      if (Object.keys(data).length === 0) return { ok: true, id }
+      await ctx.prisma.listing.update({ where: { id }, data: data as never })
+      if (data.status === 'removed') await ctx.prisma.cartItem.deleteMany({ where: { listingId: id } })
+      return { ok: true, id }
+    }),
+
   // Public inbound submissions from the footer info panels (suggestions,
   // money-saving tips, free-listings applications, contact) — captured as CRM
   // leads so the exec team receives them in the pipeline.

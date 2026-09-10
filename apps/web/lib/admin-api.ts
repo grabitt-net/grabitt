@@ -135,6 +135,8 @@ export function makeCrmApi(execToken: string) {
       rpc<{ rows: any[]; total: number }>('crm.listingsAdmin', 'query', input, execToken),
     listingsBulk: (ids: string[], action: 'delete' | 'renew' | 'feature' | 'unfeature' | 'activate' | 'remove') =>
       rpc<any>('crm.listingsBulk', 'mutation', { ids, action }, execToken),
+    listingAdminDetail: (id: string) => rpc<any>('crm.listingAdminDetail', 'query', { id }, execToken),
+    updateListingAdmin: (data: Record<string, unknown>) => rpc<any>('crm.updateListingAdmin', 'mutation', data, execToken),
 
     // Editable page copy (Admin → Page Content)
     pageContentAll: () => rpc<{ pageKey: string; html: string; updatedAt: string }[]>('homepage.allPageContent', 'query', undefined, execToken),
