@@ -72,8 +72,8 @@ export default function ListingsView() {
     { a: 'renew' as const, label: 'Renew', bg: '#eef7ff', color: '#1e6fd0' },
     { a: 'feature' as const, label: 'Feature', bg: '#fff3ee', color: 'var(--orange)' },
     { a: 'unfeature' as const, label: 'Unfeature', bg: '#f5f0e8', color: '#8a6d3b' },
-    { a: 'activate' as const, label: 'Activate', bg: '#f0faf4', color: '#16a34a' },
-    { a: 'remove' as const, label: 'Remove', bg: '#fef7ed', color: '#c2410c' },
+    { a: 'activate' as const, label: 'Reactivate', bg: '#f0faf4', color: '#16a34a' },
+    { a: 'remove' as const, label: 'Deactivate', bg: '#fef7ed', color: '#c2410c' },
     { a: 'delete' as const, label: 'Delete', bg: '#fef2f2', color: '#ef4444' },
   ]), [])
 

@@ -63,7 +63,7 @@ export const crmRouter = router({
   // freshness clock and resets the relist counter.
   listingsBulk: execProcedure
     .input(z.object({
-      ids: z.array(z.string().uuid()).min(1).max(500),
+      ids: z.array(z.string().min(1)).min(1).max(1000),
       action: z.enum(['delete', 'renew', 'feature', 'unfeature', 'activate', 'remove']),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -90,7 +90,13 @@ export const crmRouter = router({
         await ctx.prisma.cartItem.deleteMany({ where: { listingId: { in: softIds } } })
       }
       if (hardIds.length) {
+        // Delete every child row that references these listings before the
+        // listings themselves, so jobs and property (with their own child
+        // tables) delete cleanly rather than tripping a foreign-key error.
         await ctx.prisma.$transaction([
+          ctx.prisma.jobApplication.deleteMany({ where: { jobListing: { listingId: { in: hardIds } } } }),
+          ctx.prisma.jobListing.deleteMany({ where: { listingId: { in: hardIds } } }),
+          ctx.prisma.propertyListing.deleteMany({ where: { listingId: { in: hardIds } } }),
           ctx.prisma.offer.deleteMany({ where: { listingId: { in: hardIds } } }),
           ctx.prisma.wishlistItem.deleteMany({ where: { listingId: { in: hardIds } } }),
           ctx.prisma.cartItem.deleteMany({ where: { listingId: { in: hardIds } } }),
@@ -104,7 +110,7 @@ export const crmRouter = router({
 
   // Full detail of one listing for the admin editor.
   listingAdminDetail: execProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
       const l = await ctx.prisma.listing.findUnique({
         where: { id: input.id },
@@ -123,7 +129,7 @@ export const crmRouter = router({
   // the keys sent are updated; search tags are re-derived when the words change.
   updateListingAdmin: execProcedure
     .input(z.object({
-      id: z.string().uuid(),
+      id: z.string().min(1),
       title: z.string().min(4).max(100).optional(),
       description: z.string().max(2000).optional(),
       price: z.number().min(0).max(9_999_999).optional(),
