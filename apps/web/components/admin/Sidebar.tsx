@@ -52,6 +52,7 @@ const SECTIONS: Section[] = [
       { icon: '📨', label: 'Support inbox', id: 'support' },
       { icon: '🖼️', label: 'Homepage', id: 'homepage' },
       { icon: '🗂️', label: 'Categories', id: 'categories' },
+      { icon: '📝', label: 'Page Content', id: 'pagecontent' },
       { icon: '🎯', label: 'Banners', id: 'banners' },
       { icon: '📰', label: 'Guides', id: 'community' },
       { icon: '🗞️', label: 'News', id: 'news' },
@@ -64,6 +65,7 @@ const SECTIONS: Section[] = [
   {
     label: 'Marketplace',
     items: [
+      { icon: '🏷️', label: 'Listings', id: 'listings' },
       { icon: '💼', label: 'Jobs', id: 'jobs' },
       { icon: '🏠', label: 'Property', id: 'property' },
       { icon: '⚖️', label: 'Disputes', id: 'disputes', countKey: 'disputes' },
