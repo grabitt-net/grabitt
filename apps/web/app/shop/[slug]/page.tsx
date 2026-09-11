@@ -108,6 +108,19 @@ function ShopInner() {
   // prominent the featured row is, and which chrome (category chips, policies)
   // shows. See the labels in the storefront editor.
   const tpl = TEMPLATES[shop.template] ?? TEMPLATES.classic
+  const featSet = new Set(shop.featuredIds)
+
+  // Owner: toggle an item's Featured status straight from the shop page. Updates
+  // optimistically, then persists the new featured list to the storefront.
+  const toggleFeatured = async (id: string) => {
+    if (!data) return
+    const cur = new Set(data.shop.featuredIds)
+    if (cur.has(id)) cur.delete(id); else cur.add(id)
+    const next = [...cur].slice(0, 12)
+    setData({ ...data, shop: { ...data.shop, featuredIds: next } })
+    try { await trpcAuthed().business.upsertStorefront.mutate({ featuredIds: next }) }
+    catch { toast('Could not update featured items.'); fetchShop() }
+  }
 
   return (
     <Shell>
@@ -175,7 +188,7 @@ function ShopInner() {
         <section style={{ padding: '14px 16px 0' }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: shop.template === 'showcase' ? 16 : 13, fontWeight: 900, color: accent, marginBottom: 10 }}>⭐ Featured</div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
-            {featured.map(l => <ItemCard key={l.id} l={l} accent={accent} widePx={tpl.featuredPx} />)}
+            {featured.map(l => <ItemCard key={l.id} l={l} accent={accent} widePx={tpl.featuredPx} owner={isOwner} featured={featSet.has(l.id)} onToggleFeatured={toggleFeatured} />)}
           </div>
         </section>
       )}
@@ -188,7 +201,7 @@ function ShopInner() {
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${tpl.minCol}px, 1fr))`, gap: tpl.gap }}>
           {visible.length === 0
             ? <div style={{ gridColumn: '1/-1', padding: 30, textAlign: 'center', color: '#aaa', fontFamily: 'var(--font-nunito)' }}>Nothing here yet.</div>
-            : visible.map(l => <ItemCard key={l.id} l={l} accent={accent} />)}
+            : visible.map(l => <ItemCard key={l.id} l={l} accent={accent} owner={isOwner} featured={featSet.has(l.id)} onToggleFeatured={toggleFeatured} />)}
         </div>
       </section>
 
@@ -251,16 +264,28 @@ function ShareButton({ name }: { name: string }) {
   )
 }
 
-function ItemCard({ l, accent, widePx }: { l: Item; accent: string; widePx?: number }) {
+function ItemCard({ l, accent, widePx, owner, featured, onToggleFeatured }: { l: Item; accent: string; widePx?: number; owner?: boolean; featured?: boolean; onToggleFeatured?: (id: string) => void }) {
   return (
     <Link href={`/listings/${l.id}`} style={{ textDecoration: 'none', ...(widePx ? { flex: `0 0 ${widePx}px` } : {}) }}>
-      <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <div style={{ background: '#fff', border: `1px solid ${featured ? accent : '#ece3d7'}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         <div style={{ width: '100%', paddingTop: '78%', position: 'relative', background: '#f5f0e8' }}>
           {l.images?.[0]
             ? <img src={l.images[0]} alt={l.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
             : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>{deptEmoji(l.department)}</div>}
           {l.isGrabItNow && <span style={{ position: 'absolute', top: 8, left: 8, background: accent, color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '3px 8px', borderRadius: 50 }}>⚡ GRAB IT NOW</span>}
           {!!l.multibuyTiers?.length && <span style={{ position: 'absolute', bottom: 8, left: 8, background: '#fff', color: accent, fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '3px 8px', borderRadius: 50, border: `1px solid ${accent}` }}>🏷️ Multibuy</span>}
+          {/* Owner-only: star toggle to feature/unfeature this item on the shop. */}
+          {owner && onToggleFeatured && (
+            <span
+              role="button"
+              tabIndex={0}
+              title={featured ? 'Remove from your shop’s Featured shelf' : 'Feature on your shop (storefront only)'}
+              aria-label={featured ? 'Remove from your shop’s Featured shelf' : 'Feature on your shop'}
+              onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleFeatured(l.id) }}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleFeatured(l.id) } }}
+              style={{ position: 'absolute', top: 8, right: 8, width: 30, height: 30, borderRadius: '50%', background: featured ? accent : 'rgba(255,255,255,0.92)', color: featured ? '#fff' : '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }}
+            >{featured ? '★' : '☆'}</span>
+          )}
         </div>
         <div style={{ padding: '10px 11px 12px' }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 700, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
