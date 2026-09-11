@@ -101,9 +101,17 @@ export async function GET(req: Request) {
     if (KEY) {
       const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&components=country:es&location=${CANARY_LOCATION}&radius=${CANARY_RADIUS}&language=en&key=${KEY}`
       const res = await fetch(url, { next: { revalidate: 60 } })
-      const data = (await res.json()) as GAutocomplete
+      const data = (await res.json()) as GAutocomplete & { error_message?: string }
       const results = (data.predictions ?? []).map(p => ({ address: p.description, placeId: p.place_id }))
-      return NextResponse.json({ results, provider: 'google' })
+      // When Google returns no usable predictions, pass through its status so a
+      // misconfiguration (API not enabled, billing off, key restricted) is
+      // visible instead of silently empty. Falls back to Nominatim so the form
+      // still works meanwhile.
+      if (results.length === 0 && data.status && data.status !== 'ZERO_RESULTS') {
+        const fallback = await nominatimSearch(q)
+        return NextResponse.json({ results: fallback, provider: 'nominatim', googleStatus: data.status, googleError: data.error_message ?? null })
+      }
+      return NextResponse.json({ results, provider: 'google', googleStatus: data.status })
     }
     return NextResponse.json({ results: await nominatimSearch(q), provider: 'nominatim' })
   } catch {
