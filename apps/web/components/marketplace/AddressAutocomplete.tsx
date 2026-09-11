@@ -2,6 +2,9 @@
 import { useEffect, useRef, useState } from 'react'
 
 export type AddressPick = { address: string; city: string; lat: number; lng: number }
+// A raw suggestion row. Google predictions carry only a placeId (coordinates are
+// fetched on select via Place Details); the Nominatim fallback carries coords.
+type Suggestion = { address: string; city?: string; lat?: number; lng?: number; placeId?: string }
 
 // Address autocomplete backed by our /api/geocode proxy (server-side Nominatim,
 // biased to the Canary Islands — reliable, no browser rate-limit issues). On
@@ -15,7 +18,7 @@ export default function AddressAutocomplete({
   onSelect: (pick: AddressPick) => void
   placeholder?: string
 }) {
-  const [results, setResults] = useState<AddressPick[]>([])
+  const [results, setResults] = useState<Suggestion[]>([])
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const boxRef = useRef<HTMLDivElement>(null)
@@ -31,7 +34,7 @@ export default function AddressAutocomplete({
       setLoading(true)
       try {
         const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`, { signal: ctrl.signal })
-        const data = await res.json() as { results?: AddressPick[] }
+        const data = await res.json() as { results?: Suggestion[] }
         setResults(Array.isArray(data.results) ? data.results : [])
         setOpen(true)
       } catch { /* aborted / offline */ }
@@ -47,12 +50,27 @@ export default function AddressAutocomplete({
     return () => document.removeEventListener('mousedown', h)
   }, [])
 
-  const pick = (r: AddressPick) => {
+  const pick = async (r: Suggestion) => {
     skipNext.current = true // don't re-search from the value we're about to set
     onChange(r.address)
-    onSelect(r)
     setOpen(false)
     setResults([])
+    // Nominatim rows already carry coordinates; Google predictions need a Place
+    // Details lookup to resolve lat/lng (and a tidy formatted address).
+    if (typeof r.lat === 'number' && typeof r.lng === 'number') {
+      onSelect({ address: r.address, city: r.city ?? '', lat: r.lat, lng: r.lng })
+      return
+    }
+    if (r.placeId) {
+      try {
+        const res = await fetch(`/api/geocode?placeId=${encodeURIComponent(r.placeId)}`)
+        const d = await res.json() as { address?: string; city?: string; lat?: number | null; lng?: number | null }
+        if (typeof d.lat === 'number' && typeof d.lng === 'number') {
+          if (d.address) onChange(d.address)
+          onSelect({ address: d.address || r.address, city: d.city ?? '', lat: d.lat, lng: d.lng })
+        }
+      } catch { /* leave the typed text; user can drop the pin manually */ }
+    }
   }
 
   return (
