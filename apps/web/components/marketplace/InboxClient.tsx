@@ -94,6 +94,15 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
 
   useEffect(() => { load() }, [load])
 
+  // Keep the conversation list live — poll and refresh on focus so new messages
+  // and their unread counts appear without a manual reload.
+  useEffect(() => {
+    const timer = setInterval(load, 25000)
+    const onFocus = () => load()
+    window.addEventListener('focus', onFocus)
+    return () => { clearInterval(timer); window.removeEventListener('focus', onFocus) }
+  }, [load])
+
   // Load all notifications up front so the pinned channels show unread counts.
   useEffect(() => {
     (async () => {

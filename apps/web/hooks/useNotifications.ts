@@ -74,7 +74,26 @@ export function useNotifications(userId: string | null) {
     finally { setLoading(false) }
   }, [userId])
 
-  useEffect(() => { fetchAll() }, [fetchAll])
+  // Keep the counts live: an initial fetch, then a light poll, plus an immediate
+  // refresh whenever the tab regains focus/visibility or auth changes — so a new
+  // message or alert shows up without a manual page reload.
+  useEffect(() => {
+    fetchAll()
+    if (!userId) return
+    const POLL_MS = 25000
+    const timer = setInterval(fetchAll, POLL_MS)
+    const onFocus = () => fetchAll()
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchAll() }
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('grabitt-auth', onFocus)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('grabitt-auth', onFocus)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [fetchAll, userId])
 
   const markRead = useCallback(async (ids: string[]) => {
     if (!ids.length) return
