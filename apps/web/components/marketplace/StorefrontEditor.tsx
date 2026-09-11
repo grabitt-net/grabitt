@@ -16,6 +16,7 @@ type Shop = {
   shippingPolicy: string | null; returnsPolicy: string | null; paymentPolicy: string | null
   published: boolean
 }
+const BANNER_HINT = 'Wide image, best at 1053 × 300 px (about 3.5 : 1). It fills the top of your shop edge-to-edge.'
 type MyListing = { id: string; title: string; price: unknown; images: string[] }
 
 const TEMPLATES: { id: string; label: string; blurb: string }[] = [
@@ -36,10 +37,12 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
   const [savedMsg, setSavedMsg] = useState('')
   const [err, setErr] = useState('')
   const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const bannerRef = useRef<HTMLInputElement>(null)
+  const logoRef = useRef<HTMLInputElement>(null)
 
   const [f, setF] = useState({
-    businessName: '', template: 'classic', tagline: '', about: '', bannerUrl: '', accentColour: 'var(--orange)',
+    businessName: '', template: 'classic', tagline: '', about: '', bannerUrl: '', logoUrl: '', accentColour: 'var(--orange)',
     categories: [] as string[], featuredIds: [] as string[],
     shippingPolicy: '', returnsPolicy: '', paymentPolicy: '', published: false, slug: '',
   })
@@ -61,7 +64,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
         setF({
           businessName: res.businessName ?? '',
           template: res.shop.template, tagline: res.shop.tagline ?? '', about: res.shop.about ?? '',
-          bannerUrl: res.shop.bannerUrl ?? '', accentColour: res.shop.accentColour ?? 'var(--orange)',
+          bannerUrl: res.shop.bannerUrl ?? '', logoUrl: res.shop.logoUrl ?? '', accentColour: res.shop.accentColour ?? 'var(--orange)',
           categories: res.shop.categories, featuredIds: res.shop.featuredIds,
           shippingPolicy: res.shop.shippingPolicy ?? '', returnsPolicy: res.shop.returnsPolicy ?? '',
           paymentPolicy: res.shop.paymentPolicy ?? '', published: res.shop.published, slug: res.shop.slug,
@@ -87,6 +90,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
         tagline: f.tagline.trim() || undefined,
         about: f.about.trim() || undefined,
         bannerUrl: f.bannerUrl || undefined,
+        logoUrl: f.logoUrl || undefined,
         accentColour: f.accentColour || undefined,
         categories: f.categories,
         featuredIds: f.featuredIds,
@@ -115,6 +119,16 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
       set('bannerUrl', url)
     } catch (e) { setErr(e instanceof Error ? e.message : 'Upload failed') }
     finally { setUploadingBanner(false) }
+  }
+
+  const uploadLogo = async (file: File | null) => {
+    if (!file || !uid) return
+    setUploadingLogo(true)
+    try {
+      const url = await compressAndUpload(file, cmsImagePath('storefront'))
+      set('logoUrl', url)
+    } catch (e) { setErr(e instanceof Error ? e.message : 'Upload failed') }
+    finally { setUploadingLogo(false) }
   }
 
   const toggleFeatured = (id: string) => set('featuredIds',
@@ -175,11 +189,26 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
                 <input value={f.tagline} onChange={e => set('tagline', e.target.value)} placeholder="e.g. Handmade island ceramics" style={INPUT} />
                 <Label>About your shop</Label>
                 <textarea value={f.about} onChange={e => set('about', e.target.value)} rows={3} style={{ ...INPUT, resize: 'vertical' }} />
+
+                <Label>Logo</Label>
+                <input ref={logoRef} type="file" accept="image/*" onChange={e => uploadLogo(e.target.files?.[0] ?? null)} style={{ display: 'none' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  <div style={{ width: 64, height: 64, borderRadius: 16, background: '#f5f0e8', border: '1px solid #e5dccd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, overflow: 'hidden', flexShrink: 0 }}>
+                    {f.logoUrl ? <img src={f.logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏪'}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => logoRef.current?.click()} disabled={uploadingLogo} style={{ background: '#fff', color: 'var(--orange)', border: '1.5px dashed var(--orange)', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{uploadingLogo ? 'Uploading…' : f.logoUrl ? 'Replace logo' : '🖼️ Upload logo'}</button>
+                    {f.logoUrl && <button onClick={() => set('logoUrl', '')} style={{ background: '#fff', color: '#888', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>Remove</button>}
+                  </div>
+                </div>
+
                 <Label>Banner image</Label>
                 <input ref={bannerRef} type="file" accept="image/*" onChange={e => uploadBanner(e.target.files?.[0] ?? null)} style={{ display: 'none' }} />
                 {f.bannerUrl
-                  ? <div style={{ position: 'relative', marginBottom: 12 }}><img src={f.bannerUrl} alt="" style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 10 }} /><button onClick={() => bannerRef.current?.click()} style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Replace</button></div>
-                  : <button onClick={() => bannerRef.current?.click()} disabled={uploadingBanner} style={{ width: '100%', marginBottom: 12, background: '#fff', color: 'var(--orange)', border: '1.5px dashed var(--orange)', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{uploadingBanner ? 'Uploading…' : '🖼️ Upload a banner'}</button>}
+                  ? <div style={{ position: 'relative', marginBottom: 6 }}><img src={f.bannerUrl} alt="" style={{ width: '100%', aspectRatio: '1053 / 300', objectFit: 'cover', borderRadius: 10, background: '#f5f0e8' }} /><button onClick={() => bannerRef.current?.click()} style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Replace</button></div>
+                  : <button onClick={() => bannerRef.current?.click()} disabled={uploadingBanner} style={{ width: '100%', marginBottom: 6, background: '#fff', color: 'var(--orange)', border: '1.5px dashed var(--orange)', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{uploadingBanner ? 'Uploading…' : '🖼️ Upload a banner'}</button>}
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '0 0 12px' }}>{BANNER_HINT}</div>
+
                 <Label>Accent colour</Label>
                 <input type="color" value={f.accentColour} onChange={e => set('accentColour', e.target.value)} style={{ width: 48, height: 34, border: '1px solid #eee', borderRadius: 8, cursor: 'pointer' }} />
               </Section>

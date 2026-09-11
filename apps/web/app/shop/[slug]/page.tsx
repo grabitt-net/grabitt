@@ -1,8 +1,8 @@
 'use client'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { PanelProvider } from '@/context/PanelContext'
+import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
@@ -10,6 +10,7 @@ import { createLooseTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { toast } from '@/lib/ui'
 import { deptEmoji, DEPT_LABEL } from '@/lib/listingMap'
+import { useGrabittUid } from '@/hooks/useGrabittUid'
 
 // A business's public shop page: full banner, the seller's identity + service
 // rating, a Follow button, category shelves derived from what they actually
@@ -40,16 +41,28 @@ export default function ShopPage() {
 
 function ShopInner() {
   const slug = String(useParams().slug ?? '')
+  const uid = useGrabittUid()
+  const { panel, openPanel } = usePanel()
   const [data, setData] = useState<Shop | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'notfound'>('loading')
   const [cat, setCat] = useState('All')
 
-  useEffect(() => {
+  const fetchShop = useCallback(() => {
     if (!slug) return
     createLooseTrpcClient().business.bySlug.query({ slug })
       .then(d => { setData(d as Shop); setState('ready') })
       .catch(() => setState('notfound'))
   }, [slug])
+
+  useEffect(() => { fetchShop() }, [fetchShop])
+
+  // When the owner finishes editing (the storefront editor panel closes),
+  // pull the shop again so their changes show without a manual refresh.
+  const wasEditing = useRef(false)
+  useEffect(() => {
+    if (panel.id === 'storefrontEdit') wasEditing.current = true
+    else if (wasEditing.current) { wasEditing.current = false; fetchShop() }
+  }, [panel.id, fetchShop])
 
   const accent = data?.shop.accentColour || 'var(--orange)'
   const featured = useMemo(() => {
@@ -75,33 +88,43 @@ function ShopInner() {
 
   const { shop, seller, rating, followers } = data
   const logo = shop.logoUrl || (seller.avatar && seller.avatar.length > 2 ? seller.avatar : null)
+  const isOwner = !!uid && uid === seller.id
 
   return (
     <Shell>
-      {/* Banner — shown in full (never cropped), on an accent ground. */}
-      <div style={{ width: '100%', background: shop.bannerUrl ? '#1a1a1a' : `linear-gradient(135deg,${accent},var(--orange2))`, display: 'flex', justifyContent: 'center', minHeight: shop.bannerUrl ? undefined : 150 }}>
-        {shop.bannerUrl && <img src={shop.bannerUrl} alt={`${seller.name} banner`} style={{ display: 'block', width: '100%', maxHeight: 320, objectFit: 'contain' }} />}
+      {/* Banner — full width, fills the space edge-to-edge (no black bars). A
+          light ground shows only behind any transparency in the artwork. */}
+      <div style={{ width: '100%', background: shop.bannerUrl ? '#fff' : `linear-gradient(135deg,${accent},var(--orange2))`, aspectRatio: '1053 / 300', maxHeight: 340, overflow: 'hidden' }}>
+        {shop.bannerUrl && <img src={shop.bannerUrl} alt={`${seller.name} banner`} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }} />}
       </div>
 
-      <div style={{ padding: '0 16px', marginTop: -30, position: 'relative' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
-          <div style={{ width: 72, height: 72, borderRadius: 18, background: '#fff', boxShadow: '0 3px 12px rgba(0,0,0,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, flexShrink: 0, overflow: 'hidden' }}>
-            {logo ? <img src={logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏪'}
+      {/* Identity: only the logo overlaps the banner — the name sits below it on
+          the page so it can never be clipped by the banner edge. */}
+      <div style={{ padding: '0 16px', position: 'relative' }}>
+        <div style={{ marginTop: -34, width: 72, height: 72, borderRadius: 18, background: '#fff', boxShadow: '0 3px 12px rgba(0,0,0,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, overflow: 'hidden' }}>
+          {logo ? <img src={logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏪'}
+        </div>
+        <div style={{ marginTop: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>{seller.name}</span>
+            {seller.verified && <span style={{ background: '#dcfce7', color: '#16a34a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>🛡️ Verified</span>}
           </div>
-          <div style={{ flex: 1, minWidth: 0, paddingBottom: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>{seller.name}</span>
-              {seller.verified && <span style={{ background: '#dcfce7', color: '#16a34a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>🛡️ Verified</span>}
-            </div>
-            {shop.tagline && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#666', marginTop: 2 }}>{shop.tagline}</div>}
-          </div>
+          {shop.tagline && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#666', marginTop: 2 }}>{shop.tagline}</div>}
         </div>
 
-        {/* Actions: Follow + Share */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <FollowButton sellerId={seller.id} accent={accent} onCount={() => {}} />
-          <ShareButton name={seller.name} />
-        </div>
+        {/* Actions — the owner sees an Edit button to change everything; visitors
+            see Follow + Share. */}
+        {isOwner ? (
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <button onClick={() => openPanel('storefrontEdit')} style={{ flex: 1, border: 'none', background: accent, color: '#fff', borderRadius: 50, padding: '11px 0', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer' }}>✏️ Edit shop</button>
+            <ShareButton name={seller.name} />
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <FollowButton sellerId={seller.id} accent={accent} onCount={() => {}} />
+            <ShareButton name={seller.name} />
+          </div>
+        )}
 
         {/* Stats */}
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
