@@ -258,10 +258,16 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
               {err && <div style={{ background: '#fff5f5', color: '#c0392b', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 10 }}>⚠️ {err}</div>}
               {savedMsg && <div style={{ background: '#f0fdf4', color: '#16a34a', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, marginBottom: 10 }}>{savedMsg}</div>}
 
+              {f.published && (
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#16a34a', fontWeight: 800, marginBottom: 8, textAlign: 'center' }}>● Your shop is live — Save changes updates it straight away.</div>
+              )}
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => save()} disabled={saving} style={{ flex: 1, background: '#fff', color: '#555', border: '1.5px solid #e5dccd', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{saving ? 'Saving…' : 'Save draft'}</button>
+                {/* Primary action. For a live shop this saves the edits and keeps
+                    it live (label says "Save changes" so that's clear); for a
+                    draft it saves without publishing. */}
+                <button onClick={() => save()} disabled={saving} style={{ flex: 1, background: f.published ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#fff', color: f.published ? '#fff' : '#555', border: f.published ? 'none' : '1.5px solid #e5dccd', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{saving ? 'Saving…' : f.published ? 'Save changes' : 'Save draft'}</button>
                 {f.published
-                  ? <button onClick={() => save(false)} disabled={saving} style={{ flex: 1, background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Unpublish</button>
+                  ? <button onClick={() => save(false)} disabled={saving} style={{ flex: '0 0 auto', background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: '13px 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Unpublish</button>
                   : <button onClick={() => save(true)} disabled={saving || !verified} title={verified ? 'Make your shop live' : 'Your business must be verified before the shop can go live'} style={{ flex: 1, background: verified ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: verified ? 'pointer' : 'not-allowed' }}>{verified ? 'Publish shop' : '🔒 Verify to publish'}</button>}
               </div>
             </>
