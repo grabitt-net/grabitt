@@ -15,9 +15,11 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const KEY = process.env.GOOGLE_MAPS_API_KEY
-// Bias suggestions toward the Canary Islands (centre + ~300km radius) within Spain.
-const CANARY_LOCATION = '28.3,-16.0'
-const CANARY_RADIUS = 300000
+// Bias suggestions toward the Canary Islands. The Places API (New) caps a
+// locationBias circle at 50 km, so we centre on Gran Canaria at the max radius;
+// results are also region-restricted to Spain (includedRegionCodes) regardless.
+const CANARY_CENTER = { latitude: 28.1, longitude: -15.5 }
+const CANARY_RADIUS = 50000
 
 // Places API (New) shapes.
 type GNewComponent = { longText?: string; types: string[] }
@@ -114,7 +116,6 @@ export async function GET(req: Request) {
     // ── Suggestions as you type ──────────────────────────────────────────────
     if (q.length < 3) return NextResponse.json({ results: [] })
     if (KEY) {
-      const [lat0, lng0] = CANARY_LOCATION.split(',').map(Number)
       const res = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': KEY },
@@ -122,7 +123,7 @@ export async function GET(req: Request) {
           input: q,
           includedRegionCodes: ['es'],
           languageCode: 'en',
-          locationBias: { circle: { center: { latitude: lat0, longitude: lng0 }, radius: CANARY_RADIUS } },
+          locationBias: { circle: { center: CANARY_CENTER, radius: CANARY_RADIUS } },
         }),
         next: { revalidate: 60 },
       })
