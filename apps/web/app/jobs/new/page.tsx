@@ -384,7 +384,7 @@ export default function PostJobPage() {
               used now and the other two are banked for later, free. */}
           {posting && !posting.freeSlot && (
             <div style={{ marginTop: 14 }}>
-              <Field label="You’ve used your job allowance — choose a pack">
+              <Field label="Your free job advert is used — choose a pack">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   {[
                     { pack: 1 as const, title: '1 job post', price: posting.perJobCents, sub: 'Posts this advert' },
@@ -418,7 +418,7 @@ export default function PostJobPage() {
               />
             </Field>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#8a6d3b', background: '#fff8e6', border: '1px solid #f0e0bd', borderRadius: 10, padding: '9px 12px', marginTop: 8 }}>
-              Your job advert may be free within your monthly business allowance. Any fee — the €{(JOBS_PRICING.perJobCents / 100).toFixed(0)} advert (over allowance) and/or the {eur(JOBS_PRICING.candidateMatchingCents)} Candidate Matching add-on — is calculated at checkout, with your discount taken off before payment. If the total comes to €0 the advert posts straight away with no card needed.
+Your first job advert is free for the lifetime of your account; after that each advert is €{(JOBS_PRICING.perJobCents / 100).toFixed(0)} (or use a banked post from a 3-pack). Any fee — the advert and/or the {eur(JOBS_PRICING.candidateMatchingCents)} Candidate Matching add-on — is calculated at checkout, with your discount taken off before payment. If the total comes to €0 the advert posts straight away with no card needed.
             </div>
           </div>
         </Section>}

@@ -221,7 +221,7 @@ function EmployersInner() {
                     <div style={{ height: 1, background: 'var(--line)', margin: '14px 0' }} />
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#000', letterSpacing: 0.3, marginBottom: 8 }}>{t('Included each month')}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                      {[`${tier.caps.items} ${t('item listings')}`, `${tier.caps.jobs} ${t('job adverts')}`, `${tier.caps.property} ${t('property listings')}`, t('Storefront'), t('Free directory listing')].map(line => (
+                      {[`${tier.caps.items} ${t('item listings')}`, `${tier.caps.property} ${t('property listings')}`, t('1 free job advert (lifetime), then paid per advert'), t('Storefront'), t('Free directory listing')].map(line => (
                         <div key={line} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#1a1a1a' }}>
                           <span style={{ width: 16, height: 16, flexShrink: 0, borderRadius: '50%', background: '#eaf7ee', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900 }}>✓</span>
                           {line}

@@ -222,13 +222,12 @@ export default function BusinessCentre({ businessVerified }: { businessVerified?
 
       {/* ── Monthly listing allowance ── (dashboard-style stat cards) */}
       <Collapsible title={t('This month’s listing allowance')}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
           <AllowanceCard label={t('Items')} icon="🛍️" used={s.usage.items} cap={s.caps.items} color="var(--orange)" />
-          <AllowanceCard label={t('Job adverts')} icon="💼" used={s.usage.jobs} cap={s.caps.jobs} color="#3b82f6" />
           <AllowanceCard label={t('Property')} icon="🏠" used={s.usage.property} cap={s.caps.property} color="#0f766e" />
         </div>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#7a8299', marginTop: 10, lineHeight: 1.5 }}>
-          {t('Allowances reset on the 1st of each month. Once you hit a cap, extra listings are simply charged per listing.')}
+          {t('Item & property allowances reset on the 1st of each month; extra listings are charged per listing. Job adverts are separate: your first is free for the life of your account, then each advert is paid (or use a banked post from a 3-pack).')}
         </div>
       </Collapsible>
 

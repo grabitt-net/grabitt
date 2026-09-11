@@ -91,13 +91,19 @@ export async function overflowFeeCents(
 ): Promise<number> {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { isBusiness: true, grade: true } })
   if (!user?.isBusiness) return 0
-  // On trial the free-tier cap applies (0 for jobs/property), so overflow is due
-  // from the first one; the included allowance unlocks after the trial.
+
+  // Jobs: no monthly free allowance on any membership. A business gets ONE free
+  // job advert for the lifetime of the account; every subsequent advert is paid.
+  if (kind === 'jobs') {
+    const usedEver = await prisma.jobListing.count({ where: { listing: { sellerId: userId } } })
+    return usedEver < 1 ? 0 : feeCents
+  }
+
+  // Property keeps the per-tier monthly allowance. On trial the free-tier cap
+  // applies, so overflow is due from the first one; the allowance unlocks after.
   const cap = (await isOnBusinessTrial(prisma, userId)) ? BUSINESS_LIGHT.caps[kind] : businessTierForGrade(user.grade).caps[kind]
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-  const used = kind === 'jobs'
-    ? await prisma.jobListing.count({ where: { listing: { sellerId: userId }, createdAt: { gte: monthStart } } })
-    : await prisma.propertyListing.count({ where: { listing: { sellerId: userId }, createdAt: { gte: monthStart } } })
+  const used = await prisma.propertyListing.count({ where: { listing: { sellerId: userId }, createdAt: { gte: monthStart } } })
   return used < cap ? 0 : feeCents
 }
 
