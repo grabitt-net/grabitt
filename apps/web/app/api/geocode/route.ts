@@ -132,11 +132,10 @@ export async function GET(req: Request) {
         .map(s => s.placePrediction)
         .filter((p): p is NonNullable<typeof p> => !!p?.placeId)
         .map(p => ({ address: p.text?.text ?? '', placeId: p.placeId }))
-      // If Google errored (API not enabled, billing off, key restricted), pass
-      // its status through and fall back to Nominatim so the form still works.
+      // If Google errored (API not enabled, billing off, key restricted), fall
+      // back to Nominatim so the form still works.
       if (results.length === 0 && data.error) {
-        const fallback = await nominatimSearch(q)
-        return NextResponse.json({ results: fallback, provider: 'nominatim', googleStatus: data.error.status ?? 'ERROR', googleError: data.error.message ?? null })
+        return NextResponse.json({ results: await nominatimSearch(q), provider: 'nominatim' })
       }
       return NextResponse.json({ results, provider: 'google' })
     }
