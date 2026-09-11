@@ -37,9 +37,11 @@ import { sponsorshipRouter } from './routers/sponsorship'
 import { discountsRouter } from './routers/discounts'
 import { execTasksRouter } from './routers/execTasks'
 import { charityRouter } from './routers/charity'
+import { accountRouter } from './routers/account'
 
 export const appRouter = router({
   auth: authRouter,
+  account: accountRouter,
   listings: listingsRouter,
   cart: cartRouter,
   follow: followRouter,

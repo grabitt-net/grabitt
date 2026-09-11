@@ -25,6 +25,13 @@ export default function AuthBootstrap() {
         window.dispatchEvent(new Event('grabitt-auth'))
         return
       }
+      // While switched into a linked account, keep that identity — don't
+      // re-provision or overwrite the uid/token from the Supabase session (which
+      // still belongs to the account the user logged in with).
+      if (typeof window !== 'undefined' && localStorage.getItem('grabitt_switched')) {
+        window.dispatchEvent(new Event('grabitt-auth'))
+        return
+      }
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { trpcAuthed, setAuthToken } from '@/lib/authToken'
+import { trpcAuthed, setAuthToken, switchAccount } from '@/lib/authToken'
 import { compressAndUpload } from '@/lib/storage'
 import { createClient } from '@/lib/supabase'
 import { toast, confirmDialog } from '@/lib/ui'
@@ -189,6 +189,25 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     c.business.tierStatus.query().then((d: any) => { if (d?.isBusiness) setBizTier(d.label) }).catch(() => {})
     c.business.myStorefront.query().then((d: any) => setStorefront(d?.shop ?? null)).catch(() => {})
   }, [me?.isBusiness])
+  // Linked accounts the user can switch into (personal ↔ business, etc.).
+  type LinkedAcc = { id: string; label: string; kind: string; current: boolean }
+  const [linkedAccs, setLinkedAccs] = useState<LinkedAcc[]>([])
+  const [switchingTo, setSwitchingTo] = useState<string | null>(null)
+  useEffect(() => {
+    (trpcAuthed() as any).account.linked.query().then((d: { accounts: LinkedAcc[] }) => setLinkedAccs(d?.accounts ?? [])).catch(() => {})
+  }, [me?.id])
+  const doSwitchAccount = async (id: string) => {
+    setSwitchingTo(id)
+    try {
+      await switchAccount(id)
+      // Reload so every panel and query re-fetches under the new identity.
+      window.location.href = '/account'
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not switch account.')
+      setSwitchingTo(null)
+    }
+  }
+
   // Personal level + monthly listing allowance (shown on the personal hub).
   const [allowance, setAllowance] = useState<AllowanceData | null>(null)
   useEffect(() => {
@@ -329,9 +348,27 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                   {me?.openToWork ? t('Looking') : t('Not looking')}
                 </button>} />
             ) : null}
+            {/* Real account switching — hop between linked identities (e.g. a
+                personal and a business account) without logging out. Only shown
+                when the user actually has another account linked. */}
+            {linkedAccs.filter(a => !a.current).length > 0 && (
+              <div style={{ margin: '10px 0 4px' }}>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: '#8a6d3b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>{t('Switch account')}</div>
+                {linkedAccs.filter(a => !a.current).map(a => (
+                  <button key={a.id} onClick={() => doSwitchAccount(a.id)} disabled={switchingTo === a.id} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1.5px solid #e5dccd', borderRadius: 12, padding: '9px 12px', marginBottom: 6, cursor: 'pointer', textAlign: 'left' }}>
+                    <span style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>{a.kind === 'business' ? '🏢' : a.kind === 'charity' ? '❤️' : '👤'}</span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.label}</span>
+                      <span style={{ display: 'block', fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: '#8a6d3b', textTransform: 'capitalize' }}>{a.kind}{' '}account</span>
+                    </span>
+                    <span style={{ flexShrink: 0, fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 900, color: 'var(--orange)' }}>{switchingTo === a.id ? '…' : t('Switch')}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {me?.isBusiness ? (
-              /* Switch easily between the business and personal profile. */
-              <HubNavRow icon="briefcase" label={effBiz ? t('Personal account') : t('Business account')} last={!effBiz} value={
+              /* Flip the business account between its business and personal VIEW. */
+              <HubNavRow icon="briefcase" label={effBiz ? t('Personal view') : t('Business view')} last={!effBiz} value={
                 <button onClick={() => {
                   const goPersonal = !personalView
                   setPersonalView(goPersonal); setSection(goPersonal ? 'hub' : 'business'); didInitSection.current = true

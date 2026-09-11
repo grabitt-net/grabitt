@@ -512,6 +512,11 @@ model User {
   // set it replaces the grade fee as the base; discounts still apply on top.
   feeOverridePct     Decimal?  @db.Decimal(5, 2)
   foundingMember     Boolean   @default(false)
+  // Linked accounts this user may switch into in-app without re-logging in
+  // (e.g. a personal account linked to its business account). The link is
+  // mutual — each linked account lists the others — and switching mints a token
+  // for the target only when it appears in the caller's list.
+  linkedAccountIds   String[]  @default([])
   // Affiliate programme — an affiliate earns cash per validated signup made via
   // their referral link. `affiliateTier` sets which rate applies.
   isAffiliate        Boolean   @default(false)

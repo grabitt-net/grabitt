@@ -13,7 +13,25 @@ export function getAuthToken(): string | null {
 export function setAuthToken(token: string | null) {
   if (typeof window === 'undefined') return
   if (token) localStorage.setItem(KEY, token)
-  else localStorage.removeItem(KEY)
+  else {
+    localStorage.removeItem(KEY)
+    // Signing out ends any account switch too, so the next login re-mints from
+    // the real Supabase session rather than staying pinned to a switched token.
+    localStorage.removeItem('grabitt_switched')
+  }
+}
+
+// Switch the app into a linked account (personal ↔ business, etc.) without
+// re-logging in. Mints a token for the target via the server (authorised only
+// if the accounts are linked), stores it, and flags the switch so the token
+// isn't re-minted back to the Supabase-session account. Returns the new uid.
+export async function switchAccount(targetId: string): Promise<string> {
+  const res = await trpcAuthed().account.switchTo.mutate({ targetId }) as { token: string; userId: string }
+  setAuthToken(res.token)
+  localStorage.setItem('grabitt_uid', res.userId)
+  localStorage.setItem('grabitt_switched', '1')
+  window.dispatchEvent(new Event('grabitt-auth'))
+  return res.userId
 }
 
 // Fetches (and stores) a fresh app JWT from the current Supabase session.
@@ -22,7 +40,10 @@ export async function refreshAuthToken(): Promise<string | null> {
   // While an admin is impersonating a member, the app JWT is the member's token.
   // Never re-mint from /api/auth/token here — that reads the admin's Supabase
   // session and would clobber the impersonation. Keep the member token as-is.
-  if (typeof window !== 'undefined' && localStorage.getItem('grabitt_impersonating')) {
+  // The same applies while the user has switched into a linked account: the
+  // Supabase session still belongs to the account they logged in with, so
+  // re-minting would silently drop them back to it.
+  if (typeof window !== 'undefined' && (localStorage.getItem('grabitt_impersonating') || localStorage.getItem('grabitt_switched'))) {
     return getAuthToken()
   }
   try {
