@@ -1928,6 +1928,13 @@ function PanelBody() {
                   {followData.following ? '✓ Following' : '+ Follow'}
                 </button>
               )}
+              {/* Owner viewing their own shop → edit everything (banner, logo,
+                  about, template, categories, policies). */}
+              {isOwnStore && (
+                <button onClick={() => openPanel('storefrontEdit')} style={{ marginTop: 12, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 24px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>
+                  ✏️ Edit my storefront
+                </button>
+              )}
             </div>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>{store.listings.length} listings</div>
             {store.listings.length === 0 ? (
