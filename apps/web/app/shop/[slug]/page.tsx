@@ -35,6 +35,17 @@ type Shop = {
 
 const catOf = (l: Item) => DEPT_LABEL[l.department] ?? l.department
 
+// Each storefront template is a distinct layout. `minCol` sets grid column
+// density, `featuredPx` the width of featured cards (bigger = more of a hero
+// row), and the flags toggle the category chips / featured shelf / policies.
+type Tpl = { minCol: number; gap: number; featuredPx: number; showFeatured: boolean; showCats: boolean; showPolicies: boolean }
+const TEMPLATES: Record<string, Tpl> = {
+  classic:  { minCol: 150, gap: 10, featuredPx: 150, showFeatured: true,  showCats: true,  showPolicies: true },
+  grid:     { minCol: 118, gap: 8,  featuredPx: 132, showFeatured: true,  showCats: true,  showPolicies: true },
+  showcase: { minCol: 168, gap: 12, featuredPx: 230, showFeatured: true,  showCats: true,  showPolicies: true },
+  minimal:  { minCol: 180, gap: 12, featuredPx: 150, showFeatured: false, showCats: false, showPolicies: false },
+}
+
 export default function ShopPage() {
   return <PanelProvider><ShopInner /></PanelProvider>
 }
@@ -79,8 +90,12 @@ function ShopInner() {
   }, [data])
   const visible = useMemo(() => {
     if (!data) return []
+    // When the template shows a separate Featured shelf, featured items are
+    // pulled out of the main grid (on All) to avoid duplication. When it doesn't
+    // (e.g. Minimal), they stay in the grid so they aren't hidden.
+    const showsFeaturedRow = (TEMPLATES[data.shop.template] ?? TEMPLATES.classic).showFeatured
     const featIds = new Set(data.shop.featuredIds)
-    return data.listings.filter(l => (cat === 'All' || catOf(l) === cat) && (cat !== 'All' || !featIds.has(l.id)))
+    return data.listings.filter(l => (cat === 'All' || catOf(l) === cat) && !(cat === 'All' && showsFeaturedRow && featIds.has(l.id)))
   }, [data, cat])
 
   if (state === 'loading') return <Shell><div style={pad}>Loading…</div></Shell>
@@ -89,6 +104,10 @@ function ShopInner() {
   const { shop, seller, rating, followers } = data
   const logo = shop.logoUrl || (seller.avatar && seller.avatar.length > 2 ? seller.avatar : null)
   const isOwner = !!uid && uid === seller.id
+  // The chosen layout template actually reshapes the shop: column density, how
+  // prominent the featured row is, and which chrome (category chips, policies)
+  // shows. See the labels in the storefront editor.
+  const tpl = TEMPLATES[shop.template] ?? TEMPLATES.classic
 
   return (
     <Shell>
@@ -142,7 +161,7 @@ function ShopInner() {
         )}
 
         {/* Category shelves */}
-        {cats.length > 0 && (
+        {tpl.showCats && cats.length > 0 && (
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', margin: '14px 0 4px' }}>
             {['All', ...cats].map(c => (
               <button key={c} onClick={() => setCat(c)} style={{ flexShrink: 0, border: `1.5px solid ${cat === c ? accent : '#e5dccd'}`, background: cat === c ? accent : '#fff', color: cat === c ? '#fff' : '#555', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{c}</button>
@@ -152,11 +171,11 @@ function ShopInner() {
       </div>
 
       {/* Featured row (only on All) */}
-      {featured.length > 0 && cat === 'All' && (
+      {tpl.showFeatured && featured.length > 0 && cat === 'All' && (
         <section style={{ padding: '14px 16px 0' }}>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: accent, marginBottom: 10 }}>⭐ Featured</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: shop.template === 'showcase' ? 16 : 13, fontWeight: 900, color: accent, marginBottom: 10 }}>⭐ Featured</div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
-            {featured.map(l => <ItemCard key={l.id} l={l} accent={accent} wide />)}
+            {featured.map(l => <ItemCard key={l.id} l={l} accent={accent} widePx={tpl.featuredPx} />)}
           </div>
         </section>
       )}
@@ -166,7 +185,7 @@ function ShopInner() {
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)', marginBottom: 10 }}>
           {cat === 'All' ? `${data.listings.length} item${data.listings.length === 1 ? '' : 's'}` : `${visible.length} in ${cat}`}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${tpl.minCol}px, 1fr))`, gap: tpl.gap }}>
           {visible.length === 0
             ? <div style={{ gridColumn: '1/-1', padding: 30, textAlign: 'center', color: '#aaa', fontFamily: 'var(--font-nunito)' }}>Nothing here yet.</div>
             : visible.map(l => <ItemCard key={l.id} l={l} accent={accent} />)}
@@ -174,7 +193,7 @@ function ShopInner() {
       </section>
 
       {/* Policies */}
-      {(shop.shippingPolicy || shop.returnsPolicy || shop.paymentPolicy) && (
+      {tpl.showPolicies && (shop.shippingPolicy || shop.returnsPolicy || shop.paymentPolicy) && (
         <section style={{ padding: '20px 16px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Shop info</div>
           {shop.shippingPolicy && <Policy icon="🚚" title="Delivery" body={shop.shippingPolicy} />}
@@ -232,9 +251,9 @@ function ShareButton({ name }: { name: string }) {
   )
 }
 
-function ItemCard({ l, accent, wide }: { l: Item; accent: string; wide?: boolean }) {
+function ItemCard({ l, accent, widePx }: { l: Item; accent: string; widePx?: number }) {
   return (
-    <Link href={`/listings/${l.id}`} style={{ textDecoration: 'none', ...(wide ? { flex: '0 0 150px' } : {}) }}>
+    <Link href={`/listings/${l.id}`} style={{ textDecoration: 'none', ...(widePx ? { flex: `0 0 ${widePx}px` } : {}) }}>
       <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         <div style={{ width: '100%', paddingTop: '78%', position: 'relative', background: '#f5f0e8' }}>
           {l.images?.[0]
