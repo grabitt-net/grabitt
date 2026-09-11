@@ -16,6 +16,8 @@ type Thread = {
   lastMessageAt: string | null
   unreadCount?: number
   archived?: boolean
+  pinned?: boolean
+  flagged?: boolean
   participants: { userId: string; user: { id: string; displayName: string; avatar: string | null } }[]
   messages: { id: string; senderId: string; body: string; blocked: boolean; readAt: string | null; createdAt: string }[]
   listing: { id: string; title: string; price: unknown; images: string[] } | null
@@ -125,13 +127,39 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
   const current = threads.find(t => t.id === selected) ?? null
   const otherOf = (t: Thread) => t.participants.find(p => p.userId !== me)?.user
   const archivedCount = threads.filter(t => t.archived).length
-  const visibleThreads = threads.filter(t => (view === 'archive' ? t.archived : !t.archived))
+  // Pinned first, then most recent. Applies within whichever view is showing.
+  const visibleThreads = threads
+    .filter(t => (view === 'archive' ? t.archived : !t.archived))
+    .sort((a, b) => {
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
+      return new Date(b.lastMessageAt ?? 0).getTime() - new Date(a.lastMessageAt ?? 0).getTime()
+    })
 
   // Archive / restore a conversation (moves it between Inbox and Archive).
   const setArchived = async (id: string, archived: boolean) => {
     setThreads(ts => ts.map(t => t.id === id ? { ...t, archived } : t))
     if (selected === id) setSelected(null)
     try { await trpcAuthed().messages.setArchived.mutate({ threadId: id, archived }) } catch { /* revert on failure */ load() }
+  }
+
+  // Pin / unpin — keeps a conversation at the top of the list.
+  const setPinned = async (id: string, pinned: boolean) => {
+    setThreads(ts => ts.map(t => t.id === id ? { ...t, pinned } : t))
+    try { await trpcAuthed().messages.setPinned.mutate({ threadId: id, pinned }) } catch { load() }
+  }
+
+  // Flag / unflag — a star for follow-up.
+  const setFlagged = async (id: string, flagged: boolean) => {
+    setThreads(ts => ts.map(t => t.id === id ? { ...t, flagged } : t))
+    try { await trpcAuthed().messages.setFlagged.mutate({ threadId: id, flagged }) } catch { load() }
+  }
+
+  // Mark a conversation read or unread from the list (like email).
+  const setRead = async (id: string, read: boolean) => {
+    setThreads(ts => ts.map(t => t.id === id
+      ? { ...t, unreadCount: read ? 0 : Math.max(1, t.unreadCount ?? 0), messages: read ? t.messages.map(m => m.senderId !== me ? { ...m, readAt: new Date().toISOString() } : m) : t.messages }
+      : t))
+    try { await trpcAuthed().messages.setThreadRead.mutate({ threadId: id, read }) } catch { load() }
   }
 
   return (
@@ -188,20 +216,32 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
                 background: active ? '#FFF8F4' : '#fff',
               }}
             >
+              {/* Unread dot — the at-a-glance "new" marker, like email. */}
+              <span style={{ flexShrink: 0, width: 9, height: 9, borderRadius: '50%', background: unread ? 'var(--orange)' : 'transparent', alignSelf: 'flex-start', marginTop: 6 }} />
               <div style={{ ...avatarCircle, background: '#FFF3EE', color: 'var(--orange)', fontSize: 17, fontWeight: 900, fontFamily: 'var(--font-nunito)' }}>
                 {other?.displayName?.[0]?.toUpperCase() ?? '?'}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ ...nameRow, fontWeight: unread ? 900 : 700 }}>{other?.displayName ?? 'Grabitt User'}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  {t.pinned && <span title="Pinned" style={{ fontSize: 11, flexShrink: 0 }}>📌</span>}
+                  {t.flagged && <span title="Flagged" style={{ fontSize: 11, flexShrink: 0 }}>⭐</span>}
+                  <div style={{ ...nameRow, fontWeight: unread ? 900 : 700 }}>{other?.displayName ?? 'Grabitt User'}</div>
+                </div>
                 {t.listing && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: 'var(--orange)', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.listing.title}</div>}
                 <div style={{ ...preview, fontWeight: unread ? 800 : 500, color: unread ? '#444' : '#999' }}>
                   {last ? (last.blocked ? '⚠️ Message hidden' : last.body) : 'Start chatting…'}
+                </div>
+                {/* Row actions — flag, pin, mark read/unread, archive. */}
+                <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+                  <RowAction title={t.flagged ? 'Unflag' : 'Flag for follow-up'} active={!!t.flagged} onClick={e => { e.stopPropagation(); setFlagged(t.id, !t.flagged) }}>{t.flagged ? '⭐' : '☆'}</RowAction>
+                  <RowAction title={t.pinned ? 'Unpin' : 'Pin to top'} active={!!t.pinned} onClick={e => { e.stopPropagation(); setPinned(t.id, !t.pinned) }}>📌</RowAction>
+                  <RowAction title={unread ? 'Mark as read' : 'Mark as unread'} onClick={e => { e.stopPropagation(); setRead(t.id, unread) }}>{unread ? '✓' : '✉️'}</RowAction>
+                  <RowAction title={view === 'archive' ? 'Restore to inbox' : 'Archive'} onClick={e => { e.stopPropagation(); setArchived(t.id, view !== 'archive') }}>{view === 'archive' ? '↩️' : '🗄️'}</RowAction>
                 </div>
               </div>
               <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 9.5, color: '#bbb' }}>{shortDate(t.lastMessageAt)}</span>
                 {unreadN > 0 && <span style={badge}>{unreadN > 99 ? '99+' : unreadN}</span>}
-                <span role="button" tabIndex={0} title={view === 'archive' ? 'Restore to inbox' : 'Archive'} onClick={e => { e.stopPropagation(); setArchived(t.id, view !== 'archive') }} style={{ fontSize: 13, color: '#bbb', cursor: 'pointer', padding: 2 }}>{view === 'archive' ? '↩️' : '🗄️'}</span>
               </div>
             </button>
           )
@@ -292,6 +332,26 @@ export default function InboxClient({ me, initial }: { me: string; alertUnread?:
         )}
       </section>
     </div>
+  )
+}
+
+// A small inline action on a conversation row. Rendered as a span (not a button)
+// because the row itself is a <button> and nesting buttons is invalid HTML.
+function RowAction({ title, active, onClick, children }: { title: string; active?: boolean; onClick: (e: React.MouseEvent) => void; children: React.ReactNode }) {
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      title={title}
+      aria-label={title}
+      onClick={onClick}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(e as unknown as React.MouseEvent) } }}
+      style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        width: 24, height: 24, borderRadius: 7, cursor: 'pointer', fontSize: 12,
+        background: active ? '#FFF3EE' : '#f6f2ec', color: '#555', userSelect: 'none',
+      }}
+    >{children}</span>
   )
 }
 

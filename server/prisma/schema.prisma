@@ -1021,6 +1021,10 @@ model ThreadParticipant {
   // Per-user archive flag — archiving moves a thread out of that user's inbox
   // into their Archive without affecting the other participant.
   archived Boolean @default(false)
+  // Per-user inbox controls, email-style. `pinned` keeps a thread at the top of
+  // the list; `flagged` stars it for follow-up. Both are private to the user.
+  pinned   Boolean @default(false)
+  flagged  Boolean @default(false)
   thread   Thread @relation(fields: [threadId], references: [id])
   user     User   @relation(fields: [userId], references: [id])
 
