@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PanelProvider } from '@/context/PanelContext'
 import PhotoReorderGrid from '@/components/marketplace/PhotoReorderGrid'
+import AddressAutocomplete from '@/components/marketplace/AddressAutocomplete'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
@@ -435,7 +436,12 @@ function EditInner() {
           </>
         )}
         <label style={lbl}>{t('Location')}</label>
-        <input value={location} onChange={e => setLocation(e.target.value)} style={field} />
+        <AddressAutocomplete
+          value={location}
+          onChange={setLocation}
+          onSelect={p => { setLocation(p.address); setCoords({ lat: p.lat, lng: p.lng }) }}
+          placeholder={t('Start typing the address…')}
+        />
         <label style={lbl}>{t('Map pin')}</label>
         <MapPicker value={coords} onChange={setCoords} />
         <div style={hint}>
