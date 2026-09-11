@@ -105,11 +105,11 @@ function ShopInner() {
           {logo ? <img src={logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏪'}
         </div>
         <div style={{ marginTop: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 20, fontWeight: 700, color: 'var(--dark)' }}>{seller.name}</span>
-            {seller.verified && <span style={{ background: '#dcfce7', color: '#16a34a', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '2px 7px', borderRadius: 50 }}>🛡️ Verified</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 28, fontWeight: 700, color: 'var(--dark)', lineHeight: 1.15 }}>{seller.name}</span>
+            {seller.verified && <span style={{ background: '#dcfce7', color: '#16a34a', fontSize: 12, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '4px 11px', borderRadius: 50 }}>🛡️ Verified</span>}
           </div>
-          {shop.tagline && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#666', marginTop: 2 }}>{shop.tagline}</div>}
+          {shop.tagline && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#666', marginTop: 4 }}>{shop.tagline}</div>}
         </div>
 
         {/* Actions — the owner sees an Edit button to change everything; visitors
@@ -128,7 +128,7 @@ function ShopInner() {
 
         {/* Stats */}
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <Stat value={`${rating.stars.toFixed(1)}★`} label={rating.provisional ? 'New shop' : 'Rating'} title={rating.parts.map(p => `${p.label}: ${p.score}/100 (${p.weight}%) — ${p.detail}`).join('\n')} />
+          <Stat value={rating.provisional ? 'New' : `${rating.stars.toFixed(1)}★`} label={rating.provisional ? 'No ratings yet' : 'Rating'} title={rating.provisional ? 'Rating appears once this shop has sales and reviews' : rating.parts.map(p => `${p.label}: ${p.score}/100 (${p.weight}%) — ${p.detail}`).join('\n')} />
           <Stat value={String(followers)} label="Followers" />
           <Stat value={String(seller.salesCount)} label="Sales" />
           <Stat value={new Date(seller.memberSince).getFullYear().toString()} label="Since" />
