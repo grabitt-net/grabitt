@@ -18,7 +18,7 @@ type Candidate = {
   matchScore: number
   matchNotes: { factor: string; points: number; of: number; detail: string }[]
 }
-type MatchJob = { id: string; jobTitle: string; sector: string | null; roles: string[]; languages: string[]; experienceMonths: number | null }
+type MatchJob = { id: string; jobTitle: string; sector: string | null; roles: string[]; languages: string[]; experienceMonths: number | null; requirements?: string[] }
 
 type FullProfile = {
   seekerId: string; headline: string | null; summary: string | null
@@ -382,6 +382,25 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginTop: 6 }}>{matchCount === 1 ? 'candidate matches' : 'candidates match'} your advert</div>
                 {matchJob && <div style={{ fontSize: 12, color: '#666', fontFamily: 'var(--font-ui)', marginTop: 4 }}>for “{matchJob.jobTitle}”{matchJob.sector ? ` · ${matchJob.sector}` : ''}</div>}
               </div>
+
+              {/* The criteria carried over from the advert's spec, so it's clear the
+                  search is matching exactly what was posted. */}
+              {matchJob && (
+                <div style={{ background: '#f8f9fa', border: '1px solid #eee', borderRadius: 12, padding: '10px 12px', marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, fontWeight: 900, color: ORANGE, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Matching your advert’s spec</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {[
+                      matchJob.sector,
+                      ...(matchJob.roles ?? []),
+                      ...(matchJob.languages ?? []),
+                      matchJob.experienceMonths ? expLabel(matchJob.experienceMonths) : null,
+                      ...((matchJob.requirements ?? [])),
+                    ].filter(Boolean).map((c, i) => (
+                      <span key={i} style={{ background: '#fff', border: '1px solid #e5dccd', borderRadius: 50, padding: '3px 10px', fontSize: 10.5, fontFamily: 'var(--font-ui)', fontWeight: 700, color: '#555' }}>{c}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {matchCount === 0 ? (
                 <div style={{ background: '#f8f9fa', borderRadius: 14, padding: 18, textAlign: 'center', marginBottom: 14 }}>

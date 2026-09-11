@@ -54,6 +54,21 @@ export default function EmployerDashboardContent() {
     } catch (e: any) { toast(e?.message || 'Could not update the job.') }
   }
 
+  // Database search (Candidate Matching) — if the advert already has it, open the
+  // search; otherwise start the paid add-on purchase (Stripe), which enables it.
+  const [buyingMatch, setBuyingMatch] = useState<string | null>(null)
+  const databaseSearch = async (j: Job) => {
+    if (j.candidateMatching) { openPanel('findStaff', { jobId: j.id }); return }
+    if (!(await confirmDialog('Database Search lets you search our candidate database and contact matching candidates for this advert. It’s a paid add-on for this job. Continue to payment?'))) return
+    setBuyingMatch(j.id)
+    try {
+      const r: any = await (trpcAuthed() as any).jobs.addCandidateMatching.mutate({ listingId: j.listingId })
+      if (r?.checkoutUrl) { window.location.href = r.checkoutUrl; return }
+      if (r?.enabled || r?.alreadyOn) { toast('✓ Database Search enabled'); load() }
+    } catch (e: any) { toast(e?.message || 'Could not start the purchase.') }
+    finally { setBuyingMatch(null) }
+  }
+
   const shareJobs = async (url: string, title: string) => {
     try {
       if (navigator.share) await navigator.share({ title, url })
@@ -126,14 +141,13 @@ export default function EmployerDashboardContent() {
                     </a>
                     <button onClick={() => openPanel('jobMessages', { listingId: j.listingId, jobTitle: j.jobTitle })} style={{ ...pillBtn, flex: '1 1 90px' }}>📨 Messages</button>
                     <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ ...pillBtn, flex: '1 1 80px' }}>📤 Share</button>
+                    {/* Database search — the paid Candidate Matching add-on for THIS
+                        advert. Shows for every job: opens the search when purchased,
+                        or starts the purchase when not. */}
+                    <button onClick={() => databaseSearch(j)} disabled={buyingMatch === j.id} style={{ ...pillBtn, flex: '1 1 120px', ...(j.candidateMatching ? { background: '#FFF3EE', color: 'var(--orange)', borderColor: '#FFD4C0' } : {}) }}>
+                      {buyingMatch === j.id ? '…' : j.candidateMatching ? '🔎 Database search' : '🔎 Database search (add)'}
+                    </button>
                   </div>
-                  {/* Job Match — the paid Candidate Matching add-on, restricted to
-                      THIS advert (the search/unlocks can't be reused elsewhere). */}
-                  {j.candidateMatching ? (
-                    <button onClick={() => openPanel('findStaff', { jobId: j.id })} style={{ marginTop: 8, width: '100%', background: '#FFF3EE', color: 'var(--orange)', border: '1px solid #FFD4C0', borderRadius: 50, padding: 10, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>🎯 Job Match — search candidates for this job</button>
-                  ) : (
-                    <div style={{ marginTop: 8, fontSize: 11, color: '#999', fontFamily: 'var(--font-nunito)', textAlign: 'center' }}>🎯 Job Match (paid) not added — add it when posting or editing this advert.</div>
-                  )}
                   {/* Position status controls */}
                   <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {jstatus === 'open' && <button onClick={() => setJobStatus(j.listingId, 'sold', 'Marked as filled')} style={statusBtn('#f0faf4', '#16a34a')}>✓ Mark filled</button>}

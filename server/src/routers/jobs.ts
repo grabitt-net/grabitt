@@ -567,6 +567,37 @@ export const jobsRouter = router({
       return { ...created, pendingPayment: true, checkoutUrl: session.url }
     }),
 
+  // Buy the Candidate Matching / database-search add-on for an EXISTING advert.
+  // Returns a Stripe checkout URL; the webhook flips candidateMatching on when
+  // paid. A €0 price (shouldn't happen normally) enables it immediately.
+  addCandidateMatching: protectedProcedure
+    .input(z.object({ listingId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await ctx.prisma.listing.findUnique({
+        where: { id: input.listingId },
+        select: { id: true, title: true, sellerId: true, jobListing: { select: { candidateMatching: true } } },
+      })
+      if (!listing || listing.sellerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the advertiser can add this.' })
+      if (!listing.jobListing) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Not a job advert' })
+      if (listing.jobListing.candidateMatching) return { alreadyOn: true as const }
+
+      const fee = JOBS_PRICING.candidateMatchingCents
+      if (fee <= 0) {
+        await ctx.prisma.jobListing.updateMany({ where: { listingId: input.listingId }, data: { candidateMatching: true } })
+        return { enabled: true as const }
+      }
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { email: true, stripeCustomerId: true } })
+      const session = await getStripe().checkout.sessions.create({
+        mode: 'payment',
+        ...(me.stripeCustomerId ? { customer: me.stripeCustomerId } : { customer_email: me.email }),
+        line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: fee, product_data: { name: `Grabitt Candidate Database Search — ${listing.title}` } } }],
+        payment_intent_data: { metadata: { kind: 'job_candidate_matching', listingId: listing.id, userId: ctx.user.id } },
+        success_url: `${appUrl()}/account?section=employment&matched=${listing.id}`,
+        cancel_url: `${appUrl()}/account?section=employment&cancelled=1`,
+      })
+      return { pendingPayment: true as const, checkoutUrl: session.url }
+    }),
+
   // Edit a job advert you posted. Writes the parent Listing and the JobListing
   // detail together, mirroring create's field mapping so the two stay in step
   // (listing.title tracks jobTitle, listing.price tracks salaryMin).

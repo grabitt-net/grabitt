@@ -350,7 +350,7 @@ export const seekersRouter = router({
 
       const job = await ctx.prisma.jobListing.findUnique({
         where: { id: input.jobListingId },
-        select: { id: true, employerId: true, jobTitle: true, sector: true, roles: true, languages: true, experienceMonths: true, skills: true, expiresAt: true, listing: { select: { status: true } } },
+        select: { id: true, employerId: true, jobTitle: true, sector: true, roles: true, languages: true, experienceMonths: true, skills: true, requirements: true, expiresAt: true, listing: { select: { status: true } } },
       })
       if (!job || job.employerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: 'Choose one of your own job adverts.' })
       const jobLive = job.listing?.status === 'active' && (!job.expiresAt || job.expiresAt > new Date())
@@ -405,7 +405,7 @@ export const seekersRouter = router({
         count: candidates.length,
         candidates,
         cvUnlockCents: RECRUITMENT_PRICING.cvUnlockCents,
-        job: { id: job.id, jobTitle: job.jobTitle, sector: job.sector, roles: job.roles, languages: job.languages, experienceMonths: job.experienceMonths },
+        job: { id: job.id, jobTitle: job.jobTitle, sector: job.sector, roles: job.roles, languages: job.languages, experienceMonths: job.experienceMonths, requirements: job.requirements ?? [] },
       }
     }),
 

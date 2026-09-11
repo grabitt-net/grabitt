@@ -292,6 +292,11 @@ export async function handleStripeEvent(event: Stripe.Event) {
         }
         // (Promo redemption, if any, is recorded by the generic block above.)
       }
+      // Candidate Matching (database search) bought for an EXISTING advert — just
+      // enable it, without touching the advert's status or dates.
+      if (pi.metadata?.kind === 'job_candidate_matching' && pi.metadata.listingId) {
+        await prisma.jobListing.updateMany({ where: { listingId: pi.metadata.listingId }, data: { candidateMatching: true } }).catch(() => {})
+      }
       // Extra categories on an existing listing — apply the paid target set now.
       if (pi.metadata?.kind === 'listing_categories' && pi.metadata.listingId) {
         const extras = (pi.metadata.extraDepartments || '').split(',').map(s => s.trim()).filter(Boolean)
