@@ -290,6 +290,15 @@ export async function handleStripeEvent(event: Stripe.Event) {
         if (pi.metadata.candidateMatching === '1') {
           await prisma.jobListing.updateMany({ where: { listingId: pi.metadata.listingId }, data: { candidateMatching: true } }).catch(() => {})
         }
+        // Job-post pack: bank the extra adverts (3-pack → +2) and/or spend a
+        // banked credit that covered this advert while add-ons were paid.
+        if (pi.metadata.jobPackExtra || pi.metadata.useJobCredit === '1') {
+          const own = await prisma.listing.findUnique({ where: { id: pi.metadata.listingId }, select: { sellerId: true } })
+          if (own?.sellerId) {
+            const delta = (Number(pi.metadata.jobPackExtra) || 0) - (pi.metadata.useJobCredit === '1' ? 1 : 0)
+            if (delta !== 0) await prisma.user.update({ where: { id: own.sellerId }, data: { jobPostCredits: { increment: delta } } }).catch(() => {})
+          }
+        }
         // (Promo redemption, if any, is recorded by the generic block above.)
       }
       // Candidate Matching (database search) bought for an EXISTING advert — just

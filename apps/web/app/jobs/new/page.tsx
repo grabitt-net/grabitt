@@ -69,6 +69,11 @@ export default function PostJobPage() {
   const [questions, setQuestions] = useState<JobQuestion[]>([])
   // Only business accounts may post jobs.
   const [gate, setGate] = useState<'checking' | 'ok' | 'needbusiness'>('checking')
+  // Whether the next advert is free (allowance/credit) or must be bought, plus
+  // pack prices — drives the 1-or-3 pack chooser on the final step.
+  type Posting = { isBusiness: boolean; freeSlot: boolean; withinAllowance?: boolean; credits: number; perJobCents: number; packThreeCents: number }
+  const [posting, setPosting] = useState<Posting | null>(null)
+  const [jobPack, setJobPack] = useState<1 | 3>(1)
 
   // Auto-save draft — never lose a half-written advert. Saved to the browser as
   // you type; offered back on return; cleared once the job is posted.
@@ -102,6 +107,7 @@ export default function PostJobPage() {
       try {
         const me: any = await (trpcAuthed() as any).users.me.query()
         setGate(me?.isBusiness ? 'ok' : 'needbusiness')
+        try { setPosting(await (trpcAuthed() as any).jobs.postingStatus.query()) } catch { /* non-fatal */ }
       } catch { router.push('/auth?next=/jobs/new') }
     })()
   }, [router])
@@ -177,6 +183,7 @@ export default function PostJobPage() {
         ...(pin ? { lat: pin.lat, lng: pin.lng } : {}),
         ...(matchingOptIn ? { candidateMatching: true } : {}),
         ...(featuredWeeks > 0 ? { featuredWeeks } : {}),
+        ...(posting && !posting.freeSlot ? { jobPack } : {}),
         ...(appliedPromo?.code ? { discountCode: appliedPromo.code } : {}),
         ...(questions.some(q => q.label.trim()) ? {
           applicationQuestions: questions
@@ -371,6 +378,33 @@ export default function PostJobPage() {
               ))}
             </div>
           </div>
+
+          {/* Job-post pack — shown only when this advert is beyond the free
+              allowance and there's no banked credit. Buy 1, or a 3-pack: one is
+              used now and the other two are banked for later, free. */}
+          {posting && !posting.freeSlot && (
+            <div style={{ marginTop: 14 }}>
+              <Field label="You’ve used your job allowance — choose a pack">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {[
+                    { pack: 1 as const, title: '1 job post', price: posting.perJobCents, sub: 'Posts this advert' },
+                    { pack: 3 as const, title: '3 job posts', price: posting.packThreeCents, sub: 'Use 1 now · bank 2 for later' },
+                  ].map(o => (
+                    <button key={o.pack} type="button" onClick={() => setJobPack(o.pack)} style={{ textAlign: 'left', background: jobPack === o.pack ? '#FFF3EE' : '#fff', border: `1.5px solid ${jobPack === o.pack ? 'var(--orange)' : 'var(--line)'}`, borderRadius: 12, padding: 12, cursor: 'pointer' }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: jobPack === o.pack ? 'var(--orange)' : 'var(--dark)' }}>{o.title}</div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: 'var(--dark)', marginTop: 2 }}>{eur(o.price)}</div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 2 }}>{o.sub}</div>
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            </div>
+          )}
+          {posting?.freeSlot && posting.credits > 0 && !posting.withinAllowance && (
+            <div style={{ marginTop: 14, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#16a34a', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '9px 12px' }}>
+              ✓ You have {posting.credits} banked job post{posting.credits === 1 ? '' : 's'} — this advert will use one, at no charge.
+            </div>
+          )}
 
           {/* Discount code — held in Grabitt and applied to the total before it's
               sent to Stripe (a 100%-off code posts the advert free). */}

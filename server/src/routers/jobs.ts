@@ -461,6 +461,25 @@ export const jobsRouter = router({
     return { locations, remote }
   }),
 
+  // Whether the next job advert is free (within the monthly allowance, or a
+  // banked credit) or must be paid for — and the pack prices, so the Post-a-Job
+  // screen can offer 1 or a 3-pack when payment is due.
+  postingStatus: protectedProcedure.query(async ({ ctx }) => {
+    const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, jobPostCredits: true } })
+    if (!me.isBusiness) return { isBusiness: false as const, freeSlot: false, credits: 0, perJobCents: JOBS_PRICING.perJobCents, packThreeCents: JOBS_PRICING.perJobCents * 3 }
+    const overflow = await overflowFeeCents(ctx.prisma, ctx.user.id, 'jobs', JOBS_PRICING.perJobCents)
+    const credits = me.jobPostCredits ?? 0
+    return {
+      isBusiness: true as const,
+      // Free if within the monthly allowance, or a banked credit is available.
+      freeSlot: overflow === 0 || credits > 0,
+      withinAllowance: overflow === 0,
+      credits,
+      perJobCents: JOBS_PRICING.perJobCents,
+      packThreeCents: JOBS_PRICING.perJobCents * 3,
+    }
+  }),
+
   // Post a Job — creates the base Listing (department=jobs) plus the JobListing
   // detail row in one transaction. The poster is the employer.
   create: protectedProcedure
@@ -499,16 +518,34 @@ export const jobsRouter = router({
       lng: z.number().optional(),
       applicationQuestions: z.array(questionSchema).max(15).optional(),
       discountCode: z.string().max(40).optional(),
+      // When over allowance with no banked credits: how many adverts to buy —
+      // 1, or a 3-pack (one used now, two banked). Defaults to 1.
+      jobPack: z.union([z.literal(1), z.literal(3)]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       // Only Business accounts may post job adverts.
-      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, isPropertyAgent: true, email: true, stripeCustomerId: true } })
+      const me = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.user.id }, select: { isBusiness: true, isPropertyAgent: true, email: true, stripeCustomerId: true, jobPostCredits: true } })
       if (me.isPropertyAgent && !me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'Property agent accounts can only list property.' })
       if (!me.isBusiness) throw new TRPCError({ code: 'FORBIDDEN', message: 'A Business account is required to post jobs' })
-      // Beyond the tier's monthly free allowance, a job advert is €29 (14 days).
-      // The listing is created hidden until the fee is paid; the webhook publishes
-      // it. Within allowance, it publishes immediately.
-      const listingFee = await overflowFeeCents(ctx.prisma, ctx.user.id, 'jobs', JOBS_PRICING.perJobCents)
+
+      // Job advert cost, in order of preference:
+      //   1. within the monthly allowance → free
+      //   2. a banked job-post credit (from a previous 3-pack) → free, credit spent
+      //   3. otherwise buy a pack: 1 advert, or a 3-pack (1 now + 2 banked)
+      const overflow = await overflowFeeCents(ctx.prisma, ctx.user.id, 'jobs', JOBS_PRICING.perJobCents)
+      let listingFee = overflow
+      let useJobCredit = false
+      let jobPackExtra = 0 // adverts banked for later (3-pack → 2)
+      if (overflow > 0) {
+        if ((me.jobPostCredits ?? 0) > 0) {
+          useJobCredit = true
+          listingFee = 0
+        } else {
+          const pack = input.jobPack ?? 1
+          listingFee = JOBS_PRICING.perJobCents * pack
+          if (pack === 3) jobPackExtra = 2
+        }
+      }
       // Total = job advert fee (over the free allowance) + optional Candidate
       // Matching add-on. A discount code (held in Grabitt, not Stripe) comes off
       // the whole total before checkout; a €0 total publishes free, bypassing
@@ -580,6 +617,10 @@ export const jobsRouter = router({
         if (discountCodeId) {
           await recordRedemption(ctx.prisma, { codeId: discountCodeId, userId: ctx.user.id, appliedTo: 'job', originalCents: baseTotal, discountCents }).catch(() => {})
         }
+        // Spent a banked job-post credit — deduct it now the advert is live.
+        if (useJobCredit) {
+          await ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { jobPostCredits: { decrement: 1 } } }).catch(() => {})
+        }
         return created
       }
 
@@ -597,6 +638,10 @@ export const jobsRouter = router({
           kind: 'listing_publish', listingId: created.id,
           ...(input.candidateMatching ? { candidateMatching: '1' } : {}),
           ...(featuredWeeks > 0 ? { featuredWeeks: String(featuredWeeks) } : {}),
+          // Bank the extra adverts from a 3-pack, or spend a credit used to cover
+          // the advert while paid add-ons are charged.
+          ...(jobPackExtra > 0 ? { jobPackExtra: String(jobPackExtra) } : {}),
+          ...(useJobCredit ? { useJobCredit: '1' } : {}),
           ...(discountCodeId ? { discountCodeId, discountUserId: ctx.user.id, discountCents: String(discountCents), originalCents: String(baseTotal) } : {}),
         } },
         success_url: `${appUrl()}/listings/${created.id}?published=1`,
