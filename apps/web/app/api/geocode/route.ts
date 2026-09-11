@@ -19,14 +19,27 @@ const KEY = process.env.GOOGLE_MAPS_API_KEY
 const CANARY_LOCATION = '28.3,-16.0'
 const CANARY_RADIUS = 300000
 
-type GAutocomplete = { predictions?: { description: string; place_id: string }[]; status: string }
-type GComponent = { long_name: string; types: string[] }
-type GDetails = {
-  result?: { formatted_address?: string; geometry?: { location?: { lat: number; lng: number } }; address_components?: GComponent[] }
-  status: string
+// Places API (New) shapes.
+type GNewComponent = { longText?: string; types: string[] }
+type GNewAutocomplete = {
+  suggestions?: { placePrediction?: { placeId: string; text?: { text?: string } } }[]
+  error?: { status?: string; message?: string }
 }
+type GNewDetails = {
+  formattedAddress?: string
+  location?: { latitude: number; longitude: number }
+  addressComponents?: GNewComponent[]
+  error?: { status?: string; message?: string }
+}
+// Classic Geocoding API (still current — not a legacy Places endpoint).
+type GComponent = { long_name: string; types: string[] }
 
-const cityFromGoogle = (comps?: GComponent[]) => {
+const cityFromGoogleNew = (comps?: GNewComponent[]) => {
+  if (!comps) return ''
+  const pick = (t: string) => comps.find(c => c.types.includes(t))?.longText
+  return pick('locality') || pick('postal_town') || pick('administrative_area_level_2') || pick('administrative_area_level_1') || ''
+}
+const cityFromGeocode = (comps?: GComponent[]) => {
   if (!comps) return ''
   const pick = (t: string) => comps.find(c => c.types.includes(t))?.long_name
   return pick('locality') || pick('postal_town') || pick('administrative_area_level_2') || pick('administrative_area_level_1') || ''
@@ -67,18 +80,20 @@ export async function GET(req: Request) {
   const lng = params.get('lng')
 
   try {
-    // ── Resolve a picked suggestion to coordinates (Google Place Details) ────
+    // ── Resolve a picked suggestion to coordinates (Places API New details) ──
     if (placeId) {
       if (!KEY) return NextResponse.json({ address: '', city: '', lat: null, lng: null })
-      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=formatted_address,geometry/location,address_component&language=en&key=${KEY}`
-      const res = await fetch(url, { next: { revalidate: 300 } })
-      const data = (await res.json()) as GDetails
-      const loc = data.result?.geometry?.location
+      const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=en`
+      const res = await fetch(url, {
+        headers: { 'X-Goog-Api-Key': KEY, 'X-Goog-FieldMask': 'formattedAddress,location,addressComponents' },
+        next: { revalidate: 300 },
+      })
+      const data = (await res.json()) as GNewDetails
       return NextResponse.json({
-        address: data.result?.formatted_address ?? '',
-        city: cityFromGoogle(data.result?.address_components),
-        lat: loc?.lat ?? null,
-        lng: loc?.lng ?? null,
+        address: data.formattedAddress ?? '',
+        city: cityFromGoogleNew(data.addressComponents),
+        lat: data.location?.latitude ?? null,
+        lng: data.location?.longitude ?? null,
       })
     }
 
@@ -91,7 +106,7 @@ export async function GET(req: Request) {
         const res = await fetch(url, { next: { revalidate: 300 } })
         const data = (await res.json()) as { results?: { formatted_address: string; address_components: GComponent[] }[] }
         const first = data.results?.[0]
-        return NextResponse.json({ address: first?.formatted_address ?? '', city: cityFromGoogle(first?.address_components) })
+        return NextResponse.json({ address: first?.formatted_address ?? '', city: cityFromGeocode(first?.address_components) })
       }
       return NextResponse.json(await nominatimReverse(la, ln))
     }
@@ -99,19 +114,30 @@ export async function GET(req: Request) {
     // ── Suggestions as you type ──────────────────────────────────────────────
     if (q.length < 3) return NextResponse.json({ results: [] })
     if (KEY) {
-      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&components=country:es&location=${CANARY_LOCATION}&radius=${CANARY_RADIUS}&language=en&key=${KEY}`
-      const res = await fetch(url, { next: { revalidate: 60 } })
-      const data = (await res.json()) as GAutocomplete & { error_message?: string }
-      const results = (data.predictions ?? []).map(p => ({ address: p.description, placeId: p.place_id }))
-      // When Google returns no usable predictions, pass through its status so a
-      // misconfiguration (API not enabled, billing off, key restricted) is
-      // visible instead of silently empty. Falls back to Nominatim so the form
-      // still works meanwhile.
-      if (results.length === 0 && data.status && data.status !== 'ZERO_RESULTS') {
+      const [lat0, lng0] = CANARY_LOCATION.split(',').map(Number)
+      const res = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': KEY },
+        body: JSON.stringify({
+          input: q,
+          includedRegionCodes: ['es'],
+          languageCode: 'en',
+          locationBias: { circle: { center: { latitude: lat0, longitude: lng0 }, radius: CANARY_RADIUS } },
+        }),
+        next: { revalidate: 60 },
+      })
+      const data = (await res.json()) as GNewAutocomplete
+      const results = (data.suggestions ?? [])
+        .map(s => s.placePrediction)
+        .filter((p): p is NonNullable<typeof p> => !!p?.placeId)
+        .map(p => ({ address: p.text?.text ?? '', placeId: p.placeId }))
+      // If Google errored (API not enabled, billing off, key restricted), pass
+      // its status through and fall back to Nominatim so the form still works.
+      if (results.length === 0 && data.error) {
         const fallback = await nominatimSearch(q)
-        return NextResponse.json({ results: fallback, provider: 'nominatim', googleStatus: data.status, googleError: data.error_message ?? null })
+        return NextResponse.json({ results: fallback, provider: 'nominatim', googleStatus: data.error.status ?? 'ERROR', googleError: data.error.message ?? null })
       }
-      return NextResponse.json({ results, provider: 'google', googleStatus: data.status })
+      return NextResponse.json({ results, provider: 'google' })
     }
     return NextResponse.json({ results: await nominatimSearch(q), provider: 'nominatim' })
   } catch {
