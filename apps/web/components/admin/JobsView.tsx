@@ -131,10 +131,9 @@ export default function JobsView() {
 
 // Read-only applicant monitor for one job (admin oversight / security).
 const ADMIN_STAGES: [string, string][] = [
-  ['applied', 'New'], ['viewed', 'Reviewing'], ['invited', 'Invited'], ['arranged', 'Interview'],
-  ['offer', 'Offer'], ['accepted', 'Hired'], ['rejected_pre', 'Rejected'],
+  ['applied', 'New'], ['invited', 'Invited'], ['accepted', 'Hired'], ['rejected_pre', 'Rejected'],
 ]
-const ADMIN_FOLD: Record<string, string> = { shortlisted: 'invited', hired: 'accepted', rejected: 'rejected_pre', rejected_post: 'rejected_pre' }
+const ADMIN_FOLD: Record<string, string> = { viewed: 'applied', arranged: 'invited', offer: 'invited', shortlisted: 'invited', hired: 'accepted', rejected: 'rejected_pre', rejected_post: 'rejected_pre' }
 function AdminApplicantsModal({ api, job, onClose }: { api: ReturnType<typeof useCrmApi>; job: AdminJob; onClose: () => void }) {
   const [data, setData] = useState<any | null>(null)
   const [err, setErr] = useState('')

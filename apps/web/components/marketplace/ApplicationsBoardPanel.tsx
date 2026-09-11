@@ -41,7 +41,9 @@ const STATUS: Record<string, { label: string; color: string }> = {
   hired:         { label: 'Hired (legacy)',            color: '#22c55e' },
   rejected:      { label: 'Rejected (legacy)',         color: '#ef4444' },
 }
-const ORDER = ['applied', 'viewed', 'invited', 'arranged', 'offer', 'accepted', 'rejected_pre', 'rejected_post']
+// Simplified pipeline — Reviewing / Interview Arranged / Offer Made removed.
+// Legacy statuses still render a label via STATUS, they're just not selectable.
+const ORDER = ['applied', 'invited', 'accepted', 'rejected_pre']
 const REJECTING = new Set(['rejected', 'rejected_pre', 'rejected_post'])
 
 export default function ApplicationsBoardPanel({ onClose, focusJobId }: { onClose: () => void; focusJobId?: string; openPanel: (id: PanelId, data?: Record<string, unknown>) => void }) {

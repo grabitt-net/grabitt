@@ -25,15 +25,14 @@ type Job = { id: string; listingId: string; jobTitle: string; company: string; q
 // the end. `hired` maps to the 'accepted' status (offer accepted = hired).
 const STAGES: { key: string; label: string; color: string }[] = [
   { key: 'applied', label: 'New Applicant', color: '#3b82f6' },
-  { key: 'viewed', label: 'Reviewing', color: '#6b7280' },
   { key: 'invited', label: 'Invited to Interview', color: '#8b5cf6' },
-  { key: 'arranged', label: 'Interview Arranged', color: '#0ea5e9' },
-  { key: 'offer', label: 'Offer Made', color: '#f59e0b' },
   { key: 'accepted', label: 'Hired', color: '#22c55e' },
   { key: 'rejected_pre', label: 'Rejected', color: '#ef4444' },
 ]
 // Legacy statuses folded onto a column so old applications still appear.
-const FOLD: Record<string, string> = { shortlisted: 'invited', hired: 'accepted', rejected: 'rejected_pre', rejected_post: 'rejected_pre' }
+// Reviewing / Interview Arranged / Offer Made were removed to simplify the
+// pipeline, so any application left on them collapses back to a live column.
+const FOLD: Record<string, string> = { viewed: 'applied', arranged: 'invited', offer: 'invited', shortlisted: 'invited', hired: 'accepted', rejected: 'rejected_pre', rejected_post: 'rejected_pre' }
 const colOf = (status: string) => FOLD[status] ?? status
 
 function expLabel(m: number | null) {
