@@ -286,7 +286,7 @@ export const jobsRouter = router({
 
     // The employer's name is released to the candidate at the same point it is
     // released to the employer: an interview invitation.
-    const KNOWS_EMPLOYER = new Set(['invited', 'arranged', 'offer', 'accepted', 'hired', 'rejected_post'])
+    const KNOWS_EMPLOYER = new Set(['invited_pending', 'invited', 'arranged', 'offer', 'accepted', 'hired', 'rejected_post'])
     return rows.map(r => ({
       ...r,
       jobListing: {
@@ -298,6 +298,44 @@ export const jobsRouter = router({
       },
     }))
   }),
+
+  // A candidate responds to a cold "invited to apply" invitation from an
+  // employer's database search. Accepting reveals their identity + contact to
+  // that employer (via a candidateUnlock) and moves them into the pipeline as an
+  // applicant; declining removes the invitation. Identity is shared ONLY on
+  // accept — never before.
+  respondToInvite: protectedProcedure
+    .input(z.object({ jobListingId: z.string().uuid(), accept: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const app = await ctx.prisma.jobApplication.findUnique({
+        where: { jobListingId_applicantId: { jobListingId: input.jobListingId, applicantId: ctx.user.id } },
+        select: { id: true, status: true, jobListing: { select: { employerId: true, jobTitle: true } } },
+      })
+      if (!app) throw new TRPCError({ code: 'NOT_FOUND', message: 'Invitation not found' })
+      if (app.status !== 'invited_pending') return { ok: true, already: true as const, status: app.status }
+      const employerId = app.jobListing.employerId
+
+      if (!input.accept) {
+        await ctx.prisma.jobApplication.delete({ where: { id: app.id } })
+        await ctx.prisma.notification.create({
+          data: { userId: employerId, kind: 'system', title: 'Invitation declined', body: `A candidate declined your invitation for “${app.jobListing.jobTitle}”.`, actionUrl: '/account?section=employment' },
+        }).catch(() => {})
+        return { ok: true, declined: true as const }
+      }
+
+      // Accepted → reveal identity to this employer (candidateUnlock) and put the
+      // candidate into the applicant pipeline.
+      await ctx.prisma.candidateUnlock.upsert({
+        where: { employerId_seekerId: { employerId, seekerId: ctx.user.id } },
+        create: { employerId, seekerId: ctx.user.id, jobListingId: input.jobListingId },
+        update: {},
+      }).catch(() => {})
+      await ctx.prisma.jobApplication.update({ where: { id: app.id }, data: { status: 'applied' } })
+      await ctx.prisma.notification.create({
+        data: { userId: employerId, kind: 'system', title: '✅ Candidate accepted your invitation', body: `A candidate accepted your invitation for “${app.jobListing.jobTitle}” — their details are now visible in Applicants.`, actionUrl: '/account?section=employment' },
+      }).catch(() => {})
+      return { ok: true, accepted: true as const }
+    }),
 
   list: publicProcedure
     .input(z.object({
@@ -698,6 +736,9 @@ export const jobsRouter = router({
       include: {
         listing: { select: { id: true, status: true, createdAt: true, images: true } },
         applications: {
+          // Cold invites awaiting the candidate's acceptance aren't applicants
+          // yet — they only enter the pipeline once they accept (status→applied).
+          where: { status: { not: 'invited_pending' } },
           orderBy: { createdAt: 'desc' },
           include: { applicant: { select: { id: true, displayName: true } } },
         },

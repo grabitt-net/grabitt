@@ -363,7 +363,7 @@ export const seekersRouter = router({
       if (job.languages?.length) where.languages = { hasEvery: job.languages }
 
       const [profiles, unlocks, views, apps] = await Promise.all([
-        ctx.prisma.seekerProfile.findMany({ where, orderBy: [{ experienceMonths: 'desc' }, { createdAt: 'desc' }], take: 60, include: { user: { select: { avgRating: true } } } }),
+        ctx.prisma.seekerProfile.findMany({ where, orderBy: [{ experienceMonths: 'desc' }, { createdAt: 'desc' }], take: 5, include: { user: { select: { avgRating: true, displayName: true, email: true, phone: true, avatar: true } } } }),
         ctx.prisma.candidateUnlock.findMany({ where: { employerId: ctx.user.id }, select: { seekerId: true } }),
         ctx.prisma.candidateView.findMany({ where: { employerId: ctx.user.id }, select: { seekerId: true } }),
         ctx.prisma.jobApplication.findMany({ where: { jobListingId: job.id }, select: { applicantId: true, status: true } }),
@@ -378,6 +378,9 @@ export const seekersRouter = router({
           candidate: { sectors: p.sectors, sector: p.sector, roles: p.roles, skills: p.skills, languages: p.languages, experienceMonths: p.experienceMonths, availability: p.availability, hours: p.hours },
         })
         const appStatus = appByUser.get(p.userId)
+        // Identity is revealed only once the candidate ACCEPTS the invite, which
+        // creates a candidateUnlock. Until then the card is anonymous.
+        const revealed = unlockedIds.has(p.userId)
         return {
           seekerId: p.userId,
           headline: p.headline,
@@ -394,10 +397,14 @@ export const seekersRouter = router({
           rating: p.user.avgRating,
           matchScore: fit.score,
           matchNotes: fit.notes,
-          unlocked: unlockedIds.has(p.userId),
+          unlocked: revealed,
           viewed: viewedIds.has(p.userId),
-          invited: appStatus === 'invited',
-          applied: !!appStatus && appStatus !== 'invited',
+          // 'invited_pending' = invited, awaiting their acceptance.
+          invited: appStatus === 'invited_pending',
+          accepted: revealed,
+          applied: !!appStatus && appStatus !== 'invited_pending',
+          // Revealed contact — only present once the candidate accepted.
+          contact: revealed ? { name: p.user.displayName, email: p.user.email, phone: p.user.phone, avatar: p.user.avatar } : null,
         }
       }).sort((a, b) => b.matchScore - a.matchScore)
 
@@ -424,11 +431,14 @@ export const seekersRouter = router({
       })
       if (existing) return { ok: true, already: true as const, status: existing.status }
 
-      await ctx.prisma.jobApplication.create({ data: { jobListingId: job.id, applicantId: input.seekerId, status: 'invited' } })
+      // Cold invite from the database search: 'invited_pending' — the candidate
+      // stays anonymous to the employer until THEY accept. On accept their
+      // identity + contact are revealed (see jobs.respondToInvite).
+      await ctx.prisma.jobApplication.create({ data: { jobListingId: job.id, applicantId: input.seekerId, status: 'invited_pending' } })
       await ctx.prisma.notification.create({
-        data: { userId: input.seekerId, kind: 'system', title: '📨 You’ve been invited to apply', body: `An employer invited you to apply for “${job.jobTitle}”. Open it to complete your application.`, actionUrl: '/jobs' },
+        data: { userId: input.seekerId, kind: 'system', title: '📨 You’ve been invited to apply', body: `${job.jobTitle ? `An employer invited you to apply for “${job.jobTitle}”.` : 'An employer invited you to apply.'} Accept to share your details and start the conversation.`, actionUrl: '/account?section=employment&invites=1' },
       })
-      return { ok: true, already: false as const, status: 'invited' as const }
+      return { ok: true, already: false as const, status: 'invited_pending' as const }
     }),
 
   // Reveal a candidate's CV + contact details. This is the one charged step of

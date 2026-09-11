@@ -18,6 +18,7 @@ import InboxClient from './InboxClient'
 import BannerSlot from './BannerSlot'
 import BusinessCentre from './BusinessCentre'
 import EmployerDashboardContent from './EmployerDashboardContent'
+import SeekerInvites from './SeekerInvites'
 import CharityCentre from './CharityCentre'
 import AgentCentre from './AgentCentre'
 import { AGENTS_ENABLED } from '@/lib/flags'
@@ -485,6 +486,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                applicants, statuses and the paid Job Match add-on. */
             <EmployerDashboardContent />
           ) : (<>
+            <SeekerInvites />
             <div style={card}>
               <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer' }}>
                 <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>{t('I am looking for work')}</span>

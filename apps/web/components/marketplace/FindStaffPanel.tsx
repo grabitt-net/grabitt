@@ -14,6 +14,9 @@ type Candidate = {
   // Whether we've already invited them to apply / they've applied for this job.
   invited?: boolean
   applied?: boolean
+  // Set once the candidate ACCEPTS the invite — their contact is then revealed.
+  accepted?: boolean
+  contact?: { name: string; email: string; phone: string | null; avatar: string | null } | null
   // How well they match THIS search — not a grade on the person.
   matchScore: number
   matchNotes: { factor: string; points: number; of: number; detail: string }[]
@@ -337,7 +340,7 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
                   <button onClick={() => setMode('search')} style={CHOOSE_TILE}>
                     <span style={CHOOSE_ICON}>🔍</span>
                     <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Search candidates</span>
-                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>Match your advert · {euro(access.cvUnlockCents)} to unlock a CV</span>
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>Match your advert · invite the ones you like</span>
                   </button>
                 )}
               </div>
@@ -348,7 +351,7 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
                 </div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: access.hasLiveJob ? '#15803d' : '#9a5b1a', marginTop: 2, lineHeight: 1.5 }}>
                   {access.hasLiveJob
-                    ? `The database search is an add-on to your advert — it matches the exact spec you placed, and each CV unlock (${euro(access.cvUnlockCents)}) is linked to that advert.`
+                    ? 'The database search is an add-on to your advert — it matches the exact spec you placed. Invite anyone you like; their details are revealed once they accept, at no extra cost.'
                     : 'Place a job advert first. The candidate database search then becomes available as an add-on, matching the spec you set on the advert.'}
                 </div>
               </div>
@@ -410,27 +413,18 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
               ) : (
                 <>
                   <div style={{ background: '#FFF3EE', border: '1.5px solid #FFD4C0', borderRadius: 14, padding: 12, marginBottom: 14 }}>
-                    <div style={{ fontSize: 12, color: '#555', fontFamily: 'var(--font-ui)', lineHeight: 1.5 }}>🔒 Unlocking a candidate&apos;s CV, name &amp; contact is <strong>{euro(unlockCents)}</strong> — linked to the job advert you&apos;re hiring for. Already-unlocked candidates stay free.</div>
-                    {(access?.liveJobs?.length ?? 0) > 1 && (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, color: ORANGE, textTransform: 'uppercase', marginBottom: 4 }}>Unlock against advert</div>
-                        <select value={unlockJobId} onChange={e => setUnlockJobId(e.target.value)} style={{ ...SELECT, padding: '8px 10px', fontSize: 12 }}>
-                          {access!.liveJobs.map(j => <option key={j.id} value={j.id}>{j.jobTitle}</option>)}
-                        </select>
-                      </div>
-                    )}
+                    <div style={{ fontSize: 12, color: '#555', fontFamily: 'var(--font-ui)', lineHeight: 1.5 }}>🔒 Candidates stay anonymous while you review them. Invite anyone you like to apply — their name &amp; contact are revealed only once <strong>they accept your invitation</strong>. There&apos;s nothing more to pay: the database search is included in your advert&apos;s Candidate Matching add-on.</div>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                     {candidates.map(c => {
-                      const rev = revealed[c.seekerId]
-                      const isUnlocked = c.unlocked || !!rev
+                      const name = c.contact?.name
                       return (
                         <div key={c.seekerId} style={{ background: '#f8f9fa', border: '1.5px solid #eee', borderRadius: 14, padding: 13 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                            <div style={{ width: 40, height: 40, borderRadius: '50%', background: ORANGE, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, flexShrink: 0 }}>{rev ? rev.name.charAt(0) : (c.roles[0] || c.sector || '?').charAt(0)}</div>
+                            <div style={{ width: 40, height: 40, borderRadius: '50%', background: ORANGE, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, flexShrink: 0 }}>{name ? name.charAt(0) : (c.roles[0] || c.sector || '?').charAt(0)}</div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: '#1a1a1a' }}>{rev ? rev.name : (c.headline || c.roles[0] || 'Candidate')}</div>
+                              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: '#1a1a1a' }}>{name || c.headline || c.roles[0] || 'Candidate'}</div>
                               <div style={{ fontSize: 11, color: '#666', fontFamily: 'var(--font-ui)' }}>{[c.sector, c.location].filter(Boolean).join(' · ') || 'Canary Islands'}{c.rating ? ` · ★ ${Number(c.rating).toFixed(1)}` : ''}</div>
                             </div>
                             {/* Fit against this search, not a grade on the person. */}
@@ -465,29 +459,25 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
                             </button>
                           )}
 
-                          {isUnlocked && rev ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: '#fff', borderRadius: 10, padding: 10 }}>
-                              <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#1a1a1a' }}>📧 <strong>{rev.email}</strong></div>
-                              {rev.phone && <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#1a1a1a' }}>📱 <strong>{rev.phone}</strong></div>}
-                              {rev.location && <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#666' }}>📍 {rev.location}</div>}
+                          {/* Contact — revealed only once the candidate accepts
+                              the invitation. */}
+                          {c.contact ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: 10 }}>
+                              <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#166534', fontWeight: 900 }}>✅ Accepted your invitation</div>
+                              <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#1a1a1a' }}>👤 <strong>{c.contact.name}</strong></div>
+                              <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#1a1a1a' }}>📧 <strong>{c.contact.email}</strong></div>
+                              {c.contact.phone && <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#1a1a1a' }}>📱 <strong>{c.contact.phone}</strong></div>}
                             </div>
-                          ) : isUnlocked ? (
-                            <div style={{ fontSize: 11, color: '#22c55e', fontFamily: 'var(--font-ui)', fontWeight: 800 }}>✓ Unlocked — reopen to view details</div>
                           ) : (
-                            <button onClick={() => unlock(c)} disabled={unlockingId === c.seekerId} style={{ width: '100%', background: ORANGE, color: '#fff', border: 'none', borderRadius: 10, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', opacity: unlockingId === c.seekerId ? 0.6 : 1 }}>{unlockingId === c.seekerId ? 'Unlocking…' : `🔓 Unlock CV & contact · ${euro(unlockCents)}`}</button>
+                            /* Invite to apply — identity is shared only if they accept. */
+                            <div style={{ marginTop: 2 }}>
+                              {c.invited ? (
+                                <div style={{ fontSize: 11, color: '#2563eb', fontFamily: 'var(--font-ui)', fontWeight: 800, textAlign: 'center' }}>📨 Invited — awaiting their acceptance</div>
+                              ) : (
+                                <button onClick={() => invite(c)} disabled={invitingId === c.seekerId} style={{ width: '100%', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 10, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', opacity: invitingId === c.seekerId ? 0.6 : 1 }}>{invitingId === c.seekerId ? 'Sending…' : '📨 Invite to apply'}</button>
+                              )}
+                            </div>
                           )}
-
-                          {/* Invite this candidate to apply for the advert — they
-                              show as "invited", not "applied". */}
-                          <div style={{ marginTop: 8 }}>
-                            {c.applied ? (
-                              <div style={{ fontSize: 11, color: '#16a34a', fontFamily: 'var(--font-ui)', fontWeight: 800, textAlign: 'center' }}>✓ Already applied to this advert</div>
-                            ) : c.invited ? (
-                              <div style={{ fontSize: 11, color: '#2563eb', fontFamily: 'var(--font-ui)', fontWeight: 800, textAlign: 'center' }}>📨 Invited to apply</div>
-                            ) : (
-                              <button onClick={() => invite(c)} disabled={invitingId === c.seekerId} style={{ width: '100%', background: '#fff', color: '#2563eb', border: '1.5px solid #bfdbfe', borderRadius: 10, padding: 9, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer', opacity: invitingId === c.seekerId ? 0.6 : 1 }}>{invitingId === c.seekerId ? 'Sending…' : '📨 Invite to apply'}</button>
-                            )}
-                          </div>
                         </div>
                       )
                     })}

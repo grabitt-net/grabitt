@@ -1433,6 +1433,7 @@ enum ApplicationStatus {
   shortlisted
   rejected
   hired
+  invited_pending  // Invited via database search — awaiting the candidate's acceptance
   invited          // Invited to interview
   arranged         // Interview arranged
   offer            // Job offer made
