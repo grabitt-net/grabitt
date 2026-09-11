@@ -362,6 +362,22 @@ export async function handleStripeEvent(event: Stripe.Event) {
           }
         }
       }
+      // Bulk promotion → apply the same option to every listing the seller paid for.
+      if (pi.metadata?.kind === 'listing_promo_bulk' && pi.metadata.listingIds && pi.metadata.userId) {
+        const ids = pi.metadata.listingIds.split(',').map(s => s.trim()).filter(Boolean)
+        const owned = await prisma.listing.findMany({ where: { id: { in: ids }, sellerId: pi.metadata.userId }, select: { id: true } })
+        const ownedIds = owned.map(l => l.id)
+        if (ownedIds.length) {
+          if (pi.metadata.option === 'grab_it_now') {
+            const until = new Date(); until.setHours(24, 0, 0, 0)
+            await prisma.listing.updateMany({ where: { id: { in: ownedIds } }, data: { status: 'grab_it_now', grabItNowUntil: until } })
+          } else {
+            const weeks = Number(pi.metadata.weeks) || 1
+            const until = new Date(Date.now() + weeks * 7 * 86400000)
+            await prisma.listing.updateMany({ where: { id: { in: ownedIds } }, data: { isFeatured: true, featuredUntil: until } })
+          }
+        }
+      }
       break
     }
     // Subscription lifecycle (trial start, activation, renewal, cancel, pause).

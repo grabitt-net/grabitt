@@ -225,6 +225,25 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       : new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime())
     .map((l: any) => ({ ref: l.id, title: l.title, price: `€${Number(l.price).toLocaleString()}`, image: Array.isArray(l.images) ? l.images[0] : null, emoji: deptEmoji(l.department) }))
 
+  // Bulk-feature selection (active listings only). Tick several, choose the
+  // number of weeks, pay once.
+  const [selectedRefs, setSelectedRefs] = useState<Set<string>>(new Set())
+  const [bulkWeeks, setBulkWeeks] = useState(1)
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const toggleRef = (ref: string) => setSelectedRefs(s => { const n = new Set(s); if (n.has(ref)) n.delete(ref); else n.add(ref); return n })
+  useEffect(() => { setSelectedRefs(new Set()) }, [seg]) // clear selection when switching tab
+  const FEATURED_WEEK_EUR = 1.99 // PRICES.featuredPerWeek
+  const bulkFeature = async () => {
+    const ids = [...selectedRefs]
+    if (!ids.length) return
+    setBulkBusy(true)
+    try {
+      const r: any = await (trpcAuthed() as any).listings.promoteBulk.mutate({ listingIds: ids, option: 'featured', weeks: bulkWeeks })
+      if (r?.url) { window.location.href = r.url; return }
+    } catch (e: any) { toast(e?.message || 'Could not start checkout.') }
+    finally { setBulkBusy(false) }
+  }
+
   const respond = async (offerId: string, action: 'accept' | 'decline') => {
     setBusyId(offerId)
     try { await (trpcAuthed() as any).offers.respond.mutate({ offerId, action }); (trpcAuthed() as any).offers.received.query().then((d: unknown) => setOffers(d as any[])) }
@@ -508,11 +527,39 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
 
             {seg !== 'buying' ? (
               <div style={card}>
-                <div style={cardHead}>{t('My Listings')}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={cardHead}>{t('My Listings')}</div>
+                  {seg === 'active' && shown.length > 0 && (
+                    <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>{t('Tick items to feature them together')}</span>
+                  )}
+                </div>
+
+                {/* Bulk-feature action bar — appears once at least one active
+                    listing is ticked. Choose weeks and pay for all in one go. */}
+                {seg === 'active' && selectedRefs.size > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', background: '#FFF8F4', border: '1.5px solid var(--orange)', borderRadius: 12, padding: '10px 12px', margin: '10px 0' }}>
+                    <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>⭐ {selectedRefs.size} selected</span>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#555' }}>
+                      {t('Weeks')}
+                      <select value={bulkWeeks} onChange={e => setBulkWeeks(Number(e.target.value))} style={{ border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, background: '#fff' }}>
+                        {[1, 2, 3, 4, 6, 8].map(w => <option key={w} value={w}>{w}</option>)}
+                      </select>
+                    </label>
+                    <button onClick={bulkFeature} disabled={bulkBusy} style={{ marginLeft: 'auto', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 18px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>
+                      {bulkBusy ? t('Starting…') : `⭐ ${t('Feature')} · €${(selectedRefs.size * bulkWeeks * FEATURED_WEEK_EUR).toFixed(2)}`}
+                    </button>
+                    <button onClick={() => setSelectedRefs(new Set())} style={{ background: 'none', border: 'none', color: '#888', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer' }}>{t('Clear')}</button>
+                  </div>
+                )}
                 {listings === null ? <Muted>{t('Loading…')}</Muted> : shown.length === 0 ? <Muted>{t('Nothing here yet.')}</Muted> : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
                     {shown.map(c => (
-                      <div key={c.ref} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, overflow: 'hidden' }}>
+                      <div key={c.ref} style={{ background: '#fff', border: `1px solid ${seg === 'active' && selectedRefs.has(c.ref) ? 'var(--orange)' : '#ece3d7'}`, borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
+                        {seg === 'active' && (
+                          <label onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 6, left: 6, zIndex: 2, width: 26, height: 26, borderRadius: 7, background: 'rgba(255,255,255,0.92)', boxShadow: '0 1px 4px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                            <input type="checkbox" checked={selectedRefs.has(c.ref)} onChange={() => toggleRef(c.ref)} style={{ width: 16, height: 16, accentColor: 'var(--orange)', cursor: 'pointer' }} />
+                          </label>
+                        )}
                         <Link href={seg === 'draft' ? `/listings/${c.ref}/edit` : `/listings/${c.ref}`} style={{ textDecoration: 'none' }}>
                           <div style={{ paddingTop: '72%', background: '#f5f0e8', position: 'relative' }}>
                             {c.image ? <img src={c.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{c.emoji}</div>}

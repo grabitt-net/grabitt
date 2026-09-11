@@ -377,6 +377,52 @@ export const listingsRouter = router({
       return { url: session.url }
     }),
 
+  // Promote several of the seller's own listings at once (e.g. Feature them all
+  // for the same number of weeks) and pay in a single checkout. The webhook then
+  // applies the promotion to every listing in the set.
+  promoteBulk: protectedProcedure
+    .input(z.object({
+      listingIds: z.array(z.string().min(1)).min(1).max(50),
+      option: z.enum(['grab_it_now', 'featured']),
+      weeks: z.number().int().min(1).max(8).default(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const ids = [...new Set(input.listingIds)]
+      const listings = await ctx.prisma.listing.findMany({
+        where: { id: { in: ids }, sellerId: ctx.user.id, status: { in: ['active', 'grab_it_now'] } },
+        select: { id: true },
+      })
+      if (listings.length === 0) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No eligible listings selected' })
+      const ownedIds = listings.map(l => l.id)
+
+      const user = await ctx.prisma.user.findUnique({ where: { id: ctx.user.id }, select: { stripeCustomerId: true } })
+      const perCents = input.option === 'grab_it_now'
+        ? Math.round(PRICES.grabItNow * 100)
+        : Math.round(PRICES.featuredPerWeek * input.weeks * 100)
+      const label = input.option === 'grab_it_now'
+        ? 'Grab It Now — 24-hour flash deal'
+        : `Featured listing — ${input.weeks} week${input.weeks > 1 ? 's' : ''}`
+
+      const session = await getStripe().checkout.sessions.create({
+        mode: 'payment',
+        ...(user?.stripeCustomerId ? { customer: user.stripeCustomerId } : {}),
+        line_items: [{
+          quantity: ownedIds.length,
+          price_data: { currency: 'eur', unit_amount: perCents, product_data: { name: `Grabitt — ${label}` } },
+        }],
+        payment_intent_data: {
+          metadata: {
+            kind: 'listing_promo_bulk', userId: ctx.user.id,
+            listingIds: ownedIds.join(','), option: input.option, weeks: String(input.weeks),
+          },
+        },
+        success_url: `${APP_URL}/account?section=listings&promo=success`,
+        cancel_url: `${APP_URL}/account?section=listings&promo=cancelled`,
+      })
+      if (!session.url) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Could not start checkout' })
+      return { url: session.url, count: ownedIds.length }
+    }),
+
   byId: publicProcedure
     .input(z.object({ id: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
