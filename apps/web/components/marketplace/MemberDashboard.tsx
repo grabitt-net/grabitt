@@ -340,7 +340,11 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                   try { localStorage.setItem('grabitt_account_view', goPersonal ? 'personal' : 'business') } catch {}
                   const sp = new URLSearchParams(Array.from(params.entries()))
                   sp.delete('section')
-                  if (goPersonal) sp.set('view', 'personal'); else sp.delete('view')
+                  // Always set ?view explicitly (business OR personal) so the page
+                  // header banner reads the current view from the URL rather than
+                  // falling back to a stale localStorage value — otherwise the
+                  // banner failed to swap back when returning to the business view.
+                  sp.set('view', goPersonal ? 'personal' : 'business')
                   router.replace(`/account${sp.toString() ? `?${sp.toString()}` : ''}`)
                 }} style={navLinkBtn}>{t('Switch')}</button>} />
             ) : (
