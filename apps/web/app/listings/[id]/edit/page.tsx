@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PanelProvider } from '@/context/PanelContext'
+import PhotoReorderGrid from '@/components/marketplace/PhotoReorderGrid'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
@@ -330,13 +331,7 @@ function EditInner() {
 
       <Card title={t('Photos')}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {images.map((src, i) => (
-            <div key={src + i} style={{ position: 'relative', width: 82, height: 82, borderRadius: 10, overflow: 'hidden', border: '1px solid #ece3d7' }}>
-              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <button onClick={() => setImages(prev => prev.filter((_, j) => j !== i))} title={t('Remove')}
-                style={{ position: 'absolute', top: 3, right: 3, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', fontSize: 12, lineHeight: 1 }}>×</button>
-            </div>
-          ))}
+          <PhotoReorderGrid value={images} onChange={setImages} tileSize={82} coverCount={kind === 'item' ? 3 : 1} />
           {images.length < 8 && (
             <label style={{ width: 82, height: 82, borderRadius: 10, border: '1.5px dashed #d9cdb8', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#1a1a1a', fontSize: 22, background: '#fff' }}>
               {uploading ? '…' : '+'}
@@ -345,7 +340,7 @@ function EditInner() {
             </label>
           )}
         </div>
-        <div style={hint}>{t('First photo is the cover. Up to 8.')}</div>
+        <div style={hint}>{t('Drag photos to reorder. The first is the cover. Up to 8.')}</div>
       </Card>
 
       <Card title={kind === 'job' ? t('Job details') : kind === 'property' ? t('Property details') : t('Item details')}>

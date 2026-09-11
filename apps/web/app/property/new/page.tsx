@@ -8,6 +8,7 @@ import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { PanelProvider, usePanel } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
+import PhotoReorderGrid from '@/components/marketplace/PhotoReorderGrid'
 import Footer from '@/components/marketplace/Footer'
 import AddressAutocomplete from '@/components/marketplace/AddressAutocomplete'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
@@ -434,22 +435,14 @@ export default function NewPropertyPage() {
         </Section>}
 
         {cur === 'photos' && <Section title="Photos" sub="Add up to 8 photos. They're saved to your draft automatically as you add them.">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 10 }}>
-            {photos.map(url => (
-              <div key={url} style={{ position: 'relative', aspectRatio: '1 / 1', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5dccd', background: 'var(--sand)' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                <button type="button" onClick={() => removePhoto(url)} aria-label="Remove photo" style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', fontSize: 13, fontWeight: 900, lineHeight: 1 }}>×</button>
-              </div>
-            ))}
-            {photos.length < 8 && (
-              <label style={{ aspectRatio: '1 / 1', borderRadius: 12, border: '1.5px dashed #d8c9b4', background: '#fffdf9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: uploadingPhoto ? 'default' : 'pointer', color: '#8a7a63', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, textAlign: 'center', padding: 8 }}>
-                {uploadingPhoto ? 'Uploading…' : <>⬆️<br />Add photo</>}
-                <input type="file" accept="image/*" multiple onChange={e => { addPhotos(e.target.files); e.target.value = '' }} style={{ display: 'none' }} disabled={uploadingPhoto} />
-              </label>
-            )}
-          </div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#999', marginTop: 8 }}>Your progress is saved to drafts automatically — you can close this and finish later.</div>
+          <PhotoReorderGrid value={photos} onChange={setPhotos} coverCount={1} columns={3} />
+          {photos.length < 8 && (
+            <label style={{ display: 'inline-flex', marginTop: photos.length ? 10 : 0, width: 110, aspectRatio: '1 / 1', borderRadius: 12, border: '1.5px dashed #d8c9b4', background: '#fffdf9', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: uploadingPhoto ? 'default' : 'pointer', color: '#8a7a63', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, textAlign: 'center', padding: 8 }}>
+              {uploadingPhoto ? 'Uploading…' : <>⬆️<br />Add photo</>}
+              <input type="file" accept="image/*" multiple onChange={e => { addPhotos(e.target.files); e.target.value = '' }} style={{ display: 'none' }} disabled={uploadingPhoto} />
+            </label>
+          )}
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#999', marginTop: 8 }}>Drag photos to reorder — the first is the main cover. Your progress is saved to drafts automatically.</div>
         </Section>}
 
         {cur === 'upgrades' && <Section title="Listing upgrades" sub="Optional — boost your advert's visibility.">

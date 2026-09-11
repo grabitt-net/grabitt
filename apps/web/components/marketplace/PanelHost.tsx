@@ -28,6 +28,7 @@ import PageHeroBanner from './PageHeroBanner'
 import Icon from './Icon'
 import Logo from './Logo'
 import StorefrontEditor from './StorefrontEditor'
+import PhotoReorderGrid from './PhotoReorderGrid'
 import MultibuyEditor, { type MultibuyTier } from './MultibuyEditor'
 import { attributesFor } from '@/lib/listingAttributes'
 import SponsorshipContent from './SponsorshipContent'
@@ -3614,14 +3615,9 @@ function PanelBody() {
                 </div>
 
                 {photos.length > 0 && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 14 }}>
-                    {photos.map((src, i) => (
-                      <div key={i} style={{ position: 'relative', paddingTop: '100%', borderRadius: 10, overflow: 'hidden', background: '#f5f0e8', border: i < 3 ? '2px solid var(--orange)' : '2px solid transparent' }}>
-                        <img src={src} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                        {i < 3 && <div style={{ position: 'absolute', bottom: 4, left: 4, background: 'var(--orange)', color: '#fff', fontSize: 8, fontFamily: 'var(--font-ui)', fontWeight: 900, padding: '2px 5px', borderRadius: 4 }}>{i === 0 ? 'COVER 1 · MAIN' : `COVER ${i + 1}`}</div>}
-                        <button onClick={() => setPhotos(prev => prev.filter((_, j) => j !== i))} style={{ position: 'absolute', top: 3, right: 3, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 20, height: 20, color: '#fff', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                      </div>
-                    ))}
+                  <div style={{ marginBottom: 14 }}>
+                    <PhotoReorderGrid value={photos} onChange={setPhotos} coverCount={3} columns={4} />
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 6, textAlign: 'center' }}>Drag photos to reorder — the first is your main cover.</div>
                   </div>
                 )}
 
@@ -5353,12 +5349,7 @@ function HandyPostPanel({ closePanel, initialKind }: { closePanel: () => void; i
       <div style={cardStyle}>
         <label style={lbl}>Photos (optional)</label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {photos.map((src, i) => (
-            <div key={i} style={{ position: 'relative', width: 62, height: 62, borderRadius: 10, overflow: 'hidden', background: '#f5f0e8' }}>
-              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <button onClick={() => setPhotos(p => p.filter((_, j) => j !== i))} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 18, height: 18, color: '#fff', fontSize: 10, cursor: 'pointer' }}>✕</button>
-            </div>
-          ))}
+          <PhotoReorderGrid value={photos} onChange={setPhotos} tileSize={62} showCoverBadges={false} />
           {photos.length < 4 && (
             <label style={{ width: 62, height: 62, borderRadius: 10, border: '2px dashed #e0d8d0', background: '#faf7f4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: '#c9a', cursor: 'pointer' }}>
               {uploading ? '…' : '+'}
