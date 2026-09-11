@@ -38,7 +38,7 @@ export default function ListingsView() {
   useEffect(() => { load() }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const allChecked = rows.length > 0 && sel.size === rows.length
-  const toggle = (id: string) => setSel(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggle = (id: string) => setSel(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
   const toggleAll = () => setSel(allChecked ? new Set() : new Set(rows.map(r => r.id)))
 
   const bulk = async (action: 'delete' | 'renew' | 'feature' | 'unfeature' | 'activate' | 'remove', label: string) => {
