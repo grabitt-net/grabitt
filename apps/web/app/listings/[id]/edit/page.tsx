@@ -45,8 +45,12 @@ function EditInner() {
   const [colour, setColour] = useState('')
   const [size, setSize] = useState('')
   const [stock, setStock] = useState('1')
-  const [deliveryFee, setDeliveryFee] = useState('0')
-  const [deliveryMethod, setDeliveryMethod] = useState<'' | 'courier' | 'in_person'>('')
+  // Delivery: the seller can offer collection (always available) plus any of the
+  // two delivery methods, each with its own fee.
+  const [courierOn, setCourierOn] = useState(false)
+  const [courierFee, setCourierFee] = useState('0')
+  const [inPersonOn, setInPersonOn] = useState(false)
+  const [inPersonFee, setInPersonFee] = useState('0')
   const [images, setImages] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -126,8 +130,14 @@ function EditInner() {
       setColour(l.colour ?? '')
       setSize(l.size ?? '')
       setStock(String(l.stock ?? 1))
-      setDeliveryFee(String(Number(l.deliveryFee ?? 0)))
-      setDeliveryMethod((l.deliveryMethod ?? '') as '' | 'courier' | 'in_person')
+      {
+        const methods: string[] = Array.isArray(l.deliveryMethods) && l.deliveryMethods.length ? l.deliveryMethods : (l.deliveryMethod ? [l.deliveryMethod] : [])
+        const fees = (l.deliveryFees ?? {}) as Record<string, number>
+        setCourierOn(methods.includes('courier'))
+        setCourierFee(String(fees.courier ?? (l.deliveryMethod === 'courier' ? Number(l.deliveryFee ?? 0) : 0)))
+        setInPersonOn(methods.includes('in_person'))
+        setInPersonFee(String(fees.in_person ?? (l.deliveryMethod === 'in_person' ? Number(l.deliveryFee ?? 0) : 0)))
+      }
       setImages(Array.isArray(l.images) ? l.images : [])
       setCoords(l.lat != null && l.lng != null ? { lat: l.lat, lng: l.lng } : null)
       setDepartment(l.department ?? 'other')
@@ -269,8 +279,11 @@ function EditInner() {
           size: size.trim() || null,
           location: location.trim(),
           stock: Math.max(1, Number(stock) || 1),
-          deliveryFee: deliveryMethod === '' ? 0 : Number(deliveryFee) || 0,
-          deliveryMethod: deliveryMethod === '' ? null : deliveryMethod,
+          deliveryMethods: [...(courierOn ? ['courier'] : []), ...(inPersonOn ? ['in_person'] : [])] as ('courier' | 'in_person')[],
+          deliveryFees: {
+            ...(courierOn ? { courier: Number(courierFee) || 0 } : {}),
+            ...(inPersonOn ? { in_person: Number(inPersonFee) || 0 } : {}),
+          },
           // A free item can't sensibly auto-accept offers.
           autoAcceptMin: freeItem ? null : num(autoAcceptMin),
           multibuyTiers: freeItem ? null : (multibuyTiers.length ? multibuyTiers : null),
@@ -613,18 +626,34 @@ function EditInner() {
           )}
           <label style={lbl}>{t('Quantity available')}</label>
           <input type="number" min={1} max={999} value={stock} onChange={e => setStock(e.target.value)} style={field} />
-          <label style={lbl}>{t('Delivery')}</label>
-          <select value={deliveryMethod} onChange={e => setDeliveryMethod(e.target.value as '' | 'courier' | 'in_person')} style={field}>
-            <option value="">{t('Collection only')}</option>
-            <option value="courier">{t('Tracked courier')}</option>
-            <option value="in_person">{t('I deliver in person')}</option>
-          </select>
-          {deliveryMethod !== '' && (
-            <>
-              <label style={lbl}>{t('Delivery fee (€)')}</label>
-              <input type="number" min={0} step="0.01" value={deliveryFee} onChange={e => setDeliveryFee(e.target.value)} style={field} />
-            </>
-          )}
+          <label style={lbl}>{t('Delivery options')}</label>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#888', margin: '-4px 0 8px' }}>{t('Collection is always available. Tick any delivery options you also offer — you can choose more than one.')}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ border: `1.5px solid ${courierOn ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 12, padding: '10px 12px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>
+                <input type="checkbox" checked={courierOn} onChange={e => setCourierOn(e.target.checked)} style={{ accentColor: 'var(--orange)', width: 16, height: 16 }} />
+                📦 {t('Tracked courier')}
+              </label>
+              {courierOn && (
+                <div style={{ marginTop: 8 }}>
+                  <label style={lbl}>{t('Courier fee (€)')}</label>
+                  <input type="number" min={0} step="0.01" value={courierFee} onChange={e => setCourierFee(e.target.value)} style={field} />
+                </div>
+              )}
+            </div>
+            <div style={{ border: `1.5px solid ${inPersonOn ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 12, padding: '10px 12px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>
+                <input type="checkbox" checked={inPersonOn} onChange={e => setInPersonOn(e.target.checked)} style={{ accentColor: 'var(--orange)', width: 16, height: 16 }} />
+                🤝 {t('I deliver in person')}
+              </label>
+              {inPersonOn && (
+                <div style={{ marginTop: 8 }}>
+                  <label style={lbl}>{t('In-person fee (€)')}</label>
+                  <input type="number" min={0} step="0.01" value={inPersonFee} onChange={e => setInPersonFee(e.target.value)} style={field} />
+                </div>
+              )}
+            </div>
+          </div>
         </Card>
       )}
 

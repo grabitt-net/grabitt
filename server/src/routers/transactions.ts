@@ -216,7 +216,9 @@ export const transactionsRouter = router({
       quantity: z.number().int().min(1).max(99).default(1),
       // Buyer intent only: collection vs delivery. The concrete fulfilment
       // (courier vs in-person delivery) is resolved server-side from the listing.
-      fulfilment: z.enum(['collection', 'delivery']).default('collection'),
+      // 'collection' (free) or a specific delivery method the listing offers.
+      // 'delivery' is kept for older clients and maps to the listing's method.
+      fulfilment: z.enum(['collection', 'delivery', 'courier', 'in_person']).default('collection'),
       // Business accounts choose per purchase; personal accounts are always
       // individual, enforced below rather than trusted from the client.
       buyerType: z.enum(['individual', 'business']).default('individual'),
@@ -244,12 +246,22 @@ export const transactionsRouter = router({
       // must offer it; the stored type is courier or in-person per the listing.
       let fulfilmentType: 'collection' | 'courier' | 'delivery' = 'collection'
       let deliveryFee = 0
-      if (input.fulfilment === 'delivery') {
-        if (!listing.deliveryMethod) {
+      if (input.fulfilment !== 'collection') {
+        // The methods this listing offers (new multi-option field, falling back
+        // to the legacy single method).
+        const offered = (listing.deliveryMethods?.length ? listing.deliveryMethods : (listing.deliveryMethod ? [listing.deliveryMethod] : [])) as ('courier' | 'in_person')[]
+        if (offered.length === 0) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'This listing does not offer delivery' })
         }
-        fulfilmentType = listing.deliveryMethod === 'courier' ? 'courier' : 'delivery'
-        deliveryFee = Number(listing.deliveryFee)
+        // 'delivery' (legacy) means "the listing's delivery method"; otherwise the
+        // buyer picked a specific one, which must be offered.
+        const chosen: 'courier' | 'in_person' = input.fulfilment === 'delivery' ? offered[0] : input.fulfilment
+        if (!offered.includes(chosen)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'That delivery option is not available for this listing' })
+        }
+        const fees = (listing.deliveryFees ?? null) as Record<string, number> | null
+        deliveryFee = fees && typeof fees[chosen] === 'number' ? Number(fees[chosen]) : Number(listing.deliveryFee)
+        fulfilmentType = chosen === 'courier' ? 'courier' : 'delivery'
       }
 
       // ALL monetary calculations server-side — never trust client amounts (§10.2)

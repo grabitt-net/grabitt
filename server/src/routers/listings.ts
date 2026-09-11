@@ -674,9 +674,18 @@ export const listingsRouter = router({
         discountCents = dr.discountCents; discountCodeId = dr.codeId; fee = Math.max(0, fee - discountCents)
       }
 
+      // Multiple delivery options: mirror the first offered method into the
+      // legacy deliveryMethod/deliveryFee so older readers still work.
+      if (input.deliveryMethods) {
+        const first = input.deliveryMethods[0]
+        input.deliveryMethod = first ?? undefined
+        input.deliveryFee = first ? (input.deliveryFees?.[first] ?? 0) : 0
+      }
+
       const listing = await ctx.prisma.listing.create({
         data: {
           ...input,
+          deliveryFees: (input.deliveryFees ?? undefined) as never,
           extraDepartments: extraDepartments as never,
           subcategory: primarySub ?? null,
           subcategories: Object.keys(subMap).length ? (subMap as never) : undefined,
@@ -807,6 +816,8 @@ export const listingsRouter = router({
       stock: z.number().int().min(1).max(999).optional(),
       deliveryFee: z.number().min(0).optional(),
       deliveryMethod: z.enum(['courier', 'in_person']).nullable().optional(),
+      deliveryMethods: z.array(z.enum(['courier', 'in_person'])).max(2).optional(),
+      deliveryFees: z.object({ courier: z.number().min(0).optional(), in_person: z.number().min(0).optional() }).nullable().optional(),
       autoAcceptMin: z.number().min(0).nullable().optional(),
       multibuyTiers: z.array(z.object({
         qty: z.number().int().min(2).max(99),
@@ -832,6 +843,14 @@ export const listingsRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Grabber accounts can list one of each item. Reach Dealer grade, or open a Business account, to list multiples.' })
       }
       if (listing.status === 'sold') throw new TRPCError({ code: 'BAD_REQUEST', message: 'A sold listing can no longer be edited.' })
+
+      // Multiple delivery options: mirror the first offered method into the
+      // legacy deliveryMethod/deliveryFee.
+      if (fields.deliveryMethods !== undefined) {
+        const first = fields.deliveryMethods[0]
+        fields.deliveryMethod = first ?? null
+        fields.deliveryFee = first ? (fields.deliveryFees?.[first] ?? 0) : 0
+      }
 
       // Drop keys the client didn't send, so an omitted field is left untouched.
       const data: Record<string, unknown> = {}

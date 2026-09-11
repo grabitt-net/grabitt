@@ -2409,11 +2409,18 @@ function PanelBody() {
     const priceNum = parseFloat(price.replace(/[^0-9.]/g, '')) || 0
 
     const deliveryFee = Number(item.deliveryFee) || 0
-    const deliveryMethod = (item.deliveryMethod as string) || 'courier'
+    // Delivery options the listing offers (multi), falling back to the legacy
+    // single method. Collection is always available.
+    const offeredMethods = ((Array.isArray(item.deliveryMethods) && (item.deliveryMethods as string[]).length
+      ? item.deliveryMethods
+      : (item.deliveryMethod ? [item.deliveryMethod] : [])) as ('courier' | 'in_person')[])
+    const feesMap = (item.deliveryFees ?? null) as Record<string, number> | null
+    const feeForMethod = (m: 'courier' | 'in_person') => (feesMap && typeof feesMap[m] === 'number' ? Number(feesMap[m]) : deliveryFee)
+    const methodLabel = (m: 'courier' | 'in_person') => (m === 'courier' ? '📦 Courier' : '🚚 In person')
 
     const [step, setStep] = useState<'summary' | 'card' | 'processing' | 'success'>('summary')
     const [qty, setQty] = useState(1)
-    const [fulfil, setFulfil] = useState<'collection' | 'delivery'>('collection')
+    const [fulfil, setFulfil] = useState<'collection' | 'courier' | 'in_person'>('collection')
     // A business account may buy for the business or personally. Personal
     // accounts never see this — the server enforces it either way.
     const [buyerType, setBuyerType] = useState<'individual' | 'business'>('individual')
@@ -2422,7 +2429,7 @@ function PanelBody() {
     const [clientSecret, setClientSecret] = useState<string | null>(null)
     const [payError, setPayError] = useState<string | null>(null)
 
-    const delFee = fulfil === 'delivery' ? deliveryFee : 0
+    const delFee = fulfil === 'collection' ? 0 : feeForMethod(fulfil)
     const total = priceNum * qty + delFee
     const fmt = (n: number) => `€${n % 1 === 0 ? n : n.toFixed(2)}`
 
@@ -2539,14 +2546,19 @@ function PanelBody() {
                   </div>
                 )}
 
-                {/* Fulfilment choice */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                  <button onClick={() => setFulfil('collection')} style={{ flex: 1, background: fulfil === 'collection' ? 'var(--orange)' : '#f0f0f0', color: fulfil === 'collection' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🤝 {t('Collection')}</button>
-                  <button onClick={() => setFulfil('delivery')} style={{ flex: 1, background: fulfil === 'delivery' ? 'var(--orange)' : '#f0f0f0', color: fulfil === 'delivery' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🚚 {t('Delivery')}{deliveryFee > 0 ? ` +${fmt(deliveryFee)}` : ` ${t('free')}`}</button>
+                {/* Fulfilment choice — Collection is always available; the seller
+                    may also offer one or both delivery methods, each with a fee. */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                  <button onClick={() => setFulfil('collection')} style={{ flex: '1 1 30%', background: fulfil === 'collection' ? 'var(--orange)' : '#f0f0f0', color: fulfil === 'collection' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🤝 {t('Collection')}</button>
+                  {offeredMethods.map(m => (
+                    <button key={m} onClick={() => setFulfil(m)} style={{ flex: '1 1 30%', background: fulfil === m ? 'var(--orange)' : '#f0f0f0', color: fulfil === m ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{methodLabel(m)}{feeForMethod(m) > 0 ? ` +${fmt(feeForMethod(m))}` : ` ${t('free')}`}</button>
+                  ))}
                 </div>
-                <div style={{ background: fulfil === 'delivery' ? '#eef6ff' : '#FFF3EE', borderRadius: 10, padding: '9px 12px', marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11, color: fulfil === 'delivery' ? '#2563eb' : 'var(--orange)' }}>
-                  {fulfil === 'delivery'
-                    ? `🚚 ${t('Delivery')}${delFee > 0 ? ` (+${fmt(delFee)})` : ` (${t('free')})`} — ${deliveryMethod === 'in_person' ? t('the seller delivers in person; scan the QR code on arrival to release funds.') : t('sent by tracked courier; funds release once tracking shows the item in transit.')}`
+                <div style={{ background: fulfil !== 'collection' ? '#eef6ff' : '#FFF3EE', borderRadius: 10, padding: '9px 12px', marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 11, color: fulfil !== 'collection' ? '#2563eb' : 'var(--orange)' }}>
+                  {fulfil === 'courier'
+                    ? `📦 ${t('Courier')}${delFee > 0 ? ` (+${fmt(delFee)})` : ` (${t('free')})`} — ${t('sent by tracked courier; funds release once tracking shows the item in transit.')}`
+                    : fulfil === 'in_person'
+                    ? `🚚 ${t('In-person delivery')}${delFee > 0 ? ` (+${fmt(delFee)})` : ` (${t('free')})`} — ${t('the seller delivers in person; scan the QR code on arrival to release funds.')}`
                     : `🤝 ${t('Collection')} — ${t('scan the QR code at handover to release funds.')}`}
                 </div>
 
@@ -2555,7 +2567,7 @@ function PanelBody() {
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 10 }}>{t('Order summary')}</div>
                   {[
                     [`${t('Item price')}${qty > 1 ? ` × ${qty}` : ''}`, fmt(priceNum * qty)],
-                    [t('Delivery'), fulfil === 'delivery' ? (delFee > 0 ? fmt(delFee) : t('Free')) : '—'],
+                    [t('Delivery'), fulfil !== 'collection' ? (delFee > 0 ? fmt(delFee) : t('Free')) : '—'],
                     [t('Platform fee'), t('Paid by seller')],
                     [t('You pay'), fmt(total)],
                   ].map(([label, val], i, arr) => (
@@ -3463,8 +3475,12 @@ function PanelBody() {
     const [autoAcceptMin, setAutoAcceptMin] = useState('')
     const [multibuyTiers, setMultibuyTiers] = useState<MultibuyTier[]>([])
     const [offersDelivery, setOffersDelivery] = useState(false)
-    const [deliveryMethod, setDeliveryMethod] = useState<'courier' | 'in_person'>('courier')
-    const [deliveryFee, setDeliveryFee] = useState('')
+    // Delivery options — the seller can offer either or both methods, each with
+    // its own fee (collection is always available regardless).
+    const [courierOn, setCourierOn] = useState(true)
+    const [courierFee, setCourierFee] = useState('')
+    const [inPersonOn, setInPersonOn] = useState(false)
+    const [inPersonFee, setInPersonFee] = useState('')
     const [town, setTown] = useState('Las Palmas')
     const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
     const [showMap, setShowMap] = useState(false)
@@ -3480,7 +3496,7 @@ function PanelBody() {
     // (Photos are re-added on resume.) Cleared once the listing goes live.
     const DRAFT_KEY = 'grabitt_listing_draft'
     const [draftFound, setDraftFound] = useState<Record<string, unknown> | null>(null)
-    const draftBody = JSON.stringify({ title, dept, condition, desc, price, brand, colour, size, attrs, stock, town, offersDelivery, deliveryMethod, deliveryFee, autoAcceptMin, grabItNow, featured, photos })
+    const draftBody = JSON.stringify({ title, dept, condition, desc, price, brand, colour, size, attrs, stock, town, offersDelivery, courierOn, courierFee, inPersonOn, inPersonFee, autoAcceptMin, grabItNow, featured, photos })
     // Auto-save the draft continuously as you go — the moment there's anything
     // worth keeping (photos, any typed field, chosen options, delivery or
     // upgrades). Photos are already https URLs, so they save and come back too.
@@ -3497,7 +3513,12 @@ function PanelBody() {
       setTitle((d.title as string) || ''); setDept((d.dept as string) || prefillCat); setCondition((d.condition as string) || '')
       setDesc((d.desc as string) || ''); setPrice((d.price as string) || ''); setBrand((d.brand as string) || ''); setColour((d.colour as string) || ''); setSize((d.size as string) || '')
       setAttrs((d.attrs as Record<string, string>) || {}); setStock((d.stock as string) || '1'); setTown((d.town as string) || 'Las Palmas')
-      setOffersDelivery(!!d.offersDelivery); setDeliveryMethod((d.deliveryMethod as 'courier' | 'in_person') || 'courier'); setDeliveryFee((d.deliveryFee as string) || ''); setAutoAcceptMin((d.autoAcceptMin as string) || '')
+      setOffersDelivery(!!d.offersDelivery)
+      setCourierOn(d.courierOn !== undefined ? !!d.courierOn : (d.deliveryMethod ? d.deliveryMethod === 'courier' : true))
+      setCourierFee((d.courierFee as string) ?? (d.deliveryMethod === 'courier' ? (d.deliveryFee as string) : '') ?? '')
+      setInPersonOn(d.inPersonOn !== undefined ? !!d.inPersonOn : d.deliveryMethod === 'in_person')
+      setInPersonFee((d.inPersonFee as string) ?? (d.deliveryMethod === 'in_person' ? (d.deliveryFee as string) : '') ?? '')
+      setAutoAcceptMin((d.autoAcceptMin as string) || '')
       setGrabItNow(!!d.grabItNow); setFeatured(!!d.featured)
       setPhotos(Array.isArray(d.photos) ? (d.photos as string[]).filter(u => /^https?:/.test(u)) : [])
       setStep('details'); setDraftFound(null)
@@ -3869,22 +3890,36 @@ function PanelBody() {
                   </div>
                   {offersDelivery && (
                     <div style={{ marginTop: 12 }}>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>Delivery method</div>
-                      <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-                        <button onClick={() => setDeliveryMethod('courier')} style={{ flex: 1, background: deliveryMethod === 'courier' ? 'var(--ocean)' : '#f0f0f0', color: deliveryMethod === 'courier' ? '#fff' : '#666', border: 'none', borderRadius: 10, padding: '8px 4px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>📦 Courier (tracked)</button>
-                        <button onClick={() => setDeliveryMethod('in_person')} style={{ flex: 1, background: deliveryMethod === 'in_person' ? 'var(--ocean)' : '#f0f0f0', color: deliveryMethod === 'in_person' ? '#fff' : '#666', border: 'none', borderRadius: 10, padding: '8px 4px', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>🤝 In person (QR)</button>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 8 }}>Delivery options — tick any you offer (you can offer both)</div>
+                      {/* Courier */}
+                      <div style={{ border: `1.5px solid ${courierOn ? 'var(--ocean)' : '#e0d8d0'}`, borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--dark)' }}>
+                          <input type="checkbox" checked={courierOn} onChange={e => setCourierOn(e.target.checked)} style={{ accentColor: 'var(--ocean)', width: 16, height: 16 }} />
+                          📦 Courier (tracked)
+                        </label>
+                        {courierOn && (
+                          <div style={{ position: 'relative', marginTop: 8 }}>
+                            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-display)', fontSize: 15, color: '#888' }}>€</span>
+                            <input type="number" value={courierFee} onChange={e => setCourierFee(e.target.value)} placeholder="0.00 (free)" min="0" step="0.01"
+                              style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '9px 12px 9px 26px', fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                          </div>
+                        )}
                       </div>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginBottom: 10 }}>
-                        {deliveryMethod === 'courier'
-                          ? 'Send by tracked courier — you get paid once tracking shows the parcel in transit.'
-                          : 'You deliver in person — the buyer scans your QR code on arrival to release funds.'}
+                      {/* In person */}
+                      <div style={{ border: `1.5px solid ${inPersonOn ? 'var(--ocean)' : '#e0d8d0'}`, borderRadius: 10, padding: '10px 12px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--dark)' }}>
+                          <input type="checkbox" checked={inPersonOn} onChange={e => setInPersonOn(e.target.checked)} style={{ accentColor: 'var(--ocean)', width: 16, height: 16 }} />
+                          🤝 In person (QR on arrival)
+                        </label>
+                        {inPersonOn && (
+                          <div style={{ position: 'relative', marginTop: 8 }}>
+                            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-display)', fontSize: 15, color: '#888' }}>€</span>
+                            <input type="number" value={inPersonFee} onChange={e => setInPersonFee(e.target.value)} placeholder="0.00 (free)" min="0" step="0.01"
+                              style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '9px 12px 9px 26px', fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
+                          </div>
+                        )}
                       </div>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 6 }}>Delivery fee (€)</div>
-                      <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-display)', fontSize: 16, color: '#888' }}>€</span>
-                        <input type="number" value={deliveryFee} onChange={e => setDeliveryFee(e.target.value)} placeholder="0.00" min="0" step="0.01"
-                          style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '10px 12px 10px 28px', fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
-                      </div>
+                      {!courierOn && !inPersonOn && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#ef4444', marginTop: 8 }}>Pick at least one delivery option, or switch to Collection only.</div>}
                     </div>
                   )}
                 </div>
@@ -3942,7 +3977,10 @@ function PanelBody() {
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, color: 'var(--orange)', marginBottom: 10 }}>{freeItem ? 'FREE' : price ? `€${parseFloat(price).toFixed(2)}` : 'POA'}</div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-                  {[dept, condition, `📍 ${town}`, '🤝 Collection', ...(offersDelivery ? [`🚚 Delivery${parseFloat(deliveryFee) > 0 ? ` +€${parseFloat(deliveryFee).toFixed(2)}` : ' free'}`] : [])].filter(Boolean).map((tag, i) => (
+                  {[dept, condition, `📍 ${town}`, '🤝 Collection',
+                    ...(offersDelivery && courierOn ? [`📦 Courier${parseFloat(courierFee) > 0 ? ` +€${parseFloat(courierFee).toFixed(2)}` : ' free'}`] : []),
+                    ...(offersDelivery && inPersonOn ? [`🚚 In person${parseFloat(inPersonFee) > 0 ? ` +€${parseFloat(inPersonFee).toFixed(2)}` : ' free'}`] : []),
+                  ].filter(Boolean).map((tag, i) => (
                     <span key={i} style={{ background: '#f5f0e8', color: '#555', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 50 }}>{tag}</span>
                   ))}
                 </div>
@@ -4047,8 +4085,8 @@ function PanelBody() {
                       location: town,
                       ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
                       stock: Math.max(1, Math.min(999, parseInt(stock) || 1)),
-                      deliveryFee: offersDelivery ? (parseFloat(deliveryFee) || 0) : 0,
-                      deliveryMethod: offersDelivery ? deliveryMethod : undefined,
+                      deliveryMethods: (offersDelivery ? [...(courierOn ? ['courier'] : []), ...(inPersonOn ? ['in_person'] : [])] : []) as ('courier' | 'in_person')[],
+                      deliveryFees: offersDelivery ? { ...(courierOn ? { courier: parseFloat(courierFee) || 0 } : {}), ...(inPersonOn ? { in_person: parseFloat(inPersonFee) || 0 } : {}) } : undefined,
                       autoAcceptMin: !freeItem && parseFloat(autoAcceptMin) > 0 ? parseFloat(autoAcceptMin) : undefined,
                       ...(multibuyTiers.length && !freeItem ? { multibuyTiers } : {}),
                       ...(Object.keys(attrs).length ? { attributes: attrs } : {}),

@@ -182,6 +182,8 @@ function ListingInner() {
     condition: listing.condition ? (COND_LABEL[listing.condition] ?? listing.condition) : '',
     sellerId: seller?.id, isFeatured: !!listing.isFeatured,
     deliveryFee: Number(listing.deliveryFee ?? 0), deliveryMethod: listing.deliveryMethod ?? undefined,
+    deliveryMethods: Array.isArray(listing.deliveryMethods) ? listing.deliveryMethods : [],
+    deliveryFees: listing.deliveryFees ?? null,
   }
 
   const requireAuth = async () => {

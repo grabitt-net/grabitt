@@ -64,6 +64,12 @@ export const CreateListingInputSchema = z.object({
   stock: z.number().int().min(1).max(999).default(1),
   deliveryFee: z.number().min(0).default(0),
   deliveryMethod: z.enum(['courier', 'in_person']).optional(),
+  // A seller can offer more than one delivery option. `deliveryMethods` lists
+  // the offered delivery methods (collection is always available) and
+  // `deliveryFees` maps each to its fee. The legacy deliveryMethod/deliveryFee
+  // above mirror the first entry.
+  deliveryMethods: z.array(z.enum(['courier', 'in_person'])).max(2).optional(),
+  deliveryFees: z.object({ courier: z.number().min(0).optional(), in_person: z.number().min(0).optional() }).optional(),
   autoAcceptMin: z.number().min(0).optional(),
   // Buy N, save X% — Business sellers only, enforced server-side.
   multibuyTiers: z.array(z.object({

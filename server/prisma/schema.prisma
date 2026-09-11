@@ -874,7 +874,13 @@ model Listing {
   grabItNowWindow  Int?
   grabItNowPrice   Decimal?         @db.Decimal(10, 2)
   deliveryFee      Decimal          @default(0) @db.Decimal(10, 2)
-  deliveryMethod   DeliveryMethod?  // null = delivery not offered (collection only)
+  deliveryMethod   DeliveryMethod?  // legacy single method (mirrors deliveryMethods[0]); null = delivery not offered
+  // A seller can offer more than one delivery option. `deliveryMethods` lists
+  // which are offered (courier and/or in_person; collection is always available)
+  // and `deliveryFees` maps each to its fee, e.g. { "courier": 4.5, "in_person": 0 }.
+  // The legacy deliveryMethod/deliveryFee mirror the first entry for compatibility.
+  deliveryMethods  DeliveryMethod[] @default([])
+  deliveryFees     Json?
   autoAcceptMin    Decimal?         @db.Decimal(10, 2)  // offers >= this are auto-accepted (seller-only, never shown to buyers)
   // Multibuy: [{ qty, discountPct }] — buy N, save X%. Business sellers only.
   multibuyTiers    Json?
