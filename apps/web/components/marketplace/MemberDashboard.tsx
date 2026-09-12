@@ -102,7 +102,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   const isAgent = AGENTS_ENABLED && !!me?.isPropertyAgent && !me?.isBusiness
   // Land on the account's own home — Business Centre for business, the My Hub
   // overview for everyone else — rather than dropping straight into Messages.
-  const [section, setSection] = useState<SectionId>(personalView ? 'hub' : (AGENTS_ENABLED && me?.isPropertyAgent && !me?.isBusiness) ? 'agent' : me?.isBusiness ? 'business' : me?.memberStatus === 'charity' ? 'charity' : 'hub')
+  const [section, setSection] = useState<SectionId>(personalView ? 'listings' : (AGENTS_ENABLED && me?.isPropertyAgent && !me?.isBusiness) ? 'agent' : me?.isBusiness ? 'business' : me?.memberStatus === 'charity' ? 'charity' : 'listings')
   // `me` loads async, so the initial default above can be wrong (defaults to
   // 'hub' before we know it's a business account). Set the landing section once,
   // when `me` first resolves — Business Centre for business, My Hub otherwise —
@@ -115,7 +115,7 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
     if (s && SECTION_IDS.has(s)) { setSection(s as SectionId); didInitSection.current = true; return }
     if (me && !didInitSection.current) {
       didInitSection.current = true
-      setSection(personalView ? 'hub' : (AGENTS_ENABLED && me.isPropertyAgent && !me.isBusiness) ? 'agent' : me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'hub')
+      setSection(personalView ? 'listings' : (AGENTS_ENABLED && me.isPropertyAgent && !me.isBusiness) ? 'agent' : me.isBusiness ? 'business' : me.memberStatus === 'charity' ? 'charity' : 'listings')
     }
   }, [params, me])
 
