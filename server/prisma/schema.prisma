@@ -884,6 +884,10 @@ model Listing {
   // The legacy deliveryMethod/deliveryFee mirror the first entry for compatibility.
   deliveryMethods  DeliveryMethod[] @default([])
   deliveryFees     Json?
+  // Whether the seller offers collection/meet-up. Optional, not forced — some
+  // sellers don't want strangers at their home, so they can turn it off and
+  // offer delivery only. At least one fulfilment method must remain.
+  offersCollection Boolean          @default(true)
   autoAcceptMin    Decimal?         @db.Decimal(10, 2)  // offers >= this are auto-accepted (seller-only, never shown to buyers)
   // Multibuy: [{ qty, discountPct }] — buy N, save X%. Business sellers only.
   multibuyTiers    Json?

@@ -47,6 +47,7 @@ function EditInner() {
   const [stock, setStock] = useState('1')
   // Delivery: the seller can offer collection (always available) plus any of the
   // two delivery methods, each with its own fee.
+  const [collectionOn, setCollectionOn] = useState(true)
   const [courierOn, setCourierOn] = useState(false)
   const [courierFee, setCourierFee] = useState('0')
   const [inPersonOn, setInPersonOn] = useState(false)
@@ -133,6 +134,7 @@ function EditInner() {
       {
         const methods: string[] = Array.isArray(l.deliveryMethods) && l.deliveryMethods.length ? l.deliveryMethods : (l.deliveryMethod ? [l.deliveryMethod] : [])
         const fees = (l.deliveryFees ?? {}) as Record<string, number>
+        setCollectionOn(l.offersCollection !== false)
         setCourierOn(methods.includes('courier'))
         setCourierFee(String(fees.courier ?? (l.deliveryMethod === 'courier' ? Number(l.deliveryFee ?? 0) : 0)))
         setInPersonOn(methods.includes('in_person'))
@@ -279,6 +281,7 @@ function EditInner() {
           size: size.trim() || null,
           location: location.trim(),
           stock: Math.max(1, Number(stock) || 1),
+          offersCollection: collectionOn,
           deliveryMethods: [...(courierOn ? ['courier'] : []), ...(inPersonOn ? ['in_person'] : [])] as ('courier' | 'in_person')[],
           deliveryFees: {
             ...(courierOn ? { courier: Number(courierFee) || 0 } : {}),
@@ -629,14 +632,13 @@ function EditInner() {
           <label style={lbl}>{t('Quantity available')}</label>
           <input type="number" min={1} max={999} value={stock} onChange={e => setStock(e.target.value)} style={field} />
           <label style={lbl}>{t('Delivery options')}</label>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#888', margin: '-4px 0 8px' }}>{t('Tick the options you offer — you can choose more than one.')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#888', margin: '-4px 0 8px' }}>{t('Tick the ways a buyer can receive the item — at least one.')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* Collection is always available to buyers — shown so the seller can
-                see it's included. */}
-            <div style={{ border: '1.5px solid var(--orange)', borderRadius: 12, padding: '10px 12px', background: '#FFF8F4' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>
-                <input type="checkbox" checked disabled style={{ accentColor: 'var(--orange)', width: 16, height: 16 }} />
-                🤝 {t('Collection')} <span style={{ fontWeight: 700, color: '#888', fontSize: 11 }}>({t('always available')})</span>
+            {/* Collection — optional. Some sellers don't want strangers at home. */}
+            <div style={{ border: `1.5px solid ${collectionOn ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 12, padding: '10px 12px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>
+                <input type="checkbox" checked={collectionOn} onChange={e => setCollectionOn(e.target.checked)} style={{ accentColor: 'var(--orange)', width: 16, height: 16 }} />
+                🤝 {t('Collection / meet-up')}
               </label>
             </div>
             <div style={{ border: `1.5px solid ${courierOn ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 12, padding: '10px 12px' }}>
@@ -663,6 +665,9 @@ function EditInner() {
                 </div>
               )}
             </div>
+            {!collectionOn && !courierOn && !inPersonOn && (
+              <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#ef4444', fontWeight: 800 }}>{t('Pick at least one way for the buyer to receive the item.')}</div>
+            )}
           </div>
         </Card>
       )}

@@ -727,6 +727,11 @@ export const listingsRouter = router({
         input.deliveryMethod = first ?? undefined
         input.deliveryFee = first ? (input.deliveryFees?.[first] ?? 0) : 0
       }
+      // Collection is optional, but the buyer needs at least one way to receive
+      // the item — collection or a delivery method.
+      if (input.offersCollection === false && (input.deliveryMethods?.length ?? 0) === 0) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Offer at least one way for the buyer to receive the item — collection or a delivery method.' })
+      }
 
       const listing = await ctx.prisma.listing.create({
         data: {
@@ -864,6 +869,7 @@ export const listingsRouter = router({
       deliveryMethod: z.enum(['courier', 'in_person']).nullable().optional(),
       deliveryMethods: z.array(z.enum(['courier', 'in_person'])).max(2).optional(),
       deliveryFees: z.object({ courier: z.number().min(0).optional(), in_person: z.number().min(0).optional() }).nullable().optional(),
+      offersCollection: z.boolean().optional(),
       autoAcceptMin: z.number().min(0).nullable().optional(),
       multibuyTiers: z.array(z.object({
         qty: z.number().int().min(2).max(99),
@@ -896,6 +902,15 @@ export const listingsRouter = router({
         const first = fields.deliveryMethods[0]
         fields.deliveryMethod = first ?? null
         fields.deliveryFee = first ? (fields.deliveryFees?.[first] ?? 0) : 0
+      }
+      // Keep at least one fulfilment method. Uses the incoming values, falling
+      // back to what's already stored for whichever field wasn't sent.
+      {
+        const collOffered = fields.offersCollection ?? listing.offersCollection
+        const methods = fields.deliveryMethods ?? listing.deliveryMethods
+        if (!collOffered && (methods?.length ?? 0) === 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Offer at least one way for the buyer to receive the item — collection or a delivery method.' })
+        }
       }
 
       // Drop keys the client didn't send, so an omitted field is left untouched.

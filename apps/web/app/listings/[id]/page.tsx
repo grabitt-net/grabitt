@@ -184,6 +184,7 @@ function ListingInner() {
     deliveryFee: Number(listing.deliveryFee ?? 0), deliveryMethod: listing.deliveryMethod ?? undefined,
     deliveryMethods: Array.isArray(listing.deliveryMethods) ? listing.deliveryMethods : [],
     deliveryFees: listing.deliveryFees ?? null,
+    offersCollection: listing.offersCollection !== false,
   }
 
   const requireAuth = async () => {

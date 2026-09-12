@@ -70,6 +70,8 @@ export const CreateListingInputSchema = z.object({
   // above mirror the first entry.
   deliveryMethods: z.array(z.enum(['courier', 'in_person'])).max(2).optional(),
   deliveryFees: z.object({ courier: z.number().min(0).optional(), in_person: z.number().min(0).optional() }).optional(),
+  // Collection is optional (not forced). Defaults to offered.
+  offersCollection: z.boolean().optional(),
   autoAcceptMin: z.number().min(0).optional(),
   // Buy N, save X% — Business sellers only, enforced server-side.
   multibuyTiers: z.array(z.object({

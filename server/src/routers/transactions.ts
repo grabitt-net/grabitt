@@ -246,6 +246,12 @@ export const transactionsRouter = router({
       // must offer it; the stored type is courier or in-person per the listing.
       let fulfilmentType: 'collection' | 'courier' | 'delivery' = 'collection'
       let deliveryFee = 0
+      if (input.fulfilment === 'collection') {
+        // Collection is optional — the seller may have turned it off.
+        if (listing.offersCollection === false) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'This listing is delivery only — collection is not offered.' })
+        }
+      }
       if (input.fulfilment !== 'collection') {
         // The methods this listing offers (new multi-option field, falling back
         // to the legacy single method).

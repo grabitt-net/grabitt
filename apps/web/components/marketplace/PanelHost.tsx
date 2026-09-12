@@ -2417,10 +2417,12 @@ function PanelBody() {
     const feesMap = (item.deliveryFees ?? null) as Record<string, number> | null
     const feeForMethod = (m: 'courier' | 'in_person') => (feesMap && typeof feesMap[m] === 'number' ? Number(feesMap[m]) : deliveryFee)
     const methodLabel = (m: 'courier' | 'in_person') => (m === 'courier' ? '📦 Courier' : '🚚 In person')
+    // Collection is optional per listing — hide it when the seller turned it off.
+    const collectionOffered = item.offersCollection !== false
 
     const [step, setStep] = useState<'summary' | 'card' | 'processing' | 'success'>('summary')
     const [qty, setQty] = useState(1)
-    const [fulfil, setFulfil] = useState<'collection' | 'courier' | 'in_person'>('collection')
+    const [fulfil, setFulfil] = useState<'collection' | 'courier' | 'in_person'>(collectionOffered ? 'collection' : (offeredMethods[0] ?? 'collection'))
     // A business account may buy for the business or personally. Personal
     // accounts never see this — the server enforces it either way.
     const [buyerType, setBuyerType] = useState<'individual' | 'business'>('individual')
@@ -2549,7 +2551,7 @@ function PanelBody() {
                 {/* Fulfilment choice — Collection is always available; the seller
                     may also offer one or both delivery methods, each with a fee. */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                  <button onClick={() => setFulfil('collection')} style={{ flex: '1 1 30%', background: fulfil === 'collection' ? 'var(--orange)' : '#f0f0f0', color: fulfil === 'collection' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🤝 {t('Collection')}</button>
+                  {collectionOffered && <button onClick={() => setFulfil('collection')} style={{ flex: '1 1 30%', background: fulfil === 'collection' ? 'var(--orange)' : '#f0f0f0', color: fulfil === 'collection' ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>🤝 {t('Collection')}</button>}
                   {offeredMethods.map(m => (
                     <button key={m} onClick={() => setFulfil(m)} style={{ flex: '1 1 30%', background: fulfil === m ? 'var(--orange)' : '#f0f0f0', color: fulfil === m ? '#fff' : '#666', border: 'none', borderRadius: 50, padding: '10px 4px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{methodLabel(m)}{feeForMethod(m) > 0 ? ` +${fmt(feeForMethod(m))}` : ` ${t('free')}`}</button>
                   ))}
@@ -3477,13 +3479,13 @@ function PanelBody() {
     const [offersDelivery, setOffersDelivery] = useState(false)
     // Delivery options — the seller can offer either or both methods, each with
     // its own fee (collection is always available regardless).
+    const [collectionOn, setCollectionOn] = useState(true)
     const [courierOn, setCourierOn] = useState(false)
     const [courierFee, setCourierFee] = useState('')
     const [inPersonOn, setInPersonOn] = useState(false)
     const [inPersonFee, setInPersonFee] = useState('')
-    // Collection is always available; "offers delivery" simply means at least one
-    // delivery method is ticked. Kept in sync so the rest of the flow (draft,
-    // preview, submit) doesn't need to change.
+    // "offers delivery" simply means at least one delivery method is ticked.
+    // Kept in sync so the rest of the flow (draft, preview, submit) still works.
     useEffect(() => { setOffersDelivery(courierOn || inPersonOn) }, [courierOn, inPersonOn])
     const [town, setTown] = useState('Las Palmas')
     const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
@@ -3500,7 +3502,7 @@ function PanelBody() {
     // (Photos are re-added on resume.) Cleared once the listing goes live.
     const DRAFT_KEY = 'grabitt_listing_draft'
     const [draftFound, setDraftFound] = useState<Record<string, unknown> | null>(null)
-    const draftBody = JSON.stringify({ title, dept, condition, desc, price, brand, colour, size, attrs, stock, town, offersDelivery, courierOn, courierFee, inPersonOn, inPersonFee, autoAcceptMin, grabItNow, featured, photos })
+    const draftBody = JSON.stringify({ title, dept, condition, desc, price, brand, colour, size, attrs, stock, town, offersDelivery, collectionOn, courierOn, courierFee, inPersonOn, inPersonFee, autoAcceptMin, grabItNow, featured, photos })
     // Auto-save the draft continuously as you go — the moment there's anything
     // worth keeping (photos, any typed field, chosen options, delivery or
     // upgrades). Photos are already https URLs, so they save and come back too.
@@ -3518,6 +3520,7 @@ function PanelBody() {
       setDesc((d.desc as string) || ''); setPrice((d.price as string) || ''); setBrand((d.brand as string) || ''); setColour((d.colour as string) || ''); setSize((d.size as string) || '')
       setAttrs((d.attrs as Record<string, string>) || {}); setStock((d.stock as string) || '1'); setTown((d.town as string) || 'Las Palmas')
       setOffersDelivery(!!d.offersDelivery)
+      setCollectionOn(d.collectionOn !== undefined ? !!d.collectionOn : true)
       setCourierOn(d.courierOn !== undefined ? !!d.courierOn : (d.deliveryMethod ? d.deliveryMethod === 'courier' : true))
       setCourierFee((d.courierFee as string) ?? (d.deliveryMethod === 'courier' ? (d.deliveryFee as string) : '') ?? '')
       setInPersonOn(d.inPersonOn !== undefined ? !!d.inPersonOn : d.deliveryMethod === 'in_person')
@@ -3872,15 +3875,15 @@ function PanelBody() {
             {/* ── Step 4: Delivery ── */}
             {step === 'delivery' && (
               <>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5, marginBottom: 12 }}>How can the buyer receive this item? Collection is always available — add delivery too if you offer it.</div>
-                {/* Collection — always available. */}
-                <div style={{ display: 'flex', gap: 12, background: '#FFF3EE', border: '1.5px solid var(--orange)', borderRadius: 14, padding: 14, marginBottom: 10, alignItems: 'center' }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5, marginBottom: 12 }}>How can the buyer receive this item? Pick at least one — collection, delivery, or both.</div>
+                {/* Collection — optional (some sellers don't want strangers at home). */}
+                <div onClick={() => setCollectionOn(v => !v)} style={{ display: 'flex', gap: 12, background: collectionOn ? '#FFF3EE' : '#faf7f4', border: `1.5px solid ${collectionOn ? 'var(--orange)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10, alignItems: 'center', cursor: 'pointer' }}>
                   <div style={{ fontSize: 26, flexShrink: 0 }}>🤝</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Collection <span style={{ fontWeight: 700, color: '#888', fontSize: 11 }}>(always available)</span></div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Buyer collects in person or you meet locally. Funds release when you confirm handover with a QR / code.</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Collection / meet-up</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Buyer collects in person or you meet locally. Turn off if you’d rather not share your location.</div>
                   </div>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span></div>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${collectionOn ? 'var(--orange)' : '#ccc'}`, background: collectionOn ? 'var(--orange)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{collectionOn && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}</div>
                 </div>
                 {/* Optional delivery methods. */}
                 <div style={{ background: '#faf7f4', border: '1.5px solid #e0d8d0', borderRadius: 14, padding: 14, marginBottom: 10 }}>
@@ -3916,6 +3919,9 @@ function PanelBody() {
                       </div>
                     </div>
                 </div>
+                {!collectionOn && !courierOn && !inPersonOn && (
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#ef4444', marginTop: 4 }}>Pick at least one way for the buyer to receive the item — collection or a delivery method.</div>
+                )}
               </>
             )}
 
@@ -4078,6 +4084,7 @@ function PanelBody() {
                       location: town,
                       ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
                       stock: Math.max(1, Math.min(999, parseInt(stock) || 1)),
+                      offersCollection: collectionOn,
                       deliveryMethods: (offersDelivery ? [...(courierOn ? ['courier'] : []), ...(inPersonOn ? ['in_person'] : [])] : []) as ('courier' | 'in_person')[],
                       deliveryFees: offersDelivery ? { ...(courierOn ? { courier: parseFloat(courierFee) || 0 } : {}), ...(inPersonOn ? { in_person: parseFloat(inPersonFee) || 0 } : {}) } : undefined,
                       autoAcceptMin: !freeItem && parseFloat(autoAcceptMin) > 0 ? parseFloat(autoAcceptMin) : undefined,
@@ -4118,9 +4125,10 @@ function PanelBody() {
                 disabled={
                   (step === 'photos' && photos.length < 4) ||
                   (step === 'details' && (!title.trim() || !dept || !condition)) ||
-                  (step === 'price' && !freeItem && !price)
+                  (step === 'price' && !freeItem && !price) ||
+                  (step === 'delivery' && !collectionOn && !courierOn && !inPersonOn)
                 }
-                style={{ flex: 2, background: (step === 'photos' && photos.length < 4) || (step === 'details' && (!title.trim() || !dept || !condition)) || (step === 'price' && !freeItem && !price) ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
+                style={{ flex: 2, background: (step === 'photos' && photos.length < 4) || (step === 'details' && (!title.trim() || !dept || !condition)) || (step === 'price' && !freeItem && !price) || (step === 'delivery' && !collectionOn && !courierOn && !inPersonOn) ? '#ccc' : 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}
               >
                 {step === 'photos' ? (photos.length >= 4 ? `${t('Continue')} · ${photos.length} 📷` : `${t('Add at least 4 photos')} (${photos.length}/4)`) : `${t('Continue')}`}
               </button>
