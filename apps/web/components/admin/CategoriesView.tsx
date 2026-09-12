@@ -19,7 +19,7 @@ const PAGE_DEPTS = ['property', 'jobs', 'business', 'news', 'help',
   'about', 'why', 'pricing', 'contact', 'delivery', 'terms', 'guarantee',
   'scam-centre', 'directory', 'advertise', 'community', 'economic', 'dos', 'suggest',
   // Footer items that open panels rather than dedicated pages.
-  'sell', 'soldprices', 'report', 'disputes',
+  'sell', 'soldprices', 'report', 'disputes', 'grabit',
   // Account hub pages.
   'hub', 'business-hub']
 

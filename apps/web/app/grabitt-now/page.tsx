@@ -8,6 +8,7 @@ import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
 import Footer from '@/components/marketplace/Footer'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
+import PageHeroBanner from '@/components/marketplace/PageHeroBanner'
 import { geocodeGC } from '@/lib/gcGeo'
 import { DEPT_LABEL, deptEmoji } from '@/lib/listingMap'
 import type { GrabitPoint } from '@/components/marketplace/GrabitMap'
@@ -110,6 +111,7 @@ function Inner() {
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title="Grabitt Now" />
       <QuickActions />
+      <PageHeroBanner dept="grabit" alt="Grabitt Now" />
 
       {/* Orange hero — same box style as the department landers. */}
       <div style={{ maxWidth: 1000, margin: '14px auto 6px', padding: '0 14px', width: '100%', boxSizing: 'border-box' }}>
