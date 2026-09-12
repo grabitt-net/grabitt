@@ -3477,10 +3477,14 @@ function PanelBody() {
     const [offersDelivery, setOffersDelivery] = useState(false)
     // Delivery options — the seller can offer either or both methods, each with
     // its own fee (collection is always available regardless).
-    const [courierOn, setCourierOn] = useState(true)
+    const [courierOn, setCourierOn] = useState(false)
     const [courierFee, setCourierFee] = useState('')
     const [inPersonOn, setInPersonOn] = useState(false)
     const [inPersonFee, setInPersonFee] = useState('')
+    // Collection is always available; "offers delivery" simply means at least one
+    // delivery method is ticked. Kept in sync so the rest of the flow (draft,
+    // preview, submit) doesn't need to change.
+    useEffect(() => { setOffersDelivery(courierOn || inPersonOn) }, [courierOn, inPersonOn])
     const [town, setTown] = useState('Las Palmas')
     const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
     const [showMap, setShowMap] = useState(false)
@@ -3868,29 +3872,20 @@ function PanelBody() {
             {/* ── Step 4: Delivery ── */}
             {step === 'delivery' && (
               <>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5, marginBottom: 12 }}>How will the buyer receive this item?</div>
-                {/* Collection only */}
-                <div onClick={() => setOffersDelivery(false)} style={{ display: 'flex', gap: 12, background: !offersDelivery ? '#FFF3EE' : '#faf7f4', border: `1.5px solid ${!offersDelivery ? 'var(--orange)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10, cursor: 'pointer', alignItems: 'center' }}>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5, marginBottom: 12 }}>How can the buyer receive this item? Collection is always available — add delivery too if you offer it.</div>
+                {/* Collection — always available. */}
+                <div style={{ display: 'flex', gap: 12, background: '#FFF3EE', border: '1.5px solid var(--orange)', borderRadius: 14, padding: 14, marginBottom: 10, alignItems: 'center' }}>
                   <div style={{ fontSize: 26, flexShrink: 0 }}>🤝</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Collection only</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Collection <span style={{ fontWeight: 700, color: '#888', fontSize: 11 }}>(always available)</span></div>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Buyer collects in person or you meet locally. Funds release when you confirm handover with a QR / code.</div>
                   </div>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${!offersDelivery ? 'var(--orange)' : '#ccc'}`, background: !offersDelivery ? 'var(--orange)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{!offersDelivery && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}</div>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span></div>
                 </div>
-                {/* Offer delivery */}
-                <div style={{ background: '#faf7f4', border: `1.5px solid ${offersDelivery ? 'var(--ocean)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
-                  <div onClick={() => setOffersDelivery(true)} style={{ display: 'flex', gap: 12, cursor: 'pointer', alignItems: 'center' }}>
-                    <div style={{ fontSize: 26, flexShrink: 0 }}>🚚</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Offer delivery</div>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Also let buyers choose delivery at checkout. Leave the fee at €0 for free delivery.</div>
-                    </div>
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${offersDelivery ? 'var(--ocean)' : '#ccc'}`, background: offersDelivery ? 'var(--ocean)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{offersDelivery && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}</div>
-                  </div>
-                  {offersDelivery && (
-                    <div style={{ marginTop: 12 }}>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 8 }}>Delivery options — tick any you offer (you can offer both)</div>
+                {/* Optional delivery methods. */}
+                <div style={{ background: '#faf7f4', border: '1.5px solid #e0d8d0', borderRadius: 14, padding: 14, marginBottom: 10 }}>
+                    <div style={{ marginTop: 0 }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 8 }}>🚚 Also offer delivery? Tick any you provide (optional — leave a fee at €0 for free)</div>
                       {/* Courier */}
                       <div style={{ border: `1.5px solid ${courierOn ? 'var(--ocean)' : '#e0d8d0'}`, borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--dark)' }}>
@@ -3919,9 +3914,7 @@ function PanelBody() {
                           </div>
                         )}
                       </div>
-                      {!courierOn && !inPersonOn && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#ef4444', marginTop: 8 }}>Pick at least one delivery option, or switch to Collection only.</div>}
                     </div>
-                  )}
                 </div>
               </>
             )}

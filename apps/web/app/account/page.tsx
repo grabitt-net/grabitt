@@ -71,8 +71,16 @@ function AccountInner() {
   // The business↔personal view preference persists in localStorage, so the
   // header reflects it even when the Account link carries no ?view= query.
   const [viewPref, setViewPref] = useState<string | null>(null)
-  useEffect(() => { try { setViewPref(localStorage.getItem('grabitt_account_view')) } catch {} }, [])
-  const personalView = (params.get('view') ?? viewPref) === 'personal'
+  // Live override set the instant the user toggles business↔personal, so the
+  // Topbar title and hero banner switch immediately (not on URL propagation).
+  const [liveView, setLiveView] = useState<string | null>(null)
+  useEffect(() => {
+    try { setViewPref(localStorage.getItem('grabitt_account_view')) } catch {}
+    const onView = (e: Event) => setLiveView((e as CustomEvent).detail as string)
+    window.addEventListener('grabitt-account-view', onView)
+    return () => window.removeEventListener('grabitt-account-view', onView)
+  }, [])
+  const personalView = (liveView ?? params.get('view') ?? viewPref) === 'personal'
   // ?tab=recruitment — how the Employers entry points land here.
   const wantTab = params.get('tab')
   const focusRef = useRef<HTMLDivElement | null>(null)

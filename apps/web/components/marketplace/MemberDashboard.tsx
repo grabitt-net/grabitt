@@ -371,6 +371,9 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                   // banner failed to swap back when returning to the business view.
                   sp.set('view', goPersonal ? 'personal' : 'business')
                   router.replace(`/account${sp.toString() ? `?${sp.toString()}` : ''}`)
+                  // Tell the page chrome (Topbar title + hero banner) to switch
+                  // immediately — don't wait on the URL param to propagate.
+                  try { window.dispatchEvent(new CustomEvent('grabitt-account-view', { detail: goPersonal ? 'personal' : 'business' })) } catch {}
                 }} style={navLinkBtn}>{t('Switch')}</button>} />
             ) : (
               <HubNavRow icon="briefcase" label={t('Business acc')} last value={

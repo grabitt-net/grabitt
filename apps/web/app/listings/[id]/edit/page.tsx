@@ -297,7 +297,9 @@ function EditInner() {
         if (cat?.pendingPayment && cat?.checkoutUrl) { window.location.href = cat.checkoutUrl; return }
       }
       setSaved(true)
-      setTimeout(() => router.push(`/listings/${id}`), 700)
+      // Stay in the seller's workflow — return to their listings (the drafts /
+      // active tab they came from) rather than opening the listing itself.
+      setTimeout(() => router.push('/account?section=listings'), 700)
     } catch (e) { setErr(e instanceof Error ? e.message : t('Could not save your changes.')) }
     finally { setBusy(false) }
   }
@@ -627,8 +629,16 @@ function EditInner() {
           <label style={lbl}>{t('Quantity available')}</label>
           <input type="number" min={1} max={999} value={stock} onChange={e => setStock(e.target.value)} style={field} />
           <label style={lbl}>{t('Delivery options')}</label>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#888', margin: '-4px 0 8px' }}>{t('Collection is always available. Tick any delivery options you also offer — you can choose more than one.')}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#888', margin: '-4px 0 8px' }}>{t('Tick the options you offer — you can choose more than one.')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Collection is always available to buyers — shown so the seller can
+                see it's included. */}
+            <div style={{ border: '1.5px solid var(--orange)', borderRadius: 12, padding: '10px 12px', background: '#FFF8F4' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>
+                <input type="checkbox" checked disabled style={{ accentColor: 'var(--orange)', width: 16, height: 16 }} />
+                🤝 {t('Collection')} <span style={{ fontWeight: 700, color: '#888', fontSize: 11 }}>({t('always available')})</span>
+              </label>
+            </div>
             <div style={{ border: `1.5px solid ${courierOn ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 12, padding: '10px 12px' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)' }}>
                 <input type="checkbox" checked={courierOn} onChange={e => setCourierOn(e.target.checked)} style={{ accentColor: 'var(--orange)', width: 16, height: 16 }} />
