@@ -14,7 +14,7 @@ import { t } from '@/lib/i18n'
 // A persistent horizontal bar — logo, wide search, primary "Sell" CTA, and
 // icon+label account actions — instead of the phone icon-rail. Same panels,
 // same data as mobile; just laid out for wide screens.
-export default function DesktopNav({ title, back, backFallback }: { title?: string; back?: boolean; backFallback?: string } = {}) {
+export default function DesktopNav({ title, back, backFallback, backTo }: { title?: string; back?: boolean; backFallback?: string; backTo?: string } = {}) {
   const { openPanel } = usePanel()
   const router = useRouter()
   const isHome = usePathname() === '/'
@@ -84,7 +84,7 @@ export default function DesktopNav({ title, back, backFallback }: { title?: stri
           mirrors the other menu items instead of an arrow beside the logo. */}
       <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
         {back && (
-          <button onClick={() => { if (typeof window !== 'undefined' && window.history.length > 1) router.back(); else router.push(backFallback ?? '/') }} title={t('Back')}
+          <button onClick={() => { if (backTo) { router.push(backTo); return } if (typeof window !== 'undefined' && window.history.length > 1) router.back(); else router.push(backFallback ?? '/') }} title={t('Back')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 8px', color: 'var(--dark)' }}>
             <Icon name="arrowLeft" size={21} />
             <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 800, color: '#1a1a1a' }}>{t('Back')}</span>

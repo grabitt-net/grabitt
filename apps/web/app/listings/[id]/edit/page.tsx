@@ -322,9 +322,12 @@ function EditInner() {
     finally { setBusy(false) }
   }
 
+  // Back always returns to the seller's listings on the tab matching this
+  // listing (a draft → Drafts), not wherever browser history happens to point.
+  const backTab = status === 'draft' ? 'draft' : status === 'sold' ? 'sold' : 'active'
   const shell = (body: React.ReactNode) => (
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40 }}>
-      <Topbar />
+      <Topbar backTo={`/account?section=listings&listtab=${backTab}`} />
       {body}
       <Footer />
       <PanelHost />

@@ -38,7 +38,7 @@ function nearestTown(lat: number, lng: number) {
   return best.name
 }
 
-export default function Topbar({ title, back, backFallback }: { title?: string; back?: boolean; backFallback?: string } = {}) {
+export default function Topbar({ title, back, backFallback, backTo }: { title?: string; back?: boolean; backFallback?: string; backTo?: string } = {}) {
   const { openPanel } = usePanel()
   const router = useRouter()
   const [query, setQuery] = useState('')
@@ -85,13 +85,13 @@ export default function Topbar({ title, back, backFallback }: { title?: string; 
       borderBottom: '1.5px solid var(--sand2)',
     }}>
       {/* Desktop (≥820px): persistent horizontal nav bar */}
-      <DesktopNav title={title} back={showBack} backFallback={backFallback} />
+      <DesktopNav title={title} back={showBack} backFallback={backFallback} backTo={backTo} />
 
       {/* Mobile/tablet (<820px): logo + search + icon rail */}
       <div className="mobile-chrome">
       {/* Row 1 — logo + search + Near */}
       <div style={{ display: 'flex', alignItems: 'flex-start', padding: '10px 14px 0' }}>
-        {showBack && <BackButton fallback={backFallback} />}
+        {showBack && <BackButton fallback={backFallback} to={backTo} />}
         {isHome ? (
           <button onClick={scrollToFooter} aria-label="Go to menu"
             style={{ flexShrink: 0, cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}>

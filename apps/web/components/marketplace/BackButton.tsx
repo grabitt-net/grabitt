@@ -8,9 +8,12 @@ import { t } from '@/lib/i18n'
 // user scrolls. Uses real browser history, but falls back to a sensible parent
 // route when there is none — e.g. the user arrived via a shared link or a
 // notification — so it never dead-ends or steps outside the app.
-export default function BackButton({ fallback = '/' }: { fallback?: string }) {
+export default function BackButton({ fallback = '/', to }: { fallback?: string; to?: string }) {
   const router = useRouter()
   const goBack = () => {
+    // `to` forces a specific destination (e.g. the seller's listings from the
+    // edit page) regardless of browser history, which may hold an unrelated page.
+    if (to) { router.push(to); return }
     if (typeof window !== 'undefined' && window.history.length > 1) router.back()
     else router.push(fallback)
   }
