@@ -229,16 +229,21 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
   // number of weeks, pay once.
   const [selectedRefs, setSelectedRefs] = useState<Set<string>>(new Set())
   const [bulkWeeks, setBulkWeeks] = useState(1)
+  const [bulkOption, setBulkOption] = useState<'featured' | 'grab_it_now'>('featured')
   const [bulkBusy, setBulkBusy] = useState(false)
   const toggleRef = (ref: string) => setSelectedRefs(s => { const n = new Set(s); if (n.has(ref)) n.delete(ref); else n.add(ref); return n })
   useEffect(() => { setSelectedRefs(new Set()) }, [seg]) // clear selection when switching tab
   const FEATURED_WEEK_EUR = 1.99 // PRICES.featuredPerWeek
-  const bulkFeature = async () => {
+  const GRAB_IT_NOW_EUR = 4.99   // PRICES.grabItNow (24-hour flash, per item)
+  const bulkTotal = bulkOption === 'featured'
+    ? selectedRefs.size * bulkWeeks * FEATURED_WEEK_EUR
+    : selectedRefs.size * GRAB_IT_NOW_EUR
+  const bulkPromote = async () => {
     const ids = [...selectedRefs]
     if (!ids.length) return
     setBulkBusy(true)
     try {
-      const r: any = await (trpcAuthed() as any).listings.promoteBulk.mutate({ listingIds: ids, option: 'featured', weeks: bulkWeeks })
+      const r: any = await (trpcAuthed() as any).listings.promoteBulk.mutate({ listingIds: ids, option: bulkOption, weeks: bulkWeeks })
       if (r?.url) { window.location.href = r.url; return }
     } catch (e: any) { toast(e?.message || 'Could not start checkout.') }
     finally { setBulkBusy(false) }
@@ -538,15 +543,24 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
                     listing is ticked. Choose weeks and pay for all in one go. */}
                 {seg === 'active' && selectedRefs.size > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', background: '#FFF8F4', border: '1.5px solid var(--orange)', borderRadius: 12, padding: '10px 12px', margin: '10px 0' }}>
-                    <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>⭐ {selectedRefs.size} selected</span>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#555' }}>
-                      {t('Weeks')}
-                      <select value={bulkWeeks} onChange={e => setBulkWeeks(Number(e.target.value))} style={{ border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, background: '#fff' }}>
-                        {[1, 2, 3, 4, 6, 8].map(w => <option key={w} value={w}>{w}</option>)}
-                      </select>
-                    </label>
-                    <button onClick={bulkFeature} disabled={bulkBusy} style={{ marginLeft: 'auto', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 18px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>
-                      {bulkBusy ? t('Starting…') : `⭐ ${t('Feature')} · €${(selectedRefs.size * bulkWeeks * FEATURED_WEEK_EUR).toFixed(2)}`}
+                    <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark)' }}>{selectedRefs.size} selected</span>
+                    {/* Upgrade type: Featured (per week) or Grab It Now (24h flash). */}
+                    <div style={{ display: 'flex', gap: 4, background: '#fff', border: '1.5px solid #e5dccd', borderRadius: 50, padding: 3 }}>
+                      {([['featured', '⭐ Featured'], ['grab_it_now', '⚡ Grab It Now']] as const).map(([opt, lbl]) => (
+                        <button key={opt} onClick={() => setBulkOption(opt)} style={{ border: 'none', borderRadius: 50, padding: '5px 12px', cursor: 'pointer', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, background: bulkOption === opt ? 'var(--orange)' : 'transparent', color: bulkOption === opt ? '#fff' : '#666' }}>{lbl}</button>
+                      ))}
+                    </div>
+                    {bulkOption === 'featured' && (
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#555' }}>
+                        {t('Weeks')}
+                        <select value={bulkWeeks} onChange={e => setBulkWeeks(Number(e.target.value))} style={{ border: '1.5px solid #e5dccd', borderRadius: 8, padding: '5px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, background: '#fff' }}>
+                          {[1, 2, 3, 4, 6, 8].map(w => <option key={w} value={w}>{w}</option>)}
+                        </select>
+                      </label>
+                    )}
+                    {bulkOption === 'grab_it_now' && <span style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#888' }}>{t('24-hour flash deal')}</span>}
+                    <button onClick={bulkPromote} disabled={bulkBusy} style={{ marginLeft: 'auto', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 18px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>
+                      {bulkBusy ? t('Starting…') : `${bulkOption === 'featured' ? '⭐' : '⚡'} ${bulkOption === 'featured' ? t('Feature') : t('Grab It Now')} · €${bulkTotal.toFixed(2)}`}
                     </button>
                     <button onClick={() => setSelectedRefs(new Set())} style={{ background: 'none', border: 'none', color: '#888', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer' }}>{t('Clear')}</button>
                   </div>
