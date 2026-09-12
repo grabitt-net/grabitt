@@ -300,9 +300,10 @@ function EditInner() {
         if (cat?.pendingPayment && cat?.checkoutUrl) { window.location.href = cat.checkoutUrl; return }
       }
       setSaved(true)
-      // Stay in the seller's workflow — return to their listings (the drafts /
-      // active tab they came from) rather than opening the listing itself.
-      setTimeout(() => router.push('/account?section=listings'), 700)
+      // Stay in the seller's workflow — return to their listings on the tab that
+      // matches this listing (drafts stay on Drafts), rather than the listing.
+      const tab = status === 'draft' ? 'draft' : status === 'sold' ? 'sold' : 'active'
+      setTimeout(() => router.push(`/account?section=listings&listtab=${tab}`), 700)
     } catch (e) { setErr(e instanceof Error ? e.message : t('Could not save your changes.')) }
     finally { setBusy(false) }
   }

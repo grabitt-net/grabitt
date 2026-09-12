@@ -130,7 +130,27 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
       window.history.replaceState(null, '', url.toString())
     }
   }, [section])
-  const [seg, setSeg] = useState<Seg>('active')
+  // The Trading sub-tab (On sale / Sold / Drafts / Buying) persists in the URL
+  // (?listtab=) so a refresh — or being sent back here after saving a draft —
+  // keeps you on the same tab.
+  const SEG_VALUES: Seg[] = ['active', 'sold', 'draft', 'buying']
+  const [seg, setSegState] = useState<Seg>(() => {
+    const q = params.get('listtab')
+    return q && (SEG_VALUES as string[]).includes(q) ? q as Seg : 'active'
+  })
+  const setSeg = (s: Seg) => {
+    setSegState(s)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('listtab', s)
+      window.history.replaceState(null, '', url.toString())
+    }
+  }
+  // Follow ?listtab= when it changes (e.g. arriving from the edit page).
+  useEffect(() => {
+    const q = params.get('listtab')
+    if (q && (SEG_VALUES as string[]).includes(q) && q !== seg) setSegState(q as Seg)
+  }, [params]) // eslint-disable-line react-hooks/exhaustive-deps
   const sortNewest = true // My Listings default to newest-first
 
   // When Messages opens (e.g. from the Alerts icon → /account?section=messages),
