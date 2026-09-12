@@ -130,6 +130,11 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('homepage.upsertCategory', 'mutation', data, execToken),
     deleteCategory: (id: string, moveTo: string) =>
       rpc<any>('homepage.deleteCategory', 'mutation', { id, moveTo }, execToken),
+    subcategories: () => rpc<{ id: string; department: string; name: string }[]>('homepage.subcategories', 'query', undefined, execToken),
+    addSubcategory: (department: string, name: string) =>
+      rpc<any>('homepage.addSubcategory', 'mutation', { department, name }, execToken),
+    deleteSubcategory: (id: string) =>
+      rpc<any>('homepage.deleteSubcategory', 'mutation', { id }, execToken),
 
     // Listings management (Admin → Listings)
     listingsAdmin: (input: { q?: string; status?: 'all' | 'active' | 'draft' | 'sold' | 'removed'; department?: string; take?: number; skip?: number }) =>

@@ -39,7 +39,7 @@ import dynamic from 'next/dynamic'
 // Leaflet needs window — load the map pin-picker client-only.
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false })
 import { toPanelItem, DEPT_ENUM, type DbListing } from '@/lib/listingMap'
-import { subcategoriesForSlug } from '@/lib/subcategories'
+import { useSubcategories } from '@/hooks/useSubcategories'
 
 // Protected tRPC calls must use our CONSUMER app JWT (verified with JWT_SECRET),
 // NOT the Supabase access_token (signed with a different secret, which the
@@ -3479,6 +3479,7 @@ function PanelBody() {
     const [offersDelivery, setOffersDelivery] = useState(false)
     // Delivery options — the seller can offer either or both methods, each with
     // its own fee (collection is always available regardless).
+    const subsFor = useSubcategories()
     const [collectionOn, setCollectionOn] = useState(true)
     const [courierOn, setCourierOn] = useState(false)
     const [courierFee, setCourierFee] = useState('')
@@ -3676,7 +3677,7 @@ function PanelBody() {
 
                   {/* Subcategory — the specific type within the chosen department. */}
                   {(() => {
-                    const subs = subcategoriesForSlug(LABEL_TO_SLUG[dept] ?? '')
+                    const subs = subsFor(LABEL_TO_SLUG[dept] ?? '')
                     if (!subs.length) return null
                     return (
                       <div style={{ marginTop: 14, borderTop: '1px dashed #eee', paddingTop: 12 }}>
@@ -3712,7 +3713,7 @@ function PanelBody() {
                         </div>
                         {/* A subcategory picker for each selected extra category. */}
                         {extraDepts.map(ed => {
-                          const subs = subcategoriesForSlug(LABEL_TO_SLUG[ed] ?? '')
+                          const subs = subsFor(LABEL_TO_SLUG[ed] ?? '')
                           if (!subs.length) return null
                           return (
                             <div key={ed} style={{ marginTop: 10 }}>

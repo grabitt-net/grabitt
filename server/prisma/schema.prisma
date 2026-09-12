@@ -56,6 +56,19 @@ model HomeSection {
   @@index([sortOrder])
 }
 
+// Admin-added subcategories for a department, on top of the built-in defaults
+// (lib/subcategories). The effective list a seller sees = defaults + these.
+model Subcategory {
+  id         String   @id @default(uuid())
+  department String
+  name       String
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@unique([department, name])
+  @@index([department])
+}
+
 // Homepage category tiles — admin-orderable grid. `name` drives the tile's
 // destination (mapped via DEPT_ENUM on the client); `img` is the circular
 // artwork. Seeded from the previously hard-coded list.

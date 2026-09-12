@@ -65,6 +65,12 @@ export const homepageRouter = router({
     ctx.prisma.homeCategory.findMany({ where: { enabled: true }, orderBy: { sortOrder: 'asc' }, select: { name: true, img: true, department: true } })
   ),
 
+  // Public: admin-added subcategories (merged with the built-in defaults on the
+  // client). Returned as { department, name } rows.
+  subcategories: publicProcedure.query(({ ctx }) =>
+    ctx.prisma.subcategory.findMany({ orderBy: [{ department: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }], select: { id: true, department: true, name: true } })
+  ),
+
   // Public: header artwork for one category page (by department slug).
   categoryHeader: publicProcedure
     .input(z.object({ department: z.string() }))
@@ -108,6 +114,29 @@ export const homepageRouter = router({
       }
       await ctx.prisma.homeCategory.delete({ where: { id: input.id } })
       return { ok: true }
+    }),
+
+  // Exec: add a subcategory to a department (on top of the built-in defaults).
+  addSubcategory: execProcedure
+    .input(z.object({ department: z.string().max(40), name: z.string().min(1).max(60) }))
+    .mutation(async ({ ctx, input }) => {
+      const name = input.name.trim()
+      if (!name) return { ok: false as const }
+      const max = await ctx.prisma.subcategory.aggregate({ where: { department: input.department }, _max: { sortOrder: true } })
+      await ctx.prisma.subcategory.upsert({
+        where: { department_name: { department: input.department, name } },
+        create: { department: input.department, name, sortOrder: (max._max.sortOrder ?? 0) + 1 },
+        update: {},
+      })
+      return { ok: true as const }
+    }),
+
+  // Exec: remove an admin-added subcategory (defaults can't be removed here).
+  deleteSubcategory: execProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.prisma.subcategory.delete({ where: { id: input.id } }).catch(() => {})
+      return { ok: true as const }
     }),
 
   // Exec: persist the reordered / toggled tiles.

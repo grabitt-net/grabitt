@@ -10,7 +10,7 @@ import { createLooseTrpcClient } from '@/lib/trpc'
 import { compressAndUpload, listingPhotoPath } from '@/lib/storage'
 import dynamic from 'next/dynamic'
 import { COND_LABEL, DEPT_LABEL } from '@/lib/listingMap'
-import { subcategoriesForSlug } from '@/lib/subcategories'
+import { useSubcategories } from '@/hooks/useSubcategories'
 import type { JobQuestion, JobQuestionType } from '@/lib/jobQuestions'
 import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
 
@@ -47,6 +47,7 @@ function EditInner() {
   const [stock, setStock] = useState('1')
   // Delivery: the seller can offer collection (always available) plus any of the
   // two delivery methods, each with its own fee.
+  const subsFor = useSubcategories()
   const [collectionOn, setCollectionOn] = useState(true)
   const [courierOn, setCourierOn] = useState(false)
   const [courierFee, setCourierFee] = useState('0')
@@ -385,7 +386,7 @@ function EditInner() {
 
             {/* Subcategory — the specific type within the chosen department. */}
             {(() => {
-              const subs = subcategoriesForSlug(department)
+              const subs = subsFor(department)
               if (!subs.length) return null
               return (
                 <>
@@ -425,7 +426,7 @@ function EditInner() {
                   </div>
                   {/* Subcategory picker for each selected extra category. */}
                   {extraDepts.map(k => {
-                    const subs = subcategoriesForSlug(k)
+                    const subs = subsFor(k)
                     if (!subs.length) return null
                     return (
                       <div key={k} style={{ marginTop: 10 }}>

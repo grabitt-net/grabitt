@@ -13,7 +13,7 @@ import BannerSlot from '@/components/marketplace/BannerSlot'
 import Pagination from '@/components/marketplace/Pagination'
 import Place from '@/components/marketplace/Place'
 import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
-import { subcategoriesForSlug } from '@/lib/subcategories'
+import { useSubcategories } from '@/hooks/useSubcategories'
 
 // A department/category now opens its own page (matching /jobs and /property)
 // instead of the old modal. Same site shell (Topbar + app-shell + Footer) with
@@ -23,8 +23,10 @@ export default function CategoryPage() {
   const slug = String(params?.slug ?? '')
   const label = DEPT_LABEL[slug] ?? 'Listings'
   const emoji = deptEmoji(slug)
-  // Subcategory filter pills — the department's fixed list with "All" prepended.
-  const subcats = ['All', ...subcategoriesForSlug(slug)]
+  // Subcategory filter pills — the department's list (defaults + admin-added),
+  // with "All" prepended.
+  const subsFor = useSubcategories()
+  const subcats = ['All', ...subsFor(slug)]
 
   const [activeSub, setActiveSub] = useState('All')
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')

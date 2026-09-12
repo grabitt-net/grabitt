@@ -4,6 +4,7 @@ import { useCrmApi } from './AdminApp'
 import { confirmDialog, toast } from '@/lib/ui'
 import ImageUploadField from './ImageUploadField'
 import { DEPT_LABEL } from '@/lib/listingMap'
+import { subcategoriesForSlug } from '@/lib/subcategories'
 
 // Manage the marketplace categories (the homepage tiles + category pages):
 // add / amend / delete, reorder, show-hide, set the round icon and the header
@@ -118,6 +119,56 @@ export default function CategoriesView() {
   )
 }
 
+// Shows the built-in default subcategories for a department (read-only) plus any
+// admin-added ones (removable), with a field to add more. Persisted to the DB;
+// the effective list a seller sees is defaults + these.
+function SubcategoryManager({ department, api }: { department: string; api: ReturnType<typeof useCrmApi> }) {
+  const defaults = subcategoriesForSlug(department)
+  const [custom, setCustom] = useState<{ id: string; name: string }[]>([])
+  const [newSub, setNewSub] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const load = () => api.subcategories()
+    .then(rows => setCustom((rows ?? []).filter(r => r.department === department).map(r => ({ id: r.id, name: r.name }))))
+    .catch(() => {})
+  useEffect(() => { load() }, [department]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const add = async () => {
+    const name = newSub.trim()
+    if (!name) return
+    if (defaults.includes(name) || custom.some(c => c.name.toLowerCase() === name.toLowerCase())) { toast('That subcategory already exists.'); return }
+    setBusy(true)
+    try { await api.addSubcategory(department, name); setNewSub(''); await load() }
+    catch (e: any) { toast(e?.message ?? 'Could not add') } finally { setBusy(false) }
+  }
+  const remove = async (id: string) => {
+    try { await api.deleteSubcategory(id); setCustom(prev => prev.filter(c => c.id !== id)) } catch { /* noop */ }
+  }
+
+  return (
+    <div style={{ marginTop: 14, borderTop: '1px solid #f0ece5', paddingTop: 12 }}>
+      <L>Subcategories ({defaults.length + custom.length})</L>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+        {defaults.map(s => (
+          <span key={s} title="Built-in subcategory" style={{ background: '#f0ebe4', color: '#555', borderRadius: 50, padding: '4px 10px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 700 }}>{s}</span>
+        ))}
+        {custom.map(c => (
+          <span key={c.id} style={{ background: '#FFF3EE', color: '#c2410c', borderRadius: 50, padding: '4px 8px 4px 10px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            {c.name}
+            <button onClick={() => remove(c.id)} title="Remove" style={{ background: 'none', border: 'none', color: '#c2410c', cursor: 'pointer', fontSize: 13, padding: 0, lineHeight: 1 }}>×</button>
+          </span>
+        ))}
+        {defaults.length + custom.length === 0 && <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#999' }}>No subcategories yet.</span>}
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <input value={newSub} onChange={e => setNewSub(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add() } }} placeholder="Add a subcategory…" style={{ ...inp, marginBottom: 0, flex: 1 }} />
+        <button onClick={add} disabled={busy} style={{ flexShrink: 0, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '0 16px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>Add</button>
+      </div>
+      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', marginTop: 6 }}>Grey = built-in (always available). Orange = added by you (removable). Added subcategories appear in the Sell form, edit form and category filters.</div>
+    </div>
+  )
+}
+
 function EditModal({ cat, onClose, onSaved, api }: { cat: Cat | null; onClose: () => void; onSaved: () => void; api: ReturnType<typeof useCrmApi> }) {
   const [name, setName] = useState(cat?.name ?? '')
   const [department, setDepartment] = useState(cat?.department ?? '')
@@ -150,6 +201,10 @@ function EditModal({ cat, onClose, onSaved, api }: { cat: Cat | null; onClose: (
         <div style={{ marginTop: 10 }}><ImageUploadField label="Round tile icon (homepage button)" kind="category" value={img} onChange={setImg} /></div>
         <div style={{ marginTop: 10 }}><ImageUploadField label="Category page hero banner (wide ~5:1 — shown full-width at the top of the category page)" kind="category" value={heroBanner} onChange={setHeroBanner} trim hint="Any white border/padding is trimmed automatically on upload." /></div>
         <div style={{ marginTop: 10 }}><ImageUploadField label="Header background image (legacy — faded behind the header)" kind="category" value={bgImage} onChange={setBgImage} /></div>
+        {/* Subcategories — the built-in defaults plus any you add. Only shown
+            once a department is chosen (subcategories are keyed by department). */}
+        {department && <SubcategoryManager department={department} api={api} />}
+
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 700, color: '#555', cursor: 'pointer' }}>
           <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} /> Show on the homepage
         </label>
