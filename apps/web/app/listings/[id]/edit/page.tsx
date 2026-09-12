@@ -299,11 +299,10 @@ function EditInner() {
         const cat: any = await c.listings.setCategories.mutate({ listingId: id, extraDepartments: extraDepts })
         if (cat?.pendingPayment && cat?.checkoutUrl) { window.location.href = cat.checkoutUrl; return }
       }
+      // Saving keeps you on the editor — you can keep working, and publish when
+      // ready. Only publishing (or unlisting) takes you back to your listings.
       setSaved(true)
-      // Stay in the seller's workflow — return to their listings on the tab that
-      // matches this listing (drafts stay on Drafts), rather than the listing.
-      const tab = status === 'draft' ? 'draft' : status === 'sold' ? 'sold' : 'active'
-      setTimeout(() => router.push(`/account?section=listings&listtab=${tab}`), 700)
+      setTimeout(() => setSaved(false), 2500)
     } catch (e) { setErr(e instanceof Error ? e.message : t('Could not save your changes.')) }
     finally { setBusy(false) }
   }
@@ -311,8 +310,14 @@ function EditInner() {
   const changeStatus = async (next: 'active' | 'removed') => {
     setErr(''); setBusy(true)
     try {
+      const wasDraft = status === 'draft'
       await (trpcAuthed() as any).listings.setStatus.mutate({ listingId: id, status: next })
       setStatus(next)
+      // Publishing a draft (or unlisting) is the point we leave the editor and
+      // return to the seller's listings — a just-published draft lands on Drafts.
+      if (next === 'active' && wasDraft) {
+        setTimeout(() => router.push('/account?section=listings&listtab=draft'), 500)
+      }
     } catch (e) { setErr(e instanceof Error ? e.message : t('Could not update the listing.')) }
     finally { setBusy(false) }
   }
