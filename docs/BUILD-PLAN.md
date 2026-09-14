@@ -52,7 +52,8 @@ TRANSLATIONS entries now need only `en` (+ `es`); other langs fall back.
 - [ ] Footer content pages (InfoPage: About, Why, Pricing, Delivery, Terms,
       Guarantee, Scam Centre, Dos, Economic) — note: long-form bodies may be
       better handled as CMS Spanish content (Phase 3) than dictionary strings
-- [ ] Apply / checkout flow (ApplyModal, checkout panel)
+- [x] Apply / checkout flow (ApplyModal fully; checkout & make-offer panels
+      completed — buyer-type, delivery labels, order summary, escrow copy)
 - [ ] Recruitment / ATS (EmployerDashboardContent, FindStaffPanel, ApplicantsKanban)
 - [ ] Hub / storefront editor, remaining marketplace components
 
