@@ -6,6 +6,7 @@ import Logo from './Logo'
 import Icon from './Icon'
 import BannerSlot from './BannerSlot'
 import LanguageSwitcher from './LanguageSwitcher'
+import { t } from '@/lib/i18n'
 
 // Site footer — grouped links, brand, and trust line. Links open the existing
 // info panels so content stays consistent with the rest of the app.
@@ -21,10 +22,10 @@ export default function Footer() {
   // pages are written.
   const cols: { heading: string; links: [string, () => void][] }[] = [
     { heading: 'Grabitt', links: [['About Us', go('/about')], ['Why Us?', go('/why')], ['Pricing', go('/pricing')], ['Contact', go('/contact')]] },
-    { heading: 'Trading', links: [['Sell an item', () => openPanel('sell')], ['Delivery', go('/delivery')], ['Sold Prices', () => openPanel('soldprices')], ['Terms', go('/terms')]] },
-    { heading: 'Safety & trust', links: [['Grabitt Guarantee', go('/guarantee')], ['Scam Centre', go('/scam-centre')], ['Report a Listing', () => openPanel('report')], ['My Disputes', () => openPanel('myDisputes')]] },
-    { heading: 'Business', links: [['For Business', go('/for-business')], ['Business Directory', go('/directory')], ['Advertise With Us', go('/advertise')]] },
-    { heading: 'Help & guides', links: [['Help Centre', go('/help')], ['Grabitt Guides', go('/community')], ['Economic Living', go('/economic')], ['Dos & Don\'ts', go('/dos')], ['Suggest Ideas', go('/suggest')]] },
+    { heading: t('Trading'), links: [['Sell an item', () => openPanel('sell')], ['Delivery', go('/delivery')], ['Sold Prices', () => openPanel('soldprices')], ['Terms', go('/terms')]] },
+    { heading: t('Safety & trust'), links: [['Grabitt Guarantee', go('/guarantee')], ['Scam Centre', go('/scam-centre')], ['Report a Listing', () => openPanel('report')], ['My Disputes', () => openPanel('myDisputes')]] },
+    { heading: t('Business'), links: [['For Business', go('/for-business')], ['Business Directory', go('/directory')], ['Advertise With Us', go('/advertise')]] },
+    { heading: t('Help & guides'), links: [['Help Centre', go('/help')], ['Grabitt Guides', go('/community')], ['Economic Living', go('/economic')], ['Dos & Don\'ts', go('/dos')], ['Suggest Ideas', go('/suggest')]] },
   ]
 
   return (
@@ -40,7 +41,7 @@ export default function Footer() {
           <div key={col.heading}>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: 'var(--dark, #1a1a1a)', letterSpacing: 0.2, marginBottom: 12 }}>{col.heading}</div>
             {col.links.map(([label, onClick]) => (
-              <button key={label} onClick={onClick} style={{ display: 'block', background: 'none', border: 'none', padding: '5px 0', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#1a1a1a', cursor: 'pointer', textAlign: 'left' }}>{label}</button>
+              <button key={label} onClick={onClick} style={{ display: 'block', background: 'none', border: 'none', padding: '5px 0', fontFamily: 'var(--font-ui)', fontSize: 13, color: '#1a1a1a', cursor: 'pointer', textAlign: 'left' }}>{t(label)}</button>
             ))}
           </div>
         ))}
@@ -48,13 +49,13 @@ export default function Footer() {
       <div style={{ borderTop: '1px solid var(--sand2, #e8dcc0)', marginTop: 24, paddingTop: 18, textAlign: 'center' }}>
         <Logo height={30} style={{ margin: '0 auto' }} />
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#1a1a1a', marginTop: 4 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="shield" size={14} strokeWidth={2} style={{ color: 'var(--success)' }} /> Every payment protected by the Grabitt Guarantee · Local to the Canaries</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="shield" size={14} strokeWidth={2} style={{ color: 'var(--success)' }} /> {t('Every payment protected by the Grabitt Guarantee · Local to the Canaries')}</span>
         </div>
         <div style={{ marginTop: 12 }}>
           <LanguageSwitcher />
         </div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 8 }}>
-          © {new Date().getFullYear()} Grabitt. All rights reserved.
+          © {new Date().getFullYear()} Grabitt. {t('All rights reserved.')}
         </div>
       </div>
     </footer>

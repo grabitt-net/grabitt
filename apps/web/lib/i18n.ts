@@ -8,7 +8,10 @@ const LANG_LABELS: Record<Lang, string> = {
   fr: '🇫🇷 Français', pt: '🇵🇹 Português',
 }
 
-export const TRANSLATIONS: Record<string, Record<Lang, string>> = {
+// Each entry must have English; other languages are optional and fall back to
+// English via t(). New strings added during the coverage pass supply en + es
+// (the priority pair); de/da/sv/nl/fr/pt can be filled in later.
+export const TRANSLATIONS: Record<string, { en: string } & Partial<Record<Lang, string>>> = {
   'Browse': { en: 'Browse', es: 'Explorar', de: 'Stöbern', da: 'Gennemse', sv: 'Bläddra', nl: 'Bladeren', fr: 'Parcourir', pt: 'Navegar' },
   'Sell': { en: 'Sell', es: 'Vender', de: 'Verkaufen', da: 'Sælg', sv: 'Sälj', nl: 'Verkopen', fr: 'Vendre', pt: 'Vender' },
   'Search the Canary Islands...': { en: 'Search the Canary Islands...', es: 'Buscar en las Islas Canarias...', de: 'Kanarische Inseln suchen...', da: 'Søg De Kanariske Øer...', sv: 'Sök Kanarieöarna...', nl: 'Zoek de Canarische Eilanden...', fr: 'Chercher les Îles Canaries...', pt: 'Pesquisar nas Ilhas Canárias...' },
@@ -432,6 +435,30 @@ export const TRANSLATIONS: Record<string, Record<Lang, string>> = {
   'Preview my CV': { en: 'Preview my CV', es: 'Vista previa de mi CV', de: 'Lebenslauf-Vorschau', da: 'Forhåndsvis mit CV', sv: 'Förhandsgranska mitt CV', nl: 'Mijn cv voorbeeld', fr: 'Aperçu de mon CV', pt: 'Pré-visualizar o meu CV' },
   'Save first — the preview shows what you last saved.': { en: 'Save first — the preview shows what you last saved.', es: 'Guarda primero — la vista previa muestra lo último que guardaste.', de: 'Zuerst speichern — die Vorschau zeigt deinen letzten Speicherstand.', da: 'Gem først — forhåndsvisningen viser det, du sidst gemte.', sv: 'Spara först — förhandsvisningen visar det du senast sparade.', nl: 'Sla eerst op — het voorbeeld toont wat je het laatst hebt opgeslagen.', fr: 'Enregistrez d\'abord — l\'aperçu montre votre dernier enregistrement.', pt: 'Guarda primeiro — a pré-visualização mostra o que guardaste por último.' },
   'Could not save your CV.': { en: 'Could not save your CV.', es: 'No se pudo guardar tu CV.', de: 'Lebenslauf konnte nicht gespeichert werden.', da: 'Dit CV kunne ikke gemmes.', sv: 'Det gick inte att spara ditt CV.', nl: 'Kon je cv niet opslaan.', fr: 'Impossible d\'enregistrer votre CV.', pt: 'Não foi possível guardar o teu CV.' },
+
+  // ── Footer ──────────────────────────────────────────────────────────────────
+  'Trading': { en: 'Trading', es: 'Comercio' },
+  'Safety & trust': { en: 'Safety & trust', es: 'Seguridad y confianza' },
+  'Help & guides': { en: 'Help & guides', es: 'Ayuda y guías' },
+  'About Us': { en: 'About Us', es: 'Sobre nosotros' },
+  'Why Us?': { en: 'Why Us?', es: '¿Por qué nosotros?' },
+  'Pricing': { en: 'Pricing', es: 'Precios' },
+  'Sell an item': { en: 'Sell an item', es: 'Vender un artículo' },
+  'Sold Prices': { en: 'Sold Prices', es: 'Precios de venta' },
+  'Terms': { en: 'Terms', es: 'Términos' },
+  'Grabitt Guarantee': { en: 'Grabitt Guarantee', es: 'Garantía Grabitt' },
+  'Scam Centre': { en: 'Scam Centre', es: 'Centro antifraude' },
+  'Report a Listing': { en: 'Report a Listing', es: 'Denunciar un anuncio' },
+  'My Disputes': { en: 'My Disputes', es: 'Mis disputas' },
+  'For Business': { en: 'For Business', es: 'Para empresas' },
+  'Business Directory': { en: 'Business Directory', es: 'Directorio de empresas' },
+  'Advertise With Us': { en: 'Advertise With Us', es: 'Anúnciate con nosotros' },
+  'Help Centre': { en: 'Help Centre', es: 'Centro de ayuda' },
+  'Economic Living': { en: 'Economic Living', es: 'Vida económica' },
+  "Dos & Don'ts": { en: "Dos & Don'ts", es: 'Recomendaciones' },
+  'Suggest Ideas': { en: 'Suggest Ideas', es: 'Sugerir ideas' },
+  'Every payment protected by the Grabitt Guarantee · Local to the Canaries': { en: 'Every payment protected by the Grabitt Guarantee · Local to the Canaries', es: 'Cada pago protegido por la Garantía Grabitt · Local en Canarias' },
+  'All rights reserved.': { en: 'All rights reserved.', es: 'Todos los derechos reservados.' },
 }
 
 let _lang: Lang = 'en'
