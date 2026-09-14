@@ -4,6 +4,7 @@ import { toast, confirmDialog } from '@/lib/ui'
 import type { PanelId } from '@/context/PanelContext'
 import { trpcAuthed } from '@/lib/authToken'
 import { JOB_SECTORS as CANON_SECTORS } from '@/lib/jobCategories'
+import { t } from '@/lib/i18n'
 
 type Candidate = {
   seekerId: string; headline: string | null; sector: string | null; sectors: string[]; roles: string[]
@@ -45,21 +46,21 @@ function FullProfileBlock({ p, seekerId }: { p: FullProfile; seekerId: string })
     <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: 12, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 10 }}>
       {p.summary && (
         <div>
-          <SectionLabel>Summary</SectionLabel>
+          <SectionLabel>{t('Summary')}</SectionLabel>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#444', lineHeight: 1.55 }}>{p.summary}</div>
         </div>
       )}
 
       {work.length > 0 && (
         <div>
-          <SectionLabel>Work history</SectionLabel>
+          <SectionLabel>{t('Work history')}</SectionLabel>
           {work.map((w, i) => (
             <div key={i} style={{ marginBottom: 7 }}>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, color: '#1a1a1a' }}>
-                {w.title || 'Role'}{w.employer ? ` · ${w.employer}` : ''}
+                {w.title || t('Role')}{w.employer ? ` · ${w.employer}` : ''}
               </div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888' }}>
-                {[w.start, w.current ? 'Present' : w.end].filter(Boolean).join(' – ')}{w.location ? ` · ${w.location}` : ''}
+                {[w.start, w.current ? t('Present') : w.end].filter(Boolean).join(' – ')}{w.location ? ` · ${w.location}` : ''}
               </div>
               {(w.bullets ?? []).filter(Boolean).map((b, bi) => (
                 <div key={bi} style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#555', marginTop: 2 }}>• {b}</div>
@@ -71,10 +72,10 @@ function FullProfileBlock({ p, seekerId }: { p: FullProfile; seekerId: string })
 
       {edu.length > 0 && (
         <div>
-          <SectionLabel>Education</SectionLabel>
+          <SectionLabel>{t('Education')}</SectionLabel>
           {edu.map((e, i) => (
             <div key={i} style={{ marginBottom: 4 }}>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#1a1a1a' }}>{e.qualification || 'Qualification'}{e.status ? ` (${e.status})` : ''}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#1a1a1a' }}>{e.qualification || t('Qualification')}{e.status ? ` (${e.status})` : ''}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888' }}>{[e.institution, [e.start, e.end].filter(Boolean).join(' – ')].filter(Boolean).join(' · ')}</div>
             </div>
           ))}
@@ -84,29 +85,29 @@ function FullProfileBlock({ p, seekerId }: { p: FullProfile; seekerId: string })
       {/* Exactly what the candidate selected when they set up their work
           profile — sectors, the roles under each, key skills, languages with
           the level they claimed, and the hours they'll work. */}
-      {p.sectors.length > 0 && <Chips label="Sectors" items={p.sectors} />}
-      {p.roles.length > 0 && <Chips label="Roles" items={p.roles} />}
-      {p.skills.length > 0 && <Chips label="Key skills" items={p.skills} />}
-      {p.keyStrengths.length > 0 && <Chips label="Key strengths" items={p.keyStrengths} />}
-      {p.certifications.length > 0 && <Chips label="Certifications" items={p.certifications} />}
-      {p.languages.length > 0 && <Chips label="Languages" items={p.languages} />}
-      {p.hours.length > 0 && <Chips label="Hours available" items={p.hours} />}
-      <Chips label="Experience" items={[expLabel(p.experienceMonths)]} />
+      {p.sectors.length > 0 && <Chips label={t('Sectors')} items={p.sectors} />}
+      {p.roles.length > 0 && <Chips label={t('Roles')} items={p.roles} />}
+      {p.skills.length > 0 && <Chips label={t('Key skills')} items={p.skills} />}
+      {p.keyStrengths.length > 0 && <Chips label={t('Key strengths')} items={p.keyStrengths} />}
+      {p.certifications.length > 0 && <Chips label={t('Certifications')} items={p.certifications} />}
+      {p.languages.length > 0 && <Chips label={t('Languages')} items={p.languages} />}
+      {p.hours.length > 0 && <Chips label={t('Hours available')} items={p.hours} />}
+      <Chips label={t('Experience')} items={[expLabel(p.experienceMonths)]} />
 
       <div style={{ display: 'flex', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', flexWrap: 'wrap' }}>
         {p.location && <span>📍 {p.location}</span>}
         {p.availability && <span>🗓️ {p.availability}</span>}
         {p.rightToWork && <span>🛂 {p.rightToWork}</span>}
-        {p.verified && <span style={{ color: '#16a34a', fontWeight: 800 }}>🛡️ Verified</span>}
+        {p.verified && <span style={{ color: '#16a34a', fontWeight: 800 }}>🛡️ {t('Verified')}</span>}
       </div>
 
       <a href={`/api/cv-pdf?seekerId=${seekerId}`} target="_blank" rel="noreferrer"
         style={{ background: ORANGE, color: '#fff', borderRadius: 8, padding: '9px 10px', textAlign: 'center', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>
-        📄 Download CV{p.contactUnlocked ? '' : ' (anonymous)'}
+        📄 {t('Download CV')}{p.contactUnlocked ? '' : ` (${t('anonymous')})`}
       </a>
       {!p.contactUnlocked && (
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#1a1a1a', textAlign: 'center' }}>
-          🔒 Name and contact appear once you unlock them ({euro(p.unlockCents)}).
+          🔒 {t('Name and contact appear once you unlock them ({price}).').replace('{price}', euro(p.unlockCents))}
         </div>
       )}
     </div>
@@ -129,10 +130,10 @@ function Chips({ label, items }: { label: string; items: string[] }) {
 }
 
 function expLabel(m: number) {
-  if (!m) return 'Any experience'
-  if (m < 12) return `${m} mo experience`
+  if (!m) return t('Any experience')
+  if (m < 12) return t('{n} mo experience').replace('{n}', String(m))
   const y = Math.floor(m / 12)
-  return `${y}+ yr${y > 1 ? 's' : ''} experience`
+  return t(y > 1 ? '{n}+ yrs experience' : '{n}+ yr experience').replace('{n}', String(y))
 }
 
 // "Find Staff" (Get Staff) — replicates the V20 HTML flow: employers build a job
@@ -223,7 +224,7 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
       setExpanded(prev => new Set(prev).add(c.seekerId))
       setCandidates(list => list.map(x => x.seekerId === c.seekerId ? { ...x, viewed: true } : x))
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not open that profile.')
+      toast(e instanceof Error ? e.message : t('Could not open that profile.'))
     } finally { setOpeningId(null) }
   }
 
@@ -245,7 +246,7 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
 
   // Search the database FOR a chosen advert — the match uses that advert's spec.
   const runMatchForJob = async (jobId: string) => {
-    if (!jobId) { toast('Pick which job advert to hire for.'); return }
+    if (!jobId) { toast(t('Pick which job advert to hire for.')); return }
     setSearchJobId(jobId)
     setUnlockJobId(jobId)
     setLoading(true)
@@ -256,7 +257,7 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
       setUnlockCents(res.cvUnlockCents)
       setMatchJob(res.job)
       setMatchCount(res.count)
-    } catch (e) { toast(e instanceof Error ? e.message : 'Could not search candidates.') }
+    } catch (e) { toast(e instanceof Error ? e.message : t('Could not search candidates.')) }
     finally { setLoading(false) }
   }
 
@@ -268,7 +269,7 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
     try {
       await trpcAuthed().seekers.inviteToApply.mutate({ seekerId: c.seekerId, jobListingId: searchJobId })
       setCandidates(prev => prev.map(x => x.seekerId === c.seekerId ? { ...x, invited: true } : x))
-    } catch (e) { toast(e instanceof Error ? e.message : 'Could not send the invite.') }
+    } catch (e) { toast(e instanceof Error ? e.message : t('Could not send the invite.')) }
     finally { setInvitingId(null) }
   }
 
@@ -278,9 +279,9 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
   const unlock = async (c: Candidate) => {
     if (revealed[c.seekerId]) return
     const jobId = unlockJobId || access?.liveJobs?.[0]?.id
-    if (!jobId) { toast('You need a live job advert to unlock candidates. Post a job first.'); return }
+    if (!jobId) { toast(t('You need a live job advert to unlock candidates. Post a job first.')); return }
     const job = access?.liveJobs?.find(j => j.id === jobId)
-    if (!(await confirmDialog({ message: `Unlock this candidate's CV & contact for ${euro(unlockCents)}? The charge is linked to your advert "${job?.jobTitle ?? 'your job'}".`, confirmLabel: `Pay ${euro(unlockCents)}` }))) return
+    if (!(await confirmDialog({ message: t('Unlock this candidate’s CV & contact for {price}? The charge is linked to your advert “{job}”.').replace('{price}', euro(unlockCents)).replace('{job}', job?.jobTitle ?? t('your job')), confirmLabel: `${t('Pay')} ${euro(unlockCents)}` }))) return
     setUnlockingId(c.seekerId)
     try {
       const r = await trpcAuthed().seekers.unlockCandidate.mutate({ seekerId: c.seekerId, jobListingId: jobId }) as
@@ -291,7 +292,7 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
         setCandidates(prev => prev.map(x => x.seekerId === c.seekerId ? { ...x, unlocked: true } : x))
       }
     } catch {
-      toast('Could not unlock this candidate. Please try again.')
+      toast(t('Could not unlock this candidate. Please try again.'))
     } finally { setUnlockingId(null) }
   }
 
@@ -299,32 +300,32 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
     <div onClick={onClose} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400 }}>
       <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
-          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>{matchCount === null ? '💼 Find Staff' : `🎯 ${matchCount} Candidates Found`}</span>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>{matchCount === null ? `💼 ${t('Find Staff')}` : `🎯 ${t('{n} Candidates Found').replace('{n}', String(matchCount))}`}</span>
           <button onClick={onClose} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer' }}>✕</button>
         </div>
 
         <div style={{ overflowY: 'auto', padding: 16, flex: 1 }}>
           {!access ? (
-            <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 13 }}>Checking your account…</div>
+            <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 13 }}>{t('Checking your account…')}</div>
           ) : !access.isBusiness ? (
             /* Hiring is a Business feature — say so plainly rather than showing
                a form that would be refused on submit. */
             <div style={{ textAlign: 'center', padding: '20px 6px' }}>
               <div style={{ fontSize: 42, marginBottom: 10 }}>🏢</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 6 }}>Find Staff is for Business accounts</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginBottom: 6 }}>{t('Find Staff is for Business accounts')}</div>
               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, color: '#666', lineHeight: 1.6, marginBottom: 18 }}>
-                Upgrade to advertise roles and search our candidate database. 14 days free, then €29/month — pause any time.
+                {t('Upgrade to advertise roles and search our candidate database. 14 days free, then €29/month — pause any time.')}
               </div>
               <button onClick={() => { onClose(); openPanel('business') }} style={{ width: '100%', background: 'linear-gradient(135deg,#4A2E1A,#7a4419)', color: '#fff', border: 'none', borderRadius: 50, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>
-                🏢 Upgrade to Business
+                🏢 {t('Upgrade to Business')}
               </button>
             </div>
           ) : mode === 'choose' && matchCount === null ? (
             /* Two ways to hire — mirrors the Sell popup's compact tile style. */
             <div>
               <div style={{ textAlign: 'center', marginBottom: 14 }}>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 2 }}>How would you like to hire?</div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888' }}>Hiring for {access.businessName || 'your business'}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 2 }}>{t('How would you like to hire?')}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888' }}>{t('Hiring for {name}').replace('{name}', access.businessName || t('your business'))}</div>
               </div>
 
               {/* No live advert → the ONLY option is to place one. With a live
@@ -332,27 +333,27 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
               <div style={{ display: 'grid', gridTemplateColumns: access.hasLiveJob ? '1fr 1fr' : '1fr', gap: 10 }}>
                 <button onClick={() => { onClose(); window.location.href = '/jobs/new' }} style={CHOOSE_TILE}>
                   <span style={CHOOSE_ICON}>📢</span>
-                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Place a job advert</span>
-                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>Candidates apply to you</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{t('Place a job advert')}</span>
+                  <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>{t('Candidates apply to you')}</span>
                 </button>
 
                 {access.hasLiveJob && (
                   <button onClick={() => setMode('search')} style={CHOOSE_TILE}>
                     <span style={CHOOSE_ICON}>🔍</span>
-                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Search candidates</span>
-                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>Match your advert · invite the ones you like</span>
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{t('Search candidates')}</span>
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', lineHeight: 1.35 }}>{t('Match your advert · invite the ones you like')}</span>
                   </button>
                 )}
               </div>
 
               <div style={{ marginTop: 12, background: access.hasLiveJob ? '#f0fdf4' : '#FFF7ED', border: `1px solid ${access.hasLiveJob ? '#bbf7d0' : '#FFD4A0'}`, borderRadius: 12, padding: '10px 12px' }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: access.hasLiveJob ? '#16a34a' : '#9a5b1a' }}>
-                  {access.hasLiveJob ? `${access.liveJobs.length} live job advert${access.liveJobs.length === 1 ? '' : 's'}` : 'A live job advert is required to search'}
+                  {access.hasLiveJob ? t(access.liveJobs.length === 1 ? '{n} live job advert' : '{n} live job adverts').replace('{n}', String(access.liveJobs.length)) : t('A live job advert is required to search')}
                 </div>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: access.hasLiveJob ? '#15803d' : '#9a5b1a', marginTop: 2, lineHeight: 1.5 }}>
                   {access.hasLiveJob
-                    ? 'The database search is an add-on to your advert — it matches the exact spec you placed. Invite anyone you like; their details are revealed once they accept, at no extra cost.'
-                    : 'Place a job advert first. The candidate database search then becomes available as an add-on, matching the spec you set on the advert.'}
+                    ? t('The database search is an add-on to your advert — it matches the exact spec you placed. Invite anyone you like; their details are revealed once they accept, at no extra cost.')
+                    : t('Place a job advert first. The candidate database search then becomes available as an add-on, matching the spec you set on the advert.')}
                 </div>
               </div>
             </div>
@@ -360,7 +361,7 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
             /* Pick which live advert to hire for — the search matches its spec. */
             <>
               <div style={{ fontSize: 12, color: '#555', fontFamily: 'var(--font-ui)', marginBottom: 14, lineHeight: 1.55 }}>
-                Choose the advert you&apos;re hiring for. We&apos;ll search the database for candidates who match the spec you placed on it — sector, role, experience and languages.
+                {t('Choose the advert you’re hiring for. We’ll search the database for candidates who match the spec you placed on it — sector, role, experience and languages.')}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -369,28 +370,28 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
                     <span style={{ fontSize: 24 }}>📋</span>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, color: '#1a1a1a' }}>{j.jobTitle}</span>
-                      <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', marginTop: 2 }}>{loading && searchJobId === j.id ? 'Searching…' : 'Search candidates for this advert'}</span>
+                      <span style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#888', marginTop: 2 }}>{loading && searchJobId === j.id ? t('Searching…') : t('Search candidates for this advert')}</span>
                     </span>
-                    <span style={{ color: ORANGE, fontWeight: 900, fontSize: 18 }}>›</span>
+                    
                   </button>
                 ))}
               </div>
 
-              <button onClick={() => setMode('choose')} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginTop: 14 }}>Back</button>
+              <button onClick={() => setMode('choose')} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginTop: 14 }}>{t('Back')}</button>
             </>
           ) : (
             <>
               <div style={{ textAlign: 'center', padding: '16px 0 12px' }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 64, fontWeight: 900, color: ORANGE, lineHeight: 1 }}>{matchCount}</div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginTop: 6 }}>{matchCount === 1 ? 'candidate matches' : 'candidates match'} your advert</div>
-                {matchJob && <div style={{ fontSize: 12, color: '#666', fontFamily: 'var(--font-ui)', marginTop: 4 }}>for “{matchJob.jobTitle}”{matchJob.sector ? ` · ${matchJob.sector}` : ''}</div>}
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, color: '#1a1a1a', marginTop: 6 }}>{matchCount === 1 ? t('candidate matches your advert') : t('candidates match your advert')}</div>
+                {matchJob && <div style={{ fontSize: 12, color: '#666', fontFamily: 'var(--font-ui)', marginTop: 4 }}>{t('for')} “{matchJob.jobTitle}”{matchJob.sector ? ` · ${matchJob.sector}` : ''}</div>}
               </div>
 
               {/* The criteria carried over from the advert's spec, so it's clear the
                   search is matching exactly what was posted. */}
               {matchJob && (
                 <div style={{ background: '#f8f9fa', border: '1px solid #eee', borderRadius: 12, padding: '10px 12px', marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, fontWeight: 900, color: ORANGE, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Matching your advert’s spec</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, fontWeight: 900, color: ORANGE, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>{t('Matching your advert’s spec')}</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                     {[
                       matchJob.sector,
@@ -407,13 +408,13 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
 
               {matchCount === 0 ? (
                 <div style={{ background: '#f8f9fa', borderRadius: 14, padding: 18, textAlign: 'center', marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555', marginBottom: 4 }}>No candidates match yet</div>
-                  <div style={{ fontSize: 12, color: '#888', fontFamily: 'var(--font-ui)', lineHeight: 1.5 }}>Try widening your spec — fewer required languages or lower minimum experience. New job-seekers register every day.</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: '#555', marginBottom: 4 }}>{t('No candidates match yet')}</div>
+                  <div style={{ fontSize: 12, color: '#888', fontFamily: 'var(--font-ui)', lineHeight: 1.5 }}>{t('Try widening your spec — fewer required languages or lower minimum experience. New job-seekers register every day.')}</div>
                 </div>
               ) : (
                 <>
                   <div style={{ background: '#FFF3EE', border: '1.5px solid #FFD4C0', borderRadius: 14, padding: 12, marginBottom: 14 }}>
-                    <div style={{ fontSize: 12, color: '#555', fontFamily: 'var(--font-ui)', lineHeight: 1.5 }}>🔒 Candidates stay anonymous while you review them. Invite anyone you like to apply — their name &amp; contact are revealed only once <strong>they accept your invitation</strong>. There&apos;s nothing more to pay: the database search is included in your advert&apos;s Candidate Matching add-on.</div>
+                    <div style={{ fontSize: 12, color: '#555', fontFamily: 'var(--font-ui)', lineHeight: 1.5 }}>🔒 {t('Candidates stay anonymous while you review them. Invite anyone you like to apply — their name & contact are revealed only once')} <strong>{t('they accept your invitation')}</strong>. {t('There’s nothing more to pay: the database search is included in your advert’s Candidate Matching add-on.')}</div>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
@@ -424,14 +425,14 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                             <div style={{ width: 40, height: 40, borderRadius: '50%', background: ORANGE, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 16, fontWeight: 900, flexShrink: 0 }}>{name ? name.charAt(0) : (c.roles[0] || c.sector || '?').charAt(0)}</div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: '#1a1a1a' }}>{name || c.headline || c.roles[0] || 'Candidate'}</div>
-                              <div style={{ fontSize: 11, color: '#666', fontFamily: 'var(--font-ui)' }}>{[c.sector, c.location].filter(Boolean).join(' · ') || 'Canary Islands'}{c.rating ? ` · ★ ${Number(c.rating).toFixed(1)}` : ''}</div>
+                              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 900, color: '#1a1a1a' }}>{name || c.headline || c.roles[0] || t('Candidate')}</div>
+                              <div style={{ fontSize: 11, color: '#666', fontFamily: 'var(--font-ui)' }}>{[c.sector, c.location].filter(Boolean).join(' · ') || t('Canary Islands')}{c.rating ? ` · ★ ${Number(c.rating).toFixed(1)}` : ''}</div>
                             </div>
                             {/* Fit against this search, not a grade on the person. */}
                             <div title={c.matchNotes.map(n => `${n.factor}: ${n.points}/${n.of} — ${n.detail}`).join('\n')}
                               style={{ flexShrink: 0, textAlign: 'center', background: '#fff', border: `1.5px solid ${c.matchScore >= 70 ? '#16a34a' : c.matchScore >= 45 ? '#f59e0b' : '#d1d5db'}`, borderRadius: 10, padding: '4px 9px' }}>
                               <div style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: c.matchScore >= 70 ? '#16a34a' : c.matchScore >= 45 ? '#f59e0b' : '#9ca3af' }}>{c.matchScore}</div>
-                              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 8, fontWeight: 800, color: '#888', textTransform: 'uppercase' }}>match</div>
+                              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 8, fontWeight: 800, color: '#888', textTransform: 'uppercase' }}>{t('match')}</div>
                             </div>
                           </div>
 
@@ -447,15 +448,15 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
                             <>
                               <FullProfileBlock p={profiles[c.seekerId]} seekerId={c.seekerId} />
                               <button onClick={() => toggleExpanded(c.seekerId)} style={{ width: '100%', marginBottom: 8, background: 'none', border: 'none', color: '#888', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', padding: 6 }}>
-                                ▲ Hide profile
+                                ▲ {t('Hide profile')}
                               </button>
                             </>
                           ) : (
                             <button onClick={() => openProfile(c)} disabled={openingId === c.seekerId}
                               style={{ width: '100%', marginBottom: 8, background: '#fff', color: ORANGE, border: `1.5px solid ${ORANGE}`, borderRadius: 10, padding: 9, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
                               {openingId === c.seekerId
-                                ? 'Opening…'
-                                : '📄 Open full profile · free'}
+                                ? t('Opening…')
+                                : `📄 ${t('Open full profile · free')}`}
                             </button>
                           )}
 
@@ -463,7 +464,7 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
                               the invitation. */}
                           {c.contact ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: 10 }}>
-                              <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#166534', fontWeight: 900 }}>✅ Accepted your invitation</div>
+                              <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#166534', fontWeight: 900 }}>✅ {t('Accepted your invitation')}</div>
                               <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#1a1a1a' }}>👤 <strong>{c.contact.name}</strong></div>
                               <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#1a1a1a' }}>📧 <strong>{c.contact.email}</strong></div>
                               {c.contact.phone && <div style={{ fontSize: 12, fontFamily: 'var(--font-ui)', color: '#1a1a1a' }}>📱 <strong>{c.contact.phone}</strong></div>}
@@ -472,9 +473,9 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
                             /* Invite to apply — identity is shared only if they accept. */
                             <div style={{ marginTop: 2 }}>
                               {c.invited ? (
-                                <div style={{ fontSize: 11, color: '#2563eb', fontFamily: 'var(--font-ui)', fontWeight: 800, textAlign: 'center' }}>📨 Invited — awaiting their acceptance</div>
+                                <div style={{ fontSize: 11, color: '#2563eb', fontFamily: 'var(--font-ui)', fontWeight: 800, textAlign: 'center' }}>📨 {t('Invited — awaiting their acceptance')}</div>
                               ) : (
-                                <button onClick={() => invite(c)} disabled={invitingId === c.seekerId} style={{ width: '100%', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 10, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', opacity: invitingId === c.seekerId ? 0.6 : 1 }}>{invitingId === c.seekerId ? 'Sending…' : '📨 Invite to apply'}</button>
+                                <button onClick={() => invite(c)} disabled={invitingId === c.seekerId} style={{ width: '100%', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 10, padding: 10, fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer', opacity: invitingId === c.seekerId ? 0.6 : 1 }}>{invitingId === c.seekerId ? t('Sending…') : `📨 ${t('Invite to apply')}`}</button>
                               )}
                             </div>
                           )}
@@ -486,8 +487,8 @@ export default function FindStaffPanel({ onClose, openPanel, focusJobId }: { onC
                 </>
               )}
 
-              <button onClick={() => { setMatchCount(null); setCandidates([]) }} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 10 }}>Choose another advert</button>
-              <div style={{ textAlign: 'center', fontSize: 10, color: '#666', fontFamily: 'var(--font-ui)' }}>Secure payment via Stripe · Each unlock is linked to your live job advert · Must be a registered employer</div>
+              <button onClick={() => { setMatchCount(null); setCandidates([]) }} style={{ width: '100%', background: '#fff', color: '#666', border: '1.5px solid #eee', borderRadius: 50, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 10 }}>{t('Choose another advert')}</button>
+              <div style={{ textAlign: 'center', fontSize: 10, color: '#666', fontFamily: 'var(--font-ui)' }}>{t('Secure payment via Stripe · Each unlock is linked to your live job advert · Must be a registered employer')}</div>
             </>
           )}
         </div>

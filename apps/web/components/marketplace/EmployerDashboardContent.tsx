@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast, confirmDialog } from '@/lib/ui'
 import { usePanel } from '@/context/PanelContext'
 import { trpcAuthed } from '@/lib/authToken'
+import { t } from '@/lib/i18n'
 
 // Employer Dashboard body — rendered as a full page (see app/employers/page.tsx)
 // with the standard header/footer. Mirrors the V20 openEmployerDashboard flow
@@ -46,12 +47,12 @@ export default function EmployerDashboardContent() {
   const shownJobs = filter === 'all' ? jobs : jobs.filter(j => statusOf(j) === filter)
 
   const setJobStatus = async (listingId: string, status: 'active' | 'sold' | 'removed', label: string) => {
-    if (status === 'removed' && !(await confirmDialog('Remove this job advert? It will no longer be visible. You can reopen it later.'))) return
+    if (status === 'removed' && !(await confirmDialog(t('Remove this job advert? It will no longer be visible. You can reopen it later.')))) return
     try {
       await trpcAuthed().jobs.setJobStatus.mutate({ listingId, status })
       toast(`✓ ${label}`)
       load()
-    } catch (e: any) { toast(e?.message || 'Could not update the job.') }
+    } catch (e: any) { toast(e?.message || t('Could not update the job.')) }
   }
 
   // Database search (Candidate Matching) — if the advert already has it, open the
@@ -59,20 +60,20 @@ export default function EmployerDashboardContent() {
   const [buyingMatch, setBuyingMatch] = useState<string | null>(null)
   const databaseSearch = async (j: Job) => {
     if (j.candidateMatching) { openPanel('findStaff', { jobId: j.id }); return }
-    if (!(await confirmDialog('Database Search lets you search our candidate database and contact matching candidates for this advert. It’s a paid add-on for this job. Continue to payment?'))) return
+    if (!(await confirmDialog(t('Database Search lets you search our candidate database and contact matching candidates for this advert. It’s a paid add-on for this job. Continue to payment?')))) return
     setBuyingMatch(j.id)
     try {
       const r: any = await (trpcAuthed() as any).jobs.addCandidateMatching.mutate({ listingId: j.listingId })
       if (r?.checkoutUrl) { window.location.href = r.checkoutUrl; return }
-      if (r?.enabled || r?.alreadyOn) { toast('✓ Database Search enabled'); load() }
-    } catch (e: any) { toast(e?.message || 'Could not start the purchase.') }
+      if (r?.enabled || r?.alreadyOn) { toast(`✓ ${t('Database Search enabled')}`); load() }
+    } catch (e: any) { toast(e?.message || t('Could not start the purchase.')) }
     finally { setBuyingMatch(null) }
   }
 
   const shareJobs = async (url: string, title: string) => {
     try {
       if (navigator.share) await navigator.share({ title, url })
-      else { await navigator.clipboard.writeText(url); toast('Link copied to clipboard') }
+      else { await navigator.clipboard.writeText(url); toast(t('Link copied to clipboard')) }
     } catch { /* user cancelled */ }
   }
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
@@ -82,16 +83,16 @@ export default function EmployerDashboardContent() {
       {/* Header row — just a title and a Post a Job action. Everything else lives
           inside each job card below. */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 900, color: 'var(--dark)' }}>Candidate Management</div>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 900, color: 'var(--dark)' }}>{t('Candidate Management')}</div>
         <a href="/jobs/new" style={{ textDecoration: 'none' }}>
-          <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', borderRadius: 50, padding: '9px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 12px rgba(245,84,10,0.22)' }}>+ Post a Job</div>
+          <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', borderRadius: 50, padding: '9px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 12px rgba(245,84,10,0.22)' }}>+ {t('Post a Job')}</div>
         </a>
       </div>
 
       {/* Position status filters */}
       {loaded && jobs.length > 0 && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-          {([['all', 'All'], ['open', 'Open'], ['filled', 'Filled'], ['removed', 'Removed']] as [typeof filter, string][]).map(([k, label]) => (
+          {([['all', t('All')], ['open', t('Open')], ['filled', t('Filled')], ['removed', t('Removed')]] as [typeof filter, string][]).map(([k, label]) => (
             <button key={k} onClick={() => setFilter(k)} style={{ border: `1.5px solid ${filter === k ? ORANGE : '#e5dccd'}`, background: filter === k ? ORANGE : '#fff', color: filter === k ? '#fff' : '#555', borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{label} ({counts[k as keyof typeof counts]})</button>
           ))}
         </div>
@@ -99,11 +100,11 @@ export default function EmployerDashboardContent() {
 
       {/* Listings */}
       {!loaded ? (
-        <div style={{ textAlign: 'center', padding: 24, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>Loading…</div>
+        <div style={{ textAlign: 'center', padding: 24, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 12 }}>{t('Loading…')}</div>
       ) : jobs.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '24px 0', color: '#777', fontFamily: 'var(--font-ui)', fontSize: 12, lineHeight: 1.6 }}>No job adverts yet.<br />Post your first job above 💼</div>
+        <div style={{ textAlign: 'center', padding: '24px 0', color: '#777', fontFamily: 'var(--font-ui)', fontSize: 12, lineHeight: 1.6 }}>{t('No job adverts yet.')}<br />{t('Post your first job above')} 💼</div>
       ) : shownJobs.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '24px 0', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 12 }}>No {filter} positions.</div>
+        <div style={{ textAlign: 'center', padding: '24px 0', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 12 }}>{t('No positions to show.')}</div>
       ) : (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -114,10 +115,10 @@ export default function EmployerDashboardContent() {
               const expired = jstatus === 'open' && dLeft <= 0
               const newCount = j.applications.filter(a => a.status === 'applied').length
               let chip: React.ReactNode
-              if (jstatus === 'filled') chip = <span style={{ background: '#22c55e1a', color: '#16a34a', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>✓ Filled</span>
-              else if (jstatus === 'removed') chip = <span style={{ background: '#9ca3af1a', color: '#6b7280', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>⚪ Removed</span>
-              else if (expired) chip = <span style={{ background: '#ef44441a', color: '#ef4444', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>⏳ Expired</span>
-              else { const c = dLeft <= 3 ? '#ef4444' : dLeft <= 7 ? '#f59e0b' : '#22c55e'; chip = <span style={{ background: `${c}1a`, color: c, fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>{dLeft} days left</span> }
+              if (jstatus === 'filled') chip = <span style={{ background: '#22c55e1a', color: '#16a34a', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>✓ {t('Filled')}</span>
+              else if (jstatus === 'removed') chip = <span style={{ background: '#9ca3af1a', color: '#6b7280', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>⚪ {t('Removed')}</span>
+              else if (expired) chip = <span style={{ background: '#ef44441a', color: '#ef4444', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>⏳ {t('Expired')}</span>
+              else { const c = dLeft <= 3 ? '#ef4444' : dLeft <= 7 ? '#f59e0b' : '#22c55e'; chip = <span style={{ background: `${c}1a`, color: c, fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>{t('{n} days left').replace('{n}', String(dLeft))}</span> }
 
               return (
                 <div key={j.id} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: '14px 16px', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
@@ -128,31 +129,31 @@ export default function EmployerDashboardContent() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.jobTitle}</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 11.5, color: '#777', fontFamily: 'var(--font-nunito)', marginTop: 3 }}>
-                        <span style={{ fontWeight: 800, color: j.applications.length ? 'var(--orange)' : '#999' }}>{j.applications.length} applicant{j.applications.length === 1 ? '' : 's'}</span>
+                        <span style={{ fontWeight: 800, color: j.applications.length ? 'var(--orange)' : '#999' }}>{j.applications.length} {t(j.applications.length === 1 ? 'applicant' : 'applicants')}</span>
                         {chip}
-                        {j.candidateMatching && <span style={{ color: 'var(--orange)', fontWeight: 800 }}>🎯 Job Match on</span>}
+                        {j.candidateMatching && <span style={{ color: 'var(--orange)', fontWeight: 800 }}>🎯 {t('Job Match on')}</span>}
                       </div>
                     </div>
                   </div>
                   <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button onClick={() => openPanel('applications', { jobId: j.id })} style={{ flex: '2 1 140px', background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>📋 Applicants{newCount ? ` (${newCount} new)` : ''}</button>
+                    <button onClick={() => openPanel('applications', { jobId: j.id })} style={{ flex: '2 1 140px', background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>📋 {t('Applicants')}{newCount ? ` (${newCount} ${t('new')})` : ''}</button>
                     <a href={`/jobs/new?edit=${j.listingId}`} style={{ flex: '1 1 80px', textDecoration: 'none' }}>
-                      <div style={pillBtn}>✏️ Edit</div>
+                      <div style={pillBtn}>✏️ {t('Edit')}</div>
                     </a>
-                    <button onClick={() => openPanel('jobMessages', { listingId: j.listingId, jobTitle: j.jobTitle })} style={{ ...pillBtn, flex: '1 1 90px' }}>📨 Messages</button>
-                    <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ ...pillBtn, flex: '1 1 80px' }}>📤 Share</button>
+                    <button onClick={() => openPanel('jobMessages', { listingId: j.listingId, jobTitle: j.jobTitle })} style={{ ...pillBtn, flex: '1 1 90px' }}>📨 {t('Messages')}</button>
+                    <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ ...pillBtn, flex: '1 1 80px' }}>📤 {t('Share')}</button>
                     {/* Database search — the paid Candidate Matching add-on for THIS
                         advert. Shows for every job: opens the search when purchased,
                         or starts the purchase when not. */}
                     <button onClick={() => databaseSearch(j)} disabled={buyingMatch === j.id} style={{ ...pillBtn, flex: '1 1 120px', ...(j.candidateMatching ? { background: '#FFF3EE', color: 'var(--orange)', borderColor: '#FFD4C0' } : {}) }}>
-                      {buyingMatch === j.id ? '…' : j.candidateMatching ? '🔎 Database search' : '🔎 Database search (add)'}
+                      {buyingMatch === j.id ? '…' : j.candidateMatching ? `🔎 ${t('Database search')}` : `🔎 ${t('Database search')} (${t('add')})`}
                     </button>
                   </div>
                   {/* Position status controls */}
                   <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {jstatus === 'open' && <button onClick={() => setJobStatus(j.listingId, 'sold', 'Marked as filled')} style={statusBtn('#f0faf4', '#16a34a')}>✓ Mark filled</button>}
-                    {jstatus !== 'open' && <button onClick={() => setJobStatus(j.listingId, 'active', 'Reopened')} style={statusBtn('#eef7ff', '#1e6fd0')}>↩ Reopen</button>}
-                    {jstatus !== 'removed' && <button onClick={() => setJobStatus(j.listingId, 'removed', 'Removed')} style={statusBtn('#fef2f2', '#ef4444')}>🗑 Remove</button>}
+                    {jstatus === 'open' && <button onClick={() => setJobStatus(j.listingId, 'sold', t('Marked as filled'))} style={statusBtn('#f0faf4', '#16a34a')}>✓ {t('Mark filled')}</button>}
+                    {jstatus !== 'open' && <button onClick={() => setJobStatus(j.listingId, 'active', t('Reopened'))} style={statusBtn('#eef7ff', '#1e6fd0')}>{t('Reopen')}</button>}
+                    {jstatus !== 'removed' && <button onClick={() => setJobStatus(j.listingId, 'removed', t('Removed'))} style={statusBtn('#fef2f2', '#ef4444')}>🗑 {t('Remove')}</button>}
                   </div>
                 </div>
               )

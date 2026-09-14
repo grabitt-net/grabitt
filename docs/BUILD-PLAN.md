@@ -54,7 +54,9 @@ TRANSLATIONS entries now need only `en` (+ `es`); other langs fall back.
       better handled as CMS Spanish content (Phase 3) than dictionary strings
 - [x] Apply / checkout flow (ApplyModal fully; checkout & make-offer panels
       completed — buyer-type, delivery labels, order summary, escrow copy)
-- [ ] Recruitment / ATS (EmployerDashboardContent, FindStaffPanel, ApplicantsKanban)
+- [x] Recruitment / ATS (EmployerDashboardContent, FindStaffPanel,
+      ApplicantsKanban) — cards, filters, stage board, candidate search &
+      unlock flow, toasts/dialogs. Removed stray arrow glyphs from buttons.
 - [ ] Hub / storefront editor, remaining marketplace components
 
 ### Phase 3 — Content translation (bigger decision, optional)
