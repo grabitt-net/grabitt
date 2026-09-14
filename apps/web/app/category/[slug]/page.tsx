@@ -14,6 +14,7 @@ import Pagination from '@/components/marketplace/Pagination'
 import Place from '@/components/marketplace/Place'
 import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
 import { useSubcategories } from '@/hooks/useSubcategories'
+import { pickBannerImage } from '@/lib/i18n'
 
 // A department/category now opens its own page (matching /jobs and /property)
 // instead of the old modal. Same site shell (Topbar + app-shell + Footer) with
@@ -31,11 +32,11 @@ export default function CategoryPage() {
   const [activeSub, setActiveSub] = useState('All')
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
   // Admin-managed header artwork for this category (the wide hero banner).
-  const [hdr, setHdr] = useState<{ img: string | null; bgImage: string | null; heroBanner: string | null } | null>(null)
+  const [hdr, setHdr] = useState<{ img: string | null; bgImage: string | null; heroBanner: string | null; heroBannerEs?: string | null } | null>(null)
   useEffect(() => {
     if (!slug) return
     createLooseTrpcClient().homepage.categoryHeader.query({ department: slug })
-      .then(h => setHdr(h as { img: string | null; bgImage: string | null; heroBanner: string | null } | null)).catch(() => {})
+      .then(h => setHdr(h as { img: string | null; bgImage: string | null; heroBanner: string | null; heroBannerEs?: string | null } | null)).catch(() => {})
   }, [slug])
   const [items, setItems] = useState<DbListing[]>([])
   const [loading, setLoading] = useState(true)
@@ -82,7 +83,7 @@ export default function CategoryPage() {
     <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
       <Topbar title={label} />
       <QuickActions belowPromo={
-        <CategoryHero banner={hdr?.heroBanner || null} title={label} />
+        <CategoryHero banner={pickBannerImage(hdr?.heroBanner, hdr?.heroBannerEs)} title={label} />
       } />
 
       {/* Sold banner placements — the paid category sponsor banner, below the hero.

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createLooseTrpcClient } from '@/lib/trpc'
+import { pickBannerImage } from '@/lib/i18n'
 
 // Standalone admin-set page header banner for footer pages that don't use the
 // InfoPage shell (Terms, Business Directory, Advertise, etc.). Fetches the wide
@@ -15,7 +16,7 @@ export default function PageHeroBanner({ dept, alt, maxWidth = 1000 }: { dept: s
     let live = true
     setBanner(null)
     createLooseTrpcClient().homepage.categoryHeader.query({ department: dept })
-      .then(h => { if (live) setBanner((h as { heroBanner?: string | null } | null)?.heroBanner ?? null) })
+      .then(h => { if (live) { const c = h as { heroBanner?: string | null; heroBannerEs?: string | null } | null; setBanner(pickBannerImage(c?.heroBanner, c?.heroBannerEs)) } })
       .catch(() => {})
     return () => { live = false }
   }, [dept])

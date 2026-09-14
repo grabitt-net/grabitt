@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react'
 import { useCrmApi } from './AdminApp'
 import ImageUploadField from './ImageUploadField'
 
-type Slide = { id: string; heading: string | null; subheading: string | null; imageUrl: string; linkUrl: string | null; active: boolean; sortOrder: number }
-const EMPTY = { heading: '', subheading: '', imageUrl: '', linkUrl: '', active: true }
+type Slide = { id: string; heading: string | null; subheading: string | null; imageUrl: string; imageUrlEs?: string | null; linkUrl: string | null; active: boolean; sortOrder: number }
+const EMPTY = { heading: '', subheading: '', imageUrl: '', imageUrlEs: '', linkUrl: '', active: true }
 
 // Inline editor for the parallax hero slider — add/edit/remove/reorder slides.
 export default function HeroSlidesEditor() {
@@ -23,7 +23,7 @@ export default function HeroSlidesEditor() {
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const startNew = () => { setForm({ ...EMPTY }); setError(''); setEditing('new') }
-  const startEdit = (s: Slide) => { setForm({ heading: s.heading ?? '', subheading: s.subheading ?? '', imageUrl: s.imageUrl, linkUrl: s.linkUrl ?? '', active: s.active }); setError(''); setEditing(s.id) }
+  const startEdit = (s: Slide) => { setForm({ heading: s.heading ?? '', subheading: s.subheading ?? '', imageUrl: s.imageUrl, imageUrlEs: s.imageUrlEs ?? '', linkUrl: s.linkUrl ?? '', active: s.active }); setError(''); setEditing(s.id) }
 
   const save = async () => {
     if (!form.imageUrl.trim()) { setError('Please add an image first.'); return }
@@ -36,6 +36,7 @@ export default function HeroSlidesEditor() {
         heading: form.heading.trim() || null, // null clears it on edit (image-only slides)
         subheading: form.subheading.trim() || null,
         imageUrl: form.imageUrl.trim(),
+        imageUrlEs: form.imageUrlEs.trim() || null,
         linkUrl: form.linkUrl.trim() || undefined,
         active: form.active,
         sortOrder,
@@ -68,6 +69,7 @@ export default function HeroSlidesEditor() {
           <Field label="Heading (optional)"><input value={form.heading} onChange={e => setForm(f => ({ ...f, heading: e.target.value }))} style={inp} placeholder="Leave blank for an image-only slide" /></Field>
           <Field label="Subheading (optional)"><input value={form.subheading} onChange={e => setForm(f => ({ ...f, subheading: e.target.value }))} style={inp} placeholder="Buy & sell locally — safely." /></Field>
           <ImageUploadField label="Image" kind="hero" hint="Wide landscape works best." value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} />
+          <div style={{ marginTop: 10 }}><ImageUploadField label="🇪🇸 Image — Spanish version (optional, auto-switch)" kind="hero" hint="Shown to visitors using the site in Spanish. Leave empty to use the main image." value={form.imageUrlEs} onChange={url => setForm(f => ({ ...f, imageUrlEs: url }))} /></div>
           <Field label="Link URL (optional)"><input value={form.linkUrl} onChange={e => setForm(f => ({ ...f, linkUrl: e.target.value }))} style={inp} placeholder="/?sell=1 (open Sell popup), /listings or https://…" /></Field>
           <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, color: '#999', marginTop: -4 }}>Tip: use <b>/?sell=1</b> to open the Sell popup, <b>/?help=1</b> for Help, or any page/URL.</div>
           <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#555' }}>

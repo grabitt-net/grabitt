@@ -11,7 +11,7 @@ import { useGrabittUid } from '@/hooks/useGrabittUid'
 
 type Shop = {
   id: string; slug: string; template: string; tagline: string | null; about: string | null
-  bannerUrl: string | null; logoUrl: string | null; accentColour: string | null
+  bannerUrl: string | null; bannerUrlEs: string | null; logoUrl: string | null; accentColour: string | null
   categories: string[]; featuredIds: string[]
   shippingPolicy: string | null; returnsPolicy: string | null; paymentPolicy: string | null
   published: boolean
@@ -37,12 +37,14 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
   const [savedMsg, setSavedMsg] = useState('')
   const [err, setErr] = useState('')
   const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [uploadingBannerEs, setUploadingBannerEs] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const bannerRef = useRef<HTMLInputElement>(null)
+  const bannerEsRef = useRef<HTMLInputElement>(null)
   const logoRef = useRef<HTMLInputElement>(null)
 
   const [f, setF] = useState({
-    businessName: '', template: 'classic', tagline: '', about: '', bannerUrl: '', logoUrl: '', accentColour: 'var(--orange)',
+    businessName: '', template: 'classic', tagline: '', about: '', bannerUrl: '', bannerUrlEs: '', logoUrl: '', accentColour: 'var(--orange)',
     categories: [] as string[], featuredIds: [] as string[],
     shippingPolicy: '', returnsPolicy: '', paymentPolicy: '', published: false, slug: '',
   })
@@ -64,7 +66,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
         setF({
           businessName: res.businessName ?? '',
           template: res.shop.template, tagline: res.shop.tagline ?? '', about: res.shop.about ?? '',
-          bannerUrl: res.shop.bannerUrl ?? '', logoUrl: res.shop.logoUrl ?? '', accentColour: res.shop.accentColour ?? 'var(--orange)',
+          bannerUrl: res.shop.bannerUrl ?? '', bannerUrlEs: res.shop.bannerUrlEs ?? '', logoUrl: res.shop.logoUrl ?? '', accentColour: res.shop.accentColour ?? 'var(--orange)',
           categories: res.shop.categories, featuredIds: res.shop.featuredIds,
           shippingPolicy: res.shop.shippingPolicy ?? '', returnsPolicy: res.shop.returnsPolicy ?? '',
           paymentPolicy: res.shop.paymentPolicy ?? '', published: res.shop.published, slug: res.shop.slug,
@@ -90,6 +92,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
         tagline: f.tagline.trim() || undefined,
         about: f.about.trim() || undefined,
         bannerUrl: f.bannerUrl || undefined,
+        bannerUrlEs: f.bannerUrlEs || undefined,
         logoUrl: f.logoUrl || undefined,
         accentColour: f.accentColour || undefined,
         categories: f.categories,
@@ -119,6 +122,17 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
       set('bannerUrl', url)
     } catch (e) { setErr(e instanceof Error ? e.message : 'Upload failed') }
     finally { setUploadingBanner(false) }
+  }
+  const uploadBannerEs = async (file: File | null) => {
+    if (!file || !uid) return
+    setUploadingBannerEs(true)
+    try {
+      // The banner is public storefront artwork — store a permanent public URL
+      // (compressed) rather than an expiring signed URL from a private bucket.
+      const url = await compressAndUpload(file, cmsImagePath('storefront'))
+      set('bannerUrlEs', url)
+    } catch (e) { setErr(e instanceof Error ? e.message : 'Upload failed') }
+    finally { setUploadingBannerEs(false) }
   }
 
   const uploadLogo = async (file: File | null) => {
@@ -208,6 +222,13 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
                   ? <div style={{ position: 'relative', marginBottom: 6 }}><img src={f.bannerUrl} alt="" style={{ width: '100%', aspectRatio: '1053 / 300', objectFit: 'cover', borderRadius: 10, background: '#f5f0e8' }} /><button onClick={() => bannerRef.current?.click()} style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Replace</button></div>
                   : <button onClick={() => bannerRef.current?.click()} disabled={uploadingBanner} style={{ width: '100%', marginBottom: 6, background: '#fff', color: 'var(--orange)', border: '1.5px dashed var(--orange)', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{uploadingBanner ? 'Uploading…' : '🖼️ Upload a banner'}</button>}
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '0 0 12px' }}>{BANNER_HINT}</div>
+
+                <Label>Banner image — Spanish version (optional)</Label>
+                <input ref={bannerEsRef} type="file" accept="image/*" onChange={e => uploadBannerEs(e.target.files?.[0] ?? null)} style={{ display: 'none' }} />
+                {f.bannerUrlEs
+                  ? <div style={{ position: 'relative', marginBottom: 6 }}><img src={f.bannerUrlEs} alt="" style={{ width: '100%', aspectRatio: '1053 / 300', objectFit: 'cover', borderRadius: 10, background: '#f5f0e8' }} /><button onClick={() => set('bannerUrlEs', '')} style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Remove</button></div>
+                  : <button onClick={() => bannerEsRef.current?.click()} disabled={uploadingBannerEs} style={{ width: '100%', marginBottom: 6, background: '#fff', color: 'var(--ocean)', border: '1.5px dashed var(--ocean)', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{uploadingBannerEs ? 'Uploading…' : '🇪🇸 Upload Spanish banner'}</button>}
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '0 0 12px' }}>Shown automatically to visitors using the site in Spanish. Leave empty to use the main banner for everyone.</div>
 
                 <Label>Accent colour</Label>
                 <input type="color" value={f.accentColour} onChange={e => set('accentColour', e.target.value)} style={{ width: 48, height: 34, border: '1px solid #eee', borderRadius: 8, cursor: 'pointer' }} />

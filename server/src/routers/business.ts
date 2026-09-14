@@ -257,6 +257,7 @@ export const businessRouter = router({
       tagline: z.string().max(120).optional(),
       about: z.string().max(2000).optional(),
       bannerUrl: z.string().max(400).optional(),
+      bannerUrlEs: z.string().max(400).optional(),
       logoUrl: z.string().max(400).optional(),
       accentColour: z.string().max(20).optional(),
       categories: z.array(z.string().max(40)).max(20).optional(),

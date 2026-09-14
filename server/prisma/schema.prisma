@@ -81,6 +81,7 @@ model HomeCategory {
   img       String?   // round tile / icon artwork
   bgImage   String?   // faded background artwork behind the category page header
   heroBanner String?  // wide banner shown as the category-page hero (replaces icon)
+  heroBannerEs String? // optional Spanish version of the hero banner (auto-switch)
   enabled   Boolean @default(true)
   sortOrder Int
 
@@ -93,6 +94,7 @@ model HeroSlide {
   heading    String?
   subheading String?
   imageUrl   String
+  imageUrlEs String?  // optional Spanish version (auto-switch)
   linkUrl    String?
   active     Boolean  @default(true)
   sortOrder  Int      @default(0)
@@ -432,6 +434,7 @@ model Storefront {
   tagline         String?
   about           String?
   bannerUrl       String?
+  bannerUrlEs     String?   // optional Spanish version of the shop banner (auto-switch)
   logoUrl         String?
   accentColour    String?
 
@@ -1726,6 +1729,7 @@ model Banner {
   id        String         @id @default(uuid())
   title     String
   imageUrl  String
+  imageUrlEs String?  // optional Spanish version (auto-switch)
   linkUrl   String?
   active    Boolean        @default(false)
   approved     Boolean      @default(false) // admin must approve before a banner shows

@@ -38,11 +38,11 @@ const POSITIONS: [string, string][] = [
 ]
 const POS_LABEL = Object.fromEntries(POSITIONS)
 
-interface Banner { id: string; title: string; imageUrl: string; linkUrl: string | null; active: boolean; approved?: boolean; isTest?: boolean; position: string; pageTarget?: string | null; pages?: string[]; startsAt: string | null; endsAt: string | null; clickCount?: number; impressions?: number }
+interface Banner { id: string; title: string; imageUrl: string; imageUrlEs?: string | null; linkUrl: string | null; active: boolean; approved?: boolean; isTest?: boolean; position: string; pageTarget?: string | null; pages?: string[]; startsAt: string | null; endsAt: string | null; clickCount?: number; impressions?: number }
 interface Slot { id: string; label: string; monthlyCents: number; cap: number; exclusive: boolean; perPage: boolean; scope: string; active: boolean; pages?: string[] }
 interface Booking { id: string; userId: string; position: string; pageTarget?: string | null; months: number; startsAt: string; endsAt: string; amountCents: number; createdByAdmin: boolean; user?: { displayName?: string; email?: string; businessName?: string } }
 
-const EMPTY = { title: '', imageUrl: '', linkUrl: '', position: 'home_top', pageTarget: '', pages: [] as string[], active: true, isTest: false, startsAt: '', endsAt: '' }
+const EMPTY = { title: '', imageUrl: '', imageUrlEs: '', linkUrl: '', position: 'home_top', pageTarget: '', pages: [] as string[], active: true, isTest: false, startsAt: '', endsAt: '' }
 const eur = (c: number) => `€${(c / 100).toFixed(0)}`
 
 export default function BannersView({ initialPosition }: { initialPosition?: string | null }) {
@@ -61,7 +61,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
   const startEdit = (b: Banner) => {
     setEditId(b.id)
     setForm({
-      title: b.title, imageUrl: b.imageUrl, linkUrl: b.linkUrl ?? '', position: b.position,
+      title: b.title, imageUrl: b.imageUrl, imageUrlEs: b.imageUrlEs ?? '', linkUrl: b.linkUrl ?? '', position: b.position,
       pageTarget: b.pageTarget ?? '', pages: b.pages ?? [], active: b.active, isTest: !!b.isTest,
       startsAt: b.startsAt ? b.startsAt.slice(0, 10) : '', endsAt: b.endsAt ? b.endsAt.slice(0, 10) : '',
     })
@@ -86,7 +86,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
     try {
       await api.upsertBanner({
         ...(editId ? { id: editId } : {}),
-        title: form.title.trim(), imageUrl: form.imageUrl.trim(), linkUrl: form.linkUrl.trim() || undefined,
+        title: form.title.trim(), imageUrl: form.imageUrl.trim(), imageUrlEs: form.imageUrlEs.trim() || null, linkUrl: form.linkUrl.trim() || undefined,
         position: form.position, pageTarget: form.pageTarget.trim() || undefined, active: form.active, isTest: form.isTest,
         pages: form.pages,
         startsAt: form.startsAt || undefined, endsAt: form.endsAt || undefined,
@@ -197,6 +197,7 @@ export default function BannersView({ initialPosition }: { initialPosition?: str
             )}
             <div />
             <div style={{ gridColumn: '1/-1' }}><ImageUploadField label={`Banner image (${sizeHint(form.position)})`} kind="banner" expect={expectSize(form.position)} value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} /></div>
+            <div style={{ gridColumn: '1/-1' }}><ImageUploadField label={`🇪🇸 Banner image — Spanish version (optional, auto-switch)`} kind="banner" expect={expectSize(form.position)} value={form.imageUrlEs} onChange={url => setForm(f => ({ ...f, imageUrlEs: url }))} /></div>
             <div style={{ gridColumn: '1/-1' }}><Field label="Link URL (optional)"><input value={form.linkUrl} onChange={e => setForm(f => ({ ...f, linkUrl: e.target.value }))} placeholder="https://… or /listings" style={inp} /></Field></div>
             <Field label="Start date"><input type="date" value={form.startsAt} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value }))} style={inp} /></Field>
             <Field label="End date"><input type="date" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))} style={inp} /></Field>

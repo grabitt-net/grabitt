@@ -463,3 +463,10 @@ export function t(key: string): string {
 export function langLabel(lang: Lang): string {
   return LANG_LABELS[lang]
 }
+
+// Pick a banner image for the current language: the Spanish variant when the
+// language is Spanish and one is set, otherwise the default image.
+export function pickBannerImage(base: string | null | undefined, es: string | null | undefined): string | null {
+  if (getLanguage() === 'es' && es) return es
+  return base ?? null
+}

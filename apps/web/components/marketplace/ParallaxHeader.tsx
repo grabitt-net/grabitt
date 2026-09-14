@@ -5,7 +5,9 @@ import { usePanel } from '@/context/PanelContext'
 import { PARAM_TO_PANEL } from './PanelDeepLink'
 import Icon from './Icon'
 
-type Slide = { id: string; heading: string | null; subheading: string | null; imageUrl: string; linkUrl: string | null }
+import { pickBannerImage } from '@/lib/i18n'
+
+type Slide = { id: string; heading: string | null; subheading: string | null; imageUrl: string; imageUrlEs?: string | null; linkUrl: string | null }
 
 // If a slide's Link URL points at a known panel deep-link (e.g. "/?sell=1",
 // "?sell=1" or just "sell"), return that panel id so clicking the slide opens
@@ -85,7 +87,7 @@ export default function CarouselHeader() {
                 onKeyDown={clickable ? (e => { if (e.key === 'Enter' || e.key === ' ') activate(s) }) : undefined}
                 style={{ position: 'relative', flexShrink: 0, width: '100%', height: '100%', cursor: clickable ? 'pointer' : 'default' }}
               >
-                <img src={s.imageUrl} alt={s.heading ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <img src={pickBannerImage(s.imageUrl, s.imageUrlEs) ?? s.imageUrl} alt={s.heading ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 {hasText && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.55))' }} />}
                 {hasText && (
                   <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 clamp(16px,4vw,48px) clamp(14px,3vw,30px)', display: 'flex', flexDirection: 'column', gap: 6 }}>

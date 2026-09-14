@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { bannerPageKey } from '@/lib/bannerPages'
+import { pickBannerImage } from '@/lib/i18n'
 import { BANNER_SLOTS } from '@grabitt/design-tokens'
 
 // The exact slot name shown in Admin → Banners → Slots & pricing, so the
@@ -10,7 +11,7 @@ import { BANNER_SLOTS } from '@grabitt/design-tokens'
 const slotLabel = (position: string): string =>
   (BANNER_SLOTS as Record<string, { label?: string }>)[position]?.label ?? position
 
-type Banner = { id: string; title: string; imageUrl: string; linkUrl: string | null }
+type Banner = { id: string; title: string; imageUrl: string; imageUrlEs?: string | null; linkUrl: string | null }
 type Position =
   | 'home_top' | 'home_mid' | 'home_hero' | 'category' | 'category_top' | 'category_infeed' | 'category_footer'
   | 'search_top' | 'search_footer' | 'sticky_bottom' | 'similar_items' | 'seller_dashboard' | 'user_dashboard'
@@ -118,7 +119,7 @@ export default function BannerSlot({ position, page, aspect = '1053 / 163', radi
   // ratio and made object-fit:cover crop the top & bottom.
   const inner = (
     <div style={{ position: 'relative', width: '100%', aspectRatio: aspect, borderRadius: radius, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', background: '#f5f0e8' }}>
-      <img src={b.imageUrl} alt={b.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      <img src={pickBannerImage(b.imageUrl, b.imageUrlEs) ?? b.imageUrl} alt={b.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
       {banners.length > 1 && (
         <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
           {banners.map((_, i) => (

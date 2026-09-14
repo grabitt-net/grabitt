@@ -11,6 +11,7 @@ import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { toast } from '@/lib/ui'
 import { deptEmoji, DEPT_LABEL } from '@/lib/listingMap'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
+import { pickBannerImage } from '@/lib/i18n'
 
 // A business's public shop page: full banner, the seller's identity + service
 // rating, a Follow button, category shelves derived from what they actually
@@ -24,7 +25,7 @@ type Item = {
 type Shop = {
   shop: {
     slug: string; template: string; tagline: string | null; about: string | null
-    bannerUrl: string | null; logoUrl: string | null; accentColour: string | null; categories: string[]; featuredIds: string[]
+    bannerUrl: string | null; bannerUrlEs: string | null; logoUrl: string | null; accentColour: string | null; categories: string[]; featuredIds: string[]
     shippingPolicy: string | null; returnsPolicy: string | null; paymentPolicy: string | null
   }
   seller: { id: string; name: string; avatar: string | null; verified: boolean; salesCount: number; memberSince: string }
@@ -104,6 +105,7 @@ function ShopInner() {
   const { shop, seller, rating, followers } = data
   const logo = shop.logoUrl || (seller.avatar && seller.avatar.length > 2 ? seller.avatar : null)
   const isOwner = !!uid && uid === seller.id
+  const bannerImg = pickBannerImage(shop.bannerUrl, shop.bannerUrlEs)
   // The chosen layout template actually reshapes the shop: column density, how
   // prominent the featured row is, and which chrome (category chips, policies)
   // shows. See the labels in the storefront editor.
@@ -126,8 +128,8 @@ function ShopInner() {
     <Shell>
       {/* Banner — full width, fills the space edge-to-edge (no black bars). A
           light ground shows only behind any transparency in the artwork. */}
-      <div style={{ width: '100%', background: shop.bannerUrl ? '#fff' : `linear-gradient(135deg,${accent},var(--orange2))`, aspectRatio: '1053 / 300', maxHeight: 340, overflow: 'hidden' }}>
-        {shop.bannerUrl && <img src={shop.bannerUrl} alt={`${seller.name} banner`} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }} />}
+      <div style={{ width: '100%', background: bannerImg ? '#fff' : `linear-gradient(135deg,${accent},var(--orange2))`, aspectRatio: '1053 / 300', maxHeight: 340, overflow: 'hidden' }}>
+        {bannerImg && <img src={bannerImg} alt={`${seller.name} banner`} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }} />}
       </div>
 
       {/* Identity: only the logo overlaps the banner — the name sits below it on

@@ -225,6 +225,7 @@ export const bannersRouter = router({
       id: z.string().uuid().optional(),
       title: z.string(),
       imageUrl: z.string().url(),
+      imageUrlEs: z.string().url().nullable().optional(),
       linkUrl: z.string().url().optional(),
       active: z.boolean(),
       isTest: z.boolean().optional(),

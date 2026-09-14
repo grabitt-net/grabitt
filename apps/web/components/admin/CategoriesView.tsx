@@ -9,7 +9,7 @@ import { subcategoriesForSlug } from '@/lib/subcategories'
 // Manage the marketplace categories (the homepage tiles + category pages):
 // add / amend / delete, reorder, show-hide, set the round icon and the header
 // background image. Deleting a category moves its ads to another category.
-type Cat = { id: string; name: string; department: string | null; img: string | null; bgImage: string | null; heroBanner: string | null; enabled: boolean; sortOrder: number }
+type Cat = { id: string; name: string; department: string | null; img: string | null; bgImage: string | null; heroBanner: string | null; heroBannerEs: string | null; enabled: boolean; sortOrder: number }
 
 const DEPT_OPTIONS = Object.entries(DEPT_LABEL) as [string, string][]
 
@@ -42,6 +42,14 @@ export default function CategoriesView() {
     try {
       await api.upsertCategory({ id: cat.id, name: cat.name, department: cat.department ?? '', heroBanner: url || null, enabled: false })
       toast(url ? 'Banner saved.' : 'Banner removed.')
+      load()
+    } catch (e: any) { toast(e?.message ?? 'Could not save') }
+  }
+  // Spanish version of a fixed page's hero banner.
+  const savePageBannerEs = async (cat: Cat, url: string) => {
+    try {
+      await api.upsertCategory({ id: cat.id, name: cat.name, department: cat.department ?? '', heroBannerEs: url || null, enabled: false })
+      toast(url ? 'Spanish banner saved.' : 'Spanish banner removed.')
       load()
     } catch (e: any) { toast(e?.message ?? 'Could not save') }
   }
@@ -108,6 +116,7 @@ export default function CategoriesView() {
               <div key={c.id} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: 12 }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, color: '#1a1a1a', marginBottom: 8 }}>{c.name}</div>
                 <ImageUploadField label="Hero banner (wide ~5:1)" kind="category" value={c.heroBanner ?? ''} onChange={url => savePageBanner(c, url)} trim hint="Any white border/padding is trimmed automatically on upload." />
+                <div style={{ marginTop: 8 }}><ImageUploadField label="🇪🇸 Hero banner — Spanish version (optional, auto-switch)" kind="category" value={c.heroBannerEs ?? ''} onChange={url => savePageBannerEs(c, url)} trim hint="Shown to visitors using the site in Spanish. Leave empty to use the main banner." /></div>
               </div>
             ))}
           </div>
@@ -175,6 +184,7 @@ function EditModal({ cat, onClose, onSaved, api }: { cat: Cat | null; onClose: (
   const [img, setImg] = useState(cat?.img ?? '')
   const [bgImage, setBgImage] = useState(cat?.bgImage ?? '')
   const [heroBanner, setHeroBanner] = useState(cat?.heroBanner ?? '')
+  const [heroBannerEs, setHeroBannerEs] = useState(cat?.heroBannerEs ?? '')
   const [enabled, setEnabled] = useState(cat?.enabled ?? true)
   const [busy, setBusy] = useState(false)
 
@@ -182,7 +192,7 @@ function EditModal({ cat, onClose, onSaved, api }: { cat: Cat | null; onClose: (
     if (!name.trim() || !department) { toast('Name and department are required.'); return }
     setBusy(true)
     try {
-      await api.upsertCategory({ ...(cat ? { id: cat.id } : {}), name: name.trim(), department, img: img || null, bgImage: bgImage || null, heroBanner: heroBanner || null, enabled })
+      await api.upsertCategory({ ...(cat ? { id: cat.id } : {}), name: name.trim(), department, img: img || null, bgImage: bgImage || null, heroBanner: heroBanner || null, heroBannerEs: heroBannerEs || null, enabled })
       onSaved()
     } catch (e: any) { toast(e?.message ?? 'Could not save'); setBusy(false) }
   }
@@ -200,6 +210,7 @@ function EditModal({ cat, onClose, onSaved, api }: { cat: Cat | null; onClose: (
         </select>
         <div style={{ marginTop: 10 }}><ImageUploadField label="Round tile icon (homepage button)" kind="category" value={img} onChange={setImg} /></div>
         <div style={{ marginTop: 10 }}><ImageUploadField label="Category page hero banner (wide ~5:1 — shown full-width at the top of the category page)" kind="category" value={heroBanner} onChange={setHeroBanner} trim hint="Any white border/padding is trimmed automatically on upload." /></div>
+        <div style={{ marginTop: 10 }}><ImageUploadField label="🇪🇸 Category hero — Spanish version (optional, auto-switch)" kind="category" value={heroBannerEs} onChange={setHeroBannerEs} trim hint="Shown to visitors using the site in Spanish. Leave empty to use the main banner." /></div>
         <div style={{ marginTop: 10 }}><ImageUploadField label="Header background image (legacy — faded behind the header)" kind="category" value={bgImage} onChange={setBgImage} /></div>
         {/* Subcategories — the built-in defaults plus any you add. Only shown
             once a department is chosen (subcategories are keyed by department). */}
