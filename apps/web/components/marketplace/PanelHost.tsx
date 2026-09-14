@@ -2416,7 +2416,7 @@ function PanelBody() {
       : (item.deliveryMethod ? [item.deliveryMethod] : [])) as ('courier' | 'in_person')[])
     const feesMap = (item.deliveryFees ?? null) as Record<string, number> | null
     const feeForMethod = (m: 'courier' | 'in_person') => (feesMap && typeof feesMap[m] === 'number' ? Number(feesMap[m]) : deliveryFee)
-    const methodLabel = (m: 'courier' | 'in_person') => (m === 'courier' ? '📦 Courier' : '🚚 In person')
+    const methodLabel = (m: 'courier' | 'in_person') => (m === 'courier' ? `📦 ${t('Courier')}` : `🚚 ${t('In person')}`)
     // Collection is optional per listing — hide it when the seller turned it off.
     const collectionOffered = item.offersCollection !== false
 
@@ -2590,7 +2590,7 @@ function PanelBody() {
 
                 {payError && <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: 'red', marginBottom: 10 }}>{payError}</div>}
                 <button onClick={startPayment} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 15, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
-                  {t('Continue to Payment')} →
+                  {t('Continue to Payment')}
                 </button>
               </>
             )}

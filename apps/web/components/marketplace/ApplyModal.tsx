@@ -6,6 +6,7 @@ import { uploadCv } from '@/lib/storage'
 import { LANGUAGE_LEVELS, formatLanguage, parseLanguages, type LanguageEntry } from '@/lib/jobSkills'
 import { JOB_LANGUAGES, JOB_ATTRIBUTES, EXP_OPTIONS } from './FindStaffPanel'
 import type { JobQuestion } from '@/lib/jobQuestions'
+import { t } from '@/lib/i18n'
 
 // Robust candidate application: standard recruitment data (prefilled from the
 // applicant's profile / prior application), the employer's screening questions,
@@ -145,14 +146,14 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
       <div onClick={() => { onApplied(); onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
         <div onClick={e => e.stopPropagation()} style={{ background: '#fff', width: '100%', maxWidth: 440, borderRadius: 20, padding: 26, textAlign: 'center' }}>
           <div style={{ fontSize: 46, marginBottom: 10 }}>✅</div>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Application sent!</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t('Application sent!')}</div>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, color: '#444', lineHeight: 1.6, marginBottom: 16 }}>
-            Thanks for applying{jobTitle ? ` to ${jobTitle}` : ''}. The employer will contact you and send any updates through <strong>your Grabitt inbox</strong> — check your <strong>Messages</strong> for replies and progress on your application.
+            {t('Thanks for applying!')} {t('The employer will contact you and send any updates through your Grabitt inbox — check your Messages for replies and progress on your application.')}
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => { onApplied(); onClose() }} style={{ flex: 1, background: '#fff', color: '#555', border: '1.5px solid #e5dccd', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 800, cursor: 'pointer' }}>Done</button>
+            <button onClick={() => { onApplied(); onClose() }} style={{ flex: 1, background: '#fff', color: '#555', border: '1.5px solid #e5dccd', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 800, cursor: 'pointer' }}>{t('Done')}</button>
             <a href="/account?section=messages" style={{ flex: 1, textDecoration: 'none' }}>
-              <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer' }}>Go to Messages</div>
+              <div style={{ background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', borderRadius: 12, padding: 12, fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer' }}>{t('Go to Messages')}</div>
             </a>
           </div>
         </div>
@@ -164,40 +165,40 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', width: '100%', maxWidth: 520, borderRadius: '20px 20px 0 0', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px 12px', borderBottom: '1px solid #f0f0f0' }}>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)' }}>Apply {jobTitle ? `· ${jobTitle}` : ''}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)' }}>{t('Apply')} {jobTitle ? `· ${jobTitle}` : ''}</div>
           <button onClick={onClose} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 30, height: 30, fontSize: 15, cursor: 'pointer' }}>✕</button>
         </div>
 
         <div style={{ overflowY: 'auto', padding: 18, flex: 1 }}>
-          {!loaded ? <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-nunito)' }}>Loading…</div> : (
+          {!loaded ? <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-nunito)' }}>{t('Loading…')}</div> : (
             <>
-              <div style={{ marginBottom: 12 }}><div style={LABEL}>Full name *</div><input value={f.fullName} onChange={e => set('fullName', e.target.value)} style={FIELD} /></div>
+              <div style={{ marginBottom: 12 }}><div style={LABEL}>{t('Full name')} *</div><input value={f.fullName} onChange={e => set('fullName', e.target.value)} style={FIELD} /></div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                <div style={{ flex: 1 }}><div style={LABEL}>Email</div><input value={f.email} onChange={e => set('email', e.target.value)} type="email" style={FIELD} /></div>
-                <div style={{ flex: 1 }}><div style={LABEL}>Phone</div><input value={f.phone} onChange={e => set('phone', e.target.value)} style={FIELD} /></div>
+                <div style={{ flex: 1 }}><div style={LABEL}>{t('Email')}</div><input value={f.email} onChange={e => set('email', e.target.value)} type="email" style={FIELD} /></div>
+                <div style={{ flex: 1 }}><div style={LABEL}>{t('Phone')}</div><input value={f.phone} onChange={e => set('phone', e.target.value)} style={FIELD} /></div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                <div style={{ flex: 1 }}><div style={LABEL}>Current / recent role</div><input value={f.currentRole} onChange={e => set('currentRole', e.target.value)} style={FIELD} /></div>
-                <div style={{ flex: 1 }}><div style={LABEL}>Location</div>
+                <div style={{ flex: 1 }}><div style={LABEL}>{t('Current / recent role')}</div><input value={f.currentRole} onChange={e => set('currentRole', e.target.value)} style={FIELD} /></div>
+                <div style={{ flex: 1 }}><div style={LABEL}>{t('Location')}</div>
                   <select value={f.location} onChange={e => set('location', e.target.value)} style={FIELD}><option value="">—</option>{JOB_ATTRIBUTES.location.map(o => <option key={o}>{o}</option>)}</select>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                <div style={{ flex: 1 }}><div style={LABEL}>Experience</div>
+                <div style={{ flex: 1 }}><div style={LABEL}>{t('Experience')}</div>
                   <select value={f.experienceMonths} onChange={e => set('experienceMonths', e.target.value)} style={FIELD}>{EXP_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
                 </div>
-                <div style={{ flex: 1 }}><div style={LABEL}>Availability</div>
+                <div style={{ flex: 1 }}><div style={LABEL}>{t('Availability')}</div>
                   <select value={f.availability} onChange={e => set('availability', e.target.value)} style={FIELD}><option value="">—</option>{JOB_ATTRIBUTES.availability.map(o => <option key={o}>{o}</option>)}</select>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                <div style={{ flex: 1 }}><div style={LABEL}>Right to work</div>
+                <div style={{ flex: 1 }}><div style={LABEL}>{t('Right to work')}</div>
                   <select value={f.rightToWork} onChange={e => set('rightToWork', e.target.value)} style={FIELD}><option value="">—</option>{JOB_ATTRIBUTES.rightToWork.map(o => <option key={o}>{o}</option>)}</select>
                 </div>
-                <div style={{ flex: 1 }}><div style={LABEL}>Expected salary (€/mo)</div><input value={f.expectedSalary} onChange={e => set('expectedSalary', e.target.value)} inputMode="numeric" style={FIELD} /></div>
+                <div style={{ flex: 1 }}><div style={LABEL}>{t('Expected salary (€/mo)')}</div><input value={f.expectedSalary} onChange={e => set('expectedSalary', e.target.value)} inputMode="numeric" style={FIELD} /></div>
               </div>
 
-              <div style={{ marginBottom: 12 }}><div style={LABEL}>Languages</div>
+              <div style={{ marginBottom: 12 }}><div style={LABEL}>{t('Languages')}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {JOB_LANGUAGES.map(l => {
                     const on = langs.some(x => x.language === l)
@@ -224,9 +225,9 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
               {/* Personal summary — prefilled from their CV, editable here, and
                   saved back so the next application starts improved. */}
               <div style={{ marginBottom: 12 }}>
-                <div style={LABEL}>Personal summary</div>
+                <div style={LABEL}>{t('Personal summary')}</div>
                 <textarea value={summary} onChange={e => setSummary(e.target.value)} rows={3}
-                  placeholder="A few lines about you — experience, strengths, what you're looking for."
+                  placeholder={t("A few lines about you — experience, strengths, what you're looking for.")}
                   style={{ ...FIELD, resize: 'vertical', minHeight: 70 }} />
               </div>
 
@@ -236,33 +237,33 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
                 <div style={{ marginBottom: 12, background: '#f8f9fa', borderRadius: 10, padding: '10px 11px' }}>
                   {skills.length > 0 && (
                     <div style={{ marginBottom: strengths.length ? 7 : 0 }}>
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9.5, fontWeight: 800, color: '#888', textTransform: 'uppercase', marginBottom: 4 }}>Skills from your profile</div>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9.5, fontWeight: 800, color: '#888', textTransform: 'uppercase', marginBottom: 4 }}>{t('Skills from your profile')}</div>
                       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#555' }}>{skills.join(' · ')}</div>
                     </div>
                   )}
                   {strengths.length > 0 && (
                     <div>
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9.5, fontWeight: 800, color: '#888', textTransform: 'uppercase', marginBottom: 4 }}>Key strengths</div>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9.5, fontWeight: 800, color: '#888', textTransform: 'uppercase', marginBottom: 4 }}>{t('Key strengths')}</div>
                       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#555' }}>{strengths.join(' · ')}</div>
                     </div>
                   )}
-                  <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 7, color: ORANGE, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800 }}>Edit work profile</a>
+                  <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 7, color: ORANGE, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800 }}>{t('Edit work profile')}</a>
                 </div>
               )}
 
-              <div style={{ marginBottom: 12 }}><div style={LABEL}>LinkedIn / portfolio (optional)</div><input value={f.linkedinUrl} onChange={e => set('linkedinUrl', e.target.value)} placeholder="https://…" style={FIELD} /></div>
+              <div style={{ marginBottom: 12 }}><div style={LABEL}>{t('LinkedIn / portfolio (optional)')}</div><input value={f.linkedinUrl} onChange={e => set('linkedinUrl', e.target.value)} placeholder="https://…" style={FIELD} /></div>
 
               {/* Asked outright rather than assumed: plenty of people already
                   have a CV they'd rather send, and plenty don't. Either way the
                   generated Grabitt CV goes too, anonymised until interview. */}
               <div style={{ marginBottom: 12 }}>
-                <div style={LABEL}>Do you have your own CV? *</div>
+                <div style={LABEL}>{t('Do you have your own CV?')} *</div>
                 <div style={{ display: 'flex', gap: 8, marginBottom: cvChoice ? 10 : 0 }}>
                   <button type="button" onClick={() => setCvChoice('own')} style={{ flex: 1, background: cvChoice === 'own' ? ORANGE : '#f8f9fa', color: cvChoice === 'own' ? '#fff' : '#555', border: '1px solid #eee', borderRadius: 10, padding: '10px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
-                    Yes — attach it
+                    {t('Yes — attach it')}
                   </button>
                   <button type="button" onClick={() => { setCvChoice('grabitt'); setCvPath(null); setCvName('') }} style={{ flex: 1, background: cvChoice === 'grabitt' ? ORANGE : '#f8f9fa', color: cvChoice === 'grabitt' ? '#fff' : '#555', border: '1px solid #eee', borderRadius: 10, padding: '10px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
-                    No — send my Grabitt CV
+                    {t('No — send my Grabitt CV')}
                   </button>
                 </div>
 
@@ -273,11 +274,11 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 15 }}>📎</span>
                         <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cvName}</span>
-                        <button type="button" onClick={() => fileRef.current?.click()} style={{ background: 'none', border: 'none', color: ORANGE, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Replace</button>
+                        <button type="button" onClick={() => fileRef.current?.click()} style={{ background: 'none', border: 'none', color: ORANGE, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{t('Replace')}</button>
                       </div>
                     ) : (
                       <button type="button" onClick={() => fileRef.current?.click()} disabled={cvBusy} style={{ width: '100%', background: '#fff', color: ORANGE, border: `1.5px dashed ${ORANGE}`, borderRadius: 10, padding: '12px 8px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: cvBusy ? 'wait' : 'pointer' }}>
-                        {cvBusy ? 'Uploading…' : '📎 Choose a file (PDF or Word)'}
+                        {cvBusy ? t('Uploading…') : `📎 ${t('Choose a file (PDF or Word)')}`}
                       </button>
                     )}
                   </div>
@@ -285,31 +286,31 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
               </div>
 
               <div style={{ marginBottom: 12 }}>
-                <div style={LABEL}>Your Grabitt CV</div>
+                <div style={LABEL}>{t('Your Grabitt CV')}</div>
                 {hasCv === false ? (
                   <div style={{ background: '#FFF7ED', border: '1px solid #FFD4A0', borderRadius: 10, padding: '11px 12px' }}>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#9a5b1a', lineHeight: 1.5, marginBottom: 8 }}>
-                      You haven&apos;t set up your work profile yet. Employers receive a formatted Grabitt CV when you apply — tick the roles you can do, your experience and languages so yours stands out.
+                      {t('You haven’t set up your work profile yet. Employers receive a formatted Grabitt CV when you apply — tick the roles you can do, your experience and languages so yours stands out.')}
                     </div>
-                    <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, textDecoration: 'none' }}>📄 Set up my work profile</a>
+                    <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: ORANGE, color: '#fff', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, textDecoration: 'none' }}>📄 {t('Set up my work profile')}</a>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '9px 11px' }}>
                     <span style={{ fontSize: 15 }}>📄</span>
-                    <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>Your CV will be sent (anonymous until they shortlist you)</span>
-                    <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a', textDecoration: 'none' }}>Edit</a>
+                    <span style={{ flex: 1, fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>{t('Your CV will be sent (anonymous until they shortlist you)')}</span>
+                    <a href="/account?section=employment" target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, color: '#16a34a', textDecoration: 'none' }}>{t('Edit')}</a>
                   </div>
                 )}
               </div>
 
-              <div style={{ marginBottom: 12 }}><div style={LABEL}>Cover note (optional)</div>
-                <textarea value={f.coverNote} onChange={e => set('coverNote', e.target.value)} placeholder="Why you're a great fit…" style={{ ...FIELD, minHeight: 80, resize: 'vertical' }} />
+              <div style={{ marginBottom: 12 }}><div style={LABEL}>{t('Cover note (optional)')}</div>
+                <textarea value={f.coverNote} onChange={e => set('coverNote', e.target.value)} placeholder={t("Why you're a great fit…")} style={{ ...FIELD, minHeight: 80, resize: 'vertical' }} />
               </div>
 
               {/* Employer screening questions */}
               {questions.length > 0 && (
                 <div style={{ marginTop: 4, marginBottom: 12, paddingTop: 12, borderTop: '1px solid #f0f0f0' }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: ORANGE, marginBottom: 10 }}>Questions from the employer</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 900, color: ORANGE, marginBottom: 10 }}>{t('Questions from the employer')}</div>
                   {questions.map(q => (
                     <div key={q.id} style={{ marginBottom: 12 }}>
                       <div style={LABEL}>{q.label}{q.required ? ' *' : ''}</div>
@@ -325,7 +326,7 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
                         </div>
                       ) : q.type === 'choice' ? (
                         <select value={String(answers[q.id] ?? '')} onChange={e => setAnswers(a => ({ ...a, [q.id]: e.target.value }))} style={FIELD}>
-                          <option value="">Select…</option>
+                          <option value="">{t('Select…')}</option>
                           {(q.options ?? []).map(o => <option key={o}>{o}</option>)}
                         </select>
                       ) : (
@@ -338,14 +339,14 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
 
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: 9, background: '#f8f9fa', borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer' }}>
                 <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} style={{ width: 16, height: 16, accentColor: ORANGE, marginTop: 1, flexShrink: 0 }} />
-                <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#555', lineHeight: 1.5 }}>I agree to share these details with the employer and for Grabitt to store them to power my profile and job matches.</span>
+                <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11, color: '#555', lineHeight: 1.5 }}>{t('I agree to share these details with the employer and for Grabitt to store them to power my profile and job matches.')}</span>
               </label>
             </>
           )}
         </div>
 
         <div style={{ padding: '12px 18px 18px', borderTop: '1px solid #f0f0f0' }}>
-          <button onClick={submit} disabled={submitting || !loaded} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1 }}>{submitting ? 'Sending…' : 'Send application'}</button>
+          <button onClick={submit} disabled={submitting || !loaded} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1 }}>{submitting ? t('Sending…') : t('Send application')}</button>
         </div>
       </div>
     </div>
