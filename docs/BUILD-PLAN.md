@@ -87,8 +87,9 @@ user-generated content = **Google machine translation, auto, no "show original"*
   no-ops (content shows in its original language).
 
 **Remaining / follow-ups:**
-- [ ] Extend `useTranslated` to the other listing surfaces (ListingsRow, search
-      results, storefront cards) — same one-line hook pattern
+- [x] Extend `useTranslated` to the other listing surfaces — home Featured strip,
+      Just Listed carousel, search results grid, storefront cards (batched +
+      cached). ListingsRow is static demo data, left as-is.
 - [ ] Fill de/da/sv/nl/fr/pt for the en+es-only dictionary entries from Phase 2
 
 ### Notes / decisions
