@@ -3876,25 +3876,25 @@ function PanelBody() {
             {/* ── Step 4: Delivery ── */}
             {step === 'delivery' && (
               <>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5, marginBottom: 12 }}>How can the buyer receive this item? Pick at least one — collection, delivery, or both.</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5, marginBottom: 12 }}>{t('How can the buyer receive this item? Pick at least one — collection, delivery, or both.')}</div>
                 {/* Collection — optional (some sellers don't want strangers at home). */}
                 <div onClick={() => setCollectionOn(v => !v)} style={{ display: 'flex', gap: 12, background: collectionOn ? '#FFF3EE' : '#faf7f4', border: `1.5px solid ${collectionOn ? 'var(--orange)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10, alignItems: 'center', cursor: 'pointer' }}>
                   <div style={{ fontSize: 26, flexShrink: 0 }}>🤝</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Collection / meet-up</div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Buyer collects in person or you meet locally. Turn off if you’d rather not share your location.</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{t('Collection / meet-up')}</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>{t('Buyer collects in person or you meet locally. Turn off if you’d rather not share your location.')}</div>
                   </div>
                   <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${collectionOn ? 'var(--orange)' : '#ccc'}`, background: collectionOn ? 'var(--orange)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{collectionOn && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}</div>
                 </div>
                 {/* Optional delivery methods. */}
                 <div style={{ background: '#faf7f4', border: '1.5px solid #e0d8d0', borderRadius: 14, padding: 14, marginBottom: 10 }}>
                     <div style={{ marginTop: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 8 }}>🚚 Also offer delivery? Tick any you provide (optional — leave a fee at €0 for free)</div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 8 }}>🚚 {t('Also offer delivery? Tick any you provide (optional — leave a fee at €0 for free)')}</div>
                       {/* Courier */}
                       <div style={{ border: `1.5px solid ${courierOn ? 'var(--ocean)' : '#e0d8d0'}`, borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--dark)' }}>
                           <input type="checkbox" checked={courierOn} onChange={e => setCourierOn(e.target.checked)} style={{ accentColor: 'var(--ocean)', width: 16, height: 16 }} />
-                          📦 Courier (tracked)
+                          📦 {t('Courier (tracked)')}
                         </label>
                         {courierOn && (
                           <div style={{ position: 'relative', marginTop: 8 }}>
@@ -3908,7 +3908,7 @@ function PanelBody() {
                       <div style={{ border: `1.5px solid ${inPersonOn ? 'var(--ocean)' : '#e0d8d0'}`, borderRadius: 10, padding: '10px 12px' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--dark)' }}>
                           <input type="checkbox" checked={inPersonOn} onChange={e => setInPersonOn(e.target.checked)} style={{ accentColor: 'var(--ocean)', width: 16, height: 16 }} />
-                          🤝 In person (QR on arrival)
+                          🤝 {t('In person (QR on arrival)')}
                         </label>
                         {inPersonOn && (
                           <div style={{ position: 'relative', marginTop: 8 }}>
@@ -3921,7 +3921,7 @@ function PanelBody() {
                     </div>
                 </div>
                 {!collectionOn && !courierOn && !inPersonOn && (
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#ef4444', marginTop: 4 }}>Pick at least one way for the buyer to receive the item — collection or a delivery method.</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#ef4444', marginTop: 4 }}>{t('Pick at least one way for the buyer to receive the item — collection or a delivery method.')}</div>
                 )}
               </>
             )}

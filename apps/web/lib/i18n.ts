@@ -472,6 +472,24 @@ export const TRANSLATIONS: Record<string, { en: string } & Partial<Record<Lang, 
   'Every order is covered by the Grabitt Guarantee.': { en: 'Every order is covered by the Grabitt Guarantee.', es: 'Cada pedido está cubierto por la Garantía Grabitt.' },
   'Tracked delivery': { en: 'Tracked delivery', es: 'Envío con seguimiento' },
   'Funds release to sellers once an item is in transit.': { en: 'Funds release to sellers once an item is in transit.', es: 'El dinero se libera al vendedor cuando el artículo está en tránsito.' },
+
+  // ── Selling: listing edit + Sell wizard ──────────────────────────────────────
+  'Collection / meet-up': { en: 'Collection / meet-up', es: 'Recogida / quedada' },
+  'Courier fee (€)': { en: 'Courier fee (€)', es: 'Tarifa de mensajería (€)' },
+  'Delivery options': { en: 'Delivery options', es: 'Opciones de entrega' },
+  'Drag photos to reorder. The first is the cover. Up to 8.': { en: 'Drag photos to reorder. The first is the cover. Up to 8.', es: 'Arrastra las fotos para reordenarlas. La primera es la portada. Hasta 8.' },
+  'In-person fee (€)': { en: 'In-person fee (€)', es: 'Tarifa en persona (€)' },
+  'Pick at least one way for the buyer to receive the item.': { en: 'Pick at least one way for the buyer to receive the item.', es: 'Elige al menos una forma de que el comprador reciba el artículo.' },
+  'Publish listing': { en: 'Publish listing', es: 'Publicar anuncio' },
+  'Save your changes first, then publish to make this draft live on the marketplace.': { en: 'Save your changes first, then publish to make this draft live on the marketplace.', es: 'Guarda los cambios primero y luego publica para poner este borrador en el mercado.' },
+  'Start typing the address…': { en: 'Start typing the address…', es: 'Empieza a escribir la dirección…' },
+  'Tick the ways a buyer can receive the item — at least one.': { en: 'Tick the ways a buyer can receive the item — at least one.', es: 'Marca las formas en que un comprador puede recibir el artículo — al menos una.' },
+  'How can the buyer receive this item? Pick at least one — collection, delivery, or both.': { en: 'How can the buyer receive this item? Pick at least one — collection, delivery, or both.', es: '¿Cómo puede recibir el comprador este artículo? Elige al menos una opción: recogida, entrega o ambas.' },
+  'Buyer collects in person or you meet locally. Turn off if you’d rather not share your location.': { en: 'Buyer collects in person or you meet locally. Turn off if you’d rather not share your location.', es: 'El comprador recoge en persona o quedáis en un punto local. Desactívalo si prefieres no compartir tu ubicación.' },
+  'Also offer delivery? Tick any you provide (optional — leave a fee at €0 for free)': { en: 'Also offer delivery? Tick any you provide (optional — leave a fee at €0 for free)', es: '¿Ofreces también entrega? Marca las que proporciones (opcional — deja la tarifa en 0 € para que sea gratis)' },
+  'Courier (tracked)': { en: 'Courier (tracked)', es: 'Mensajería (con seguimiento)' },
+  'In person (QR on arrival)': { en: 'In person (QR on arrival)', es: 'En persona (QR al llegar)' },
+  'Pick at least one way for the buyer to receive the item — collection or a delivery method.': { en: 'Pick at least one way for the buyer to receive the item — collection or a delivery method.', es: 'Elige al menos una forma de que el comprador reciba el artículo: recogida o un método de entrega.' },
 }
 
 let _lang: Lang = 'en'
