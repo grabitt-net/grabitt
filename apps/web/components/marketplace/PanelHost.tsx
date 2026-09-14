@@ -1471,7 +1471,7 @@ function PanelBody() {
               </div>
             )}
             <button onClick={() => openPanel('purchases')} style={{ width: '100%', background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><Icon name="cart" size={16} strokeWidth={2} /> View My Purchases</button>
-            <button onClick={closePanel} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>Back to browsing</button>
+            <button onClick={closePanel} style={{ width: '100%', background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>{t('Back to browsing')}</button>
           </div>
         ) : cartStep === 'card' ? (
           <>
@@ -3569,13 +3569,13 @@ function PanelBody() {
       <ActionPanel title="🎉 Listing live!" onClose={closePanel}>
         <div style={{ textAlign: 'center', padding: '30px 0' }}>
           <Logo height={40} style={{ margin: '0 auto 14px' }} />
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>Your listing is live!</div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>"{title}" is now visible to thousands of buyers across the Canary Islands.</div>
-          {grabItNow && <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--orange)', fontWeight: 800 }}>⚡ Grab It Now active — expires tonight at midnight!</div>}
-          {featured && <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)', fontWeight: 800 }}>👀 Featured for 7 days — appearing at the top of search!</div>}
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 900, color: 'var(--dark)', marginBottom: 8 }}>{t('Your listing is live!')}</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#555', marginBottom: 20 }}>“{title}” {t('is now visible to thousands of buyers across the Canary Islands.')}</div>
+          {grabItNow && <div style={{ background: '#FFF3EE', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--orange)', fontWeight: 800 }}>⚡ {t('Grab It Now active — expires tonight at midnight!')}</div>}
+          {featured && <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'var(--font-ui)', fontSize: 12, color: 'var(--sage)', fontWeight: 800 }}>👀 {t('Featured for 7 days — appearing at the top of search!')}</div>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button onClick={() => openPanel('mylistings')} style={{ background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>📋 View My Listings</button>
-            <button onClick={() => openPanel('createListing')} style={{ background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, cursor: 'pointer' }}>+ List another item</button>
+            <button onClick={() => openPanel('mylistings')} style={{ background: 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>📋 {t('View My Listings')}</button>
+            <button onClick={() => openPanel('createListing')} style={{ background: '#f5f5f5', color: '#555', border: 'none', borderRadius: 14, padding: 14, fontFamily: 'var(--font-ui)', fontSize: 14, cursor: 'pointer' }}>+ {t('List another item')}</button>
             <button onClick={closePanel} style={{ background: 'transparent', color: '#888', border: 'none', padding: 8, fontFamily: 'var(--font-ui)', fontSize: 12, cursor: 'pointer' }}>Back to browsing</button>
           </div>
         </div>
@@ -3637,8 +3637,8 @@ function PanelBody() {
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed #e0d8d0', borderRadius: 16, padding: 24, cursor: 'pointer', background: '#faf7f4' }}>
                     <Logo height={40} style={{ margin: '0 auto 14px' }} />
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>{photoBusy > 0 ? `Uploading ${photoBusy} photo${photoBusy === 1 ? '' : 's'}…` : 'Add 4–8 photos'}</div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{photoBusy > 0 ? 'Saved to your draft as they upload.' : 'Tap to choose from your device · 4 minimum'}</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', marginBottom: 4 }}>{photoBusy > 0 ? `${t('Uploading photos…')}` : t('Add 4–8 photos')}</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888' }}>{photoBusy > 0 ? t('Saved to your draft as they upload.') : t('Tap to choose from your device · 4 minimum')}</div>
                     <input type="file" accept="image/*" multiple onChange={handleFileChange} style={{ display: 'none' }} />
                   </label>
                 </div>
@@ -3646,7 +3646,7 @@ function PanelBody() {
                 {photos.length > 0 && (
                   <div style={{ marginBottom: 14 }}>
                     <PhotoReorderGrid value={photos} onChange={setPhotos} coverCount={3} columns={4} />
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 6, textAlign: 'center' }}>Drag photos to reorder — the first is your main cover.</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 6, textAlign: 'center' }}>{t('Drag photos to reorder — the first is your main cover.')}</div>
                   </div>
                 )}
 
@@ -3663,7 +3663,7 @@ function PanelBody() {
               <>
                 <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '14px 14px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Title')} *</div>
-                  <FkInput value={title} onChange={e => setTitle(e.target.value)} placeholder='e.g. "iPhone 14 Pro — Unlocked, 256GB"' />
+                  <FkInput value={title} onChange={e => setTitle(e.target.value)} placeholder={t('e.g. "iPhone 14 Pro — Unlocked, 256GB"')} />
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#aaa', marginTop: 3 }}>{title.length}/80</div>
                 </div>
 
@@ -3681,7 +3681,7 @@ function PanelBody() {
                     if (!subs.length) return null
                     return (
                       <div style={{ marginTop: 14, borderTop: '1px dashed #eee', paddingTop: 12 }}>
-                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>Subcategory <span style={{ fontWeight: 600, color: '#888' }}>(helps buyers find it)</span></div>
+                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Subcategory')} <span style={{ fontWeight: 600, color: '#888' }}>{t('(helps buyers find it)')}</span></div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                           {subs.map(s => (
                             <button key={s} onClick={() => setSubcat(prev => prev === s ? '' : s)} style={{ background: subcat === s ? '#FFF3EE' : '#fff', color: subcat === s ? 'var(--orange)' : '#555', border: `1.5px solid ${subcat === s ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 50, padding: '6px 13px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>{s}</button>
@@ -3701,7 +3701,7 @@ function PanelBody() {
                     const cost = (paid * 0.99).toFixed(2)
                     return (
                       <div style={{ marginTop: 14, borderTop: '1px dashed #eee', paddingTop: 12 }}>
-                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 3 }}>Also list in <span style={{ fontWeight: 600, color: '#888' }}>(optional)</span></div>
+                        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 3 }}>{t('Also list in')} <span style={{ fontWeight: 600, color: '#888' }}>{t('(optional)')}</span></div>
                         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 8 }}>Your item shows in up to <strong>2 categories free</strong> (this department + 1 more). Each additional category is <strong>€0.99</strong>.</div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                           {options.map(d => {
@@ -3788,8 +3788,8 @@ function PanelBody() {
                 })()}
 
                 <div style={{ background: '#fff', border: '1px solid #eef0f4', borderRadius: 14, padding: '14px 14px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>Description</div>
-                  <FkTextarea value={desc} onChange={e => setDesc(e.target.value)} placeholder='Describe the item — include any defects, accessories included, reason for selling...' rows={4} />
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', marginBottom: 8 }}>{t('Description')}</div>
+                  <FkTextarea value={desc} onChange={e => setDesc(e.target.value)} placeholder={t('Describe the item — include any defects, accessories included, reason for selling...')} rows={4} />
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
@@ -3835,21 +3835,21 @@ function PanelBody() {
                   <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Quantity available')}</div>
                   <input type="number" value={stock} onChange={e => setStock(e.target.value)} min="1" max="999" step="1"
                     style={{ width: 120, border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '12px', fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 4 }}>Buyers can purchase multiple units until stock runs out.</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 4 }}>{t('Buyers can purchase multiple units until stock runs out.')}</div>
                 </div>
 
 
                 {/* Auto-accept offers minimum (seller-only; never shown to buyers) */}
                 {!freeItem && (
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>Auto-accept offers over (optional)</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555', marginBottom: 6 }}>{t('Auto-accept offers over (optional)')}</div>
                     <div style={{ position: 'relative' }}>
                       <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-display)', fontSize: 18, color: '#888' }}>€</span>
-                      <input type="number" value={autoAcceptMin} onChange={e => setAutoAcceptMin(e.target.value)} placeholder="Leave blank to review every offer" min="0" step="0.01"
+                      <input type="number" value={autoAcceptMin} onChange={e => setAutoAcceptMin(e.target.value)} placeholder={t('Leave blank to review every offer')} min="0" step="0.01"
                         style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: '11px 12px 11px 28px', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--dark)', outline: 'none', boxSizing: 'border-box' }} />
                     </div>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#888', marginTop: 4 }}>
-                      Offers at or above this amount are accepted automatically. Buyers never see your threshold.
+                      {t('Offers at or above this amount are accepted automatically. Buyers never see your threshold.')}
                     </div>
                   </div>
                 )}
@@ -3859,15 +3859,15 @@ function PanelBody() {
                 {/* Fee explainer */}
                 {price && parseFloat(price) > 0 && (
                   <div style={{ background: '#f9f6f2', borderRadius: 12, padding: 12, marginBottom: 12 }}>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 4 }}>If it sells at this price, you&apos;ll receive</div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#999', marginBottom: 8, lineHeight: 1.45 }}>Listing is free — there&apos;s nothing to pay now. We only take our commission from the sale, and only once it sells.</div>
-                    {[['Sale price', `€${parseFloat(price).toFixed(2)}`],['Our commission (8%)', `-€${(parseFloat(price) * 0.08).toFixed(2)}`],['You receive', `€${(parseFloat(price) * 0.92).toFixed(2)}`]].map(([l, v], i) => (
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', marginBottom: 4 }}>{t('If it sells at this price, you’ll receive')}</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#999', marginBottom: 8, lineHeight: 1.45 }}>{t('Listing is free — there’s nothing to pay now. We only take our commission from the sale, and only once it sells.')}</div>
+                    {[[t('Sale price'), `€${parseFloat(price).toFixed(2)}`],[t('Our commission (8%)'), `-€${(parseFloat(price) * 0.08).toFixed(2)}`],[t('You receive'), `€${(parseFloat(price) * 0.92).toFixed(2)}`]].map(([l, v], i) => (
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderTop: i === 2 ? '1px solid #ece3d7' : 'none', marginTop: i === 2 ? 4 : 0, paddingTop: i === 2 ? 6 : 3 }}>
                         <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: i === 2 ? 800 : 400, color: i === 2 ? 'var(--dark)' : '#555' }}>{l}</span>
                         <span style={{ fontFamily: 'var(--font-ui)', fontSize: i === 2 ? 13 : 11, fontWeight: 900, color: i === 2 ? 'var(--sage)' : '#555' }}>{v}</span>
                       </div>
                     ))}
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, color: '#aaa', marginTop: 6 }}>Grabber grade · your commission falls as you level up.</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, color: '#aaa', marginTop: 6 }}>{t('Grabber grade · your commission falls as you level up.')}</div>
                   </div>
                 )}
               </>
@@ -3929,16 +3929,16 @@ function PanelBody() {
             {/* ── Step 5: Upgrades ── */}
             {step === 'upgrades' && (
               <>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5, marginBottom: 12 }}>Optional paid boosts to help your item sell faster. You can skip these and publish for free.</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#666', lineHeight: 1.5, marginBottom: 12 }}>{t('Optional paid boosts to help your item sell faster. You can skip these and publish for free.')}</div>
                 {/* Grab It Now */}
                 <div onClick={() => setGrabItNow(v => !v)} style={{ display: 'flex', gap: 12, background: grabItNow ? '#FFF3EE' : '#faf7f4', border: `1.5px solid ${grabItNow ? 'var(--orange)' : '#e0d8d0'}`, borderRadius: 14, padding: 14, marginBottom: 10, cursor: 'pointer', alignItems: 'flex-start' }}>
                   <div style={{ fontSize: 26, flexShrink: 0 }}>⚡</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Grab It Now</div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{t('Grab It Now')}</div>
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>€4.99</div>
                     </div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Appears in the Grab It Now strip on the homepage. Expires at midnight — creates buying urgency.</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>{t('Appears in the Grab It Now strip on the homepage. Expires at midnight — creates buying urgency.')}</div>
                   </div>
                   <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${grabItNow ? 'var(--orange)' : '#ccc'}`, background: grabItNow ? 'var(--orange)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {grabItNow && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}
@@ -3949,10 +3949,10 @@ function PanelBody() {
                   <div style={{ fontSize: 26, flexShrink: 0 }}>👀</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Featured listing</div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{t('Featured listing')}</div>
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--sage)' }}>€1.99/wk</div>
                     </div>
-                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>Shown in the Featured strip on the homepage and at the top of department search results.</div>
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#666', marginTop: 3 }}>{t('Shown in the Featured strip on the homepage and at the top of department search results.')}</div>
                   </div>
                   <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${featured ? 'var(--sage)' : '#ccc'}`, background: featured ? 'var(--sage)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {featured && <span style={{ color: '#fff', fontSize: 13, fontWeight: 900 }}>✓</span>}
