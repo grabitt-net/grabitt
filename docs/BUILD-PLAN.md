@@ -27,18 +27,19 @@ scaffolded), including Spanish versions of banners that switch with the language
 - **User/admin content is untranslated by nature** (listing titles/descriptions,
   job adverts, help articles, CMS page content, category names, messages).
 
-### Phase 1 — Switcher + banners (≈1 day)
-- [ ] Auto-detect on first visit: on app bootstrap, if no `grabitt_lang`, set it
-      from `detectBrowserLang()`.
-- [ ] Footer language switcher (EN/ES toggle, or dropdown of the 8) → `setLanguage()`
-      then reload (keep the reload approach; `t()` isn't reactive).
-- [ ] Spanish banner variants that auto-switch, with fallback to the default when
-      no Spanish image is set. Add an optional per-language image + a "Spanish
-      version (optional)" upload in each admin editor:
-      - `Banner.imageUrl` (ad placements / BannerSlot)
-      - `HeroSlide.imageUrl` (homepage carousel)
-      - `HomeCategory.heroBanner` (category + footer page heroes, incl. Grabitt Now)
-      - `Storefront.bannerUrl` (shop pages)
+### Phase 1 — Switcher + banners ✅ DONE (2026-09-14)
+- [x] Auto-detect on first visit (`LangBoot` in the root layout; reloads once for
+      a non-EN browser, explicit choices untouched).
+- [x] Footer language switcher (`LanguageSwitcher`, all 8 langs, EN/ES first) →
+      `setLanguage()` + reload.
+- [x] Spanish banner variants that auto-switch, fallback to default when no ES
+      image is set, via `pickBannerImage(base, es)`:
+      - `Banner.imageUrlEs` (ad placements / BannerSlot)
+      - `HeroSlide.imageUrlEs` (homepage carousel / ParallaxHeader)
+      - `HomeCategory.heroBannerEs` (category + footer page heroes, incl. Grabitt Now)
+      - `Storefront.bannerUrlEs` (shop pages)
+      Admin ES upload fields added in BannersView, HeroSlidesEditor, CategoriesView
+      (page + category hero) and the storefront editor.
 
 ### Phase 2 — Coverage pass (larger, iterative)
 - [ ] Migrate hardcoded-English components onto `t()` and add Spanish strings,
