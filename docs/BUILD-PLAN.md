@@ -41,17 +41,14 @@ scaffolded), including Spanish versions of banners that switch with the language
       Admin ES upload fields added in BannersView, HeroSlidesEditor, CategoriesView
       (page + category hero) and the storefront editor.
 
-### Phase 2 — Coverage pass (larger, iterative) — IN PROGRESS
-Migrate hardcoded-English components onto `t()` and add Spanish strings.
+### Phase 2 — Coverage pass (interactive UI) ✅ DONE (2026-09-14)
+Migrated hardcoded-English components onto `t()` and added Spanish strings.
 TRANSLATIONS entries now need only `en` (+ `es`); other langs fall back.
 - [x] Footer (columns, links, guarantee line, copyright)
 - [x] Home strips (Featured / Just Listed / See all) + Trust strip
 - [x] Selling flow: listing edit form (fully) + Sell wizard steps (photos,
       details, price, delivery, upgrades, success). Remaining in-wizard bits:
       best-practice guide items and a couple of `<strong>`-embedded lines.
-- [ ] Footer content pages (InfoPage: About, Why, Pricing, Delivery, Terms,
-      Guarantee, Scam Centre, Dos, Economic) — note: long-form bodies may be
-      better handled as CMS Spanish content (Phase 3) than dictionary strings
 - [x] Apply / checkout flow (ApplyModal fully; checkout & make-offer panels
       completed — buyer-type, delivery labels, order summary, escrow copy)
 - [x] Recruitment / ATS (EmployerDashboardContent, FindStaffPanel,
@@ -60,10 +57,17 @@ TRANSLATIONS entries now need only `en` (+ `es`); other langs fall back.
 - [x] Hub / storefront editor (StorefrontEditor, MyHub) + public shop page
       (templates, branding, categories, featured, policies, follow/share,
       owner controls) — MyHub was already translated bar account-type labels
+- [→] Footer content pages (InfoPage: About, Why, Pricing, Delivery, Terms,
+      Guarantee, Scam Centre, Dos, Economic) — **deferred to Phase 3**: these
+      are long-form bodies best owned as CMS Spanish content, not dictionary
+      strings (decision 2026-09-14).
 
 ### Phase 3 — Content translation (bigger decision, optional)
 - [ ] Decide how to handle user/admin content: manual Spanish fields in the CMS,
       or an automatic machine-translation layer. Separate scoping.
+- [ ] Footer content pages (InfoPage long-form bodies) — moved here from Phase 2;
+      handle via the CMS Spanish-content mechanism decided above rather than the
+      `t()` dictionary. The page chrome (nav, shared headings) is already on `t()`.
 
 ### Notes / decisions
 - Keep reload-on-switch unless we later decide the live-update refactor (a React
