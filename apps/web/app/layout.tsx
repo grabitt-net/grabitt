@@ -4,6 +4,7 @@ import { TrpcProvider } from '@/providers/TrpcProvider'
 import { ToastProvider } from '@/context/ToastContext'
 import { CartProvider } from '@/context/CartContext'
 import AuthBootstrap from '@/components/AuthBootstrap'
+import LangBoot from '@/components/LangBoot'
 import ConsentGate from '@/components/ConsentGate'
 import AttributesOnboarding from '@/components/AttributesOnboarding'
 import CookieBanner from '@/components/CookieBanner'
@@ -94,7 +95,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${sora.variable}`}>
       <body className="min-h-full">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }} />
-        <TrpcProvider><ToastProvider><CartProvider><AuthBootstrap /><ConsentGate /><AttributesOnboarding /><ImpersonationBanner />{children}<CookieBanner /><StickyBottomBanner /><UiHost /></CartProvider></ToastProvider></TrpcProvider></body>
+        <TrpcProvider><ToastProvider><CartProvider><LangBoot /><AuthBootstrap /><ConsentGate /><AttributesOnboarding /><ImpersonationBanner />{children}<CookieBanner /><StickyBottomBanner /><UiHost /></CartProvider></ToastProvider></TrpcProvider></body>
     </html>
   )
 }

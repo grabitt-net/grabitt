@@ -5,6 +5,7 @@ import { bannerPageKey } from '@/lib/bannerPages'
 import Logo from './Logo'
 import Icon from './Icon'
 import BannerSlot from './BannerSlot'
+import LanguageSwitcher from './LanguageSwitcher'
 
 // Site footer — grouped links, brand, and trust line. Links open the existing
 // info panels so content stays consistent with the rest of the app.
@@ -48,6 +49,9 @@ export default function Footer() {
         <Logo height={30} style={{ margin: '0 auto' }} />
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#1a1a1a', marginTop: 4 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="shield" size={14} strokeWidth={2} style={{ color: 'var(--success)' }} /> Every payment protected by the Grabitt Guarantee · Local to the Canaries</span>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <LanguageSwitcher />
         </div>
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#1a1a1a', marginTop: 8 }}>
           © {new Date().getFullYear()} Grabitt. All rights reserved.
