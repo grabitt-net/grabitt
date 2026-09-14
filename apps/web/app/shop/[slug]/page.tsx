@@ -12,6 +12,7 @@ import { toast } from '@/lib/ui'
 import { deptEmoji, DEPT_LABEL } from '@/lib/listingMap'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
 import { pickBannerImage, t } from '@/lib/i18n'
+import { useTranslated } from '@/lib/translateContent'
 
 // A business's public shop page: full banner, the seller's identity + service
 // rating, a Follow button, category shelves derived from what they actually
@@ -98,6 +99,16 @@ function ShopInner() {
     const featIds = new Set(data.shop.featuredIds)
     return data.listings.filter(l => (cat === 'All' || catOf(l) === cat) && !(cat === 'All' && showsFeaturedRow && featIds.has(l.id)))
   }, [data, cat])
+
+  // Auto-translate item titles to the viewer's site language (batched + cached;
+  // English viewers get the originals with no round trip). Built before the
+  // early returns so the hook order stays stable, then keyed by listing id.
+  const shopListings = data?.listings ?? []
+  const trShopTitles = useTranslated(shopListings.map(l => l.title))
+  const titleFor = (id: string) => {
+    const i = shopListings.findIndex(l => l.id === id)
+    return i >= 0 ? (trShopTitles[i] || shopListings[i].title) : undefined
+  }
 
   if (state === 'loading') return <Shell><div style={pad}>{t('Loading…')}</div></Shell>
   if (state === 'notfound' || !data) return <Shell><div style={pad}>{t('This shop isn’t available.')} <Link href="/" style={{ color: 'var(--orange)', fontWeight: 800 }}>{t('Back home')}</Link></div></Shell>
@@ -190,7 +201,7 @@ function ShopInner() {
         <section style={{ padding: '14px 16px 0' }}>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: shop.template === 'showcase' ? 16 : 13, fontWeight: 900, color: accent, marginBottom: 10 }}>⭐ {t('Featured')}</div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
-            {featured.map(l => <ItemCard key={l.id} l={l} accent={accent} widePx={tpl.featuredPx} owner={isOwner} featured={featSet.has(l.id)} onToggleFeatured={toggleFeatured} />)}
+            {featured.map(l => <ItemCard key={l.id} l={l} dispTitle={titleFor(l.id)} accent={accent} widePx={tpl.featuredPx} owner={isOwner} featured={featSet.has(l.id)} onToggleFeatured={toggleFeatured} />)}
           </div>
         </section>
       )}
@@ -203,7 +214,7 @@ function ShopInner() {
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${tpl.minCol}px, 1fr))`, gap: tpl.gap }}>
           {visible.length === 0
             ? <div style={{ gridColumn: '1/-1', padding: 30, textAlign: 'center', color: '#aaa', fontFamily: 'var(--font-nunito)' }}>{t('Nothing here yet.')}</div>
-            : visible.map(l => <ItemCard key={l.id} l={l} accent={accent} owner={isOwner} featured={featSet.has(l.id)} onToggleFeatured={toggleFeatured} />)}
+            : visible.map(l => <ItemCard key={l.id} l={l} dispTitle={titleFor(l.id)} accent={accent} owner={isOwner} featured={featSet.has(l.id)} onToggleFeatured={toggleFeatured} />)}
         </div>
       </section>
 
@@ -266,7 +277,7 @@ function ShareButton({ name }: { name: string }) {
   )
 }
 
-function ItemCard({ l, accent, widePx, owner, featured, onToggleFeatured }: { l: Item; accent: string; widePx?: number; owner?: boolean; featured?: boolean; onToggleFeatured?: (id: string) => void }) {
+function ItemCard({ l, dispTitle, accent, widePx, owner, featured, onToggleFeatured }: { l: Item; dispTitle?: string; accent: string; widePx?: number; owner?: boolean; featured?: boolean; onToggleFeatured?: (id: string) => void }) {
   return (
     <Link href={`/listings/${l.id}`} style={{ textDecoration: 'none', ...(widePx ? { flex: `0 0 ${widePx}px` } : {}) }}>
       <div style={{ background: '#fff', border: `1px solid ${featured ? accent : '#ece3d7'}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
@@ -290,7 +301,7 @@ function ItemCard({ l, accent, widePx, owner, featured, onToggleFeatured }: { l:
           )}
         </div>
         <div style={{ padding: '10px 11px 12px' }}>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 700, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 700, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{dispTitle || l.title}</div>
           <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: accent, marginTop: 2 }}>€{l.price.toLocaleString()}</div>
         </div>
       </div>

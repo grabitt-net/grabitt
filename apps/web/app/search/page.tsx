@@ -14,6 +14,7 @@ import BannerSlot from '@/components/marketplace/BannerSlot'
 import Place from '@/components/marketplace/Place'
 import { deptEmoji, type DbListing } from '@/lib/listingMap'
 import { t } from '@/lib/i18n'
+import { useTranslated } from '@/lib/translateContent'
 
 // Search results as a real, deep-linkable page (/search?q=…), replacing the old
 // in-app panel. Cards link straight to /listings/[id] so a result opens the same
@@ -78,6 +79,10 @@ function SearchInner() {
     return items.filter(l => l.department === dept)
   }, [items, featured, filterIdx])
 
+  // Auto-translate result titles to the viewer's site language (cached; English
+  // viewers get the originals with no round trip).
+  const trTitles = useTranslated(shown.map(l => l.title ?? ''))
+
   const heading = featured ? t('Featured') : q ? `“${q}”` : t('Search')
 
   return (
@@ -118,7 +123,7 @@ function SearchInner() {
       </div>
 
       <div className="category-grid">
-        {shown.map(l => {
+        {shown.map((l, idx) => {
           const img = Array.isArray(l.images) ? l.images[0] : null
           const emoji = deptEmoji(l.department)
           return (
@@ -130,7 +135,7 @@ function SearchInner() {
                     : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>{emoji}</div>}
                 </div>
                 <div style={{ padding: '10px 11px 12px' }}>
-                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
+                  <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trTitles[idx] || l.title}</div>
                   <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>€{Number(l.price ?? 0).toLocaleString()}</div>
                   <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: 'var(--ink-2)' }}>{l.location ?? 'Canary Islands'}</Place>
                 </div>
