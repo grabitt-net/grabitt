@@ -62,12 +62,34 @@ TRANSLATIONS entries now need only `en` (+ `es`); other langs fall back.
       are long-form bodies best owned as CMS Spanish content, not dictionary
       strings (decision 2026-09-14).
 
-### Phase 3 — Content translation (bigger decision, optional)
-- [ ] Decide how to handle user/admin content: manual Spanish fields in the CMS,
-      or an automatic machine-translation layer. Separate scoping.
-- [ ] Footer content pages (InfoPage long-form bodies) — moved here from Phase 2;
-      handle via the CMS Spanish-content mechanism decided above rather than the
-      `t()` dictionary. The page chrome (nav, shared headings) is already on `t()`.
+### Phase 3 — Content translation ✅ DONE (2026-09-14)
+Decision (2026-09-14): editorial/admin content = **manual Spanish CMS fields**;
+user-generated content = **Google machine translation, auto, no "show original"**.
+
+**3a — editorial manual ES fields (done):**
+- [x] `PageContent.htmlEs` + EN/ES tabs in Admin → Page Content; InfoPage serves
+      `htmlEs` when the site is Spanish (footer content pages covered this way)
+- [x] `HelpArticle.questionEs/answerEs` + `HelpCategory.titleEs/blurbEs` + Spanish
+      fields in the Help admin; public /help serves them
+- Served with English fallback everywhere; empty ES = show English.
+
+**3b — user content machine translation (done):**
+- [x] `Translation` cache table (hash + target lang, RLS on) + Prisma model
+- [x] `/api/translate` (Google Cloud Translation v2, batched, DB-cached, echoes
+      input when unconfigured) — reuses `GOOGLE_MAPS_API_KEY` unless
+      `GOOGLE_TRANSLATE_API_KEY` is set
+- [x] `lib/translateContent.ts` — `translateTexts()` + `useTranslated()` hook
+      (in-memory cache; English viewers skip the round trip)
+- [x] Applied to listing detail (title + description), job adverts, inbox
+      messages (other party's), browse-grid titles
+- **Setup required:** enable the Cloud Translation API on the Google key (and
+  ensure any API-key restriction allows it). Until then translation silently
+  no-ops (content shows in its original language).
+
+**Remaining / follow-ups:**
+- [ ] Extend `useTranslated` to the other listing surfaces (ListingsRow, search
+      results, storefront cards) — same one-line hook pattern
+- [ ] Fill de/da/sv/nl/fr/pt for the en+es-only dictionary entries from Phase 2
 
 ### Notes / decisions
 - Keep reload-on-switch unless we later decide the live-update refactor (a React
