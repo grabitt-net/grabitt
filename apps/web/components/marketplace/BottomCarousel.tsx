@@ -5,6 +5,7 @@ import { usePanel } from '@/context/PanelContext'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { toPanelItem, type DbListing } from '@/lib/listingMap'
 import Icon from './Icon'
+import { t } from '@/lib/i18n'
 
 // "Just Listed" — previously a fixed bottom bar; now an inline banner-style
 // section in the page flow (a full-width strip with its own tinted surface).
@@ -31,12 +32,12 @@ export default function BottomCarousel() {
     <section style={{ margin: '24px 14px 0' }}>
       <div style={{ background: 'linear-gradient(180deg,#fff,#faf6f0)', border: '1px solid #ece3d7', borderRadius: 16, padding: '16px 16px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>🆕 Just listed</h2>
+          <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>🆕 {t('Just Listed')}</h2>
           <button
             onClick={() => openPanel('justlisted')}
             style={{ background: '#FFF3EE', color: 'var(--orange)', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}
           >
-            See all
+            {t('See all')}
           </button>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             <button aria-label="Scroll left" onClick={() => nudge(-1)} style={arrow}><Icon name="arrowLeft" size={16} /></button>

@@ -5,6 +5,8 @@ import { createLooseTrpcClient } from '@/lib/trpc'
 import { toPanelItem, type DbListing } from '@/lib/listingMap'
 import Icon from './Icon'
 
+import { t } from '@/lib/i18n'
+
 export default function FeaturedStrip() {
   const router = useRouter()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -32,8 +34,8 @@ export default function FeaturedStrip() {
     <section style={{ margin: '24px 14px 0' }}>
       <div style={{ background: 'linear-gradient(180deg,#fff,#faf6f0)', border: '1px solid #ece3d7', borderRadius: 16, padding: '16px 16px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>⭐ Featured</h2>
-          <button onClick={() => router.push('/search?featured=1')} style={{ background: '#FFF3EE', color: 'var(--orange)', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>See all</button>
+          <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 18, fontWeight: 800, color: 'var(--dark)', margin: 0 }}>⭐ {t('Featured')}</h2>
+          <button onClick={() => router.push('/search?featured=1')} style={{ background: '#FFF3EE', color: 'var(--orange)', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>{t('See all')}</button>
         </div>
         <div ref={scrollRef} style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6, paddingTop: 2, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
           {items.map(l => {

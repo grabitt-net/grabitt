@@ -1,5 +1,6 @@
 'use client'
 import Icon, { IconName } from './Icon'
+import { t } from '@/lib/i18n'
 
 // Trust/USP strip (marketplace pattern): a small set of reassurance badges with
 // consistent SVG icons — replaces the old emoji-link grid, whose links now live
@@ -24,9 +25,9 @@ export default function TrustStrip() {
               <Icon name={b.icon} size={21} />
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, fontWeight: 800, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{b.tag}</div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)', lineHeight: 1.3, marginBottom: 5 }}>{b.title}</div>
-              <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#1a1a1a', lineHeight: 1.45 }}>{b.body}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, fontWeight: 800, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{t(b.tag)}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)', lineHeight: 1.3, marginBottom: 5 }}>{t(b.title)}</div>
+              <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#1a1a1a', lineHeight: 1.45 }}>{t(b.body)}</div>
             </div>
           </div>
         ))}

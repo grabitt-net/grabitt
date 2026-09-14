@@ -459,6 +459,19 @@ export const TRANSLATIONS: Record<string, { en: string } & Partial<Record<Lang, 
   'Suggest Ideas': { en: 'Suggest Ideas', es: 'Sugerir ideas' },
   'Every payment protected by the Grabitt Guarantee · Local to the Canaries': { en: 'Every payment protected by the Grabitt Guarantee · Local to the Canaries', es: 'Cada pago protegido por la Garantía Grabitt · Local en Canarias' },
   'All rights reserved.': { en: 'All rights reserved.', es: 'Todos los derechos reservados.' },
+
+  // ── Home trust strip ─────────────────────────────────────────────────────────
+  'Escrow': { en: 'Escrow', es: 'Depósito' },
+  'Secure escrow': { en: 'Secure escrow', es: 'Depósito seguro' },
+  'Payment is held safely until you confirm handover.': { en: 'Payment is held safely until you confirm handover.', es: 'El pago se retiene de forma segura hasta que confirmes la entrega.' },
+  'Local': { en: 'Local', es: 'Local' },
+  'Local to the Canaries': { en: 'Local to the Canaries', es: 'Local en Canarias' },
+  'Buy and sell with people near you across the Canary Islands.': { en: 'Buy and sell with people near you across the Canary Islands.', es: 'Compra y vende con gente cerca de ti en las Islas Canarias.' },
+  'Protection': { en: 'Protection', es: 'Protección' },
+  'Buyer protection': { en: 'Buyer protection', es: 'Protección del comprador' },
+  'Every order is covered by the Grabitt Guarantee.': { en: 'Every order is covered by the Grabitt Guarantee.', es: 'Cada pedido está cubierto por la Garantía Grabitt.' },
+  'Tracked delivery': { en: 'Tracked delivery', es: 'Envío con seguimiento' },
+  'Funds release to sellers once an item is in transit.': { en: 'Funds release to sellers once an item is in transit.', es: 'El dinero se libera al vendedor cuando el artículo está en tránsito.' },
 }
 
 let _lang: Lang = 'en'
