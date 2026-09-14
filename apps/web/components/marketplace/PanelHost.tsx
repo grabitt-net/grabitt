@@ -14,7 +14,7 @@ import { AGENTS_ENABLED } from '@/lib/flags'
 import { createClient } from '@/lib/supabase'
 import { getAuthToken, refreshAuthToken, setAuthToken } from '@/lib/authToken'
 import { compressAndUpload, listingPhotoPath, uploadDisputeEvidence } from '@/lib/storage'
-import { LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
+import { LAUNCH_LANGS, langLabel, getLanguage, setLanguage, t, type Lang } from '@/lib/i18n'
 import StripePayment from './StripePayment'
 import FooterPanelActions from './FooterPanelActions'
 import FindStaffPanel from './FindStaffPanel'
@@ -4459,7 +4459,7 @@ function PanelBody() {
             {/* Preferences — language */}
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{t('Language')}</div>
             <select value={lang} onChange={e => setLang(e.target.value as Lang)} style={{ width: '100%', border: '1.5px solid #e0d8d0', borderRadius: 10, padding: 11, fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--dark)', background: '#fff', marginBottom: 14, boxSizing: 'border-box' }}>
-              {LANGS.map(l => <option key={l} value={l}>{langLabel(l)}</option>)}
+              {LAUNCH_LANGS.map(l => <option key={l} value={l}>{langLabel(l)}</option>)}
             </select>
 
             <button onClick={savePrefs} disabled={saving} style={{ width: '100%', background: saving ? '#ccc' : 'var(--sage)', color: '#fff', border: 'none', borderRadius: 14, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 16 }}>{saving ? t('Saving…') : `${t('Save preferences')} ✓`}</button>

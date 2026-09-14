@@ -2,6 +2,12 @@
 export const LANGS = ['en', 'es', 'de', 'da', 'sv', 'nl', 'fr', 'pt'] as const
 export type Lang = typeof LANGS[number]
 
+// Languages actually offered at launch. The dictionary carries all of LANGS, but
+// only these are exposed in the switcher and used by browser auto-detect, so we
+// never show a half-translated UI. The other languages fall back to English;
+// add them here once their strings are filled in to switch them on.
+export const LAUNCH_LANGS: readonly Lang[] = ['en', 'es']
+
 const LANG_LABELS: Record<Lang, string> = {
   en: '🇬🇧 English', es: '🇪🇸 Español', de: '🇩🇪 Deutsch',
   da: '🇩🇰 Dansk', sv: '🇸🇪 Svenska', nl: '🇳🇱 Nederlands',
@@ -770,7 +776,9 @@ let _lang: Lang = 'en'
 export function detectBrowserLang(): Lang {
   if (typeof window === 'undefined') return 'en'
   const nav = navigator.language?.slice(0, 2) as Lang
-  return LANGS.includes(nav) ? nav : 'en'
+  // Only auto-switch to a language we actually launch with; everything else
+  // (incl. unsupported languages) stays on English.
+  return LAUNCH_LANGS.includes(nav) ? nav : 'en'
 }
 
 export function setLanguage(lang: Lang) {
