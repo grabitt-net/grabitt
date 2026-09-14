@@ -57,7 +57,9 @@ TRANSLATIONS entries now need only `en` (+ `es`); other langs fall back.
 - [x] Recruitment / ATS (EmployerDashboardContent, FindStaffPanel,
       ApplicantsKanban) — cards, filters, stage board, candidate search &
       unlock flow, toasts/dialogs. Removed stray arrow glyphs from buttons.
-- [ ] Hub / storefront editor, remaining marketplace components
+- [x] Hub / storefront editor (StorefrontEditor, MyHub) + public shop page
+      (templates, branding, categories, featured, policies, follow/share,
+      owner controls) — MyHub was already translated bar account-type labels
 
 ### Phase 3 — Content translation (bigger decision, optional)
 - [ ] Decide how to handle user/admin content: manual Spanish fields in the CMS,

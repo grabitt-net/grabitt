@@ -11,7 +11,7 @@ import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { toast } from '@/lib/ui'
 import { deptEmoji, DEPT_LABEL } from '@/lib/listingMap'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
-import { pickBannerImage } from '@/lib/i18n'
+import { pickBannerImage, t } from '@/lib/i18n'
 
 // A business's public shop page: full banner, the seller's identity + service
 // rating, a Follow button, category shelves derived from what they actually
@@ -99,8 +99,8 @@ function ShopInner() {
     return data.listings.filter(l => (cat === 'All' || catOf(l) === cat) && !(cat === 'All' && showsFeaturedRow && featIds.has(l.id)))
   }, [data, cat])
 
-  if (state === 'loading') return <Shell><div style={pad}>Loading…</div></Shell>
-  if (state === 'notfound' || !data) return <Shell><div style={pad}>This shop isn&apos;t available. <Link href="/" style={{ color: 'var(--orange)', fontWeight: 800 }}>Back home</Link></div></Shell>
+  if (state === 'loading') return <Shell><div style={pad}>{t('Loading…')}</div></Shell>
+  if (state === 'notfound' || !data) return <Shell><div style={pad}>{t('This shop isn’t available.')} <Link href="/" style={{ color: 'var(--orange)', fontWeight: 800 }}>{t('Back home')}</Link></div></Shell>
 
   const { shop, seller, rating, followers } = data
   const logo = shop.logoUrl || (seller.avatar && seller.avatar.length > 2 ? seller.avatar : null)
@@ -121,7 +121,7 @@ function ShopInner() {
     const next = [...cur].slice(0, 12)
     setData({ ...data, shop: { ...data.shop, featuredIds: next } })
     try { await trpcAuthed().business.upsertStorefront.mutate({ featuredIds: next }) }
-    catch { toast('Could not update featured items.'); fetchShop() }
+    catch { toast(t('Could not update featured items.')); fetchShop() }
   }
 
   return (
@@ -141,7 +141,7 @@ function ShopInner() {
         <div style={{ marginTop: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 28, fontWeight: 700, color: 'var(--dark)', lineHeight: 1.15 }}>{seller.name}</span>
-            {seller.verified && <span style={{ background: '#dcfce7', color: '#16a34a', fontSize: 12, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '4px 11px', borderRadius: 50 }}>🛡️ Verified</span>}
+            {seller.verified && <span style={{ background: '#dcfce7', color: '#16a34a', fontSize: 12, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '4px 11px', borderRadius: 50 }}>🛡️ {t('Verified')}</span>}
           </div>
           {shop.tagline && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, color: '#666', marginTop: 4 }}>{shop.tagline}</div>}
         </div>
@@ -150,7 +150,7 @@ function ShopInner() {
             see Follow + Share. */}
         {isOwner ? (
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            <button onClick={() => openPanel('storefrontEdit')} style={{ flex: 1, border: 'none', background: accent, color: '#fff', borderRadius: 50, padding: '11px 0', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer' }}>✏️ Edit shop</button>
+            <button onClick={() => openPanel('storefrontEdit')} style={{ flex: 1, border: 'none', background: accent, color: '#fff', borderRadius: 50, padding: '11px 0', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer' }}>✏️ {t('Edit shop')}</button>
             <ShareButton name={seller.name} />
           </div>
         ) : (
@@ -162,15 +162,15 @@ function ShopInner() {
 
         {/* Stats */}
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <Stat value={rating.provisional ? 'New' : `${rating.stars.toFixed(1)}★`} label={rating.provisional ? 'No ratings yet' : 'Rating'} title={rating.provisional ? 'Rating appears once this shop has sales and reviews' : rating.parts.map(p => `${p.label}: ${p.score}/100 (${p.weight}%) — ${p.detail}`).join('\n')} />
-          <Stat value={String(followers)} label="Followers" />
-          <Stat value={String(seller.salesCount)} label="Sales" />
-          <Stat value={new Date(seller.memberSince).getFullYear().toString()} label="Since" />
+          <Stat value={rating.provisional ? t('New') : `${rating.stars.toFixed(1)}★`} label={rating.provisional ? t('No ratings yet') : t('Rating')} title={rating.provisional ? t('Rating appears once this shop has sales and reviews') : rating.parts.map(p => `${p.label}: ${p.score}/100 (${p.weight}%) — ${p.detail}`).join('\n')} />
+          <Stat value={String(followers)} label={t('Followers')} />
+          <Stat value={String(seller.salesCount)} label={t('Sales')} />
+          <Stat value={new Date(seller.memberSince).getFullYear().toString()} label={t('Since')} />
         </div>
 
         {shop.about && (
           <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, padding: '13px 15px', marginTop: 14 }}>
-            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 5 }}>About</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 5 }}>{t('About')}</div>
             <p style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 13, color: '#444', lineHeight: 1.6, margin: 0 }}>{shop.about}</p>
           </div>
         )}
@@ -179,7 +179,7 @@ function ShopInner() {
         {tpl.showCats && cats.length > 0 && (
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', margin: '14px 0 4px' }}>
             {['All', ...cats].map(c => (
-              <button key={c} onClick={() => setCat(c)} style={{ flexShrink: 0, border: `1.5px solid ${cat === c ? accent : '#e5dccd'}`, background: cat === c ? accent : '#fff', color: cat === c ? '#fff' : '#555', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{c}</button>
+              <button key={c} onClick={() => setCat(c)} style={{ flexShrink: 0, border: `1.5px solid ${cat === c ? accent : '#e5dccd'}`, background: cat === c ? accent : '#fff', color: cat === c ? '#fff' : '#555', borderRadius: 50, padding: '6px 14px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>{c === 'All' ? t('All') : c}</button>
             ))}
           </div>
         )}
@@ -188,7 +188,7 @@ function ShopInner() {
       {/* Featured row (only on All) */}
       {tpl.showFeatured && featured.length > 0 && cat === 'All' && (
         <section style={{ padding: '14px 16px 0' }}>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: shop.template === 'showcase' ? 16 : 13, fontWeight: 900, color: accent, marginBottom: 10 }}>⭐ Featured</div>
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: shop.template === 'showcase' ? 16 : 13, fontWeight: 900, color: accent, marginBottom: 10 }}>⭐ {t('Featured')}</div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
             {featured.map(l => <ItemCard key={l.id} l={l} accent={accent} widePx={tpl.featuredPx} owner={isOwner} featured={featSet.has(l.id)} onToggleFeatured={toggleFeatured} />)}
           </div>
@@ -198,11 +198,11 @@ function ShopInner() {
       {/* Items */}
       <section style={{ padding: '16px 16px 0' }}>
         <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)', marginBottom: 10 }}>
-          {cat === 'All' ? `${data.listings.length} item${data.listings.length === 1 ? '' : 's'}` : `${visible.length} in ${cat}`}
+          {cat === 'All' ? t(data.listings.length === 1 ? '{n} item' : '{n} items').replace('{n}', String(data.listings.length)) : t('{n} in {cat}').replace('{n}', String(visible.length)).replace('{cat}', cat)}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${tpl.minCol}px, 1fr))`, gap: tpl.gap }}>
           {visible.length === 0
-            ? <div style={{ gridColumn: '1/-1', padding: 30, textAlign: 'center', color: '#aaa', fontFamily: 'var(--font-nunito)' }}>Nothing here yet.</div>
+            ? <div style={{ gridColumn: '1/-1', padding: 30, textAlign: 'center', color: '#aaa', fontFamily: 'var(--font-nunito)' }}>{t('Nothing here yet.')}</div>
             : visible.map(l => <ItemCard key={l.id} l={l} accent={accent} owner={isOwner} featured={featSet.has(l.id)} onToggleFeatured={toggleFeatured} />)}
         </div>
       </section>
@@ -210,10 +210,10 @@ function ShopInner() {
       {/* Policies */}
       {tpl.showPolicies && (shop.shippingPolicy || shop.returnsPolicy || shop.paymentPolicy) && (
         <section style={{ padding: '20px 16px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>Shop info</div>
-          {shop.shippingPolicy && <Policy icon="🚚" title="Delivery" body={shop.shippingPolicy} />}
-          {shop.returnsPolicy && <Policy icon="↩️" title="Returns" body={shop.returnsPolicy} />}
-          {shop.paymentPolicy && <Policy icon="💳" title="Payment" body={shop.paymentPolicy} />}
+          <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{t('Shop info')}</div>
+          {shop.shippingPolicy && <Policy icon="🚚" title={t('Delivery')} body={shop.shippingPolicy} />}
+          {shop.returnsPolicy && <Policy icon="↩️" title={t('Returns')} body={shop.returnsPolicy} />}
+          {shop.paymentPolicy && <Policy icon="💳" title={t('Payment')} body={shop.paymentPolicy} />}
         </section>
       )}
 
@@ -241,8 +241,8 @@ function FollowButton({ sellerId, accent }: { sellerId: string; accent: string; 
     setBusy(true)
     try {
       if (following) { await (trpcAuthed() as any).follow.unfollow.mutate({ sellerId }); setFollowing(false) }
-      else { await (trpcAuthed() as any).follow.follow.mutate({ sellerId }); setFollowing(true); toast('Following — you’ll see their new listings.') }
-    } catch { toast('Could not update. Please try again.') } finally { setBusy(false) }
+      else { await (trpcAuthed() as any).follow.follow.mutate({ sellerId }); setFollowing(true); toast(t('Following — you’ll see their new listings.')) }
+    } catch { toast(t('Could not update. Please try again.')) } finally { setBusy(false) }
   }
 
   const on = following === true
@@ -250,7 +250,7 @@ function FollowButton({ sellerId, accent }: { sellerId: string; accent: string; 
     <button onClick={toggle} disabled={busy} style={{
       flex: 1, border: on ? '1.5px solid #ccc' : 'none', background: on ? '#fff' : accent, color: on ? '#555' : '#fff',
       borderRadius: 50, padding: '11px 0', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, cursor: busy ? 'wait' : 'pointer',
-    }}>{on ? '✓ Following' : '＋ Follow shop'}</button>
+    }}>{on ? `✓ ${t('Following')}` : `＋ ${t('Follow shop')}`}</button>
   )
 }
 
@@ -262,7 +262,7 @@ function ShareButton({ name }: { name: string }) {
     try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1800) } catch { /* blocked */ }
   }
   return (
-    <button onClick={share} style={{ flexShrink: 0, border: '1.5px solid #e5dccd', background: '#fff', color: 'var(--dark)', borderRadius: 50, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer' }}>{copied ? 'Copied ✓' : '🔗 Share'}</button>
+    <button onClick={share} style={{ flexShrink: 0, border: '1.5px solid #e5dccd', background: '#fff', color: 'var(--dark)', borderRadius: 50, padding: '11px 18px', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, cursor: 'pointer' }}>{copied ? `${t('Copied')} ✓` : `🔗 ${t('Share')}`}</button>
   )
 }
 
@@ -274,15 +274,15 @@ function ItemCard({ l, accent, widePx, owner, featured, onToggleFeatured }: { l:
           {l.images?.[0]
             ? <img src={l.images[0]} alt={l.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
             : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>{deptEmoji(l.department)}</div>}
-          {l.isGrabItNow && <span style={{ position: 'absolute', top: 8, left: 8, background: accent, color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '3px 8px', borderRadius: 50 }}>⚡ GRAB IT NOW</span>}
-          {!!l.multibuyTiers?.length && <span style={{ position: 'absolute', bottom: 8, left: 8, background: '#fff', color: accent, fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '3px 8px', borderRadius: 50, border: `1px solid ${accent}` }}>🏷️ Multibuy</span>}
+          {l.isGrabItNow && <span style={{ position: 'absolute', top: 8, left: 8, background: accent, color: '#fff', fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '3px 8px', borderRadius: 50 }}>⚡ {t('GRAB IT NOW')}</span>}
+          {!!l.multibuyTiers?.length && <span style={{ position: 'absolute', bottom: 8, left: 8, background: '#fff', color: accent, fontSize: 9, fontWeight: 900, fontFamily: 'var(--font-nunito)', padding: '3px 8px', borderRadius: 50, border: `1px solid ${accent}` }}>🏷️ {t('Multibuy')}</span>}
           {/* Owner-only: star toggle to feature/unfeature this item on the shop. */}
           {owner && onToggleFeatured && (
             <span
               role="button"
               tabIndex={0}
-              title={featured ? 'Remove from your shop’s Featured shelf' : 'Feature on your shop (storefront only)'}
-              aria-label={featured ? 'Remove from your shop’s Featured shelf' : 'Feature on your shop'}
+              title={featured ? t('Remove from your shop’s Featured shelf') : t('Feature on your shop (storefront only)')}
+              aria-label={featured ? t('Remove from your shop’s Featured shelf') : t('Feature on your shop')}
               onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleFeatured(l.id) }}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleFeatured(l.id) } }}
               style={{ position: 'absolute', top: 8, right: 8, width: 30, height: 30, borderRadius: '50%', background: featured ? accent : 'rgba(255,255,255,0.92)', color: featured ? '#fff' : '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }}

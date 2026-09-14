@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { trpcAuthed } from '@/lib/authToken'
 import { compressAndUpload, cmsImagePath } from '@/lib/storage'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
+import { t } from '@/lib/i18n'
 
 // The business storefront editor. A shop is more than a bio: a layout template,
 // the seller's own category shelves, which listings to feature, and the
@@ -104,11 +105,11 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
         ...(shop ? {} : { slug: f.slug.trim() || undefined }),
       })
       if (publishOverride !== undefined) set('published', publishOverride)
-      setSavedMsg(publishOverride === true ? 'Your shop is live 🎉' : publishOverride === false ? 'Shop unpublished' : 'Saved')
+      setSavedMsg(publishOverride === true ? t('Your shop is live 🎉') : publishOverride === false ? t('Shop unpublished') : t('Saved'))
       // Reload so a freshly-created shop picks up its slug.
       const s = await trpcAuthed().business.myStorefront.query() as { shop: Shop | null }
       if (s.shop) { setShop(s.shop); set('slug', s.shop.slug) }
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Could not save.') }
+    } catch (e) { setErr(e instanceof Error ? e.message : t('Could not save.')) }
     finally { setSaving(false) }
   }
 
@@ -120,7 +121,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
       // (compressed) rather than an expiring signed URL from a private bucket.
       const url = await compressAndUpload(file, cmsImagePath('storefront'))
       set('bannerUrl', url)
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Upload failed') }
+    } catch (e) { setErr(e instanceof Error ? e.message : t('Upload failed')) }
     finally { setUploadingBanner(false) }
   }
   const uploadBannerEs = async (file: File | null) => {
@@ -131,7 +132,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
       // (compressed) rather than an expiring signed URL from a private bucket.
       const url = await compressAndUpload(file, cmsImagePath('storefront'))
       set('bannerUrlEs', url)
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Upload failed') }
+    } catch (e) { setErr(e instanceof Error ? e.message : t('Upload failed')) }
     finally { setUploadingBannerEs(false) }
   }
 
@@ -141,7 +142,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
     try {
       const url = await compressAndUpload(file, cmsImagePath('storefront'))
       set('logoUrl', url)
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Upload failed') }
+    } catch (e) { setErr(e instanceof Error ? e.message : t('Upload failed')) }
     finally { setUploadingLogo(false) }
   }
 
@@ -158,87 +159,87 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
     <div onClick={onClose} className="panel-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400 }}>
       <div onClick={e => e.stopPropagation()} className="panel-sheet" style={{ background: '#fff', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
-          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>🏪 My storefront</span>
+          <span style={{ fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 900, color: '#1a1a1a' }}>🏪 {t('My storefront')}</span>
           <button onClick={onClose} style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 16, cursor: 'pointer' }}>✕</button>
         </div>
 
         <div style={{ overflowY: 'auto', padding: 16, flex: 1 }}>
-          {!loaded ? <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)' }}>Loading…</div>
+          {!loaded ? <div style={{ textAlign: 'center', padding: 30, color: '#888', fontFamily: 'var(--font-ui)' }}>{t('Loading…')}</div>
           : !isBiz ? (
-            <Note emoji="🏢" title="Storefronts are for Business accounts"
-              body="Upgrade to Business to open a shop with your own layout, categories and policies." />
+            <Note emoji="🏢" title={t('Storefronts are for Business accounts')}
+              body={t('Upgrade to Business to open a shop with your own layout, categories and policies.')} />
           ) : (
             <>
               {!verified && (
                 <div style={{ background: '#FFF7ED', border: '1px solid #FFD4A0', borderRadius: 10, padding: '10px 12px', marginBottom: 14, fontFamily: 'var(--font-ui)', fontSize: 12, color: '#9a5b1a', lineHeight: 1.5 }}>
-                  You can build your shop now, but it can only go live once your business is verified.
+                  {t('You can build your shop now, but it can only go live once your business is verified.')}
                 </div>
               )}
 
               {shareUrl && (
                 <div style={{ background: '#f8f9fa', borderRadius: 10, padding: '9px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-ui)', fontSize: 11.5, color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shareUrl}</span>
-                  <a href={`/shop/${f.slug}`} target="_blank" rel="noreferrer" style={{ flexShrink: 0, color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>Preview</a>
+                  <a href={`/shop/${f.slug}`} target="_blank" rel="noreferrer" style={{ flexShrink: 0, color: 'var(--orange)', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}>{t('Preview')}</a>
                 </div>
               )}
 
               {/* Layout template */}
-              <Section title="Layout">
+              <Section title={t('Layout')}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {TEMPLATES.map(t => (
-                    <button key={t.id} onClick={() => set('template', t.id)} style={{ textAlign: 'left', background: f.template === t.id ? '#FFF3EE' : '#fff', border: `1.5px solid ${f.template === t.id ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 10, padding: 10, cursor: 'pointer' }}>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: f.template === t.id ? 'var(--orange)' : '#1a1a1a' }}>{t.label}</div>
-                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 2 }}>{t.blurb}</div>
+                  {TEMPLATES.map(tpl => (
+                    <button key={tpl.id} onClick={() => set('template', tpl.id)} style={{ textAlign: 'left', background: f.template === tpl.id ? '#FFF3EE' : '#fff', border: `1.5px solid ${f.template === tpl.id ? 'var(--orange)' : '#e5dccd'}`, borderRadius: 10, padding: 10, cursor: 'pointer' }}>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 900, color: f.template === tpl.id ? 'var(--orange)' : '#1a1a1a' }}>{t(tpl.label)}</div>
+                      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#888', marginTop: 2 }}>{t(tpl.blurb)}</div>
                     </button>
                   ))}
                 </div>
               </Section>
 
               {/* Branding */}
-              <Section title="Branding">
-                <Label>Business name</Label>
-                <input value={f.businessName} onChange={e => set('businessName', e.target.value)} placeholder="e.g. Isla Ceramics" style={INPUT} />
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '2px 0 8px' }}>Shown across Grabitt and on your Business Hub.</div>
-                <Label>Tagline</Label>
-                <input value={f.tagline} onChange={e => set('tagline', e.target.value)} placeholder="e.g. Handmade island ceramics" style={INPUT} />
-                <Label>About your shop</Label>
+              <Section title={t('Branding')}>
+                <Label>{t('Business name')}</Label>
+                <input value={f.businessName} onChange={e => set('businessName', e.target.value)} placeholder={t('e.g. Isla Ceramics')} style={INPUT} />
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '2px 0 8px' }}>{t('Shown across Grabitt and on your Business Hub.')}</div>
+                <Label>{t('Tagline')}</Label>
+                <input value={f.tagline} onChange={e => set('tagline', e.target.value)} placeholder={t('e.g. Handmade island ceramics')} style={INPUT} />
+                <Label>{t('About your shop')}</Label>
                 <textarea value={f.about} onChange={e => set('about', e.target.value)} rows={3} style={{ ...INPUT, resize: 'vertical' }} />
 
-                <Label>Logo</Label>
+                <Label>{t('Logo')}</Label>
                 <input ref={logoRef} type="file" accept="image/*" onChange={e => uploadLogo(e.target.files?.[0] ?? null)} style={{ display: 'none' }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                   <div style={{ width: 64, height: 64, borderRadius: 16, background: '#f5f0e8', border: '1px solid #e5dccd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, overflow: 'hidden', flexShrink: 0 }}>
                     {f.logoUrl ? <img src={f.logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏪'}
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => logoRef.current?.click()} disabled={uploadingLogo} style={{ background: '#fff', color: 'var(--orange)', border: '1.5px dashed var(--orange)', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{uploadingLogo ? 'Uploading…' : f.logoUrl ? 'Replace logo' : '🖼️ Upload logo'}</button>
-                    {f.logoUrl && <button onClick={() => set('logoUrl', '')} style={{ background: '#fff', color: '#888', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>Remove</button>}
+                    <button onClick={() => logoRef.current?.click()} disabled={uploadingLogo} style={{ background: '#fff', color: 'var(--orange)', border: '1.5px dashed var(--orange)', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{uploadingLogo ? t('Uploading…') : f.logoUrl ? t('Replace logo') : `🖼️ ${t('Upload logo')}`}</button>
+                    {f.logoUrl && <button onClick={() => set('logoUrl', '')} style={{ background: '#fff', color: '#888', border: '1.5px solid #e5dccd', borderRadius: 10, padding: '9px 14px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{t('Remove')}</button>}
                   </div>
                 </div>
 
-                <Label>Banner image</Label>
+                <Label>{t('Banner image')}</Label>
                 <input ref={bannerRef} type="file" accept="image/*" onChange={e => uploadBanner(e.target.files?.[0] ?? null)} style={{ display: 'none' }} />
                 {f.bannerUrl
-                  ? <div style={{ position: 'relative', marginBottom: 6 }}><img src={f.bannerUrl} alt="" style={{ width: '100%', aspectRatio: '1053 / 300', objectFit: 'cover', borderRadius: 10, background: '#f5f0e8' }} /><button onClick={() => bannerRef.current?.click()} style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Replace</button></div>
-                  : <button onClick={() => bannerRef.current?.click()} disabled={uploadingBanner} style={{ width: '100%', marginBottom: 6, background: '#fff', color: 'var(--orange)', border: '1.5px dashed var(--orange)', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{uploadingBanner ? 'Uploading…' : '🖼️ Upload a banner'}</button>}
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '0 0 12px' }}>{BANNER_HINT}</div>
+                  ? <div style={{ position: 'relative', marginBottom: 6 }}><img src={f.bannerUrl} alt="" style={{ width: '100%', aspectRatio: '1053 / 300', objectFit: 'cover', borderRadius: 10, background: '#f5f0e8' }} /><button onClick={() => bannerRef.current?.click()} style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{t('Replace')}</button></div>
+                  : <button onClick={() => bannerRef.current?.click()} disabled={uploadingBanner} style={{ width: '100%', marginBottom: 6, background: '#fff', color: 'var(--orange)', border: '1.5px dashed var(--orange)', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{uploadingBanner ? t('Uploading…') : `🖼️ ${t('Upload a banner')}`}</button>}
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '0 0 12px' }}>{t(BANNER_HINT)}</div>
 
-                <Label>Banner image — Spanish version (optional)</Label>
+                <Label>{t('Banner image — Spanish version (optional)')}</Label>
                 <input ref={bannerEsRef} type="file" accept="image/*" onChange={e => uploadBannerEs(e.target.files?.[0] ?? null)} style={{ display: 'none' }} />
                 {f.bannerUrlEs
                   ? <div style={{ position: 'relative', marginBottom: 6 }}><img src={f.bannerUrlEs} alt="" style={{ width: '100%', aspectRatio: '1053 / 300', objectFit: 'cover', borderRadius: 10, background: '#f5f0e8' }} /><button onClick={() => set('bannerUrlEs', '')} style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: 50, padding: '5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>Remove</button></div>
-                  : <button onClick={() => bannerEsRef.current?.click()} disabled={uploadingBannerEs} style={{ width: '100%', marginBottom: 6, background: '#fff', color: 'var(--ocean)', border: '1.5px dashed var(--ocean)', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{uploadingBannerEs ? 'Uploading…' : '🇪🇸 Upload Spanish banner'}</button>}
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '0 0 12px' }}>Shown automatically to visitors using the site in Spanish. Leave empty to use the main banner for everyone.</div>
+                  : <button onClick={() => bannerEsRef.current?.click()} disabled={uploadingBannerEs} style={{ width: '100%', marginBottom: 6, background: '#fff', color: 'var(--ocean)', border: '1.5px dashed var(--ocean)', borderRadius: 10, padding: 12, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>{uploadingBannerEs ? t('Uploading…') : `🇪🇸 ${t('Upload Spanish banner')}`}</button>}
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '0 0 12px' }}>{t('Shown automatically to visitors using the site in Spanish. Leave empty to use the main banner for everyone.')}</div>
 
-                <Label>Accent colour</Label>
+                <Label>{t('Accent colour')}</Label>
                 <input type="color" value={f.accentColour} onChange={e => set('accentColour', e.target.value)} style={{ width: 48, height: 34, border: '1px solid #eee', borderRadius: 8, cursor: 'pointer' }} />
               </Section>
 
               {/* Categories */}
-              <Section title="Shop categories">
+              <Section title={t('Shop categories')}>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                  <input value={newCat} onChange={e => setNewCat(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCat() } }} placeholder="e.g. Clearance" style={{ ...INPUT, marginBottom: 0, flex: 1 }} />
-                  <button onClick={addCat} style={{ flexShrink: 0, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '0 16px', fontFamily: 'var(--font-ui)', fontWeight: 800, cursor: 'pointer' }}>Add</button>
+                  <input value={newCat} onChange={e => setNewCat(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCat() } }} placeholder={t('e.g. Clearance')} style={{ ...INPUT, marginBottom: 0, flex: 1 }} />
+                  <button onClick={addCat} style={{ flexShrink: 0, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '0 16px', fontFamily: 'var(--font-ui)', fontWeight: 800, cursor: 'pointer' }}>{t('Add')}</button>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {f.categories.map(c => (
@@ -248,8 +249,8 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
               </Section>
 
               {/* Featured items */}
-              <Section title={`Featured items (${f.featuredIds.length}/12)`}>
-                {mine.length === 0 ? <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>List some items and they&apos;ll appear here to feature.</div> : (
+              <Section title={`${t('Featured items')} (${f.featuredIds.length}/12)`}>
+                {mine.length === 0 ? <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#888' }}>{t('List some items and they’ll appear here to feature.')}</div> : (
                   <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
                     {mine.map(l => {
                       const on = f.featuredIds.includes(l.id)
@@ -267,29 +268,29 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
               </Section>
 
               {/* Policies */}
-              <Section title="Policies">
-                <Label>Shipping</Label>
-                <textarea value={f.shippingPolicy} onChange={e => set('shippingPolicy', e.target.value)} rows={2} placeholder="How and when you dispatch, costs, areas covered." style={{ ...INPUT, resize: 'vertical' }} />
-                <Label>Returns</Label>
-                <textarea value={f.returnsPolicy} onChange={e => set('returnsPolicy', e.target.value)} rows={2} placeholder="Your returns window and conditions." style={{ ...INPUT, resize: 'vertical' }} />
-                <Label>Payment</Label>
-                <textarea value={f.paymentPolicy} onChange={e => set('paymentPolicy', e.target.value)} rows={2} placeholder="Accepted methods, deposits, anything a buyer should know." style={{ ...INPUT, resize: 'vertical' }} />
+              <Section title={t('Policies')}>
+                <Label>{t('Shipping')}</Label>
+                <textarea value={f.shippingPolicy} onChange={e => set('shippingPolicy', e.target.value)} rows={2} placeholder={t('How and when you dispatch, costs, areas covered.')} style={{ ...INPUT, resize: 'vertical' }} />
+                <Label>{t('Returns')}</Label>
+                <textarea value={f.returnsPolicy} onChange={e => set('returnsPolicy', e.target.value)} rows={2} placeholder={t('Your returns window and conditions.')} style={{ ...INPUT, resize: 'vertical' }} />
+                <Label>{t('Payment')}</Label>
+                <textarea value={f.paymentPolicy} onChange={e => set('paymentPolicy', e.target.value)} rows={2} placeholder={t('Accepted methods, deposits, anything a buyer should know.')} style={{ ...INPUT, resize: 'vertical' }} />
               </Section>
 
               {err && <div style={{ background: '#fff5f5', color: '#c0392b', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, marginBottom: 10 }}>⚠️ {err}</div>}
               {savedMsg && <div style={{ background: '#f0fdf4', color: '#16a34a', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, marginBottom: 10 }}>{savedMsg}</div>}
 
               {f.published && (
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#16a34a', fontWeight: 800, marginBottom: 8, textAlign: 'center' }}>● Your shop is live — Save changes updates it straight away.</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#16a34a', fontWeight: 800, marginBottom: 8, textAlign: 'center' }}>{t('● Your shop is live — Save changes updates it straight away.')}</div>
               )}
               <div style={{ display: 'flex', gap: 8 }}>
                 {/* Primary action. For a live shop this saves the edits and keeps
                     it live (label says "Save changes" so that's clear); for a
                     draft it saves without publishing. */}
-                <button onClick={() => save()} disabled={saving} style={{ flex: 1, background: f.published ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#fff', color: f.published ? '#fff' : '#555', border: f.published ? 'none' : '1.5px solid #e5dccd', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{saving ? 'Saving…' : f.published ? 'Save changes' : 'Save draft'}</button>
+                <button onClick={() => save()} disabled={saving} style={{ flex: 1, background: f.published ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#fff', color: f.published ? '#fff' : '#555', border: f.published ? 'none' : '1.5px solid #e5dccd', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{saving ? t('Saving…') : f.published ? t('Save changes') : t('Save draft')}</button>
                 {f.published
-                  ? <button onClick={() => save(false)} disabled={saving} style={{ flex: '0 0 auto', background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: '13px 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Unpublish</button>
-                  : <button onClick={() => save(true)} disabled={saving || !verified} title={verified ? 'Make your shop live' : 'Your business must be verified before the shop can go live'} style={{ flex: 1, background: verified ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: verified ? 'pointer' : 'not-allowed' }}>{verified ? 'Publish shop' : '🔒 Verify to publish'}</button>}
+                  ? <button onClick={() => save(false)} disabled={saving} style={{ flex: '0 0 auto', background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 12, padding: '13px 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{t('Unpublish')}</button>
+                  : <button onClick={() => save(true)} disabled={saving || !verified} title={verified ? t('Make your shop live') : t('Your business must be verified before the shop can go live')} style={{ flex: 1, background: verified ? 'linear-gradient(135deg,var(--orange),var(--orange2))' : '#ccc', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: verified ? 'pointer' : 'not-allowed' }}>{verified ? t('Publish shop') : `🔒 ${t('Verify to publish')}`}</button>}
               </div>
             </>
           )}

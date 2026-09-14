@@ -127,7 +127,7 @@ export default function MyHub({ me, onReload }: { me: any; onReload: () => void 
   }
 
   const memberRef = me?.id ? `M${String(me.id).replace(/-/g, '').slice(0, 6).toUpperCase()}` : ''
-  const accountType = me?.memberStatus === 'blue_light' ? 'Bluelight' : me?.memberStatus === 'student' ? 'Student' : me?.memberStatus === 'charity' ? 'Charity' : 'Regular'
+  const accountType = me?.memberStatus === 'blue_light' ? t('Bluelight') : me?.memberStatus === 'student' ? t('Student') : me?.memberStatus === 'charity' ? t('Charity') : t('Regular')
 
   return (
     <div>
