@@ -41,10 +41,17 @@ scaffolded), including Spanish versions of banners that switch with the language
       Admin ES upload fields added in BannersView, HeroSlidesEditor, CategoriesView
       (page + category hero) and the storefront editor.
 
-### Phase 2 — Coverage pass (larger, iterative)
-- [ ] Migrate hardcoded-English components onto `t()` and add Spanish strings,
-      highest-traffic first: Footer → InfoPage/footer pages → home → checkout/apply
-      → recruitment/ATS → hub/storefront.
+### Phase 2 — Coverage pass (larger, iterative) — IN PROGRESS
+Migrate hardcoded-English components onto `t()` and add Spanish strings.
+TRANSLATIONS entries now need only `en` (+ `es`); other langs fall back.
+- [x] Footer (columns, links, guarantee line, copyright)
+- [x] Home strips (Featured / Just Listed / See all) + Trust strip
+- [ ] Footer content pages (InfoPage: About, Why, Pricing, Delivery, Terms,
+      Guarantee, Scam Centre, Dos, Economic) — note: long-form bodies may be
+      better handled as CMS Spanish content (Phase 3) than dictionary strings
+- [ ] Apply / checkout flow (ApplyModal, checkout panel)
+- [ ] Recruitment / ATS (EmployerDashboardContent, FindStaffPanel, ApplicantsKanban)
+- [ ] Hub / storefront editor, remaining marketplace components
 
 ### Phase 3 — Content translation (bigger decision, optional)
 - [ ] Decide how to handle user/admin content: manual Spanish fields in the CMS,
