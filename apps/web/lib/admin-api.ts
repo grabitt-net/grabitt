@@ -145,9 +145,9 @@ export function makeCrmApi(execToken: string) {
     updateListingAdmin: (data: Record<string, unknown>) => rpc<any>('crm.updateListingAdmin', 'mutation', data, execToken),
 
     // Editable page copy (Admin → Page Content)
-    pageContentAll: () => rpc<{ pageKey: string; html: string; updatedAt: string }[]>('homepage.allPageContent', 'query', undefined, execToken),
-    savePageContent: (pageKey: string, html: string) =>
-      rpc<any>('homepage.upsertPageContent', 'mutation', { pageKey, html }, execToken),
+    pageContentAll: () => rpc<{ pageKey: string; html: string; htmlEs: string | null; updatedAt: string }[]>('homepage.allPageContent', 'query', undefined, execToken),
+    savePageContent: (pageKey: string, html: string, htmlEs?: string) =>
+      rpc<any>('homepage.upsertPageContent', 'mutation', { pageKey, html, htmlEs }, execToken),
 
     // Parallax hero slides
     heroSlides: () => rpc<any[]>('homepage.allHeroSlides', 'query', undefined, execToken),

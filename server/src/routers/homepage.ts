@@ -13,23 +13,27 @@ export const homepageRouter = router({
   pageContent: publicProcedure
     .input(z.object({ pageKey: z.string().max(60) }))
     .query(async ({ ctx, input }) => {
-      const row = await ctx.prisma.pageContent.findUnique({ where: { pageKey: input.pageKey }, select: { html: true } })
+      // Return both language bodies; the client picks the Spanish one when the
+      // site language is Spanish and it's set, else falls back to `html`.
+      const row = await ctx.prisma.pageContent.findUnique({ where: { pageKey: input.pageKey }, select: { html: true, htmlEs: true } })
       return row ?? null
     }),
 
   // Exec: every stored page body, for the admin editor.
   allPageContent: execProcedure.query(({ ctx }) =>
-    ctx.prisma.pageContent.findMany({ select: { pageKey: true, html: true, updatedAt: true } })
+    ctx.prisma.pageContent.findMany({ select: { pageKey: true, html: true, htmlEs: true, updatedAt: true } })
   ),
 
   // Exec: save (or clear) a page's body. Empty html removes the override so the
-  // page falls back to its built-in copy.
+  // page falls back to its built-in copy. An empty Spanish body clears just the
+  // Spanish override (the page then uses the English body for Spanish visitors).
   upsertPageContent: execProcedure
-    .input(z.object({ pageKey: z.string().min(1).max(60), html: z.string().max(200000) }))
+    .input(z.object({ pageKey: z.string().min(1).max(60), html: z.string().max(200000), htmlEs: z.string().max(200000).optional() }))
     .mutation(async ({ ctx, input }) => {
       const html = input.html.trim()
+      const htmlEs = (input.htmlEs ?? '').trim() || null
       if (!html) { await ctx.prisma.pageContent.deleteMany({ where: { pageKey: input.pageKey } }); return { ok: true, cleared: true } }
-      await ctx.prisma.pageContent.upsert({ where: { pageKey: input.pageKey }, update: { html }, create: { pageKey: input.pageKey, html } })
+      await ctx.prisma.pageContent.upsert({ where: { pageKey: input.pageKey }, update: { html, htmlEs }, create: { pageKey: input.pageKey, html, htmlEs } })
       return { ok: true }
     }),
 

@@ -2,6 +2,7 @@
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { createLooseTrpcClient } from '@/lib/trpc'
+import { getLanguage } from '@/lib/i18n'
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from './Topbar'
 import QuickActions from './QuickActions'
@@ -99,7 +100,13 @@ export default function InfoPage({ title, intro, pills, hero, banner, dept, topb
   useEffect(() => {
     if (!dept) return
     createLooseTrpcClient().homepage.pageContent.query({ pageKey: dept })
-      .then(r => setCmsHtml((r as { html?: string } | null)?.html ?? null))
+      .then(r => {
+        const row = r as { html?: string; htmlEs?: string | null } | null
+        // Serve the Spanish body when the site is in Spanish and one is set;
+        // otherwise fall back to the English body for everyone.
+        const es = getLanguage() === 'es' && row?.htmlEs ? row.htmlEs : null
+        setCmsHtml(es ?? row?.html ?? null)
+      })
       .catch(() => {})
   }, [dept])
 

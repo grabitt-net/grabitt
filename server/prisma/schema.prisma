@@ -110,6 +110,10 @@ model PageContent {
   id        String   @id @default(uuid())
   pageKey   String   @unique
   html      String
+  // Optional Spanish version, served when the site language is Spanish and this
+  // is set; otherwise the English `html` is used for everyone. Mirrors the
+  // Spanish-banner pattern (imageUrlEs et al.).
+  htmlEs    String?
   updatedAt DateTime @updatedAt @default(now())
 }
 
@@ -123,6 +127,10 @@ model HelpArticle {
   category   String                         // category slug, e.g. "getting-started"
   question   String
   answer     String
+  // Optional Spanish versions, served when the site language is Spanish; fall
+  // back to the English question/answer when unset.
+  questionEs String?
+  answerEs   String?
   sortOrder  Int      @default(0)
   active     Boolean  @default(true)
   // "Was this helpful?" deflection signal — increments from the public article.
@@ -157,6 +165,10 @@ model HelpCategory {
   slug       String   @unique
   title      String
   blurb      String   @default("")
+  // Optional Spanish versions, served when the site language is Spanish; fall
+  // back to the English title/blurb when unset.
+  titleEs    String?
+  blurbEs    String?
   icon       String   @default("📄")
   sortOrder  Int      @default(0)
   active     Boolean  @default(true)

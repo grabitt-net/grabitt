@@ -9,7 +9,7 @@ export const helpRouter = router({
     ctx.prisma.helpArticle.findMany({
       where: { active: true },
       orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
-      select: { id: true, category: true, question: true, answer: true },
+      select: { id: true, category: true, question: true, answer: true, questionEs: true, answerEs: true },
     })
   ),
 
@@ -26,11 +26,15 @@ export const helpRouter = router({
       category: z.string().min(1).max(60),
       question: z.string().min(2).max(300),
       answer: z.string().min(2).max(4000),
+      questionEs: z.string().max(300).optional(),
+      answerEs: z.string().max(4000).optional(),
       sortOrder: z.number().int().default(0),
       active: z.boolean().default(true),
     }))
     .mutation(({ ctx, input }) => {
-      const { id, ...data } = input
+      const { id, questionEs, answerEs, ...rest } = input
+      // Empty strings clear the Spanish override (fall back to English).
+      const data = { ...rest, questionEs: (questionEs ?? '').trim() || null, answerEs: (answerEs ?? '').trim() || null }
       return id
         ? ctx.prisma.helpArticle.update({ where: { id }, data })
         : ctx.prisma.helpArticle.create({ data })
@@ -54,7 +58,7 @@ export const helpRouter = router({
   // ── Categories (the helpdesk sections) ──────────────────────────────────────
   // Public: active categories in order (drives the Help Centre grid).
   categories: publicProcedure.query(({ ctx }) =>
-    ctx.prisma.helpCategory.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' }, select: { slug: true, title: true, blurb: true, icon: true } })
+    ctx.prisma.helpCategory.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' }, select: { slug: true, title: true, blurb: true, titleEs: true, blurbEs: true, icon: true } })
   ),
 
   // Admin: every category for management (incl. article counts, added below).
@@ -68,12 +72,15 @@ export const helpRouter = router({
       slug: z.string().min(1).max(60).regex(/^[a-z0-9-]+$/, 'lowercase letters, numbers and hyphens only'),
       title: z.string().min(1).max(80),
       blurb: z.string().max(160).default(''),
+      titleEs: z.string().max(80).optional(),
+      blurbEs: z.string().max(160).optional(),
       icon: z.string().max(8).default('📄'),
       sortOrder: z.number().int().default(0),
       active: z.boolean().default(true),
     }))
     .mutation(({ ctx, input }) => {
-      const { id, ...data } = input
+      const { id, titleEs, blurbEs, ...rest } = input
+      const data = { ...rest, titleEs: (titleEs ?? '').trim() || null, blurbEs: (blurbEs ?? '').trim() || null }
       return id
         ? ctx.prisma.helpCategory.update({ where: { id }, data })
         : ctx.prisma.helpCategory.create({ data })

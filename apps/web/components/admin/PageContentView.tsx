@@ -8,11 +8,15 @@ import { toast } from '@/lib/ui'
 // Admin → Page Content. Steve picks a page and edits its whole-page rich text.
 // When saved, that page renders this copy instead of the built-in text; clearing
 // it (Reset to built-in) removes the override so the original copy returns.
+// A separate Spanish tab holds the ES body served to Spanish visitors; leaving
+// it empty means Spanish visitors see the English copy.
 export default function PageContentView() {
   const api = useCrmApi()
   const [sel, setSel] = useState(EDITABLE_PAGES[0].key)
-  const [stored, setStored] = useState<Record<string, string>>({})
+  const [stored, setStored] = useState<Record<string, { html: string; htmlEs: string }>>({})
   const [html, setHtml] = useState('')
+  const [htmlEs, setHtmlEs] = useState('')
+  const [lang, setLang] = useState<'en' | 'es'>('en')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
@@ -21,8 +25,8 @@ export default function PageContentView() {
     setLoading(true)
     api.pageContentAll()
       .then(rows => {
-        const map: Record<string, string> = {}
-        for (const r of rows) map[r.pageKey] = r.html
+        const map: Record<string, { html: string; htmlEs: string }> = {}
+        for (const r of rows) map[r.pageKey] = { html: r.html, htmlEs: r.htmlEs ?? '' }
         setStored(map)
       })
       .catch(() => {})
@@ -31,42 +35,58 @@ export default function PageContentView() {
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // When the selected page changes, load its stored copy into the editor — or,
-  // if nothing's been saved yet, pre-fill with the page's current built-in text
-  // so Steve amends the words already there instead of a blank box.
-  useEffect(() => { setHtml(stored[sel] ?? EDITABLE_PAGE_DEFAULTS[sel] ?? ''); setDirty(false) }, [sel, stored])
+  // if nothing's been saved yet, pre-fill English with the page's current
+  // built-in text so Steve amends the words already there instead of a blank box.
+  useEffect(() => {
+    setHtml(stored[sel]?.html ?? EDITABLE_PAGE_DEFAULTS[sel] ?? '')
+    setHtmlEs(stored[sel]?.htmlEs ?? '')
+    setDirty(false)
+  }, [sel, stored])
 
   const page = useMemo(() => EDITABLE_PAGES.find(p => p.key === sel)!, [sel])
-  const hasOverride = !!stored[sel]
+  const hasOverride = !!stored[sel]?.html
+  const hasEs = !!stored[sel]?.htmlEs
 
   const save = async () => {
     setSaving(true)
     try {
-      await api.savePageContent(sel, html)
+      await api.savePageContent(sel, html, htmlEs)
       toast(html.trim() ? '✓ Page saved' : '✓ Reset to built-in copy')
-      setStored(s => { const n = { ...s }; if (html.trim()) n[sel] = html; else delete n[sel]; return n })
+      setStored(s => {
+        const n = { ...s }
+        if (html.trim()) n[sel] = { html, htmlEs: htmlEs.trim() }
+        else delete n[sel]
+        return n
+      })
       setDirty(false)
     } catch (e: any) { toast(e?.message ?? 'Could not save.') }
     finally { setSaving(false) }
   }
   const reset = async () => {
-    if (!confirm('Reset this page to the original built-in text? Your edits will be removed.')) return
-    setHtml(''); setSaving(true)
-    try { await api.savePageContent(sel, ''); toast('✓ Reset to built-in copy'); setStored(s => { const n = { ...s }; delete n[sel]; return n }); setDirty(false) }
+    if (!confirm('Reset this page to the original built-in text? Your edits (English and Spanish) will be removed.')) return
+    setHtml(''); setHtmlEs(''); setSaving(true)
+    try { await api.savePageContent(sel, '', ''); toast('✓ Reset to built-in copy'); setStored(s => { const n = { ...s }; delete n[sel]; return n }); setDirty(false) }
     catch (e: any) { toast(e?.message ?? 'Could not reset.') }
     finally { setSaving(false) }
   }
+
+  const tab = (l: 'en' | 'es', label: string, marked: boolean): React.CSSProperties => ({
+    background: lang === l ? 'var(--orange)' : '#fff', color: lang === l ? '#fff' : '#555',
+    border: `1.5px solid ${lang === l ? 'var(--orange)' : '#e0d8d0'}`, borderRadius: 8, padding: '7px 14px',
+    fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer',
+  })
 
   return (
     <div style={{ maxWidth: 900 }}>
       <h2 style={{ fontFamily: 'var(--font-ui)', fontSize: 20, fontWeight: 900, color: '#1a1a1a', margin: '0 0 4px' }}>Page Content</h2>
       <p style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#777', margin: '0 0 16px' }}>
-        Edit the words on a page. Pick a page, change the text, and Save — the live page updates. Leave a page untouched and it keeps the copy from the build. Use “Reset to built-in” to undo your edits on a page.
+        Edit the words on a page. Pick a page, change the text, and Save — the live page updates. Leave a page untouched and it keeps the copy from the build. Use “Reset to built-in” to undo your edits on a page. Add a Spanish version on the Español tab; leave it empty and Spanish visitors see the English copy.
       </p>
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
         <label style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: '#555' }}>Page</label>
         <select value={sel} onChange={e => setSel(e.target.value)} style={{ border: '1.5px solid #e0d8d0', borderRadius: 8, padding: '8px 10px', fontFamily: 'var(--font-ui)', fontSize: 13, background: '#fff' }}>
-          {EDITABLE_PAGES.map(p => <option key={p.key} value={p.key}>{p.label}{stored[p.key] ? '  • edited' : ''}</option>)}
+          {EDITABLE_PAGES.map(p => <option key={p.key} value={p.key}>{p.label}{stored[p.key]?.html ? '  • edited' : ''}{stored[p.key]?.htmlEs ? '  ·ES' : ''}</option>)}
         </select>
         <a href={page.path} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--orange)' }}>Open page ↗</a>
         <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-ui)', fontSize: 11.5, color: hasOverride ? '#16a34a' : '#999' }}>{hasOverride ? 'Showing your edited copy' : 'Showing the built-in copy'}</span>
@@ -76,12 +96,29 @@ export default function PageContentView() {
         <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: '#aaa', padding: 20 }}>Loading…</div>
       ) : (
         <>
-          {!hasOverride && (
-            <div style={{ background: '#fff8e6', border: '1px solid #f0e0bd', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#8a6d3b', marginBottom: 10 }}>
-              This is the page's current text, loaded for you to edit. Change the wording below and press Save — your version then takes over on the live page. “Reset to built-in” brings the original back at any time.
-            </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            <button onClick={() => setLang('en')} style={tab('en', 'English', hasOverride)}>English</button>
+            <button onClick={() => setLang('es')} style={tab('es', 'Español', hasEs)}>Español{hasEs ? ' •' : ''}</button>
+          </div>
+
+          {lang === 'en' ? (
+            <>
+              {!hasOverride && (
+                <div style={{ background: '#fff8e6', border: '1px solid #f0e0bd', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#8a6d3b', marginBottom: 10 }}>
+                  This is the page's current text, loaded for you to edit. Change the wording below and press Save — your version then takes over on the live page. “Reset to built-in” brings the original back at any time.
+                </div>
+              )}
+              <RichTextEditor value={html} onChange={v => { setHtml(v); setDirty(true) }} placeholder="Write this page's content…" />
+            </>
+          ) : (
+            <>
+              <div style={{ background: '#eef6ff', border: '1px solid #cfe3ff', borderRadius: 10, padding: '9px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, color: '#2563eb', marginBottom: 10 }}>
+                Spanish version, shown to visitors using the site in Spanish. Leave this empty to show them the English copy instead.
+              </div>
+              <RichTextEditor value={htmlEs} onChange={v => { setHtmlEs(v); setDirty(true) }} placeholder="Escribe el contenido de esta página en español…" />
+            </>
           )}
-          <RichTextEditor value={html} onChange={v => { setHtml(v); setDirty(true) }} placeholder="Write this page's content…" />
+
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             <button onClick={save} disabled={saving || !dirty} style={{ background: dirty ? '#16a34a' : '#cbd5c0', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: saving || !dirty ? 'default' : 'pointer' }}>{saving ? 'Saving…' : 'Save'}</button>
             {hasOverride && <button onClick={reset} disabled={saving} style={{ background: '#fef2f2', color: '#ef4444', border: '1.5px solid #fecaca', borderRadius: 10, padding: '10px 18px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Reset to built-in</button>}

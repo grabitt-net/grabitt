@@ -7,12 +7,13 @@ import { HELP_CATEGORIES, helpCategory } from '@/lib/helpContent'
 
 interface Article {
   id: string; category: string; question: string; answer: string
+  questionEs?: string | null; answerEs?: string | null
   sortOrder: number; active: boolean; helpfulYes?: number; helpfulNo?: number
 }
-interface Category { id: string; slug: string; title: string; blurb: string; icon: string; sortOrder: number; active: boolean }
+interface Category { id: string; slug: string; title: string; blurb: string; titleEs?: string | null; blurbEs?: string | null; icon: string; sortOrder: number; active: boolean }
 
-const EMPTY = { category: HELP_CATEGORIES[0]?.id ?? 'getting-started', question: '', answer: '', sortOrder: 0, active: true }
-const EMPTY_CAT = { slug: '', title: '', blurb: '', icon: '📄', sortOrder: 0, active: true }
+const EMPTY = { category: HELP_CATEGORIES[0]?.id ?? 'getting-started', question: '', answer: '', questionEs: '', answerEs: '', sortOrder: 0, active: true }
+const EMPTY_CAT = { slug: '', title: '', blurb: '', titleEs: '', blurbEs: '', icon: '📄', sortOrder: 0, active: true }
 
 // Help Centre editor — add / edit / remove / reorder the Q&A articles that power
 // the public /help page and the AI assistant. Grouped by category.
@@ -49,7 +50,7 @@ export default function HelpView() {
   }, [articles, cats])
 
   function openNew(category?: string) { setForm({ ...EMPTY, category: category ?? EMPTY.category, sortOrder: articles.filter(a => a.category === (category ?? EMPTY.category)).length }); setEditing('new') }
-  function openEdit(a: Article) { setForm({ category: a.category, question: a.question, answer: a.answer, sortOrder: a.sortOrder, active: a.active }); setEditing(a.id) }
+  function openEdit(a: Article) { setForm({ category: a.category, question: a.question, answer: a.answer, questionEs: a.questionEs ?? '', answerEs: a.answerEs ?? '', sortOrder: a.sortOrder, active: a.active }); setEditing(a.id) }
 
   async function save() {
     if (!form.question.trim() || !form.answer.trim()) return
@@ -58,6 +59,7 @@ export default function HelpView() {
       await api.upsertHelpArticle({
         ...(editing !== 'new' ? { id: editing } : {}),
         category: form.category, question: form.question.trim(), answer: form.answer.trim(),
+        questionEs: form.questionEs.trim(), answerEs: form.answerEs.trim(),
         sortOrder: Number(form.sortOrder) || 0, active: form.active,
       })
       setEditing(null); load()
@@ -70,7 +72,7 @@ export default function HelpView() {
   }
 
   async function toggleActive(a: Article) {
-    await api.upsertHelpArticle({ id: a.id, category: a.category, question: a.question, answer: a.answer, sortOrder: a.sortOrder, active: !a.active })
+    await api.upsertHelpArticle({ id: a.id, category: a.category, question: a.question, answer: a.answer, questionEs: a.questionEs ?? '', answerEs: a.answerEs ?? '', sortOrder: a.sortOrder, active: !a.active })
     load()
   }
 
@@ -79,12 +81,12 @@ export default function HelpView() {
   const [catForm, setCatForm] = useState({ ...EMPTY_CAT })
   const [catSaving, setCatSaving] = useState(false)
   function openCatNew() { setCatForm({ ...EMPTY_CAT, sortOrder: cats.length }); setCatEditing('new') }
-  function openCatEdit(c: Category) { setCatForm({ slug: c.slug, title: c.title, blurb: c.blurb, icon: c.icon, sortOrder: c.sortOrder, active: c.active }); setCatEditing(c.id) }
+  function openCatEdit(c: Category) { setCatForm({ slug: c.slug, title: c.title, blurb: c.blurb, titleEs: c.titleEs ?? '', blurbEs: c.blurbEs ?? '', icon: c.icon, sortOrder: c.sortOrder, active: c.active }); setCatEditing(c.id) }
   async function saveCat() {
     if (!catForm.slug.trim() || !catForm.title.trim()) return
     setCatSaving(true)
     try {
-      await api.upsertHelpCategory({ ...(catEditing !== 'new' ? { id: catEditing } : {}), slug: catForm.slug.trim(), title: catForm.title.trim(), blurb: catForm.blurb.trim(), icon: catForm.icon.trim() || '📄', sortOrder: Number(catForm.sortOrder) || 0, active: catForm.active })
+      await api.upsertHelpCategory({ ...(catEditing !== 'new' ? { id: catEditing } : {}), slug: catForm.slug.trim(), title: catForm.title.trim(), blurb: catForm.blurb.trim(), titleEs: catForm.titleEs.trim(), blurbEs: catForm.blurbEs.trim(), icon: catForm.icon.trim() || '📄', sortOrder: Number(catForm.sortOrder) || 0, active: catForm.active })
       setCatEditing(null); loadCats()
     } finally { setCatSaving(false) }
   }
@@ -117,6 +119,8 @@ export default function HelpView() {
               <span><label style={lbl}>Title</label><input value={catForm.title} onChange={e => setCatForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Payments & escrow" style={inp} /></span>
               <span style={{ gridColumn: '1/-1' }}><label style={lbl}>Slug (used in links; lowercase-hyphenated)</label><input value={catForm.slug} onChange={e => setCatForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }))} placeholder="payments" style={inp} disabled={catEditing !== 'new'} /></span>
               <span style={{ gridColumn: '1/-1' }}><label style={lbl}>Blurb</label><input value={catForm.blurb} onChange={e => setCatForm(f => ({ ...f, blurb: e.target.value }))} placeholder="Secure payments and refunds." style={inp} /></span>
+              <span style={{ gridColumn: '1/-1' }}><label style={lblEs}>Title — Español (optional)</label><input value={catForm.titleEs} onChange={e => setCatForm(f => ({ ...f, titleEs: e.target.value }))} placeholder="p. ej. Pagos y depósito de garantía" style={inpEs} /></span>
+              <span style={{ gridColumn: '1/-1' }}><label style={lblEs}>Blurb — Español (optional)</label><input value={catForm.blurbEs} onChange={e => setCatForm(f => ({ ...f, blurbEs: e.target.value }))} placeholder="Pagos seguros y reembolsos." style={inpEs} /></span>
               <span><label style={lbl}>Order</label><input type="number" value={catForm.sortOrder} onChange={e => setCatForm(f => ({ ...f, sortOrder: Number(e.target.value) }))} style={{ ...inp, width: 80 }} /></span>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, color: '#555', marginTop: 18 }}><input type="checkbox" checked={catForm.active} onChange={e => setCatForm(f => ({ ...f, active: e.target.checked }))} /> Visible</label>
             </div>
@@ -171,6 +175,10 @@ export default function HelpView() {
           <input value={form.question} onChange={e => setForm(f => ({ ...f, question: e.target.value }))} placeholder="e.g. How do I get a refund?" style={inp} />
           <label style={lbl}>Answer</label>
           <textarea value={form.answer} onChange={e => setForm(f => ({ ...f, answer: e.target.value }))} placeholder="A short, plain-text answer." style={{ ...inp, minHeight: 90, resize: 'vertical' }} />
+          <label style={lblEs}>Question — Español (optional)</label>
+          <input value={form.questionEs} onChange={e => setForm(f => ({ ...f, questionEs: e.target.value }))} placeholder="p. ej. ¿Cómo obtengo un reembolso?" style={inpEs} />
+          <label style={lblEs}>Answer — Español (optional)</label>
+          <textarea value={form.answerEs} onChange={e => setForm(f => ({ ...f, answerEs: e.target.value }))} placeholder="Una respuesta breve en español. Déjalo vacío y se mostrará la versión en inglés." style={{ ...inpEs, minHeight: 90, resize: 'vertical' }} />
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
             <span>
               <label style={lbl}>Order</label>
@@ -223,6 +231,9 @@ export default function HelpView() {
 
 const lbl: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#888', margin: '8px 0 4px' }
 const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #e0d8d0', borderRadius: 8, padding: '8px 10px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none', background: '#fff' }
+// Spanish fields: tinted so they read clearly as the optional ES override.
+const lblEs: React.CSSProperties = { display: 'block', fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#2563eb', margin: '8px 0 4px' }
+const inpEs: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1.5px solid #cfe3ff', borderRadius: 8, padding: '8px 10px', fontFamily: 'var(--font-ui)', fontSize: 13, outline: 'none', background: '#f7fbff' }
 const btnPrimary: React.CSSProperties = { background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }
 const btnGhost: React.CSSProperties = { background: '#fff', color: '#555', border: '1px solid #ddd', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }
 const iconBtn: React.CSSProperties = { background: '#f7f4ee', border: '1px solid #eee', borderRadius: 8, padding: '5px 8px', fontSize: 13, cursor: 'pointer' }

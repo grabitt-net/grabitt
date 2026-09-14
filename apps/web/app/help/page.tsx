@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import InfoPage from '@/components/marketplace/InfoPage'
 import { HELP_TOPICS, HELP_CATEGORIES, helpCategory, type HelpTopic } from '@/lib/helpContent'
+import { getLanguage } from '@/lib/i18n'
 
 // Full Help Centre: an AI assistant on top, searchable topic categories below.
 // Uses the standard footer-page template (logo, title, hero, pills).
@@ -37,11 +38,14 @@ function Inner() {
       client.help.articles.query().catch(() => []),
       client.help.categories.query().catch(() => []),
     ]).then(([artRes, catRes]) => {
-      const rows = artRes as { id: string; category: string; question: string; answer: string }[]
+      const rows = artRes as { id: string; category: string; question: string; answer: string; questionEs?: string | null; answerEs?: string | null }[]
       if (!Array.isArray(rows) || rows.length === 0) return
+      // Serve Spanish copy when the site is in Spanish and it's set, else English.
+      const es = getLanguage() === 'es'
+      const pick = (en: string, esVal?: string | null) => (es && esVal ? esVal : en)
       // Admin-managed category metadata (title/blurb/icon/order); fall back to
       // the built-in metadata for any category not in the table.
-      const cats = catRes as { slug: string; title: string; blurb: string; icon: string }[]
+      const cats = catRes as { slug: string; title: string; blurb: string; icon: string; titleEs?: string | null; blurbEs?: string | null }[]
       const meta = new Map(cats.map(c => [c.slug, c]))
       const order = cats.length ? cats.map(c => c.slug) : HELP_CATEGORIES.map(c => c.id)
       const byCat = new Map<string, LTopic>()
@@ -51,10 +55,10 @@ function Inner() {
         if (!topic) {
           const m = meta.get(r.category)
           const fb = helpCategory(r.category)
-          topic = { id: r.category, icon: m?.icon || fb.icon, title: m?.title || fb.title, blurb: m?.blurb ?? fb.blurb, articles: [] }
+          topic = { id: r.category, icon: m?.icon || fb.icon, title: m ? pick(m.title, m.titleEs) : fb.title, blurb: m ? pick(m.blurb, m.blurbEs) : fb.blurb, articles: [] }
           byCat.set(r.category, topic)
         }
-        topic.articles.push({ q: r.question, a: r.answer, id: r.id })
+        topic.articles.push({ q: pick(r.question, r.questionEs), a: pick(r.answer, r.answerEs), id: r.id })
       }
       setAllTopics(Array.from(byCat.values()))
     }).catch(() => {})
