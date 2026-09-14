@@ -90,7 +90,12 @@ user-generated content = **Google machine translation, auto, no "show original"*
 - [x] Extend `useTranslated` to the other listing surfaces — home Featured strip,
       Just Listed carousel, search results grid, storefront cards (batched +
       cached). ListingsRow is static demo data, left as-is.
-- [ ] Fill de/da/sv/nl/fr/pt for the en+es-only dictionary entries from Phase 2
+- [→] Fill de/da/sv/nl/fr/pt for the en+es-only dictionary entries — **not doing
+      for launch** (decision 2026-09-14: launching EN/ES only). The dictionary
+      still carries all 8 langs; `LAUNCH_LANGS` (lib/i18n) gates the switcher,
+      the profile picker and browser auto-detect to en/es so no half-translated
+      UI shows. To add a language later: fill its strings, then add it to
+      `LAUNCH_LANGS`.
 
 ### Notes / decisions
 - Keep reload-on-switch unless we later decide the live-update refactor (a React
