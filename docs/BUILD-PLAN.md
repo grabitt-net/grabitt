@@ -46,6 +46,9 @@ Migrate hardcoded-English components onto `t()` and add Spanish strings.
 TRANSLATIONS entries now need only `en` (+ `es`); other langs fall back.
 - [x] Footer (columns, links, guarantee line, copyright)
 - [x] Home strips (Featured / Just Listed / See all) + Trust strip
+- [x] Selling flow: listing edit form (fully) + Sell wizard steps (photos,
+      details, price, delivery, upgrades, success). Remaining in-wizard bits:
+      best-practice guide items and a couple of `<strong>`-embedded lines.
 - [ ] Footer content pages (InfoPage: About, Why, Pricing, Delivery, Terms,
       Guarantee, Scam Centre, Dos, Economic) — note: long-form bodies may be
       better handled as CMS Spanish content (Phase 3) than dictionary strings
