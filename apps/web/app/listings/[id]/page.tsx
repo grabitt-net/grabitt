@@ -8,6 +8,7 @@ import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 import { DEPT_LABEL, COND_LABEL, deptEmoji } from '@/lib/listingMap'
 import { featureIcon, featureLabel } from '@/lib/propertyFeatures'
 import { t } from '@/lib/i18n'
+import { useTranslated } from '@/lib/translateContent'
 import { pushView } from '@/lib/recentViews'
 import { renderWithHashtags } from '@/lib/hashtags'
 import { PRICES } from '@grabitt/design-tokens'
@@ -118,10 +119,21 @@ function ListingInner() {
       .catch(() => {})
   }, [listing, id])
 
+  // Auto-translate the user-written headline + description to the viewer's site
+  // language (English viewers get the originals; no round trip). Called before
+  // the early returns so the hook order stays stable.
+  const [trTitle, trDesc, trJobTitle] = useTranslated([
+    listing?.title ?? '', listing?.description ?? '', listing?.jobListing?.jobTitle ?? '',
+  ])
+
   if (state === 'loading') return <Centered>Loading…</Centered>
   if (state === 'notfound' || !listing) return <Centered>This listing is no longer available. <Link href="/" style={{ color: 'var(--orange)', fontWeight: 800 }}>Back home</Link></Centered>
 
   const job = listing.jobListing
+  // Display strings — translated for non-English viewers, original otherwise.
+  const dispTitle = trTitle || listing.title
+  const dispDesc = trDesc || listing.description
+  const dispJobTitle = trJobTitle || job?.jobTitle
   const prop = listing.propertyListing
   const seller = listing.seller
 
@@ -245,7 +257,7 @@ function ListingInner() {
   const descriptionCard = listing.description ? (
     <div style={cardBox}>
       <div style={sectionTitle}>{t('Description')}</div>
-      <p style={{ fontSize: 13.5, color: '#3a3a3a', lineHeight: 1.65, fontFamily: 'var(--font-comfortaa)', whiteSpace: 'pre-wrap', margin: 0 }}>{renderWithHashtags(listing.description)}</p>
+      <p style={{ fontSize: 13.5, color: '#3a3a3a', lineHeight: 1.65, fontFamily: 'var(--font-comfortaa)', whiteSpace: 'pre-wrap', margin: 0 }}>{renderWithHashtags(dispDesc)}</p>
     </div>
   ) : null
 
@@ -384,7 +396,7 @@ function ListingInner() {
                   {prop.propertyType && <Chip muted>{prettify(prop.propertyType)}</Chip>}
                   {listing.sponsoredUntil && new Date(listing.sponsoredUntil) > new Date() && <Chip>⚡ Sponsored</Chip>}
                 </div>
-                <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25, margin: 0 }}>{listing.title}</h1>
+                <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25, margin: 0 }}>{dispTitle}</h1>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 28, fontWeight: 900, color: 'var(--orange)', marginTop: 6 }}>{priceLabel}</div>
                 <div style={{ fontSize: 12, color: 'var(--ink-2)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
                   <Place>{town || 'Canary Islands'}</Place> · Ref: {ref}
@@ -507,7 +519,7 @@ function ListingInner() {
                   <Chip>{JOB_TYPE[job.type] ?? job.type}</Chip>
                   {job.remote && <Chip muted>Remote</Chip>}
                 </div>
-                <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25, margin: 0 }}>{job.jobTitle}</h1>
+                <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25, margin: 0 }}>{dispJobTitle}</h1>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)', marginTop: 6 }}>{priceLabel}</div>
                 <div style={{ fontSize: 12, color: 'var(--ink-2)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
                   <Place>{town}</Place> · Ref: {ref}{job.company ? ` · ${job.company}` : ''}
@@ -596,7 +608,7 @@ function ListingInner() {
                   <Chip>🔧 {isOffer ? 'Service offered' : 'Help wanted'}</Chip>
                   {listing.subcategory && <Chip muted>{listing.subcategory}</Chip>}
                 </div>
-                <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25, margin: 0 }}>{listing.title}</h1>
+                <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25, margin: 0 }}>{dispTitle}</h1>
                 {hasPrice && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)', marginTop: 6 }}>{priceLabel}</div>}
                 <div style={{ fontSize: 12, color: 'var(--ink-2)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
                   <Place>{town}</Place> · Ref: {ref}
@@ -678,7 +690,7 @@ function ListingInner() {
                   {condLabel && <Chip muted>{condLabel}</Chip>}
                   {isGrabItNow && <Chip>⚡ Grab It Now</Chip>}
                 </div>
-                <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25, margin: 0 }}>{listing.title}</h1>
+                <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25, margin: 0 }}>{dispTitle}</h1>
                 <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 28, fontWeight: 900, color: 'var(--orange)', marginTop: 6 }}>{priceLabel}</div>
                 <div style={{ fontSize: 12, color: 'var(--ink-2)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
                   <Place>{listing.location ?? 'Canary Islands'}</Place> · Ref: {ref}
@@ -831,7 +843,7 @@ function ListingInner() {
               {prop && <Chip>{PROP_TYPE[prop.type] ?? prop.type}</Chip>}
               {job?.remote && <Chip>Remote</Chip>}
             </div>
-            <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25 }}>{job?.jobTitle ?? listing.title}</h1>
+            <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 19, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25 }}>{job ? dispJobTitle : dispTitle}</h1>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginTop: 3 }}>
               <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 24, fontWeight: 900, color: 'var(--orange)' }}>{priceLabel}</div>
               <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-ui)', display: 'flex', alignItems: 'center', gap: 4 }}><Place>{job?.remote ? 'Remote' : (listing.location ?? 'Canary Islands')}</Place> · Ref: {ref}</div>
@@ -1082,7 +1094,7 @@ function ListingInner() {
         {listing.description && (
           <div style={cardBox}>
             <div style={sectionTitle}>{t('Description')}</div>
-            <p style={{ fontSize: 13, color: '#444', lineHeight: 1.6, fontFamily: 'var(--font-comfortaa)', whiteSpace: 'pre-wrap' }}>{renderWithHashtags(listing.description)}</p>
+            <p style={{ fontSize: 13, color: '#444', lineHeight: 1.6, fontFamily: 'var(--font-comfortaa)', whiteSpace: 'pre-wrap' }}>{renderWithHashtags(dispDesc)}</p>
           </div>
         )}
 

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { toPanelItem, type DbListing } from '@/lib/listingMap'
+import { useTranslated } from '@/lib/translateContent'
 import Icon from './Icon'
 
 // The main browse experience for the homepage: a big responsive grid of real
@@ -41,6 +42,10 @@ export default function ListingsGrid() {
       .catch(() => setLoading(false))
   }, [cat, sort])
 
+  // Auto-translate card titles to the viewer's site language (cached; English
+  // viewers get the originals with no round trip).
+  const trTitles = useTranslated(items.map(l => toPanelItem(l).title))
+
   return (
     <section style={{ padding: '18px 14px 0' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -67,7 +72,7 @@ export default function ListingsGrid() {
         <div style={{ textAlign: 'center', padding: 40, color: '#888', fontFamily: 'var(--font-ui)', fontSize: 13 }}>No listings in this department yet.</div>
       ) : (
         <div className="listing-grid" style={{ paddingBottom: 8 }}>
-          {items.map(l => {
+          {items.map((l, idx) => {
             const item = toPanelItem(l)
             return (
               <div key={l.id} className="product-card" onClick={() => router.push(`/listings/${l.id}`)} style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--radius)', overflow: 'hidden', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
@@ -78,7 +83,7 @@ export default function ListingsGrid() {
                   {item.isFeatured && <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(26,26,26,0.82)', color: '#fff', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50, letterSpacing: 0.3 }}><Icon name="star" size={10} strokeWidth={0} style={{ fill: '#FFB800' }} /> FEATURED</div>}
                 </div>
                 <div style={{ padding: '11px 12px 13px' }}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 700, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 5 }}>{item.title}</div>
+                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 700, color: 'var(--dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 5 }}>{trTitles[idx] || item.title}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: 17, fontWeight: 800, color: 'var(--dark)' }}>{item.price}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 500, color: '#1a1a1a', fontFamily: 'var(--font-ui)' }}><Icon name="mapPin" size={11} /> {item.location}</div>

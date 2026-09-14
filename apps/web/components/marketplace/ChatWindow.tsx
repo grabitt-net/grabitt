@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useChat, type ChatMessage } from '@/hooks/useChat'
+import { useTranslated } from '@/lib/translateContent'
 
 interface Props {
   threadId: string
@@ -17,6 +18,10 @@ export default function ChatWindow({ threadId, userId, initialMessages }: Props)
 
   // Show server-rendered messages until the first live fetch returns.
   const messages = live.length > 0 ? live : initialMessages
+
+  // Auto-translate the other party's messages to the viewer's site language
+  // (the viewer's own messages are left as written). Cached per (text, lang).
+  const trBodies = useTranslated(messages.map(m => (!m.blocked && m.senderId !== userId ? m.body : '')))
 
   useEffect(() => {
     // Scroll only the message list to the newest message — never the page.
@@ -81,7 +86,7 @@ export default function ChatWindow({ threadId, userId, initialMessages }: Props)
                     boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
                     fontFamily: 'var(--font-nunito)', fontSize: 14, lineHeight: 1.4,
                   }}>
-                    {msg.body}
+                    {isMe ? msg.body : (trBodies[i] || msg.body)}
                     <div style={{ fontSize: 9, marginTop: 4, textAlign: 'right', color: isMe ? 'rgba(255,255,255,0.7)' : '#bbb' }}>
                       {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       {isMe && <span style={{ marginLeft: 4 }}>{msg.readAt ? '✓✓' : '✓'}</span>}

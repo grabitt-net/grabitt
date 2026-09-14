@@ -117,6 +117,20 @@ model PageContent {
   updatedAt DateTime @updatedAt @default(now())
 }
 
+// Machine-translation cache for user-generated content (listing titles &
+// descriptions, job adverts, messages). Keyed by a hash of the source text and
+// the target language so repeat views don't re-hit the translation provider.
+// Written by the /api/translate route (service role); RLS denies anon.
+model Translation {
+  id        String   @id @default(uuid())
+  hash      String                            // sha256 of the source text
+  lang      String                            // target language code, e.g. "es"
+  text      String                            // the translated text
+  createdAt DateTime @default(now())
+
+  @@unique([hash, lang])
+}
+
 // ── Community content ─────────────────────────────────────────────────────────
 // Editorial posts (island tips, economy write-ups, how-to guides) surfaced on the
 // homepage. Admin-managed; readers just view them.
