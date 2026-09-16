@@ -4,12 +4,13 @@ import { useRouter } from 'next/navigation'
 import { usePanel } from '@/context/PanelContext'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { DEPT_ENUM } from '@/lib/listingMap'
+import { pickBannerImage } from '@/lib/i18n'
 
 // Category tiles use Steve's circular illustrated artwork (name baked into the
 // image, cream ground, sage brush stroke + heart). Categories he hasn't supplied
 // art for yet get a matching circular placeholder so the whole grid reads as one
 // set — swap in a real image at /public/categories when it arrives.
-type Cat = { name: string; img?: string | null; department?: string | null }
+type Cat = { name: string; img?: string | null; imgEs?: string | null; department?: string | null }
 
 // Default order — also the fallback if the admin-controlled list can't be
 // fetched, and the seed shape for the HomeCategory table.
@@ -75,7 +76,8 @@ export default function CategoryGrid() {
     <section className="dept-grid-wrap" style={{ paddingTop: 16, marginTop: 30 }}>
       <div className="dept-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, padding: '0 12px' }}>
         {categories.map(cat => {
-          const img = cat.img
+          // Spanish visitors get the Spanish tile artwork when one is set.
+          const img = pickBannerImage(cat.img ?? null, cat.imgEs ?? null)
           const showImg = img && !failed[cat.name]
           const isActive = active === cat.name
           // All category tiles use the wide landscape banner format Steve signed

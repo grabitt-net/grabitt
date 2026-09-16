@@ -66,7 +66,7 @@ export const homepageRouter = router({
   // ── Homepage category tiles ─────────────────────────────────────────────────
   // Public: enabled tiles in admin order (the homepage grid renders from this).
   categories: publicProcedure.query(({ ctx }) =>
-    ctx.prisma.homeCategory.findMany({ where: { enabled: true }, orderBy: { sortOrder: 'asc' }, select: { name: true, img: true, department: true } })
+    ctx.prisma.homeCategory.findMany({ where: { enabled: true }, orderBy: { sortOrder: 'asc' }, select: { name: true, img: true, imgEs: true, department: true } })
   ),
 
   // Public: admin-added subcategories (merged with the built-in defaults on the
@@ -95,6 +95,7 @@ export const homepageRouter = router({
       name: z.string().min(2).max(60),
       department: z.string().max(40),
       img: z.string().max(500).nullable().optional(),
+      imgEs: z.string().max(500).nullable().optional(),
       bgImage: z.string().max(500).nullable().optional(),
       heroBanner: z.string().max(500).nullable().optional(),
       heroBannerEs: z.string().max(500).nullable().optional(),

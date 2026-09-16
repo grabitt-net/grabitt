@@ -9,7 +9,7 @@ import { subcategoriesForSlug } from '@/lib/subcategories'
 // Manage the marketplace categories (the homepage tiles + category pages):
 // add / amend / delete, reorder, show-hide, set the round icon and the header
 // background image. Deleting a category moves its ads to another category.
-type Cat = { id: string; name: string; department: string | null; img: string | null; bgImage: string | null; heroBanner: string | null; heroBannerEs: string | null; enabled: boolean; sortOrder: number }
+type Cat = { id: string; name: string; department: string | null; img: string | null; imgEs: string | null; bgImage: string | null; heroBanner: string | null; heroBannerEs: string | null; enabled: boolean; sortOrder: number }
 
 const DEPT_OPTIONS = Object.entries(DEPT_LABEL) as [string, string][]
 
@@ -182,6 +182,7 @@ function EditModal({ cat, onClose, onSaved, api }: { cat: Cat | null; onClose: (
   const [name, setName] = useState(cat?.name ?? '')
   const [department, setDepartment] = useState(cat?.department ?? '')
   const [img, setImg] = useState(cat?.img ?? '')
+  const [imgEs, setImgEs] = useState(cat?.imgEs ?? '')
   const [bgImage, setBgImage] = useState(cat?.bgImage ?? '')
   const [heroBanner, setHeroBanner] = useState(cat?.heroBanner ?? '')
   const [heroBannerEs, setHeroBannerEs] = useState(cat?.heroBannerEs ?? '')
@@ -192,7 +193,7 @@ function EditModal({ cat, onClose, onSaved, api }: { cat: Cat | null; onClose: (
     if (!name.trim() || !department) { toast('Name and department are required.'); return }
     setBusy(true)
     try {
-      await api.upsertCategory({ ...(cat ? { id: cat.id } : {}), name: name.trim(), department, img: img || null, bgImage: bgImage || null, heroBanner: heroBanner || null, heroBannerEs: heroBannerEs || null, enabled })
+      await api.upsertCategory({ ...(cat ? { id: cat.id } : {}), name: name.trim(), department, img: img || null, imgEs: imgEs || null, bgImage: bgImage || null, heroBanner: heroBanner || null, heroBannerEs: heroBannerEs || null, enabled })
       onSaved()
     } catch (e: any) { toast(e?.message ?? 'Could not save'); setBusy(false) }
   }
@@ -209,6 +210,7 @@ function EditModal({ cat, onClose, onSaved, api }: { cat: Cat | null; onClose: (
           {DEPT_OPTIONS.map(([slug, label]) => <option key={slug} value={slug}>{label} ({slug})</option>)}
         </select>
         <div style={{ marginTop: 10 }}><ImageUploadField label="Round tile icon (homepage button)" kind="category" value={img} onChange={setImg} /></div>
+        <div style={{ marginTop: 10 }}><ImageUploadField label="🇪🇸 Round tile icon — Spanish version (optional, auto-switch)" kind="category" value={imgEs} onChange={setImgEs} hint="Shown on the homepage to visitors using the site in Spanish. Leave empty to use the main tile." /></div>
         <div style={{ marginTop: 10 }}><ImageUploadField label="Category page hero banner (wide ~5:1 — shown full-width at the top of the category page)" kind="category" value={heroBanner} onChange={setHeroBanner} trim hint="Any white border/padding is trimmed automatically on upload." /></div>
         <div style={{ marginTop: 10 }}><ImageUploadField label="🇪🇸 Category hero — Spanish version (optional, auto-switch)" kind="category" value={heroBannerEs} onChange={setHeroBannerEs} trim hint="Shown to visitors using the site in Spanish. Leave empty to use the main banner." /></div>
         <div style={{ marginTop: 10 }}><ImageUploadField label="Header background image (legacy — faded behind the header)" kind="category" value={bgImage} onChange={setBgImage} /></div>
