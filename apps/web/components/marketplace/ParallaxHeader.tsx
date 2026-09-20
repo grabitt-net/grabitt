@@ -33,9 +33,6 @@ export default function CarouselHeader() {
   const { openPanel } = usePanel()
   const [slides, setSlides] = useState<Slide[]>([])
   const [idx, setIdx] = useState(0)
-  // Natural aspect ratio (w/h) of each slide's image, learned on load, so the
-  // viewport matches the uploaded banner and the whole image fits with no crop.
-  const [ratios, setRatios] = useState<Record<string, number>>({})
   const pausedRef = useRef(false)
 
   useEffect(() => {
@@ -75,7 +72,7 @@ export default function CarouselHeader() {
       onTouchStart={() => { pausedRef.current = true }}
     >
       {/* Viewport */}
-      <div style={{ position: 'relative', width: '100%', overflow: 'hidden', aspectRatio: ratios[slides[idx]?.id] ? String(ratios[slides[idx]?.id]) : '1053 / 320', transition: 'aspect-ratio 0.3s ease', background: 'linear-gradient(135deg,var(--orange) 0%,var(--orange2) 100%)' }}>
+      <div style={{ position: 'relative', width: '100%', overflow: 'hidden', aspectRatio: '1053 / 320', background: 'linear-gradient(135deg,var(--orange) 0%,var(--orange2) 100%)' }}>
         {/* Track */}
         <div style={{ display: 'flex', height: '100%', transform: `translateX(-${idx * 100}%)`, transition: 'transform 0.5s ease' }}>
           {slides.map(s => {
@@ -90,18 +87,7 @@ export default function CarouselHeader() {
                 onKeyDown={clickable ? (e => { if (e.key === 'Enter' || e.key === ' ') activate(s) }) : undefined}
                 style={{ position: 'relative', flexShrink: 0, width: '100%', height: '100%', cursor: clickable ? 'pointer' : 'default' }}
               >
-                <img
-                  src={pickBannerImage(s.imageUrl, s.imageUrlEs) ?? s.imageUrl}
-                  alt={s.heading ?? ''}
-                  onLoad={e => {
-                    const im = e.currentTarget
-                    if (im.naturalWidth && im.naturalHeight) {
-                      const r = im.naturalWidth / im.naturalHeight
-                      setRatios(prev => (prev[s.id] === r ? prev : { ...prev, [s.id]: r }))
-                    }
-                  }}
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-                />
+                <img src={pickBannerImage(s.imageUrl, s.imageUrlEs) ?? s.imageUrl} alt={s.heading ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 {hasText && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.55))' }} />}
                 {hasText && (
                   <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 clamp(16px,4vw,48px) clamp(14px,3vw,30px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
