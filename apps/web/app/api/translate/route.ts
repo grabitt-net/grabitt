@@ -3,24 +3,29 @@ import { createHash } from 'crypto'
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 
 // Machine-translation proxy for user-generated content (listing titles &
-// descriptions, job adverts, messages). Auto-translates to the viewer's site
-// language; results are cached in the Translation table keyed by (hash, lang)
-// so repeat views never re-hit Google. The API key stays on the server.
+// descriptions, job adverts, messages, directory listings, guides).
+// Auto-translates to the viewer's site language; results are cached in the
+// Translation table keyed by (hash, lang) so repeat views never re-hit a provider.
+//
+// Provider priority — free by default, no card required:
+//   1. DeepL API Free      — set DEEPL_API_KEY (free tier: 500k chars/month, best quality)
+//   2. Google Cloud (paid) — set GOOGLE_TRANSLATE_API_KEY (only if you opt in)
+//   3. MyMemory            — free, no key, used automatically as the fallback
+// Set MYMEMORY_EMAIL to raise MyMemory's free daily quota.
 //
 // POST { texts: string[], target: string } → { translations: string[] }
-// The response array is aligned to the input order. When no key is configured,
-// or the target is unsupported, the original texts are returned unchanged so the
-// site keeps working.
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// Google Cloud Translation API (v2, API-key auth). Reuses the Maps key when a
-// dedicated translate key isn't set — enable "Cloud Translation API" on it.
-const KEY = process.env.GOOGLE_TRANSLATE_API_KEY || process.env.GOOGLE_MAPS_API_KEY
-// The site's supported languages (mirrors lib/i18n Lang).
+const DEEPL_KEY = process.env.DEEPL_API_KEY
+const GOOGLE_KEY = process.env.GOOGLE_TRANSLATE_API_KEY // NB: not the Maps key — avoids surprise billing
+const MYMEMORY_EMAIL = process.env.MYMEMORY_EMAIL || ''
+
 const SUPPORTED = new Set(['en', 'es', 'de', 'da', 'sv', 'nl', 'fr', 'pt'])
-// Don't send anything huge to the API; skip oversized blobs (returned as-is).
 const MAX_LEN = 5000
+// Cap provider calls per request when using the per-string free API, so one page
+// never fires hundreds of requests; the rest resolve from cache on later loads.
+const MYMEMORY_MAX = 30
 
 const hashOf = (s: string) => createHash('sha256').update(s).digest('hex')
 
@@ -31,6 +36,53 @@ function admin() {
   return createSupabaseAdmin(url, key, { auth: { persistSession: false } })
 }
 
+// ── Providers: each takes the miss list + target, returns src → translated ──────
+async function viaDeepL(misses: string[], target: string): Promise<Map<string, string>> {
+  const out = new Map<string, string>()
+  const host = (DEEPL_KEY || '').endsWith(':fx') ? 'https://api-free.deepl.com' : 'https://api.deepl.com'
+  const res = await fetch(`${host}/v2/translate`, {
+    method: 'POST',
+    headers: { 'Authorization': `DeepL-Auth-Key ${DEEPL_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: misses, target_lang: target === 'en' ? 'EN-GB' : target.toUpperCase() }),
+  })
+  if (!res.ok) return out
+  const json = await res.json() as { translations?: { text?: string }[] }
+  ;(json.translations ?? []).forEach((t, i) => { if (typeof t.text === 'string') out.set(misses[i], t.text) })
+  return out
+}
+
+async function viaGoogle(misses: string[], target: string): Promise<Map<string, string>> {
+  const out = new Map<string, string>()
+  const res = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_KEY}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ q: misses, target, format: 'text' }),
+  })
+  if (!res.ok) return out
+  const json = await res.json() as { data?: { translations?: { translatedText?: string }[] } }
+  ;(json.data?.translations ?? []).forEach((t, i) => { if (typeof t.translatedText === 'string') out.set(misses[i], t.translatedText) })
+  return out
+}
+
+async function viaMyMemory(misses: string[], target: string): Promise<Map<string, string>> {
+  const out = new Map<string, string>()
+  // MyMemory needs a source language. The site is EN/ES-first, so assume content
+  // is in the "other" launch language; default to English for any other target.
+  const source = target === 'es' ? 'en' : target === 'en' ? 'es' : 'en'
+  const de = MYMEMORY_EMAIL ? `&de=${encodeURIComponent(MYMEMORY_EMAIL)}` : ''
+  for (const text of misses.slice(0, MYMEMORY_MAX)) {
+    try {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}${de}`
+      const res = await fetch(url)
+      if (!res.ok) continue
+      const json = await res.json() as { responseStatus?: number; responseData?: { translatedText?: string } }
+      const translated = json.responseData?.translatedText
+      // MyMemory returns quota/error notices in translatedText with non-200 status.
+      if (json.responseStatus === 200 && typeof translated === 'string' && translated.trim()) out.set(text, translated)
+    } catch { /* skip this one */ }
+  }
+  return out
+}
+
 export async function POST(req: Request) {
   let body: { texts?: unknown; target?: unknown }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Bad JSON' }, { status: 400 }) }
@@ -38,17 +90,11 @@ export async function POST(req: Request) {
   const target = String(body.target ?? '').toLowerCase()
   const texts = Array.isArray(body.texts) ? body.texts.map(t => (typeof t === 'string' ? t : '')) : []
   if (!texts.length) return NextResponse.json({ translations: [] })
+  if (!SUPPORTED.has(target)) return NextResponse.json({ translations: texts })
 
-  // Nothing to do (or can't): echo the input so callers can use the result
-  // unconditionally.
-  if (!KEY || !SUPPORTED.has(target)) return NextResponse.json({ translations: texts })
-
-  // Work on the unique, non-trivial strings only — many inputs repeat (same
-  // title in a list) or are empty / too long to translate.
   const translatable = (s: string) => s.trim().length > 0 && s.length <= MAX_LEN
   const uniques = Array.from(new Set(texts.filter(translatable)))
-  const result = new Map<string, string>() // source text -> translated
-
+  const result = new Map<string, string>()
   const db = admin()
 
   // 1) Cache lookup.
@@ -62,35 +108,23 @@ export async function POST(req: Request) {
     }
   }
 
-  // 2) Translate the misses via Google, in one batched call.
+  // 2) Translate the misses via the first configured provider (free by default).
   const misses = uniques.filter(t => !result.has(t))
   if (misses.length) {
     try {
-      const res = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q: misses, target, format: 'text' }),
-      })
-      if (res.ok) {
-        const json = await res.json() as { data?: { translations?: { translatedText?: string }[] } }
-        const out = json.data?.translations ?? []
-        const rows: { hash: string; lang: string; text: string }[] = []
-        misses.forEach((src, i) => {
-          const translated = out[i]?.translatedText
-          if (typeof translated === 'string') {
-            result.set(src, translated)
-            rows.push({ hash: hashOf(src), lang: target, text: translated })
-          }
-        })
-        // 3) Persist for next time (ignore conflicts on the unique key).
-        if (db && rows.length) {
-          await db.from('Translation').upsert(rows, { onConflict: 'hash,lang', ignoreDuplicates: true })
-        }
+      const fresh = DEEPL_KEY ? await viaDeepL(misses, target)
+        : GOOGLE_KEY ? await viaGoogle(misses, target)
+        : await viaMyMemory(misses, target)
+      const rows: { hash: string; lang: string; text: string }[] = []
+      for (const [src, translated] of fresh) {
+        result.set(src, translated)
+        rows.push({ hash: hashOf(src), lang: target, text: translated })
       }
-    } catch { /* provider hiccup — fall through, untranslated strings echo back */ }
+      // 3) Persist for next time (ignore conflicts on the unique key).
+      if (db && rows.length) await db.from('Translation').upsert(rows, { onConflict: 'hash,lang', ignoreDuplicates: true })
+    } catch { /* provider hiccup — untranslated strings echo back below */ }
   }
 
   // 4) Map every input back to its translation (or itself when not translated).
-  const translations = texts.map(t => result.get(t) ?? t)
-  return NextResponse.json({ translations })
+  return NextResponse.json({ translations: texts.map(t => result.get(t) ?? t) })
 }
