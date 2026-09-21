@@ -12,6 +12,8 @@ import PanelHost from '@/components/marketplace/PanelHostLazy'
 import Place from '@/components/marketplace/Place'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
+import { t } from '@/lib/i18n'
+import { useTranslated } from '@/lib/translateContent'
 
 const DirectoryMap = dynamic(() => import('@/components/marketplace/DirectoryMap'), { ssr: false, loading: () => <div style={{ width: '100%', height: 240, borderRadius: 12, background: '#ece3d7' }} /> })
 
@@ -32,6 +34,8 @@ export default function DirectoryListingPage() {
   const [state, setState] = useState<'loading' | 'ok' | 'unavailable'>('loading')
   const [claiming, setClaiming] = useState(false)
   const [claimErr, setClaimErr] = useState('')
+  // Auto-translate the business-written text for non-English viewers (free MT).
+  const [trName, trCategory, trDescription] = useTranslated([listing?.name ?? '', listing?.category ?? '', listing?.description ?? ''])
 
   useEffect(() => {
     if (!id) return
@@ -58,16 +62,16 @@ export default function DirectoryListingPage() {
   return (
     <PanelProvider>
       <main className="app-shell" style={{ background: 'var(--cream)', minHeight: '100vh', paddingBottom: 60, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-        <Topbar title="Business Directory" back backFallback="/directory" />
+        <Topbar title={t('Business Directory')} back backFallback="/directory" />
         <QuickActions />
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 14px' }}>
-          <Link href="/directory" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#1a1a1a', textDecoration: 'none' }}>Directory</Link>
+          <Link href="/directory" style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: '#1a1a1a', textDecoration: 'none' }}>{t('Directory')}</Link>
 
-          {state === 'loading' && <div style={{ padding: 50, textAlign: 'center', fontFamily: 'var(--font-nunito)', color: '#1a1a1a' }}>Loading…</div>}
+          {state === 'loading' && <div style={{ padding: 50, textAlign: 'center', fontFamily: 'var(--font-nunito)', color: '#1a1a1a' }}>{t('Loading…')}</div>}
           {state === 'unavailable' && (
             <div style={{ padding: 50, textAlign: 'center', fontFamily: 'var(--font-nunito)', color: '#aaa' }}>
               <div style={{ fontSize: 40, marginBottom: 10 }}>🚫</div>
-              <div style={{ fontSize: 15, fontWeight: 800 }}>This listing isn’t currently live</div>
+              <div style={{ fontSize: 15, fontWeight: 800 }}>{t('This listing isn’t currently live')}</div>
             </div>
           )}
           {state === 'ok' && listing && (
@@ -76,10 +80,10 @@ export default function DirectoryListingPage() {
                 {listing.logoUrl ? <img src={listing.logoUrl} alt={listing.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 54 }}>🏢</span>}
               </div>
               <div style={{ padding: 18 }}>
-                {listing.category && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{listing.category}</div>}
-                <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 24, fontWeight: 700, color: 'var(--dark)', margin: '4px 0' }}>{listing.name}</h1>
+                {listing.category && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{trCategory || listing.category}</div>}
+                <h1 style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 24, fontWeight: 700, color: 'var(--dark)', margin: '4px 0' }}>{trName || listing.name}</h1>
                 {listing.location && <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: 'var(--ink-2)', marginBottom: 10 }}>{listing.location}</Place>}
-                {listing.description && <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, color: '#1a1a1a', lineHeight: 1.7, marginBottom: 14 }}>{listing.description}</p>}
+                {listing.description && <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, color: '#1a1a1a', lineHeight: 1.7, marginBottom: 14, whiteSpace: 'pre-wrap' }}>{trDescription || listing.description}</p>}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {listing.phone && <Contact icon="📞" text={listing.phone} href={`tel:${listing.phone}`} />}
                   {/* Email & website arrive base64-encoded and are decoded here, so
@@ -104,10 +108,10 @@ export default function DirectoryListingPage() {
                 {/* Unclaimed (admin-seeded) listing — the business owner can claim it. */}
                 {listing.claimable && (
                   <div style={{ marginTop: 16, background: '#FFF8F4', border: '1px solid #FFD4C0', borderRadius: 12, padding: 14 }}>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>Is this your business?</div>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#555', lineHeight: 1.6, marginBottom: 10 }}>Claim this listing to manage it yourself. You&apos;ll get <strong>1 month free</strong>, then choose a subscription to keep it live.</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 900, color: 'var(--dark)', marginBottom: 4 }}>{t('Is this your business?')}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#555', lineHeight: 1.6, marginBottom: 10 }}>{t('Claim this listing to manage it yourself. You’ll get 1 month free, then choose a subscription to keep it live.')}</div>
                     {claimErr && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#ef4444', fontWeight: 700, marginBottom: 8 }}>{claimErr}</div>}
-                    <button onClick={claim} disabled={claiming} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: claiming ? 'wait' : 'pointer' }}>{claiming ? 'Claiming…' : '✋ Claim this listing'}</button>
+                    <button onClick={claim} disabled={claiming} style={{ width: '100%', background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', border: 'none', borderRadius: 12, padding: 13, fontFamily: 'var(--font-nunito)', fontSize: 14, fontWeight: 900, cursor: claiming ? 'wait' : 'pointer' }}>{claiming ? t('Claiming…') : `✋ ${t('Claim this listing')}`}</button>
                   </div>
                 )}
               </div>

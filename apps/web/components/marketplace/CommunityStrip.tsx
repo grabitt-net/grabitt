@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { t } from '@/lib/i18n'
+import { useTranslated } from '@/lib/translateContent'
 
 type Post = { id: string; title: string; excerpt: string; category: string; emoji: string; imageUrl: string | null }
 
@@ -14,6 +15,9 @@ export default function CommunityStrip() {
       .then(p => setPosts(p as Post[]))
       .catch(() => {})
   }, [])
+  // Auto-translate the editorial titles/excerpts for non-English viewers (free MT).
+  const trTitles = useTranslated(posts.map(p => p.title))
+  const trExcerpts = useTranslated(posts.map(p => p.excerpt))
   if (posts.length === 0) return null
   return (
     <section style={{ padding: '16px 0 0' }}>
@@ -22,7 +26,7 @@ export default function CommunityStrip() {
         <Link href="/community" style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--orange)', textDecoration: 'none', background: '#FFF3EE', border: '1px solid #FFD9C2', borderRadius: 50, padding: '5px 12px' }}>{t('See all')}</Link>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, padding: '0 14px 4px' }}>
-        {posts.map(p => (
+        {posts.map((p, idx) => (
           <Link key={p.id} href={`/community/${p.id}`} style={{ textDecoration: 'none' }}>
             <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', height: '100%' }}>
               <div style={{ height: 96, background: 'linear-gradient(135deg,#e8dfd0,#f5f0e8)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
@@ -30,8 +34,8 @@ export default function CommunityStrip() {
               </div>
               <div style={{ padding: '10px 12px 12px' }}>
                 <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, fontWeight: 800, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>{p.category}</div>
-                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)', lineHeight: 1.3, marginBottom: 5 }}>{p.title}</div>
-                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#1a1a1a', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.excerpt}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)', lineHeight: 1.3, marginBottom: 5 }}>{trTitles[idx] || p.title}</div>
+                <div style={{ fontFamily: 'var(--font-comfortaa)', fontSize: 11.5, color: '#1a1a1a', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{trExcerpts[idx] || p.excerpt}</div>
               </div>
             </div>
           </Link>

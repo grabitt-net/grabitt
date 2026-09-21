@@ -856,6 +856,19 @@ export const TRANSLATIONS: Record<string, { en: string } & Partial<Record<Lang, 
   'Good': { en: 'Good', es: 'Bueno' },
   'Fair': { en: 'Fair', es: 'Aceptable' },
   'For Parts': { en: 'For Parts', es: 'Para piezas' },
+
+  // Business directory chrome
+  'Business type': { en: 'Business type', es: 'Tipo de negocio' },
+  'All business types': { en: 'All business types', es: 'Todos los tipos de negocio' },
+  'All locations': { en: 'All locations', es: 'Todas las ubicaciones' },
+  'List your business': { en: 'List your business', es: 'Publica tu negocio' },
+  'No businesses listed yet': { en: 'No businesses listed yet', es: 'Aún no hay negocios publicados' },
+  'Directory': { en: 'Directory', es: 'Directorio' },
+  'This listing isn’t currently live': { en: 'This listing isn’t currently live', es: 'Este anuncio no está activo actualmente' },
+  'Is this your business?': { en: 'Is this your business?', es: '¿Es este tu negocio?' },
+  'Claim this listing to manage it yourself. You’ll get 1 month free, then choose a subscription to keep it live.': { en: 'Claim this listing to manage it yourself. You’ll get 1 month free, then choose a subscription to keep it live.', es: 'Reclama este anuncio para gestionarlo tú mismo. Tendrás 1 mes gratis y luego eliges una suscripción para mantenerlo activo.' },
+  'Claim this listing': { en: 'Claim this listing', es: 'Reclamar este anuncio' },
+  'Claiming…': { en: 'Claiming…', es: 'Reclamando…' },
 }
 
 let _lang: Lang = 'en'
