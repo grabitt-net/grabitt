@@ -15,12 +15,12 @@ interface Listing {
 }
 interface DirCategory { id: string; name: string; sortOrder: number; active: boolean }
 
-// The category dropdown = built-in defaults + any custom categories admins added
-// (active ones), de-duplicated and defaults-first.
+// Categories are DB-driven (seeded from the built-in defaults). The dropdowns use
+// the active ones in admin order; the static defaults are only a fallback for the
+// brief case where the table is somehow empty.
 function mergeCategories(custom: DirCategory[]): string[] {
-  const out = [...BUSINESS_CATEGORIES]
-  for (const c of custom) if (c.active && !out.includes(c.name)) out.push(c.name)
-  return out
+  const active = custom.filter(c => c.active).map(c => c.name)
+  return active.length ? active : [...BUSINESS_CATEGORIES]
 }
 
 export default function DirectoryView() {
@@ -192,7 +192,7 @@ function CategoryManager({ api, custom, reload }: { api: ReturnType<typeof useCr
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: 14, marginBottom: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: '#1a1a1a' }}>Categories <span style={{ color: '#aaa', fontWeight: 700 }}>· {BUSINESS_CATEGORIES.length} built-in + {custom.length} custom</span></div>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: '#1a1a1a' }}>Categories <span style={{ color: '#aaa', fontWeight: 700 }}>· {custom.length}</span></div>
         <button onClick={() => setOpen(o => !o)} style={{ ...pill, background: '#f0f0f0', color: '#555' }}>{open ? 'Hide' : 'Manage'}</button>
       </div>
       {open && (
@@ -201,9 +201,9 @@ function CategoryManager({ api, custom, reload }: { api: ReturnType<typeof useCr
             <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add() } }} placeholder="New category name" style={{ ...inp, flex: 1, marginBottom: 0 }} />
             <button onClick={add} disabled={busy || name.trim().length < 2} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 8, padding: '0 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>Add</button>
           </div>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', marginBottom: 8 }}>Built-in categories always appear in the dropdowns. Custom ones you add here appear alongside them.</div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', marginBottom: 8 }}>These are the categories advertisers can choose. Add new ones, hide (👁) or remove (×) any you don’t want. Removing one only drops the dropdown option — listings already on it keep their text.</div>
           {custom.length === 0
-            ? <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#bbb' }}>No custom categories yet.</div>
+            ? <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#bbb' }}>No categories yet — add your first above.</div>
             : <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {custom.map(c => (
                   <span key={c.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: c.active ? '#f0ebe4' : '#f5f5f5', color: c.active ? '#1a1a1a' : '#aaa', borderRadius: 50, padding: '5px 8px 5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 700 }}>

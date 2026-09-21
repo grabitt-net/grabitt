@@ -30,9 +30,10 @@ export default function DirectoryPage() {
       .then(c => setCustomCats(((c ?? []) as { name: string }[]).map(x => x.name))).catch(() => {})
   }, [])
 
-  // Business type shows ALL main categories (even empty ones — no-results is fine),
-  // then admin custom categories, then any legacy values present on listings.
-  const base = [...BUSINESS_CATEGORIES, ...customCats.filter(c => !BUSINESS_CATEGORIES.includes(c))]
+  // Categories are admin-managed (DB); fall back to the built-in defaults only if
+  // the admin list is empty. Any legacy values on listings are appended so nothing
+  // becomes unfilterable.
+  const base = customCats.length ? customCats : BUSINESS_CATEGORIES
   const present = Array.from(new Set((listings ?? []).map(l => l.category).filter((c): c is string => !!c)))
   const extra = present.filter(c => !base.includes(c)).sort()
   const categories = ['All', ...base, ...extra]

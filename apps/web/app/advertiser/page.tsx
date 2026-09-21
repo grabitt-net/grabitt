@@ -122,7 +122,8 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
   const [terms, setTerms] = useState<Term[]>([])
   const [subBusy, setSubBusy] = useState<string>('')
   const [customCats, setCustomCats] = useState<string[]>([])
-  const cats = [...BUSINESS_CATEGORIES, ...customCats.filter(c => !BUSINESS_CATEGORIES.includes(c))]
+  // Admin-managed categories (DB); fall back to the built-in defaults if empty.
+  const cats = customCats.length ? customCats : BUSINESS_CATEGORIES
 
   useEffect(() => {
     trpcAuthed().banners.myBookings.query().then((d: any) => setBookings(d ?? [])).catch(() => setBookings([]))
