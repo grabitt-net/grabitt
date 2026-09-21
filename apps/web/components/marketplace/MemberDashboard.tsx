@@ -402,7 +402,10 @@ export default function MemberDashboard({ me, onReload }: { me: any; onReload: (
             {effBiz && (
               <HubNavRow icon="building" label={t('Storefront')} last value={
                 storefront?.slug
-                  ? <button onClick={() => router.push(`/shop/${storefront.slug}`)} style={navLinkBtn}>{t('View shop')}</button>
+                  ? <span style={{ display: 'inline-flex', gap: 10 }}>
+                      <button onClick={() => openPanel('storefrontEdit' as PanelId)} style={navLinkBtn}>{t('Edit')}</button>
+                      <button onClick={() => router.push(`/shop/${storefront.slug}`)} style={navLinkBtn}>{t('View shop')}</button>
+                    </span>
                   : <button onClick={() => openPanel('storefrontEdit' as PanelId)} style={navLinkBtn}>{t('Set up')}</button>} />
             )}
           </div>

@@ -15,6 +15,7 @@ type Shop = {
   bannerUrl: string | null; bannerUrlEs: string | null; logoUrl: string | null; accentColour: string | null
   categories: string[]; featuredIds: string[]
   shippingPolicy: string | null; returnsPolicy: string | null; paymentPolicy: string | null
+  contactPhone: string | null; contactEmail: string | null; contactWebsite: string | null
   published: boolean
 }
 const BANNER_HINT = 'Wide image, best at 1053 × 300 px (about 3.5 : 1). It fills the top of your shop edge-to-edge.'
@@ -47,7 +48,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
   const [f, setF] = useState({
     businessName: '', template: 'classic', tagline: '', about: '', bannerUrl: '', bannerUrlEs: '', logoUrl: '', accentColour: 'var(--orange)',
     categories: [] as string[], featuredIds: [] as string[],
-    shippingPolicy: '', returnsPolicy: '', paymentPolicy: '', published: false, slug: '',
+    shippingPolicy: '', returnsPolicy: '', paymentPolicy: '', contactPhone: '', contactEmail: '', contactWebsite: '', published: false, slug: '',
   })
   const [newCat, setNewCat] = useState('')
 
@@ -70,7 +71,9 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
           bannerUrl: res.shop.bannerUrl ?? '', bannerUrlEs: res.shop.bannerUrlEs ?? '', logoUrl: res.shop.logoUrl ?? '', accentColour: res.shop.accentColour ?? 'var(--orange)',
           categories: res.shop.categories, featuredIds: res.shop.featuredIds,
           shippingPolicy: res.shop.shippingPolicy ?? '', returnsPolicy: res.shop.returnsPolicy ?? '',
-          paymentPolicy: res.shop.paymentPolicy ?? '', published: res.shop.published, slug: res.shop.slug,
+          paymentPolicy: res.shop.paymentPolicy ?? '',
+          contactPhone: res.shop.contactPhone ?? '', contactEmail: res.shop.contactEmail ?? '', contactWebsite: res.shop.contactWebsite ?? '',
+          published: res.shop.published, slug: res.shop.slug,
         })
       } else if (res?.businessName) {
         setF(prev => ({ ...prev, businessName: res.businessName ?? '' }))
@@ -101,6 +104,9 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
         shippingPolicy: f.shippingPolicy.trim() || undefined,
         returnsPolicy: f.returnsPolicy.trim() || undefined,
         paymentPolicy: f.paymentPolicy.trim() || undefined,
+        contactPhone: f.contactPhone.trim() || undefined,
+        contactEmail: f.contactEmail.trim() || undefined,
+        contactWebsite: f.contactWebsite.trim() || undefined,
         ...(publishOverride !== undefined ? { published: publishOverride } : {}),
         ...(shop ? {} : { slug: f.slug.trim() || undefined }),
       })
@@ -265,6 +271,17 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
                     })}
                   </div>
                 )}
+              </Section>
+
+              {/* Contact */}
+              <Section title={t('Contact')}>
+                <Label>{t('Phone')}</Label>
+                <input value={f.contactPhone} onChange={e => set('contactPhone', e.target.value)} placeholder="+34 600 000 000" style={INPUT} />
+                <Label>{t('Email')}</Label>
+                <input value={f.contactEmail} onChange={e => set('contactEmail', e.target.value)} placeholder="hello@yourbusiness.com" style={INPUT} />
+                <Label>{t('Website')}</Label>
+                <input value={f.contactWebsite} onChange={e => set('contactWebsite', e.target.value)} placeholder="yourbusiness.com" style={INPUT} />
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '-4px 0 4px' }}>{t('Shown on your shop page. Email and website are protected from spam bots.')}</div>
               </Section>
 
               {/* Policies */}

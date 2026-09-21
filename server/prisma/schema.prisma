@@ -494,6 +494,12 @@ model Storefront {
   returnsPolicy   String?
   paymentPolicy   String?
 
+  // Public contact details shown on the shop page (email/website are served
+  // base64-encoded so bots can't scrape them).
+  contactPhone    String?
+  contactEmail    String?
+  contactWebsite  String?
+
   published       Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

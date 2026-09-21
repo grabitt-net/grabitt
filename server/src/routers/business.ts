@@ -265,6 +265,9 @@ export const businessRouter = router({
       shippingPolicy: z.string().max(3000).optional(),
       returnsPolicy: z.string().max(3000).optional(),
       paymentPolicy: z.string().max(3000).optional(),
+      contactPhone: z.string().max(40).optional(),
+      contactEmail: z.string().max(160).optional(),
+      contactWebsite: z.string().max(200).optional(),
       published: z.boolean().optional(),
       slug: z.string().max(50).optional(),
     }))
@@ -360,8 +363,11 @@ export const businessRouter = router({
         sellerScoreFor(ctx.prisma, shop.userId),
       ])
 
+      // Anti-harvest: email/website leave as base64, decoded in the browser.
+      const enc = (s: string | null) => (s ? Buffer.from(s, 'utf8').toString('base64') : null)
+      const { user: _user, contactEmail, contactWebsite, ...shopRest } = shop as typeof shop & { contactEmail: string | null; contactWebsite: string | null }
       return {
-        shop: { ...shop, user: undefined } as unknown as StorefrontPublic['shop'],
+        shop: { ...shopRest, contactEmailB64: enc(contactEmail), contactWebsiteB64: enc(contactWebsite) } as unknown as StorefrontPublic['shop'],
         seller: {
           id: shop.user.id,
           name: shop.user.businessName || shop.user.displayName,

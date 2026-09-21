@@ -877,6 +877,10 @@ export const TRANSLATIONS: Record<string, { en: string } & Partial<Record<Lang, 
   'Reviewed': { en: 'Reviewed', es: 'Revisado' },
   'Offered': { en: 'Offered', es: 'Oferta realizada' },
   'Reason for rejecting this candidate (kept on file):': { en: 'Reason for rejecting this candidate (kept on file):', es: 'Motivo para rechazar a este candidato (se guarda en el expediente):' },
+
+  // Storefront contact
+  'Website': { en: 'Website', es: 'Sitio web' },
+  'Shown on your shop page. Email and website are protected from spam bots.': { en: 'Shown on your shop page. Email and website are protected from spam bots.', es: 'Se muestra en la página de tu tienda. El correo y el sitio web están protegidos contra bots de spam.' },
 }
 
 let _lang: Lang = 'en'

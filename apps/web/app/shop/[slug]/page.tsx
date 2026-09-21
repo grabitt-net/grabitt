@@ -28,6 +28,7 @@ type Shop = {
     slug: string; template: string; tagline: string | null; about: string | null
     bannerUrl: string | null; bannerUrlEs: string | null; logoUrl: string | null; accentColour: string | null; categories: string[]; featuredIds: string[]
     shippingPolicy: string | null; returnsPolicy: string | null; paymentPolicy: string | null
+    contactPhone: string | null; contactEmailB64: string | null; contactWebsiteB64: string | null
   }
   seller: { id: string; name: string; avatar: string | null; verified: boolean; salesCount: number; memberSince: string }
   followers: number
@@ -228,6 +229,23 @@ function ShopInner() {
         </section>
       )}
 
+      {/* Contact — email/website arrive base64-encoded and are decoded here so
+          the raw address is never in the page HTML/JSON for bots to harvest. */}
+      {(() => {
+        const email = decodeContact(shop.contactEmailB64)
+        const website = decodeContact(shop.contactWebsiteB64)
+        if (!shop.contactPhone && !email && !website) return null
+        const webUrl = website && (/^https?:\/\//i.test(website) ? website : `https://${website}`)
+        return (
+          <section style={{ padding: '20px 16px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{t('Contact')}</div>
+            {shop.contactPhone && <ContactRow icon="📞" text={shop.contactPhone} href={`tel:${shop.contactPhone}`} />}
+            {email && <ContactRow icon="✉️" text={email} href={`mailto:${email}`} />}
+            {website && webUrl && <ContactRow icon="🌐" text={website.replace(/^https?:\/\//, '')} href={webUrl} external />}
+          </section>
+        )
+      })()}
+
       <Footer />
     </Shell>
   )
@@ -315,6 +333,19 @@ function Stat({ value, label, title }: { value: string; label: string; title?: s
       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)' }}>{value}</div>
       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 9, color: '#888', fontWeight: 800, textTransform: 'uppercase', marginTop: 2 }}>{label}</div>
     </div>
+  )
+}
+// Decode the base64 the API sends for contact details (keeps raw addresses out
+// of the HTML/JSON). Returns '' on anything unexpected.
+function decodeContact(b64: string | null | undefined): string {
+  if (!b64) return ''
+  try { return typeof atob === 'function' ? atob(b64) : Buffer.from(b64, 'base64').toString('utf8') } catch { return '' }
+}
+function ContactRow({ icon, text, href, external }: { icon: string; text: string; href: string; external?: boolean }) {
+  return (
+    <a href={href} {...(external ? { target: '_blank', rel: 'noopener' } : {})} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', background: '#fff', border: '1px solid #ece3d7', borderRadius: 12, padding: '10px 14px', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)', overflowWrap: 'anywhere', minWidth: 0 }}>
+      <span style={{ flexShrink: 0 }}>{icon}</span><span style={{ color: 'var(--orange)', minWidth: 0, overflowWrap: 'anywhere' }}>{text}</span>
+    </a>
   )
 }
 function Policy({ icon, title, body }: { icon: string; title: string; body: string }) {
