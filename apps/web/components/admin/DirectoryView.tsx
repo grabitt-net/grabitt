@@ -29,6 +29,7 @@ export default function DirectoryView() {
   const [editing, setEditing] = useState<Listing | null>(null)
   const [saving, setSaving] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [logoBusy, setLogoBusy] = useState(false)
   const [customCats, setCustomCats] = useState<DirCategory[]>([])
   const cats = mergeCategories(customCats)
 
@@ -71,6 +72,13 @@ export default function DirectoryView() {
     } finally { setSaving(false) }
   }
   const set = (k: keyof Listing, v: string) => setEditing(e => e ? { ...e, [k]: v } : e)
+  const uploadEditLogo = async (file: File | undefined) => {
+    if (!file) return
+    setLogoBusy(true)
+    try { const url = await compressAndUpload(file, cmsImagePath('directory'), { maxDim: 2400, quality: 0.92 }); set('logoUrl', url) }
+    catch { window.alert('Could not upload the logo. Please try again.') }
+    finally { setLogoBusy(false) }
+  }
 
   const liveCount = rows.filter(r => r.live).length
   const pendingCount = rows.filter(r => r.reviewStatus === 'pending').length
@@ -148,7 +156,18 @@ export default function DirectoryView() {
               <F label="Phone"><input value={editing.phone ?? ''} onChange={e => set('phone', e.target.value)} style={inp} /></F>
               <F label="Email"><input value={editing.email ?? ''} onChange={e => set('email', e.target.value)} style={inp} /></F>
               <F label="Website"><input value={editing.website ?? ''} onChange={e => set('website', e.target.value)} style={inp} /></F>
-              <div style={{ gridColumn: '1/-1' }}><F label="Logo URL"><input value={editing.logoUrl ?? ''} onChange={e => set('logoUrl', e.target.value)} style={inp} /></F></div>
+              <div style={{ gridColumn: '1/-1' }}>
+                <F label="Logo">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {editing.logoUrl ? <img src={editing.logoUrl} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', border: '1px solid #e5e7eb', flexShrink: 0 }} /> : <div style={{ width: 48, height: 48, borderRadius: 8, background: '#f5f0e8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🏢</div>}
+                    <label style={{ display: 'inline-block', background: '#FFF3EE', color: 'var(--orange)', border: '1.5px solid #FFD9C2', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: logoBusy ? 'default' : 'pointer' }}>
+                      {logoBusy ? 'Uploading…' : editing.logoUrl ? 'Change logo' : 'Upload logo'}
+                      <input type="file" accept="image/*" hidden onChange={e => uploadEditLogo(e.target.files?.[0])} />
+                    </label>
+                    {editing.logoUrl && <button onClick={() => set('logoUrl', '')} style={{ background: '#fff', color: '#888', border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>Remove</button>}
+                  </div>
+                </F>
+              </div>
               <div style={{ gridColumn: '1/-1' }}><F label="Description"><textarea value={editing.description ?? ''} onChange={e => set('description', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} /></F></div>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 14 }}>

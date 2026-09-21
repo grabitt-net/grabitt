@@ -18,6 +18,23 @@ const DIRECTORY_TERMS = {
 } as const
 export type DirectoryTerm = keyof typeof DIRECTORY_TERMS
 
+// Build a URL-safe slug from a business name.
+function slugify(name: string): string {
+  return name.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'business'
+}
+
+// A slug unique across the directory. Appends a short id-based suffix on clash.
+async function uniqueSlug(prisma: any, name: string, excludeId?: string): Promise<string> {
+  const base = slugify(name)
+  for (let i = 0; i < 6; i++) {
+    const candidate = i === 0 ? base : `${base}-${Math.random().toString(36).slice(2, 6)}`
+    const clash = await prisma.directoryListing.findUnique({ where: { slug: candidate }, select: { id: true } })
+    if (!clash || clash.id === excludeId) return candidate
+  }
+  return `${base}-${Date.now().toString(36).slice(-4)}`
+}
+
 // Turn a bare domain into a full URL (https://), leaving valid URLs untouched.
 function normalizeWebsite(v: string | null | undefined): string | null {
   const s = (v ?? '').trim()
@@ -56,7 +73,8 @@ export const directoryRouter = router({
   get: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const listing = await ctx.prisma.directoryListing.findUnique({ where: { id: input.id } })
+      // Accept the canonical slug or the raw id (old links / freshly created rows).
+      const listing = await ctx.prisma.directoryListing.findFirst({ where: { OR: [{ slug: input.id }, { id: input.id }] } })
       if (!listing || listing.disabled || !isLive(listing.paidUntil) || listing.reviewStatus !== 'approved') throw new TRPCError({ code: 'NOT_FOUND', message: 'This listing is not currently live.' })
       // Admin-seeded listings with no owner yet can be claimed by a business.
       return { ...listing, claimable: listing.adminCreated && !listing.userId }
@@ -125,7 +143,7 @@ export const directoryRouter = router({
       await ctx.prisma.user.update({ where: { id: ctx.user.id }, data: { isAdvertiser: true } })
       return ctx.prisma.directoryListing.upsert({
         where: { userId: ctx.user.id },
-        create: { userId: ctx.user.id, name: input.name },
+        create: { userId: ctx.user.id, name: input.name, slug: await uniqueSlug(ctx.prisma, input.name) },
         update: {},
       })
     }),
@@ -158,7 +176,7 @@ export const directoryRouter = router({
       // it stays hidden until an admin approves. Clear any prior rejection note.
       return ctx.prisma.directoryListing.upsert({
         where: { userId: ctx.user.id },
-        create: { userId: ctx.user.id, ...data, reviewStatus: 'pending', adminNote: null },
+        create: { userId: ctx.user.id, ...data, slug: await uniqueSlug(ctx.prisma, input.name), reviewStatus: 'pending', adminNote: null },
         update: { ...data, reviewStatus: 'pending', adminNote: null },
       })
     }),
@@ -213,6 +231,7 @@ export const directoryRouter = router({
       const data = Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, v === '' ? null : v]))
       if ('website' in data) data.website = normalizeWebsite(data.website as string | null)
       const paidUntil = paidMonths > 0 ? new Date(Date.now() + paidMonths * 30 * 86400000) : null
+      const slug = await uniqueSlug(ctx.prisma, (data as { name: string }).name)
 
       // With an owner email: attach the listing to that member (their one listing).
       if (ownerEmail && ownerEmail.trim()) {
@@ -221,13 +240,13 @@ export const directoryRouter = router({
         return ctx.prisma.directoryListing.upsert({
           where: { userId: user.id },
           update: { ...data, adminCreated: false, reviewStatus: 'approved', ...(paidUntil ? { paidUntil } : {}) },
-          create: { userId: user.id, ...(data as { name: string }), adminCreated: false, reviewStatus: 'approved', paidUntil },
+          create: { userId: user.id, ...(data as { name: string }), slug, adminCreated: false, reviewStatus: 'approved', paidUntil },
         })
       }
 
       // No owner: an unclaimed, admin-seeded listing that a business can claim.
       return ctx.prisma.directoryListing.create({
-        data: { ...(data as { name: string }), adminCreated: true, reviewStatus: 'approved', paidUntil },
+        data: { ...(data as { name: string }), slug, adminCreated: true, reviewStatus: 'approved', paidUntil },
       })
     }),
 

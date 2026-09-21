@@ -13,7 +13,7 @@ import Place from '@/components/marketplace/Place'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { BUSINESS_CATEGORIES } from '@/lib/businessCategories'
 
-type Listing = { id: string; name: string; category: string | null; description: string | null; location: string | null; logoUrl: string | null; website: string | null }
+type Listing = { id: string; slug: string | null; name: string; category: string | null; description: string | null; location: string | null; logoUrl: string | null; website: string | null }
 
 export default function DirectoryPage() {
   const [listings, setListings] = useState<Listing[] | null>(null)
@@ -82,16 +82,16 @@ export default function DirectoryPage() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
               {shown.map(l => (
-                <Link key={l.id} href={`/directory/${l.id}`} style={{ textDecoration: 'none' }}>
+                <Link key={l.id} href={`/directory/${l.slug || l.id}`} style={{ textDecoration: 'none', minWidth: 0 }}>
                   <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', height: '100%' }}>
                     <div style={{ height: 90, background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       {l.logoUrl ? <img loading="lazy" decoding="async" src={l.logoUrl} alt={l.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 34 }}>🏢</span>}
                     </div>
-                    <div style={{ padding: '11px 12px 14px' }}>
-                      {l.category && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4 }}>{l.category}</div>}
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', marginTop: 2 }}>{l.name}</div>
-                      {l.location && <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>{l.location}</Place>}
-                      {l.description && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#1a1a1a', marginTop: 6, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{l.description}</div>}
+                    <div style={{ padding: '11px 12px 14px', minWidth: 0 }}>
+                      {l.category && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4, overflowWrap: 'anywhere' }}>{l.category}</div>}
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 14.5, fontWeight: 900, color: 'var(--dark)', marginTop: 2, overflowWrap: 'anywhere' }}>{l.name}</div>
+                      {l.location && <Place wrap style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>{l.location}</Place>}
+                      {l.description && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#1a1a1a', marginTop: 6, lineHeight: 1.4, overflowWrap: 'anywhere', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{l.description}</div>}
                     </div>
                   </div>
                 </Link>
