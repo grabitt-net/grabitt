@@ -5,7 +5,7 @@ import { getStripe } from '../lib/stripe'
 import { businessTierForGrade, PROPERTY_PRICING, PRICES } from '@grabitt/design-tokens'
 import { validateDiscount, recordRedemption } from '../lib/discounts'
 
-const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
+const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net'
 
 export const propertyRouter = router({
   // Agents/business accounts list a property. Creates the Listing + its

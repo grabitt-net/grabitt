@@ -15,7 +15,7 @@ function genericEstablishment(sector?: string | null): string {
   return sector?.trim() ? `${sector.trim()} employer` : 'Employer'
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net'
 
 // Multi-category pricing: a listing's primary department + 1 extra are free
 // (2 categories); each further category costs €0.99.

@@ -6,7 +6,7 @@ import { getSponsorshipCatalog, sponsorMonthlyCents, SPONSOR_DURATIONS, SPONSOR_
 import { BUSINESS_ADDON_IDS, BLAST_BUNDLES } from '@grabitt/design-tokens'
 import type { PrismaClient } from '@prisma/client'
 
-const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
+const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net'
 
 // Category Sponsor is exclusive — one advertiser per page for any overlapping
 // period. Throws if the page is already taken.

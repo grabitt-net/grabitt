@@ -5,7 +5,7 @@ import { scoreSuitability } from '../lib/suitability'
 import { getStripe } from '../lib/stripe'
 import { RECRUITMENT_PRICING } from '@grabitt/design-tokens'
 
-const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
+const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net'
 
 // The candidate database is an OPTIONAL add-on to an existing paid job advert.
 // Searching and opening profiles are free; revealing a candidate's CV + contact

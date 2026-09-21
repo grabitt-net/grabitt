@@ -11,7 +11,7 @@ import { BANNER_SLOT_IDS, BANNER_MAX_MONTHS, BANNER_DURATIONS } from '@grabitt/d
 import { SPONSOR_PAGES } from '../lib/sponsorshipPricing'
 import { applyPromo } from '../lib/discounts'
 
-const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
+const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net'
 const POSITIONS = BANNER_SLOT_IDS as unknown as [string, ...string[]]
 
 // A line the buyer wants: slot, optional page, months, and an ISO start date.

@@ -5,7 +5,7 @@ import { getStripe } from '../lib/stripe'
 import { HANDY_PRICING } from '@grabitt/design-tokens'
 import { applyPromo } from '../lib/discounts'
 
-const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
+const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net'
 const VALIDITY_MS = HANDY_PRICING.validityDays * 86_400_000
 const expiryOf = (createdAt: Date) => new Date(createdAt.getTime() + VALIDITY_MS)
 

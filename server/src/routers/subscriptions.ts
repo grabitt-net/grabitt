@@ -8,7 +8,7 @@ import type { PrismaClient } from '@prisma/client'
 import { validateDiscount } from '../lib/discounts'
 
 const PLAN_IDS = Object.keys(SUBSCRIPTION_PLANS) as (keyof typeof SUBSCRIPTION_PLANS)[]
-const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
+const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net'
 
 // Get-or-create the Stripe customer for a user and persist its id.
 async function getOrCreateCustomer(prisma: PrismaClient, userId: string) {

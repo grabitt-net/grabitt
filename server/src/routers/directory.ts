@@ -4,7 +4,7 @@ import { router, publicProcedure, protectedProcedure, execProcedure } from '../t
 import { getStripe } from '../lib/stripe'
 import { DIRECTORY_PRICING } from '@grabitt/design-tokens'
 
-const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://grabitt.vercel.app'
+const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net'
 
 // A directory listing is live only while its standalone subscription is paid
 // (paidUntil in the future) — this is a separate income stream from banner ads.
@@ -76,8 +76,13 @@ export const directoryRouter = router({
       // Accept the canonical slug or the raw id (old links / freshly created rows).
       const listing = await ctx.prisma.directoryListing.findFirst({ where: { OR: [{ slug: input.id }, { id: input.id }] } })
       if (!listing || listing.disabled || !isLive(listing.paidUntil) || listing.reviewStatus !== 'approved') throw new TRPCError({ code: 'NOT_FOUND', message: 'This listing is not currently live.' })
+      // Anti-harvest: never send the raw email/website in the public payload —
+      // base64-encode them so a scraper scanning the HTML or API JSON for an
+      // address or URL finds nothing usable. The browser decodes them for display.
+      const enc = (s: string | null) => (s ? Buffer.from(s, 'utf8').toString('base64') : null)
+      const { email, website, ...rest } = listing
       // Admin-seeded listings with no owner yet can be claimed by a business.
-      return { ...listing, claimable: listing.adminCreated && !listing.userId }
+      return { ...rest, emailB64: enc(email), websiteB64: enc(website), claimable: listing.adminCreated && !listing.userId }
     }),
 
   // A business owner claims an admin-created (unclaimed) listing as their own.
