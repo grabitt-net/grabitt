@@ -482,7 +482,7 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
           </Card>
 
           <Card title="Business directory">
-            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 8 }}>Create a live directory listing for this business automatically — pre-filled from their name, approved, and granted a free window. They can then edit its details themselves.</div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 8 }}>Create a live directory listing for this business automatically, pulling their <strong>business name</strong>, <strong>storefront logo</strong> and <strong>storefront description</strong> from their profile. Approved and granted a free window. Re-running refreshes it from the current profile.</div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <label style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555' }}>Free months</label>
               <input value={dirMonths} onChange={e => setDirMonths(e.target.value.replace(/[^0-9]/g, ''))} style={{ width: 60, boxSizing: 'border-box', border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '7px 9px', fontFamily: 'var(--font-ui)', fontSize: 13 }} />
@@ -490,8 +490,8 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
                 onClick={async () => {
                   setBusy('dir'); setErr('')
                   try {
-                    await api.createDirectoryListing({ ownerEmail: member.email, name: (f.businessName.trim() || f.displayName.trim() || member.email), paidMonths: Math.max(0, parseInt(dirMonths) || 0) })
-                    flash('✓ Directory listing created (approved & live). Edit its details in Business Directory.'); onSaved()
+                    await api.grantDirectoryForUser(member.id, Math.max(0, parseInt(dirMonths) || 0))
+                    flash('✓ Directory listing created from their profile (approved & live).'); onSaved()
                   } catch (e) { fail(e) } finally { setBusy('') }
                 }}
                 disabled={!!busy}

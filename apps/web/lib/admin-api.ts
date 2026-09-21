@@ -114,6 +114,8 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('directory.adminSetDisabled', 'mutation', { id, disabled }, execToken),
     grantDirectoryMonths: (id: string, months: number) =>
       rpc<any>('directory.adminGrantMonths', 'mutation', { id, months }, execToken),
+    grantDirectoryForUser: (userId: string, paidMonths: number) =>
+      rpc<any>('directory.grantForUser', 'mutation', { userId, paidMonths }, execToken),
     // Directory categories (admin-managed, merged with the built-in defaults)
     directoryCategories: () => rpc<{ id: string; name: string; sortOrder: number; active: boolean }[]>('directory.adminCategories', 'query', undefined, execToken),
     upsertDirectoryCategory: (data: { id?: string; name: string; sortOrder?: number; active?: boolean }) =>
