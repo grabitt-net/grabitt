@@ -382,7 +382,7 @@ function ListingInner() {
     const town = (listing.location || '').trim()
     return (
       <main className="app-shell" style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-        <Topbar title={DEPT_LABEL[listing.department] ?? 'Property'} back backFallback="/property" />
+        <Topbar title={t(DEPT_LABEL[listing.department] ?? 'Property')} back backFallback="/property" />
         <QuickActions />
 
         <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -440,12 +440,12 @@ function ListingInner() {
 
               {/* In-demand strip */}
               <div style={{ background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '10px 12px' }}>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>🔥 In demand</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>🔥 {t('In demand')}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
                   {[[views, 'views'], [watchers, 'watching']].map(([n, lab], i) => (
                     <div key={i}>
                       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div>
-                      <div style={{ fontSize: 9.5, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{lab as string}</div>
+                      <div style={{ fontSize: 9.5, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{t(lab as string)}</div>
                     </div>
                   ))}
                 </div>
@@ -541,10 +541,10 @@ function ListingInner() {
                 </div>
               </div>
               <div style={{ background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '10px 12px' }}>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>🔥 In demand</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>🔥 {t('In demand')}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
                   {[[views, 'views'], [watchers, 'watching']].map(([n, lab], i) => (
-                    <div key={i}><div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div><div style={{ fontSize: 9.5, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{lab as string}</div></div>
+                    <div key={i}><div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div><div style={{ fontSize: 9.5, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{t(lab as string)}</div></div>
                   ))}
                 </div>
               </div>
@@ -590,7 +590,7 @@ function ListingInner() {
     const isOffer = listing.handyKind === 'offer'
     const town = (listing.location || 'Canary Islands').trim()
     const handyFacts: [string, string][] = [
-      [t('Type'), isOffer ? 'Service offered' : 'Help wanted'],
+      [t('Type'), isOffer ? t('Service offered') : t('Help wanted')],
       [t('Category'), listing.subcategory ?? ''],
       [t('Reference'), ref],
     ].filter(([, v]) => v) as [string, string][]
@@ -605,7 +605,7 @@ function ListingInner() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={cardBox}>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-                  <Chip>🔧 {isOffer ? 'Service offered' : 'Help wanted'}</Chip>
+                  <Chip>🔧 {isOffer ? t('Service offered') : t('Help wanted')}</Chip>
                   {listing.subcategory && <Chip muted>{listing.subcategory}</Chip>}
                 </div>
                 <h1 style={{ fontFamily: 'var(--font-nunito)', fontSize: 22, fontWeight: 900, color: 'var(--dark)', lineHeight: 1.25, margin: 0 }}>{dispTitle}</h1>
@@ -662,20 +662,20 @@ function ListingInner() {
 
   // ── CLEAN ITEM VIEW — Shopify-style: gallery + buy box, then clear sections ──
   if (!job && !prop) {
-    const condLabel = listing.condition ? (COND_LABEL[listing.condition] ?? listing.condition) : ''
+    const condLabel = listing.condition ? t(COND_LABEL[listing.condition] ?? listing.condition) : ''
     const facts: [string, string][] = [
       [t('Condition'), condLabel],
       [t('Model / Brand'), listing.brand ?? ''],
       [t('Colour'), listing.colour ?? ''],
       [t('Size'), listing.size ?? ''],
       ...(listing.attributes && typeof listing.attributes === 'object' ? Object.entries(listing.attributes as Record<string, string>).filter(([, v]) => v).map(([k, v]) => [t(k), v] as [string, string]) : []),
-      [t('Category'), DEPT_LABEL[listing.department] ?? listing.department],
+      [t('Category'), t(DEPT_LABEL[listing.department] ?? listing.department)],
       ...(typeof listing.stock === 'number' ? [[t('Availability'), listing.stock > 0 ? `${listing.stock} ${t('in stock')}` : t('Out of stock')] as [string, string]] : []),
       [t('Reference'), ref],
     ]
     return (
       <main className="app-shell" style={{ background: '#f5f2ec', minHeight: '100dvh', paddingBottom: 40, boxShadow: '0 0 40px rgba(0,0,0,0.06)' }}>
-        <Topbar title={DEPT_LABEL[listing.department] ?? 'Listing'} back backFallback="/" />
+        <Topbar title={t(DEPT_LABEL[listing.department] ?? 'Listing')} back backFallback="/" />
         <QuickActions />
 
         <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -686,7 +686,7 @@ function ListingInner() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={cardBox}>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <Chip>{DEPT_LABEL[listing.department] ?? listing.department}</Chip>
+                  <Chip>{t(DEPT_LABEL[listing.department] ?? listing.department)}</Chip>
                   {condLabel && <Chip muted>{condLabel}</Chip>}
                   {isGrabItNow && <Chip>⚡ Grab It Now</Chip>}
                 </div>
@@ -745,12 +745,12 @@ function ListingInner() {
 
               {/* In-demand strip */}
               <div style={{ background: '#FFF8F4', border: '1px solid #FFE0CC', borderRadius: 12, padding: '10px 12px' }}>
-                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>🔥 In demand</div>
+                <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: '#d35400', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>🔥 {t('In demand')}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
                   {[[views, 'views'], [watchers, 'watching'], [wanted, 'wanted']].map(([n, lab], i) => (
                     <div key={i}>
                       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 20, fontWeight: 900, color: 'var(--dark)' }}>{n as number}</div>
-                      <div style={{ fontSize: 9.5, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{lab as string}</div>
+                      <div style={{ fontSize: 9.5, color: '#777', fontFamily: 'var(--font-comfortaa)', lineHeight: 1.1 }}>{t(lab as string)}</div>
                     </div>
                   ))}
                 </div>
