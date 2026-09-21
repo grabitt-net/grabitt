@@ -75,7 +75,7 @@ export default function DirectoryView() {
   const uploadEditLogo = async (file: File | undefined) => {
     if (!file) return
     setLogoBusy(true)
-    try { const url = await compressAndUpload(file, cmsImagePath('directory'), { maxDim: 2400, quality: 0.92 }); set('logoUrl', url) }
+    try { const url = await compressAndUpload(file, cmsImagePath('directory'), { trim: true, padSquare: true, maxDim: 640, quality: 0.92 }); set('logoUrl', url) }
     catch { window.alert('Could not upload the logo. Please try again.') }
     finally { setLogoBusy(false) }
   }
@@ -249,7 +249,7 @@ function CreateListingModal({ api, cats, onClose, onCreated }: { api: ReturnType
   const uploadLogo = async (file: File | undefined) => {
     if (!file) return
     setLogoBusy(true); setErr('')
-    try { set('logoUrl', await compressAndUpload(file, cmsImagePath('directory'))) }
+    try { set('logoUrl', await compressAndUpload(file, cmsImagePath('directory'), { trim: true, padSquare: true, maxDim: 640, quality: 0.92 })) }
     catch { setErr('Could not upload the logo.') } finally { setLogoBusy(false) }
   }
   const create = async () => {

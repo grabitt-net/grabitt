@@ -9,8 +9,8 @@ export const PHOTOS_BUCKET = 'photos'
  * then uploads to Supabase Storage. Returns the public URL.
  * Photo compression MUST happen before upload — §10.2 security rule.
  */
-export async function compressAndUpload(file: File, path: string, opts?: { trim?: boolean; maxDim?: number; quality?: number }): Promise<string> {
-  const blob = await compressImage(file, opts?.trim, opts?.maxDim, opts?.quality)
+export async function compressAndUpload(file: File, path: string, opts?: { trim?: boolean; maxDim?: number; quality?: number; padSquare?: boolean }): Promise<string> {
+  const blob = await compressImage(file, opts?.trim, opts?.maxDim, opts?.quality, opts?.padSquare)
   const client = createClient()
 
   const { error } = await client.storage
@@ -107,7 +107,7 @@ export async function uploadVerificationDoc(file: File, userId: string, kind: 'i
   return path
 }
 
-async function compressImage(file: File, trim = false, maxDim: number = MAX_DIM, quality: number = JPEG_QUALITY): Promise<Blob> {
+async function compressImage(file: File, trim = false, maxDim: number = MAX_DIM, quality: number = JPEG_QUALITY, padSquare = false): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     const url = URL.createObjectURL(file)
@@ -122,16 +122,31 @@ async function compressImage(file: File, trim = false, maxDim: number = MAX_DIM,
         if (box) { sx = box.x; sy = box.y; sw = box.w; sh = box.h }
       }
 
-      const scale = Math.min(1, maxDim / Math.max(sw, sh))
-      const w = Math.round(sw * scale)
-      const h = Math.round(sh * scale)
-
       const canvas = document.createElement('canvas')
-      canvas.width = w
-      canvas.height = h
       const ctx = canvas.getContext('2d')
       if (!ctx) { reject(new Error('Canvas unavailable')); return }
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h)
+
+      if (padSquare) {
+        // Logo mode: place the (trimmed) logo, centred, on a square white canvas
+        // so the WHOLE logo always shows on a card with no cropping. Never
+        // upscale beyond the logo's own pixels, so a small logo stays crisp
+        // (surrounded by white) rather than being blown up and fuzzy.
+        const S = maxDim
+        const drawScale = Math.min(1, (S * 0.84) / Math.max(sw, sh)) // ~8% padding each side
+        const dw = Math.round(sw * drawScale)
+        const dh = Math.round(sh * drawScale)
+        canvas.width = S
+        canvas.height = S
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, S, S)
+        ctx.drawImage(img, sx, sy, sw, sh, Math.round((S - dw) / 2), Math.round((S - dh) / 2), dw, dh)
+      } else {
+        const scale = Math.min(1, maxDim / Math.max(sw, sh))
+        canvas.width = Math.round(sw * scale)
+        canvas.height = Math.round(sh * scale)
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
+      }
+
       canvas.toBlob(
         blob => blob ? resolve(blob) : reject(new Error('Compression failed')),
         'image/jpeg',

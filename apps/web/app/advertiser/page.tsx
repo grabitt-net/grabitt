@@ -157,7 +157,7 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
     if (!file) return
     setLogoBusy(true); setMsg('')
     try {
-      const url = await compressAndUpload(file, cmsImagePath('directory'))
+      const url = await compressAndUpload(file, cmsImagePath('directory'), { trim: true, padSquare: true, maxDim: 640, quality: 0.92 })
       set('logoUrl', url)
     } catch { setMsg('Could not upload the logo') } finally { setLogoBusy(false) }
   }

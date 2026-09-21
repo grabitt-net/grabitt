@@ -90,8 +90,8 @@ export default function DirectoryPage() {
               {shown.map((l, idx) => (
                 <Link key={l.id} href={`/directory/${l.slug || l.id}`} style={{ textDecoration: 'none', minWidth: 0 }}>
                   <div style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', height: '100%' }}>
-                    <div style={{ height: 90, background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      {l.logoUrl ? <img loading="lazy" decoding="async" src={l.logoUrl} alt={l.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 34 }}>🏢</span>}
+                    <div style={{ height: 90, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                      {l.logoUrl ? <img loading="lazy" decoding="async" src={l.logoUrl} alt={l.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <span style={{ fontSize: 34 }}>🏢</span>}
                     </div>
                     <div style={{ padding: '11px 12px 14px', minWidth: 0 }}>
                       {l.category && <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4, overflowWrap: 'anywhere' }}>{trCats[idx] || l.category}</div>}
