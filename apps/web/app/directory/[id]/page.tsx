@@ -17,7 +17,7 @@ import { useTranslated } from '@/lib/translateContent'
 
 const DirectoryMap = dynamic(() => import('@/components/marketplace/DirectoryMap'), { ssr: false, loading: () => <div style={{ width: '100%', height: 240, borderRadius: 12, background: '#ece3d7' }} /> })
 
-type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; emailB64: string | null; websiteB64: string | null; logoUrl: string | null; location: string | null; lat?: number | null; lng?: number | null; claimable?: boolean }
+type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; emailB64: string | null; websiteB64: string | null; logoUrl: string | null; location: string | null; lat?: number | null; lng?: number | null; shopSlug?: string | null; claimable?: boolean }
 
 // Decode the base64 the API sends for contact details (keeps the raw address out
 // of the HTML/JSON). Returns '' on anything unexpected.
@@ -85,6 +85,7 @@ export default function DirectoryListingPage() {
                 {listing.location && <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, color: 'var(--ink-2)', marginBottom: 10 }}>{listing.location}</Place>}
                 {listing.description && <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, color: '#1a1a1a', lineHeight: 1.7, marginBottom: 14, whiteSpace: 'pre-wrap' }}>{trDescription || listing.description}</p>}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {listing.shopSlug && <Contact icon="🏪" text={t('Visit shop')} href={`/shop/${listing.shopSlug}`} />}
                   {listing.phone && <Contact icon="📞" text={listing.phone} href={`tel:${listing.phone}`} />}
                   {/* Email & website arrive base64-encoded and are decoded here, so
                       the raw address is never in the page HTML or API JSON for bots

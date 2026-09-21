@@ -310,6 +310,15 @@ export const businessRouter = router({
     }),
 
   // The public shop page.
+  // Public: resolve a seller/user id to their published storefront slug (or null),
+  // so a listing can link to the storefront PAGE (/shop/<slug>) instead of a popup.
+  slugForUser: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ ctx, input }): Promise<{ slug: string | null }> => {
+      const shop = await ctx.prisma.storefront.findUnique({ where: { userId: input.userId }, select: { slug: true, published: true } })
+      return { slug: shop?.published ? shop.slug : null }
+    }),
+
   bySlug: publicProcedure
     .input(z.object({ slug: z.string().max(60) }))
     .query(async ({ ctx, input }): Promise<StorefrontPublic> => {

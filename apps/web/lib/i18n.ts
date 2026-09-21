@@ -869,6 +869,7 @@ export const TRANSLATIONS: Record<string, { en: string } & Partial<Record<Lang, 
   'Claim this listing to manage it yourself. You’ll get 1 month free, then choose a subscription to keep it live.': { en: 'Claim this listing to manage it yourself. You’ll get 1 month free, then choose a subscription to keep it live.', es: 'Reclama este anuncio para gestionarlo tú mismo. Tendrás 1 mes gratis y luego eliges una suscripción para mantenerlo activo.' },
   'Claim this listing': { en: 'Claim this listing', es: 'Reclamar este anuncio' },
   'Claiming…': { en: 'Claiming…', es: 'Reclamando…' },
+  'Visit shop': { en: 'Visit shop', es: 'Visitar tienda' },
 }
 
 let _lang: Lang = 'en'

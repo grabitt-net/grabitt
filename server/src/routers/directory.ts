@@ -66,7 +66,14 @@ export const directoryRouter = router({
         where: { paidUntil: { gt: new Date() }, reviewStatus: 'approved', disabled: false, ...(input?.category ? { category: input.category } : {}) },
         orderBy: { name: 'asc' },
       })
-      return listings
+      // Attach the owner's published storefront slug (if any) so the card can link
+      // through to their shop page. One query for all owners, not N.
+      const ownerIds = listings.map(l => l.userId).filter((v): v is string => !!v)
+      const shops = ownerIds.length
+        ? await ctx.prisma.storefront.findMany({ where: { userId: { in: ownerIds }, published: true }, select: { userId: true, slug: true } })
+        : []
+      const shopByUser = new Map(shops.map(s => [s.userId, s.slug]))
+      return listings.map(l => ({ ...l, shopSlug: l.userId ? (shopByUser.get(l.userId) ?? null) : null }))
     }),
 
   // Public: one listing — only while its subscription is paid AND approved.
@@ -81,8 +88,15 @@ export const directoryRouter = router({
       // address or URL finds nothing usable. The browser decodes them for display.
       const enc = (s: string | null) => (s ? Buffer.from(s, 'utf8').toString('base64') : null)
       const { email, website, ...rest } = listing
+      // If the owner has a published storefront, expose its slug so the listing
+      // can link through to their shop page.
+      let shopSlug: string | null = null
+      if (listing.userId) {
+        const shop = await ctx.prisma.storefront.findUnique({ where: { userId: listing.userId }, select: { slug: true, published: true } })
+        shopSlug = shop?.published ? shop.slug : null
+      }
       // Admin-seeded listings with no owner yet can be claimed by a business.
-      return { ...rest, emailB64: enc(email), websiteB64: enc(website), claimable: listing.adminCreated && !listing.userId }
+      return { ...rest, emailB64: enc(email), websiteB64: enc(website), shopSlug, claimable: listing.adminCreated && !listing.userId }
     }),
 
   // A business owner claims an admin-created (unclaimed) listing as their own.

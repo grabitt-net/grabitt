@@ -199,6 +199,17 @@ function ListingInner() {
     offersCollection: listing.offersCollection !== false,
   }
 
+  // Open a seller's storefront. If they have a published shop, go to the shop
+  // PAGE (/shop/<slug>); otherwise fall back to the quick storefront popup.
+  const openSeller = async (sid?: string) => {
+    if (!sid) return
+    try {
+      const r = await createLooseTrpcClient().business.slugForUser.query({ userId: sid }) as { slug?: string | null }
+      if (r?.slug) { router.push(`/shop/${r.slug}`); return }
+    } catch { /* fall back to the popup */ }
+    openPanel('storefront', { sellerId: sid })
+  }
+
   const requireAuth = async () => {
     let token = getAuthToken()
     if (!token) token = await refreshAuthToken()
@@ -308,7 +319,7 @@ function ListingInner() {
   const sellerCard = (
     <div style={cardBox}>
       <div style={panelTitle}>{job ? t('Employer') : t('Seller')}</div>
-      <div onClick={() => seller?.id && openPanel('storefront', { sellerId: seller.id })} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: seller?.id ? 'pointer' : 'default' }}>
+      <div onClick={() => seller?.id && openSeller(seller.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: seller?.id ? 'pointer' : 'default' }}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, color: '#fff', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>
           {(seller?.tradingName ?? job?.company ?? seller?.displayName ?? '?')[0]?.toUpperCase()}
         </div>
@@ -1006,7 +1017,7 @@ function ListingInner() {
           <div style={cardBox}>
             <div style={panelTitle}>{job ? t('Employer') : t('Seller')}</div>
             <div
-              onClick={() => seller?.id && openPanel('storefront', { sellerId: seller.id })}
+              onClick={() => seller?.id && openSeller(seller.id)}
               style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: seller?.id ? 'pointer' : 'default' }}
             >
               <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,var(--orange),var(--orange2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, color: '#fff', fontWeight: 900, fontFamily: 'var(--font-nunito)', flexShrink: 0 }}>
