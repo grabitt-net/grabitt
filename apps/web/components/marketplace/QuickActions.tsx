@@ -19,11 +19,14 @@ export default function QuickActions({ belowPromo }: { belowPromo?: React.ReactN
     { label: 'Property', icon: 'building', action: () => router.push('/property') },
     // Sponsorship now lives inside the For Business page.
     { label: 'For Business', icon: 'star', action: () => router.push('/for-business') },
+    { label: 'Business Directory', icon: 'clipboard', action: () => router.push('/directory') },
   ]
 
   return (
     <section style={{ padding: '12px 14px 4px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+      {/* Four pills kept on a single row at every width — sized down (smaller
+          icon tile, tighter gaps/padding, label allowed to wrap) so they fit. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
         {actions.map(a => (
           <button
             key={a.label}
@@ -31,16 +34,16 @@ export default function QuickActions({ belowPromo }: { belowPromo?: React.ReactN
             style={{
               // Match the trust-badge cards (TrustStrip): white card, soft border
               // + shadow, an icon tile on the left with a bold label beside it.
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, textAlign: 'center',
-              background: '#fff', border: '1px solid #ece3d7', borderRadius: 14,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)', padding: '12px 14px',
-              cursor: 'pointer', width: '100%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, textAlign: 'center',
+              background: '#fff', border: '1px solid #ece3d7', borderRadius: 12,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)', padding: '9px 8px',
+              cursor: 'pointer', width: '100%', minWidth: 0,
             }}
           >
-            <span style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 11, background: 'var(--sand)', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name={a.icon} size={21} strokeWidth={2} />
+            <span style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 9, background: 'var(--sand)', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name={a.icon} size={17} strokeWidth={2} />
             </span>
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, color: 'var(--dark)' }}>{t(a.label)}</span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', lineHeight: 1.15, minWidth: 0 }}>{t(a.label)}</span>
           </button>
         ))}
       </div>
