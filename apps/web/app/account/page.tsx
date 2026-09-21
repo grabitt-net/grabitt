@@ -165,6 +165,13 @@ function AccountInner() {
   }, [router])
   useEffect(() => { load() }, [load])
 
+  // First-login business onboarding: a business that hasn't set up its shop yet
+  // is sent to the full My Storefront setup page (not a cut-down popup). Declared
+  // here — above any early return — so the hook order stays stable.
+  useEffect(() => {
+    if (me?.isBusiness && !me?.businessOnboardedAt) router.push('/account/storefront?welcome=1')
+  }, [me, router])
+
   useEffect(() => {
     // Recruitment is now folded into the Business hub.
     if (wantTab === 'recruitment') { setMainTab(me?.isBusiness ? 'business' : 'selling'); return }
@@ -242,12 +249,6 @@ function AccountInner() {
   }))
 
   if (!ready) return <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-nunito)', color: '#888' }}>{t('Loading your account…')}</main>
-
-  // First-login business onboarding: a business that hasn't set up its shop yet
-  // is sent to the full My Storefront setup page (not a cut-down popup), so their
-  // logo/banner/about/template are captured and saved properly.
-  const needsBizOnboarding = !!me?.isBusiness && !me?.businessOnboardedAt
-  useEffect(() => { if (needsBizOnboarding) router.push('/account/storefront?welcome=1') }, [needsBizOnboarding, router])
 
   const grade = me?.grade ?? 'grabber'
   const memberSince = me?.createdAt ? new Date(me.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '—'
