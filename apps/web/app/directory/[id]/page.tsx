@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { PanelProvider } from '@/context/PanelContext'
 import Topbar from '@/components/marketplace/Topbar'
 import QuickActions from '@/components/marketplace/QuickActions'
@@ -12,7 +13,9 @@ import Place from '@/components/marketplace/Place'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { getAuthToken, refreshAuthToken, trpcAuthed } from '@/lib/authToken'
 
-type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null; claimable?: boolean }
+const DirectoryMap = dynamic(() => import('@/components/marketplace/DirectoryMap'), { ssr: false, loading: () => <div style={{ width: '100%', height: 240, borderRadius: 12, background: '#ece3d7' }} /> })
+
+type Listing = { id: string; name: string; category: string | null; description: string | null; phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null; lat?: number | null; lng?: number | null; claimable?: boolean }
 
 export default function DirectoryListingPage() {
   const params = useParams()
@@ -72,9 +75,18 @@ export default function DirectoryListingPage() {
                 {listing.description && <p style={{ fontFamily: 'var(--font-nunito)', fontSize: 14, color: '#1a1a1a', lineHeight: 1.7, marginBottom: 14 }}>{listing.description}</p>}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {listing.phone && <Contact icon="📞" text={listing.phone} href={`tel:${listing.phone}`} />}
-                  {listing.email && <Contact icon="✉️" text={listing.email} href={`mailto:${listing.email}`} />}
-                  {listing.website && <Contact icon="🌐" text={listing.website.replace(/^https?:\/\//, '')} href={listing.website} external />}
+                  {/* Email & website are revealed only on a click, so bots that
+                      scrape the page (or its JSON) never see a ready mailto/URL. */}
+                  {listing.email && <RevealContact icon="✉️" kind="email" value={listing.email} />}
+                  {listing.website && <RevealContact icon="🌐" kind="website" value={listing.website} />}
                 </div>
+
+                {/* Location map */}
+                {typeof listing.lat === 'number' && typeof listing.lng === 'number' && (
+                  <div style={{ marginTop: 14 }}>
+                    <DirectoryMap lat={listing.lat} lng={listing.lng} name={listing.name} />
+                  </div>
+                )}
 
                 {/* Unclaimed (admin-seeded) listing — the business owner can claim it. */}
                 {listing.claimable && (
@@ -99,8 +111,28 @@ export default function DirectoryListingPage() {
 
 function Contact({ icon, text, href, external }: { icon: string; text: string; href: string; external?: boolean }) {
   return (
-    <a href={href} {...(external ? { target: '_blank', rel: 'noopener' } : {})} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', background: '#f9f6f2', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)' }}>
-      <span>{icon}</span><span style={{ color: 'var(--orange)' }}>{text}</span>
+    <a href={href} {...(external ? { target: '_blank', rel: 'noopener' } : {})} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', background: '#f9f6f2', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)', overflowWrap: 'anywhere', minWidth: 0 }}>
+      <span style={{ flexShrink: 0 }}>{icon}</span><span style={{ color: 'var(--orange)', minWidth: 0, overflowWrap: 'anywhere' }}>{text}</span>
     </a>
+  )
+}
+
+// Anti-harvest contact: the real email/URL is not put into an href until the
+// visitor clicks "Show", so bots scraping the static HTML get nothing usable.
+function RevealContact({ icon, kind, value }: { icon: string; kind: 'email' | 'website'; value: string }) {
+  const [shown, setShown] = useState(false)
+  if (shown) {
+    if (kind === 'email') return <Contact icon={icon} text={value} href={`mailto:${value}`} />
+    const url = /^https?:\/\//i.test(value) ? value : `https://${value}`
+    return <Contact icon={icon} text={value.replace(/^https?:\/\//, '')} href={url} external />
+  }
+  const label = kind === 'email' ? 'Show email' : 'Show website'
+  return (
+    <button
+      onClick={() => setShown(true)}
+      style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', cursor: 'pointer', background: '#f9f6f2', border: 'none', borderRadius: 10, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13.5, fontWeight: 800, color: 'var(--dark)' }}
+    >
+      <span style={{ flexShrink: 0 }}>{icon}</span><span style={{ color: 'var(--orange)' }}>{label}</span>
+    </button>
   )
 }
