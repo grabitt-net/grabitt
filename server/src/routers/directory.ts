@@ -261,12 +261,12 @@ export const directoryRouter = router({
   // Public: the custom categories admins have added. The client merges these with
   // BUSINESS_CATEGORIES so the dropdowns show both.
   categories: publicProcedure.query(({ ctx }) =>
-    ctx.prisma.directoryCategory.findMany({ where: { active: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }], select: { name: true } })
+    ctx.prisma.directoryCategory.findMany({ where: { active: true }, orderBy: { name: 'asc' }, select: { name: true } })
   ),
 
-  // Admin: every custom category for management.
+  // Admin: every category for management (always shown alphabetically).
   adminCategories: execProcedure.query(({ ctx }) =>
-    ctx.prisma.directoryCategory.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] })
+    ctx.prisma.directoryCategory.findMany({ orderBy: { name: 'asc' } })
   ),
 
   // Admin: add or rename a custom category.
