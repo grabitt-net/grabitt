@@ -9,24 +9,12 @@ const PROTECTED_ROUTES = ['/profile', '/listings/new', '/orders']
 const ADMIN_ROUTES = ['/admin']
 const AUTH_ROUTES = ['/auth']
 
-// Canonical production host (matches NEXT_PUBLIC_APP_URL); the old Vercel alias
-// 308-redirects here so the site serves from one canonical domain. Only the exact
-// prod alias is matched, so *.vercel.app preview deployments are untouched.
-const CANONICAL_HOST = (() => {
-  try { return new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.grabitt.net').host } catch { return 'www.grabitt.net' }
-})()
-
 export async function middleware(request: NextRequest) {
-  // Force the canonical domain (grabitt.vercel.app → grabitt.net). Runs before
-  // anything else so every route is normalised; preview URLs are left alone.
-  const host = request.headers.get('host') ?? ''
-  if (host === 'grabitt.vercel.app' && CANONICAL_HOST && host !== CANONICAL_HOST) {
-    const url = request.nextUrl.clone()
-    url.host = CANONICAL_HOST
-    url.protocol = 'https:'
-    url.port = ''
-    return NextResponse.redirect(url, 308)
-  }
+  // NOTE: no forced host redirect — the site is intentionally viewable from BOTH
+  // grabitt.vercel.app and the grabitt.net domain during/after go-live. If you
+  // later want a single canonical host, set that redirect in Vercel → Domains
+  // (mark one primary, the other "Redirect to"), which won't block either URL
+  // while DNS propagates.
 
   // The OAuth / email-confirm callback must exchange its PKCE code untouched —
   // running getUser() + rewriting cookies here can drop the code-verifier
