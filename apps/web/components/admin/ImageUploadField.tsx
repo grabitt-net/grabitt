@@ -56,7 +56,10 @@ export default function ImageUploadField({
           }
         } catch { /* if we can't read it, let the upload proceed */ }
       }
-      const url = await compressAndUpload(file, cmsImagePath(kind), { trim })
+      // CMS artwork (hero slides, banners, category tiles) renders large and
+      // full-width, often on hi-DPI screens — keep it crisp with a much higher
+      // resolution cap and quality than the default photo compression.
+      const url = await compressAndUpload(file, cmsImagePath(kind), { trim, maxDim: 2400, quality: 0.92 })
       onChange(url)
     } catch (err: any) {
       setError(err?.message ?? 'Upload failed. Please try again.')

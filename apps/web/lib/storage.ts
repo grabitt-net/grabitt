@@ -9,8 +9,8 @@ export const PHOTOS_BUCKET = 'photos'
  * then uploads to Supabase Storage. Returns the public URL.
  * Photo compression MUST happen before upload — §10.2 security rule.
  */
-export async function compressAndUpload(file: File, path: string, opts?: { trim?: boolean }): Promise<string> {
-  const blob = await compressImage(file, opts?.trim)
+export async function compressAndUpload(file: File, path: string, opts?: { trim?: boolean; maxDim?: number; quality?: number }): Promise<string> {
+  const blob = await compressImage(file, opts?.trim, opts?.maxDim, opts?.quality)
   const client = createClient()
 
   const { error } = await client.storage
@@ -107,7 +107,7 @@ export async function uploadVerificationDoc(file: File, userId: string, kind: 'i
   return path
 }
 
-async function compressImage(file: File, trim = false): Promise<Blob> {
+async function compressImage(file: File, trim = false, maxDim: number = MAX_DIM, quality: number = JPEG_QUALITY): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     const url = URL.createObjectURL(file)
@@ -122,7 +122,7 @@ async function compressImage(file: File, trim = false): Promise<Blob> {
         if (box) { sx = box.x; sy = box.y; sw = box.w; sh = box.h }
       }
 
-      const scale = Math.min(1, MAX_DIM / Math.max(sw, sh))
+      const scale = Math.min(1, maxDim / Math.max(sw, sh))
       const w = Math.round(sw * scale)
       const h = Math.round(sh * scale)
 
@@ -135,7 +135,7 @@ async function compressImage(file: File, trim = false): Promise<Blob> {
       canvas.toBlob(
         blob => blob ? resolve(blob) : reject(new Error('Compression failed')),
         'image/jpeg',
-        JPEG_QUALITY,
+        quality,
       )
     }
 

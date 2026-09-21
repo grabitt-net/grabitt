@@ -119,7 +119,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
     try {
       // The banner is public storefront artwork — store a permanent public URL
       // (compressed) rather than an expiring signed URL from a private bucket.
-      const url = await compressAndUpload(file, cmsImagePath('storefront'))
+      const url = await compressAndUpload(file, cmsImagePath('storefront'), { maxDim: 2400, quality: 0.92 })
       set('bannerUrl', url)
     } catch (e) { setErr(e instanceof Error ? e.message : t('Upload failed')) }
     finally { setUploadingBanner(false) }
@@ -130,7 +130,7 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
     try {
       // The banner is public storefront artwork — store a permanent public URL
       // (compressed) rather than an expiring signed URL from a private bucket.
-      const url = await compressAndUpload(file, cmsImagePath('storefront'))
+      const url = await compressAndUpload(file, cmsImagePath('storefront'), { maxDim: 2400, quality: 0.92 })
       set('bannerUrlEs', url)
     } catch (e) { setErr(e instanceof Error ? e.message : t('Upload failed')) }
     finally { setUploadingBannerEs(false) }
