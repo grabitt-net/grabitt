@@ -296,6 +296,8 @@ export const businessRouter = router({
           Object.assign(data, { slug: slugify(slug) })
         }
         await ctx.prisma.storefront.update({ where: { userId: ctx.user.id }, data })
+        // Setting up the storefront completes first-login business onboarding.
+        await ctx.prisma.user.updateMany({ where: { id: ctx.user.id, businessOnboardedAt: null }, data: { businessOnboardedAt: new Date() } })
         return { ok: true as const }
       }
 
@@ -306,8 +308,16 @@ export const businessRouter = router({
         candidate = `${slugify(slug || baseName)}-${n}`
       }
       await ctx.prisma.storefront.create({ data: { userId: ctx.user.id, slug: candidate, ...data } })
+      await ctx.prisma.user.updateMany({ where: { id: ctx.user.id, businessOnboardedAt: null }, data: { businessOnboardedAt: new Date() } })
       return { ok: true as const }
     }),
+
+  // Mark first-login business onboarding complete without forcing a full save
+  // (e.g. the user chose to finish their storefront later).
+  markOnboarded: protectedProcedure.mutation(async ({ ctx }) => {
+    await ctx.prisma.user.updateMany({ where: { id: ctx.user.id, businessOnboardedAt: null }, data: { businessOnboardedAt: new Date() } })
+    return { ok: true as const }
+  }),
 
   // The public shop page.
   // Public: resolve a seller/user id to their published storefront slug (or null),
