@@ -870,6 +870,13 @@ export const TRANSLATIONS: Record<string, { en: string } & Partial<Record<Lang, 
   'Claim this listing': { en: 'Claim this listing', es: 'Reclamar este anuncio' },
   'Claiming…': { en: 'Claiming…', es: 'Reclamando…' },
   'Visit shop': { en: 'Visit shop', es: 'Visitar tienda' },
+
+  // Recruitment candidate management
+  'Candidates': { en: 'Candidates', es: 'Candidatos' },
+  'Open CV': { en: 'Open CV', es: 'Abrir CV' },
+  'Reviewed': { en: 'Reviewed', es: 'Revisado' },
+  'Offered': { en: 'Offered', es: 'Oferta realizada' },
+  'Reason for rejecting this candidate (kept on file):': { en: 'Reason for rejecting this candidate (kept on file):', es: 'Motivo para rechazar a este candidato (se guarda en el expediente):' },
 }
 
 let _lang: Lang = 'en'

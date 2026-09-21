@@ -13,8 +13,25 @@ import { t } from '@/lib/i18n'
 const ORANGE = 'var(--orange)'
 const JOB_LIFE_DAYS = 21     // listings run for 21 days
 
-type App = { id: string; status: string; applicant: string; applicantId: string; coverNote: string | null; employerNote: string | null; createdAt: string }
+type App = { id: string; status: string; applicant: string; applicantId: string; coverNote: string | null; employerNote: string | null; createdAt: string; cvUrl?: string | null; fullName?: string | null }
 type Job = { id: string; listingId: string; jobTitle: string; company: string; type: string; listingStatus: string; postedAt: string; image: string | null; candidateMatching?: boolean; applications: App[] }
+
+// The hiring stages the recruiter can set per candidate, mapped to the stored
+// ApplicationStatus enum. "Rejected" requires a reason note (enforced server-side).
+const STAGES: { value: string; label: string }[] = [
+  { value: 'applied', label: 'New' },
+  { value: 'viewed', label: 'Reviewed' },
+  { value: 'invited', label: 'Invited to Interview' },
+  { value: 'offer', label: 'Offered' },
+  { value: 'rejected_pre', label: 'Rejected' },
+]
+// Fold every stored status onto one of the five selectable stages.
+const stageValue = (s: string): string =>
+  s === 'viewed' || s === 'shortlisted' ? 'viewed'
+  : s === 'invited' || s === 'arranged' ? 'invited'
+  : s === 'offer' || s === 'hired' || s === 'accepted' ? 'offer'
+  : s.startsWith('rejected') ? 'rejected_pre'
+  : 'applied'
 
 const TYPE_EMOJI: Record<string, string> = { full_time: '💼', part_time: '🕒', contract: '📄', temporary: '⏳', volunteer: '🤝' }
 const statusBtn = (bg: string, color: string): React.CSSProperties => ({ flex: 1, minWidth: 100, background: bg, color, border: 'none', borderRadius: 50, padding: 8, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer' })
@@ -33,6 +50,37 @@ export default function EmployerDashboardContent() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loaded, setLoaded] = useState(false)
   const [filter, setFilter] = useState<'all' | JobStatus>('all')
+  const [meId, setMeId] = useState<string>('')
+  useEffect(() => { trpcAuthed().users.me.query().then((m: any) => setMeId(m?.id ?? '')).catch(() => {}) }, [])
+
+  // Open a candidate's CV — their attached file if they uploaded one, otherwise
+  // the Grabitt-generated CV built from their work profile + application.
+  const openCV = (a: App) => {
+    const url = a.cvUrl ? `/api/cv?applicationId=${a.id}` : `/api/cv-pdf?applicationId=${a.id}`
+    if (typeof window !== 'undefined') window.open(url, '_blank', 'noopener')
+  }
+  // Set a candidate's hiring stage. Rejection needs a reason (kept on file).
+  const setStage = async (a: App, value: string) => {
+    if (value === stageValue(a.status)) return
+    let note: string | undefined
+    if (value === 'rejected_pre') {
+      const reason = window.prompt(t('Reason for rejecting this candidate (kept on file):'), '')
+      if (reason === null) return
+      if (!reason.trim()) { toast(t('A reason is required to reject.')); return }
+      note = reason.trim()
+    }
+    try {
+      await trpcAuthed().jobs.setApplicationStatus.mutate({ applicationId: a.id, status: value as never, note })
+      setJobs(prev => prev.map(j => ({ ...j, applications: j.applications.map(x => x.id === a.id ? { ...x, status: value } : x) })))
+    } catch (e: any) { toast(e?.message || t('Could not update.')) }
+  }
+  // Open the recruiter ↔ candidate message thread for this application.
+  const openMessages = async (j: Job, a: App) => {
+    try {
+      const thread = await trpcAuthed().messages.thread.mutate({ listingId: j.listingId, sellerId: a.applicantId }) as { id: string }
+      openPanel('chatThread', { threadId: thread.id, handle: a.applicant, listing: j.jobTitle, avatar: '👤', currentUserId: meId })
+    } catch (e: any) { toast(e?.message || t('Could not open the conversation.')) }
+  }
 
   const load = () => trpcAuthed().jobs.employerApplications.query()
     .then((d: any) => { setJobs(d as Job[]); setLoaded(true) })
@@ -113,7 +161,6 @@ export default function EmployerDashboardContent() {
               const jstatus = statusOf(j)
               const filled = jstatus !== 'open'
               const expired = jstatus === 'open' && dLeft <= 0
-              const newCount = j.applications.filter(a => a.status === 'applied').length
               let chip: React.ReactNode
               if (jstatus === 'filled') chip = <span style={{ background: '#22c55e1a', color: '#16a34a', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>✓ {t('Filled')}</span>
               else if (jstatus === 'removed') chip = <span style={{ background: '#9ca3af1a', color: '#6b7280', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>⚪ {t('Removed')}</span>
@@ -136,11 +183,9 @@ export default function EmployerDashboardContent() {
                     </div>
                   </div>
                   <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button onClick={() => openPanel('applications', { jobId: j.id })} style={{ flex: '2 1 140px', background: 'linear-gradient(135deg,var(--orange),var(--orange2,#ff8a3d))', color: '#fff', border: 'none', borderRadius: 50, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' }}>📋 {t('Applicants')}{newCount ? ` (${newCount} ${t('new')})` : ''}</button>
                     <a href={`/jobs/new?edit=${j.listingId}`} style={{ flex: '1 1 80px', textDecoration: 'none' }}>
                       <div style={pillBtn}>✏️ {t('Edit')}</div>
                     </a>
-                    <button onClick={() => openPanel('jobMessages', { listingId: j.listingId, jobTitle: j.jobTitle })} style={{ ...pillBtn, flex: '1 1 90px' }}>📨 {t('Messages')}</button>
                     <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ ...pillBtn, flex: '1 1 80px' }}>📤 {t('Share')}</button>
                     {/* Database search — the paid Candidate Matching add-on for THIS
                         advert. Shows for every job: opens the search when purchased,
@@ -155,6 +200,23 @@ export default function EmployerDashboardContent() {
                     {jstatus !== 'open' && <button onClick={() => setJobStatus(j.listingId, 'active', t('Reopened'))} style={statusBtn('#eef7ff', '#1e6fd0')}>{t('Reopen')}</button>}
                     {jstatus !== 'removed' && <button onClick={() => setJobStatus(j.listingId, 'removed', t('Removed'))} style={statusBtn('#fef2f2', '#ef4444')}>🗑 {t('Remove')}</button>}
                   </div>
+
+                  {/* Candidates — listed inline. Click a name to open their CV; set
+                      their stage; message them. */}
+                  {j.applications.length > 0 && (
+                    <div style={{ marginTop: 12, borderTop: '1px solid #f0ece4', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: '#999', textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('Candidates')}</div>
+                      {j.applications.map(a => (
+                        <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <button onClick={() => openCV(a)} title={t('Open CV')} style={{ flex: '1 1 130px', minWidth: 0, textAlign: 'left', background: '#f8f6f2', border: '1px solid #ece3d7', borderRadius: 8, padding: '7px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>📄 {a.applicant}</button>
+                          <select value={stageValue(a.status)} onChange={e => setStage(a, e.target.value)} style={{ flexShrink: 0, border: '1.5px solid #e5dccd', borderRadius: 8, padding: '7px 8px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, background: '#fff', color: 'var(--dark)', cursor: 'pointer' }}>
+                            {STAGES.map(s => <option key={s.value} value={s.value}>{t(s.label)}</option>)}
+                          </select>
+                          <button onClick={() => openMessages(j, a)} title={t('Message candidate')} style={{ flexShrink: 0, background: '#fff', border: '1px solid #e5dccd', borderRadius: 8, padding: '7px 10px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>💬</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}
