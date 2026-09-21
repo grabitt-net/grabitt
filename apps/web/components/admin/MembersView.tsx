@@ -299,6 +299,7 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
   const [suspendUntil, setSuspendUntil] = useState('')
   const [suspendReason, setSuspendReason] = useState(member.suspendedReason ?? '')
   const [feeOverride, setFeeOverride] = useState((member as any).feeOverridePct != null ? String((member as any).feeOverridePct) : '')
+  const [dirMonths, setDirMonths] = useState('12')
 
   const set = (k: string, v: any) => setF(p => ({ ...p, [k]: v }))
   const flash = (m: string) => { setMsg(m); setErr(''); setTimeout(() => setMsg(''), 4000) }
@@ -477,6 +478,25 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
               <button onClick={async () => { setBusy('affF'); try { await api.setAffiliate(member.id, true, 'founding'); flash('✓ Founding affiliate'); onSaved() } catch (e) { fail(e) } finally { setBusy('') } }} disabled={!!busy} style={secondary}>Affiliate: Founding</button>
               <button onClick={async () => { setBusy('affS'); try { await api.setAffiliate(member.id, true, 'standard'); flash('✓ Standard affiliate'); onSaved() } catch (e) { fail(e) } finally { setBusy('') } }} disabled={!!busy} style={secondary}>Affiliate: Standard</button>
               <button onClick={async () => { setBusy('affN'); try { await api.setAffiliate(member.id, false); flash('✓ Affiliate removed'); onSaved() } catch (e) { fail(e) } finally { setBusy('') } }} disabled={!!busy} style={secondary}>Remove affiliate</button>
+            </div>
+          </Card>
+
+          <Card title="Business directory">
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 8 }}>Create a live directory listing for this business automatically — pre-filled from their name, approved, and granted a free window. They can then edit its details themselves.</div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <label style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 800, color: '#555' }}>Free months</label>
+              <input value={dirMonths} onChange={e => setDirMonths(e.target.value.replace(/[^0-9]/g, ''))} style={{ width: 60, boxSizing: 'border-box', border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '7px 9px', fontFamily: 'var(--font-ui)', fontSize: 13 }} />
+              <button
+                onClick={async () => {
+                  setBusy('dir'); setErr('')
+                  try {
+                    await api.createDirectoryListing({ ownerEmail: member.email, name: (f.businessName.trim() || f.displayName.trim() || member.email), paidMonths: Math.max(0, parseInt(dirMonths) || 0) })
+                    flash('✓ Directory listing created (approved & live). Edit its details in Business Directory.'); onSaved()
+                  } catch (e) { fail(e) } finally { setBusy('') }
+                }}
+                disabled={!!busy}
+                style={secondary}
+              >{busy === 'dir' ? '…' : '📒 Grant directory listing'}</button>
             </div>
           </Card>
 
