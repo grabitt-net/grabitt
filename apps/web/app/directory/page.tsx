@@ -8,6 +8,7 @@ import Footer from '@/components/marketplace/Footer'
 import CartFab from '@/components/marketplace/CartFab'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import PageHeroBanner from '@/components/marketplace/PageHeroBanner'
+import BannerSlot from '@/components/marketplace/BannerSlot'
 import Place from '@/components/marketplace/Place'
 import { createLooseTrpcClient } from '@/lib/trpc'
 import { BUSINESS_CATEGORIES } from '@/lib/businessCategories'
@@ -38,10 +39,14 @@ export default function DirectoryPage() {
         <Topbar title="Business Directory" />
         <QuickActions />
         <PageHeroBanner dept="directory" alt="Business Directory" maxWidth={960} />
+        {/* Paid sponsor banner for this page (managed in Admin → Banners). */}
+        <div style={{ maxWidth: 960, margin: '10px auto 0', padding: '0 14px', width: '100%', boxSizing: 'border-box' }}>
+          <BannerSlot position="directory" aspect="1053 / 163" />
+        </div>
         <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 14px' }}>
           {/* Prominent, eye-catching call to action — much larger than the old inline link. */}
           <Link href="/advertiser" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', boxSizing: 'border-box', background: 'linear-gradient(135deg, var(--orange), var(--orange2, #ff8a3d))', color: '#fff', borderRadius: 999, padding: '16px 22px', fontFamily: 'var(--font-nunito)', fontSize: 17, fontWeight: 900, textDecoration: 'none', boxShadow: '0 6px 18px rgba(245,84,10,0.28)', marginBottom: 18 }}>
-            📖 List your business ›
+            📖 List your business
           </Link>
 
           {/* Filters — business type and location. */}

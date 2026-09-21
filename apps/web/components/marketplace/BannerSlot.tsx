@@ -15,7 +15,7 @@ type Banner = { id: string; title: string; imageUrl: string; imageUrlEs?: string
 type Position =
   | 'home_top' | 'home_mid' | 'home_hero' | 'category' | 'category_top' | 'category_infeed' | 'category_footer'
   | 'search_top' | 'search_footer' | 'sticky_bottom' | 'similar_items' | 'seller_dashboard' | 'user_dashboard'
-  | 'checkout' | 'jobs' | 'property' | 'sponsor_top' | 'sponsor_footer' | 'messages' | 'notifications'
+  | 'checkout' | 'jobs' | 'property' | 'directory' | 'sponsor_top' | 'sponsor_footer' | 'messages' | 'notifications'
 
 // CMS-driven banner slot. Renders the active banners for a given position
 // (managed from the admin Banners view). Rotates if more than one. Every view
@@ -38,7 +38,7 @@ export const BANNER_ASPECTS: Record<string, string> = {
   category: '1053 / 163', category_top: '1053 / 163', category_infeed: '1053 / 163', category_footer: '1053 / 163',
   search_top: '1053 / 163', search_footer: '1053 / 163', sticky_bottom: '1053 / 163',
   similar_items: '1053 / 163', seller_dashboard: '1053 / 163', user_dashboard: '1053 / 163',
-  checkout: '1053 / 163', jobs: '1053 / 163', property: '1053 / 163', sponsor_top: '1053 / 163', sponsor_footer: '1053 / 163',
+  checkout: '1053 / 163', jobs: '1053 / 163', property: '1053 / 163', directory: '1053 / 163', sponsor_top: '1053 / 163', sponsor_footer: '1053 / 163',
   messages: '1053 / 163', notifications: '1053 / 163',
 }
 

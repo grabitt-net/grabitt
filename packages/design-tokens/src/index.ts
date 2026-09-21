@@ -228,6 +228,7 @@ export const BANNER_SLOTS = {
   notifications:    { label: 'Notifications popup',      monthlyCents: 9900,  cap: 3, exclusive: false, perPage: false, scope: 'Featured sponsor inside the notifications popup.' },
   jobs:             { label: 'Recruitment page',         monthlyCents: 7900,  cap: 5, exclusive: false, perPage: false, scope: 'The jobs/recruitment page.' },
   property:         { label: 'Property page',            monthlyCents: 7900,  cap: 5, exclusive: false, perPage: false, scope: 'The property page.' },
+  directory:        { label: 'Business Directory page',  monthlyCents: 7900,  cap: 5, exclusive: false, perPage: false, scope: 'The business directory page.' },
   home_mid:         { label: 'Homepage — mid feed',      monthlyCents: 12900, cap: 3, exclusive: false, perPage: false, scope: 'Between homepage sections.' },
   sponsor_footer:   { label: 'Featured banner (footer)', monthlyCents: 7900,  cap: 5, exclusive: false, perPage: false, scope: 'Bottom banner across Alerts, Saved, Messages & Departments — 5 rotating slots.' },
   sponsor_top:      { label: 'Site-wide top strip',      monthlyCents: 12900, cap: 1, exclusive: true,  perPage: false, scope: 'Top strip shown under the search bar across the site.' },
