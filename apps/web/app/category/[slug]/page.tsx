@@ -14,7 +14,8 @@ import Pagination from '@/components/marketplace/Pagination'
 import Place from '@/components/marketplace/Place'
 import { DEPT_LABEL, deptEmoji, type DbListing } from '@/lib/listingMap'
 import { useSubcategories } from '@/hooks/useSubcategories'
-import { pickBannerImage } from '@/lib/i18n'
+import { pickBannerImage, t } from '@/lib/i18n'
+import { useTranslated } from '@/lib/translateContent'
 
 // A department/category now opens its own page (matching /jobs and /property)
 // instead of the old modal. Same site shell (Topbar + app-shell + Footer) with
@@ -22,7 +23,7 @@ import { pickBannerImage } from '@/lib/i18n'
 export default function CategoryPage() {
   const params = useParams()
   const slug = String(params?.slug ?? '')
-  const label = DEPT_LABEL[slug] ?? 'Listings'
+  const label = t(DEPT_LABEL[slug] ?? 'Listings')
   const emoji = deptEmoji(slug)
   // Subcategory filter pills — the department's list (defaults + admin-added),
   // with "All" prepended.
@@ -77,6 +78,8 @@ export default function CategoryPage() {
       return subWords.length ? subWords.some(w => haystack.includes(w)) : true
     })
   }, [items, activeSub])
+  // Auto-translate the listing titles for non-English viewers (free MT).
+  const trTitles = useTranslated(filtered.map(l => l.title))
 
   return (
     <PanelProvider>
@@ -120,7 +123,7 @@ export default function CategoryPage() {
       </div>
 
       <div className="category-grid">
-        {filtered.map((l) => {
+        {filtered.map((l, idx) => {
           const img = Array.isArray(l.images) ? l.images[0] : null
           return (
               <Link key={l.id} href={`/listings/${l.id}`} style={{ textDecoration: 'none' }}>
@@ -131,7 +134,7 @@ export default function CategoryPage() {
                       : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>{emoji}</div>}
                   </div>
                   <div style={{ padding: '10px 11px 12px' }}>
-                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.title}</div>
+                    <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trTitles[idx] || l.title}</div>
                     <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--orange)', margin: '3px 0' }}>€{Number(l.price ?? 0).toLocaleString()}</div>
                     <Place style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, color: 'var(--ink-2)' }}>{l.location ?? 'Canary Islands'}</Place>
                   </div>
