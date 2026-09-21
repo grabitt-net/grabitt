@@ -110,6 +110,16 @@ export function makeCrmApi(execToken: string) {
       rpc<any>('directory.adminSetPaidUntil', 'mutation', { id, paidUntil }, execToken),
     reviewDirectoryListing: (id: string, status: 'approved' | 'rejected' | 'pending', note?: string) =>
       rpc<any>('directory.adminReview', 'mutation', { id, status, note }, execToken),
+    setDirectoryDisabled: (id: string, disabled: boolean) =>
+      rpc<any>('directory.adminSetDisabled', 'mutation', { id, disabled }, execToken),
+    grantDirectoryMonths: (id: string, months: number) =>
+      rpc<any>('directory.adminGrantMonths', 'mutation', { id, months }, execToken),
+    // Directory categories (admin-managed, merged with the built-in defaults)
+    directoryCategories: () => rpc<{ id: string; name: string; sortOrder: number; active: boolean }[]>('directory.adminCategories', 'query', undefined, execToken),
+    upsertDirectoryCategory: (data: { id?: string; name: string; sortOrder?: number; active?: boolean }) =>
+      rpc<any>('directory.upsertCategory', 'mutation', data, execToken),
+    removeDirectoryCategory: (id: string) =>
+      rpc<any>('directory.removeCategory', 'mutation', { id }, execToken),
 
     // Compliance (GDPR consent log + deletion requests)
     consentLog: (kind?: 'gdpr' | 'withdrawal_waiver') =>

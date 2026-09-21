@@ -17,19 +17,25 @@ type Listing = { id: string; name: string; category: string | null; description:
 
 export default function DirectoryPage() {
   const [listings, setListings] = useState<Listing[] | null>(null)
+  const [customCats, setCustomCats] = useState<string[]>([])
   const [cat, setCat] = useState<string>('All')
   const [loc, setLoc] = useState<string>('All')
 
   useEffect(() => {
-    createLooseTrpcClient().directory.list.query()
+    const client = createLooseTrpcClient()
+    client.directory.list.query()
       .then(d => setListings(d as unknown as Listing[])).catch(() => setListings([]))
+    // Admin-added custom categories, merged into the dropdown alongside defaults.
+    client.directory.categories.query()
+      .then(c => setCustomCats(((c ?? []) as { name: string }[]).map(x => x.name))).catch(() => {})
   }, [])
 
   // Business type shows ALL main categories (even empty ones — no-results is fine),
-  // plus any legacy category values present on listings that aren't in the list.
+  // then admin custom categories, then any legacy values present on listings.
+  const base = [...BUSINESS_CATEGORIES, ...customCats.filter(c => !BUSINESS_CATEGORIES.includes(c))]
   const present = Array.from(new Set((listings ?? []).map(l => l.category).filter((c): c is string => !!c)))
-  const extra = present.filter(c => !BUSINESS_CATEGORIES.includes(c)).sort()
-  const categories = ['All', ...BUSINESS_CATEGORIES, ...extra]
+  const extra = present.filter(c => !base.includes(c)).sort()
+  const categories = ['All', ...base, ...extra]
   const locations = ['All', ...Array.from(new Set((listings ?? []).map(l => l.location).filter((c): c is string => !!c))).sort()]
   const shown = (listings ?? []).filter(l => (cat === 'All' || l.category === cat) && (loc === 'All' || l.location === loc))
 

@@ -46,7 +46,7 @@ export const directoryRouter = router({
     .input(z.object({ category: z.string().optional() }).optional())
     .query(async ({ ctx, input }) => {
       const listings = await ctx.prisma.directoryListing.findMany({
-        where: { paidUntil: { gt: new Date() }, reviewStatus: 'approved', ...(input?.category ? { category: input.category } : {}) },
+        where: { paidUntil: { gt: new Date() }, reviewStatus: 'approved', disabled: false, ...(input?.category ? { category: input.category } : {}) },
         orderBy: { name: 'asc' },
       })
       return listings
@@ -57,7 +57,7 @@ export const directoryRouter = router({
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const listing = await ctx.prisma.directoryListing.findUnique({ where: { id: input.id } })
-      if (!listing || !isLive(listing.paidUntil) || listing.reviewStatus !== 'approved') throw new TRPCError({ code: 'NOT_FOUND', message: 'This listing is not currently live.' })
+      if (!listing || listing.disabled || !isLive(listing.paidUntil) || listing.reviewStatus !== 'approved') throw new TRPCError({ code: 'NOT_FOUND', message: 'This listing is not currently live.' })
       // Admin-seeded listings with no owner yet can be claimed by a business.
       return { ...listing, claimable: listing.adminCreated && !listing.userId }
     }),
@@ -235,4 +235,54 @@ export const directoryRouter = router({
   adminRemove: execProcedure
     .input(z.object({ id: z.string() }))
     .mutation(({ ctx, input }) => ctx.prisma.directoryListing.delete({ where: { id: input.id } })),
+
+  // Admin: disable / re-enable a listing (kill-switch; hides it publicly without
+  // deleting it or touching its paid window).
+  adminSetDisabled: execProcedure
+    .input(z.object({ id: z.string(), disabled: z.boolean() }))
+    .mutation(({ ctx, input }) =>
+      ctx.prisma.directoryListing.update({ where: { id: input.id }, data: { disabled: input.disabled } })
+    ),
+
+  // Admin: grant free months — extend the paid window by N months from now (or
+  // from the current expiry if it's still in the future, so a comp never shortens
+  // an active subscription). A listing must be live to show, so this is how we
+  // gift time.
+  adminGrantMonths: execProcedure
+    .input(z.object({ id: z.string(), months: z.number().int().min(1).max(60) }))
+    .mutation(async ({ ctx, input }) => {
+      const l = await ctx.prisma.directoryListing.findUniqueOrThrow({ where: { id: input.id }, select: { paidUntil: true } })
+      const base = l.paidUntil && l.paidUntil.getTime() > Date.now() ? l.paidUntil.getTime() : Date.now()
+      const paidUntil = new Date(base + input.months * 30 * 86400000)
+      return ctx.prisma.directoryListing.update({ where: { id: input.id }, data: { paidUntil } })
+    }),
+
+  // ── Directory categories (admin-managed, merged with the built-in defaults) ──
+  // Public: the custom categories admins have added. The client merges these with
+  // BUSINESS_CATEGORIES so the dropdowns show both.
+  categories: publicProcedure.query(({ ctx }) =>
+    ctx.prisma.directoryCategory.findMany({ where: { active: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }], select: { name: true } })
+  ),
+
+  // Admin: every custom category for management.
+  adminCategories: execProcedure.query(({ ctx }) =>
+    ctx.prisma.directoryCategory.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] })
+  ),
+
+  // Admin: add or rename a custom category.
+  upsertCategory: execProcedure
+    .input(z.object({ id: z.string().optional(), name: z.string().min(2).max(60), sortOrder: z.number().int().default(0), active: z.boolean().default(true) }))
+    .mutation(({ ctx, input }) => {
+      const { id, ...data } = input
+      const name = data.name.trim()
+      return id
+        ? ctx.prisma.directoryCategory.update({ where: { id }, data: { ...data, name } })
+        : ctx.prisma.directoryCategory.create({ data: { ...data, name } })
+    }),
+
+  // Admin: remove a custom category. Existing listings keep whatever category
+  // string they already hold; only the dropdown option goes away.
+  removeCategory: execProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(({ ctx, input }) => ctx.prisma.directoryCategory.delete({ where: { id: input.id } })),
 })

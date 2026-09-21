@@ -302,10 +302,27 @@ model DirectoryListing {
   // to review (resubmit). pending | approved | rejected.
   reviewStatus String  @default("pending")
   adminNote   String?
+  // Admin kill-switch: a disabled listing is hidden from the public directory
+  // regardless of its paid/approved state (e.g. a complaint or policy breach),
+  // without deleting it or refunding. Distinct from reviewStatus.
+  disabled    Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([reviewStatus])
+}
+
+// Admin-managed categories for the Business Directory. Merged with the built-in
+// BUSINESS_CATEGORIES defaults on the client; admins add/remove their own here.
+model DirectoryCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
 }
 
 // Singleton admin-editable sponsorship pricing (per-add-on monthly base price +

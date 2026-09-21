@@ -11,7 +11,16 @@ const MapPicker = dynamic(() => import('@/components/marketplace/MapPicker'), { 
 interface Listing {
   id: string; userId: string; name: string; category: string | null; description: string | null
   phone: string | null; email: string | null; website: string | null; logoUrl: string | null; location: string | null
-  live: boolean; reviewStatus?: string; adminNote?: string | null; user?: { email?: string; displayName?: string }
+  live: boolean; disabled?: boolean; reviewStatus?: string; adminNote?: string | null; user?: { email?: string; displayName?: string }
+}
+interface DirCategory { id: string; name: string; sortOrder: number; active: boolean }
+
+// The category dropdown = built-in defaults + any custom categories admins added
+// (active ones), de-duplicated and defaults-first.
+function mergeCategories(custom: DirCategory[]): string[] {
+  const out = [...BUSINESS_CATEGORIES]
+  for (const c of custom) if (c.active && !out.includes(c.name)) out.push(c.name)
+  return out
 }
 
 export default function DirectoryView() {
@@ -20,23 +29,36 @@ export default function DirectoryView() {
   const [editing, setEditing] = useState<Listing | null>(null)
   const [saving, setSaving] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [customCats, setCustomCats] = useState<DirCategory[]>([])
+  const cats = mergeCategories(customCats)
 
   const load = () => api.directoryListings().then(d => {
     // Surface listings awaiting review first, then rejected, then the rest.
     const order = (s?: string) => (s === 'pending' ? 0 : s === 'rejected' ? 1 : 2)
     setRows(((d ?? []) as Listing[]).slice().sort((a, b) => order(a.reviewStatus) - order(b.reviewStatus)))
   }).catch(() => {})
-  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const loadCats = () => api.directoryCategories().then(c => setCustomCats((c ?? []) as DirCategory[])).catch(() => {})
+  useEffect(() => { load(); loadCats() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const remove = async (id: string) => { await api.removeDirectoryListing(id); load() }
+  const remove = async (id: string) => { if (!window.confirm('Delete this listing permanently? This cannot be undone.')) return; await api.removeDirectoryListing(id); load() }
   const approve = async (id: string) => { await api.reviewDirectoryListing(id, 'approved'); load() }
   const reject = async (id: string) => {
     const note = window.prompt('Reason for rejection (shown to the advertiser so they can fix & resubmit):', '')
     if (note === null) return
     await api.reviewDirectoryListing(id, 'rejected', note || undefined); load()
   }
-  const grantYear = async (id: string) => { const d = new Date(); d.setFullYear(d.getFullYear() + 1); await api.setDirectoryPaidUntil(id, d.toISOString()); load() }
-  const clearPaid = async (id: string) => { await api.setDirectoryPaidUntil(id, null); load() }
+  const toggleDisabled = async (l: Listing) => {
+    if (!l.disabled && !window.confirm(`Disable “${l.name}”? It will be hidden from the public directory until you re-enable it. Its paid time is not affected.`)) return
+    await api.setDirectoryDisabled(l.id, !l.disabled); load()
+  }
+  const grantMonths = async (l: Listing) => {
+    const raw = window.prompt(`Grant free months to “${l.name}” — how many? (extends from its current expiry if still active)`, '1')
+    if (raw === null) return
+    const months = Math.floor(Number(raw))
+    if (!Number.isFinite(months) || months < 1 || months > 60) { window.alert('Enter a whole number of months between 1 and 60.'); return }
+    await api.grantDirectoryMonths(l.id, months); load()
+  }
+  const clearPaid = async (id: string) => { if (!window.confirm('Clear the paid window? The listing will stop showing publicly.')) return; await api.setDirectoryPaidUntil(id, null); load() }
   const save = async () => {
     if (!editing) return
     setSaving(true)
@@ -63,6 +85,9 @@ export default function DirectoryView() {
         <button onClick={() => setCreating(true)} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 50, padding: '9px 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ New listing</button>
       </div>
 
+      <CategoryManager api={api} custom={customCats} reload={loadCats} />
+
+
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-ui)', fontSize: 12.5 }}>
           <thead><tr style={{ textAlign: 'left', color: '#999', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -80,6 +105,7 @@ export default function DirectoryView() {
                     : l.reviewStatus === 'rejected'
                       ? <span style={{ color: '#ef4444', fontWeight: 800 }} title={l.adminNote ?? ''}>⛔ Rejected</span>
                       : l.live ? <span style={{ color: '#16a34a', fontWeight: 800 }}>🟢 Live</span> : <span style={{ color: '#888', fontWeight: 800 }}>⚪ Approved · unpaid</span>}
+                  {l.disabled && <div style={{ color: '#ef4444', fontWeight: 800, marginTop: 3 }}>🚫 Disabled</div>}
                   {l.reviewStatus === 'rejected' && l.adminNote && <div style={{ color: '#aaa', fontSize: 10, marginTop: 3, maxWidth: 200 }}>“{l.adminNote}”</div>}
                 </td>
                 <td style={td}>
@@ -90,7 +116,9 @@ export default function DirectoryView() {
                     {l.reviewStatus === 'rejected' && <button onClick={() => approve(l.id)} style={{ ...pill, background: '#f0faf4', color: '#16a34a' }}>Approve</button>}
                     <button onClick={() => setEditing(l)} style={{ ...pill, background: '#f0f0f0', color: '#555' }}>Edit</button>
                     <a href={`/directory/${l.id}`} target="_blank" rel="noopener" style={{ ...pill, background: '#fff7ed', color: '#c2410c', textDecoration: 'none', display: 'inline-block' }}>View</a>
-                    {l.live ? <button onClick={() => clearPaid(l.id)} style={{ ...pill, background: '#f5f5f5', color: '#888' }}>Clear paid</button> : <button onClick={() => grantYear(l.id)} style={{ ...pill, background: '#f0faf4', color: '#16a34a' }}>Comp 1yr</button>}
+                    <button onClick={() => grantMonths(l)} title="Grant free months" style={{ ...pill, background: '#f0faf4', color: '#16a34a' }}>+ Free months</button>
+                    {l.live && <button onClick={() => clearPaid(l.id)} style={{ ...pill, background: '#f5f5f5', color: '#888' }}>Clear paid</button>}
+                    <button onClick={() => toggleDisabled(l)} style={{ ...pill, background: l.disabled ? '#f0faf4' : '#fff7ed', color: l.disabled ? '#16a34a' : '#b45309' }}>{l.disabled ? 'Enable' : 'Disable'}</button>
                     <button onClick={() => remove(l.id)} style={{ ...pill, background: '#fef2f2', color: '#ef4444' }}>Delete</button>
                   </div>
                 </td>
@@ -101,7 +129,7 @@ export default function DirectoryView() {
         </table>
       </div>
 
-      {creating && <CreateListingModal api={api} onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load() }} />}
+      {creating && <CreateListingModal api={api} cats={cats} onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load() }} />}
 
       {editing && (
         <div onClick={() => setEditing(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 20 }}>
@@ -109,7 +137,13 @@ export default function DirectoryView() {
             <h3 style={{ fontFamily: 'var(--font-ui)', fontWeight: 800, marginBottom: 12 }}>Edit listing</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <F label="Name"><input value={editing.name} onChange={e => set('name', e.target.value)} style={inp} /></F>
-              <F label="Category"><input value={editing.category ?? ''} onChange={e => set('category', e.target.value)} style={inp} /></F>
+              <F label="Category">
+                <select value={editing.category ?? ''} onChange={e => set('category', e.target.value)} style={inp}>
+                  <option value="">Select a category…</option>
+                  {cats.map(c => <option key={c} value={c}>{c}</option>)}
+                  {editing.category && !cats.includes(editing.category) && <option value={editing.category}>{editing.category}</option>}
+                </select>
+              </F>
               <F label="Location"><input value={editing.location ?? ''} onChange={e => set('location', e.target.value)} style={inp} /></F>
               <F label="Phone"><input value={editing.phone ?? ''} onChange={e => set('phone', e.target.value)} style={inp} /></F>
               <F label="Email"><input value={editing.email ?? ''} onChange={e => set('email', e.target.value)} style={inp} /></F>
@@ -136,8 +170,57 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
   return <div><label style={{ display: 'block', fontSize: 9, fontWeight: 800, color: '#aaa', fontFamily: 'var(--font-ui)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>{children}</div>
 }
 
+// Admin-managed custom categories. Built-in defaults always show in the
+// dropdowns and can't be removed here; this adds/removes the extra ones.
+function CategoryManager({ api, custom, reload }: { api: ReturnType<typeof useCrmApi>; custom: DirCategory[]; reload: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [busy, setBusy] = useState(false)
+  const add = async () => {
+    const n = name.trim()
+    if (n.length < 2) return
+    setBusy(true)
+    try { await api.upsertDirectoryCategory({ name: n, sortOrder: custom.length }); setName(''); reload() }
+    finally { setBusy(false) }
+  }
+  const remove = async (c: DirCategory) => {
+    if (!window.confirm(`Remove the category “${c.name}” from the dropdowns? Existing listings keep their category text.`)) return
+    await api.removeDirectoryCategory(c.id); reload()
+  }
+  const toggle = async (c: DirCategory) => { await api.upsertDirectoryCategory({ id: c.id, name: c.name, sortOrder: c.sortOrder, active: !c.active }); reload() }
+
+  return (
+    <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: 14, marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 900, color: '#1a1a1a' }}>Categories <span style={{ color: '#aaa', fontWeight: 700 }}>· {BUSINESS_CATEGORIES.length} built-in + {custom.length} custom</span></div>
+        <button onClick={() => setOpen(o => !o)} style={{ ...pill, background: '#f0f0f0', color: '#555' }}>{open ? 'Hide' : 'Manage'}</button>
+      </div>
+      {open && (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add() } }} placeholder="New category name" style={{ ...inp, flex: 1, marginBottom: 0 }} />
+            <button onClick={add} disabled={busy || name.trim().length < 2} style={{ background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: 8, padding: '0 16px', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>Add</button>
+          </div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', marginBottom: 8 }}>Built-in categories always appear in the dropdowns. Custom ones you add here appear alongside them.</div>
+          {custom.length === 0
+            ? <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, color: '#bbb' }}>No custom categories yet.</div>
+            : <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {custom.map(c => (
+                  <span key={c.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: c.active ? '#f0ebe4' : '#f5f5f5', color: c.active ? '#1a1a1a' : '#aaa', borderRadius: 50, padding: '5px 8px 5px 12px', fontFamily: 'var(--font-ui)', fontSize: 11.5, fontWeight: 700 }}>
+                    {c.name}
+                    <button onClick={() => toggle(c)} title={c.active ? 'Hide from dropdowns' : 'Show in dropdowns'} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, padding: 0 }}>{c.active ? '🙈' : '👁️'}</button>
+                    <button onClick={() => remove(c)} title="Remove" style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 13, padding: 0, lineHeight: 1 }}>×</button>
+                  </span>
+                ))}
+              </div>}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Admin creates a directory listing for an existing member (by their email).
-function CreateListingModal({ api, onClose, onCreated }: { api: ReturnType<typeof useCrmApi>; onClose: () => void; onCreated: () => void }) {
+function CreateListingModal({ api, cats, onClose, onCreated }: { api: ReturnType<typeof useCrmApi>; cats: string[]; onClose: () => void; onCreated: () => void }) {
   const [f, setF] = useState({ ownerEmail: '', name: '', category: '', location: '', phone: '', email: '', website: '', logoUrl: '', description: '', paidMonths: 12 })
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [logoBusy, setLogoBusy] = useState(false)
@@ -175,7 +258,7 @@ function CreateListingModal({ api, onClose, onCreated }: { api: ReturnType<typeo
           <F label="Category">
             <select value={f.category} onChange={e => set('category', e.target.value)} style={inp}>
               <option value="">Select a category…</option>
-              {BUSINESS_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {cats.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </F>
           <F label="Phone"><input value={f.phone} onChange={e => set('phone', e.target.value)} style={inp} /></F>

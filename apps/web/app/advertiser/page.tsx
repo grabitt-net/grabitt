@@ -121,10 +121,13 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
   const [bkImg, setBkImg] = useState(''); const [bkBusy, setBkBusy] = useState(false); const [bkMsg, setBkMsg] = useState('')
   const [terms, setTerms] = useState<Term[]>([])
   const [subBusy, setSubBusy] = useState<string>('')
+  const [customCats, setCustomCats] = useState<string[]>([])
+  const cats = [...BUSINESS_CATEGORIES, ...customCats.filter(c => !BUSINESS_CATEGORIES.includes(c))]
 
   useEffect(() => {
     trpcAuthed().banners.myBookings.query().then((d: any) => setBookings(d ?? [])).catch(() => setBookings([]))
     createLooseTrpcClient().directory.terms.query().then((d: any) => setTerms(d ?? [])).catch(() => {})
+    createLooseTrpcClient().directory.categories.query().then((d: any) => setCustomCats(((d ?? []) as { name: string }[]).map(x => x.name))).catch(() => {})
   }, [])
 
   const subscribe = async (term: string) => {
@@ -211,7 +214,8 @@ function Dashboard({ mine, onReload }: { mine: Mine; onReload: () => void }) {
           <F label="Category">
             <select value={f.category ?? ''} onChange={e => set('category', e.target.value)} style={inp}>
               <option value="">Select a category…</option>
-              {BUSINESS_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {cats.map(c => <option key={c} value={c}>{c}</option>)}
+              {f.category && !cats.includes(f.category) && <option value={f.category}>{f.category}</option>}
             </select>
           </F>
           <F label="Phone"><input value={f.phone ?? ''} onChange={e => set('phone', e.target.value)} style={inp} /></F>
