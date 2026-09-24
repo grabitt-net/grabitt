@@ -268,6 +268,9 @@ export const businessRouter = router({
       contactPhone: z.string().max(40).optional(),
       contactEmail: z.string().max(160).optional(),
       contactWebsite: z.string().max(200).optional(),
+      location: z.string().max(200).optional(),
+      lat: z.number().nullable().optional(),
+      lng: z.number().nullable().optional(),
       published: z.boolean().optional(),
       slug: z.string().max(50).optional(),
     }))

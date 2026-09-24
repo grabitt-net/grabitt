@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { trpcAuthed } from '@/lib/authToken'
 import { compressAndUpload, cmsImagePath } from '@/lib/storage'
 import { useGrabittUid } from '@/hooks/useGrabittUid'
+import AddressAutocomplete from '@/components/marketplace/AddressAutocomplete'
 import { t } from '@/lib/i18n'
 
 // The business storefront editor. A shop is more than a bio: a layout template,
@@ -16,6 +17,7 @@ type Shop = {
   categories: string[]; featuredIds: string[]
   shippingPolicy: string | null; returnsPolicy: string | null; paymentPolicy: string | null
   contactPhone: string | null; contactEmail: string | null; contactWebsite: string | null
+  location: string | null; lat: number | null; lng: number | null
   published: boolean
 }
 const BANNER_HINT = 'Wide image, best at 1053 × 300 px (about 3.5 : 1). It fills the top of your shop edge-to-edge.'
@@ -48,8 +50,9 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
   const [f, setF] = useState({
     businessName: '', template: 'classic', tagline: '', about: '', bannerUrl: '', bannerUrlEs: '', logoUrl: '', accentColour: 'var(--orange)',
     categories: [] as string[], featuredIds: [] as string[],
-    shippingPolicy: '', returnsPolicy: '', paymentPolicy: '', contactPhone: '', contactEmail: '', contactWebsite: '', published: false, slug: '',
+    shippingPolicy: '', returnsPolicy: '', paymentPolicy: '', contactPhone: '', contactEmail: '', contactWebsite: '', location: '', published: false, slug: '',
   })
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [newCat, setNewCat] = useState('')
 
   useEffect(() => {
@@ -73,8 +76,10 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
           shippingPolicy: res.shop.shippingPolicy ?? '', returnsPolicy: res.shop.returnsPolicy ?? '',
           paymentPolicy: res.shop.paymentPolicy ?? '',
           contactPhone: res.shop.contactPhone ?? '', contactEmail: res.shop.contactEmail ?? '', contactWebsite: res.shop.contactWebsite ?? '',
+          location: res.shop.location ?? '',
           published: res.shop.published, slug: res.shop.slug,
         })
+        if (res.shop.lat != null && res.shop.lng != null) setCoords({ lat: res.shop.lat, lng: res.shop.lng })
       } else if (res?.businessName) {
         setF(prev => ({ ...prev, businessName: res.businessName ?? '' }))
       }
@@ -107,6 +112,9 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
         contactPhone: f.contactPhone.trim() || undefined,
         contactEmail: f.contactEmail.trim() || undefined,
         contactWebsite: f.contactWebsite.trim() || undefined,
+        location: f.location.trim() || undefined,
+        lat: coords?.lat ?? null,
+        lng: coords?.lng ?? null,
         ...(publishOverride !== undefined ? { published: publishOverride } : {}),
         ...(shop ? {} : { slug: f.slug.trim() || undefined }),
       })
@@ -275,6 +283,14 @@ export default function StorefrontEditor({ onClose }: { onClose: () => void }) {
 
               {/* Contact */}
               <Section title={t('Contact')}>
+                <Label>{t('Address')}</Label>
+                <AddressAutocomplete
+                  value={f.location}
+                  onChange={v => set('location', v)}
+                  onSelect={pick => { set('location', pick.address); setCoords({ lat: pick.lat, lng: pick.lng }) }}
+                  placeholder={t('Start typing your address…')}
+                />
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, color: '#999', margin: '2px 0 10px' }}>{t('Used on your shop page and pulled into your Business Directory listing.')}</div>
                 <Label>{t('Phone')}</Label>
                 <input value={f.contactPhone} onChange={e => set('contactPhone', e.target.value)} placeholder="+34 600 000 000" style={INPUT} />
                 <Label>{t('Email')}</Label>

@@ -29,6 +29,7 @@ type Shop = {
     bannerUrl: string | null; bannerUrlEs: string | null; logoUrl: string | null; accentColour: string | null; categories: string[]; featuredIds: string[]
     shippingPolicy: string | null; returnsPolicy: string | null; paymentPolicy: string | null
     contactPhone: string | null; contactEmailB64: string | null; contactWebsiteB64: string | null
+    location: string | null; lat: number | null; lng: number | null
   }
   seller: { id: string; name: string; avatar: string | null; verified: boolean; salesCount: number; memberSince: string }
   followers: number
@@ -234,11 +235,15 @@ function ShopInner() {
       {(() => {
         const email = decodeContact(shop.contactEmailB64)
         const website = decodeContact(shop.contactWebsiteB64)
-        if (!shop.contactPhone && !email && !website) return null
+        if (!shop.contactPhone && !email && !website && !shop.location) return null
         const webUrl = website && (/^https?:\/\//i.test(website) ? website : `https://${website}`)
+        const mapUrl = shop.location && (shop.lat != null && shop.lng != null
+          ? `https://www.google.com/maps/search/?api=1&query=${shop.lat},${shop.lng}`
+          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shop.location)}`)
         return (
           <section style={{ padding: '20px 16px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 900, color: 'var(--dark)' }}>{t('Contact')}</div>
+            {shop.location && mapUrl && <ContactRow icon="📍" text={shop.location} href={mapUrl} external />}
             {shop.contactPhone && <ContactRow icon="📞" text={shop.contactPhone} href={`tel:${shop.contactPhone}`} />}
             {email && <ContactRow icon="✉️" text={email} href={`mailto:${email}`} />}
             {website && webUrl && <ContactRow icon="🌐" text={website.replace(/^https?:\/\//, '')} href={webUrl} external />}

@@ -277,11 +277,21 @@ export const directoryRouter = router({
     .input(z.object({ userId: z.string(), paidMonths: z.number().int().min(0).max(60).default(12) }))
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: input.userId }, select: { businessName: true, displayName: true, phone: true } })
-      const shop = await ctx.prisma.storefront.findUnique({ where: { userId: input.userId }, select: { about: true, tagline: true, logoUrl: true } })
+      const shop = await ctx.prisma.storefront.findUnique({ where: { userId: input.userId }, select: { about: true, tagline: true, logoUrl: true, contactPhone: true, contactEmail: true, contactWebsite: true, location: true, lat: true, lng: true } })
       const name = (user.businessName || user.displayName || 'Business').trim()
       const description = (shop?.about || shop?.tagline || '').trim().slice(0, 600) || null
       const paidUntil = input.paidMonths > 0 ? new Date(Date.now() + input.paidMonths * 30 * 86400000) : null
-      const data = { name, description, logoUrl: shop?.logoUrl || null, phone: user.phone || null, adminCreated: false, reviewStatus: 'approved' }
+      const data = {
+        name, description,
+        logoUrl: shop?.logoUrl || null,
+        phone: shop?.contactPhone || user.phone || null,
+        email: shop?.contactEmail || null,
+        website: shop?.contactWebsite || null,
+        location: shop?.location || null,
+        lat: shop?.lat ?? null,
+        lng: shop?.lng ?? null,
+        adminCreated: false, reviewStatus: 'approved',
+      }
       const existing = await ctx.prisma.directoryListing.findUnique({ where: { userId: input.userId }, select: { id: true } })
       if (existing) {
         return ctx.prisma.directoryListing.update({ where: { userId: input.userId }, data: { ...data, ...(paidUntil ? { paidUntil } : {}) } })

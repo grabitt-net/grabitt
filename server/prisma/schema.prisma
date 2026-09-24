@@ -499,6 +499,10 @@ model Storefront {
   contactPhone    String?
   contactEmail    String?
   contactWebsite  String?
+  // Business address (from the address lookup) — pulled into the directory listing.
+  location        String?
+  lat             Float?
+  lng             Float?
 
   published       Boolean  @default(false)
   createdAt       DateTime @default(now())
