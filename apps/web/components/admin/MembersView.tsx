@@ -300,6 +300,7 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
   const [suspendReason, setSuspendReason] = useState(member.suspendedReason ?? '')
   const [feeOverride, setFeeOverride] = useState((member as any).feeOverridePct != null ? String((member as any).feeOverridePct) : '')
   const [dirMonths, setDirMonths] = useState('12')
+  const [manageTab, setManageTab] = useState<'profile' | 'verify' | 'perks' | 'security' | 'suspend'>('profile')
 
   const set = (k: string, v: any) => setF(p => ({ ...p, [k]: v }))
   const flash = (m: string) => { setMsg(m); setErr(''); setTimeout(() => setMsg(''), 4000) }
@@ -410,10 +411,19 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
 
         {view === 'activity' && <div style={{ padding: 16 }}><MemberActivity userId={member.id} /></div>}
 
-        <div style={{ padding: 16, display: view === 'manage' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
+        <div style={{ padding: 16, display: view === 'manage' ? 'block' : 'none' }}>
           {msg && <Banner color="#16a34a" bg="#f0fdf4" border="#bbf7d0">{msg}</Banner>}
           {err && <Banner color="#b91c1c" bg="#fef2f2" border="#fecaca">{err}</Banner>}
 
+          {/* Section sub-tabs — the Manage panel was one long scroll; grouping it
+              keeps each area focused. */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '4px 0 16px' }}>
+            {([['profile', 'Profile & level'], ['verify', 'Verification'], ['perks', 'Perks & directory'], ['security', 'Security'], ['suspend', 'Suspension']] as const).map(([id, label]) => (
+              <button key={id} onClick={() => setManageTab(id)} style={chip(manageTab === id)}>{label}</button>
+            ))}
+          </div>
+
+          <div style={{ display: manageTab === 'profile' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
           <Card title="Profile details">
             <L>Full name</L><input value={f.displayName} onChange={e => set('displayName', e.target.value)} style={inp} />
             <L>Phone</L><input value={f.phone} onChange={e => set('phone', e.target.value)} style={inp} />
@@ -467,7 +477,10 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
                 : <>Personal = neither ticked. <strong>Business Light</strong> is the starter plan (limited allowance). <strong>Business account</strong> is the full plan. Save with <strong>Save details</strong> below.</>}
             </div>
           </Card>
+          <button onClick={saveDetails} disabled={!!busy} style={primary}>{busy === 'details' ? 'Saving…' : 'Save changes'}</button>
+          </div>
 
+          <div style={{ display: manageTab === 'perks' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
           <Card title="Founding & affiliate">
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 8 }}>Founding Member is granted automatically to the first web signups. Assign it manually here for admin-created members.</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -499,7 +512,9 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
               >{busy === 'dir' ? '…' : '📒 Grant directory listing'}</button>
             </div>
           </Card>
+          </div>
 
+          <div style={{ display: manageTab === 'verify' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
           <Card title="Verification">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <Check label="Verified member" checked={f.isVerified} onChange={v => set('isVerified', v)} />
@@ -522,7 +537,9 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
           </Card>
 
           <button onClick={saveDetails} disabled={!!busy} style={primary}>{busy === 'details' ? 'Saving…' : 'Save changes'}</button>
+          </div>
 
+          <div style={{ display: manageTab === 'security' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
           <Card title="Email & password">
             <div style={{ fontSize: 11, color: '#888', fontFamily: 'Nunito, sans-serif', marginBottom: 8 }}>
               Changing the email updates their sign-in identity immediately. Password resets are sent to the member — you never see or set it.
@@ -555,7 +572,9 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
               <button onClick={() => setAdmin(true)} disabled={!!busy} style={{ ...secondary, width: '100%' }}>{busy === 'admin' ? '…' : '🔐 Grant admin access'}</button>
             )}
           </Card>
+          </div>
 
+          <div style={{ display: manageTab === 'suspend' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
           <Card title="Suspension">
             {isSuspended ? (
               <>
@@ -574,6 +593,7 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
             )}
             <div style={{ fontSize: 11, color: '#999', fontFamily: 'Nunito, sans-serif', marginTop: 8 }}>Strikes: {member.strikeCount}</div>
           </Card>
+          </div>
         </div>
       </div>
     </div>
