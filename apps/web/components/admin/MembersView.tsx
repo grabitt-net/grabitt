@@ -140,7 +140,7 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
-              {['Member', 'Email', 'Account level', 'Type', 'Sales', 'Joined', 'Status', 'Actions'].map(h => <th key={h} style={th}>{h}</th>)}
+              {['Member', 'Email', 'Account level', 'Sales', 'Joined', 'Status', 'Actions'].map(h => <th key={h} style={th}>{h}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -151,15 +151,15 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
                   onMouseEnter={e => (e.currentTarget.style.background = '#FFF3EE')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <td style={{ ...td, fontWeight: 800, fontSize: 13, color: '#1a1a1a' }}>
-                    {m.displayName}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                      {m.displayName}
+                      {m.isAdmin && <span style={pill('#111')}>ADMIN</span>}
+                      {m.isBusiness ? <span style={pill('#7c3aed')}>Business{m.businessVerified ? ' ✓' : ''}</span> : m.businessLight ? <span style={pill('#0ea5e9')}>Business Light</span> : null}
+                    </div>
                     {m.businessName && <div style={{ fontSize: 11, color: '#999', fontWeight: 600 }}>{m.businessName}</div>}
                   </td>
                   <td style={{ ...td, color: '#888' }}>{m.email}</td>
                   <td style={td}><span style={{ color: gradeColors[m.grade] ?? '#aaa', fontWeight: 900, fontSize: 11 }}>{accountLevel(m)}</span></td>
-                  <td style={td}>
-                    {m.isAdmin && <span style={{ ...pill('#111'), marginRight: 4 }}>ADMIN</span>}
-                    {m.isBusiness ? <span style={pill('#7c3aed')}>Business{m.businessVerified ? ' ✓' : ''}</span> : m.businessLight ? <span style={pill('#0ea5e9')}>Business Light</span> : <span style={{ color: '#bbb', fontSize: 11 }}>Personal</span>}
-                  </td>
                   <td style={td}>{m.salesCount}</td>
                   <td style={{ ...td, fontSize: 11, color: '#999' }}>{new Date(m.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                   <td style={td}><span style={pill(st.color)}>{st.label}</span></td>
@@ -175,7 +175,7 @@ export default function MembersView({ members: initial, focusUserId }: Props) {
                 </tr>
               )
             })}
-            {filtered.length === 0 && <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#ccc', fontFamily: 'Nunito, sans-serif', fontSize: 13 }}>No members found</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#ccc', fontFamily: 'Nunito, sans-serif', fontSize: 13 }}>No members found</td></tr>}
           </tbody>
         </table>
       </div>

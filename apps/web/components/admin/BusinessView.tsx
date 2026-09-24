@@ -90,23 +90,26 @@ export default function BusinessView({ execToken, members = [] }: {
 
   useEffect(() => { load() }, [load])
 
-  const decide = async (a: Application, decision: 'approved' | 'rejected') => {
-    let reason: string | undefined
-    if (decision === 'rejected') {
-      const r = window.prompt('Reason for rejection (shown to the applicant):')
-      if (r === null) return
-      if (!r.trim()) { toast('A reason is required to reject.'); return }
-      reason = r.trim()
-    } else if (!(await confirmDialog({ message: `Approve ${a.legalName || a.user.displayName}? This grants the business badge, storefront and multibuy.`, confirmLabel: 'Approve' }))) {
-      return
-    }
+  // Rejections capture their reason inline (no browser prompt).
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+
+  const approve = async (a: Application) => {
+    if (!(await confirmDialog({ message: `Approve ${a.legalName || a.user.displayName}? This grants the business badge, storefront and multibuy.`, confirmLabel: 'Approve' }))) return
     setBusy(a.userId)
     try {
-      await makeCrmApi(execToken).reviewBusiness(a.userId, decision, reason)
+      await makeCrmApi(execToken).reviewBusiness(a.userId, 'approved')
       setRows(rs => (rs ?? []).filter(x => x.userId !== a.userId))
-    } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not record the decision.')
-    } finally { setBusy(null) }
+    } catch (e) { toast(e instanceof Error ? e.message : 'Could not record the decision.') } finally { setBusy(null) }
+  }
+  const submitReject = async (a: Application) => {
+    if (!rejectReason.trim()) { toast('A reason is required to reject.'); return }
+    setBusy(a.userId)
+    try {
+      await makeCrmApi(execToken).reviewBusiness(a.userId, 'rejected', rejectReason.trim())
+      setRows(rs => (rs ?? []).filter(x => x.userId !== a.userId))
+      setRejectingId(null); setRejectReason('')
+    } catch (e) { toast(e instanceof Error ? e.message : 'Could not record the decision.') } finally { setBusy(null) }
   }
 
   const docLink = (userId: string, kind: string) => `/api/verification-doc?userId=${userId}&kind=${kind}`
@@ -207,11 +210,22 @@ export default function BusinessView({ execToken, members = [] }: {
 
                 {tab === 'pending' && (
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => decide(a, 'approved')} disabled={busy === a.userId} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>{busy === a.userId ? '…' : 'Approve'}</button>
-                    <button onClick={() => decide(a, 'rejected')} disabled={busy === a.userId} style={{ background: '#fff', color: '#ef4444', border: '1.5px solid #ef4444', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>Reject</button>
+                    <button onClick={() => approve(a)} disabled={busy === a.userId} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>{busy === a.userId ? '…' : 'Approve'}</button>
+                    <button onClick={() => { setRejectingId(rejectingId === a.userId ? null : a.userId); setRejectReason('') }} disabled={busy === a.userId} style={{ background: rejectingId === a.userId ? '#ef4444' : '#fff', color: rejectingId === a.userId ? '#fff' : '#ef4444', border: '1.5px solid #ef4444', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>Reject</button>
                   </div>
                 )}
               </div>
+
+              {/* Inline rejection reason (shown to the applicant so they can fix & resubmit). */}
+              {tab === 'pending' && rejectingId === a.userId && (
+                <div style={{ marginTop: 10, background: '#fff7f7', border: '1px solid #fecaca', borderRadius: 10, padding: 10 }}>
+                  <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Reason for rejection (shown to the applicant so they can fix & resubmit)…" style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #fca5a5', borderRadius: 8, padding: '8px 10px', fontFamily: 'Nunito, sans-serif', fontSize: 12.5, minHeight: 56, resize: 'vertical' }} />
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
+                    <button onClick={() => { setRejectingId(null); setRejectReason('') }} style={{ background: '#fff', color: '#555', border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+                    <button onClick={() => submitReject(a)} disabled={busy === a.userId || !rejectReason.trim()} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 12, fontWeight: 800, cursor: 'pointer', opacity: (busy === a.userId || !rejectReason.trim()) ? 0.6 : 1 }}>{busy === a.userId ? '…' : 'Confirm rejection'}</button>
+                  </div>
+                </div>
+              )}
 
               {/* Documents — open in a new tab via a short-lived signed URL. */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
