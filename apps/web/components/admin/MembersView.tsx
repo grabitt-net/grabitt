@@ -273,7 +273,6 @@ function CreateMemberModal({ onClose, onCreated }: { onClose: () => void; onCrea
 
 export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onClose: () => void; onSaved: () => void }) {
   const api = useCrmApi()
-  const [view, setView] = useState<'activity' | 'manage'>('activity')
   const [f, setF] = useState({
     displayName: member.displayName ?? '',
     phone: member.phone ?? '',
@@ -300,7 +299,7 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
   const [suspendReason, setSuspendReason] = useState(member.suspendedReason ?? '')
   const [feeOverride, setFeeOverride] = useState((member as any).feeOverridePct != null ? String((member as any).feeOverridePct) : '')
   const [dirMonths, setDirMonths] = useState('12')
-  const [manageTab, setManageTab] = useState<'profile' | 'verify' | 'perks' | 'security' | 'suspend'>('profile')
+  const [manageTab, setManageTab] = useState<'activity' | 'profile' | 'verify' | 'perks' | 'security' | 'suspend'>('activity')
 
   const set = (k: string, v: any) => setF(p => ({ ...p, [k]: v }))
   const flash = (m: string) => { setMsg(m); setErr(''); setTimeout(() => setMsg(''), 4000) }
@@ -402,28 +401,26 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
             </div>
             <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{member.email} · {member.grade} · joined {new Date(member.createdAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</div>
           </div>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <button onClick={() => setView('activity')} style={topTab(view === 'activity')}>Activity</button>
-            <button onClick={() => setView('manage')} style={topTab(view === 'manage')}>Manage</button>
-            <button onClick={onClose} style={{ background: '#fff', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15, marginLeft: 4 }}>✕</button>
-          </div>
+          <button onClick={onClose} style={{ background: '#fff', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: 15, marginLeft: 4 }}>✕</button>
         </div>
 
-        {view === 'activity' && <div style={{ padding: 16 }}><MemberActivity userId={member.id} /></div>}
-
-        <div style={{ padding: 16, display: view === 'manage' ? 'block' : 'none' }}>
-          {msg && <Banner color="#16a34a" bg="#f0fdf4" border="#bbf7d0">{msg}</Banner>}
-          {err && <Banner color="#b91c1c" bg="#fef2f2" border="#fecaca">{err}</Banner>}
-
-          {/* Section sub-tabs — the Manage panel was one long scroll; grouping it
-              keeps each area focused. */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '4px 0 16px' }}>
-            {([['profile', 'Profile & level'], ['verify', 'Verification'], ['perks', 'Perks & directory'], ['security', 'Security'], ['suspend', 'Suspension']] as const).map(([id, label]) => (
+        {/* One combined tab set — Activity plus every management section, so
+            everything lives under a single row of tabs (no Activity/Manage split). */}
+        <div style={{ padding: '12px 16px 0', position: 'sticky', top: 56, background: '#fff', zIndex: 9, borderBottom: '1px solid #f0ece4' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingBottom: 12 }}>
+            {([['activity', 'Activity'], ['profile', 'Profile & level'], ['verify', 'Verification'], ['perks', 'Perks & directory'], ['security', 'Security'], ['suspend', 'Suspension']] as const).map(([id, label]) => (
               <button key={id} onClick={() => setManageTab(id)} style={chip(manageTab === id)}>{label}</button>
             ))}
           </div>
+        </div>
 
-          <div style={{ display: manageTab === 'profile' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
+        {manageTab === 'activity' && <div style={{ padding: 16 }}><MemberActivity userId={member.id} /></div>}
+
+        <div style={{ padding: 16, display: manageTab === 'activity' ? 'none' : 'block' }}>
+          {msg && <Banner color="#16a34a" bg="#f0fdf4" border="#bbf7d0">{msg}</Banner>}
+          {err && <Banner color="#b91c1c" bg="#fef2f2" border="#fecaca">{err}</Banner>}
+
+          <div style={{ display: manageTab === 'profile' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 560 }}>
           <Card title="Profile details">
             <L>Full name</L><input value={f.displayName} onChange={e => set('displayName', e.target.value)} style={inp} />
             <L>Phone</L><input value={f.phone} onChange={e => set('phone', e.target.value)} style={inp} />
@@ -480,7 +477,7 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
           <button onClick={saveDetails} disabled={!!busy} style={primary}>{busy === 'details' ? 'Saving…' : 'Save changes'}</button>
           </div>
 
-          <div style={{ display: manageTab === 'perks' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
+          <div style={{ display: manageTab === 'perks' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 560 }}>
           <Card title="Founding & affiliate">
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: '#888', marginBottom: 8 }}>Founding Member is granted automatically to the first web signups. Assign it manually here for admin-created members.</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -514,7 +511,7 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
           </Card>
           </div>
 
-          <div style={{ display: manageTab === 'verify' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
+          <div style={{ display: manageTab === 'verify' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 560 }}>
           <Card title="Verification">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <Check label="Verified member" checked={f.isVerified} onChange={v => set('isVerified', v)} />
@@ -539,7 +536,7 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
           <button onClick={saveDetails} disabled={!!busy} style={primary}>{busy === 'details' ? 'Saving…' : 'Save changes'}</button>
           </div>
 
-          <div style={{ display: manageTab === 'security' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
+          <div style={{ display: manageTab === 'security' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 560 }}>
           <Card title="Email & password">
             <div style={{ fontSize: 11, color: '#888', fontFamily: 'Nunito, sans-serif', marginBottom: 8 }}>
               Changing the email updates their sign-in identity immediately. Password resets are sent to the member — you never see or set it.
@@ -574,7 +571,7 @@ export function MemberDrawer({ member, onClose, onSaved }: { member: Member; onC
           </Card>
           </div>
 
-          <div style={{ display: manageTab === 'suspend' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 460 }}>
+          <div style={{ display: manageTab === 'suspend' ? 'flex' : 'none', flexDirection: 'column', gap: 16, maxWidth: 560 }}>
           <Card title="Suspension">
             {isSuspended ? (
               <>
@@ -641,9 +638,4 @@ const pill = (color: string): React.CSSProperties => ({
 const rowBtn = (bg: string, fg: string): React.CSSProperties => ({
   background: bg, color: fg, border: 'none', borderRadius: 7, padding: '5px 10px',
   fontSize: 11, fontWeight: 800, fontFamily: 'Nunito, sans-serif', cursor: 'pointer', whiteSpace: 'nowrap',
-})
-const topTab = (active: boolean): React.CSSProperties => ({
-  background: active ? '#1a1a1a' : '#fff', color: active ? '#fff' : '#666',
-  border: 'none', borderRadius: 50, padding: '7px 16px',
-  fontFamily: 'Nunito, sans-serif', fontSize: 12, fontWeight: 800, cursor: 'pointer',
 })
