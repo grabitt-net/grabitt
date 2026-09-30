@@ -9,7 +9,7 @@ import Topbar from '@/components/marketplace/Topbar'
 import PanelHost from '@/components/marketplace/PanelHostLazy'
 import Footer from '@/components/marketplace/Footer'
 import type { JobQuestion, JobQuestionType } from '@/lib/jobQuestions'
-import { QUESTION_TYPE_LABEL } from '@/lib/jobQuestions'
+import { QUESTION_TYPE_LABEL, PRESET_QUESTIONS } from '@/lib/jobQuestions'
 import { GC_TOWNS } from '@/lib/gcTowns'
 import { JOB_SECTORS, JOB_LANGUAGES } from '@/lib/jobCategories'
 import { Section, Row, Field, Input, Textarea, Select, Pill, Check, FormError, StepTabs, SubmitButton } from '@/components/marketplace/FormKit'
@@ -114,6 +114,11 @@ export default function PostJobPage() {
 
   const set = (k: string, v: any) => setF(prev => ({ ...prev, [k]: v }))
   const addQ = () => setQuestions(qs => [...qs, { id: crypto.randomUUID().slice(0, 8), label: '', type: 'short', required: false }])
+  // Add a ready-made question. Ignores it if the same question is already added.
+  const addPreset = (p: { label: string; type: JobQuestionType; options?: string[] }) =>
+    setQuestions(qs => qs.some(q => q.label.trim().toLowerCase() === p.label.toLowerCase())
+      ? qs
+      : [...qs, { id: crypto.randomUUID().slice(0, 8), label: p.label, type: p.type, required: false, ...(p.options ? { options: p.options } : {}) }])
   const updateQ = (id: string, patch: Partial<JobQuestion>) => setQuestions(qs => qs.map(q => q.id === id ? { ...q, ...patch } : q))
   const removeQ = (id: string) => setQuestions(qs => qs.filter(q => q.id !== id))
 
@@ -272,7 +277,23 @@ export default function PostJobPage() {
               )}
             </div>
           ))}
-          <button type="button" onClick={addQ} style={{ background: 'var(--cream)', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 'var(--radius-sm)', padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ Add a question</button>
+          {/* Ready-made questions — one tap to add, then edit as needed. */}
+          <div style={{ border: '1px dashed var(--line)', borderRadius: 'var(--radius-sm)', padding: 12, background: 'var(--bg)' }}>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, color: 'var(--muted, #7a6a55)', marginBottom: 8 }}>Suggested questions — tap to add</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              {PRESET_QUESTIONS.map(p => {
+                const added = questions.some(q => q.label.trim().toLowerCase() === p.label.toLowerCase())
+                return (
+                  <button key={p.label} type="button" onClick={() => addPreset(p)} disabled={added} style={{
+                    background: added ? '#f0faf4' : '#fff', border: `1.5px solid ${added ? '#8ed3a4' : 'var(--orange)'}`,
+                    color: added ? '#16a34a' : 'var(--orange)', borderRadius: 999, padding: '7px 12px',
+                    fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 800, cursor: added ? 'default' : 'pointer',
+                  }}>{added ? '✓ ' : '+ '}{p.label}</button>
+                )
+              })}
+            </div>
+          </div>
+          <button type="button" onClick={addQ} style={{ background: 'var(--cream)', border: '1.5px solid var(--orange)', color: 'var(--orange)', borderRadius: 'var(--radius-sm)', padding: '10px', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>+ Add a custom question</button>
         </Section>}
 
         {/* Job Requirements — what the candidate must have. Selection boxes the
