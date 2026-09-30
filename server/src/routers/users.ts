@@ -518,10 +518,12 @@ export const usersRouter = router({
       })
 
       // Bridge the tick-box recruitment data into the seeker profile that the
-      // employer Find Staff search and the generated CV read from. Jobseekers
-      // only — a business ticking roles in "employer" mode must not become a
-      // searchable candidate. `active` tracks the "looking for work" toggle.
-      if ((seekerDerived || openToWork !== undefined) && !user.isBusiness) {
+      // employer Find Staff search and the generated CV read from. `seekerDerived`
+      // is built only by the jobseeker editor (employer mode sends none), so its
+      // presence already means the member is filling in their own candidate
+      // profile — a business account may also be looking for work. Searchability
+      // stays gated by `active`/openToWork, not by the account type.
+      if (seekerDerived || openToWork !== undefined) {
         const data: Record<string, unknown> = {}
         if (seekerDerived) {
           data.sectors = seekerDerived.sectors
