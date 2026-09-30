@@ -890,6 +890,10 @@ export const TRANSLATIONS: Record<string, { en: string } & Partial<Record<Lang, 
   'Profile': { en: 'Profile', es: 'Perfil' },
   'LinkedIn / portfolio': { en: 'LinkedIn / portfolio', es: 'LinkedIn / portafolio' },
   'Contact details are revealed once you invite the candidate to interview.': { en: 'Contact details are revealed once you invite the candidate to interview.', es: 'Los datos de contacto se revelan cuando invitas al candidato a una entrevista.' },
+
+  // Candidate management
+  'Expires': { en: 'Expires', es: 'Caduca' },
+  'No applicants yet.': { en: 'No applicants yet.', es: 'Aún no hay solicitantes.' },
 }
 
 let _lang: Lang = 'en'

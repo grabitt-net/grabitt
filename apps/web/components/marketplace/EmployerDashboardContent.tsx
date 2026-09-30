@@ -56,6 +56,10 @@ function daysLeft(postedAt: string) {
   const end = new Date(postedAt).getTime() + JOB_LIFE_DAYS * 86400000
   return Math.ceil((end - Date.now()) / 86400000)
 }
+function expiryDate(postedAt: string) {
+  const end = new Date(new Date(postedAt).getTime() + JOB_LIFE_DAYS * 86400000)
+  return end.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+}
 
 type JobStatus = 'open' | 'filled' | 'removed'
 const statusOf = (j: Job): JobStatus => j.listingStatus === 'removed' ? 'removed' : j.listingStatus === 'sold' ? 'filled' : 'open'
@@ -69,6 +73,11 @@ export default function EmployerDashboardContent() {
   useEffect(() => { trpcAuthed().users.me.query().then((m: any) => setMeId(m?.id ?? '')).catch(() => {}) }, [])
   // The candidate whose detail popup is open.
   const [viewing, setViewing] = useState<{ job: Job; app: App } | null>(null)
+  // Which job cards are expanded. Collapsed by default so the list stays scannable.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const toggleExpanded = (id: string) => setExpanded(prev => {
+    const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n
+  })
 
   // Open a candidate's CV — their attached file if they uploaded one, otherwise
   // the Grabitt-generated CV built from their work profile + application.
@@ -173,66 +182,87 @@ export default function EmployerDashboardContent() {
         <div style={{ textAlign: 'center', padding: '24px 0', color: '#999', fontFamily: 'var(--font-ui)', fontSize: 12 }}>{t('No positions to show.')}</div>
       ) : (
         <>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {shownJobs.map(j => {
               const dLeft = daysLeft(j.postedAt)
               const jstatus = statusOf(j)
-              const filled = jstatus !== 'open'
               const expired = jstatus === 'open' && dLeft <= 0
+              const isOpen = expanded.has(j.id)
+              const nApps = j.applications.length
+              // Accent + chip for the position status, used for the left rail and pill.
+              let accent = '#22c55e'
               let chip: React.ReactNode
-              if (jstatus === 'filled') chip = <span style={{ background: '#22c55e1a', color: '#16a34a', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>✓ {t('Filled')}</span>
-              else if (jstatus === 'removed') chip = <span style={{ background: '#9ca3af1a', color: '#6b7280', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>⚪ {t('Removed')}</span>
-              else if (expired) chip = <span style={{ background: '#ef44441a', color: '#ef4444', fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>⏳ {t('Expired')}</span>
-              else { const c = dLeft <= 3 ? '#ef4444' : dLeft <= 7 ? '#f59e0b' : '#22c55e'; chip = <span style={{ background: `${c}1a`, color: c, fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 8px', borderRadius: 50 }}>{t('{n} days left').replace('{n}', String(dLeft))}</span> }
+              if (jstatus === 'filled') { accent = '#16a34a'; chip = <span style={{ background: '#22c55e1a', color: '#16a34a', fontSize: 9.5, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>✓ {t('Filled')}</span> }
+              else if (jstatus === 'removed') { accent = '#9ca3af'; chip = <span style={{ background: '#9ca3af1a', color: '#6b7280', fontSize: 9.5, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>⚪ {t('Removed')}</span> }
+              else if (expired) { accent = '#ef4444'; chip = <span style={{ background: '#ef44441a', color: '#ef4444', fontSize: 9.5, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>⏳ {t('Expired')}</span> }
+              else { accent = dLeft <= 3 ? '#ef4444' : dLeft <= 7 ? '#f59e0b' : '#22c55e'; chip = <span style={{ background: `${accent}1a`, color: accent, fontSize: 9.5, fontWeight: 800, fontFamily: 'var(--font-ui)', padding: '3px 9px', borderRadius: 50 }}>{t('{n} days left').replace('{n}', String(dLeft))}</span> }
 
               return (
-                <div key={j.id} style={{ background: '#fff', border: '1px solid #ece3d7', borderRadius: 16, padding: '14px 16px', boxShadow: '0 1px 4px rgba(30,43,85,0.05)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0, overflow: 'hidden' }}>
+                <div key={j.id} style={{ background: '#fff', border: `1px solid ${isOpen ? '#e2d6c4' : '#ece3d7'}`, borderRadius: 16, boxShadow: isOpen ? '0 6px 20px rgba(30,43,85,0.09)' : '0 1px 4px rgba(30,43,85,0.05)', overflow: 'hidden', transition: 'box-shadow .15s' }}>
+                  {/* Collapsible header — title, applicant count, expiry, arrow */}
+                  <button
+                    onClick={() => toggleExpanded(j.id)}
+                    aria-expanded={isOpen}
+                    style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: isOpen ? 'linear-gradient(180deg,#fffaf6,#fff)' : '#fff', border: 'none', borderLeft: `4px solid ${accent}`, cursor: 'pointer' }}
+                  >
+                    <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 21, flexShrink: 0, overflow: 'hidden' }}>
                       {j.image ? <img src={j.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (TYPE_EMOJI[j.type] ?? '💼')}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.jobTitle}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 11.5, color: '#777', fontFamily: 'var(--font-nunito)', marginTop: 3 }}>
-                        <span style={{ fontWeight: 800, color: j.applications.length ? 'var(--orange)' : '#999' }}>{j.applications.length} {t(j.applications.length === 1 ? 'applicant' : 'applicants')}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 15, fontWeight: 900, color: 'var(--dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.jobTitle}</div>
                         {chip}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', fontSize: 11.5, color: '#8a7c68', fontFamily: 'var(--font-nunito)', marginTop: 4 }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 800, color: nApps ? 'var(--orange)' : '#a99' }}>
+                          👤 {nApps} {t(nApps === 1 ? 'applicant' : 'applicants')}
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>📅 {t('Expires')} {expiryDate(j.postedAt)}</span>
                         {j.candidateMatching && <span style={{ color: 'var(--orange)', fontWeight: 800 }}>🎯 {t('Job Match on')}</span>}
                       </div>
                     </div>
-                  </div>
-                  <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <a href={`/jobs/new?edit=${j.listingId}`} style={{ flex: '1 1 80px', textDecoration: 'none' }}>
-                      <div style={pillBtn}>✏️ {t('Edit')}</div>
-                    </a>
-                    <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ ...pillBtn, flex: '1 1 80px' }}>📤 {t('Share')}</button>
-                    {/* Database search — the paid Candidate Matching add-on for THIS
-                        advert. Shows for every job: opens the search when purchased,
-                        or starts the purchase when not. */}
-                    <button onClick={() => databaseSearch(j)} disabled={buyingMatch === j.id} style={{ ...pillBtn, flex: '1 1 120px', ...(j.candidateMatching ? { background: '#FFF3EE', color: 'var(--orange)', borderColor: '#FFD4C0' } : {}) }}>
-                      {buyingMatch === j.id ? '…' : j.candidateMatching ? `🔎 ${t('Database search')}` : `🔎 ${t('Database search')} (${t('add')})`}
-                    </button>
-                  </div>
-                  {/* Position status controls */}
-                  <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {jstatus === 'open' && <button onClick={() => setJobStatus(j.listingId, 'sold', t('Marked as filled'))} style={statusBtn('#f0faf4', '#16a34a')}>✓ {t('Mark filled')}</button>}
-                    {jstatus !== 'open' && <button onClick={() => setJobStatus(j.listingId, 'active', t('Reopened'))} style={statusBtn('#eef7ff', '#1e6fd0')}>{t('Reopen')}</button>}
-                    {jstatus !== 'removed' && <button onClick={() => setJobStatus(j.listingId, 'removed', t('Removed'))} style={statusBtn('#fef2f2', '#ef4444')}>🗑 {t('Remove')}</button>}
-                  </div>
+                    <span aria-hidden style={{ flexShrink: 0, width: 26, height: 26, borderRadius: '50%', background: isOpen ? 'var(--orange)' : '#f3ece1', color: isOpen ? '#fff' : '#9a8c74', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s, background .15s' }}>▾</span>
+                  </button>
 
-                  {/* Candidates — listed inline. Click a name to open their CV; set
-                      their stage; message them. */}
-                  {j.applications.length > 0 && (
-                    <div style={{ marginTop: 12, borderTop: '1px solid #f0ece4', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: '#999', textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('Candidates')}</div>
-                      {j.applications.map(a => (
-                        <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <button onClick={() => setViewing({ job: j, app: a })} title={t('View candidate')} style={{ flex: '1 1 130px', minWidth: 0, textAlign: 'left', background: '#f8f6f2', border: '1px solid #ece3d7', borderRadius: 8, padding: '7px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>👤 {a.applicant}</button>
-                          <select value={stageValue(a.status)} onChange={e => setStage(a, e.target.value)} style={{ flexShrink: 0, border: '1.5px solid #e5dccd', borderRadius: 8, padding: '7px 8px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, background: '#fff', color: 'var(--dark)', cursor: 'pointer' }}>
-                            {STAGES.map(s => <option key={s.value} value={s.value}>{t(s.label)}</option>)}
-                          </select>
-                          <button onClick={() => openMessages(j, a)} title={t('Message candidate')} style={{ flexShrink: 0, background: '#fff', border: '1px solid #e5dccd', borderRadius: 8, padding: '7px 10px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>💬</button>
-                        </div>
-                      ))}
+                  {/* Expanded body */}
+                  {isOpen && (
+                    <div style={{ padding: '4px 16px 16px' }}>
+                      {/* Manage actions */}
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <a href={`/jobs/new?edit=${j.listingId}`} style={{ flex: '1 1 80px', textDecoration: 'none' }}>
+                          <div style={pillBtn}>✏️ {t('Edit')}</div>
+                        </a>
+                        <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ ...pillBtn, flex: '1 1 80px' }}>📤 {t('Share')}</button>
+                        <button onClick={() => databaseSearch(j)} disabled={buyingMatch === j.id} style={{ ...pillBtn, flex: '1 1 120px', ...(j.candidateMatching ? { background: '#FFF3EE', color: 'var(--orange)', borderColor: '#FFD4C0' } : {}) }}>
+                          {buyingMatch === j.id ? '…' : j.candidateMatching ? `🔎 ${t('Database search')}` : `🔎 ${t('Database search')} (${t('add')})`}
+                        </button>
+                      </div>
+                      {/* Position status controls */}
+                      <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {jstatus === 'open' && <button onClick={() => setJobStatus(j.listingId, 'sold', t('Marked as filled'))} style={statusBtn('#f0faf4', '#16a34a')}>✓ {t('Mark filled')}</button>}
+                        {jstatus !== 'open' && <button onClick={() => setJobStatus(j.listingId, 'active', t('Reopened'))} style={statusBtn('#eef7ff', '#1e6fd0')}>{t('Reopen')}</button>}
+                        {jstatus !== 'removed' && <button onClick={() => setJobStatus(j.listingId, 'removed', t('Removed'))} style={statusBtn('#fef2f2', '#ef4444')}>🗑 {t('Remove')}</button>}
+                      </div>
+
+                      {/* Candidates */}
+                      <div style={{ marginTop: 14, borderTop: '1px solid #f0ece4', paddingTop: 12 }}>
+                        <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: '#b0a08c', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>{t('Candidates')} {nApps > 0 ? `(${nApps})` : ''}</div>
+                        {nApps === 0 ? (
+                          <div style={{ textAlign: 'center', padding: '16px 0', color: '#a99', fontFamily: 'var(--font-nunito)', fontSize: 12 }}>{t('No applicants yet.')}</div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                            {j.applications.map(a => (
+                              <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', background: '#faf8f4', border: '1px solid #efe7db', borderRadius: 10, padding: 6 }}>
+                                <button onClick={() => setViewing({ job: j, app: a })} title={t('View candidate')} style={{ flex: '1 1 130px', minWidth: 0, textAlign: 'left', background: '#fff', border: '1px solid #ece3d7', borderRadius: 8, padding: '8px 11px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>👤 {a.applicant}</button>
+                                <select value={stageValue(a.status)} onChange={e => setStage(a, e.target.value)} style={{ flexShrink: 0, border: '1.5px solid #e5dccd', borderRadius: 8, padding: '8px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, background: '#fff', color: 'var(--dark)', cursor: 'pointer' }}>
+                                  {STAGES.map(s => <option key={s.value} value={s.value}>{t(s.label)}</option>)}
+                                </select>
+                                <button onClick={() => openMessages(j, a)} title={t('Message candidate')} style={{ flexShrink: 0, background: '#fff', border: '1px solid #e5dccd', borderRadius: 8, padding: '8px 11px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>💬</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
