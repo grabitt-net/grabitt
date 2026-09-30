@@ -2,7 +2,11 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, execProcedure, publicProcedure, protectedProcedure } from '../trpc'
 import type { PrismaClient, Prisma } from '@prisma/client'
-import { notifyUser } from '../lib/notify'
+import { notifyUser, sendEmail } from '../lib/notify'
+
+// Where inbound support-inbox notifications go. Overridable via env.
+const SUPPORT_INBOX_EMAIL = process.env.SUPPORT_INBOX_EMAIL || 'info@grabitt.net'
+const esc = (s: string) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string))
 import { businessTierForGrade, BUSINESS_TIERS, BUSINESS_TIER_ORDER } from '@grabitt/design-tokens'
 import { signConsumerJwt } from '../middleware/auth'
 
@@ -181,13 +185,13 @@ export const crmRouter = router({
       email: z.string().email().optional(),
       company: z.string().max(160).optional(),
     }))
-    .mutation(({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const LABEL: Record<string, string> = {
         suggestion: 'Feature suggestion', economic_tip: 'Money-saving tip',
         free_listings: 'Free-listings application', contact: 'Contact enquiry', event: 'Event submission',
         advertise: 'Advertising enquiry',
       }
-      return ctx.prisma.crmContact.create({
+      const created = await ctx.prisma.crmContact.create({
         data: {
           name: input.name?.trim() || 'Website visitor',
           email: input.email,
@@ -198,6 +202,22 @@ export const crmRouter = router({
         },
         select: { id: true },
       })
+      // Notify the support inbox address for the enquiry types that land there.
+      if (['contact', 'suggestion', 'event', 'advertise'].includes(input.type)) {
+        const label = LABEL[input.type]
+        sendEmail(
+          SUPPORT_INBOX_EMAIL,
+          `New ${label} — Grabitt`,
+          `<h2 style="font-family:system-ui,sans-serif">New ${esc(label)}</h2>
+           <p style="font-family:system-ui,sans-serif;font-size:14px;line-height:1.6">
+             <strong>From:</strong> ${esc(input.name || 'Website visitor')}${input.company ? ` (${esc(input.company)})` : ''}<br/>
+             <strong>Email:</strong> ${input.email ? esc(input.email) : '—'}
+           </p>
+           <p style="font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;white-space:pre-wrap">${esc(input.message)}</p>
+           <p style="font-family:system-ui,sans-serif;font-size:12px;color:#888">View it in Admin → Support Inbox.</p>`,
+        ).catch(() => { /* email best-effort; the enquiry is already saved */ })
+      }
+      return created
     }),
 
   // Logged-in "Suggest ideas" submission. Captures the idea as a CRM lead AND
@@ -216,6 +236,14 @@ export const crmRouter = router({
           tags: ['inbound', 'suggestion'],
         },
       })
+      sendEmail(
+        SUPPORT_INBOX_EMAIL,
+        'New Feature suggestion — Grabitt',
+        `<h2 style="font-family:system-ui,sans-serif">New Feature suggestion</h2>
+         <p style="font-family:system-ui,sans-serif;font-size:14px;line-height:1.6"><strong>From:</strong> ${esc(me.displayName || 'Member')} (${me.email ? esc(me.email) : '—'})</p>
+         <p style="font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;white-space:pre-wrap">${esc(input.message.trim())}</p>
+         <p style="font-family:system-ui,sans-serif;font-size:12px;color:#888">View it in Admin → Support Inbox.</p>`,
+      ).catch(() => { /* best-effort */ })
       await ctx.prisma.notification.create({
         data: {
           userId: ctx.user.id,
