@@ -776,7 +776,12 @@ export const jobsRouter = router({
   // the Employer Dashboard (stats, listing cards, per-applicant pipeline).
   employerApplications: protectedProcedure.query(async ({ ctx }) => {
     const jobs = await ctx.prisma.jobListing.findMany({
-      where: { employerId: ctx.user.id },
+      // Drafts are adverts still awaiting payment (paid job packs are created as a
+      // draft, then published once Stripe checkout completes). An abandoned
+      // checkout leaves an orphaned draft, so exclude drafts here — otherwise they
+      // show up in Candidate Management looking like a second, live advert. The
+      // public board already hides them the same way.
+      where: { employerId: ctx.user.id, listing: { status: { not: 'draft' } } },
       orderBy: { createdAt: 'desc' },
       include: {
         listing: { select: { id: true, status: true, createdAt: true, images: true } },
