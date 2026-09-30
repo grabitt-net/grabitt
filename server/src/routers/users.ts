@@ -7,6 +7,7 @@ import { makeReferralCode } from './auth'
 import { PRICES, LISTING_CAPS, GRADE_THRESHOLDS, FEE_RATES, PROPERTY_PRICING } from '@grabitt/design-tokens'
 import { sendSms } from '../lib/notify'
 import { createHash } from 'node:crypto'
+import { buildCvSnapshot } from '../lib/cvSnapshot'
 
 const APP_URL = () => process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
@@ -543,11 +544,26 @@ export const usersRouter = router({
           if (seekerDerived.uploadedCvName !== undefined) data.uploadedCvName = seekerDerived.uploadedCvName || null
         }
         if (openToWork !== undefined) data.active = openToWork
-        await ctx.prisma.seekerProfile.upsert({
+        const profile = await ctx.prisma.seekerProfile.upsert({
           where: { userId: ctx.user.id },
           create: { userId: ctx.user.id, ...data },
           update: data,
         })
+
+        // The CV is frozen onto each application at apply time. When the member
+        // edits their profile, refresh the snapshot on their existing
+        // applications so recruiters always see the current CV rather than a
+        // stale copy from the moment they applied.
+        if (seekerDerived) {
+          const snapshot = buildCvSnapshot(
+            { displayName: user.displayName, email: user.email, phone: user.phone },
+            profile as never,
+          )
+          await ctx.prisma.jobApplication.updateMany({
+            where: { applicantId: ctx.user.id },
+            data: { cvSnapshot: snapshot as never },
+          })
+        }
       }
 
       return user
