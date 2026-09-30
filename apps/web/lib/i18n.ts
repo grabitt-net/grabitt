@@ -881,6 +881,15 @@ export const TRANSLATIONS: Record<string, { en: string } & Partial<Record<Lang, 
   // Storefront contact
   'Website': { en: 'Website', es: 'Sitio web' },
   'Shown on your shop page. Email and website are protected from spam bots.': { en: 'Shown on your shop page. Email and website are protected from spam bots.', es: 'Se muestra en la página de tu tienda. El correo y el sitio web están protegidos contra bots de spam.' },
+
+  // Candidate detail popup
+  'View candidate': { en: 'View candidate', es: 'Ver candidato' },
+  'Match': { en: 'Match', es: 'Coincidencia' },
+  'Attached CV': { en: 'Attached CV', es: 'CV adjunto' },
+  'Grabitt CV': { en: 'Grabitt CV', es: 'CV de Grabitt' },
+  'Profile': { en: 'Profile', es: 'Perfil' },
+  'LinkedIn / portfolio': { en: 'LinkedIn / portfolio', es: 'LinkedIn / portafolio' },
+  'Contact details are revealed once you invite the candidate to interview.': { en: 'Contact details are revealed once you invite the candidate to interview.', es: 'Los datos de contacto se revelan cuando invitas al candidato a una entrevista.' },
 }
 
 let _lang: Lang = 'en'

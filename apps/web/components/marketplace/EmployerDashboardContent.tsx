@@ -13,8 +13,23 @@ import { t } from '@/lib/i18n'
 const ORANGE = 'var(--orange)'
 const JOB_LIFE_DAYS = 21     // listings run for 21 days
 
-type App = { id: string; status: string; applicant: string; applicantId: string; coverNote: string | null; employerNote: string | null; createdAt: string; cvUrl?: string | null; fullName?: string | null }
-type Job = { id: string; listingId: string; jobTitle: string; company: string; type: string; listingStatus: string; postedAt: string; image: string | null; candidateMatching?: boolean; applications: App[] }
+type App = {
+  id: string; status: string; applicant: string; applicantId: string; coverNote: string | null; employerNote: string | null; createdAt: string
+  cvUrl?: string | null; revealed?: boolean; suitabilityScore?: number | null
+  fullName?: string | null; email?: string | null; phone?: string | null; linkedinUrl?: string | null
+  location?: string | null; rightToWork?: string | null; languages?: string[]; experienceMonths?: number | null
+  currentRole?: string | null; expectedSalary?: number | null; availability?: string | null
+  answers?: Record<string, string | number | boolean>
+}
+type Question = { id: string; label: string }
+type Job = { id: string; listingId: string; jobTitle: string; company: string; type: string; listingStatus: string; postedAt: string; image: string | null; candidateMatching?: boolean; questions?: Question[]; applications: App[] }
+
+function expLabel(m: number | null | undefined): string | null {
+  if (!m) return null
+  if (m < 12) return `${m} mo experience`
+  const y = Math.floor(m / 12)
+  return `${y}+ yr${y > 1 ? 's' : ''} experience`
+}
 
 // The hiring stages the recruiter can set per candidate, mapped to the stored
 // ApplicationStatus enum. "Rejected" requires a reason note (enforced server-side).
@@ -52,6 +67,8 @@ export default function EmployerDashboardContent() {
   const [filter, setFilter] = useState<'all' | JobStatus>('all')
   const [meId, setMeId] = useState<string>('')
   useEffect(() => { trpcAuthed().users.me.query().then((m: any) => setMeId(m?.id ?? '')).catch(() => {}) }, [])
+  // The candidate whose detail popup is open.
+  const [viewing, setViewing] = useState<{ job: Job; app: App } | null>(null)
 
   // Open a candidate's CV — their attached file if they uploaded one, otherwise
   // the Grabitt-generated CV built from their work profile + application.
@@ -72,6 +89,7 @@ export default function EmployerDashboardContent() {
     try {
       await trpcAuthed().jobs.setApplicationStatus.mutate({ applicationId: a.id, status: value as never, note })
       setJobs(prev => prev.map(j => ({ ...j, applications: j.applications.map(x => x.id === a.id ? { ...x, status: value } : x) })))
+      setViewing(v => v && v.app.id === a.id ? { ...v, app: { ...v.app, status: value } } : v)
     } catch (e: any) { toast(e?.message || t('Could not update.')) }
   }
   // Open the recruiter ↔ candidate message thread for this application.
@@ -208,7 +226,7 @@ export default function EmployerDashboardContent() {
                       <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10.5, fontWeight: 900, color: '#999', textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('Candidates')}</div>
                       {j.applications.map(a => (
                         <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <button onClick={() => openCV(a)} title={t('Open CV')} style={{ flex: '1 1 130px', minWidth: 0, textAlign: 'left', background: '#f8f6f2', border: '1px solid #ece3d7', borderRadius: 8, padding: '7px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>📄 {a.applicant}</button>
+                          <button onClick={() => setViewing({ job: j, app: a })} title={t('View candidate')} style={{ flex: '1 1 130px', minWidth: 0, textAlign: 'left', background: '#f8f6f2', border: '1px solid #ece3d7', borderRadius: 8, padding: '7px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: 'var(--dark)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>👤 {a.applicant}</button>
                           <select value={stageValue(a.status)} onChange={e => setStage(a, e.target.value)} style={{ flexShrink: 0, border: '1.5px solid #e5dccd', borderRadius: 8, padding: '7px 8px', fontFamily: 'var(--font-nunito)', fontSize: 11.5, fontWeight: 800, background: '#fff', color: 'var(--dark)', cursor: 'pointer' }}>
                             {STAGES.map(s => <option key={s.value} value={s.value}>{t(s.label)}</option>)}
                           </select>
@@ -223,6 +241,119 @@ export default function EmployerDashboardContent() {
           </div>
         </>
       )}
+
+      {viewing && (
+        <CandidateModal
+          job={viewing.job}
+          app={viewing.app}
+          onClose={() => setViewing(null)}
+          onStage={(v) => setStage(viewing.app, v)}
+          onMessage={() => openMessages(viewing.job, viewing.app)}
+          onOpenCV={() => openCV(viewing.app)}
+        />
+      )}
     </div>
   )
+}
+
+// Candidate detail popup — shows the profile attributes captured from the
+// seeker's recruitment profile at apply time, their screening answers, contact
+// (once revealed), plus buttons to open the CV, set their stage and message them.
+function CandidateModal({ job, app, onClose, onStage, onMessage, onOpenCV }: {
+  job: Job; app: App; onClose: () => void; onStage: (v: string) => void; onMessage: () => void; onOpenCV: () => void
+}) {
+  const facts = ([
+    [t('Current role'), app.currentRole || ''],
+    [t('Experience'), expLabel(app.experienceMonths) || ''],
+    [t('Languages'), (app.languages ?? []).join(', ')],
+    [t('Availability'), app.availability || ''],
+    [t('Right to work'), app.rightToWork || ''],
+    [t('Location'), app.location || ''],
+    [t('Expected salary'), app.expectedSalary != null ? `€${Number(app.expectedSalary).toLocaleString()}/mo` : ''],
+  ] as [string, string][]).filter(([, v]) => !!v)
+  const answers = job.questions ?? []
+  const hasAnswers = answers.some(q => app.answers?.[q.id] != null && String(app.answers[q.id]).trim() !== '')
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px 12px', borderBottom: '1px solid #f0ece4', position: 'sticky', top: 0, background: '#fff' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 16, fontWeight: 900, color: 'var(--dark)' }}>{app.fullName || app.applicant}</div>
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11.5, color: '#888' }}>{job.jobTitle}{app.suitabilityScore != null ? ` · ${t('Match')} ${app.suitabilityScore}` : ''}</div>
+          </div>
+          <button onClick={onClose} aria-label="Close" style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: 30, height: 30, fontSize: 15, cursor: 'pointer', flexShrink: 0 }}>✕</button>
+        </div>
+
+        <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Stage + message */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <select value={stageValue(app.status)} onChange={e => onStage(e.target.value)} style={{ flex: 1, minWidth: 140, border: '1.5px solid #e5dccd', borderRadius: 8, padding: '8px 10px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, background: '#fff', color: 'var(--dark)', cursor: 'pointer' }}>
+              {STAGES.map(s => <option key={s.value} value={s.value}>{t(s.label)}</option>)}
+            </select>
+            <button onClick={onMessage} style={{ flexShrink: 0, background: '#fff', border: '1px solid #e5dccd', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-nunito)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>💬 {t('Message')}</button>
+          </div>
+
+          {/* CV buttons */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {app.cvUrl && <a href={`/api/cv?applicationId=${app.id}`} target="_blank" rel="noreferrer" style={cvBtn}>📎 {t('Attached CV')}</a>}
+            <a href={`/api/cv-pdf?applicationId=${app.id}`} target="_blank" rel="noreferrer" style={cvBtn}>📄 {t('Grabitt CV')}</a>
+          </div>
+
+          {/* Profile snapshot from their recruitment profile */}
+          {facts.length > 0 && (
+            <div>
+              <SectionLabel>{t('Profile')}</SectionLabel>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {facts.map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontFamily: 'var(--font-nunito)', fontSize: 12.5 }}>
+                    <span style={{ color: '#999', fontWeight: 700 }}>{k}</span>
+                    <span style={{ color: '#1a1a1a', fontWeight: 700, textAlign: 'right' }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Cover note */}
+          {app.coverNote && (
+            <div>
+              <SectionLabel>{t('Cover note')}</SectionLabel>
+              <div style={{ background: '#f8f6f2', borderRadius: 8, padding: '9px 11px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, color: '#444', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{app.coverNote}</div>
+            </div>
+          )}
+
+          {/* Screening answers */}
+          {hasAnswers && (
+            <div>
+              <SectionLabel>{t('Screening answers')}</SectionLabel>
+              {answers.map(q => app.answers?.[q.id] != null && String(app.answers[q.id]).trim() !== '' && (
+                <div key={q.id} style={{ fontFamily: 'var(--font-nunito)', fontSize: 12, color: '#333', marginBottom: 5 }}><strong>{q.label}:</strong> {String(app.answers![q.id])}</div>
+              ))}
+            </div>
+          )}
+
+          {/* Contact — only once the candidate is revealed */}
+          {app.revealed && (app.email || app.phone || app.linkedinUrl) && (
+            <div>
+              <SectionLabel>{t('Contact')}</SectionLabel>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontFamily: 'var(--font-nunito)', fontSize: 12.5 }}>
+                {app.email && <a href={`mailto:${app.email}`} style={{ color: 'var(--orange)', fontWeight: 800 }}>✉️ {app.email}</a>}
+                {app.phone && <a href={`tel:${app.phone}`} style={{ color: 'var(--orange)', fontWeight: 800 }}>📞 {app.phone}</a>}
+                {app.linkedinUrl && <a href={app.linkedinUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--orange)', fontWeight: 800, overflowWrap: 'anywhere' }}>🔗 {t('LinkedIn / portfolio')}</a>}
+              </div>
+            </div>
+          )}
+          {!app.revealed && (
+            <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 11, color: '#999', lineHeight: 1.5 }}>{t('Contact details are revealed once you invite the candidate to interview.')}</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const cvBtn: React.CSSProperties = { flex: '1 1 auto', textAlign: 'center', textDecoration: 'none', background: '#FFF3EE', color: 'var(--orange)', border: '1px solid #FFD4C0', borderRadius: 8, padding: '9px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800 }
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontFamily: 'var(--font-nunito)', fontSize: 10, fontWeight: 900, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>{children}</div>
 }
