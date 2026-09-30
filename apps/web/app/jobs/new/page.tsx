@@ -34,13 +34,28 @@ const TYPES: [string, string][] = [
 
 // Job requirements the employer can attach to the advert — shown to candidates
 // so expectations are clear up front.
+// Selectable requirements. Deliberately excludes anything that is a protected
+// characteristic or a disproportionate blanket demand under EU / Spanish equality
+// law (Estatuto de los Trabajadores art. 17, Ley 15/2022), to avoid direct or
+// indirect discrimination on the advert. Intentionally NOT offered:
+//   • age limits (e.g. "18+") — age is protected; only lawful where a specific
+//     legal duty applies (e.g. serving alcohol), which the employer states in
+//     the description rather than as a blanket filter.
+//   • "work visa / permit" and "NIE & social security" — these single out
+//     immigration status / nationality; the lawful, neutral "Right to work in
+//     Spain/EU" covers eligibility, and an NIE is obtained after hiring.
+//   • "criminal record check" — disproportionate as a general filter and only
+//     lawful for specific regulated roles (childcare, security), so it belongs
+//     in the description for those roles, not as a tick-box.
+//   • "physically fit" — risks disability discrimination; replaced with the
+//     specific, job-related "Able to lift heavy items".
 const REQUIREMENTS: string[] = [
-  'Right to work in Spain/EU', 'Valid work visa / permit', 'NIE & social security number',
-  'Driving licence', 'Own vehicle / transport', 'Minimum age 18+',
+  'Right to work in Spain/EU',
+  'Driving licence', 'Own vehicle / transport',
   'Fluent Spanish', 'Fluent English', 'Other language (see description)',
-  'Criminal record check', 'Own tools / equipment', 'Food hygiene certificate',
+  'Own tools / equipment', 'Food hygiene certificate',
   'Relevant qualification / certificate', 'References required',
-  'Available weekends', 'Available evenings / nights', 'Able to lift / physically fit',
+  'Available weekends', 'Available evenings / nights', 'Able to lift heavy items',
 ]
 
 export default function PostJobPage() {
