@@ -479,6 +479,12 @@ export const usersRouter = router({
         experienceMonths: z.number().int().min(0).max(600),
         languages: z.array(z.string().max(40)).max(10),
         languageLevels: z.array(z.object({ language: z.string().max(40), level: z.string().max(20) })).max(10).optional(),
+        // Roles grouped under their sector, each with its own experience label —
+        // the shape the generated CV renders.
+        roleGroups: z.array(z.object({
+          sector: z.string().max(80),
+          roles: z.array(z.object({ role: z.string().max(140), experience: z.string().max(40) })).max(60),
+        })).max(20).optional(),
         // About Me
         bio: z.string().max(2000).optional(),
         location: z.string().max(120).optional(),
@@ -533,6 +539,7 @@ export const usersRouter = router({
           data.experienceMonths = seekerDerived.experienceMonths
           data.languages = seekerDerived.languages
           if (seekerDerived.languageLevels !== undefined) data.languageLevels = seekerDerived.languageLevels
+          if (seekerDerived.roleGroups !== undefined) data.roleGroups = seekerDerived.roleGroups
           if (seekerDerived.bio !== undefined) data.summary = seekerDerived.bio || null
           if (seekerDerived.location !== undefined) data.location = seekerDerived.location || null
           if (seekerDerived.nationality !== undefined) data.nationality = seekerDerived.nationality || null

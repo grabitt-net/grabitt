@@ -23,7 +23,21 @@ const EXP_BUCKETS: { key: string; label: string }[] = [
   { key: '1to2y', label: '1+ year' },
   { key: 'gt2y', label: '2+ years' },
 ]
-type Level = 'basic' | 'fluent'
+type Level = 'basic' | 'intermediate' | 'advanced' | 'native'
+const LEVELS: { key: Level; label: string }[] = [
+  { key: 'basic', label: 'Basic' },
+  { key: 'intermediate', label: 'Intermediate' },
+  { key: 'advanced', label: 'Advanced' },
+  { key: 'native', label: 'Native' },
+]
+const LEVEL_LABEL: Record<Level, string> = { basic: 'Basic', intermediate: 'Intermediate', advanced: 'Advanced', native: 'Native' }
+// Coerce any stored/legacy value onto the current four-level scale. The old
+// scale was just basic/fluent, so "fluent" maps to the nearest new level.
+function coerceLevel(v: unknown): Level {
+  if (v === 'basic' || v === 'intermediate' || v === 'advanced' || v === 'native') return v
+  if (v === 'fluent') return 'advanced'
+  return 'advanced'
+}
 // Map any legacy stored month count onto the nearest bucket.
 function monthsToBucket(m: number): string {
   if (m < 3) return 'lt3m'
@@ -55,9 +69,21 @@ function deriveSeeker(langs: Record<string, Level>, exp: Record<string, string>,
     })
   })
   const languages = Object.keys(langs).map(langLabel)
-  const languageLevels = Object.entries(langs).map(([code, lvl]) => ({ language: langLabel(code), level: lvl === 'fluent' ? 'Fluent' : 'Basic' }))
+  const languageLevels = Object.entries(langs).map(([code, lvl]) => ({ language: langLabel(code), level: LEVEL_LABEL[lvl] }))
+  // Roles grouped under their sector, each with its own experience label — the
+  // shape the generated CV renders (category heading, role, experience).
+  const roleGroups: { sector: string; roles: { role: string; experience: string }[] }[] = []
+  JOB_SECTORS.forEach((sec, si) => {
+    const rs: { role: string; experience: string }[] = []
+    sec.jobs.forEach((job, ji) => {
+      const bucket = exp[jobKey(si, ji)]
+      if (!bucket) return
+      rs.push({ role: job, experience: EXP_BUCKETS.find(b => b.key === bucket)?.label ?? bucket })
+    })
+    if (rs.length) roleGroups.push({ sector: sec.name, roles: rs })
+  })
   return {
-    sectors: [...sectors], roles, experienceMonths, languages, languageLevels,
+    sectors: [...sectors], roles, experienceMonths, languages, languageLevels, roleGroups,
     bio: about.bio.trim(), location: about.location.trim(), nationality: about.nationality.trim(),
     drives: !!about.drives, hasCar: !!(about.drives && about.hasCar), canWorkGC: !!about.canWorkGC, allowUnlock: about.allowUnlock,
     uploadedCvPath: about.uploadedCvPath ?? null, uploadedCvName: about.uploadedCvName ?? null,
@@ -95,8 +121,8 @@ export default function JobCategories({ me, onReload, mode }: { me: any; onReloa
   const [langs, setLangs] = useState<Record<string, Level>>(() => {
     const src = jp.languages
     const out: Record<string, Level> = {}
-    if (Array.isArray(src)) src.forEach(c => { if (typeof c === 'string') out[c] = 'fluent' })
-    else if (src && typeof src === 'object') for (const [k, v] of Object.entries(src as Record<string, unknown>)) out[k] = v === 'basic' ? 'basic' : 'fluent'
+    if (Array.isArray(src)) src.forEach(c => { if (typeof c === 'string') out[c] = 'advanced' })
+    else if (src && typeof src === 'object') for (const [k, v] of Object.entries(src as Record<string, unknown>)) out[k] = coerceLevel(v)
     return out
   })
   const [exp, setExp] = useState<Record<string, string>>(() => {
@@ -187,10 +213,11 @@ export default function JobCategories({ me, onReload, mode }: { me: any; onReloa
           {JOB_LANGUAGES.map(([code, label]) => {
             const cur = langs[code]
             return (
-              <div key={code} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div key={code} style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 <span style={{ flex: 1, minWidth: 90, fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, color: DARK }}>{t(label)}</span>
-                <button onClick={() => setLang(code, 'basic')} style={pill(cur === 'basic')}>{t('Basic')}</button>
-                <button onClick={() => setLang(code, 'fluent')} style={pill(cur === 'fluent')}>{t('Fluent')}</button>
+                {LEVELS.map(lv => (
+                  <button key={lv.key} onClick={() => setLang(code, lv.key)} style={{ ...pill(cur === lv.key), padding: '5px 11px', fontSize: 11.5 }}>{t(lv.label)}</button>
+                ))}
               </div>
             )
           })}
@@ -375,7 +402,7 @@ function CvPreview({ me, langs, exp, about, onClose }: { me: any; langs: Record<
             <div style={{ marginTop: 18 }}>
               <div style={sh}>{t('Languages')}</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {langEntries.map(([code, lvl]) => <span key={code} style={{ background: '#FFF3EE', border: '1px solid #f3d3c2', color: 'var(--orange)', borderRadius: 999, padding: '4px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>{langLabel(code)} · {lvl === 'fluent' ? t('Fluent') : t('Basic')}</span>)}
+                {langEntries.map(([code, lvl]) => <span key={code} style={{ background: '#FFF3EE', border: '1px solid #f3d3c2', color: 'var(--orange)', borderRadius: 999, padding: '4px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12, fontWeight: 800 }}>{langLabel(code)} · {t(LEVEL_LABEL[lvl])}</span>)}
               </div>
             </div>
           )}

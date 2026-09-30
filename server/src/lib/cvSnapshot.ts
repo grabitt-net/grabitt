@@ -13,10 +13,12 @@ export type CvSnapshot = {
   keyStrengths: string[]
   certifications: string[]
   languages: string[]
+  languageLevels: { language: string; level: string }[]
   availability: string | null
   rightToWork: string | null
   experienceMonths: number
   roles: string[]
+  roleGroups: { sector: string; roles: { role: string; experience: string }[] }[]
   nationality: string | null
   drives: boolean | null
   hasCar: boolean | null
@@ -30,6 +32,7 @@ type ProfileLite = {
   certifications: string[]; languages: string[]; availability: string | null; rightToWork: string | null
   location: string | null; experienceMonths: number; roles?: string[]
   nationality?: string | null; drives?: boolean | null; hasCar?: boolean | null
+  languageLevels?: unknown; roleGroups?: unknown
   workExperience: unknown; education: unknown
 } | null
 
@@ -45,10 +48,12 @@ export function buildCvSnapshot(user: UserLite, profile: ProfileLite): CvSnapsho
     keyStrengths: profile?.keyStrengths ?? [],
     certifications: profile?.certifications ?? [],
     languages: profile?.languages ?? [],
+    languageLevels: Array.isArray(profile?.languageLevels) ? profile!.languageLevels as CvSnapshot['languageLevels'] : [],
     availability: profile?.availability ?? null,
     rightToWork: profile?.rightToWork ?? null,
     experienceMonths: profile?.experienceMonths ?? 0,
     roles: profile?.roles ?? [],
+    roleGroups: Array.isArray(profile?.roleGroups) ? profile!.roleGroups as CvSnapshot['roleGroups'] : [],
     nationality: profile?.nationality ?? null,
     drives: profile?.drives ?? null,
     hasCar: profile?.hasCar ?? null,

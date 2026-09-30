@@ -762,8 +762,11 @@ model SeekerProfile {
   roles            String[] @default([])
   experienceMonths Int      @default(0)
   languages        String[] @default([])
-  // [{ language, level }] — level being Basic / Conversational / Fluent / Native.
+  // [{ language, level }] — level being Basic / Intermediate / Advanced / Native.
   languageLevels   Json?
+  // [{ sector, roles: [{ role, experience }] }] — roles grouped under their
+  // sector with a per-role experience label, as rendered on the generated CV.
+  roleGroups       Json?
   hours            String[] @default([])
   availability     String?
   rightToWork      String?

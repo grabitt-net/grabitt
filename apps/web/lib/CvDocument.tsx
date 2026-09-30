@@ -16,9 +16,11 @@ export type CvData = {
   keyStrengths?: string[]
   certifications?: string[]
   languages?: string[]
+  languageLevels?: Array<{ language?: string; level?: string }>
   availability?: string | null
   rightToWork?: string | null
   roles?: string[]
+  roleGroups?: Array<{ sector?: string; roles?: Array<{ role?: string; experience?: string }> }>
   experienceMonths?: number
   nationality?: string | null
   drives?: boolean | null
@@ -53,6 +55,10 @@ const s = StyleSheet.create({
   jobMeta: { fontSize: 9, color: '#666', marginBottom: 3 },
   block: { marginBottom: 9 },
   summary: { lineHeight: 1.45, color: '#333' },
+  sectorHead: { fontSize: 10.5, fontFamily: 'Helvetica-Bold', color: '#1a1a1a', marginTop: 8, marginBottom: 4 },
+  roleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 2.5, borderBottom: '0.6px solid #e6e6e6' },
+  roleName: { flex: 1, fontSize: 9.5, color: '#333' },
+  roleExp: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: NAVY, marginLeft: 8 },
 })
 
 function List({ items }: { items: string[] }) {
@@ -74,7 +80,10 @@ export default function CvDocument({ data, revealed, reference }: { data: CvData
   const work = (data.workExperience || []).filter(w => w.title || w.employer)
   const edu = (data.education || []).filter(e => e.qualification || e.institution)
   const roles = data.roles || []
+  const roleGroups = (data.roleGroups || []).filter(g => (g.roles || []).length > 0)
   const expLabel = experienceLabel(data.experienceMonths)
+  // Prefer languages with their proficiency level; fall back to plain names.
+  const languageLevels = (data.languageLevels || []).filter(l => l.language)
   const languages = data.languages || []
   const strengths = data.keyStrengths || []
   const certs = data.certifications || []
@@ -93,7 +102,16 @@ export default function CvDocument({ data, revealed, reference }: { data: CvData
               {data.location ? <Text style={s.contact}>{data.location}</Text> : null}
             </View>
           )}
-          {languages.length > 0 && (<><Text style={s.sideHead}>Languages</Text><List items={languages} /></>)}
+          {languageLevels.length > 0 ? (
+            <>
+              <Text style={s.sideHead}>Languages</Text>
+              {languageLevels.map((l, i) => (
+                <View key={i} style={{ marginBottom: 3 }}>
+                  <Text style={s.contact}>{l.language}{l.level ? ` — ${l.level}` : ''}</Text>
+                </View>
+              ))}
+            </>
+          ) : languages.length > 0 ? (<><Text style={s.sideHead}>Languages</Text><List items={languages} /></>) : null}
           {strengths.length > 0 && (<><Text style={s.sideHead}>Key Strengths</Text><List items={strengths} /></>)}
           {certs.length > 0 && (<><Text style={s.sideHead}>Certifications</Text><List items={certs} /></>)}
           {(data.availability || data.rightToWork) && (
@@ -125,12 +143,27 @@ export default function CvDocument({ data, revealed, reference }: { data: CvData
             <><Text style={s.mainHead}>Professional Summary</Text><Text style={s.summary}>{data.summary}</Text></>
           ) : null}
 
-          {roles.length > 0 && (
+          {roleGroups.length > 0 ? (
+            <>
+              <Text style={s.mainHead}>Roles &amp; Experience</Text>
+              {roleGroups.map((g, gi) => (
+                <View key={gi} style={{ marginBottom: 6 }} wrap={false}>
+                  <Text style={s.sectorHead}>{g.sector}</Text>
+                  {(g.roles || []).filter(r => r.role).map((r, ri) => (
+                    <View key={ri} style={s.roleRow}>
+                      <Text style={s.roleName}>{r.role}</Text>
+                      {r.experience ? <Text style={s.roleExp}>{r.experience}</Text> : null}
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </>
+          ) : roles.length > 0 ? (
             <>
               <Text style={s.mainHead}>Roles{expLabel ? `  ·  ${expLabel}` : ''}</Text>
               <List items={roles} />
             </>
-          )}
+          ) : null}
 
           {work.length > 0 && (
             <>
