@@ -175,7 +175,7 @@ export const crmRouter = router({
   // leads so the exec team receives them in the pipeline.
   submit: publicProcedure
     .input(z.object({
-      type: z.enum(['suggestion', 'economic_tip', 'free_listings', 'contact', 'event']),
+      type: z.enum(['suggestion', 'economic_tip', 'free_listings', 'contact', 'event', 'advertise']),
       message: z.string().min(1).max(4000),
       name: z.string().max(120).optional(),
       email: z.string().email().optional(),
@@ -185,6 +185,7 @@ export const crmRouter = router({
       const LABEL: Record<string, string> = {
         suggestion: 'Feature suggestion', economic_tip: 'Money-saving tip',
         free_listings: 'Free-listings application', contact: 'Contact enquiry', event: 'Event submission',
+        advertise: 'Advertising enquiry',
       }
       return ctx.prisma.crmContact.create({
         data: {
@@ -235,14 +236,14 @@ export const crmRouter = router({
     .query(async ({ ctx, input }) => {
       const status = input?.status ?? 'open'
       const rows = await ctx.prisma.crmContact.findMany({
-        where: { tags: { hasSome: ['contact', 'suggestion', 'event'] } },
+        where: { tags: { hasSome: ['contact', 'suggestion', 'event', 'advertise'] } },
         orderBy: { createdAt: 'desc' },
         take: 300,
         select: { id: true, name: true, email: true, notes: true, tags: true, createdAt: true },
       })
       const mapped = rows.map(r => ({
         id: r.id, name: r.name, email: r.email, notes: r.notes, createdAt: r.createdAt,
-        kind: r.tags.includes('suggestion') ? 'suggestion' as const : r.tags.includes('event') ? 'event' as const : 'contact' as const,
+        kind: r.tags.includes('suggestion') ? 'suggestion' as const : r.tags.includes('event') ? 'event' as const : r.tags.includes('advertise') ? 'advertise' as const : 'contact' as const,
         resolved: r.tags.includes('resolved'),
       }))
       return status === 'all' ? mapped : mapped.filter(m => (status === 'resolved') === m.resolved)

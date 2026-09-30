@@ -7,12 +7,13 @@ import { useCrmApi } from './AdminApp'
 // don't get lost. Mark each one resolved once handled.
 interface Item {
   id: string; name: string; email: string | null; notes: string | null
-  createdAt: string; kind: 'contact' | 'suggestion' | 'event'; resolved: boolean
+  createdAt: string; kind: 'contact' | 'suggestion' | 'event' | 'advertise'; resolved: boolean
 }
 const KIND_META: Record<Item['kind'], { icon: string; label: string }> = {
   contact: { icon: '✉️', label: 'Enquiry' },
   suggestion: { icon: '💡', label: 'Idea' },
   event: { icon: '📅', label: 'Event' },
+  advertise: { icon: '📣', label: 'Advertiser' },
 }
 
 const TABS: { id: 'open' | 'resolved' | 'all'; label: string }[] = [
