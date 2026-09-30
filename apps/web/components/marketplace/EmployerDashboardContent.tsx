@@ -51,6 +51,8 @@ const stageValue = (s: string): string =>
 const TYPE_EMOJI: Record<string, string> = { full_time: '💼', part_time: '🕒', contract: '📄', temporary: '⏳', volunteer: '🤝' }
 const statusBtn = (bg: string, color: string): React.CSSProperties => ({ flex: 1, minWidth: 100, background: bg, color, border: 'none', borderRadius: 50, padding: 8, fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer' })
 const pillBtn: React.CSSProperties = { background: '#fff', color: 'var(--dark)', border: '1px solid #e5dccd', borderRadius: 50, padding: '10px 12px', fontFamily: 'var(--font-nunito)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', textAlign: 'center' }
+// Compact button for the single-row action bar on each job card.
+const rowBtn: React.CSSProperties = { background: '#fff', color: 'var(--dark)', border: '1px solid #e5dccd', borderRadius: 50, padding: '8px 6px', fontFamily: 'var(--font-nunito)', fontSize: 11, fontWeight: 800, cursor: 'pointer', textAlign: 'center', whiteSpace: 'nowrap' }
 
 function daysLeft(postedAt: string) {
   const end = new Date(postedAt).getTime() + JOB_LIFE_DAYS * 86400000
@@ -227,21 +229,18 @@ export default function EmployerDashboardContent() {
                   {/* Expanded body */}
                   {isOpen && (
                     <div style={{ padding: '4px 16px 16px' }}>
-                      {/* Manage actions */}
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        <a href={`/jobs/new?edit=${j.listingId}`} style={{ flex: '1 1 80px', textDecoration: 'none' }}>
-                          <div style={pillBtn}>✏️ {t('Edit')}</div>
+                      {/* Manage + status controls — all on one row */}
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', overflowX: 'auto' }}>
+                        <a href={`/jobs/new?edit=${j.listingId}`} style={{ flex: '1 1 0', minWidth: 62, textDecoration: 'none' }}>
+                          <div style={rowBtn}>✏️ {t('Edit')}</div>
                         </a>
-                        <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ ...pillBtn, flex: '1 1 80px' }}>📤 {t('Share')}</button>
-                        <button onClick={() => databaseSearch(j)} disabled={buyingMatch === j.id} style={{ ...pillBtn, flex: '1 1 120px', ...(j.candidateMatching ? { background: '#FFF3EE', color: 'var(--orange)', borderColor: '#FFD4C0' } : {}) }}>
-                          {buyingMatch === j.id ? '…' : j.candidateMatching ? `🔎 ${t('Database search')}` : `🔎 ${t('Database search')} (${t('add')})`}
+                        <button onClick={() => shareJobs(`${origin}/listings/${j.listingId}`, j.jobTitle)} style={{ ...rowBtn, flex: '1 1 0', minWidth: 62 }}>📤 {t('Share')}</button>
+                        <button onClick={() => databaseSearch(j)} disabled={buyingMatch === j.id} style={{ ...rowBtn, flex: '1 1 0', minWidth: 96, ...(j.candidateMatching ? { background: '#FFF3EE', color: 'var(--orange)', borderColor: '#FFD4C0' } : {}) }}>
+                          {buyingMatch === j.id ? '…' : `🔎 ${t('Database search')}${j.candidateMatching ? '' : ` (${t('add')})`}`}
                         </button>
-                      </div>
-                      {/* Position status controls */}
-                      <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {jstatus === 'open' && <button onClick={() => setJobStatus(j.listingId, 'sold', t('Marked as filled'))} style={statusBtn('#f0faf4', '#16a34a')}>✓ {t('Mark filled')}</button>}
-                        {jstatus !== 'open' && <button onClick={() => setJobStatus(j.listingId, 'active', t('Reopened'))} style={statusBtn('#eef7ff', '#1e6fd0')}>{t('Reopen')}</button>}
-                        {jstatus !== 'removed' && <button onClick={() => setJobStatus(j.listingId, 'removed', t('Removed'))} style={statusBtn('#fef2f2', '#ef4444')}>🗑 {t('Remove')}</button>}
+                        {jstatus === 'open' && <button onClick={() => setJobStatus(j.listingId, 'sold', t('Marked as filled'))} style={{ ...rowBtn, flex: '1 1 0', minWidth: 80, background: '#f0faf4', color: '#16a34a', borderColor: '#cdeed6' }}>✓ {t('Mark filled')}</button>}
+                        {jstatus !== 'open' && <button onClick={() => setJobStatus(j.listingId, 'active', t('Reopened'))} style={{ ...rowBtn, flex: '1 1 0', minWidth: 74, background: '#eef7ff', color: '#1e6fd0', borderColor: '#cfe3f7' }}>{t('Reopen')}</button>}
+                        {jstatus !== 'removed' && <button onClick={() => setJobStatus(j.listingId, 'removed', t('Removed'))} style={{ ...rowBtn, flex: '1 1 0', minWidth: 74, background: '#fef2f2', color: '#ef4444', borderColor: '#f7d4d4' }}>🗑 {t('Remove')}</button>}
                       </div>
 
                       {/* Candidates */}
