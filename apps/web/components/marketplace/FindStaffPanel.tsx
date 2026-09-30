@@ -151,7 +151,7 @@ export const JOB_LANGUAGES = ['English', 'Spanish', 'German', 'Other']
 export const JOB_ATTRIBUTES: Record<string, string[]> = {
   hours: ['Full time', 'Part time', 'Seasonal', 'Flexible / Freelance'],
   availability: ['Immediate', '1 month', '3 months', '6 months+'],
-  rightToWork: ['EU citizen', 'Non-EU with permit', 'Sponsorship required', 'Student visa'],
+  rightToWork: ['Spanish Resident', 'EU Citizen', 'Non-EU TIE Holder', 'Non-EU Work Visa Holder', 'Sponsorship Required'],
   location: ['Las Palmas', 'South GC', 'North GC', 'Remote', 'All areas'],
 }
 export const EXP_OPTIONS = [['0', 'Any experience'], ['3', '3+ months'], ['6', '6+ months'], ['12', '1+ year'], ['24', '2+ years'], ['36', '3+ years'], ['60', '5+ years']]

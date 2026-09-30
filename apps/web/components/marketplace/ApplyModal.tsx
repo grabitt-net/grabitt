@@ -5,6 +5,7 @@ import { trpcAuthed } from '@/lib/authToken'
 import { uploadCv } from '@/lib/storage'
 import { LANGUAGE_LEVELS, formatLanguage, parseLanguages, type LanguageEntry } from '@/lib/jobSkills'
 import { JOB_LANGUAGES, JOB_ATTRIBUTES, EXP_OPTIONS } from './FindStaffPanel'
+import { GC_TOWNS } from '@/lib/gcTowns'
 import type { JobQuestion } from '@/lib/jobQuestions'
 import { t } from '@/lib/i18n'
 
@@ -179,8 +180,8 @@ export default function ApplyModal({ listingId, userId, onClose, onApplied }: { 
               </div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                 <div style={{ flex: 1 }}><div style={LABEL}>{t('Current / recent role')}</div><input value={f.currentRole} onChange={e => set('currentRole', e.target.value)} style={FIELD} /></div>
-                <div style={{ flex: 1 }}><div style={LABEL}>{t('Location')}</div>
-                  <select value={f.location} onChange={e => set('location', e.target.value)} style={FIELD}><option value="">—</option>{JOB_ATTRIBUTES.location.map(o => <option key={o}>{o}</option>)}</select>
+                <div style={{ flex: 1 }}><div style={LABEL}>{t('Town where you live')}</div>
+                  <select value={f.location} onChange={e => set('location', e.target.value)} style={FIELD}><option value="">—</option>{GC_TOWNS.map(o => <option key={o}>{o}</option>)}</select>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
