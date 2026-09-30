@@ -87,6 +87,23 @@ export async function GET(req: Request) {
     revealed = isApplicant || isAdmin || employerRevealed
     reference = 'Candidate ' + app.applicantId.slice(-4).toUpperCase()
     data = app.cvSnapshot as unknown as CvData
+
+    // The snapshot froze the profile as it was at apply time. If the candidate
+    // applied with an empty profile and has since filled it in, that snapshot is
+    // near-blank — fall back to their CURRENT profile so the CV still has content.
+    const snap = app.cvSnapshot as Record<string, unknown>
+    const arr = (k: string) => Array.isArray(snap?.[k]) ? (snap[k] as unknown[]).length : 0
+    const sparse = !snap || (
+      arr('roles') === 0 && arr('skills') === 0 && arr('workExperience') === 0 && arr('education') === 0 &&
+      arr('languages') === 0 && !snap.summary && !snap.headline && !(Number(snap.experienceMonths) > 0)
+    )
+    if (sparse) {
+      const [u2, prof2] = await Promise.all([
+        prisma.user.findUnique({ where: { id: app.applicantId }, select: { displayName: true, email: true, phone: true } }),
+        prisma.seekerProfile.findUnique({ where: { userId: app.applicantId } }),
+      ])
+      if (u2 && prof2) data = buildCvSnapshot(u2, prof2 as never) as unknown as CvData
+    }
   } else {
     return NextResponse.json({ error: 'Missing applicationId or seekerId' }, { status: 400 })
   }
