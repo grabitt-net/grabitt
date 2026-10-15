@@ -4,6 +4,7 @@ import { toast, confirmDialog } from '@/lib/ui'
 import type { PanelId } from '@/context/PanelContext'
 import { trpcAuthed } from '@/lib/authToken'
 import { JOB_SECTORS as CANON_SECTORS } from '@/lib/jobCategories'
+import { GC_TOWNS } from '@/lib/gcTowns'
 import { t } from '@/lib/i18n'
 
 type Candidate = {
@@ -152,7 +153,9 @@ export const JOB_ATTRIBUTES: Record<string, string[]> = {
   hours: ['Full time', 'Part time', 'Seasonal', 'Flexible / Freelance'],
   availability: ['Immediate', '1 month', '3 months', '6 months+'],
   rightToWork: ['Spanish Resident', 'EU Citizen', 'Non-EU TIE Holder', 'Non-EU Work Visa Holder', 'Sponsorship Required'],
-  location: ['Las Palmas', 'South GC', 'North GC', 'Remote', 'All areas'],
+  // Towns of Gran Canaria — matches what applicants pick as their home town, so
+  // the employer's location filter lines up with stored candidate locations.
+  location: GC_TOWNS,
 }
 export const EXP_OPTIONS = [['0', 'Any experience'], ['3', '3+ months'], ['6', '6+ months'], ['12', '1+ year'], ['24', '2+ years'], ['36', '3+ years'], ['60', '5+ years']]
 const ORANGE = 'var(--orange)'
