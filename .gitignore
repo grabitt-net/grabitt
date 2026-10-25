@@ -40,3 +40,6 @@ apps/mobile/android/
 apps/mobile/ios/
 
 .vercel
+
+# This is a pnpm workspace — npm lockfiles confuse EAS/tooling into using npm
+package-lock.json
