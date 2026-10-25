@@ -3,6 +3,7 @@ import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Image, Modal, Tex
 import { useLocalSearchParams, router } from 'expo-router'
 import { Alert, Linking } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { WebView } from 'react-native-webview'
 import { colors, PRICES } from '@grabitt/design-tokens'
 
 const SCREEN_W = Dimensions.get('window').width
@@ -299,23 +300,30 @@ export default function ListingScreen() {
             </View>
           )}
 
-          {/* Location — opens the exact pin (lat/lng when known) in the device
-              maps app. NOTE: inline embedded map pending react-native-webview. */}
-          <TouchableOpacity
-            style={s.mapCard}
-            onPress={() => {
-              const q = (item.lat != null && item.lng != null)
-                ? `${item.lat},${item.lng}`
-                : (item.job?.address || `${item.location}, Gran Canaria`).trim()
-              if (q) Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`)
-            }}
-          >
-            <Text style={{ fontSize: 26 }}>📍</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={s.mapText}>{item.job?.address || `${item.location}, Gran Canaria`}</Text>
-              <Text style={s.mapLink}>Open in Maps</Text>
-            </View>
-          </TouchableOpacity>
+          {/* Location — inline Google Maps embed (same as web; no API key needed),
+              with a tap-through to open the pin in the device maps app. */}
+          {(() => {
+            const hasPin = item.lat != null && item.lng != null
+            const q = hasPin
+              ? `${item.lat},${item.lng}`
+              : (item.job?.address || `${item.location}, Gran Canaria`).trim()
+            return (
+              <View style={s.mapWrap}>
+                <WebView
+                  style={s.mapEmbed}
+                  source={{ uri: `https://www.google.com/maps?q=${encodeURIComponent(q)}&z=${hasPin ? 16 : 13}&output=embed` }}
+                  scrollEnabled={false}
+                  pointerEvents="none"
+                />
+                <TouchableOpacity
+                  style={s.mapOpen}
+                  onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`)}
+                >
+                  <Text style={s.mapOpenText}>📍 {item.job?.address || `${item.location}, Gran Canaria`} · Open in Maps</Text>
+                </TouchableOpacity>
+              </View>
+            )
+          })()}
 
           {/* Similar listings */}
           <Text style={s.similarHeading}>Similar listings</Text>
@@ -421,9 +429,10 @@ const s = StyleSheet.create({
   pill: { backgroundColor: '#f5f0e8', borderRadius: 50, paddingHorizontal: 10, paddingVertical: 4 },
   pillText: { fontFamily: 'Nunito', fontSize: 10, fontWeight: '800', color: '#555' },
   desc: { fontFamily: 'Nunito', fontSize: 13, color: '#555', lineHeight: 20, marginBottom: 14 },
-  mapCard: { backgroundColor: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 18, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#ece3d7' },
-  mapText: { fontFamily: 'Nunito', fontSize: 13, fontWeight: '700', color: colors.dark },
-  mapLink: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '900', color: colors.orange, marginTop: 3 },
+  mapWrap: { borderRadius: 12, overflow: 'hidden', marginBottom: 18, borderWidth: 1, borderColor: '#ece3d7', backgroundColor: '#f5f0e8' },
+  mapEmbed: { width: '100%', height: 200, backgroundColor: '#f5f0e8' },
+  mapOpen: { paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#f9f6f2', borderTopWidth: 1, borderTopColor: '#ece3d7' },
+  mapOpenText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: colors.orange },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 },
   modalCard: { width: '100%', backgroundColor: '#fff', borderRadius: 18, padding: 20 },
   modalTitle: { fontFamily: 'Georgia', fontSize: 18, fontWeight: '700', color: colors.dark, marginBottom: 4 },
