@@ -1,8 +1,13 @@
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors } from '@grabitt/design-tokens'
 
 export default function TabLayout() {
+  // Add the device's bottom safe-area inset so the tab bar clears the Android
+  // system navigation bar (gesture pill / back-home-recents buttons) instead of
+  // sitting behind it.
+  const insets = useSafeAreaInsets()
   return (
     <Tabs
       screenOptions={{
@@ -13,9 +18,9 @@ export default function TabLayout() {
           backgroundColor: colors.sand,
           borderTopColor: colors.sand2,
           borderTopWidth: 1.5,
-          paddingBottom: 8,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
-          height: 62,
+          height: 62 + insets.bottom,
         },
         tabBarLabelStyle: {
           fontFamily: 'Nunito',

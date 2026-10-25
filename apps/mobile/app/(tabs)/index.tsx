@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, Image } from 'react-native'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
-import { apiClient } from '../../lib/trpc'
+import { apiClient, API_URL } from '../../lib/trpc'
 import { useAuth } from '../../lib/auth'
-import { toCard, type Card } from '../../lib/listingMap'
+import { toCard, type Card, DEPT_ENUM } from '../../lib/listingMap'
 import { ListingCard } from '../../components/ListingCard'
 import { getViews } from '../../lib/recentViews'
 
@@ -12,10 +12,14 @@ const { width: SCREEN_W } = Dimensions.get('window')
 
 // Jobs and Property have bespoke screens (salary/beds/baths etc.); everything
 // else uses the generic department grid.
-function deptRoute(name: string): string {
-  if (name === 'Jobs') return '/jobs'
-  if (name === 'Property') return '/property'
-  return `/dept/${encodeURIComponent(name)}`
+function catRoute(cat: Cat): string {
+  // Route by the stored department slug (survives renames); fall back to the
+  // display-name lookup for any tile without one — same logic as the web.
+  const slug = cat.department || DEPT_ENUM[cat.name]
+  if (slug === 'jobs') return '/jobs'
+  if (slug === 'property') return '/property'
+  // Mobile department screen is keyed by display name.
+  return `/dept/${encodeURIComponent(cat.name)}`
 }
 
 // Seasonal promo banner — date-driven campaign (parity with the web
@@ -41,23 +45,34 @@ function currentSeasonal() {
 // gradient + emoji so a card never renders broken.
 const IMG = (id: string) => `https://images.unsplash.com/${id}?w=320&h=320&fit=crop&q=55&auto=format`
 
-const DEPTS = [
-  { icon: '🏡', name: 'Home & Garden', color: '#56ab2f', img: IMG('photo-1416879595882-3373a0480b5b') },
-  { icon: '💼', name: 'Jobs',          color: '#2193b0', img: IMG('photo-1521737604893-d14cc237f11d') },
-  { icon: '👗', name: 'Fashion',       color: '#f7971e', img: IMG('photo-1445205170230-053b83016050') },
-  { icon: '⚽', name: 'Sport',         color: '#11998e', img: IMG('photo-1461896836934-ffe607ba8211') },
-  { icon: '🎮', name: 'Gaming',        color: '#8E2DE2', img: IMG('photo-1542751371-adc38448a05e') },
-  { icon: '📱', name: 'Electronics',   color: '#4776E6', img: IMG('photo-1498049794561-7780e7231661') },
-  { icon: '🎁', name: 'Gift Ideas',    color: '#f953c6', img: IMG('photo-1513885535751-8b9238bd345a') },
-  { icon: '🧸', name: 'Kids & Baby',   color: '#f9d423', img: IMG('photo-1515488042361-ee00e0ddd4e4') },
-  { icon: '🏠', name: 'Property',      color: '#e96c2a', img: IMG('photo-1560518883-ce09059eeffa') },
-  { icon: '💊', name: 'Health & Fitness', color: '#43cea2', img: IMG('photo-1571019613454-1cb2f99b2d8b') },
-  { icon: '🥖', name: 'Food Store',    color: '#8e44ad', img: IMG('photo-1542838132-92c53300491e') },
-  { icon: '🕺', name: 'Retro & Vintage', color: '#d35400', img: IMG('photo-1489599849927-2ee91cede3ba') },
-  { icon: '🛍️', name: 'Grab It Now',  color: colors.orange, img: '' }, // brand tile — no photo
-  { icon: '🔧', name: 'Handy Help',    color: '#00b09b', img: IMG('photo-1581578731548-c64695cc6952') },
-  { icon: '🐾', name: 'Pet Shop',      color: '#f093fb', img: IMG('photo-1425082661705-1834bfd09dca') },
+// Department tiles — mirrors the web CategoryGrid. The admin-ordered list comes
+// from homepage.categories at runtime; this is the fallback/default order and
+// shape. Artwork lives on the web public folder (/categories/*.jpg) with the
+// category name baked in, so mobile loads it from the web origin.
+type Cat = { name: string; img?: string | null; imgEs?: string | null; department?: string | null }
+
+const DEFAULT_CATEGORIES: Cat[] = [
+  { name: 'Home & Garden', img: '/categories/home-garden.jpg' },
+  { name: 'Fashion', img: '/categories/fashion.jpg' },
+  { name: 'Sport', img: '/categories/sport.jpg' },
+  { name: 'Gaming', img: '/categories/gaming.jpg' },
+  { name: 'Electronics', img: '/categories/electronics.jpg' },
+  { name: 'Gift Ideas', img: '/categories/gift-ideas.jpg' },
+  { name: 'Kids & Baby', img: '/categories/kids-baby.jpg' },
+  { name: 'Health, Fitness & Diet', img: '/categories/health-beauty.jpg' },
+  { name: 'Retro & Vintage', img: '/categories/retro.jpg' },
+  { name: 'Handy Help', img: '/categories/handy-help-v2.jpg' },
+  { name: 'Pet Supplies', img: '/categories/pet-supplies.jpg' },
+  { name: 'Hobbies & Crafts', img: '/categories/hobbies-crafts.jpg' },
 ]
+
+// Category artwork is served from the web public folder — turn the stored
+// relative path into an absolute URL against the web/API origin.
+function catImg(path?: string | null): string | null {
+  if (!path) return null
+  if (/^https?:\/\//.test(path)) return path
+  return `${API_URL}${path.startsWith('/') ? '' : '/'}${path}`
+}
 
 const FEATURED = [
   { ref: 'F1', emoji: '📱', title: 'iPhone 14 — Unlocked',        price: '€620',    location: 'Las Palmas' },
@@ -105,6 +120,7 @@ export default function HomeScreen() {
   const [recommended, setRecommended] = useState<Card[]>([])
   const [recent, setRecent] = useState<Card[]>([])
   const [guides, setGuides] = useState<any[]>([])
+  const [categories, setCategories] = useState<Cat[]>(DEFAULT_CATEGORIES)
   const [deptFailed, setDeptFailed] = useState<Record<string, boolean>>({})
 
   // Live data from the backend (public endpoints — same as web).
@@ -114,6 +130,8 @@ export default function HomeScreen() {
     api.listings.recent.query().then((d: any[]) => setJustListed(d.map(toCard))).catch(() => {})
     getViews().then(setRecent).catch(() => {})
     api.community.list.query({ limit: 8 }).then((d: any[]) => setGuides(d)).catch(() => {})
+    // Admin-ordered department tiles — same source as the web CategoryGrid.
+    api.homepage.categories.query().then((rows: Cat[]) => { if (rows?.length) setCategories(rows) }).catch(() => {})
   }, [])
 
   // Personalised "Recommended for you" (needs login — uses your interests).
@@ -156,7 +174,7 @@ export default function HomeScreen() {
         {(() => {
           const c = currentSeasonal()
           return (
-            <TouchableOpacity style={[s.seasonalBanner, { backgroundColor: c.grad }]} onPress={() => router.push(deptRoute(c.dept) as any)}>
+            <TouchableOpacity style={[s.seasonalBanner, { backgroundColor: c.grad }]} onPress={() => router.push(catRoute({ name: c.dept }) as any)}>
               <Text style={{ fontSize: 34 }}>{c.emoji}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={s.seasonalTitle}>{c.title}</Text>
@@ -182,33 +200,33 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
 
-        {/* Dept grid — 3 col */}
+        {/* Dept grid — 4-col wide banner tiles (parity with web CategoryGrid).
+            Artwork has the category name baked in, so no overlaid label. */}
         <View style={s.sectionHeader}>
           <Text style={s.sectionTitle}>Departments</Text>
         </View>
         <View style={s.deptGrid}>
-          {DEPTS.map(dept => {
-            const showImg = !!dept.img && !deptFailed[dept.name]
+          {categories.map(cat => {
+            const uri = catImg(cat.imgEs || cat.img)
+            const showImg = !!uri && !deptFailed[cat.name]
             return (
               <TouchableOpacity
-                key={dept.name}
-                style={[s.deptTile, { backgroundColor: dept.color }]}
-                onPress={() => router.push(deptRoute(dept.name) as any)}
+                key={cat.name}
+                style={s.deptTile}
+                activeOpacity={0.85}
+                onPress={() => router.push(catRoute(cat) as any)}
               >
-                {showImg && (
-                  <Image
-                    source={{ uri: dept.img }}
-                    resizeMode="cover"
-                    onError={() => setDeptFailed(f => ({ ...f, [dept.name]: true }))}
-                    style={StyleSheet.absoluteFill}
-                  />
-                )}
-                {/* Dark scrim so the label stays legible over any photo */}
-                <View style={s.deptScrim} />
-                {!showImg && (
-                  <View style={s.deptEmojiWrap}><Text style={{ fontSize: 26 }}>{dept.icon}</Text></View>
-                )}
-                <Text style={s.deptName} numberOfLines={2}>{dept.name}</Text>
+                {showImg
+                  ? <Image
+                      source={{ uri: uri! }}
+                      resizeMode="cover"
+                      onError={() => setDeptFailed(f => ({ ...f, [cat.name]: true }))}
+                      style={StyleSheet.absoluteFill}
+                    />
+                  : <View style={s.deptPlaceholder}>
+                      <Text style={s.deptPlaceholderText} numberOfLines={2}>{cat.name.toUpperCase()}</Text>
+                      <Text style={s.deptPlaceholderHeart}>♥</Text>
+                    </View>}
               </TouchableOpacity>
             )
           })}
@@ -340,17 +358,15 @@ const s = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: 20, paddingBottom: 10 },
   sectionTitle: { fontFamily: 'Comfortaa', fontSize: 18, fontWeight: '700', color: colors.dark },
   seeAll: { fontFamily: 'Nunito', fontSize: 12, color: colors.orange, fontWeight: '800' },
-  deptGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10, gap: 6 },
+  // 4 columns of wide banner tiles (2.35:1), matching the web CategoryGrid.
+  deptGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10 },
   deptTile: {
-    width: (SCREEN_W - 20 - 18) / 4, aspectRatio: 1, borderRadius: 12, overflow: 'hidden',
-    position: 'relative', marginBottom: 6, justifyContent: 'flex-end',
+    width: (SCREEN_W - 24 - 30) / 4, aspectRatio: 2.35 / 1, borderRadius: 16, overflow: 'hidden',
+    position: 'relative', backgroundColor: '#f6f1e6',
+    borderWidth: 1, borderColor: '#e8ddc7',
     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
   },
-  deptScrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.28)' },
-  deptEmojiWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  deptName: {
-    fontFamily: 'Nunito', fontSize: 9, fontWeight: '900', color: '#fff', lineHeight: 11,
-    paddingHorizontal: 5, paddingBottom: 5,
-    textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
-  },
+  deptPlaceholder: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', padding: 4, backgroundColor: '#f6f1e6' },
+  deptPlaceholderText: { fontFamily: 'Nunito', fontSize: 9, fontWeight: '900', color: '#33352f', textAlign: 'center', lineHeight: 10, letterSpacing: 0.2 },
+  deptPlaceholderHeart: { color: '#8a9a5b', fontSize: 11, marginTop: 1 },
 })

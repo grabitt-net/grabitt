@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { MaybeStripeProvider } from '../lib/stripe'
 import { AuthProvider } from '../lib/auth'
 import ConsentGate from '../components/ConsentGate'
@@ -9,12 +10,14 @@ const STRIPE_PK = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY
 
 export default function RootLayout() {
   return (
-    <MaybeStripeProvider publishableKey={STRIPE_PK}>
-      <AuthProvider>
-        <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }} />
-        <ConsentGate />
-      </AuthProvider>
-    </MaybeStripeProvider>
+    <SafeAreaProvider>
+      <MaybeStripeProvider publishableKey={STRIPE_PK}>
+        <AuthProvider>
+          <StatusBar style="dark" />
+          <Stack screenOptions={{ headerShown: false }} />
+          <ConsentGate />
+        </AuthProvider>
+      </MaybeStripeProvider>
+    </SafeAreaProvider>
   )
 }
