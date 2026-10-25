@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 5.9.1"
+    "version": ">= 5.9.1",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -25,7 +26,9 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "APP_ENV": "production"
+        "APP_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://grabitt.net",
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_51ToglgLj1cI4cCytXGhLvDvN5h8xWlFbM1ZRPW6Csx1hvlL1ZPJz63cjFWWCoDEme8RasyL9neHgk6KisbmqPy9900jXDSIdHc"
       }
     }
   },
