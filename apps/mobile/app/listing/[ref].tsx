@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native'
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Image, Modal, TextInput, Dimensions } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Alert, Linking } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors, PRICES } from '@grabitt/design-tokens'
+
+const SCREEN_W = Dimensions.get('window').width
 import { apiClient } from '../../lib/trpc'
 import { useAuth } from '../../lib/auth'
 import { toCard } from '../../lib/listingMap'
@@ -10,7 +13,7 @@ import { pushView } from '../../lib/recentViews'
 
 const pretty = (s?: string) => (s ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
-type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; description?: string; tags?: string[]; stock?: number; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number }; job?: any }
+type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; images?: string[]; lat?: number | null; lng?: number | null; offersCollection?: boolean; description?: string; tags?: string[]; stock?: number; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number }; job?: any }
 
 const PERIOD: Record<string, string> = { month: '/mo', year: '/yr', hour: '/hr' }
 function salaryLabel(min?: any, max?: any, period?: string | null) {
@@ -50,12 +53,42 @@ export default function ListingScreen() {
   const [comps, setComps] = useState<any>(null)
   const [rawPrice, setRawPrice] = useState<number | null>(null)
   const [dept, setDept] = useState<string | null>(null)
+  const [galleryIdx, setGalleryIdx] = useState(0)
+  const [offerOpen, setOfferOpen] = useState(false)
+  const [offerAmount, setOfferAmount] = useState('')
+  const [offerBusy, setOfferBusy] = useState(false)
+  const insets = useSafeAreaInsets()
 
   useEffect(() => {
     if (token) apiClient(token).users.me.query().then((u: any) => setMeId(u?.id ?? null)).catch(() => {})
   }, [token])
 
   const isOwner = !!meId && !!fetched?.sellerId && meId === fetched.sellerId
+  // Jobs and property use their own CTAs, not Buy/Offer.
+  const isBuyable = dept !== 'jobs' && dept !== 'property'
+
+  // Buy Now → the escrow checkout flow (payment held until handover).
+  const buyNow = () => {
+    if (!token) { Alert.alert('Please log in', 'Log in to buy this item.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
+    router.push(`/checkout/${ref}`)
+  }
+
+  // Make Offer → offers.make, after collecting an amount.
+  const submitOffer = async () => {
+    const amount = Number(offerAmount)
+    if (!amount || amount <= 0) { Alert.alert('Enter an amount', 'Please enter a valid offer amount.'); return }
+    setOfferBusy(true)
+    try {
+      await apiClient(token!).offers.make.mutate({ listingId: ref as string, amount })
+      setOfferOpen(false); setOfferAmount('')
+      Alert.alert('Offer sent', 'The seller has been notified of your offer.')
+    } catch (e: any) { Alert.alert('Could not send offer', e?.message ?? 'Try again') }
+    finally { setOfferBusy(false) }
+  }
+  const openOffer = () => {
+    if (!token) { Alert.alert('Please log in', 'Log in to make an offer.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
+    setOfferOpen(true)
+  }
 
   const promote = async (option: 'grab_it_now' | 'featured') => {
     if (!token) { Alert.alert('Please log in', 'Log in to promote your listing.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
@@ -91,6 +124,10 @@ export default function ListingScreen() {
         condition: l.condition ? pretty(l.condition) : undefined,
         isFeatured: l.isFeatured,
         image: Array.isArray(l.images) ? l.images[0] : undefined,
+        images: Array.isArray(l.images) ? l.images : [],
+        lat: l.lat ?? null,
+        lng: l.lng ?? null,
+        offersCollection: l.offersCollection !== false,
         description: l.description,
         tags: Array.isArray(l.tags) ? l.tags : [],
         stock: typeof l.stock === 'number' ? l.stock : undefined,
@@ -108,6 +145,7 @@ export default function ListingScreen() {
     location: 'Gran Canaria',
     category: 'General',
   }
+  const imgs: string[] = (item.images && item.images.length ? item.images : (item.image ? [item.image] : []))
 
   return (
     <View style={s.screen}>
@@ -117,11 +155,30 @@ export default function ListingScreen() {
       </TouchableOpacity>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Hero */}
+        {/* Hero — swipeable gallery; images shown in full (contain) over the
+            brand sand, so nothing is cropped. */}
         <View style={s.hero}>
-          {item.image
-            ? <Image source={{ uri: item.image }} style={{ ...StyleSheet.absoluteFillObject }} resizeMode="cover" />
-            : <Text style={{ fontSize: 90 }}>{item.emoji}</Text>}
+          {imgs.length > 0 ? (
+            <>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={e => setGalleryIdx(Math.round(e.nativeEvent.contentOffset.x / SCREEN_W))}
+              >
+                {imgs.map((uri, i) => (
+                  <Image key={i} source={{ uri }} style={{ width: SCREEN_W, height: '100%' }} resizeMode="contain" />
+                ))}
+              </ScrollView>
+              {imgs.length > 1 && (
+                <View style={s.dots}>
+                  {imgs.map((_, i) => <View key={i} style={[s.dot, i === galleryIdx && s.dotActive]} />)}
+                </View>
+              )}
+            </>
+          ) : (
+            <Text style={{ fontSize: 90 }}>{item.emoji}</Text>
+          )}
           {item.isFeatured && (
             <View style={s.featuredBadge}><Text style={s.featuredBadgeText}>👀 FEATURED</Text></View>
           )}
@@ -242,17 +299,22 @@ export default function ListingScreen() {
             </View>
           )}
 
-          {/* Map — opens the location in the device maps app */}
+          {/* Location — opens the exact pin (lat/lng when known) in the device
+              maps app. NOTE: inline embedded map pending react-native-webview. */}
           <TouchableOpacity
-            style={s.mapPlaceholder}
+            style={s.mapCard}
             onPress={() => {
-              const q = (item.job?.address || item.location || '').trim()
+              const q = (item.lat != null && item.lng != null)
+                ? `${item.lat},${item.lng}`
+                : (item.job?.address || `${item.location}, Gran Canaria`).trim()
               if (q) Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`)
             }}
           >
-            <Text style={{ fontSize: 28, marginBottom: 4 }}>📍</Text>
-            <Text style={s.mapText}>{item.job?.address || `${item.location}, Gran Canaria`}</Text>
-            <Text style={s.mapLink}>View on map ›</Text>
+            <Text style={{ fontSize: 26 }}>📍</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.mapText}>{item.job?.address || `${item.location}, Gran Canaria`}</Text>
+              <Text style={s.mapLink}>Open in Maps</Text>
+            </View>
           </TouchableOpacity>
 
           {/* Similar listings */}
@@ -269,8 +331,8 @@ export default function ListingScreen() {
         </View>
       </ScrollView>
 
-      {/* Fixed action buttons */}
-      <View style={s.actions}>
+      {/* Fixed action buttons — padded above the Android system-nav bar. */}
+      <View style={[s.actions, { paddingBottom: 14 + insets.bottom }]}>
         {isOwner ? (
           <>
             <TouchableOpacity style={s.buyBtn} onPress={() => promote('grab_it_now')}>
@@ -280,17 +342,53 @@ export default function ListingScreen() {
               <Text style={s.offerBtnText}>👀 Feature €{PRICES.featuredPerWeek}/wk</Text>
             </TouchableOpacity>
           </>
-        ) : (
+        ) : isBuyable ? (
           <>
-            <TouchableOpacity style={s.buyBtn}>
-              <Text style={s.buyBtnText}>Buy Now</Text>
+            <TouchableOpacity style={s.buyBtn} onPress={buyNow}>
+              <Text style={s.buyBtnText}>Buy Now · {item.price}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.offerBtn}>
-              <Text style={s.offerBtnText}>Make Offer</Text>
-            </TouchableOpacity>
+            {item.offersCollection !== false && (
+              <TouchableOpacity style={s.offerBtn} onPress={openOffer}>
+                <Text style={s.offerBtnText}>Make Offer</Text>
+              </TouchableOpacity>
+            )}
           </>
+        ) : (
+          <TouchableOpacity style={s.buyBtn} onPress={startChat}>
+            <Text style={s.buyBtnText}>{dept === 'jobs' ? 'Apply / Message' : 'Enquire'}</Text>
+          </TouchableOpacity>
         )}
       </View>
+
+      {/* Make-offer modal */}
+      <Modal visible={offerOpen} transparent animationType="fade" onRequestClose={() => setOfferOpen(false)}>
+        <View style={s.modalBackdrop}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>Make an offer</Text>
+            <Text style={s.modalSub}>{item.title} · asking {item.price}</Text>
+            <View style={s.offerInputRow}>
+              <Text style={s.offerCurrency}>€</Text>
+              <TextInput
+                value={offerAmount}
+                onChangeText={setOfferAmount}
+                keyboardType="numeric"
+                placeholder="Your offer"
+                placeholderTextColor="#aaa"
+                style={s.offerInput}
+                autoFocus
+              />
+            </View>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+              <TouchableOpacity style={[s.offerBtn, { flex: 1 }]} onPress={() => setOfferOpen(false)}>
+                <Text style={s.offerBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.buyBtn, { flex: 1, opacity: offerBusy ? 0.6 : 1 }]} disabled={offerBusy} onPress={submitOffer}>
+                <Text style={s.buyBtnText}>{offerBusy ? 'Sending…' : 'Send offer'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -298,7 +396,10 @@ export default function ListingScreen() {
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#fff' },
   backBtn: { position: 'absolute', top: 52, left: 14, zIndex: 10, backgroundColor: 'rgba(255,255,255,0.9)', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  hero: { width: '100%', aspectRatio: 1.8, backgroundColor: '#f5f0e8', alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  hero: { width: '100%', aspectRatio: 4 / 3, backgroundColor: '#f5f0e8', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' },
+  dots: { position: 'absolute', bottom: 10, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: 'rgba(0,0,0,0.25)' },
+  dotActive: { backgroundColor: colors.orange, width: 9, height: 9, borderRadius: 5 },
   featuredBadge: { position: 'absolute', top: 12, left: 14, backgroundColor: colors.orange, borderRadius: 50, paddingHorizontal: 10, paddingVertical: 3 },
   featuredBadgeText: { color: '#fff', fontFamily: 'Nunito', fontSize: 9, fontWeight: '900' },
   heartBtn: { position: 'absolute', top: 12, right: 56, backgroundColor: 'rgba(255,255,255,0.9)', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
@@ -320,9 +421,16 @@ const s = StyleSheet.create({
   pill: { backgroundColor: '#f5f0e8', borderRadius: 50, paddingHorizontal: 10, paddingVertical: 4 },
   pillText: { fontFamily: 'Nunito', fontSize: 10, fontWeight: '800', color: '#555' },
   desc: { fontFamily: 'Nunito', fontSize: 13, color: '#555', lineHeight: 20, marginBottom: 14 },
-  mapPlaceholder: { backgroundColor: '#eee', borderRadius: 12, padding: 18, alignItems: 'center', marginBottom: 18 },
-  mapText: { fontFamily: 'Nunito', fontSize: 12, color: '#666', textAlign: 'center' },
-  mapLink: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '900', color: colors.orange, marginTop: 6 },
+  mapCard: { backgroundColor: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 18, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#ece3d7' },
+  mapText: { fontFamily: 'Nunito', fontSize: 13, fontWeight: '700', color: colors.dark },
+  mapLink: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '900', color: colors.orange, marginTop: 3 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  modalCard: { width: '100%', backgroundColor: '#fff', borderRadius: 18, padding: 20 },
+  modalTitle: { fontFamily: 'Georgia', fontSize: 18, fontWeight: '700', color: colors.dark, marginBottom: 4 },
+  modalSub: { fontFamily: 'Nunito', fontSize: 12, color: '#888', marginBottom: 16 },
+  offerInputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f5f0e8', borderRadius: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: '#ece3d7' },
+  offerCurrency: { fontFamily: 'Georgia', fontSize: 20, fontWeight: '700', color: colors.dark, marginRight: 6 },
+  offerInput: { flex: 1, fontFamily: 'Nunito', fontSize: 18, fontWeight: '800', color: colors.dark, paddingVertical: 12 },
   jobBox: { backgroundColor: '#f9f6f2', borderRadius: 12, padding: 14, marginBottom: 14, borderWidth: 1, borderColor: '#ece3d7' },
   jobBoxTitle: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '900', color: colors.orange, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
   jobSalary: { fontFamily: 'Georgia', fontSize: 18, fontWeight: '700', color: colors.dark, marginBottom: 10 },
