@@ -13,5 +13,11 @@ export const supabase = createClient(url, anon, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    // PKCE so OAuth returns a ?code= to exchange (signInWithGoogle in auth.tsx
+    // calls exchangeCodeForSession). Without this the client defaults to the
+    // implicit flow, which returns tokens in the URL hash and leaves no code —
+    // the deep-link callback then has nothing to exchange and sign-in silently
+    // fails after the Google screen completes.
+    flowType: 'pkce',
   },
 })
