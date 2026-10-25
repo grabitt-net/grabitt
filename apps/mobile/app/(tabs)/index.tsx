@@ -40,10 +40,6 @@ function currentSeasonal() {
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
-// Department tiles use real photography (Unsplash) over the brand gradient —
-// same image set as the web CategoryGrid. A failed image falls back to the
-// gradient + emoji so a card never renders broken.
-const IMG = (id: string) => `https://images.unsplash.com/${id}?w=320&h=320&fit=crop&q=55&auto=format`
 
 // Department tiles — mirrors the web CategoryGrid. The admin-ordered list comes
 // from homepage.categories at runtime; this is the fallback/default order and
@@ -73,22 +69,6 @@ function catImg(path?: string | null): string | null {
   if (/^https?:\/\//.test(path)) return path
   return `${API_URL}${path.startsWith('/') ? '' : '/'}${path}`
 }
-
-const FEATURED = [
-  { ref: 'F1', emoji: '📱', title: 'iPhone 14 — Unlocked',        price: '€620',    location: 'Las Palmas' },
-  { ref: 'F2', emoji: '🚴', title: 'Mountain Bike — 21sp',        price: '€340',    location: 'Maspalomas' },
-  { ref: 'F3', emoji: '💻', title: 'MacBook Air M2',              price: '€890',    location: 'Las Palmas' },
-  { ref: 'F4', emoji: '🏄', title: 'Surfboard 6ft + GoPro',       price: '€120',    location: 'Las Palmas' },
-  { ref: 'F5', emoji: '🎸', title: 'Fender Stratocaster 2020',    price: '€340',    location: 'Las Palmas' },
-]
-
-const JUST_LISTED = [
-  { ref: 'JL1', emoji: '🎮', title: 'PS5 + 2 Controllers',        price: '€380', location: 'Las Palmas' },
-  { ref: 'JL2', emoji: '🐱', title: 'Bengal Kitten — 10 weeks',   price: '€450', location: 'Maspalomas' },
-  { ref: 'JL3', emoji: '👗', title: 'Summer Dress — Size M',      price: '€22',  location: 'Playa del Inglés' },
-  { ref: 'JL4', emoji: '🔧', title: 'Plumber — Emergency',        price: '€35/hr', location: 'Las Palmas' },
-  { ref: 'JL5', emoji: '🪴', title: 'Indoor Plant Collection',    price: '€18',  location: 'Telde' },
-]
 
 // ── Grab It Now countdown ─────────────────────────────────────────────────────
 
@@ -247,33 +227,41 @@ export default function HomeScreen() {
           </>
         )}
 
-        {/* Featured strip */}
-        <View style={[s.sectionHeader, recommended.length > 0 && { marginTop: 20 }]}>
-          <Text style={s.sectionTitle}>👀 Featured</Text>
-          <TouchableOpacity><Text style={s.seeAll}>See all</Text></TouchableOpacity>
-        </View>
-        <FlatList
-          data={(featured.length ? featured : FEATURED) as Card[]}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
-          keyExtractor={i => i.ref}
-          renderItem={({ item }) => <ListingCard item={item} width={158} />}
-        />
+        {/* Featured strip — real listings only (no mock fallback) */}
+        {featured.length > 0 && (
+          <>
+            <View style={[s.sectionHeader, recommended.length > 0 && { marginTop: 20 }]}>
+              <Text style={s.sectionTitle}>👀 Featured</Text>
+              <TouchableOpacity onPress={() => router.push('/search?featured=1')}><Text style={s.seeAll}>See all</Text></TouchableOpacity>
+            </View>
+            <FlatList
+              data={featured}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
+              keyExtractor={i => i.ref}
+              renderItem={({ item }) => <ListingCard item={item} width={158} />}
+            />
+          </>
+        )}
 
-        {/* Just Listed */}
-        <View style={[s.sectionHeader, { marginTop: 20 }]}>
-          <Text style={s.sectionTitle}>🆕 Just Listed</Text>
-          <TouchableOpacity><Text style={s.seeAll}>See all</Text></TouchableOpacity>
-        </View>
-        <FlatList
-          data={(justListed.length ? justListed : JUST_LISTED) as Card[]}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
-          keyExtractor={i => i.ref}
-          renderItem={({ item }) => <ListingCard item={item} width={158} />}
-        />
+        {/* Just Listed — real listings only */}
+        {justListed.length > 0 && (
+          <>
+            <View style={[s.sectionHeader, { marginTop: 20 }]}>
+              <Text style={s.sectionTitle}>🆕 Just Listed</Text>
+              <TouchableOpacity onPress={() => router.push('/search')}><Text style={s.seeAll}>See all</Text></TouchableOpacity>
+            </View>
+            <FlatList
+              data={justListed}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
+              keyExtractor={i => i.ref}
+              renderItem={({ item }) => <ListingCard item={item} width={158} />}
+            />
+          </>
+        )}
 
         {/* Recently viewed */}
         {recent.length > 0 && (

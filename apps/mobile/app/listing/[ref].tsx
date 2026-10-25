@@ -14,7 +14,7 @@ import { pushView } from '../../lib/recentViews'
 
 const pretty = (s?: string) => (s ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
-type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; images?: string[]; lat?: number | null; lng?: number | null; offersCollection?: boolean; description?: string; tags?: string[]; stock?: number; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number }; job?: any }
+type Item = { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean; image?: string; images?: string[]; lat?: number | null; lng?: number | null; offersCollection?: boolean; description?: string; tags?: string[]; stock?: number; viewCount?: number; watching?: number; sellerOther?: any[]; sellerId?: string; seller?: { name: string; grade: string; rating: number | null; sales: number }; job?: any }
 
 const PERIOD: Record<string, string> = { month: '/mo', year: '/yr', hour: '/hr' }
 function salaryLabel(min?: any, max?: any, period?: string | null) {
@@ -39,12 +39,6 @@ const LISTINGS: Record<string, { emoji: string; title: string; price: string; lo
   JL4: { emoji: '🔧', title: 'Plumber — Emergency',         price: '€35/hr',  location: 'Las Palmas',      category: 'Handy Help' },
   JL5: { emoji: '🪴', title: 'Indoor Plant Collection',     price: '€18',     location: 'Telde',           category: 'Home & Garden' },
 }
-
-const SIMILAR = [
-  { emoji: '📱', title: 'Samsung S24',      price: '€580' },
-  { emoji: '💻', title: 'iPad Pro 12.9"',   price: '€720' },
-  { emoji: '🎧', title: 'Sony WH-1000XM5', price: '€220' },
-]
 
 export default function ListingScreen() {
   const { ref } = useLocalSearchParams<{ ref: string }>()
@@ -129,6 +123,9 @@ export default function ListingScreen() {
         lat: l.lat ?? null,
         lng: l.lng ?? null,
         offersCollection: l.offersCollection !== false,
+        viewCount: typeof l.viewCount === 'number' ? l.viewCount : undefined,
+        watching: l._count?.wishlistItems,
+        sellerOther: Array.isArray(l.sellerOther) ? l.sellerOther : [],
         description: l.description,
         tags: Array.isArray(l.tags) ? l.tags : [],
         stock: typeof l.stock === 'number' ? l.stock : undefined,
@@ -194,11 +191,13 @@ export default function ListingScreen() {
         </View>
 
         <View style={s.body}>
-          {/* Demand signals */}
-          <View style={s.signals}>
-            <View style={s.signalPill}><Text style={s.signalText}>👁 42 views today</Text></View>
-            <View style={s.signalPill}><Text style={s.signalText}>⚡ 7 watching</Text></View>
-          </View>
+          {/* Demand signals — real counts from the listing */}
+          {(item.viewCount != null || !!item.watching) && (
+            <View style={s.signals}>
+              {item.viewCount != null && <View style={s.signalPill}><Text style={s.signalText}>👁 {item.viewCount.toLocaleString()} view{item.viewCount === 1 ? '' : 's'}</Text></View>}
+              {!!item.watching && <View style={s.signalPill}><Text style={s.signalText}>⚡ {item.watching} watching</Text></View>}
+            </View>
+          )}
 
           {/* Title + price */}
           <Text style={s.title}>{item.title}</Text>
@@ -325,17 +324,26 @@ export default function ListingScreen() {
             )
           })()}
 
-          {/* Similar listings */}
-          <Text style={s.similarHeading}>Similar listings</Text>
-          <View style={s.similarRow}>
-            {SIMILAR.map((sim, i) => (
-              <TouchableOpacity key={i} style={s.simCard}>
-                <View style={s.simThumb}><Text style={{ fontSize: 28 }}>{sim.emoji}</Text></View>
-                <Text style={s.simTitle} numberOfLines={1}>{sim.title}</Text>
-                <Text style={s.simPrice}>{sim.price}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {/* More from this seller — real live items */}
+          {Array.isArray(item.sellerOther) && item.sellerOther.length > 0 && (
+            <>
+              <Text style={s.similarHeading}>More from this seller</Text>
+              <View style={s.similarRow}>
+                {item.sellerOther.slice(0, 3).map((sim: any) => {
+                  const thumb = Array.isArray(sim.images) ? sim.images[0] : undefined
+                  return (
+                    <TouchableOpacity key={sim.id} style={s.simCard} onPress={() => router.push(`/listing/${sim.id}`)}>
+                      <View style={s.simThumb}>
+                        {thumb ? <Image source={{ uri: thumb }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : <Text style={{ fontSize: 28 }}>🛍️</Text>}
+                      </View>
+                      <Text style={s.simTitle} numberOfLines={1}>{sim.title}</Text>
+                      <Text style={s.simPrice}>€{Number(sim.price).toLocaleString()}</Text>
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
 
