@@ -29,7 +29,7 @@ export default function HandoverScreen() {
         transactionId: txn,
         token,
       })
-      setSellerNet(result.sellerNet)
+      setSellerNet('sellerNet' in result ? result.sellerNet : null)
       setStatus('success')
     } catch (err: any) {
       setErrorMsg(err?.message ?? 'Handover confirmation failed')
