@@ -160,7 +160,7 @@ export default function HomeScreen() {
                 <Text style={s.seasonalTitle}>{c.title}</Text>
                 <Text style={s.seasonalSub}>{c.sub}</Text>
               </View>
-              <Text style={s.seasonalCta}>Shop →</Text>
+              <Text style={s.seasonalCta}>Shop</Text>
             </TouchableOpacity>
           )
         })()}

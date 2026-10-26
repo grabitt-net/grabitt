@@ -86,7 +86,7 @@ export default function CreateJobScreen() {
         </Section>
 
         <TouchableOpacity onPress={submit} disabled={saving} style={[s.submit, saving && { opacity: 0.7 }]}>
-          {saving ? <ActivityIndicator color="#fff" /> : <Text style={s.submitText}>Post Job →</Text>}
+          {saving ? <ActivityIndicator color="#fff" /> : <Text style={s.submitText}>Post Job</Text>}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

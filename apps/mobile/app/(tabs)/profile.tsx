@@ -102,7 +102,7 @@ export default function ProfileScreen() {
         <View style={{ marginHorizontal: 14, marginTop: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <Text style={s.sectionLabel}>RECENT MESSAGES</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/messages')}><Text style={s.seeAll}>See all ›</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/messages')}><Text style={s.seeAll}>See all</Text></TouchableOpacity>
           </View>
           {threads.slice(0, 3).map((t: any) => {
             const other = t.participants?.find((p: any) => p.userId !== meId)?.user
