@@ -27,12 +27,14 @@ function relTime(d: string | Date): string {
   return `${Math.floor(secs / 86400)}d ago`
 }
 
-function salaryLabel(min?: string | number | null, max?: string | number | null): string {
+const PERIOD: Record<string, string> = { month: '/mo', year: '/yr', hour: '/hr' }
+function salaryLabel(min?: string | number | null, max?: string | number | null, period?: string | null): string {
+  const p = PERIOD[period ?? 'month'] ?? '/mo'
   const lo = min != null ? Number(min) : null
   const hi = max != null ? Number(max) : null
-  if (lo && hi) return `€${lo.toLocaleString()}–${hi.toLocaleString()}/mo`
-  if (lo) return `€${lo.toLocaleString()}/mo`
-  if (hi) return `up to €${hi.toLocaleString()}/mo`
+  if (lo && hi) return `€${lo.toLocaleString()}–${hi.toLocaleString()}${p}`
+  if (lo) return `€${lo.toLocaleString()}${p}`
+  if (hi) return `up to €${hi.toLocaleString()}${p}`
   return 'Negotiable'
 }
 
@@ -60,7 +62,7 @@ export default function JobsScreen() {
         title: j.jobTitle ?? j.listing?.title ?? 'Job',
         company: j.company ?? '',
         location: j.remote ? 'Remote' : (j.listing?.location ?? 'Gran Canaria'),
-        salary: salaryLabel(j.salaryMin, j.salaryMax),
+        salary: salaryLabel(j.salaryMin, j.salaryMax, j.salaryPeriod),
         type: TYPE_LABEL[j.type] ?? j.type ?? '',
         remote: !!j.remote,
         posted: relTime(j.createdAt ?? Date.now()),

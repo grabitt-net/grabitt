@@ -6,6 +6,7 @@ import { colors } from '@grabitt/design-tokens'
 import { useAuth } from '../lib/auth'
 import { apiClient } from '../lib/trpc'
 import { uploadListingPhoto } from '../lib/upload'
+import { GC_TOWNS } from '../lib/gcTowns'
 
 const DEPTS: [string, string][] = [
   ['Electronics', 'electronics'], ['Fashion', 'fashion'], ['Home & Garden', 'home_garden'], ['Sport', 'sport'],
@@ -14,7 +15,6 @@ const DEPTS: [string, string][] = [
   ['Collectables', 'collectables'], ['Other', 'other'],
 ]
 const CONDITIONS: [string, string][] = [['New', 'new'], ['Like New', 'like_new'], ['Very Good', 'very_good'], ['Good', 'good'], ['Fair', 'fair']]
-const TOWNS = ['Las Palmas', 'Maspalomas', 'Playa del Inglés', 'Telde', 'Arucas', 'Vecindario', 'Gáldar', 'Mogán', 'Other']
 
 export default function CreateListingScreen() {
   const { token } = useAuth()
@@ -26,7 +26,7 @@ export default function CreateListingScreen() {
   const [condition, setCondition] = useState('')
   const [price, setPrice] = useState('')
   const [stock, setStock] = useState('1')
-  const [location, setLocation] = useState('Las Palmas')
+  const [location, setLocation] = useState('Las Palmas de Gran Canaria')
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -99,7 +99,9 @@ export default function CreateListingScreen() {
       <TextInput value={stock} onChangeText={setStock} placeholder="1" placeholderTextColor="#aaa" keyboardType="numeric" style={s.input} />
 
       <Text style={s.label}>Location</Text>
-      <View style={s.chips}>{TOWNS.map(t => <Chip key={t} label={t} active={location === t} onPress={() => setLocation(t)} />)}</View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+        {GC_TOWNS.map(t => <Chip key={t} label={t} active={location === t} onPress={() => setLocation(t)} />)}
+      </ScrollView>
 
       <Text style={s.label}>Description</Text>
       <TextInput value={description} onChangeText={setDescription} placeholder="Describe your item…" placeholderTextColor="#aaa" style={[s.input, { height: 90, textAlignVertical: 'top' }]} multiline />
