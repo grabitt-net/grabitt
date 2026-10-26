@@ -149,6 +149,9 @@ export default function HomeScreen() {
               <Text style={s.nearBtnText}>📍 Near Me</Text>
             </TouchableOpacity>
           </View>
+          <TouchableOpacity style={s.bellBtn} onPress={() => router.push('/notifications' as any)}>
+            <Text style={{ fontSize: 20 }}>🔔</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Seasonal promo banner (date-driven) */}
@@ -338,8 +341,9 @@ const s = StyleSheet.create({
   wordmark: { fontFamily: 'Comfortaa', fontSize: 24, fontWeight: '700', color: colors.dark },
   memberBtn: { backgroundColor: colors.orange, borderRadius: 50, paddingHorizontal: 16, paddingVertical: 8 },
   memberBtnText: { color: '#fff', fontFamily: 'Nunito', fontSize: 13, fontWeight: '900' },
-  searchRow: { backgroundColor: colors.sand, padding: 10, borderBottomWidth: 1.5, borderBottomColor: colors.sand2 },
-  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 50, paddingLeft: 14, paddingRight: 6, paddingVertical: 8, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  searchRow: { backgroundColor: colors.sand, padding: 10, borderBottomWidth: 1.5, borderBottomColor: colors.sand2, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  bellBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.sand2 },
+  searchBox: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 50, paddingLeft: 14, paddingRight: 6, paddingVertical: 8, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
   searchInput: { flex: 1, fontFamily: 'Nunito', fontSize: 14, color: colors.dark },
   nearBtn: { backgroundColor: '#FFF3EE', borderRadius: 50, paddingHorizontal: 10, paddingVertical: 6 },
   nearBtnText: { color: colors.orange, fontFamily: 'Nunito', fontSize: 11, fontWeight: '900' },
