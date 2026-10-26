@@ -1,5 +1,4 @@
 {
-  "github": { "silent": true },
   "crons": [
     { "path": "/api/cron/release-funds", "schedule": "0 2 * * *" },
     { "path": "/api/cron/cleanup-draft-photos", "schedule": "30 3 * * *" }
