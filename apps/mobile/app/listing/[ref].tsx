@@ -40,7 +40,31 @@ export default function ListingScreen() {
   const [offerOpen, setOfferOpen] = useState(false)
   const [offerAmount, setOfferAmount] = useState('')
   const [offerBusy, setOfferBusy] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportBusy, setReportBusy] = useState(false)
   const insets = useSafeAreaInsets()
+
+  // Report reasons — ids must match the server REASON_MAP / web report panel.
+  const REPORT_REASONS: [string, string][] = [
+    ['scam', 'Scam or fraud'],
+    ['counterfeit', 'Counterfeit item'],
+    ['prohibited', 'Prohibited/illegal item'],
+    ['misleading', 'Misleading or fake listing'],
+    ['price_gouging', 'Unfair pricing'],
+    ['duplicate', 'Duplicate listing'],
+    ['contact_info_leak', 'Shares contact details'],
+    ['other', 'Something else'],
+  ]
+  const submitReport = async (reason: string) => {
+    if (!token) { setReportOpen(false); Alert.alert('Please log in', 'Log in to report a listing.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
+    setReportBusy(true)
+    try {
+      await apiClient(token).reports.create.mutate({ listingId: ref as string, reason })
+      setReportOpen(false)
+      Alert.alert('Report sent', 'Thanks — our team will review this listing.')
+    } catch (e: any) { Alert.alert('Could not send report', e?.message ?? 'Try again') }
+    finally { setReportBusy(false) }
+  }
 
   useEffect(() => {
     if (token) apiClient(token).users.me.query().then((u: any) => setMeId(u?.id ?? null)).catch(() => {})
@@ -312,6 +336,13 @@ export default function ListingScreen() {
             )
           })()}
 
+          {/* Report — safety action for non-owners */}
+          {!isOwner && (
+            <TouchableOpacity onPress={() => setReportOpen(true)} style={s.reportLink}>
+              <Text style={s.reportLinkText}>🚩 Report this listing</Text>
+            </TouchableOpacity>
+          )}
+
           {/* More from this seller — real live items */}
           {Array.isArray(item.sellerOther) && item.sellerOther.length > 0 && (
             <>
@@ -393,6 +424,24 @@ export default function ListingScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Report modal */}
+      <Modal visible={reportOpen} transparent animationType="fade" onRequestClose={() => setReportOpen(false)}>
+        <View style={s.modalBackdrop}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>Report this listing</Text>
+            <Text style={s.modalSub}>Why are you reporting it?</Text>
+            {REPORT_REASONS.map(([id, label]) => (
+              <TouchableOpacity key={id} style={s.reasonRow} disabled={reportBusy} onPress={() => submitReport(id)}>
+                <Text style={s.reasonText}>{label}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={[s.offerBtn, { marginTop: 12 }]} onPress={() => setReportOpen(false)}>
+              <Text style={s.offerBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -429,6 +478,10 @@ const s = StyleSheet.create({
   mapEmbed: { width: '100%', height: 200, backgroundColor: '#f5f0e8' },
   mapOpen: { paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#f9f6f2', borderTopWidth: 1, borderTopColor: '#ece3d7' },
   mapOpenText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: colors.orange },
+  reportLink: { alignSelf: 'flex-start', marginTop: 18, paddingVertical: 6 },
+  reportLinkText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: '#b4433a' },
+  reasonRow: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0ebe4' },
+  reasonText: { fontFamily: 'Nunito', fontSize: 14, fontWeight: '700', color: colors.dark },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 },
   modalCard: { width: '100%', backgroundColor: '#fff', borderRadius: 18, padding: 20 },
   modalTitle: { fontFamily: 'Georgia', fontSize: 18, fontWeight: '700', color: colors.dark, marginBottom: 4 },
