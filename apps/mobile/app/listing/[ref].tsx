@@ -27,18 +27,6 @@ function salaryLabel(min?: any, max?: any, period?: string | null) {
 }
 
 // Fallback demo lookup for the old ref-keyed cards (F1, JL1…).
-const LISTINGS: Record<string, { emoji: string; title: string; price: string; location: string; category: string; condition?: string; isFeatured?: boolean }> = {
-  F1: { emoji: '📱', title: 'iPhone 14 — Unlocked',         price: '€620',    location: 'Las Palmas',      category: 'Electronics',   condition: 'Excellent', isFeatured: true },
-  F2: { emoji: '🚴', title: 'Mountain Bike — 21sp Shimano', price: '€340',    location: 'Maspalomas',      category: 'Sport',         condition: 'Good',      isFeatured: true },
-  F3: { emoji: '💻', title: 'MacBook Air M2 — 8GB',         price: '€890',    location: 'Las Palmas',      category: 'Electronics',   condition: 'Like New',  isFeatured: true },
-  F4: { emoji: '🏄', title: 'Surfboard 6ft + GoPro',        price: '€120',    location: 'Las Palmas',      category: 'Sport',         condition: 'Good' },
-  F5: { emoji: '🎸', title: 'Fender Stratocaster 2020',     price: '€340',    location: 'Las Palmas',      category: 'Retro & Vintage', condition: 'Very Good' },
-  JL1: { emoji: '🎮', title: 'PS5 + 2 Controllers',         price: '€380',    location: 'Las Palmas',      category: 'Gaming',        condition: 'Like New' },
-  JL2: { emoji: '🐱', title: 'Bengal Kitten — 10 weeks',    price: '€450',    location: 'Maspalomas',      category: 'Pet Shop' },
-  JL3: { emoji: '👗', title: 'Summer Dress — Size M',       price: '€22',     location: 'Playa del Inglés', category: 'Fashion',       condition: 'New' },
-  JL4: { emoji: '🔧', title: 'Plumber — Emergency',         price: '€35/hr',  location: 'Las Palmas',      category: 'Handy Help' },
-  JL5: { emoji: '🪴', title: 'Indoor Plant Collection',     price: '€18',     location: 'Telde',           category: 'Home & Garden' },
-}
 
 export default function ListingScreen() {
   const { ref } = useLocalSearchParams<{ ref: string }>()
@@ -136,7 +124,7 @@ export default function ListingScreen() {
       .catch(() => {})
   }, [ref])
 
-  const item: Item = fetched || LISTINGS[ref as string] || {
+  const item: Item = fetched || {
     emoji: '🛍️',
     title: decodeURIComponent(ref || 'Item'),
     price: 'POA',
