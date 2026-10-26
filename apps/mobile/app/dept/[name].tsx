@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
@@ -6,32 +6,38 @@ import { apiClient } from '../../lib/trpc'
 import { toCard, type Card, DEPT_ENUM } from '../../lib/listingMap'
 import { ListingCard } from '../../components/ListingCard'
 
-const SUBCATS: Record<string, string[]> = {
-  'Electronics':    ['All', 'Phones', 'Laptops', 'Audio', 'Cameras', 'Gaming', 'Wearables'],
-  'Fashion':        ['All', "Women's", "Men's", "Shoes", 'Accessories', 'Vintage'],
-  'Home & Garden':  ['All', 'Furniture', 'Kitchen', 'Garden', 'Decor', 'DIY'],
-  'Sport':          ['All', 'Water Sports', 'Cycling', 'Football', 'Tennis', 'Gym'],
-  'Property':       ['All', 'Rent', 'For Sale', 'Rooms', 'Commercial'],
-}
-
 export default function DeptScreen() {
   const { name } = useLocalSearchParams<{ name: string }>()
   const deptName = name ? decodeURIComponent(name) : 'Listings'
-  const subcats = SUBCATS[deptName] || ['All']
+  const department = DEPT_ENUM[deptName]
   const [activeSub, setActiveSub] = useState('All')
   const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc'>('newest')
-  const [items, setItems] = useState<Card[]>([])
+  const [raw, setRaw] = useState<any[]>([])
+  const [subcats, setSubcats] = useState<string[]>(['All'])
 
-  // Live listings for this department (falls back to nothing if unmapped).
+  // Real subcategories for this department — same list sellers pick from, so the
+  // names match listing.subcategory for client-side filtering.
   useEffect(() => {
-    const department = DEPT_ENUM[deptName]
-    apiClient().listings.search.query({ ...(department ? { department } : {}), sort, limit: 50 } as any)
-      .then((res: any) => {
-        const list = (res?.items ?? res ?? []) as any[]
-        setItems(list.map(toCard))
+    apiClient().homepage.subcategories.query()
+      .then((rows: any[]) => {
+        const names = rows.filter(r => r.department === department).map(r => r.name)
+        setSubcats(['All', ...names])
       })
-      .catch(() => setItems([]))
-  }, [deptName, sort])
+      .catch(() => setSubcats(['All']))
+  }, [department])
+
+  // Live listings for this department.
+  useEffect(() => {
+    apiClient().listings.search.query({ ...(department ? { department } : {}), sort, limit: 50 } as any)
+      .then((res: any) => setRaw((res?.items ?? res ?? []) as any[]))
+      .catch(() => setRaw([]))
+  }, [department, sort])
+
+  // Filter by the chosen subcategory client-side (search has no subcat param).
+  const items: Card[] = useMemo(
+    () => raw.filter(l => activeSub === 'All' || l.subcategory === activeSub).map(toCard),
+    [raw, activeSub],
+  )
 
   return (
     <View style={s.screen}>
