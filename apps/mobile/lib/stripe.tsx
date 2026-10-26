@@ -11,6 +11,9 @@ export const isExpoGo = Constants.executionEnvironment === 'storeClient'
 type StripeFns = {
   initPaymentSheet: ((opts: any) => Promise<{ error?: { message: string } }>) | null
   presentPaymentSheet: (() => Promise<{ error?: { message: string } }>) | null
+  // Needed for the multi-seller cart checkout: after the SetupIntent is
+  // confirmed via the payment sheet, retrieve the saved card's id.
+  retrieveSetupIntent: ((clientSecret: string) => Promise<{ setupIntent?: { paymentMethodId?: string | null }; error?: { message: string } }>) | null
 }
 
 let RealStripeProvider: React.ComponentType<any> | null = null
@@ -28,6 +31,6 @@ export function MaybeStripeProvider({ publishableKey, children }: { publishableK
 }
 
 export function useSafeStripe(): StripeFns {
-  if (isExpoGo || !realUseStripe) return { initPaymentSheet: null, presentPaymentSheet: null }
-  return realUseStripe()
+  if (isExpoGo || !realUseStripe) return { initPaymentSheet: null, presentPaymentSheet: null, retrieveSetupIntent: null }
+  return realUseStripe() as StripeFns
 }

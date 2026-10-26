@@ -149,6 +149,9 @@ export default function HomeScreen() {
               <Text style={s.nearBtnText}>📍 Near Me</Text>
             </TouchableOpacity>
           </View>
+          <TouchableOpacity style={s.bellBtn} onPress={() => router.push('/cart' as any)}>
+            <Text style={{ fontSize: 20 }}>🧺</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={s.bellBtn} onPress={() => router.push('/notifications' as any)}>
             <Text style={{ fontSize: 20 }}>🔔</Text>
           </TouchableOpacity>

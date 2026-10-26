@@ -101,6 +101,15 @@ export default function ListingScreen() {
     router.push(`/checkout/${ref}`)
   }
 
+  // Add to basket (standard items only; server rejects jobs/property/grab-it-now).
+  const addToCart = async () => {
+    if (!token) { Alert.alert('Please log in', 'Log in to use your basket.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
+    try {
+      await apiClient(token).cart.addItem.mutate({ listingId: ref as string, qty: 1 })
+      Alert.alert('Added to basket', 'Find it in your basket to check out.', [{ text: 'View basket', onPress: () => router.push('/cart') }, { text: 'Keep browsing' }])
+    } catch (e: any) { Alert.alert('Could not add', e?.message ?? 'Try again') }
+  }
+
   // Make Offer → offers.make, after collecting an amount.
   const submitOffer = async () => {
     const amount = Number(offerAmount)
@@ -407,6 +416,9 @@ export default function ListingScreen() {
           </>
         ) : isBuyable ? (
           <>
+            <TouchableOpacity style={s.basketBtn} onPress={addToCart}>
+              <Text style={{ fontSize: 20 }}>🧺</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={s.buyBtn} onPress={buyNow}>
               <Text style={s.buyBtnText}>Buy Now · {item.price}</Text>
             </TouchableOpacity>
@@ -506,6 +518,7 @@ const s = StyleSheet.create({
   mapEmbed: { width: '100%', height: 200, backgroundColor: '#f5f0e8' },
   mapOpen: { paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#f9f6f2', borderTopWidth: 1, borderTopColor: '#ece3d7' },
   mapOpenText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: colors.orange },
+  basketBtn: { width: 50, borderWidth: 1.5, borderColor: '#e5dccd', borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   followBtn: { borderWidth: 1.5, borderColor: colors.orange, borderRadius: 50, paddingHorizontal: 14, paddingVertical: 6 },
   followBtnOn: { backgroundColor: colors.orange },
   followBtnText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '900', color: colors.orange },
