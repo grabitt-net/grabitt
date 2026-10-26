@@ -17,7 +17,6 @@ export default function TermsPage() {
         <h1 style={h1}>Terms of Service</h1>
         <p style={muted}>Last updated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
 
-        <div style={{ background: '#fff6e6', border: '1px solid #f0e0bd', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#8a6d3b', marginBottom: 14 }}>⚠️ Draft pending legal review — this document is a working draft and must be reviewed and finalised by a Spanish lawyer before it is relied upon.</div>
         <p style={p}>These terms govern your use of <strong>Grabitt</strong>, a digital marketplace operating across the <strong>Canary Islands</strong>, Spain. By creating an account or using the service you agree to them. Please read section 7 (right of withdrawal) carefully — it affects your legal rights.</p>
 
         {/* 1 */}
