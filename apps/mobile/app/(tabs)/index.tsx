@@ -18,6 +18,7 @@ function catRoute(cat: Cat): string {
   const slug = cat.department || DEPT_ENUM[cat.name]
   if (slug === 'jobs') return '/jobs'
   if (slug === 'property') return '/property'
+  if (slug === 'handy_help') return '/handy'
   // Mobile department screen is keyed by display name.
   return `/dept/${encodeURIComponent(cat.name)}`
 }
@@ -179,6 +180,20 @@ export default function HomeScreen() {
             <Text style={s.countdownLabel}>ENDS MIDNIGHT</Text>
           </View>
         </TouchableOpacity>
+
+        {/* Quick links to the bespoke boards (parity with the web top nav). */}
+        <View style={s.quickRow}>
+          {[
+            { label: '💼 Jobs', go: '/jobs' },
+            { label: '🏠 Property', go: '/property' },
+            { label: '🏢 Directory', go: '/directory' },
+            { label: '🛠️ Handy Help', go: '/handy' },
+          ].map(q => (
+            <TouchableOpacity key={q.label} style={s.quickPill} onPress={() => router.push(q.go as any)}>
+              <Text style={s.quickPillText}>{q.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {/* Dept grid — 4-col wide banner tiles (parity with web CategoryGrid).
             Artwork has the category name baked in, so no overlaid label. */}
@@ -348,6 +363,9 @@ const s = StyleSheet.create({
   seeAll: { fontFamily: 'Nunito', fontSize: 12, color: colors.orange, fontWeight: '800' },
   // 4 columns of wide banner tiles (2.35:1), matching the web CategoryGrid.
   deptGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10 },
+  quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 14, paddingTop: 16 },
+  quickPill: { backgroundColor: '#FFF3EE', borderRadius: 50, paddingHorizontal: 14, paddingVertical: 8 },
+  quickPillText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: colors.orange },
   deptTile: {
     width: (SCREEN_W - 24 - 30) / 4, aspectRatio: 2.35 / 1, borderRadius: 16, overflow: 'hidden',
     position: 'relative', backgroundColor: '#f6f1e6',
