@@ -33,8 +33,7 @@ export default function TabLayout() {
       <Tabs.Screen name="sell"     options={{ title: 'Sell',     tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'add-circle' : 'add-circle-outline'} size={24} color={color} /> }} />
       <Tabs.Screen name="messages" options={{ title: 'Messages', tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} size={21} color={color} /> }} />
       <Tabs.Screen name="profile"  options={{ title: 'Profile',  tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={color} /> }} />
-      {/* Admin/CRM is a web-only product — hide the placeholder Exec tab. */}
-      <Tabs.Screen name="exec"     options={{ href: null }} />
+      {/* Admin/CRM is managed on the web only — no admin screens in the app. */}
     </Tabs>
   )
 }
