@@ -42,7 +42,20 @@ export default function ListingScreen() {
   const [offerBusy, setOfferBusy] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [reportBusy, setReportBusy] = useState(false)
+  const [following, setFollowing] = useState(false)
   const insets = useSafeAreaInsets()
+
+  const toggleFollow = async () => {
+    const sid = fetched?.sellerId
+    if (!sid) return
+    if (!token) { Alert.alert('Please log in', 'Log in to follow sellers.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
+    const next = !following
+    setFollowing(next) // optimistic
+    try {
+      if (next) await apiClient(token).follow.follow.mutate({ sellerId: sid })
+      else await apiClient(token).follow.unfollow.mutate({ sellerId: sid })
+    } catch { setFollowing(!next) }
+  }
 
   // Report reasons — ids must match the server REASON_MAP / web report panel.
   const REPORT_REASONS: [string, string][] = [
@@ -71,6 +84,14 @@ export default function ListingScreen() {
   }, [token])
 
   const isOwner = !!meId && !!fetched?.sellerId && meId === fetched.sellerId
+
+  // Follow state for the seller (public query; reflects my follow if logged in).
+  useEffect(() => {
+    const sid = fetched?.sellerId
+    if (!sid || isOwner) return
+    apiClient(token ?? undefined).follow.status.query({ sellerId: sid })
+      .then((r: any) => setFollowing(!!r.following)).catch(() => {})
+  }, [fetched?.sellerId, isOwner, token])
   // Jobs and property use their own CTAs, not Buy/Offer.
   const isBuyable = dept !== 'jobs' && dept !== 'property'
 
@@ -230,7 +251,14 @@ export default function ListingScreen() {
                 <Text style={s.sellerStats}>⭐ {item.seller?.rating ? Number(item.seller.rating).toFixed(1) : '—'} · {item.seller?.sales ?? 0} sales</Text>
               </View>
             </View>
-            <TouchableOpacity style={s.msgBtn} onPress={startChat}><Text style={s.msgBtnText}>Message</Text></TouchableOpacity>
+            <View style={{ gap: 6, alignItems: 'flex-end' }}>
+              {!isOwner && (
+                <TouchableOpacity style={[s.followBtn, following && s.followBtnOn]} onPress={toggleFollow}>
+                  <Text style={[s.followBtnText, following && s.followBtnTextOn]}>{following ? '✓ Following' : '+ Follow'}</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity style={s.msgBtn} onPress={startChat}><Text style={s.msgBtnText}>Message</Text></TouchableOpacity>
+            </View>
           </View>
 
           {/* Tag pills */}
@@ -478,6 +506,10 @@ const s = StyleSheet.create({
   mapEmbed: { width: '100%', height: 200, backgroundColor: '#f5f0e8' },
   mapOpen: { paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#f9f6f2', borderTopWidth: 1, borderTopColor: '#ece3d7' },
   mapOpenText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: colors.orange },
+  followBtn: { borderWidth: 1.5, borderColor: colors.orange, borderRadius: 50, paddingHorizontal: 14, paddingVertical: 6 },
+  followBtnOn: { backgroundColor: colors.orange },
+  followBtnText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '900', color: colors.orange },
+  followBtnTextOn: { color: '#fff' },
   reportLink: { alignSelf: 'flex-start', marginTop: 18, paddingVertical: 6 },
   reportLinkText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: '#b4433a' },
   reasonRow: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0ebe4' },
