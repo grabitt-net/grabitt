@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, Image } from 'react-native'
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, Image, Linking } from 'react-native'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient, API_URL } from '../../lib/trpc'
@@ -90,11 +90,14 @@ function useCountdown() {
   return `${h}:${m}:${s}`
 }
 
+// Default section order when no admin layout is configured — mirrors the web
+// HomeSections DEFAULT_ORDER so mobile and web agree out of the box.
+const DEFAULT_SECTIONS = ['hero_banner', 'featured', 'departments', 'recommended', 'recently_viewed', 'seasonal_banner', 'mid_banner', 'listings', 'just_listed', 'community', 'trust']
+
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
   const [query, setQuery] = useState('')
-  const countdown = useCountdown()
   const { user, token } = useAuth()
   const [featured, setFeatured] = useState<Card[]>([])
   const [justListed, setJustListed] = useState<Card[]>([])
@@ -103,6 +106,11 @@ export default function HomeScreen() {
   const [guides, setGuides] = useState<any[]>([])
   const [categories, setCategories] = useState<Cat[]>(DEFAULT_CATEGORIES)
   const [deptFailed, setDeptFailed] = useState<Record<string, boolean>>({})
+  // Admin-controlled homepage layout (same source as the web HomeSections).
+  const [layoutKeys, setLayoutKeys] = useState<string[] | null>(null)
+  const [hero, setHero] = useState<any[]>([])
+  const [topBanners, setTopBanners] = useState<any[]>([])
+  const [midBanners, setMidBanners] = useState<any[]>([])
 
   // Live data from the backend (public endpoints — same as web).
   useEffect(() => {
@@ -113,6 +121,18 @@ export default function HomeScreen() {
     api.community.list.query({ limit: 8 }).then((d: any[]) => setGuides(d)).catch(() => {})
     // Admin-ordered department tiles — same source as the web CategoryGrid.
     api.homepage.categories.query().then((rows: Cat[]) => { if (rows?.length) setCategories(rows) }).catch(() => {})
+    // Hero slides + sponsor banner slots (same sources as the web homepage).
+    api.homepage.heroSlides.query().then((d: any[]) => setHero(d)).catch(() => {})
+    api.banners.active.query({ position: 'home_top' } as any).then((d: any[]) => setTopBanners(d)).catch(() => {})
+    api.banners.active.query({ position: 'home_mid' } as any).then((d: any[]) => setMidBanners(d)).catch(() => {})
+    // Admin homepage layout: which sections show, in what order. Fall back to the
+    // web's default order if nothing is configured or the fetch fails.
+    api.homepage.layout.query()
+      .then((rows: any[]) => {
+        const list = (rows ?? []) as { key: string; enabled: boolean }[]
+        setLayoutKeys(list.length ? list.filter(r => r.enabled).map(r => r.key) : DEFAULT_SECTIONS)
+      })
+      .catch(() => setLayoutKeys(DEFAULT_SECTIONS))
   }, [])
 
   // Personalised "Recommended for you" (needs login — uses your interests).
@@ -120,6 +140,135 @@ export default function HomeScreen() {
     if (!token) { setRecommended([]); return }
     apiClient(token).listings.recommended.query().then((d: any[]) => setRecommended(d.map(toCard))).catch(() => {})
   }, [token])
+
+  // A horizontal strip of listing cards (Featured / Recommended / Recently viewed).
+  const strip = (title: string, data: Card[]) => data.length === 0 ? null : (
+    <>
+      <View style={[s.sectionHeader, { marginTop: 20 }]}><Text style={s.sectionTitle}>{title}</Text></View>
+      <FlatList
+        data={data}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
+        keyExtractor={(i, idx) => i.ref + idx}
+        renderItem={({ item }) => <ListingCard item={item} width={158} />}
+      />
+    </>
+  )
+
+  // A sponsor banner slot (admin-managed) — renders the first active banner.
+  const bannerSlot = (list: any[]) => {
+    const b = list?.[0]
+    if (!b?.imageUrl) return null
+    return (
+      <TouchableOpacity style={s.sponsorBanner} activeOpacity={0.9} onPress={() => b.linkUrl && Linking.openURL(b.linkUrl)}>
+        <Image source={{ uri: b.imageUrl }} style={{ width: '100%', aspectRatio: 1053 / 163 }} resizeMode="cover" />
+      </TouchableOpacity>
+    )
+  }
+
+  // Render one homepage section by its admin key (mirrors web HomeSections).
+  const renderSection = (key: string) => {
+    switch (key) {
+      case 'hero_banner': {
+        const h = hero?.[0]
+        if (!h?.imageUrl) return null
+        return (
+          <TouchableOpacity activeOpacity={0.9} onPress={() => h.linkUrl && Linking.openURL(h.linkUrl)}>
+            <Image source={{ uri: h.imageUrl }} style={{ width: '100%', aspectRatio: 16 / 9 }} resizeMode="cover" />
+          </TouchableOpacity>
+        )
+      }
+      case 'seasonal_banner': {
+        const c = currentSeasonal()
+        return (
+          <TouchableOpacity style={[s.seasonalBanner, { backgroundColor: c.grad }]} onPress={() => router.push(catRoute({ name: c.dept }) as any)}>
+            <Text style={{ fontSize: 34 }}>{c.emoji}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.seasonalTitle}>{c.title}</Text>
+              <Text style={s.seasonalSub}>{c.sub}</Text>
+            </View>
+            <Text style={s.seasonalCta}>Shop</Text>
+          </TouchableOpacity>
+        )
+      }
+      case 'quick_actions':
+        return (
+          <View style={s.quickRow}>
+            {[
+              { label: '💼 Jobs', go: '/jobs' },
+              { label: '🏠 Property', go: '/property' },
+              { label: '🏢 Directory', go: '/directory' },
+              { label: '🛠️ Handy Help', go: '/handy' },
+            ].map(q => (
+              <TouchableOpacity key={q.label} style={s.quickPill} onPress={() => router.push(q.go as any)}>
+                <Text style={s.quickPillText}>{q.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )
+      case 'mid_banner': return bannerSlot(midBanners)
+      case 'featured': return strip('👀 Featured', featured)
+      case 'recommended': return strip('✨ Recommended for you', recommended)
+      case 'recently_viewed': return strip('🕘 Recently viewed', recent)
+      case 'just_listed': return strip('🆕 Just Listed', justListed)
+      case 'listings': return strip('🛍️ Fresh on Grabitt', justListed)
+      case 'departments':
+        return (
+          <>
+            <View style={s.sectionHeader}><Text style={s.sectionTitle}>Departments</Text></View>
+            <View style={s.deptGrid}>
+              {categories.map(cat => {
+                const uri = catImg(cat.imgEs || cat.img)
+                const showImg = !!uri && !deptFailed[cat.name]
+                return (
+                  <TouchableOpacity key={cat.name} style={s.deptTile} activeOpacity={0.85} onPress={() => router.push(catRoute(cat) as any)}>
+                    {showImg
+                      ? <Image source={{ uri: uri! }} resizeMode="cover" onError={() => setDeptFailed(f => ({ ...f, [cat.name]: true }))} style={StyleSheet.absoluteFill} />
+                      : <View style={s.deptPlaceholder}>
+                          <Text style={s.deptPlaceholderText} numberOfLines={2}>{cat.name.toUpperCase()}</Text>
+                          <Text style={s.deptPlaceholderHeart}>♥</Text>
+                        </View>}
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+          </>
+        )
+      case 'community':
+        return guides.length === 0 ? null : (
+          <>
+            <View style={[s.sectionHeader, { marginTop: 20 }]}><Text style={s.sectionTitle}>📰 Grabitt Guides</Text></View>
+            <FlatList
+              data={guides}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
+              keyExtractor={(i) => i.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity onPress={() => router.push(`/community/${item.id}` as any)} style={s.guideCard}>
+                  <View style={s.guideThumb}><Text style={{ fontSize: 34 }}>{item.emoji}</Text></View>
+                  <View style={{ padding: 10 }}>
+                    <Text style={s.guideCat}>{item.category}</Text>
+                    <Text numberOfLines={2} style={s.guideTitle}>{item.title}</Text>
+                    <Text numberOfLines={3} style={s.guideExcerpt}>{item.excerpt}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </>
+        )
+      case 'trust':
+        return (
+          <View style={s.trustRow}>
+            {[['🔒', 'Secure escrow'], ['🤝', 'Safe handovers'], ['⭐', 'Rated sellers']].map(([e, t]) => (
+              <View key={t} style={s.trustItem}><Text style={{ fontSize: 20 }}>{e}</Text><Text style={s.trustText}>{t}</Text></View>
+            ))}
+          </View>
+        )
+      default: return null
+    }
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -157,171 +306,12 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Seasonal promo banner (date-driven) */}
-        {(() => {
-          const c = currentSeasonal()
-          return (
-            <TouchableOpacity style={[s.seasonalBanner, { backgroundColor: c.grad }]} onPress={() => router.push(catRoute({ name: c.dept }) as any)}>
-              <Text style={{ fontSize: 34 }}>{c.emoji}</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={s.seasonalTitle}>{c.title}</Text>
-                <Text style={s.seasonalSub}>{c.sub}</Text>
-              </View>
-              <Text style={s.seasonalCta}>Shop</Text>
-            </TouchableOpacity>
-          )
-        })()}
+        {/* Sponsor hero banner — admin-managed (web home_top slot) */}
+        {bannerSlot(topBanners)}
 
-        {/* Grab It Now strip */}
-        <TouchableOpacity style={s.grabitStrip} onPress={() => router.push('/dept/Grab%20It%20Now')}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ fontSize: 18 }}>⚡</Text>
-            <View>
-              <Text style={s.grabitTitle}>Grab It Now!</Text>
-              <Text style={s.grabitSub}>Flash deals — today only</Text>
-            </View>
-          </View>
-          <View style={s.countdownBox}>
-            <Text style={s.countdownText}>{countdown}</Text>
-            <Text style={s.countdownLabel}>ENDS MIDNIGHT</Text>
-          </View>
-        </TouchableOpacity>
+        {/* Admin-controlled homepage sections, in order (mirrors web HomeSections) */}
+        {(layoutKeys ?? []).map(k => <View key={k}>{renderSection(k)}</View>)}
 
-        {/* Quick links to the bespoke boards (parity with the web top nav). */}
-        <View style={s.quickRow}>
-          {[
-            { label: '💼 Jobs', go: '/jobs' },
-            { label: '🏠 Property', go: '/property' },
-            { label: '🏢 Directory', go: '/directory' },
-            { label: '🛠️ Handy Help', go: '/handy' },
-          ].map(q => (
-            <TouchableOpacity key={q.label} style={s.quickPill} onPress={() => router.push(q.go as any)}>
-              <Text style={s.quickPillText}>{q.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Dept grid — 4-col wide banner tiles (parity with web CategoryGrid).
-            Artwork has the category name baked in, so no overlaid label. */}
-        <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>Departments</Text>
-        </View>
-        <View style={s.deptGrid}>
-          {categories.map(cat => {
-            const uri = catImg(cat.imgEs || cat.img)
-            const showImg = !!uri && !deptFailed[cat.name]
-            return (
-              <TouchableOpacity
-                key={cat.name}
-                style={s.deptTile}
-                activeOpacity={0.85}
-                onPress={() => router.push(catRoute(cat) as any)}
-              >
-                {showImg
-                  ? <Image
-                      source={{ uri: uri! }}
-                      resizeMode="cover"
-                      onError={() => setDeptFailed(f => ({ ...f, [cat.name]: true }))}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  : <View style={s.deptPlaceholder}>
-                      <Text style={s.deptPlaceholderText} numberOfLines={2}>{cat.name.toUpperCase()}</Text>
-                      <Text style={s.deptPlaceholderHeart}>♥</Text>
-                    </View>}
-              </TouchableOpacity>
-            )
-          })}
-        </View>
-
-        {/* Recommended for you (personalised — logged-in) */}
-        {recommended.length > 0 && (
-          <>
-            <View style={s.sectionHeader}><Text style={s.sectionTitle}>✨ Recommended for you</Text></View>
-            <FlatList
-              data={recommended}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
-              keyExtractor={(i, idx) => i.ref + idx}
-              renderItem={({ item }) => <ListingCard item={item} width={158} />}
-            />
-          </>
-        )}
-
-        {/* Featured strip — real listings only (no mock fallback) */}
-        {featured.length > 0 && (
-          <>
-            <View style={[s.sectionHeader, recommended.length > 0 && { marginTop: 20 }]}>
-              <Text style={s.sectionTitle}>👀 Featured</Text>
-              <TouchableOpacity onPress={() => router.push('/search?featured=1')}><Text style={s.seeAll}>See all</Text></TouchableOpacity>
-            </View>
-            <FlatList
-              data={featured}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
-              keyExtractor={i => i.ref}
-              renderItem={({ item }) => <ListingCard item={item} width={158} />}
-            />
-          </>
-        )}
-
-        {/* Just Listed — real listings only */}
-        {justListed.length > 0 && (
-          <>
-            <View style={[s.sectionHeader, { marginTop: 20 }]}>
-              <Text style={s.sectionTitle}>🆕 Just Listed</Text>
-              <TouchableOpacity onPress={() => router.push('/search')}><Text style={s.seeAll}>See all</Text></TouchableOpacity>
-            </View>
-            <FlatList
-              data={justListed}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
-              keyExtractor={i => i.ref}
-              renderItem={({ item }) => <ListingCard item={item} width={158} />}
-            />
-          </>
-        )}
-
-        {/* Recently viewed */}
-        {recent.length > 0 && (
-          <>
-            <View style={[s.sectionHeader, { marginTop: 20 }]}><Text style={s.sectionTitle}>🕘 Recently viewed</Text></View>
-            <FlatList
-              data={recent}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
-              keyExtractor={(i, idx) => i.ref + idx}
-              renderItem={({ item }) => <ListingCard item={item} width={158} />}
-            />
-          </>
-        )}
-
-        {/* Grabitt Guides (community content) */}
-        {guides.length > 0 && (
-          <>
-            <View style={[s.sectionHeader, { marginTop: 20 }]}><Text style={s.sectionTitle}>📰 Grabitt Guides</Text></View>
-            <FlatList
-              data={guides}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
-              keyExtractor={(i) => i.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => router.push(`/community/${item.id}` as any)} style={s.guideCard}>
-                  <View style={s.guideThumb}><Text style={{ fontSize: 34 }}>{item.emoji}</Text></View>
-                  <View style={{ padding: 10 }}>
-                    <Text style={s.guideCat}>{item.category}</Text>
-                    <Text numberOfLines={2} style={s.guideTitle}>{item.title}</Text>
-                    <Text numberOfLines={3} style={s.guideExcerpt}>{item.excerpt}</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-            />
-          </>
-        )}
       </ScrollView>
     </View>
   )
@@ -370,6 +360,10 @@ const s = StyleSheet.create({
   seeAll: { fontFamily: 'Nunito', fontSize: 12, color: colors.orange, fontWeight: '800' },
   // 4 columns of wide banner tiles (2.35:1), matching the web CategoryGrid.
   deptGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10 },
+  sponsorBanner: { marginHorizontal: 14, marginTop: 12, borderRadius: 14, overflow: 'hidden' },
+  trustRow: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#faf6ef', marginHorizontal: 14, marginTop: 20, borderRadius: 14, paddingVertical: 16 },
+  trustItem: { alignItems: 'center', gap: 4 },
+  trustText: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: '#6b5a41' },
   quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 14, paddingTop: 16 },
   quickPill: { backgroundColor: '#FFF3EE', borderRadius: 50, paddingHorizontal: 14, paddingVertical: 8 },
   quickPillText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: colors.orange },
