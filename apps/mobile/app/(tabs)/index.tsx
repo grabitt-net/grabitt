@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, Image, Linking } from 'react-native'
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, Image } from 'react-native'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient, API_URL } from '../../lib/trpc'
@@ -159,11 +159,20 @@ export default function HomeScreen() {
   )
 
   // A sponsor banner slot (admin-managed) — renders the first active banner.
+  // Open a banner/hero link: internal app paths navigate natively, external
+  // URLs open in the in-app browser (never kick the user out to the OS browser).
+  const openLink = (url?: string | null) => {
+    if (!url) return
+    if (/^https?:\/\//.test(url)) WebBrowser.openBrowserAsync(url)
+    else if (url.startsWith('/')) router.push(url as any)
+    else WebBrowser.openBrowserAsync(`${API_URL}/${url.replace(/^\//, '')}`)
+  }
+
   const bannerSlot = (list: any[]) => {
     const b = list?.[0]
     if (!b?.imageUrl) return null
     return (
-      <TouchableOpacity style={s.sponsorBanner} activeOpacity={0.9} onPress={() => b.linkUrl && Linking.openURL(b.linkUrl)}>
+      <TouchableOpacity style={s.sponsorBanner} activeOpacity={0.9} onPress={() => openLink(b.linkUrl)}>
         <Image source={{ uri: b.imageUrl }} style={{ width: '100%', aspectRatio: 1053 / 163 }} resizeMode="cover" />
       </TouchableOpacity>
     )
@@ -176,7 +185,7 @@ export default function HomeScreen() {
         const h = hero?.[0]
         if (!h?.imageUrl) return null
         return (
-          <TouchableOpacity activeOpacity={0.9} onPress={() => h.linkUrl && Linking.openURL(h.linkUrl)}>
+          <TouchableOpacity activeOpacity={0.9} onPress={() => openLink(h.linkUrl)}>
             <Image source={{ uri: h.imageUrl }} style={{ width: '100%', aspectRatio: 1053 / 320 }} resizeMode="cover" />
           </TouchableOpacity>
         )

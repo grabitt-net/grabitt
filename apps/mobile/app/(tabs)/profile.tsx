@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native'
+import * as WebBrowser from 'expo-web-browser'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { useAuth } from '../../lib/auth'
@@ -51,12 +52,12 @@ export default function ProfileScreen() {
     if (!token) return
     try {
       const res = await apiClient(token).subscriptions.createCheckout.mutate({ plan: 'business' })
-      if (res.url) Linking.openURL(res.url)
+      if (res.url) WebBrowser.openBrowserAsync(res.url)
     } catch (e: any) { Alert.alert('Error', e?.message ?? 'Could not start checkout') }
   }
   const manageBilling = async () => {
     if (!token) return
-    try { const res = await apiClient(token).subscriptions.portal.mutate(); if (res.url) Linking.openURL(res.url) }
+    try { const res = await apiClient(token).subscriptions.portal.mutate(); if (res.url) WebBrowser.openBrowserAsync(res.url) }
     catch (e: any) { Alert.alert('Error', e?.message ?? 'Could not open billing') }
   }
   const deleteAccount = () => {
@@ -170,8 +171,8 @@ export default function ProfileScreen() {
         <TouchableOpacity style={s.deleteBtn} onPress={deleteAccount}><Text style={s.deleteText}>🗑 Delete my account & data</Text></TouchableOpacity>
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 18, marginTop: 20 }}>
-          <TouchableOpacity onPress={() => Linking.openURL(`${API_URL}/privacy`)}><Text style={s.legalLink}>Privacy Policy</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => Linking.openURL(`${API_URL}/terms`)}><Text style={s.legalLink}>Terms of Service</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${API_URL}/privacy`)}><Text style={s.legalLink}>Privacy Policy</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${API_URL}/terms`)}><Text style={s.legalLink}>Terms of Service</Text></TouchableOpacity>
         </View>
       </View>
     </ScrollView>

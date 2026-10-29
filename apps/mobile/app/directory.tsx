@@ -78,7 +78,7 @@ export default function DirectoryScreen() {
                   {!!item.phone && (
                     <TouchableOpacity style={s.callBtn} onPress={() => Linking.openURL(`tel:${item.phone}`)}><Text style={s.callText}>📞 Call</Text></TouchableOpacity>
                   )}
-                  <TouchableOpacity style={s.infoBtn} onPress={() => WebBrowser.openBrowserAsync(`${API_URL}/directory/${item.slug ?? item.id}`)}><Text style={s.infoText}>More info</Text></TouchableOpacity>
+                  <TouchableOpacity style={s.infoBtn} onPress={() => router.push(`/directory-listing/${item.slug ?? item.id}` as any)}><Text style={s.infoText}>More info</Text></TouchableOpacity>
                 </View>
               </View>
             </View>

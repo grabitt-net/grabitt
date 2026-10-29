@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert, ActivityIndicator, Linking } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { useAuth } from '../lib/auth'
-import { apiClient, API_URL } from '../lib/trpc'
+import { apiClient } from '../lib/trpc'
 
 export default function BusinessCentreScreen() {
   const { token } = useAuth()
@@ -87,7 +87,7 @@ export default function BusinessCentreScreen() {
           <TouchableOpacity style={[s.cta, saving && { opacity: 0.6 }, { alignSelf: 'stretch' }]} disabled={saving} onPress={save}><Text style={s.ctaText}>{saving ? 'Saving…' : 'Save storefront'}</Text></TouchableOpacity>
 
           {!!slug && published && (
-            <TouchableOpacity style={s.linkRow} onPress={() => Linking.openURL(`${API_URL}/shop/${slug}`)}><Text style={s.linkText}>View my shop page</Text><Text style={s.chev}>›</Text></TouchableOpacity>
+            <TouchableOpacity style={s.linkRow} onPress={() => router.push(`/shop/${slug}` as any)}><Text style={s.linkText}>View my shop page</Text><Text style={s.chev}>›</Text></TouchableOpacity>
           )}
           <TouchableOpacity style={s.linkRow} onPress={() => router.push('/(tabs)/profile')}><Text style={s.linkText}>Business subscription</Text><Text style={s.chev}>›</Text></TouchableOpacity>
         </ScrollView>

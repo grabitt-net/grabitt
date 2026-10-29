@@ -4,6 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { Alert, Linking } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { WebView } from 'react-native-webview'
+import * as WebBrowser from 'expo-web-browser'
 import { colors, PRICES } from '@grabitt/design-tokens'
 
 const SCREEN_W = Dimensions.get('window').width
@@ -131,7 +132,7 @@ export default function ListingScreen() {
     if (!token) { Alert.alert('Please log in', 'Log in to promote your listing.', [{ text: 'Log in', onPress: () => router.push('/auth') }, { text: 'Cancel' }]); return }
     try {
       const res: any = await apiClient(token).listings.promote.mutate({ listingId: ref as string, option, weeks: 1 })
-      if (res?.url) Linking.openURL(res.url)
+      if (res?.url) WebBrowser.openBrowserAsync(res.url)
     } catch (e: any) { Alert.alert('Could not start payment', e?.message ?? 'Try again') }
   }
 
