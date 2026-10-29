@@ -387,7 +387,10 @@ const s = StyleSheet.create({
   railIconHot: { backgroundColor: colors.orange, borderColor: colors.orange },
   railLabel: { fontFamily: 'Nunito', fontSize: 9.5, fontWeight: '800', color: colors.dark },
   deptTile: {
-    width: (SCREEN_W - 24 - 10) / 2, aspectRatio: 2.35 / 1, borderRadius: 16, overflow: 'hidden',
+    // Explicit height (not aspectRatio): the tile's only child is an
+    // absoluteFill image, and on Android aspectRatio with no in-flow child
+    // collapses the height to ~0 (tiles showed as thin lines).
+    width: (SCREEN_W - 24 - 10) / 2, height: ((SCREEN_W - 24 - 10) / 2) / 2.35, borderRadius: 16, overflow: 'hidden',
     position: 'relative', backgroundColor: '#f6f1e6',
     borderWidth: 1, borderColor: '#e8ddc7',
     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
