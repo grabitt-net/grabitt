@@ -8,6 +8,7 @@ import { toCard, type Card, DEPT_ENUM } from '../../lib/listingMap'
 import { ListingCard } from '../../components/ListingCard'
 import { getViews } from '../../lib/recentViews'
 import { Ionicons } from '@expo/vector-icons'
+import * as WebBrowser from 'expo-web-browser'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -199,12 +200,12 @@ export default function HomeScreen() {
             {[
               { icon: 'briefcase-outline', label: 'Recruitment', go: () => router.push('/jobs') },
               { icon: 'business-outline', label: 'Property', go: () => router.push('/property') },
-              { icon: 'star-outline', label: 'For Business', go: () => Linking.openURL(`${API_URL}/for-business`) },
-              { icon: 'clipboard-outline', label: 'Directory', go: () => router.push('/directory') },
+              { icon: 'star-outline', label: 'For Business', go: () => WebBrowser.openBrowserAsync(`${API_URL}/for-business`) },
+              { icon: 'clipboard-outline', label: 'Business Directory', go: () => router.push('/directory') },
             ].map(q => (
               <TouchableOpacity key={q.label} style={s.quickPill} onPress={q.go as any}>
-                <Ionicons name={q.icon as any} size={16} color={colors.orange} />
-                <Text style={s.quickPillText}>{q.label}</Text>
+                <Ionicons name={q.icon as any} size={15} color={colors.orange} />
+                <Text style={s.quickPillText} numberOfLines={2}>{q.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -308,7 +309,7 @@ export default function HomeScreen() {
             { icon: user ? 'person-outline' : 'log-in-outline', label: user ? 'Account' : 'Login', go: () => router.push(user ? '/(tabs)/profile' : '/auth') },
             { icon: 'chatbubble-outline', label: 'Messages', go: () => router.push('/(tabs)/messages') },
             { icon: 'cube', label: 'Sell', go: () => router.push('/(tabs)/sell'), hot: true },
-            { icon: 'help-buoy-outline', label: 'Help', go: () => Linking.openURL(`${API_URL}/help`) },
+            { icon: 'help-buoy-outline', label: 'Help', go: () => WebBrowser.openBrowserAsync(`${API_URL}/help`) },
           ].map(r => (
             <TouchableOpacity key={r.label} style={s.railItem} onPress={r.go as any}>
               <View style={[s.railIcon, (r as any).hot && s.railIconHot]}>
@@ -377,9 +378,9 @@ const s = StyleSheet.create({
   trustRow: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#faf6ef', marginHorizontal: 14, marginTop: 20, borderRadius: 14, paddingVertical: 16 },
   trustItem: { alignItems: 'center', gap: 4 },
   trustText: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: '#6b5a41' },
-  quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 14, paddingTop: 16 },
-  quickPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFF3EE', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10 },
-  quickPillText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: colors.dark },
+  quickRow: { flexDirection: 'row', gap: 6, paddingHorizontal: 12, paddingTop: 16 },
+  quickPill: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, backgroundColor: '#FFF3EE', borderRadius: 12, paddingHorizontal: 4, paddingVertical: 8 },
+  quickPillText: { fontFamily: 'Nunito', fontSize: 10, fontWeight: '800', color: colors.dark, textAlign: 'center', lineHeight: 12 },
   tagline: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: '#9a8b74' },
   rail: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: colors.sand, paddingHorizontal: 10, paddingTop: 4, paddingBottom: 10, borderBottomWidth: 1.5, borderBottomColor: colors.sand2 },
   railItem: { alignItems: 'center', gap: 3, flex: 1 },

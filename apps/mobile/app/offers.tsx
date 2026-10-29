@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView, Image, Alert } from 'react-native'
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { useAuth } from '../lib/auth'

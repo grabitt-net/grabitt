@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, Linking, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, Image, Linking, ActivityIndicator } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import * as WebBrowser from 'expo-web-browser'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient, API_URL } from '../lib/trpc'
@@ -27,7 +29,7 @@ export default function HandyScreen() {
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={{ fontSize: 20, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading}>🛠️ Handy Help</Text>
-        <TouchableOpacity onPress={() => Linking.openURL(`${API_URL}/handy`)}><Text style={s.post}>+ Post</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${API_URL}/handy`)}><Text style={s.post}>+ Post</Text></TouchableOpacity>
       </View>
 
       <Text style={s.sub}>Local help wanted & offered across Gran Canaria.</Text>

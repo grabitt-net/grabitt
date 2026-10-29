@@ -146,6 +146,14 @@ export default function ProfileScreen() {
         { icon: '📋', label: 'My Listings', onPress: () => router.push('/my-listings' as any) },
         { icon: '❤️', label: 'Saved items', onPress: () => router.push('/wishlist' as any) },
         { icon: '🔔', label: 'Notifications', onPress: () => router.push('/notifications' as any) },
+        { icon: '⭐', label: 'Rewards & credits', onPress: () => router.push('/rewards' as any) },
+        { icon: '🏅', label: 'My grade', onPress: () => router.push('/grade' as any) },
+        { icon: '🌟', label: 'My reviews', onPress: () => router.push('/reviews' as any) },
+        { icon: '💰', label: 'Payouts (get paid)', onPress: () => router.push('/payouts' as any) },
+        { icon: '💼', label: 'Work profile', onPress: () => router.push('/recruitment' as any) },
+        { icon: '🏢', label: 'Business Centre', onPress: () => router.push('/business-centre' as any) },
+        { icon: '✏️', label: 'Edit profile', onPress: () => router.push('/edit-profile' as any) },
+        { icon: '⚙️', label: 'Account settings', onPress: () => router.push('/settings' as any) },
       ].map(item => (
         <TouchableOpacity key={item.label} style={s.menuRow} onPress={item.onPress}>
           <Text style={{ fontSize: 20, width: 32, textAlign: 'center' }}>{item.icon}</Text>

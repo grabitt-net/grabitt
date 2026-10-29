@@ -38,7 +38,10 @@ export default function MessagesScreen() {
   if (!user) {
     return (
       <View style={s.screen}>
-        <Text style={s.heading}>Messages</Text>
+        <View style={s.headerRow}>
+          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.push('/(tabs)')} style={s.backBtn}><Text style={{ fontSize: 26, color: colors.orange }}>‹</Text></TouchableOpacity>
+          <Text style={s.heading}>Messages</Text>
+        </View>
         <View style={s.empty}>
           <Text style={s.emptyTitle}>Log in to see your messages</Text>
           <TouchableOpacity style={s.loginBtn} onPress={() => router.push('/auth')}><Text style={s.loginBtnText}>Log In</Text></TouchableOpacity>
@@ -49,7 +52,10 @@ export default function MessagesScreen() {
 
   return (
     <View style={s.screen}>
-      <Text style={s.heading}>Messages</Text>
+      <View style={s.headerRow}>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.push('/(tabs)')} style={s.backBtn}><Text style={{ fontSize: 26, color: colors.orange }}>‹</Text></TouchableOpacity>
+        <Text style={s.heading}>Messages</Text>
+      </View>
       {loading ? (
         <ActivityIndicator color={colors.orange} style={{ marginTop: 30 }} />
       ) : threads.length === 0 ? (
@@ -85,7 +91,9 @@ export default function MessagesScreen() {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#fff', paddingTop: 60 },
-  heading: { fontFamily: 'Comfortaa', fontSize: 20, fontWeight: '700', color: colors.dark, paddingHorizontal: 16, paddingBottom: 14, borderBottomWidth: 1.5, borderBottomColor: colors.sand2 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingBottom: 12, borderBottomWidth: 1.5, borderBottomColor: colors.sand2 },
+  backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  heading: { fontFamily: 'Comfortaa', fontSize: 20, fontWeight: '700', color: colors.dark },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   emptyTitle: { fontFamily: 'Nunito', fontSize: 16, fontWeight: '900', color: colors.dark, marginBottom: 8 },
   emptySub: { fontFamily: 'Nunito', fontSize: 12, color: '#888', textAlign: 'center', lineHeight: 18 },

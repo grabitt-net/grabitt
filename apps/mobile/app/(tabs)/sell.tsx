@@ -18,6 +18,7 @@ export default function SellScreen() {
   }
   return (
     <View style={s.screen}>
+      <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.push('/(tabs)')} style={s.backBtn}><Text style={{ fontSize: 26, color: colors.orange }}>‹</Text></TouchableOpacity>
       <View style={s.header}>
         <Text style={s.heading}>📦 Sell on Grabitt</Text>
         <Text style={s.sub}>Fees from 2.5% · Secure payments</Text>
@@ -43,6 +44,7 @@ export default function SellScreen() {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#fff', paddingTop: 60, paddingHorizontal: 16 },
+  backBtn: { position: 'absolute', top: 54, left: 6, width: 40, height: 40, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
   header: { alignItems: 'center', marginBottom: 28 },
   heading: { fontFamily: 'Comfortaa', fontSize: 22, fontWeight: '700', color: colors.dark, marginBottom: 4 },
   sub: { fontFamily: 'Nunito', fontSize: 12, color: '#888' },

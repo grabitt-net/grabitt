@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, Linking, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, Image, Linking, ActivityIndicator } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import * as WebBrowser from 'expo-web-browser'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient, API_URL } from '../lib/trpc'
@@ -37,7 +39,7 @@ export default function DirectoryScreen() {
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={{ fontSize: 20, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading}>🏢 Directory</Text>
-        <TouchableOpacity onPress={() => Linking.openURL(`${API_URL}/advertise-enquiry`)}><Text style={s.advertise}>Advertise</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${API_URL}/advertise-enquiry`)}><Text style={s.advertise}>Advertise</Text></TouchableOpacity>
       </View>
 
       {/* Category chips */}
@@ -76,7 +78,7 @@ export default function DirectoryScreen() {
                   {!!item.phone && (
                     <TouchableOpacity style={s.callBtn} onPress={() => Linking.openURL(`tel:${item.phone}`)}><Text style={s.callText}>📞 Call</Text></TouchableOpacity>
                   )}
-                  <TouchableOpacity style={s.infoBtn} onPress={() => Linking.openURL(`${API_URL}/directory/${item.slug ?? item.id}`)}><Text style={s.infoText}>More info</Text></TouchableOpacity>
+                  <TouchableOpacity style={s.infoBtn} onPress={() => WebBrowser.openBrowserAsync(`${API_URL}/directory/${item.slug ?? item.id}`)}><Text style={s.infoText}>More info</Text></TouchableOpacity>
                 </View>
               </View>
             </View>

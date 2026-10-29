@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView } from 'react-native'
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { useAuth } from '../lib/auth'

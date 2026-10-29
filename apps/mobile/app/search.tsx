@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Modal, Alert } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal, Alert } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../lib/trpc'
