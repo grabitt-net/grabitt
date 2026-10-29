@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Image, Alert, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SAFE_TOP } from '../lib/layout'
 import { colors } from '@grabitt/design-tokens'
 import { useAuth } from '../lib/auth'
 import { apiClient } from '../lib/trpc'
@@ -75,7 +76,7 @@ export default function CartScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: SAFE_TOP + 14 }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={{ fontSize: 20, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading}>🧺 Basket</Text>
         <View style={{ width: 36 }} />

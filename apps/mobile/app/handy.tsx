@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Image, Linking, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { SAFE_TOP } from '../lib/layout'
 import * as WebBrowser from 'expo-web-browser'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
@@ -26,7 +27,7 @@ export default function HandyScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: SAFE_TOP + 14 }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={{ fontSize: 20, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading}>🛠️ Handy Help</Text>
         <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${API_URL}/handy`)}><Text style={s.post}>+ Post</Text></TouchableOpacity>

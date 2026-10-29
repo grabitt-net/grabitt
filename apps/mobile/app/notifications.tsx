@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { SAFE_TOP } from '../lib/layout'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { useAuth } from '../lib/auth'
@@ -43,7 +44,7 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: SAFE_TOP + 14 }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={{ fontSize: 20, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading}>🔔 Notifications</Text>
         {items.some(n => !n.readAt) ? (

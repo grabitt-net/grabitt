@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { SAFE_TOP } from '../../lib/layout'
 import { useLocalSearchParams, router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
@@ -30,7 +31,7 @@ export default function ShopScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: SAFE_TOP + 14 }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={{ fontSize: 22, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading} numberOfLines={1}>{seller?.name ?? 'Shop'}</Text>
         <View style={{ width: 36 }} />

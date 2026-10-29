@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, ActivityIndicator } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SAFE_TOP } from '../../lib/layout'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../../lib/trpc'
 import { useAuth } from '../../lib/auth'
@@ -108,7 +109,7 @@ export default function CheckoutScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff', paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: '#fff', paddingTop: Math.max(insets.top, SAFE_TOP) }}>
       <View style={s.header}>
         {step < 2 && <TouchableOpacity onPress={() => step > 0 ? setStep(s => s - 1) : router.back()}><Text style={{ fontSize: 22, color: colors.orange }}>‹</Text></TouchableOpacity>}
         <Text style={s.heading}>Checkout</Text>

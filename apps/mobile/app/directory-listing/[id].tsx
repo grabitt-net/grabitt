@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Linking, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { SAFE_TOP } from '../../lib/layout'
 import { useLocalSearchParams, router } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import { colors } from '@grabitt/design-tokens'
@@ -31,7 +32,7 @@ export default function DirectoryListingScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: SAFE_TOP + 14 }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={{ fontSize: 22, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading} numberOfLines={1}>{biz?.name ?? 'Business'}</Text>
         <View style={{ width: 36 }} />
