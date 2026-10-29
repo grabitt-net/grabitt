@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/auth'
 import { toCard, type Card, DEPT_ENUM } from '../../lib/listingMap'
 import { ListingCard } from '../../components/ListingCard'
 import { getViews } from '../../lib/recentViews'
+import { Ionicons } from '@expo/vector-icons'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -175,7 +176,7 @@ export default function HomeScreen() {
         if (!h?.imageUrl) return null
         return (
           <TouchableOpacity activeOpacity={0.9} onPress={() => h.linkUrl && Linking.openURL(h.linkUrl)}>
-            <Image source={{ uri: h.imageUrl }} style={{ width: '100%', aspectRatio: 16 / 9 }} resizeMode="cover" />
+            <Image source={{ uri: h.imageUrl }} style={{ width: '100%', aspectRatio: 1053 / 320 }} resizeMode="cover" />
           </TouchableOpacity>
         )
       }
@@ -196,12 +197,13 @@ export default function HomeScreen() {
         return (
           <View style={s.quickRow}>
             {[
-              { label: '💼 Jobs', go: '/jobs' },
-              { label: '🏠 Property', go: '/property' },
-              { label: '🏢 Directory', go: '/directory' },
-              { label: '🛠️ Handy Help', go: '/handy' },
+              { icon: 'briefcase-outline', label: 'Recruitment', go: () => router.push('/jobs') },
+              { icon: 'business-outline', label: 'Property', go: () => router.push('/property') },
+              { icon: 'star-outline', label: 'For Business', go: () => Linking.openURL(`${API_URL}/for-business`) },
+              { icon: 'clipboard-outline', label: 'Directory', go: () => router.push('/directory') },
             ].map(q => (
-              <TouchableOpacity key={q.label} style={s.quickPill} onPress={() => router.push(q.go as any)}>
+              <TouchableOpacity key={q.label} style={s.quickPill} onPress={q.go as any}>
+                <Ionicons name={q.icon as any} size={16} color={colors.orange} />
                 <Text style={s.quickPillText}>{q.label}</Text>
               </TouchableOpacity>
             ))}
@@ -272,12 +274,10 @@ export default function HomeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      {/* Topbar */}
+      {/* Topbar — logo + tagline (matches the web header) */}
       <View style={s.topbar}>
         <Image source={require('../../assets/logo.png')} resizeMode="contain" style={{ height: 28, width: 28 * (1470 / 472) }} />
-        <TouchableOpacity style={s.memberBtn} onPress={() => router.push(user ? '/(tabs)/profile' : '/auth')}>
-          <Text style={s.memberBtnText}>{user ? 'Account' : 'Log in'}</Text>
-        </TouchableOpacity>
+        <Text style={s.tagline}>Your Everything, Local</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -298,12 +298,25 @@ export default function HomeScreen() {
               <Text style={s.nearBtnText}>📍 Near Me</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={s.bellBtn} onPress={() => router.push('/cart' as any)}>
-            <Text style={{ fontSize: 20 }}>🧺</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.bellBtn} onPress={() => router.push('/notifications' as any)}>
-            <Text style={{ fontSize: 20 }}>🔔</Text>
-          </TouchableOpacity>
+        </View>
+
+        {/* Icon rail — matches the web top nav (Alerts, Saved, Login, Messages, Sell, Help) */}
+        <View style={s.rail}>
+          {[
+            { icon: 'notifications-outline', label: 'Alerts', go: () => router.push('/notifications' as any) },
+            { icon: 'heart-outline', label: 'Saved', go: () => router.push('/wishlist' as any) },
+            { icon: user ? 'person-outline' : 'log-in-outline', label: user ? 'Account' : 'Login', go: () => router.push(user ? '/(tabs)/profile' : '/auth') },
+            { icon: 'chatbubble-outline', label: 'Messages', go: () => router.push('/(tabs)/messages') },
+            { icon: 'cube', label: 'Sell', go: () => router.push('/(tabs)/sell'), hot: true },
+            { icon: 'help-buoy-outline', label: 'Help', go: () => Linking.openURL(`${API_URL}/help`) },
+          ].map(r => (
+            <TouchableOpacity key={r.label} style={s.railItem} onPress={r.go as any}>
+              <View style={[s.railIcon, (r as any).hot && s.railIconHot]}>
+                <Ionicons name={r.icon as any} size={19} color={(r as any).hot ? '#fff' : colors.dark} />
+              </View>
+              <Text style={[s.railLabel, (r as any).hot && { color: colors.orange }]}>{r.label}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Sponsor hero banner — admin-managed (web home_top slot) */}
@@ -365,15 +378,21 @@ const s = StyleSheet.create({
   trustItem: { alignItems: 'center', gap: 4 },
   trustText: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: '#6b5a41' },
   quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 14, paddingTop: 16 },
-  quickPill: { backgroundColor: '#FFF3EE', borderRadius: 50, paddingHorizontal: 14, paddingVertical: 8 },
-  quickPillText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: colors.orange },
+  quickPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFF3EE', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10 },
+  quickPillText: { fontFamily: 'Nunito', fontSize: 12, fontWeight: '800', color: colors.dark },
+  tagline: { fontFamily: 'Nunito', fontSize: 11, fontWeight: '800', color: '#9a8b74' },
+  rail: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: colors.sand, paddingHorizontal: 10, paddingTop: 4, paddingBottom: 10, borderBottomWidth: 1.5, borderBottomColor: colors.sand2 },
+  railItem: { alignItems: 'center', gap: 3, flex: 1 },
+  railIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.sand2 },
+  railIconHot: { backgroundColor: colors.orange, borderColor: colors.orange },
+  railLabel: { fontFamily: 'Nunito', fontSize: 9.5, fontWeight: '800', color: colors.dark },
   deptTile: {
-    width: (SCREEN_W - 24 - 30) / 4, aspectRatio: 2.35 / 1, borderRadius: 16, overflow: 'hidden',
+    width: (SCREEN_W - 24 - 10) / 2, aspectRatio: 2.35 / 1, borderRadius: 16, overflow: 'hidden',
     position: 'relative', backgroundColor: '#f6f1e6',
     borderWidth: 1, borderColor: '#e8ddc7',
     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
   },
   deptPlaceholder: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', padding: 4, backgroundColor: '#f6f1e6' },
-  deptPlaceholderText: { fontFamily: 'Nunito', fontSize: 9, fontWeight: '900', color: '#33352f', textAlign: 'center', lineHeight: 10, letterSpacing: 0.2 },
+  deptPlaceholderText: { fontFamily: 'Nunito', fontSize: 13, fontWeight: '900', color: '#33352f', textAlign: 'center', lineHeight: 15, letterSpacing: 0.2 },
   deptPlaceholderHeart: { color: '#8a9a5b', fontSize: 11, marginTop: 1 },
 })
