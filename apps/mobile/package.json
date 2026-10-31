@@ -10,6 +10,7 @@
     "typecheck": "echo \"(mobile typecheck skipped — WIP app; re-enable when built out)\""
   },
   "dependencies": {
+    "@expo/config-plugins": "~54.0.4",
     "@expo/vector-icons": "^15.0.3",
     "@grabitt/api-client": "workspace:*",
     "@grabitt/design-tokens": "workspace:*",
