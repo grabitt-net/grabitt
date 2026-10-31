@@ -49,7 +49,8 @@
         {
           "enableGooglePay": false
         }
-      ]
+      ],
+      "./plugins/withLocationNotRequired"
     ],
     "experiments": {
       "typedRoutes": true
