@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Image, Linking, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { SAFE_TOP } from '../lib/layout'
-import * as WebBrowser from 'expo-web-browser'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
-import { apiClient, API_URL } from '../lib/trpc'
+import { apiClient } from '../lib/trpc'
 
 type Post = {
   id: string; title: string; description?: string | null; image?: string | null
@@ -30,7 +29,7 @@ export default function HandyScreen() {
       <View style={[s.header, { paddingTop: SAFE_TOP + 14 }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={{ fontSize: 20, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading}>🛠️ Handy Help</Text>
-        <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${API_URL}/handy`)}><Text style={s.post}>+ Post</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/handy-post' as any)}><Text style={s.post}>+ Post</Text></TouchableOpacity>
       </View>
 
       <Text style={s.sub}>Local help wanted & offered across Gran Canaria.</Text>

@@ -356,11 +356,17 @@ export default function ListingScreen() {
             const q = hasPin
               ? `${item.lat},${item.lng}`
               : (item.job?.address || `${item.location}, Gran Canaria`).trim()
+            // Google's Maps embed must live inside an <iframe>; loading the embed
+            // URL directly in a WebView triggers "must be used in an iframe". So we
+            // feed the WebView an HTML doc that wraps the embed in a full-bleed iframe.
+            const embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(q)}&z=${hasPin ? 16 : 13}&output=embed`
+            const mapHtml = `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><style>html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#f5f0e8}iframe{border:0;width:100%;height:100%;display:block}</style></head><body><iframe src="${embedUrl}" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></body></html>`
             return (
               <View style={s.mapWrap}>
                 <WebView
                   style={s.mapEmbed}
-                  source={{ uri: `https://www.google.com/maps?q=${encodeURIComponent(q)}&z=${hasPin ? 16 : 13}&output=embed` }}
+                  originWhitelist={['*']}
+                  source={{ html: mapHtml, baseUrl: 'https://www.google.com' }}
                   scrollEnabled={false}
                   pointerEvents="none"
                 />

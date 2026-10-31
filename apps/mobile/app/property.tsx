@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image } from 'react-native'
+import { SAFE_TOP } from '../lib/layout'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient } from '../lib/trpc'
@@ -77,7 +78,7 @@ export default function PropertyScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: SAFE_TOP + 14 }]}>
         <TouchableOpacity onPress={() => router.back()}><Text style={{ fontSize: 22, color: colors.orange }}>‹</Text></TouchableOpacity>
         <Text style={s.heading}>🏠 Property</Text>
         <TouchableOpacity onPress={() => setShowFilters(v => !v)}><Text style={s.filterToggle}>{showFilters ? 'Hide' : 'Filters'}</Text></TouchableOpacity>

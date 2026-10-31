@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, Image } from 'react-native'
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, Image, Alert } from 'react-native'
 import { router } from 'expo-router'
 import { colors } from '@grabitt/design-tokens'
 import { apiClient, API_URL } from '../../lib/trpc'
@@ -9,6 +9,27 @@ import { ListingCard } from '../../components/ListingCard'
 import { getViews } from '../../lib/recentViews'
 import { Ionicons } from '@expo/vector-icons'
 import * as WebBrowser from 'expo-web-browser'
+import * as Location from 'expo-location'
+
+// Main Gran Canaria towns with coordinates, for resolving "Near Me" to the
+// nearest town (mirrors the web Topbar list).
+const NEAR_TOWNS: { name: string; lat: number; lng: number }[] = [
+  { name: 'Las Palmas de Gran Canaria', lat: 28.1235, lng: -15.4363 },
+  { name: 'Telde', lat: 27.9985, lng: -15.4197 },
+  { name: 'Maspalomas', lat: 27.7606, lng: -15.586 },
+  { name: 'Playa del Inglés', lat: 27.756, lng: -15.573 },
+  { name: 'Vecindario', lat: 27.816, lng: -15.447 },
+  { name: 'Arguineguín', lat: 27.76, lng: -15.685 },
+  { name: 'Puerto Rico', lat: 27.79, lng: -15.71 },
+  { name: 'Mogán', lat: 27.887, lng: -15.723 },
+  { name: 'Gáldar', lat: 28.144, lng: -15.651 },
+  { name: 'Arucas', lat: 28.119, lng: -15.523 },
+]
+function nearestTown(lat: number, lng: number): string {
+  let best = NEAR_TOWNS[0], bestD = Infinity
+  for (const t of NEAR_TOWNS) { const d = (lat - t.lat) ** 2 + (lng - t.lng) ** 2; if (d < bestD) { bestD = d; best = t } }
+  return best.name
+}
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -168,6 +189,18 @@ export default function HomeScreen() {
     else WebBrowser.openBrowserAsync(`${API_URL}/${url.replace(/^\//, '')}`)
   }
 
+  // Near Me — resolve the device location to the nearest Gran Canaria town and
+  // search there (server has no radius filter, so we search by town).
+  const nearMe = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync()
+      if (status !== 'granted') { Alert.alert('Location off', 'Allow location access to find listings near you.'); return }
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low })
+      const town = nearestTown(pos.coords.latitude, pos.coords.longitude)
+      router.push(`/search?q=${encodeURIComponent(town)}` as any)
+    } catch { Alert.alert('Could not get location', 'Please try again.') }
+  }
+
   const bannerSlot = (list: any[]) => {
     const b = list?.[0]
     if (!b?.imageUrl) return null
@@ -304,7 +337,7 @@ export default function HomeScreen() {
               returnKeyType="search"
               onSubmitEditing={() => query.trim() && router.push(`/search?q=${encodeURIComponent(query)}`)}
             />
-            <TouchableOpacity style={s.nearBtn}>
+            <TouchableOpacity style={s.nearBtn} onPress={nearMe}>
               <Text style={s.nearBtnText}>📍 Near Me</Text>
             </TouchableOpacity>
           </View>
@@ -328,6 +361,11 @@ export default function HomeScreen() {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Grabitt NOW promo bar (matches the web home banner) */}
+        <TouchableOpacity style={s.grabittNow} activeOpacity={0.9} onPress={() => router.push('/dept/Grab%20It%20Now' as any)}>
+          <Text style={s.grabittNowText}>⚡  Grabitt NOW! Limited Time Offers  ⚡</Text>
+        </TouchableOpacity>
 
         {/* Sponsor hero banner — admin-managed (web home_top slot) */}
         {bannerSlot(topBanners)}
@@ -383,6 +421,8 @@ const s = StyleSheet.create({
   seeAll: { fontFamily: 'Nunito', fontSize: 12, color: colors.orange, fontWeight: '800' },
   // 4 columns of wide banner tiles (2.35:1), matching the web CategoryGrid.
   deptGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10 },
+  grabittNow: { backgroundColor: colors.orange, marginHorizontal: 14, marginTop: 14, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  grabittNowText: { fontFamily: 'Nunito', fontSize: 15, fontWeight: '900', color: '#fff' },
   sponsorBanner: { marginHorizontal: 14, marginTop: 12, borderRadius: 14, overflow: 'hidden' },
   trustRow: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#faf6ef', marginHorizontal: 14, marginTop: 20, borderRadius: 14, paddingVertical: 16 },
   trustItem: { alignItems: 'center', gap: 4 },
